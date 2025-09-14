@@ -142,6 +142,12 @@ export default {
           return 'Profile';
         case '/upload':
           return 'File Upload Center';
+        case '/organizer':
+          return 'Document Organizer';
+        case '/organizer/categories':
+          return 'Document Organizer >> Categories';
+        case '/organizer/categories/new':
+          return 'Document Organizer >> Categories >> Create New Category';
         case '/':
         case '/home':
           return 'Home';

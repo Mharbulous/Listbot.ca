@@ -5,7 +5,7 @@ import tagSubcollectionService from './tagSubcollectionService.js';
 
 /**
  * Evidence Document Service - Handles evidence document operations and Firestore data retrieval
- * Provides document access, category management, and AI suggestion storage with subcollection support
+ * Provides document access, Categories, and AI suggestion storage with subcollection support
  */
 export class EvidenceDocumentService {
   constructor(teamId = null) {

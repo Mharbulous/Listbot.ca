@@ -67,7 +67,7 @@
 - **NEVER** manually calculate from subcollection
 - **UPDATE** updatedAt whenever counters change
 
-**Note**: For complete tag subcollection architecture, validation rules, and category management patterns, see [CategoryTags.md](CategoryTags.md).
+**Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 
 ## Tag Subcollection
 
@@ -173,6 +173,7 @@ function validateTagDocument(data) {
 **Note**: For complete security rule patterns, custom claims structure, and team-based access control implementation, see [security-rules.md](security-rules.md).
 
 ```javascript
+
 ```
 
 ## Query Operations
@@ -202,6 +203,7 @@ const tagMetrics = {
 **Note**: For team member management and data migration workflows that affect evidence document access patterns, see [team-workflows.md](team-workflows.md).
 
 ```javascript
+
 ```
 
 ### Get Tags for Evidence

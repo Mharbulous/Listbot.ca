@@ -4,7 +4,7 @@
 **Updated**: 2025-01-20  
 **Status**: Testing Halted - Features Not Implemented  
 **Version**: v1.3 - Virtual Folder Implementation  
-**Category**: Category A - Human Testing  
+**Category**: Category A - Human Testing
 
 ## Overview
 
@@ -19,13 +19,15 @@ This document provides a comprehensive checklist for human testers to validate t
 ## TEST ENVIRONMENT SETUP
 
 ### Required Test Data
+
 - [x] At least 20-30 evidence documents uploaded (using available data)
 - [x] Documents tagged across 4-5 different categories (5 categories available - 2 original + 3 new)
-- [x] Mix of documents with single and multiple tags per category  
+- [x] Mix of documents with single and multiple tags per category
 - [x] Some documents with overlapping tag combinations
 - [x] Categories with 3-4 tags each for meaningful folder structures (working with available tags)
 
 ### Browser Setup
+
 - [x] Primary testing browser: Chrome (latest)
 - [ ] Secondary browsers: Firefox, Safari, Edge (for compatibility)
 - [x] Browser zoom at 100% (test other zoom levels separately)
@@ -33,6 +35,7 @@ This document provides a comprehensive checklist for human testers to validate t
 - [x] Clear browser cache before starting test session
 
 ### Device Testing Setup
+
 - [ ] Desktop: 1920x1080 resolution minimum
 - [ ] Tablet: iPad or equivalent (768px+ width)
 - [ ] Mobile: Phone with 360px+ width
@@ -43,10 +46,13 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 1. VIEW MODE TOGGLE FUNCTIONALITY
 
 ### 1.1 Dual-Toggle System Usability ✅
+
 **Objective**: Validate the enhanced view mode toggle operates intuitively
 
 #### Test Steps:
+
 1. **Initial State Verification**
+
    - [x] Navigate to Organizer page
    - [x] Observe view mode toggle in header area
    - [ ] **VERIFY**: Toggle shows "Flat View" as active by default - **ISSUE: Primary Flat/Folder toggle not found**
@@ -54,6 +60,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [x] **VERIFY**: Status indicator (if present) shows current view information - **PASS: Shows document count**
 
 2. **Primary Toggle Operation (Flat ↔ Folder)**
+
    - [ ] Click on "Folder View" option in primary toggle
    - [ ] **VERIFY**: Toggle smoothly switches to "Folder View" active
    - [ ] **VERIFY**: Interface changes to show folder-based layout
@@ -63,6 +70,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: All original functionality appears intact
 
 3. **Secondary Toggle Operation (List ↔ Grid)**
+
    - [ ] In Flat View: Toggle between List and Grid layouts
    - [ ] **VERIFY**: Layout changes appropriately in flat view
    - [ ] Switch to Folder View, then toggle List/Grid
@@ -76,10 +84,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Layout preference persists across page reloads
 
 ### 1.2 Mobile View Mode Toggle ✅
+
 **Objective**: Test toggle behavior on mobile devices
 
 #### Test Steps:
+
 1. **Mobile Layout Adaptation**
+
    - [ ] Switch to mobile view (360px width)
    - [ ] **VERIFY**: Toggle buttons stack vertically or adapt appropriately
    - [ ] **VERIFY**: All toggle options remain accessible
@@ -96,16 +107,20 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 2. FOLDER HIERARCHY SELECTOR
 
 ### 2.1 Hierarchy Management UI Usability ✅
+
 **Objective**: Validate hierarchy selector interface and interactions
 
 #### Test Steps:
+
 1. **Initial Hierarchy Selector Access**
+
    - [ ] Switch to Folder View mode
    - [ ] Locate hierarchy selector component (likely in sidebar or header)
    - [ ] **VERIFY**: Interface clearly shows "Configure folder structure" or similar
    - [ ] **VERIFY**: Current hierarchy state is visually clear (empty initially)
 
 2. **Add Categories to Hierarchy**
+
    - [ ] Open category selector or "Add Category" interface
    - [ ] **VERIFY**: Available categories list appears
    - [ ] **VERIFY**: Categories show with their names and colors
@@ -116,6 +131,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Multiple categories display in correct order
 
 3. **Hierarchy Reordering**
+
    - [ ] Look for reorder controls (up/down arrows, drag handles)
    - [ ] Test moving a category up in the hierarchy
    - [ ] **VERIFY**: Category moves to correct position
@@ -131,16 +147,20 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Folder view updates to reflect removed category
 
 ### 2.2 Keyboard Navigation Support ✅
+
 **Objective**: Test keyboard accessibility for hierarchy management
 
 #### Test Steps:
+
 1. **Keyboard Focus Management**
+
    - [ ] Tab into the hierarchy selector area
    - [ ] **VERIFY**: Focus indicator is clearly visible
    - [ ] Use Tab to navigate through hierarchy items
    - [ ] **VERIFY**: Focus moves logically through interface elements
 
 2. **Keyboard Shortcuts (if implemented)**
+
    - [ ] Test Ctrl+Up/Down for reordering (if available)
    - [ ] **VERIFY**: Keyboard shortcuts work as expected
    - [ ] Test Enter/Space for activating buttons
@@ -153,16 +173,20 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Hierarchy changes are communicated to screen reader
 
 ### 2.3 Visual Design and Responsive Behavior ✅
+
 **Objective**: Validate hierarchy selector design across screen sizes
 
 #### Test Steps:
+
 1. **Desktop Design Validation**
+
    - [ ] **VERIFY**: Hierarchy selector fits well within overall layout
    - [ ] **VERIFY**: Category colors are accurately displayed
    - [ ] **VERIFY**: Text is readable and properly sized
    - [ ] **VERIFY**: Interactive elements have clear affordances (buttons look clickable)
 
 2. **Tablet Layout Testing**
+
    - [ ] Switch to tablet view (768px-1024px width)
    - [ ] **VERIFY**: Hierarchy selector adapts appropriately
    - [ ] **VERIFY**: Touch targets remain adequate size
@@ -179,16 +203,20 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 3. FOLDER BREADCRUMB NAVIGATION
 
 ### 3.1 Breadcrumb Display and Visual Hierarchy ✅
+
 **Objective**: Test breadcrumb navigation component appearance and behavior
 
 #### Test Steps:
+
 1. **Root Level Breadcrumb Display**
+
    - [ ] Ensure you're in Folder View at root level (no navigation)
    - [ ] **VERIFY**: Breadcrumb shows "All Files" or similar root indicator
    - [ ] **VERIFY**: Root breadcrumb has appropriate icon (home/folder icon)
    - [ ] **VERIFY**: Breadcrumb bar is visually integrated with overall design
 
 2. **Single Level Navigation**
+
    - [ ] Set up a simple hierarchy (1 category)
    - [ ] Navigate into a folder by clicking on it
    - [ ] **VERIFY**: Breadcrumb shows: "All Files > [Folder Name]"
@@ -203,10 +231,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Breadcrumb doesn't become too long or wrap awkwardly
 
 ### 3.2 Click Navigation Functionality ✅
+
 **Objective**: Test breadcrumb click navigation
 
 #### Test Steps:
+
 1. **Breadcrumb Click Navigation**
+
    - [ ] Navigate to a deep folder (2-3 levels)
    - [ ] Click on "All Files" in breadcrumb
    - [ ] **VERIFY**: Returns to root level showing all folders
@@ -221,16 +252,20 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Clear visual distinction between clickable and current items
 
 ### 3.3 Responsive Breadcrumb Behavior ✅
+
 **Objective**: Test breadcrumb behavior across different screen sizes
 
 #### Test Steps:
+
 1. **Desktop Breadcrumb Layout**
+
    - [ ] Create a deep navigation path (3-4 levels)
    - [ ] **VERIFY**: Breadcrumbs display horizontally without wrapping
    - [ ] **VERIFY**: Text remains readable at normal size
    - [ ] **VERIFY**: Adequate spacing between breadcrumb segments
 
 2. **Tablet Breadcrumb Adaptation**
+
    - [ ] Switch to tablet view with deep navigation path
    - [ ] **VERIFY**: Breadcrumbs adapt appropriately (may truncate or wrap)
    - [ ] **VERIFY**: All navigation functionality remains accessible
@@ -243,10 +278,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Current location is always visible
 
 ### 3.4 Breadcrumb Integration with Overall Navigation ✅
+
 **Objective**: Test how breadcrumbs work with other navigation methods
 
 #### Test Steps:
+
 1. **Breadcrumb + Folder Clicking Navigation**
+
    - [ ] Use breadcrumbs to navigate to a level
    - [ ] Click on folders to go deeper
    - [ ] Use breadcrumbs to go back up
@@ -265,10 +303,13 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 4. TAG CONTEXT MENU SYSTEM
 
 ### 4.1 Right-Click Menu Trigger and Positioning ✅
+
 **Objective**: Test context menu activation and placement
 
 #### Test Steps:
+
 1. **Context Menu Activation**
+
    - [ ] In Flat View, right-click on various tag chips
    - [ ] **VERIFY**: Context menu appears on right-click
    - [ ] **VERIFY**: Menu appears quickly (no noticeable delay)
@@ -277,6 +318,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Appropriate context menu appears for each tag type
 
 2. **Menu Positioning Accuracy**
+
    - [ ] Right-click on tags near screen edges (top, bottom, left, right)
    - [ ] **VERIFY**: Menu always appears fully visible on screen
    - [ ] **VERIFY**: Menu position adjusts when near screen boundaries
@@ -290,10 +332,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Menu styling matches overall app design
 
 ### 4.2 "Show in Folders" Workflow ✅
+
 **Objective**: Test primary context menu action
 
 #### Test Steps:
+
 1. **Show in Folders Navigation**
+
    - [ ] Right-click on a tag and select "Show in Folders"
    - [ ] **VERIFY**: Automatically switches to Folder View
    - [ ] **VERIFY**: Navigates to appropriate folder containing that tag
@@ -301,6 +346,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: User lands in correct folder with filtered documents
 
 2. **Workflow User Feedback**
+
    - [ ] **VERIFY**: Transition from flat to folder view is smooth
    - [ ] **VERIFY**: Clear indication of what happened (maybe breadcrumbs update)
    - [ ] **VERIFY**: User can easily understand where they are after navigation
@@ -313,10 +359,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Hierarchy updates or appropriate handling occurs
 
 ### 4.3 Context Menu Accessibility ✅
+
 **Objective**: Test context menu accessibility features
 
 #### Test Steps:
+
 1. **Keyboard Navigation in Context Menu**
+
    - [ ] Right-click to open context menu
    - [ ] Use arrow keys to navigate menu items
    - [ ] **VERIFY**: Focus moves correctly between menu options
@@ -333,10 +382,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Previous menu closes, new menu might open
 
 ### 4.4 Context Menu on Different Devices ✅
+
 **Objective**: Test context menu across devices and input methods
 
 #### Test Steps:
+
 1. **Touch Device Context Menu**
+
    - [ ] On touch-enabled device, long-press on tag chips
    - [ ] **VERIFY**: Context menu appears with long-press
    - [ ] **VERIFY**: Touch targets are adequate size for finger navigation
@@ -353,10 +405,13 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 5. INTEGRATION WITH EXISTING UI FLOWS
 
 ### 5.1 Backward Compatibility Validation ✅
+
 **Objective**: Ensure existing functionality remains unchanged
 
 #### Test Steps:
+
 1. **Original Flat View Functionality**
+
    - [ ] Switch to Flat View mode
    - [ ] **VERIFY**: Evidence list displays identically to previous version
    - [ ] **VERIFY**: Search functionality works unchanged
@@ -364,7 +419,8 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Category tag display appears unchanged
    - [ ] **VERIFY**: File actions (view, download, delete) work normally
 
-2. **Category Management Integration**
+2. **Categories Integration**
+
    - [ ] Navigate to Category Manager
    - [ ] **VERIFY**: Category creation works normally
    - [ ] **VERIFY**: Category editing works normally
@@ -380,10 +436,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Tagging new files works with virtual folder system
 
 ### 5.2 Search and Filter Integration ✅
+
 **Objective**: Test search/filter functionality with virtual folder system
 
 #### Test Steps:
+
 1. **Search in Flat View**
+
    - [ ] In Flat View, use search functionality
    - [ ] **VERIFY**: Search works identically to previous versions
    - [ ] **VERIFY**: Search results display correctly
@@ -400,10 +459,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Filter and folder navigation work together logically
 
 ### 5.3 Multi-App SSO Context ✅
+
 **Objective**: Test virtual folder functionality in SSO environment
 
 #### Test Steps:
+
 1. **Cross-App Navigation**
+
    - [ ] Set up virtual folder view with specific navigation state
    - [ ] Navigate to different SSO app (Intranet or Coryphaeus)
    - [ ] Return to Bookkeeper Organizer
@@ -420,15 +482,19 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 6. RESPONSIVE DESIGN AND CROSS-BROWSER TESTING
 
 ### 6.1 Desktop Browser Compatibility ✅
+
 **Objective**: Test virtual folder functionality across desktop browsers
 
 #### Test Steps:
+
 1. **Chrome Testing** (Primary Browser)
+
    - [ ] Complete all core functionality tests in Chrome
    - [ ] **VERIFY**: All features work as expected
    - [ ] Note any Chrome-specific behaviors
 
 2. **Firefox Testing**
+
    - [ ] Repeat key workflow tests in Firefox
    - [ ] **VERIFY**: Virtual folder toggle works correctly
    - [ ] **VERIFY**: Breadcrumb navigation functions properly
@@ -436,6 +502,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Responsive design works consistently
 
 3. **Safari Testing**
+
    - [ ] Test core virtual folder workflows in Safari
    - [ ] **VERIFY**: No significant functionality differences
    - [ ] **VERIFY**: Visual design renders consistently
@@ -447,10 +514,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Performance remains acceptable
 
 ### 6.2 Mobile and Tablet Testing ✅
+
 **Objective**: Validate responsive design across device categories
 
 #### Test Steps:
+
 1. **Tablet Testing (768px-1024px)**
+
    - [ ] Test virtual folder toggle on tablet view
    - [ ] **VERIFY**: Touch targets are appropriate size
    - [ ] **VERIFY**: Hierarchy selector remains functional
@@ -458,6 +528,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Context menus work with touch interactions
 
 2. **Mobile Testing (360px-767px)**
+
    - [ ] Test all core functionality on mobile view
    - [ ] **VERIFY**: Interface adapts without losing functionality
    - [ ] **VERIFY**: Virtual folder navigation remains intuitive
@@ -474,10 +545,13 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 7. USER EXPERIENCE AND WORKFLOW VALIDATION
 
 ### 7.1 Intuitive Navigation Patterns ✅
+
 **Objective**: Validate that virtual folder navigation feels natural
 
 #### Test Steps:
+
 1. **First-Time User Experience**
+
    - [ ] Imagine you're a new user seeing virtual folders for first time
    - [ ] **VERIFY**: Folder View toggle is discoverable and understandable
    - [ ] **VERIFY**: Hierarchy selector purpose is clear
@@ -485,6 +559,7 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: "Show in Folders" context menu option is intuitive
 
 2. **Workflow Efficiency**
+
    - [ ] Time yourself performing common tasks in both Flat and Folder views
    - [ ] **VERIFY**: Virtual folder navigation doesn't significantly slow down common tasks
    - [ ] **VERIFY**: Switching between views feels worthwhile for organization
@@ -497,10 +572,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: System gracefully handles edge cases
 
 ### 7.2 Visual Feedback and Loading States ✅
+
 **Objective**: Test user feedback during virtual folder operations
 
 #### Test Steps:
+
 1. **Loading State Communication**
+
    - [ ] Observe behavior during folder navigation
    - [ ] **VERIFY**: Loading states are communicated clearly
    - [ ] **VERIFY**: User understands system is processing during slower operations
@@ -516,10 +594,13 @@ This document provides a comprehensive checklist for human testers to validate t
 ## 8. ACCESSIBILITY VALIDATION
 
 ### 8.1 Screen Reader Compatibility ✅
+
 **Objective**: Test virtual folder accessibility with assistive technology
 
 #### Test Steps:
+
 1. **Screen Reader Navigation**
+
    - [ ] Enable screen reader (NVDA, JAWS, or VoiceOver)
    - [ ] Navigate through virtual folder interface
    - [ ] **VERIFY**: All interactive elements are properly announced
@@ -532,10 +613,13 @@ This document provides a comprehensive checklist for human testers to validate t
    - [ ] **VERIFY**: Context menus are accessible via screen reader
 
 ### 8.2 Keyboard-Only Navigation ✅
+
 **Objective**: Test complete keyboard accessibility
 
 #### Test Steps:
+
 1. **Full Keyboard Navigation**
+
    - [ ] Navigate entire virtual folder system using only keyboard
    - [ ] **VERIFY**: All functionality accessible via keyboard
    - [ ] **VERIFY**: Tab order is logical and predictable
@@ -551,6 +635,7 @@ This document provides a comprehensive checklist for human testers to validate t
 ## TEST COMPLETION CHECKLIST
 
 ### Final Validation
+
 - [❌] All test sections completed across at least 2 browsers - **TESTING HALTED**
 - [❌] No critical usability issues identified - **VIRTUAL FOLDER FEATURES NOT IMPLEMENTED**
 - [❌] Virtual folder functionality enhances rather than hinders workflow - **FEATURES NOT IMPLEMENTED**
@@ -560,6 +645,7 @@ This document provides a comprehensive checklist for human testers to validate t
 - [✅] Performance acceptable for typical usage - **CURRENT FEATURES PERFORM WELL**
 
 ### Sign-off Requirements
+
 - [❌] **Desktop Browser Testing**: Chrome + 1 other browser - **TESTING HALTED**
 - [❌] **Mobile Testing**: At least 1 mobile device or responsive mode - **TESTING HALTED**
 - [❌] **Accessibility Testing**: Basic keyboard and screen reader validation - **TESTING HALTED**
@@ -567,6 +653,7 @@ This document provides a comprehensive checklist for human testers to validate t
 - [❌] **User Experience**: Confirmed intuitive and efficient workflows - **FEATURES NOT IMPLEMENTED**
 
 ### Issues and Notes
+
 Use this space to document any issues, suggestions, or observations:
 
 ```
@@ -587,12 +674,14 @@ TESTING CONCLUSION:
 ## TESTING GUIDELINES FOR TESTERS
 
 ### Testing Mindset
+
 - Think like an end user, not a developer
 - Focus on whether features make sense and feel natural
 - Pay attention to small details that affect user experience
 - Note both positive experiences and pain points
 
 ### What to Report
+
 - Functionality that doesn't work as expected
 - UI elements that are confusing or unclear
 - Performance issues or slow responses
@@ -600,7 +689,8 @@ TESTING CONCLUSION:
 - Accessibility barriers
 - Suggestions for improvement
 
-### What NOT to Test  
+### What NOT to Test
+
 - Don't use browser console or developer tools (unless specifically requested)
 - Don't test with artificial or unrealistic data scenarios
 - Don't focus on minor pixel-level visual differences

@@ -1,27 +1,15 @@
 <template>
   <div class="category-creation-wizard">
-    <div class="text-center mb-6">
-      <h2 class="text-h4 mb-2">Create New Category</h2>
-      <p class="text-body-1 text-medium-emphasis">
-        Set up a new category to organize your documents.
-      </p>
-    </div>
-
-    <v-card variant="outlined" class="mx-auto" style="max-width: 800px;">
+    <v-card variant="outlined" class="mx-auto" style="max-width: 800px">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-plus-circle</v-icon>
-        Category Details
+        New Category
         <v-spacer />
-        <v-btn
-          variant="text"
-          icon
-          :to="{ name: 'category-manager' }"
-          color="default"
-        >
+        <v-btn variant="text" icon :to="{ name: 'category-manager' }" color="default">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      
+
       <v-card-text class="pt-6">
         <v-form @submit.prevent="createCategory">
           <v-row>
@@ -92,7 +80,10 @@
                 <template #item="{ props, item }">
                   <v-list-item v-bind="props" :title="item.raw.title">
                     <template #prepend>
-                      <span class="font-weight-bold text-h6 mr-2" style="min-width: 24px; text-align: center;">
+                      <span
+                        class="font-weight-bold text-h6 mr-2"
+                        style="min-width: 24px; text-align: center"
+                      >
                         {{ item.raw.symbol }}
                       </span>
                     </template>
@@ -140,9 +131,7 @@
                 <template #item="{ props, item }">
                   <v-list-item v-bind="props" :title="item.raw.title">
                     <template #prepend>
-                      <v-icon color="orange" size="20">
-                        mdi-calendar
-                      </v-icon>
+                      <v-icon color="orange" size="20"> mdi-calendar </v-icon>
                     </template>
                     <template #append>
                       <span class="text-caption text-medium-emphasis">
@@ -172,15 +161,15 @@
                     <div class="d-flex align-center">
                       <v-icon color="orange" size="20" class="mr-2">mdi-calendar</v-icon>
                       <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
-                      <span class="text-caption text-medium-emphasis">({{ item.raw.example }})</span>
+                      <span class="text-caption text-medium-emphasis"
+                        >({{ item.raw.example }})</span
+                      >
                     </div>
                   </template>
                   <template #item="{ props, item }">
                     <v-list-item v-bind="props" :title="item.raw.title">
                       <template #prepend>
-                        <v-icon color="orange" size="20">
-                          mdi-calendar
-                        </v-icon>
+                        <v-icon color="orange" size="20"> mdi-calendar </v-icon>
                       </template>
                       <template #append>
                         <span class="text-caption text-medium-emphasis">
@@ -208,15 +197,15 @@
                     <div class="d-flex align-center">
                       <v-icon color="#7b1fa2" size="20" class="mr-2">mdi-clock-outline</v-icon>
                       <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
-                      <span class="text-caption text-medium-emphasis">({{ item.raw.example }})</span>
+                      <span class="text-caption text-medium-emphasis"
+                        >({{ item.raw.example }})</span
+                      >
                     </div>
                   </template>
                   <template #item="{ props, item }">
                     <v-list-item v-bind="props" :title="item.raw.title">
                       <template #prepend>
-                        <v-icon color="#7b1fa2" size="20">
-                          mdi-clock-outline
-                        </v-icon>
+                        <v-icon color="#7b1fa2" size="20"> mdi-clock-outline </v-icon>
                       </template>
                       <template #append>
                         <span class="text-caption text-medium-emphasis">
@@ -279,42 +268,36 @@
                 hide-details="auto"
               />
             </v-col>
-
-            <v-col cols="12">
-              <div class="text-subtitle-2 mb-3">Color Preview</div>
-              <div class="d-flex align-center">
-                <v-icon 
-                  :color="previewColor" 
-                  size="32" 
-                  class="mr-3"
-                >
-                  mdi-folder
-                </v-icon>
-                <div class="font-weight-medium">{{ newCategory.name || 'Category Name' }}</div>
-              </div>
-            </v-col>
           </v-row>
         </v-form>
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6">
-        <v-btn
-          variant="outlined"
-          :to="{ name: 'category-manager' }"
-          class="mr-3"
-        >
+        <v-btn variant="outlined" :to="{ name: 'category-manager' }" class="mr-3">
           <v-icon start>mdi-arrow-left</v-icon>
-          Back to Categories
+          CATEGORIES LIST
         </v-btn>
-        
+
         <v-spacer />
-        
+
         <v-btn
           color="primary"
+          variant="elevated"
           :loading="creating"
-:disabled="!newCategory.name.trim() || !newCategory.type || (newCategory.type === 'Currency' && !newCategory.defaultCurrency) || ((newCategory.type === 'Date' || newCategory.type === 'Timestamp') && !newCategory.defaultDateFormat) || (newCategory.type === 'Timestamp' && !newCategory.defaultTimeFormat) || (newCategory.type === 'Sequence' && !newCategory.defaultSequenceFormat) || (newCategory.type === 'Regex' && !newCategory.regexDefinition.trim()) || (['TextArea', 'Sequence', 'Regex'].includes(newCategory.type) && typeof newCategory.allowDuplicateValues !== 'boolean') || (newCategory.type === 'Sequence' && typeof newCategory.allowGaps !== 'boolean')"
+          :disabled="
+            newCategory.name.trim().length < 3 ||
+            !newCategory.type ||
+            (newCategory.type === 'Currency' && !newCategory.defaultCurrency) ||
+            ((newCategory.type === 'Date' || newCategory.type === 'Timestamp') &&
+              !newCategory.defaultDateFormat) ||
+            (newCategory.type === 'Timestamp' && !newCategory.defaultTimeFormat) ||
+            (newCategory.type === 'Sequence' && !newCategory.defaultSequenceFormat) ||
+            (newCategory.type === 'Regex' && !newCategory.regexDefinition.trim()) ||
+            (['TextArea', 'Sequence', 'Regex'].includes(newCategory.type) &&
+              typeof newCategory.allowDuplicateValues !== 'boolean') ||
+            (newCategory.type === 'Sequence' && typeof newCategory.allowGaps !== 'boolean')
+          "
           @click="createCategory"
-          size="large"
         >
           <v-icon start>mdi-plus</v-icon>
           Create Category
@@ -343,58 +326,80 @@ const organizerStore = useOrganizerStore();
 const { categories } = storeToRefs(organizerStore);
 
 const creating = ref(false);
-const newCategory = ref({ name: '', type: 'Fixed List', defaultCurrency: 'CAD', defaultDateFormat: 'YYYY-MM-DD', defaultTimeFormat: 'HH:mm', defaultSequenceFormat: '1, 2, 3, ...', regexDefinition: '.*', regexExamples: '', allowDuplicateValues: false, allowGaps: false });
-const newCategoryErrors = ref({ name: [], type: [], defaultCurrency: [], defaultDateFormat: [], defaultTimeFormat: [], defaultSequenceFormat: [], regexDefinition: [], regexExamples: [], allowDuplicateValues: [], allowGaps: [] });
+const newCategory = ref({
+  name: '',
+  type: 'Fixed List',
+  defaultCurrency: 'CAD',
+  defaultDateFormat: 'YYYY-MM-DD',
+  defaultTimeFormat: 'HH:mm',
+  defaultSequenceFormat: '1, 2, 3, ...',
+  regexDefinition: '.*',
+  regexExamples: '',
+  allowDuplicateValues: false,
+  allowGaps: false,
+});
+const newCategoryErrors = ref({
+  name: [],
+  type: [],
+  defaultCurrency: [],
+  defaultDateFormat: [],
+  defaultTimeFormat: [],
+  defaultSequenceFormat: [],
+  regexDefinition: [],
+  regexExamples: [],
+  allowDuplicateValues: [],
+  allowGaps: [],
+});
 
 const categoryTypeOptions = [
   {
     title: 'Fixed List',
     value: 'Fixed List',
     icon: 'mdi-format-list-bulleted',
-    color: '#1976d2' // Blue
+    color: '#1976d2', // Blue
   },
   {
     title: 'Open List',
     value: 'Open List',
     icon: 'mdi-playlist-plus',
-    color: '#1565c0' // Darker blue (similar tone to Fixed List)
+    color: '#1565c0', // Darker blue (similar tone to Fixed List)
   },
   {
     title: 'Currency',
     value: 'Currency',
     icon: 'mdi-currency-usd',
-    color: '#388e3c' // Green
+    color: '#388e3c', // Green
   },
   {
     title: 'Date',
     value: 'Date',
     icon: 'mdi-calendar',
-    color: '#f57c00' // Orange
+    color: '#f57c00', // Orange
   },
   {
     title: 'Timestamp',
     value: 'Timestamp',
     icon: 'mdi-clock-outline',
-    color: '#7b1fa2' // Purple
+    color: '#7b1fa2', // Purple
   },
   {
     title: 'Sequence',
     value: 'Sequence',
     icon: 'mdi-numeric',
-    color: '#00796b' // Teal
+    color: '#00796b', // Teal
   },
   {
     title: 'Regex',
     value: 'Regex',
     icon: 'mdi-regex',
-    color: '#c62828' // Red
+    color: '#c62828', // Red
   },
   {
     title: 'TextArea',
     value: 'TextArea',
     icon: 'mdi-text-box-outline',
-    color: '#5d4037' // Brown
-  }
+    color: '#5d4037', // Brown
+  },
 ];
 
 // Currency options with specified ordering
@@ -414,7 +419,7 @@ const currencyOptions = [
   { title: 'Russian Ruble (RUB)', value: 'RUB', symbol: '₽' },
   { title: 'Singapore Dollar (SGD)', value: 'SGD', symbol: '$' },
   { title: 'South African Rand (ZAR)', value: 'ZAR', symbol: 'R' },
-  { title: 'Swiss Franc (CHF)', value: 'CHF', symbol: 'CHF' }
+  { title: 'Swiss Franc (CHF)', value: 'CHF', symbol: 'CHF' },
 ];
 
 // Date format options ordered from most concise to least concise
@@ -430,7 +435,7 @@ const dateFormatOptions = [
   { title: 'DD MMM YYYY', value: 'DD MMM YYYY', example: '23 Jan 2024' },
   { title: 'MMM DD, YYYY', value: 'MMM DD, YYYY', example: 'Jan 23, 2024' },
   { title: 'DD MMMM YYYY', value: 'DD MMMM YYYY', example: '23 January 2024' },
-  { title: 'MMMM DD, YYYY', value: 'MMMM DD, YYYY', example: 'January 23, 2024' }
+  { title: 'MMMM DD, YYYY', value: 'MMMM DD, YYYY', example: 'January 23, 2024' },
 ];
 
 // Time format options ordered from most concise to least concise
@@ -439,7 +444,7 @@ const timeFormatOptions = [
   { title: 'HH:mm:ss', value: 'HH:mm:ss', example: '23:01:45' },
   { title: 'h:mm a', value: 'h:mm a', example: '11:01 PM' },
   { title: 'h:mm:ss a', value: 'h:mm:ss a', example: '11:01:45 PM' },
-  { title: 'HH:mm:ss.SSS', value: 'HH:mm:ss.SSS', example: '23:01:45.123' }
+  { title: 'HH:mm:ss.SSS', value: 'HH:mm:ss.SSS', example: '23:01:45.123' },
 ];
 
 // Sequence format options ordered from most common to least common
@@ -451,7 +456,7 @@ const sequenceFormatOptions = [
   { title: 'i, ii, iii, ...', value: 'i, ii, iii, ...' },
   { title: 'I, II, III, ...', value: 'I, II, III, ...' },
   { title: '1st, 2nd, 3rd, ...', value: '1st, 2nd, 3rd, ...' },
-  { title: 'First, Second, Third, ...', value: 'First, Second, Third, ...' }
+  { title: 'First, Second, Third, ...', value: 'First, Second, Third, ...' },
 ];
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
@@ -503,7 +508,7 @@ const validateNewCategory = () => {
   // Validate type
   if (!type) {
     typeErrors.push('Category type is required');
-  } else if (!categoryTypeOptions.find(option => option.value === type)) {
+  } else if (!categoryTypeOptions.find((option) => option.value === type)) {
     typeErrors.push('Please select a valid category type');
   }
 
@@ -511,7 +516,7 @@ const validateNewCategory = () => {
   if (type === 'Currency') {
     if (!defaultCurrency) {
       defaultCurrencyErrors.push('Default currency is required for Currency categories');
-    } else if (!currencyOptions.find(option => option.value === defaultCurrency)) {
+    } else if (!currencyOptions.find((option) => option.value === defaultCurrency)) {
       defaultCurrencyErrors.push('Please select a valid currency');
     }
   }
@@ -520,7 +525,7 @@ const validateNewCategory = () => {
   if (type === 'Date' || type === 'Timestamp') {
     if (!defaultDateFormat) {
       defaultDateFormatErrors.push('Date format is required for Date and Timestamp categories');
-    } else if (!dateFormatOptions.find(option => option.value === defaultDateFormat)) {
+    } else if (!dateFormatOptions.find((option) => option.value === defaultDateFormat)) {
       defaultDateFormatErrors.push('Please select a valid date format');
     }
   }
@@ -529,7 +534,7 @@ const validateNewCategory = () => {
   if (type === 'Timestamp') {
     if (!defaultTimeFormat) {
       defaultTimeFormatErrors.push('Time format is required for Timestamp categories');
-    } else if (!timeFormatOptions.find(option => option.value === defaultTimeFormat)) {
+    } else if (!timeFormatOptions.find((option) => option.value === defaultTimeFormat)) {
       defaultTimeFormatErrors.push('Please select a valid time format');
     }
   }
@@ -538,7 +543,7 @@ const validateNewCategory = () => {
   if (type === 'Sequence') {
     if (!defaultSequenceFormat) {
       defaultSequenceFormatErrors.push('Sequence format is required for Sequence categories');
-    } else if (!sequenceFormatOptions.find(option => option.value === defaultSequenceFormat)) {
+    } else if (!sequenceFormatOptions.find((option) => option.value === defaultSequenceFormat)) {
       defaultSequenceFormatErrors.push('Please select a valid sequence format');
     }
   }
@@ -583,7 +588,18 @@ const validateNewCategory = () => {
   newCategoryErrors.value.allowDuplicateValues = allowDuplicateValuesErrors;
   newCategoryErrors.value.allowGaps = allowGapsErrors;
 
-  return nameErrors.length === 0 && typeErrors.length === 0 && defaultCurrencyErrors.length === 0 && defaultDateFormatErrors.length === 0 && defaultTimeFormatErrors.length === 0 && defaultSequenceFormatErrors.length === 0 && regexDefinitionErrors.length === 0 && regexExamplesErrors.length === 0 && allowDuplicateValuesErrors.length === 0 && allowGapsErrors.length === 0;
+  return (
+    nameErrors.length === 0 &&
+    typeErrors.length === 0 &&
+    defaultCurrencyErrors.length === 0 &&
+    defaultDateFormatErrors.length === 0 &&
+    defaultTimeFormatErrors.length === 0 &&
+    defaultSequenceFormatErrors.length === 0 &&
+    regexDefinitionErrors.length === 0 &&
+    regexExamplesErrors.length === 0 &&
+    allowDuplicateValuesErrors.length === 0 &&
+    allowGapsErrors.length === 0
+  );
 };
 
 const createCategory = async () => {
@@ -635,12 +651,11 @@ const createCategory = async () => {
     await organizerStore.createCategory(categoryData);
 
     showNotification(`Category "${name}" created successfully`, 'success');
-    
+
     // Navigate back to category manager after a brief delay
     setTimeout(() => {
       router.push({ name: 'category-manager' });
     }, 1500);
-    
   } catch (error) {
     showNotification('Failed to create category: ' + error.message, 'error');
     creating.value = false;

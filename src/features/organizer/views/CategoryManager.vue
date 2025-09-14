@@ -1,23 +1,14 @@
 <template>
   <div class="category-manager">
-    <div class="text-center mb-6">
-      <h2 class="text-h4 mb-2">Category Management</h2>
-      <p class="text-body-1 text-medium-emphasis">
-        Manage your document organization categories and their tag options.
-      </p>
-    </div>
-
-
     <v-card variant="outlined">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-folder-multiple</v-icon>
-        Existing Categories ({{ categories.length }})
+        Categories List ({{ categories.length }})
         <v-spacer />
         <v-btn
           color="primary"
           :to="{ name: 'category-creation-wizard' }"
           variant="elevated"
-          size="small"
         >
           <v-icon start>mdi-plus</v-icon>
           Create Category

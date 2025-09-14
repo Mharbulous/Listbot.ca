@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useOrganizerStore } from '../../../../../src/features/organizer/stores/organizer.js';
-import { generateMockCategories, generateMockEvidence } from '../../../../../src/test-utils/virtualFolderTestUtils.js';
+import {
+  generateMockCategories,
+  generateMockEvidence,
+} from '../../../../../src/test-utils/virtualFolderTestUtils.js';
 
 describe('Backward Compatibility Tests', () => {
   let organizer;
@@ -21,12 +24,12 @@ describe('Backward Compatibility Tests', () => {
       expect(typeof organizer.setFilter).toBe('function');
       expect(typeof organizer.clearFilters).toBe('function');
       expect(typeof organizer.reset).toBe('function');
-      
-      // v1.1 category methods  
+
+      // v1.1 category methods
       expect(typeof organizer.addCategory).toBe('function');
       expect(typeof organizer.updateCategory).toBe('function');
       expect(typeof organizer.deleteCategory).toBe('function');
-      
+
       // v1.2 AI categorization methods
       expect(typeof organizer.processAICategorization).toBe('function');
       expect(typeof organizer.approveAITag).toBe('function');
@@ -35,9 +38,9 @@ describe('Backward Compatibility Tests', () => {
 
     it('should maintain setFilter method behavior', () => {
       const filterValue = 'test filter';
-      
+
       organizer.setFilter(filterValue);
-      
+
       expect(organizer.filterText).toBe(filterValue);
       // Verify filtered evidence updates accordingly
       expect(organizer.filteredEvidence).toBeDefined();
@@ -46,9 +49,9 @@ describe('Backward Compatibility Tests', () => {
     it('should maintain clearFilters method behavior', () => {
       // Set up some filters first
       organizer.setFilter('test');
-      
+
       organizer.clearFilters();
-      
+
       expect(organizer.filterText).toBe('');
       expect(organizer.filteredEvidence.length).toBeGreaterThanOrEqual(0);
     });
@@ -57,9 +60,9 @@ describe('Backward Compatibility Tests', () => {
       // Set up some state
       organizer.setFilter('test');
       organizer.setViewMode('folders');
-      
+
       organizer.reset();
-      
+
       // Verify all stores reset to initial state
       expect(organizer.filterText).toBe('');
       expect(organizer.viewMode).toBe('flat');
@@ -92,14 +95,14 @@ describe('Backward Compatibility Tests', () => {
     it('should maintain filteredEvidence filtering behavior', () => {
       // Mock evidence data
       organizer.stores.organizerCore.evidence = mockEvidence;
-      
+
       const allEvidence = organizer.filteredEvidence;
       const initialCount = allEvidence.length;
-      
+
       // Apply filter
       organizer.setFilter('invoice');
       const filteredCount = organizer.filteredEvidence.length;
-      
+
       // Filtered results should be less than or equal to total
       expect(filteredCount).toBeLessThanOrEqual(initialCount);
     });
@@ -112,44 +115,44 @@ describe('Backward Compatibility Tests', () => {
       expect(organizer.stores.organizerCore).toBeDefined();
       expect(organizer.stores.categoryStore).toBeDefined();
       expect(organizer.stores.organizerQuery).toBeDefined();
-      
+
       // New v1.3 store should be accessible too
       expect(organizer.stores.virtualFolder).toBeDefined();
     });
 
     it('should maintain computed property reactivity', () => {
       let reactiveCalled = false;
-      
+
       // Watch for reactivity
       organizer.$subscribe(() => {
         reactiveCalled = true;
       });
-      
+
       // Trigger a change
       organizer.setFilter('test');
-      
+
       expect(reactiveCalled).toBe(true);
     });
   });
 
-  describe('Category Management Compatibility', () => {
+  describe('Categories Compatibility', () => {
     it('should preserve category CRUD operations', async () => {
       const newCategory = {
         name: 'Test Category',
         color: '#FF0000',
-        description: 'Test description'
+        description: 'Test description',
       };
-      
+
       // Test category creation
       const createdCategory = await organizer.addCategory(newCategory);
       expect(createdCategory).toBeDefined();
       expect(createdCategory.name).toBe(newCategory.name);
-      
+
       // Test category update
       const updatedData = { ...createdCategory, name: 'Updated Category' };
       const updatedCategory = await organizer.updateCategory(createdCategory.id, updatedData);
       expect(updatedCategory.name).toBe('Updated Category');
-      
+
       // Test category deletion
       const deleteResult = await organizer.deleteCategory(createdCategory.id);
       expect(deleteResult).toBe(true);
@@ -165,11 +168,11 @@ describe('Backward Compatibility Tests', () => {
         filename: 'test.pdf',
         metadata: { size: 1000 },
         tags: {}, // Legacy format without subcollectionTags
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
       };
-      
+
       organizer.stores.organizerCore.evidence = [legacyEvidence];
-      
+
       expect(() => {
         const filtered = organizer.filteredEvidence;
         expect(Array.isArray(filtered)).toBe(true);
@@ -183,11 +186,11 @@ describe('Backward Compatibility Tests', () => {
         metadata: { size: 2000 },
         tags: {},
         subcollectionTags: mockEvidence[0]?.subcollectionTags || {},
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
       };
-      
+
       organizer.stores.organizerCore.evidence = [newEvidence];
-      
+
       expect(() => {
         const filtered = organizer.filteredEvidence;
         expect(Array.isArray(filtered)).toBe(true);
@@ -198,16 +201,16 @@ describe('Backward Compatibility Tests', () => {
   describe('Event System Compatibility', () => {
     it('should maintain existing event handling patterns', () => {
       let eventFired = false;
-      
+
       // Mock event listener pattern used by components
       const unsubscribe = organizer.$subscribe((mutation, state) => {
         if (mutation.type === 'setFilter') {
           eventFired = true;
         }
       });
-      
+
       organizer.setFilter('test');
-      
+
       expect(eventFired).toBe(true);
       unsubscribe();
     });
@@ -215,27 +218,27 @@ describe('Backward Compatibility Tests', () => {
     it('should not break existing watchers when adding v1.3 functionality', () => {
       let filterWatcherCalled = false;
       let viewModeWatcherCalled = false;
-      
+
       // Set up watchers similar to existing components
       const filterUnwatch = organizer.$subscribe((mutation, state) => {
         if (mutation.storeId === 'organizerQuery' || mutation.events?.key === 'filterText') {
           filterWatcherCalled = true;
         }
       });
-      
+
       const viewModeUnwatch = organizer.$subscribe((mutation, state) => {
         if (mutation.storeId === 'virtualFolder' || mutation.events?.key === 'viewMode') {
           viewModeWatcherCalled = true;
         }
       });
-      
+
       // Trigger both old and new functionality
       organizer.setFilter('test');
       organizer.setViewMode('folders');
-      
+
       expect(filterWatcherCalled).toBe(true);
       expect(viewModeWatcherCalled).toBe(true);
-      
+
       filterUnwatch();
       viewModeUnwatch();
     });
@@ -246,10 +249,10 @@ describe('Backward Compatibility Tests', () => {
       // Test setFilter method signature
       expect(() => organizer.setFilter('string')).not.toThrow();
       expect(() => organizer.setFilter()).not.toThrow(); // Should handle undefined
-      
-      // Test clearFilters method signature  
+
+      // Test clearFilters method signature
       expect(() => organizer.clearFilters()).not.toThrow();
-      
+
       // Test reset method signature
       expect(() => organizer.reset()).not.toThrow();
     });
@@ -257,10 +260,10 @@ describe('Backward Compatibility Tests', () => {
     it('should return expected data types from legacy methods', () => {
       const filterResult = organizer.setFilter('test');
       expect(filterResult).toBeUndefined(); // setFilter doesn't return value
-      
+
       const clearResult = organizer.clearFilters();
       expect(clearResult).toBeUndefined(); // clearFilters doesn't return value
-      
+
       const resetResult = organizer.reset();
       expect(resetResult).toBeUndefined(); // reset doesn't return value
     });
@@ -271,35 +274,36 @@ describe('Backward Compatibility Tests', () => {
       // Set up larger dataset
       const largeEvidenceSet = generateMockEvidence(100, mockCategories);
       organizer.stores.organizerCore.evidence = largeEvidenceSet;
-      
+
       const startTime = performance.now();
-      
+
       // Access legacy computed properties multiple times
       for (let i = 0; i < 10; i++) {
         const _ = organizer.filteredEvidence;
         const __ = organizer.evidenceList;
       }
-      
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       // Should complete in reasonable time (adjust threshold as needed)
       expect(duration).toBeLessThan(50); // 50ms threshold
     });
 
     it('should not significantly increase memory usage for legacy operations', () => {
       const initialMemory = performance.memory?.usedJSHeapSize || 0;
-      
+
       // Perform typical legacy operations
       organizer.setFilter('test');
       organizer.clearFilters();
       organizer.setFilter('another test');
-      
+
       const finalMemory = performance.memory?.usedJSHeapSize || 0;
       const memoryIncrease = finalMemory - initialMemory;
-      
+
       // Memory increase should be minimal for these operations
-      if (initialMemory > 0) { // Only test if memory API available
+      if (initialMemory > 0) {
+        // Only test if memory API available
         expect(memoryIncrease).toBeLessThan(1000000); // Less than 1MB increase
       }
     });

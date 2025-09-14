@@ -34,32 +34,33 @@ export const useOrganizerStore = defineStore('organizer', () => {
   // Computed properties combining data from multiple stores
   const evidenceCount = computed(() => coreStore.evidenceCount);
   const filteredCount = computed(() => queryStore.filteredCount);
-  const isInitialized = computed(() => 
-    coreStore.isInitialized && categoryStore.isInitialized
-  );
+  const isInitialized = computed(() => coreStore.isInitialized && categoryStore.isInitialized);
 
   /**
    * Initialize all stores
    */
   const initialize = async () => {
     try {
-      console.log(`[DEBUG ORGANIZER LOADING] Organizer initialization started at: ${new Date().toISOString()} (${Date.now()})`);
-      
+      console.log(
+        `[DEBUG ORGANIZER LOADING] Organizer initialization started at: ${new Date().toISOString()} (${Date.now()})`
+      );
+
       // Load evidence and categories in parallel
       const [evidenceUnsubscribe, categoryUnsubscribe] = await Promise.all([
         coreStore.loadEvidence(),
-        categoryStore.loadCategories()
+        categoryStore.loadCategories(),
       ]);
-      
-      console.log(`[DEBUG ORGANIZER LOADING] Organizer initialization completed at: ${new Date().toISOString()} (${Date.now()})`);
-      
+
+      console.log(
+        `[DEBUG ORGANIZER LOADING] Organizer initialization completed at: ${new Date().toISOString()} (${Date.now()})`
+      );
+
       return { evidenceUnsubscribe, categoryUnsubscribe };
     } catch (err) {
       console.error('[OrganizerStore] Failed to initialize:', err);
       throw err;
     }
   };
-
 
   /**
    * Get all tags for display
@@ -106,28 +107,26 @@ export const useOrganizerStore = defineStore('organizer', () => {
     // Store access
     core: coreStore,
     query: queryStore,
-    
-    // Category management
+
+    // Categories
     categories: computed(() => categoryStore.categories),
     categoryCount: computed(() => categoryStore.categoryCount),
     activeCategories: computed(() => categoryStore.activeCategories),
-    
+
     // Category actions
     createCategory: categoryStore.createCategory,
     updateCategory: categoryStore.updateCategory,
     deleteCategory: categoryStore.deleteCategory,
     getCategoryById: categoryStore.getCategoryById,
-    
-    
+
     // Advanced filtering
     applyFiltersWithCategories: queryStore.applyFiltersWithCategories,
     getStructuredTagsByCategory: queryStore.getStructuredTagsByCategory,
     hasAnyTags: queryStore.hasAnyTags,
-    
-    
+
     // Initialization
     initialize,
-    
+
     // === NEW v1.3 FEATURES - Virtual Folder System ===
     // Virtual folder state
     viewMode: computed(() => virtualFolderStore.viewMode),
@@ -137,7 +136,7 @@ export const useOrganizerStore = defineStore('organizer', () => {
     breadcrumbPath: computed(() => virtualFolderStore.breadcrumbPath),
     isAtRoot: computed(() => virtualFolderStore.isAtRoot),
     currentDepth: computed(() => virtualFolderStore.currentDepth),
-    
+
     // Virtual folder navigation
     setViewMode: virtualFolderStore.setViewMode,
     setFolderHierarchy: virtualFolderStore.setFolderHierarchy,
@@ -145,7 +144,7 @@ export const useOrganizerStore = defineStore('organizer', () => {
     navigateToDepth: virtualFolderStore.navigateToDepth,
     navigateBack: virtualFolderStore.navigateBack,
     navigateToRoot: virtualFolderStore.navigateToRoot,
-    
+
     // Virtual folder structure generation
     generateFolderStructure: virtualFolderStore.generateFolderStructure,
     filterEvidenceByPath: virtualFolderStore.filterEvidenceByPath,
@@ -157,6 +156,6 @@ export const useOrganizerStore = defineStore('organizer', () => {
       query: queryStore,
       category: categoryStore,
       virtualFolder: virtualFolderStore,
-    }
+    },
   };
 });

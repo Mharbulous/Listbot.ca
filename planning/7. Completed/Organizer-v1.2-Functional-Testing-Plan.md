@@ -9,6 +9,7 @@
 ## Pre-Testing Setup
 
 ### Prerequisites Checklist
+
 - [ ] **Document organizer loads properly** - Navigate to `/organizer` and verify the interface displays
 - [ ] **Existing v1.1 functionality works** - Can view documents, manage categories, apply manual tags
 - [ ] **AI environment configured** - Check that `VITE_ENABLE_AI_FEATURES=true` in environment
@@ -17,6 +18,7 @@
 - [ ] **Categories exist** - Have at least 2-3 categories with some existing tags
 
 ### Environment Verification
+
 1. **Check Console for Errors** - Open browser DevTools, look for critical errors
 2. **Verify Feature Flag** - Confirm AI features are enabled
 3. **Test Basic Navigation** - Ensure organizer loads and displays documents
@@ -24,11 +26,13 @@
 ## Test Plan Overview
 
 ### Testing Strategy
+
 This functional testing plan focuses on **user experience validation** rather than technical unit testing. We'll test the complete workflow from a user's perspective to ensure the AI categorization feature works reliably and intuitively.
 
 ### Testing Scope
+
 - ✅ **Single Document AI Processing** - Manual trigger and processing workflow
-- ✅ **AI Tag Review & Approval** - Review interface and approval/rejection workflow  
+- ✅ **AI Tag Review & Approval** - Review interface and approval/rejection workflow
 - ✅ **Visual Integration** - UI components and user feedback
 - ✅ **Error Handling** - Graceful handling of processing failures
 - ✅ **Backward Compatibility** - Existing v1.1 features remain unchanged
@@ -40,12 +44,15 @@ This functional testing plan focuses on **user experience validation** rather th
 **Objective**: Verify the complete single document AI processing workflow
 
 #### Steps:
+
 1. **Navigate to Document Organizer**
+
    - Go to `/organizer`
    - ✅ **Expected**: Document list displays properly
    - ❌ **If Failed**: Check console for component errors, verify v1.1 functionality first
 
 2. **Locate AI Processing Button**
+
    - Find any document in the list
    - Look for actions menu (three dots icon)
    - Click actions menu
@@ -53,13 +60,15 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check if `VITE_ENABLE_AI_FEATURES=true`, verify component loading
 
 3. **Trigger AI Processing**
+
    - Click "🤖 Process with AI" button
-   - ✅ **Expected**: 
+   - ✅ **Expected**:
      - Button shows loading state
      - Notification appears: "Processing document with AI..."
    - ❌ **If Failed**: Check console for AI service errors, verify Firebase AI Logic configuration
 
 4. **Wait for Processing Completion**
+
    - Wait up to 30 seconds for processing
    - ✅ **Expected**: One of these outcomes:
      - Success notification: "AI processing complete! X tags suggested"
@@ -71,8 +80,9 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check tag storage and display logic
 
 #### Success Criteria:
+
 - [x] AI processing button appears and is clickable
-- [x] Processing shows appropriate loading state  
+- [x] Processing shows appropriate loading state
 - [x] User receives clear feedback about processing status
 - [x] Tags applied directly to document without modal interruption
 
@@ -81,11 +91,14 @@ This functional testing plan focuses on **user experience validation** rather th
 **Objective**: Test the AI tag review and approval workflow
 
 #### Prerequisites:
+
 - Complete Test Case 1 successfully with suggested tags
 
 #### Steps:
+
 1. **Review AI Suggestions**
-   - ✅ **Expected**: 
+
+   - ✅ **Expected**:
      - Modal shows document name
      - Suggested tags appear with robot icons (🤖)
      - Each tag has individual Approve/Reject buttons
@@ -93,23 +106,27 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check AITagReview.vue component, verify tag data structure
 
 2. **Test Individual Tag Approval**
+
    - Click "✓ Approve" on one suggested tag
    - ✅ **Expected**: Visual feedback that tag is approved
    - ❌ **If Failed**: Check component state management, verify button functionality
 
 3. **Test Individual Tag Rejection**
-   - Click "✗ Reject" on one suggested tag  
+
+   - Click "✗ Reject" on one suggested tag
    - ✅ **Expected**: Visual feedback that tag is rejected/removed
    - ❌ **If Failed**: Check component state management
 
 4. **Test Batch Operations**
+
    - Try "Approve All" or "Reject All" if multiple tags present
    - ✅ **Expected**: All tags show appropriate approved/rejected state
    - ❌ **If Failed**: Check batch operation logic
 
 5. **Save Changes**
+
    - Click "Save Changes" or "Apply" button
-   - ✅ **Expected**: 
+   - ✅ **Expected**:
      - Processing indicator appears
      - Success notification: "Successfully applied changes: X approved, Y rejected"
      - Modal closes
@@ -121,6 +138,7 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check tag storage and display logic
 
 #### Success Criteria:
+
 - [ ] Review interface shows suggested tags clearly
 - [ ] Individual approve/reject works
 - [ ] Batch operations work (if applicable)
@@ -128,18 +146,20 @@ This functional testing plan focuses on **user experience validation** rather th
 - [ ] Approved tags appear on document
 - [ ] Rejected tags are removed/hidden
 
-### Test Case 3: Error Handling & Edge Cases 
+### Test Case 3: Error Handling & Edge Cases
 
 **Objective**: Verify system handles errors gracefully
 
 #### Test Scenarios:
 
 1. **AI Processing Failure**
+
    - Try processing a very large file (>20MB) or unsupported format
    - ✅ **Expected**: Clear error message, no system crash
    - ❌ **If Failed**: Check error handling in aiTagService.js
 
-2. **No Categories Available** 
+2. **No Categories Available**
+
    - If possible, temporarily have no categories
    - Try AI processing
    - ✅ **Expected**: Error message about needing categories
@@ -151,6 +171,7 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check Firebase error handling
 
 #### Success Criteria:
+
 - [ ] All error scenarios show user-friendly messages
 - [ ] No system crashes or blank screens
 - [ ] User can continue using other organizer features after errors
@@ -160,20 +181,24 @@ This functional testing plan focuses on **user experience validation** rather th
 **Objective**: Ensure existing v1.1 functionality is unchanged
 
 #### Steps:
+
 1. **Manual Tag Management**
+
    - Add manual tags to documents (not using AI)
    - Edit existing tags
    - Delete tags
    - ✅ **Expected**: All tag operations work exactly as in v1.1
    - ❌ **If Failed**: Check for breaking changes in tag management
 
-2. **Category Management**
-   - Navigate to category management
+2. **Categories**
+
+   - Navigate to Categories
    - Create, edit, delete categories
    - ✅ **Expected**: All category operations work exactly as in v1.1
    - ❌ **If Failed**: Check for breaking changes in category system
 
 3. **Search Functionality**
+
    - Search for documents using various criteria
    - ✅ **Expected**: Search works as before, may include AI tags in results
    - ❌ **If Failed**: Check organizerQueryStore.js search logic
@@ -186,6 +211,7 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check for breaking changes in file management
 
 #### Success Criteria:
+
 - [ ] All existing features work identically to v1.1
 - [ ] No performance degradation in existing operations
 - [ ] No UI/UX changes in non-AI features
@@ -195,12 +221,15 @@ This functional testing plan focuses on **user experience validation** rather th
 **Objective**: Verify AI features integrate well with existing interface
 
 #### Steps:
+
 1. **AI Tag Visual Distinction**
+
    - Look at documents with both human and AI tags
    - ✅ **Expected**: Clear visual difference between AI and human tags
    - ❌ **If Failed**: Check AITagChip.vue styling
 
 2. **Loading States & Feedback**
+
    - Observe loading indicators during AI processing
    - ✅ **Expected**: Clear feedback during processing states
    - ❌ **If Failed**: Check loading state management
@@ -211,6 +240,7 @@ This functional testing plan focuses on **user experience validation** rather th
    - ❌ **If Failed**: Check responsive CSS
 
 #### Success Criteria:
+
 - [ ] AI features have consistent visual design
 - [ ] Loading states provide clear user feedback
 - [ ] Interface remains usable across different screen sizes
@@ -218,28 +248,34 @@ This functional testing plan focuses on **user experience validation** rather th
 ## Test Results Documentation
 
 ### Test Execution Checklist
+
 For each test case, mark the result:
 
 **Test Case 1: Basic AI Processing Workflow**
+
 - [x] ✅ PASSED - AI processing working successfully
   - **Status**: AI processing button works, generates tag suggestions, applies tags to documents
   - **Notes**: CORS issues resolved, full document content analysis working
 
 **Test Case 2: AI Tag Review & Approval**
+
 - [x] ✅ PASSED - AI tag generation and application working
   - **Status**: AI successfully processes documents and applies suggested tags
 
 **Test Case 3: Error Handling & Edge Cases**
+
 - [x] ✅ PASSED - Error handling works properly
   - **Status**: System shows appropriate error messages for various failure scenarios
   - **Notes**: CORS errors handled gracefully with user-friendly messages
 
 **Test Case 4: Backward Compatibility**
+
 - [x] ✅ PASSED - All existing v1.1 features work unchanged
-  - **Status**: Manual tagging, category management, search all function normally
+  - **Status**: Manual tagging, Categories, search all function normally
   - **Notes**: No breaking changes observed in existing functionality
 
 **Test Case 5: Visual Integration & User Experience**
+
 - [x] ✅ PASSED - UI integration looks good
   - **Status**: AI processing button appears correctly, loading states work
   - **Notes**: Visual design consistent with existing interface
@@ -247,26 +283,29 @@ For each test case, mark the result:
 ### Issues Found and Resolved
 
 **Issue #1: AI Processing Team ID Error** ✅ **RESOLVED**
+
 - **Severity**: High (Critical)
 - **Description**: AI processing failed with "Team ID is required for tag operations" error
 - **Root Cause**: AITagService was not passing teamId parameter to tagSubcollectionService methods
-- **Steps to Reproduce**: 
+- **Steps to Reproduce**:
   1. Navigate to a document and click "Process with AI"
   2. Processing would fail with team ID error in console
 - **Resolution**: Updated aiTagService.js to properly get and pass teamId to all tag subcollection operations
 - **Status**: ✅ Fixed - AI processing now works correctly
 
 **Issue #2: AI Confidence Score Conversion** ✅ **RESOLVED**
+
 - **Severity**: High (Critical)
 - **Description**: AI suggestions had confidence of 1 instead of proper percentages (90, 95), preventing auto-approval
 - **Root Cause**: AI returned decimal confidence (0.9) but Math.round() converted to 1 instead of 90
-- **Steps to Reproduce**: 
+- **Steps to Reproduce**:
   1. Process document with AI and check console logs
   2. Confidence scores showed as 1, autoApproved was false
 - **Resolution**: Updated confidence conversion to properly convert decimals to percentages (0.9 → 90)
 - **Status**: ✅ Fixed - Auto-approval now works correctly for high-confidence suggestions
 
 **Issue #3: AI Service Implementation Updated**
+
 - **Severity**: Low (Enhancement)
 - **Description**: AI service was updated to use proper Firebase Storage SDK methods and improved file handling
 - **Steps to Reproduce**: N/A - Implementation improvement
@@ -279,6 +318,7 @@ For each test case, mark the result:
 **Overall Progress**: ✅ **FULLY COMPLETE** - All AI processing functionality working perfectly
 
 **Completed**:
+
 - ✅ Pre-testing setup verification
 - ✅ Firebase AI Logic API enabled
 - ✅ AI processing button implementation
@@ -294,6 +334,7 @@ For each test case, mark the result:
 - ✅ Visual integration working
 
 **Critical Fixes Applied**:
+
 - ✅ Team ID parameter properly passed to all tag operations
 - ✅ Decimal confidence scores (0.9) correctly converted to percentages (90)
 - ✅ Auto-approval now works for high-confidence suggestions
@@ -303,12 +344,14 @@ For each test case, mark the result:
 ## Common Troubleshooting
 
 ### If AI Processing Button Doesn't Appear:
+
 1. Check browser console for component errors
 2. Verify `VITE_ENABLE_AI_FEATURES=true` in environment
 3. Confirm document organizer loads properly first
 4. Check if FileListItemActions.vue component loaded
 
 ### If AI Processing Fails:
+
 1. Check browser console for detailed error messages
 2. Verify Firebase AI Logic is enabled in Firebase console
 3. Confirm document is supported format (PDF, JPG, PNG)
@@ -316,12 +359,14 @@ For each test case, mark the result:
 5. Verify user has categories created
 
 ### If Review Modal Doesn't Open:
+
 1. Check if AI processing actually succeeded
 2. Look for AITagReview.vue component errors in console
 3. Verify suggested tags were returned from AI service
 4. Check modal component registration
 
 ### If Tags Don't Save:
+
 1. Check network connectivity to Firebase
 2. Verify Firestore security rules allow updates
 3. Check aiTagService.js processReviewChanges method
@@ -330,6 +375,7 @@ For each test case, mark the result:
 ## Success Criteria Summary
 
 ### Version 1.2 is Ready for Production if:
+
 - [x] **Core AI Workflow**: Users can successfully process documents with AI and receive tag suggestions
 - [x] **Review Process**: Users can approve/reject AI suggestions and see changes reflected
 - [x] **Error Handling**: System handles failures gracefully with clear user feedback
@@ -338,6 +384,7 @@ For each test case, mark the result:
 - [x] **Tag Management**: All AI tag operations work properly with auto-approval
 
 ### Version 1.2 Needs Fixes if:
+
 - [ ] **Critical Errors**: AI processing fails consistently or crashes the system
 - [ ] **Data Issues**: Tag approval/rejection doesn't save or corrupts existing data
 - [ ] **Breaking Changes**: Existing features stop working or behave differently
@@ -346,12 +393,14 @@ For each test case, mark the result:
 ## Next Steps After Testing
 
 ### If Testing Passes ✅:
+
 1. **Move to Production**: v1.2 is ready for user deployment
 2. **Update Documentation**: Mark implementation plan as completed
 3. **Plan v1.3**: Begin planning batch processing features
 4. **User Training**: Provide guidance on AI features to end users
 
 ### If Issues Found ⚠️❌:
+
 1. **Prioritize Fixes**: Address critical and high-severity issues first
 2. **Re-test**: Run focused tests on fixed components
 3. **Consider Rollback**: If issues are severe, prepare rollback plan

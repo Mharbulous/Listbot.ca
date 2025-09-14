@@ -1,14 +1,5 @@
 <template>
   <div class="organizer-header">
-    <div class="header-content">
-      <h1 class="text-h4 font-weight-medium text-primary">
-        Document Organizer
-      </h1>
-      <p class="text-body-2 text-medium-emphasis mb-0">
-        Organize and tag your uploaded documents for easy discovery
-      </p>
-    </div>
-    
     <!-- Search and filter controls -->
     <div class="search-controls">
       <v-text-field
@@ -75,10 +66,6 @@ defineEmits([
   padding: 24px 32px;
   border-bottom: 1px solid rgb(var(--v-theme-surface-variant));
   background: rgb(var(--v-theme-surface));
-}
-
-.header-content {
-  margin-bottom: 20px;
 }
 
 .search-controls {

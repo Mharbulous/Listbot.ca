@@ -1,25 +1,25 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useOrganizerStore } from '../../../../../src/features/organizer/stores/organizer.js';
-import { 
-  generateMockCategories, 
-  generateMockEvidence, 
+import {
+  generateMockCategories,
+  generateMockEvidence,
   testScenarios,
   performanceUtils,
-  validationUtils
+  validationUtils,
 } from '../../../../../src/test-utils/virtualFolderTestUtils.js';
 
 // Mock Firebase dependencies
 vi.mock('../../../services/firebase.js', () => ({
-  db: {}
+  db: {},
 }));
 
 // Mock auth store
 vi.mock('../../../core/stores/auth.js', () => ({
   useAuthStore: () => ({
     currentTeam: 'mock-team-id',
-    isAuthenticated: true
-  })
+    isAuthenticated: true,
+  }),
 }));
 
 // Create mock functions that persist across tests
@@ -37,8 +37,8 @@ vi.mock('./organizerCore.js', () => ({
     isInitialized: true,
     loadEvidence: vi.fn().mockResolvedValue(() => {}),
     getDisplayInfo: vi.fn(),
-    reset: mockCoreReset
-  })
+    reset: mockCoreReset,
+  }),
 }));
 
 vi.mock('./organizerQueryStore.js', () => ({
@@ -53,8 +53,8 @@ vi.mock('./organizerQueryStore.js', () => ({
     hasAnyTags: vi.fn(),
     getAllTags: vi.fn(),
     initializeFilters: vi.fn(),
-    reset: mockQueryReset
-  })
+    reset: mockQueryReset,
+  }),
 }));
 
 vi.mock('./categoryStore.js', () => ({
@@ -70,15 +70,15 @@ vi.mock('./categoryStore.js', () => ({
     deleteCategory: vi.fn(),
     getCategoryById: vi.fn(),
     loadCategories: vi.fn().mockResolvedValue(() => {}),
-    reset: mockCategoryReset
-  })
+    reset: mockCategoryReset,
+  }),
 }));
 
 describe('Organizer Store Integration', () => {
   let store;
   let mockCategories;
   let mockEvidence;
-  
+
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
@@ -114,7 +114,7 @@ describe('Organizer Store Integration', () => {
       expect(store.isInitialized).toBeDefined();
       expect(store.evidenceCount).toBeDefined();
       expect(store.filteredCount).toBeDefined();
-      
+
       // Legacy methods
       expect(typeof store.loadEvidence).toBe('function');
       expect(typeof store.setFilter).toBe('function');
@@ -124,11 +124,11 @@ describe('Organizer Store Integration', () => {
       expect(typeof store.getAllTags).toBe('function');
     });
 
-    it('should provide v1.1 category management interface', () => {
+    it('should provide v1.1 Categories interface', () => {
       expect(store.categories).toBeDefined();
       expect(store.categoryCount).toBeDefined();
       expect(store.activeCategories).toBeDefined();
-      
+
       expect(typeof store.createCategory).toBe('function');
       expect(typeof store.updateCategory).toBe('function');
       expect(typeof store.deleteCategory).toBe('function');
@@ -147,7 +147,7 @@ describe('Organizer Store Integration', () => {
       expect(store.breadcrumbPath).toBeDefined();
       expect(store.isAtRoot).toBeDefined();
       expect(store.currentDepth).toBeDefined();
-      
+
       // Virtual folder methods
       expect(typeof store.setViewMode).toBe('function');
       expect(typeof store.setFolderHierarchy).toBe('function');
@@ -172,7 +172,7 @@ describe('Organizer Store Integration', () => {
     beforeEach(() => {
       const hierarchy = [
         { categoryId: 'doc-type', categoryName: 'Document Type' },
-        { categoryId: 'client', categoryName: 'Client' }
+        { categoryId: 'client', categoryName: 'Client' },
       ];
       store.setFolderHierarchy(hierarchy);
     });
@@ -182,9 +182,9 @@ describe('Organizer Store Integration', () => {
       expect(store.isFolderMode).toBe(false);
       expect(store.isAtRoot).toBe(true);
       expect(store.currentDepth).toBe(0);
-      
+
       store.setViewMode('folders');
-      
+
       expect(store.viewMode).toBe('folders');
       expect(store.isFolderMode).toBe(true);
     });
@@ -192,21 +192,21 @@ describe('Organizer Store Integration', () => {
     it('should handle virtual folder navigation through facade', () => {
       store.setViewMode('folders');
       store.navigateToFolder('doc-type', 'Invoice');
-      
+
       expect(store.currentDepth).toBe(1);
       expect(store.isAtRoot).toBe(false);
       expect(store.currentPath).toHaveLength(1);
       expect(store.currentPath[0].tagName).toBe('Invoice');
-      
+
       const breadcrumbs = store.breadcrumbPath;
       expect(validationUtils.validateBreadcrumbs(breadcrumbs, 1)).toBe(true);
     });
 
     it('should generate folder structure through facade', () => {
       const testData = testScenarios.hierarchicalTestData();
-      
+
       const folders = store.generateFolderStructure(testData.evidence);
-      
+
       expect(validationUtils.validateFolderStructure(folders)).toBe(true);
       expect(folders).toHaveLength(2); // Invoice and Receipt
     });
@@ -214,18 +214,18 @@ describe('Organizer Store Integration', () => {
     it('should filter evidence by path through facade', () => {
       const testData = testScenarios.hierarchicalTestData();
       store.navigateToFolder('doc-type', 'Invoice');
-      
+
       const filtered = store.filterEvidenceByPath(testData.evidence);
-      
+
       expect(filtered).toHaveLength(2); // Both invoices
     });
 
     it('should provide folder context through facade', () => {
       store.setViewMode('folders');
       store.navigateToFolder('doc-type', 'Invoice');
-      
+
       const context = store.getFolderContext();
-      
+
       expect(context.viewMode).toBe('folders');
       expect(context.isFolderMode).toBe(true);
       expect(context.currentDepth).toBe(1);
@@ -236,7 +236,7 @@ describe('Organizer Store Integration', () => {
   describe('Store Initialization', () => {
     it('should initialize all stores in parallel', async () => {
       const initResult = await store.initialize();
-      
+
       expect(store.stores.core.loadEvidence).toHaveBeenCalled();
       expect(store.stores.category.loadCategories).toHaveBeenCalled();
       expect(initResult).toBeDefined();
@@ -244,7 +244,7 @@ describe('Organizer Store Integration', () => {
 
     it('should handle initialization errors', async () => {
       store.stores.core.loadEvidence.mockRejectedValue(new Error('Load failed'));
-      
+
       await expect(store.initialize()).rejects.toThrow('Load failed');
     });
 
@@ -258,27 +258,27 @@ describe('Organizer Store Integration', () => {
     it('should delegate legacy methods to appropriate stores', () => {
       const testFilter = 'test filter';
       store.setFilter(testFilter);
-      
+
       expect(store.stores.query.setFilter).toHaveBeenCalledWith(testFilter);
     });
 
     it('should delegate category methods to category store', () => {
       const categoryData = { name: 'Test Category' }; // color removed - automatically assigned by UI
       store.createCategory(categoryData);
-      
+
       expect(store.stores.category.createCategory).toHaveBeenCalledWith(categoryData);
     });
 
     it('should delegate evidence methods to core store', () => {
       const evidenceId = 'test-evidence';
       store.getDisplayInfo(evidenceId);
-      
+
       expect(store.stores.core.getDisplayInfo).toHaveBeenCalledWith(evidenceId);
     });
 
     it('should reset all stores when reset is called', () => {
       store.reset();
-      
+
       expect(mockCoreReset).toHaveBeenCalled();
       expect(mockQueryReset).toHaveBeenCalled();
       expect(mockCategoryReset).toHaveBeenCalled();
@@ -292,20 +292,20 @@ describe('Organizer Store Integration', () => {
       // Mock the core store to have reactive evidence
       const mockCoreStore = {
         evidenceList: [],
-        ...store.stores.core
+        ...store.stores.core,
       };
-      
+
       // Spy on virtual folder cache clear
       const clearCacheSpy = vi.spyOn(store.stores.virtualFolder, 'clearFolderCache');
-      
+
       // Simulate evidence change
       mockCoreStore.evidenceList = [...mockEvidence];
-      
+
       // In a real scenario, the watcher would trigger automatically
       // Here we simulate the effect manually since we're mocking the stores
       store.stores.virtualFolder.clearFolderCache();
       store.stores.query.initializeFilters();
-      
+
       expect(clearCacheSpy).toHaveBeenCalled();
     });
   });
@@ -314,17 +314,17 @@ describe('Organizer Store Integration', () => {
     it('should maintain performance with integrated operations', async () => {
       const testData = testScenarios.hierarchicalTestData();
       store.setFolderHierarchy(testData.categories);
-      
+
       const result = await performanceUtils.measureTime(async () => {
         store.setViewMode('folders');
         store.navigateToFolder('doc-type', 'Invoice');
         const folders = store.generateFolderStructure(testData.evidence);
         const filtered = store.filterEvidenceByPath(testData.evidence);
         const context = store.getFolderContext();
-        
+
         return { folders, filtered, context };
       });
-      
+
       expect(result.duration).toBeLessThan(10); // Should be fast for integrated operations
       expect(validationUtils.validateFolderStructure(result.result.folders)).toBe(true);
     });
@@ -332,12 +332,12 @@ describe('Organizer Store Integration', () => {
     it('should handle large datasets efficiently in integration', async () => {
       const largeData = testScenarios.largeDataset();
       store.setFolderHierarchy(largeData.categories);
-      
+
       const result = await performanceUtils.measureTime(() => {
         store.setViewMode('folders');
         return store.generateFolderStructure(largeData.evidence);
       });
-      
+
       expect(result.duration).toBeLessThan(100); // Should handle large data efficiently
       expect(validationUtils.validateFolderStructure(result.result)).toBe(true);
     });
@@ -347,53 +347,53 @@ describe('Organizer Store Integration', () => {
     it('should maintain consistent state across virtual folder operations', () => {
       const hierarchy = [
         { categoryId: 'cat-1', categoryName: 'Category 1' },
-        { categoryId: 'cat-2', categoryName: 'Category 2' }
+        { categoryId: 'cat-2', categoryName: 'Category 2' },
       ];
-      
+
       store.setFolderHierarchy(hierarchy);
       store.setViewMode('folders');
-      
+
       // Verify initial state
       expect(store.folderHierarchy).toEqual(hierarchy);
       expect(store.isFolderMode).toBe(true);
       expect(store.isAtRoot).toBe(true);
-      
+
       // Navigate and verify state consistency
       store.navigateToFolder('cat-1', 'Tag1');
-      
+
       expect(store.currentDepth).toBe(1);
       expect(store.isAtRoot).toBe(false);
       expect(store.breadcrumbPath).toHaveLength(1);
-      
+
       // Navigate deeper and verify
       store.navigateToFolder('cat-2', 'Tag2');
-      
+
       expect(store.currentDepth).toBe(2);
       expect(store.breadcrumbPath).toHaveLength(2);
-      
+
       // Navigate back and verify
       store.navigateBack();
-      
+
       expect(store.currentDepth).toBe(1);
       expect(store.breadcrumbPath).toHaveLength(1);
     });
 
     it('should maintain state when switching view modes', () => {
       const hierarchy = [{ categoryId: 'cat-1', categoryName: 'Category 1' }];
-      
+
       store.setFolderHierarchy(hierarchy);
       store.setViewMode('folders');
       store.navigateToFolder('cat-1', 'Tag1');
-      
+
       expect(store.currentPath).toHaveLength(1);
-      
+
       // Switch to flat mode (should reset navigation)
       store.setViewMode('flat');
-      
+
       expect(store.isFolderMode).toBe(false);
       expect(store.currentPath).toHaveLength(0);
       expect(store.isAtRoot).toBe(true);
-      
+
       // Hierarchy should be preserved
       expect(store.folderHierarchy).toEqual(hierarchy);
     });
@@ -401,16 +401,16 @@ describe('Organizer Store Integration', () => {
     it('should handle concurrent operations correctly', async () => {
       const testData = testScenarios.hierarchicalTestData();
       store.setFolderHierarchy(testData.categories);
-      
+
       // Simulate concurrent operations
       const operations = await Promise.all([
         Promise.resolve(store.generateFolderStructure(testData.evidence)),
         Promise.resolve(store.filterEvidenceByPath(testData.evidence)),
-        Promise.resolve(store.getFolderContext())
+        Promise.resolve(store.getFolderContext()),
       ]);
-      
+
       const [folders, filtered, context] = operations;
-      
+
       expect(validationUtils.validateFolderStructure(folders)).toBe(true);
       expect(Array.isArray(filtered)).toBe(true);
       expect(context).toBeDefined();
@@ -422,11 +422,11 @@ describe('Organizer Store Integration', () => {
     it('should handle errors gracefully across stores', () => {
       // Test with malformed data
       const badEvidence = [{ id: 'bad', tags: null }];
-      
+
       expect(() => {
         store.generateFolderStructure(badEvidence);
       }).not.toThrow();
-      
+
       expect(() => {
         store.filterEvidenceByPath(badEvidence);
       }).not.toThrow();
@@ -436,11 +436,11 @@ describe('Organizer Store Integration', () => {
       expect(() => {
         store.navigateToFolder('non-existent', 'tag');
       }).not.toThrow();
-      
+
       expect(() => {
         store.navigateToDepth(-1);
       }).not.toThrow();
-      
+
       expect(() => {
         store.navigateBack(); // At root
       }).not.toThrow();
@@ -450,7 +450,7 @@ describe('Organizer Store Integration', () => {
       expect(() => {
         store.setFolderHierarchy(null);
       }).not.toThrow();
-      
+
       expect(() => {
         store.stores.virtualFolder.removeFromHierarchy('non-existent');
       }).not.toThrow();
@@ -460,7 +460,7 @@ describe('Organizer Store Integration', () => {
   describe('Memory Management Integration', () => {
     it('should not leak memory with repeated operations', async () => {
       const testData = testScenarios.hierarchicalTestData();
-      
+
       // Perform many operations to test for leaks
       for (let i = 0; i < 100; i++) {
         store.setFolderHierarchy(testData.categories);
@@ -470,23 +470,23 @@ describe('Organizer Store Integration', () => {
         store.navigateToRoot();
         store.setViewMode('flat');
       }
-      
+
       // Should complete without issues
       expect(store.isAtRoot).toBe(true);
     });
 
     it('should clean up properly on reset', () => {
       const testData = testScenarios.hierarchicalTestData();
-      
+
       // Set up complex state
       store.setFolderHierarchy(testData.categories);
       store.setViewMode('folders');
       store.navigateToFolder('doc-type', 'Invoice');
       store.generateFolderStructure(testData.evidence);
-      
+
       // Reset should clear everything
       store.reset();
-      
+
       // Verify all stores were reset
       expect(mockCoreReset).toHaveBeenCalled();
       expect(mockQueryReset).toHaveBeenCalled();

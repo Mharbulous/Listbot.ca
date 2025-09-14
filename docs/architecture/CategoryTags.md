@@ -30,7 +30,7 @@ This document defines the Categories and Tags system used for organizing and cla
       color: '#1976d2'                   // Inherits or varies from category color
     },
     {
-      id: 'tag-uuid-2', 
+      id: 'tag-uuid-2',
       name: 'Statement',
       color: '#1565c0'                   // Darker shade of category color
     }
@@ -78,9 +78,9 @@ try {
 const loadedCategories = [];
 const categoriesToMigrate = [];
 
-snapshot.docs.forEach(doc => {
+snapshot.docs.forEach((doc) => {
   const data = doc.data();
-  
+
   // Handle missing isActive field
   if (data.isActive === undefined) {
     // Mark for migration and include as active
@@ -101,17 +101,17 @@ if (categoriesToMigrate.length > 0) {
     const categoryRef = doc(db, 'teams', teamId, 'categories', id);
     return updateDoc(categoryRef, {
       isActive: true,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
   });
-  Promise.all(migrationPromises).catch(err => console.error('Migration failed:', err));
+  Promise.all(migrationPromises).catch((err) => console.error('Migration failed:', err));
 }
 
 // Soft delete category
 await updateDoc(categoryRef, {
   isActive: false,
   deletedAt: serverTimestamp(),
-  updatedAt: serverTimestamp()
+  updatedAt: serverTimestamp(),
 });
 ```
 
@@ -210,11 +210,13 @@ Evidence documents maintain counters for efficient tag management:
 The `aiAlternatives` field implements a no-cap approach that balances UX simplicity with AI transparency:
 
 **Data Storage:**
+
 - Stores ALL alternative tags the AI considered (no arbitrary limit)
 - Rank-ordered by AI confidence/relevance score
 - Excludes the AI's final selected tag (stored separately in `aiSelection`)
 
 **UI Implementation:**
+
 - Displays only top 2 alternatives as quick-click options
 - "Other" button shows all category options with smart ordering:
   - Remaining aiAlternatives (3rd, 4th, 5th, etc.) in rank order
@@ -222,6 +224,7 @@ The `aiAlternatives` field implements a no-cap approach that balances UX simplic
 - Optimal decision tree: AI choice → Alt 1 → Alt 2 → Other (full category)
 
 **Benefits:**
+
 - Maximum AI transparency for debugging and analysis
 - Optimal user experience with minimal cognitive load
 - Future-proof for multi-select categories and advanced features
@@ -491,7 +494,7 @@ const getTagCounts = (evidence) => {
 
 ### Data Flow Patterns
 
-1. **Category Management**: Categories → Available Tags → UI Options
+1. **Categories**: Categories → Available Tags → UI Options
 2. **Tag Assignment**: Evidence Document → Tag Subcollection → Category Reference
 3. **AI Processing**: Content Analysis → Category Selection → Tag Assignment → Confidence Evaluation → Auto-Approval/Review
 4. **User Review**: Review Queue → Tag Modification → Counter Updates → Evidence Document Sync
