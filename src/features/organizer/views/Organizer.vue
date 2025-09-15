@@ -229,10 +229,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .organizer-container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 /* Simplified styles - component-specific styles moved to respective components */
