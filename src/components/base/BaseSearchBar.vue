@@ -1,24 +1,17 @@
 <template>
-  <div class="relative max-w-sm flex-1 mx-10 md:mx-2 min-w-[200px]">
-    <div
-      class="absolute left-4 top-1/2 transform -translate-y-1/2"
-      :class="disabled ? 'text-gray-300' : 'text-gray-400'"
-    >
-      🔍
-    </div>
-    <input
-      type="text"
+  <div class="search-field-container">
+    <v-text-field
+      :model-value="modelValue"
+      :placeholder="disabled ? 'Search (coming soon)...' : 'Search files by name or tags...'"
+      variant="outlined"
+      density="compact"
+      prepend-inner-icon="mdi-magnify"
+      hide-details
+      clearable
       :disabled="disabled"
-      :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
+      class="search-field"
+      @update:model-value="$emit('update:modelValue', $event)"
       @keyup.enter="handleSearch"
-      :class="[
-        'w-full py-3 px-4 pl-11 border rounded-lg text-sm',
-        disabled
-          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-          : 'border-gray-300 bg-gray-50 transition-all duration-200 focus:outline-none focus:border-brand-blue focus:bg-white focus:shadow-[0_0_0_3px_rgba(59,130,246,0.1)]',
-      ]"
-      :placeholder="disabled ? 'Search (coming soon)...' : placeholder"
     />
   </div>
 </template>
@@ -50,3 +43,22 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.search-field-container {
+  max-width: 400px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-field {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .search-field-container {
+    max-width: none;
+    min-width: unset;
+  }
+}
+</style>

@@ -205,6 +205,13 @@ onMounted(async () => {
     // Initialize all stores (evidence + categories)
     const { evidenceUnsubscribe } = await organizerStore.initialize();
     unsubscribe.value = evidenceUnsubscribe;
+
+    // Check for search query in URL parameters
+    const urlSearchQuery = router.currentRoute.value.query.search;
+    if (urlSearchQuery) {
+      searchText.value = urlSearchQuery;
+      organizerStore.setFilter(urlSearchQuery);
+    }
   } catch (error) {
     console.error('Failed to initialize organizer:', error);
     showNotification('Failed to load documents', 'error');

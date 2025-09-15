@@ -13,10 +13,10 @@
     >
       {{ pageTitle }}
     </h1>
-    <div class="flex items-center gap-4">
-      <BaseSearchBar :disabled="true" @search="handleSearch" />
+    <div class="flex items-center gap-4 flex-shrink-0">
+      <BaseSearchBar v-model="searchQuery" @search="handleSearch" />
     </div>
-    <div class="flex items-center">
+    <div class="flex items-center ml-6">
       <div
         class="relative inline-block cursor-pointer outline-none group"
         tabindex="0"
@@ -118,9 +118,20 @@ export default {
       authStore,
     };
   },
+  data() {
+    return {
+      searchQuery: '',
+    };
+  },
   methods: {
     handleSearch(query) {
-      console.log('Search query:', query);
+      if (query && query.trim()) {
+        // Navigate to organizer with search query
+        this.$router.push({
+          path: '/organizer',
+          query: { search: query.trim() }
+        });
+      }
     },
     async signOut() {
       try {
