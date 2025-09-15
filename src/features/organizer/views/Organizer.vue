@@ -6,6 +6,8 @@
       :evidence-count="evidenceCount"
       :filtered-count="filteredCount"
       @search="handleSearch"
+      @manage-categories="navigateToCategories"
+      @view-mode-changed="handleViewModeChange"
     />
 
     <!-- States (loading, error, empty) -->
@@ -117,6 +119,10 @@ const retryLoad = async () => {
 
 const navigateToCategories = () => {
   router.push('/organizer/categories');
+};
+
+const handleViewModeChange = (event) => {
+  viewMode.value = event.mode;
 };
 
 // Helper methods for child components

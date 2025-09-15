@@ -32,11 +32,25 @@
           {{ evidenceCount }} documents
         </v-chip>
       </div>
+      <div class="header-controls">
+        <v-btn
+          color="primary"
+          variant="outlined"
+          size="small"
+          @click="$emit('manage-categories')"
+        >
+          <v-icon start>mdi-cog</v-icon>
+          Manage Categories
+        </v-btn>
+        <ViewModeToggle :loading="false" @view-mode-changed="$emit('view-mode-changed', $event)" />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import ViewModeToggle from './ViewModeToggle.vue';
+
 // Props
 defineProps({
   searchText: {
@@ -57,6 +71,8 @@ defineProps({
 defineEmits([
   'update:searchText',
   'search',
+  'manage-categories',
+  'view-mode-changed',
 ]);
 </script>
 
@@ -83,19 +99,31 @@ defineEmits([
   flex-shrink: 0;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   .organizer-header {
     padding: 16px 20px;
   }
-  
+
   .search-controls {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .search-field {
     max-width: none;
+  }
+
+  .header-controls {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 </style>

@@ -1,28 +1,10 @@
 <template>
   <div class="file-list-container">
-    <!-- File list header -->
-    <div class="list-header">
-      <div class="list-title">
-        <h3 class="text-h6">Documents</h3>
-      </div>
-      <div class="list-controls">
-        <v-btn
-          color="primary"
-          variant="outlined"
-          size="small"
-          @click="$emit('manage-categories')"
-        >
-          <v-icon start>mdi-cog</v-icon>
-          Manage Categories
-        </v-btn>
-        <ViewModeToggle :loading="false" @view-mode-changed="handleViewModeChange" />
-      </div>
-    </div>
 
     <!-- File display with 2 view modes -->
     <div class="file-display">
       <!-- List view -->
-      <div v-if="currentViewMode === 'list'" class="file-list">
+      <div v-if="props.viewMode === 'list'" class="file-list">
         <template v-for="(evidence, index) in props.filteredEvidence" :key="evidence.id">
           <!-- Simple placeholder when not loaded -->
           <div
@@ -49,7 +31,7 @@
       </div>
 
       <!-- Tree view placeholder -->
-      <div v-else-if="currentViewMode === 'tree'" class="file-tree">
+      <div v-else-if="props.viewMode === 'tree'" class="file-tree">
         <p class="text-body-2 text-center text-medium-emphasis pa-8">
           <v-icon size="48" class="mb-2 d-block">mdi-file-tree</v-icon>
           Folder Tree coming in future updates
@@ -62,7 +44,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import FileListItem from './FileListItem.vue';
-import ViewModeToggle from './ViewModeToggle.vue';
 import { useLazyDocuments } from '@/composables/useLazyDocuments.js';
 
 // Debug logging helper
@@ -95,8 +76,6 @@ const props = defineProps({
   },
 });
 
-// Local state for current view mode
-const currentViewMode = ref('list');
 
 // Add lazy loading composable
 const { isItemLoaded, loadItem, preloadInitialItems } = useLazyDocuments(
@@ -111,17 +90,8 @@ let dataLoadTime = null; // eslint-disable-line no-unused-vars
 
 // Emits
 const emit = defineEmits([
-  'update:viewMode',
   'process-with-ai',
-  'manage-categories',
 ]);
-
-// Handle view mode changes from ViewModeToggle
-const handleViewModeChange = (event) => {
-  debugLog(`View mode changed to: ${event.mode}`);
-  currentViewMode.value = event.mode;
-  emit('update:viewMode', event.mode);
-};
 
 // Debug: Watch filteredEvidence changes to track data loading timing
 watch(
@@ -135,7 +105,7 @@ watch(
 
 // Debug: Track FileListItem loop start/completion
 watch(
-  currentViewMode,
+  () => props.viewMode,
   (newMode) => {
     if (newMode === 'list') {
       renderStartTime = performance.now();
@@ -212,18 +182,6 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.list-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
 .file-display {
   min-height: 0;
