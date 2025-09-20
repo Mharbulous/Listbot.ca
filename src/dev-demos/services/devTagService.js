@@ -128,7 +128,7 @@ export class DevTagService {
       }
 
       const defaultTestTags = [
-        // Locked category tags
+        // Fixed list tags
         {
           id: 'locked1',
           categoryId: 'document-type',
@@ -161,7 +161,7 @@ export class DevTagService {
           source: 'system',
           confidence: 100,
         },
-        // Open category tags
+        // Open list tags
         {
           id: 'open1',
           categoryId: 'document-type',

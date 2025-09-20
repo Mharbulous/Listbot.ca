@@ -24,11 +24,11 @@ export function useDevTags() {
   const testTagCount = computed(() => testTags.value.length);
 
   // Get reactive test tags split by type
-  const lockedTestTags = computed(() =>
+  const fixedListTestTags = computed(() =>
     testTags.value.filter(tag => !tag.isOpenCategory)
   );
 
-  const openTestTags = computed(() =>
+  const openListTestTags = computed(() =>
     testTags.value.filter(tag => tag.isOpenCategory)
   );
 
@@ -280,8 +280,8 @@ export function useDevTags() {
     // Computed
     categoryCount,
     testTagCount,
-    lockedTestTags,
-    openTestTags,
+    fixedListTestTags,
+    openListTestTags,
 
     // Actions
     initializeDevEnvironment,

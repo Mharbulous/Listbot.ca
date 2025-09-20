@@ -1,8 +1,8 @@
 <template>
   <DemoContainer
-    title="Tag System Demonstration"
+    title="Tag System Development"
     subtitle="Two Tag Implementation Approaches"
-    description="Test functional tag components with real Firestore integration. Compare Locked Categories (fixed options) vs Open Categories (user can create new options)."
+    description="Test functional tag components with real Firestore integration. Compare Fixed List Categories (fixed options) vs Open List Categories (user can create new options)."
     icon="mdi-tag-multiple"
     :tags="['Tag Demo', 'Vue 3', 'EditableTag Component']"
   >
@@ -26,18 +26,22 @@
       </v-alert>
 
       <!-- No Data -->
-      <v-alert v-else-if="devTags.categories.value.length === 0 || devTags.testTags.value.length === 0" type="info" class="mb-4">
+      <v-alert
+        v-else-if="devTags.categories.value.length === 0 || devTags.testTags.value.length === 0"
+        type="info"
+        class="mb-4"
+      >
         <v-icon size="16">mdi-information</v-icon>
         Setting up development environment with original four categories and eight test tags...
       </v-alert>
 
       <v-row v-else-if="authStore.isAuthenticated">
-        <!-- Locked Category Example -->
+        <!-- Fixed List Example -->
         <v-col cols="12" md="6">
           <v-card class="h-100">
             <v-card-title class="d-flex align-center">
               <v-icon color="orange" size="16" class="me-2">mdi-lock</v-icon>
-              Locked Category Tags
+              Fixed List Tags
             </v-card-title>
             <v-card-text>
               <div class="d-flex align-center mb-3">
@@ -47,7 +51,7 @@
 
               <div class="tags-container mb-3">
                 <EditableTag
-                  v-for="tag in lockedCategoryTags"
+                  v-for="tag in fixedListTags"
                   :key="tag.id"
                   :tag="tag"
                   :categoryOptions="getCategoryOptions(tag.categoryId)"
@@ -60,18 +64,18 @@
 
               <v-alert color="warning" variant="tonal" density="compact">
                 <v-icon size="14">mdi-lock</v-icon>
-                Locked Category: Users can only select from existing options
+                Fixed List Category: Users can only select from existing options
               </v-alert>
             </v-card-text>
           </v-card>
         </v-col>
 
-        <!-- Open Category Example -->
+        <!-- Open List Example -->
         <v-col cols="12" md="6">
           <v-card class="h-100">
             <v-card-title class="d-flex align-center">
               <v-icon color="green" size="16" class="me-2">mdi-lock-open-variant</v-icon>
-              Open Category Tags
+              Open List Tags
             </v-card-title>
             <v-card-text>
               <div class="d-flex align-center mb-3">
@@ -81,7 +85,7 @@
 
               <div class="tags-container mb-3">
                 <EditableTag
-                  v-for="tag in openCategoryTags"
+                  v-for="tag in openListTags"
                   :key="tag.id"
                   :tag="tag"
                   :categoryOptions="getCategoryOptions(tag.categoryId)"
@@ -94,12 +98,11 @@
 
               <v-alert color="success" variant="tonal" density="compact">
                 <v-icon size="14">mdi-pencil-plus</v-icon>
-                Open Category: Type new options and press Enter to add them to Firestore
+                Open List Category: Type new options and press Enter to add them to Firestore
               </v-alert>
             </v-card-text>
           </v-card>
         </v-col>
-
       </v-row>
 
       <!-- Development Environment Status -->
@@ -111,16 +114,18 @@
               <strong class="text-body-2">Development Tag Environment</strong>
             </div>
             <div class="text-caption text-medium-emphasis">
-              {{ devTags.categoryCount.value }} categories • {{ devTags.testTagCount.value }} test tags
+              {{ devTags.categoryCount.value }} categories • {{ devTags.testTagCount.value }} test
+              tags
             </div>
           </div>
           <div class="text-caption text-medium-emphasis">
             <strong>Collections:</strong>
             <code class="text-success">devTesting</code> •
-            <code class="text-success">devTestTags</code>
+            <code class="text-success">devTesting/TestTags</code>
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
-            Original four categories: Document Type, Priority, Status, Year (with all original options)
+            Original four categories: Document Type, Priority, Status, Year (with all original
+            options)
           </div>
         </v-card-text>
       </v-card>
@@ -151,14 +156,17 @@ onMounted(async () => {
 });
 
 // Watch for auth changes and reload development environment
-watch(() => authStore.isAuthenticated, async (isAuth) => {
-  if (isAuth) {
-    cleanup = await devTags.initializeDevEnvironment();
-  } else {
-    if (cleanup) cleanup();
-    devTags.reset();
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuth) => {
+    if (isAuth) {
+      cleanup = await devTags.initializeDevEnvironment();
+    } else {
+      if (cleanup) cleanup();
+      devTags.reset();
+    }
   }
-});
+);
 
 // Cleanup on unmount
 onUnmounted(() => {
@@ -166,9 +174,8 @@ onUnmounted(() => {
 });
 
 // Use reactive test tags from development collections
-const lockedCategoryTags = devTags.lockedTestTags;
-const openCategoryTags = devTags.openTestTags;
-
+const fixedListTags = devTags.fixedListTestTags;
+const openListTags = devTags.openListTestTags;
 
 // Helper functions
 const getCategoryOptions = devTags.getCategoryOptions;
