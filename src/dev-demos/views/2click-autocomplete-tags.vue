@@ -44,10 +44,6 @@
               Fixed List Tags
             </v-card-title>
             <v-card-text>
-              <div class="d-flex align-center mb-3">
-                <v-icon icon="mdi-file-document" size="16" class="me-2" />
-                <strong class="text-body-2">quarterly-report.pdf</strong>
-              </div>
 
               <div class="tags-container mb-3">
                 <EditableTag
@@ -78,10 +74,6 @@
               Open List Tags
             </v-card-title>
             <v-card-text>
-              <div class="d-flex align-center mb-3">
-                <v-icon icon="mdi-file-document" size="16" class="me-2" />
-                <strong class="text-body-2">client-proposal.pdf</strong>
-              </div>
 
               <div class="tags-container mb-3">
                 <EditableTag
