@@ -1,60 +1,164 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only access their own document
+
+    // Users collection - users can read/write their own document
     match /users/{userId} {
-      allow read, write: if request.auth != null && 
-                           request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Team access - works for both solo and multi-user teams
-    match /teams/{teamId} {
-      allow read: if request.auth != null && 
-                     request.auth.uid == teamId;  // Solo team
-      allow write: if request.auth != null && 
-                      request.auth.uid == teamId;  // Solo team only for now
-    }
-    
-    // Files use hash as document ID for automatic dedup
-    match /teams/{teamId}/files/{hash} {
-      allow read: if request.auth != null && 
-                     (request.auth.uid == teamId || 
-                      request.auth.token.teamId == teamId);
-      
-      // Create only if document doesn't exist (no merge)
-      allow create: if request.auth != null && 
-                       (request.auth.uid == teamId || 
-                        request.auth.token.teamId == teamId);
-      
-      // No updates or deletes for immutability
-      allow update, delete: if false;
-    }
-    
-    // File index for queries
-    match /teams/{teamId}/fileIndex/{hash} {
-      allow read, write: if request.auth != null && 
-                            (request.auth.uid == teamId || 
-                             request.auth.token.teamId == teamId);
-    }
-    
-    // Evidence documents and their data
-    match /teams/{teamId}/evidence/{docId} {
-      allow read, write: if request.auth != null && 
-                           (request.auth.uid == teamId || 
-                            request.auth.token.teamId == teamId);
-      
-      // Tags subcollection (NEW structure)
-      match /tags/{categoryId} {
-        allow read, write: if request.auth != null && 
-                             (request.auth.uid == teamId || 
-                              request.auth.token.teamId == teamId);
+
+    // Development testing collections (global access for development)
+    match /devTesting/{document} {
+      allow read, write: if request.auth != null;  // Any authenticated user can access dev collections
+
+      // TestTags subcollection
+      match /TestTags/{tagId} {
+        allow read, write: if request.auth != null;
       }
     }
-    
-    // Team subcollections (fallback for other collections)
+
+    // Teams collection - team-based access control
+    match /teams/{teamId} {
+      // Allow read if user is authenticated and is a member of the team
+      allow read: if request.auth != null &&
+        (
+          // Check custom claims for teamId (preferred for SSO)
+          request.auth.token.teamId == teamId ||
+          // Solo user fallback: allow if teamId equals userId
+          teamId == request.auth.uid ||
+          // Fallback: check if user is listed as a member in the team document
+          request.auth.uid in resource.data.members.keys()
+        );
+
+      // Allow write if user is authenticated and is an admin of the team
+      allow write: if request.auth != null &&
+        (
+          // Check if user has admin role in custom claims
+          (request.auth.token.teamId == teamId && request.auth.token.role == 'admin') ||
+          // Solo user fallback: allow if teamId equals userId (solo users are admins)
+          teamId == request.auth.uid ||
+          // Fallback: check if user is an admin member in the team document
+          (request.auth.uid in resource.data.members.keys() &&
+           resource.data.members[request.auth.uid].role == 'admin')
+        );
+
+      // Allow create if user is authenticated (for initial team creation)
+      allow create: if request.auth != null;
+    }
+
+    // Evidence documents with AI tags subcollection
+    match /teams/{teamId}/evidence/{evidenceId} {
+      // Team members can read/write evidence documents
+      allow read, write: if request.auth != null &&
+        (
+          // Check custom claims for teamId
+          request.auth.token.teamId == teamId ||
+          // Solo user fallback: allow if teamId equals userId
+          teamId == request.auth.uid ||
+          // Fallback: check team membership
+          exists(/databases/$(database)/documents/teams/$(teamId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+        );
+
+      // AI tags subcollection for evidence documents
+      match /Tags/{tagId} {
+        // Team members can read/write AI tags for evidence in their team
+        allow read, write: if request.auth != null &&
+          (
+            // Check custom claims for teamId
+            request.auth.token.teamId == teamId ||
+            // Solo user fallback: allow if teamId equals userId
+            teamId == request.auth.uid ||
+            // Fallback: check team membership
+            exists(/databases/$(database)/documents/teams/$(teamId)) &&
+            request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+          ) &&
+          // Additional validation for AI tag data structure
+          (
+            // For create operations, ensure required fields are present
+            (request.method != 'create' ||
+             (resource == null &&
+              request.resource.data.keys().hasAll(['categoryId', 'categoryName', 'tagName', 'color', 'source', 'createdAt']) &&
+              request.resource.data.source == 'ai' &&
+              request.resource.data.confidence is number &&
+              request.resource.data.confidence >= 0 &&
+              request.resource.data.confidence <= 100)) &&
+            // For update operations, allow status changes and approvals
+            (request.method != 'update' ||
+             (resource != null &&
+              // Core tag fields shouldn't change
+              request.resource.data.categoryId == resource.data.categoryId &&
+              request.resource.data.tagName == resource.data.tagName &&
+              // Allow source change from 'ai' to 'human' for approvals
+              (request.resource.data.source == resource.data.source ||
+               (resource.data.source == 'ai' && request.resource.data.source == 'human'))))
+          );
+      }
+    }
+
+    // Tag subcollections for evidence documents (legacy support)
+    match /teams/{teamId}/evidence/{evidenceId}/tags/{tagId} {
+      // Team members can read/write tags for evidence in their team
+      allow read, write: if request.auth != null &&
+        (
+          // Check custom claims for teamId
+          request.auth.token.teamId == teamId ||
+          // Solo user fallback: allow if teamId equals userId
+          teamId == request.auth.uid ||
+          // Fallback: check team membership
+          exists(/databases/$(database)/documents/teams/$(teamId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+        ) &&
+        // Additional validation for tag data structure
+        (
+          // For create operations, ensure required fields are present
+          (request.method != 'create' ||
+           (resource == null &&
+            request.resource.data.keys().hasAll(['categoryId', 'categoryName', 'tagName', 'color', 'source', 'createdAt', 'createdBy']))) &&
+          // For update operations, ensure core fields aren't changed inappropriately
+          (request.method != 'update' ||
+           (resource != null &&
+            request.resource.data.categoryId == resource.data.categoryId &&
+            request.resource.data.tagName == resource.data.tagName &&
+            request.resource.data.source == resource.data.source))
+        );
+    }
+
+    // Team-specific data collections (clients, matters, documents, etc.)
     match /teams/{teamId}/{collection}/{document} {
-      allow read, write: if request.auth != null && 
-                           request.auth.uid == teamId;  // Solo team
+      // Users can access team data if they're team members
+      allow read, write: if request.auth != null &&
+        (
+          // Check custom claims for teamId
+          request.auth.token.teamId == teamId ||
+          // Solo user fallback: allow if teamId equals userId
+          teamId == request.auth.uid ||
+          // Fallback: check team membership (requires additional read)
+          exists(/databases/$(database)/documents/teams/$(teamId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+        );
+    }
+
+    // Nested team collections (e.g., matters with subcollections)
+    match /teams/{teamId}/{collection}/{document}/{subcollection}/{subdocument} {
+      allow read, write: if request.auth != null &&
+        (
+          request.auth.token.teamId == teamId ||
+          teamId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/teams/$(teamId)) &&
+           request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys())
+        );
+    }
+
+    // Global admin access (optional - for super admins)
+    match /{document=**} {
+      allow read, write: if request.auth != null &&
+        request.auth.token.role == 'superadmin';
+    }
+
+    // Default: deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -2,12 +2,36 @@
   <DemoContainer
     title="Tag System Demonstration"
     subtitle="Two Tag Implementation Approaches"
-    description="Compare the two different tag implementations: Locked Categories and Open Categories."
+    description="Test functional tag components with real Firestore integration. Compare Locked Categories (fixed options) vs Open Categories (user can create new options)."
     icon="mdi-tag-multiple"
     :tags="['Tag Demo', 'Vue 3', 'EditableTag Component']"
   >
     <div class="max-w-6xl mx-auto">
-      <v-row>
+      <!-- Authentication Check -->
+      <v-alert v-if="!authStore.isAuthenticated" type="warning" class="mb-4">
+        <v-icon size="16">mdi-account-alert</v-icon>
+        Please log in to test the development tag system with Firebase
+      </v-alert>
+
+      <!-- Loading State -->
+      <v-alert v-else-if="devTags.loading.value" type="info" class="mb-4">
+        <v-icon size="16">mdi-loading mdi-spin</v-icon>
+        Loading development tag environment...
+      </v-alert>
+
+      <!-- Error State -->
+      <v-alert v-else-if="devTags.error.value" type="error" class="mb-4">
+        <v-icon size="16">mdi-alert-circle</v-icon>
+        {{ devTags.error.value }}
+      </v-alert>
+
+      <!-- No Data -->
+      <v-alert v-else-if="devTags.categories.value.length === 0 || devTags.testTags.value.length === 0" type="info" class="mb-4">
+        <v-icon size="16">mdi-information</v-icon>
+        Setting up development environment with original four categories and eight test tags...
+      </v-alert>
+
+      <v-row v-else-if="authStore.isAuthenticated">
         <!-- Locked Category Example -->
         <v-col cols="12" md="6">
           <v-card class="h-100">
@@ -30,12 +54,13 @@
                   :isOpenCategory="false"
                   :tagColor="getTagColor(tag)"
                   @tag-updated="handleTagUpdate"
+                  @tag-created="handleTagCreated"
                 />
               </div>
 
               <v-alert color="warning" variant="tonal" density="compact">
-                <v-icon size="14">mdi-information</v-icon>
-                Fixed options only - no custom tags allowed
+                <v-icon size="14">mdi-lock</v-icon>
+                Locked Category: Users can only select from existing options
               </v-alert>
             </v-card-text>
           </v-card>
@@ -63,152 +88,99 @@
                   :isOpenCategory="true"
                   :tagColor="getTagColor(tag)"
                   @tag-updated="handleTagUpdate"
+                  @tag-created="handleTagCreated"
                 />
               </div>
 
               <v-alert color="success" variant="tonal" density="compact">
-                <v-icon size="14">mdi-information</v-icon>
-                Users can create custom tags inline
+                <v-icon size="14">mdi-pencil-plus</v-icon>
+                Open Category: Type new options and press Enter to add them to Firestore
               </v-alert>
             </v-card-text>
           </v-card>
         </v-col>
 
       </v-row>
+
+      <!-- Development Environment Status -->
+      <v-card v-if="authStore.isAuthenticated" class="mt-4" variant="outlined">
+        <v-card-text>
+          <div class="d-flex align-center justify-space-between mb-2">
+            <div>
+              <v-icon color="green" size="16" class="me-2">mdi-database-check</v-icon>
+              <strong class="text-body-2">Development Tag Environment</strong>
+            </div>
+            <div class="text-caption text-medium-emphasis">
+              {{ devTags.categoryCount.value }} categories • {{ devTags.testTagCount.value }} test tags
+            </div>
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            <strong>Collections:</strong>
+            <code class="text-success">devTesting</code> •
+            <code class="text-success">devTestTags</code>
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            Original four categories: Document Type, Priority, Status, Year (with all original options)
+          </div>
+        </v-card-text>
+      </v-card>
     </div>
   </DemoContainer>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import DemoContainer from '../components/DemoContainer.vue';
 import EditableTag from '@/components/features/tags/EditableTag.vue';
 import { getAutomaticTagColor } from '@/features/organizer/utils/automaticTagColors.js';
+import { useDevTags } from '../composables/useDevTags.js';
+import { useAuthStore } from '../../core/stores/auth.js';
 
-// Mock categories with basic data
-const mockCategories = ref([
-  {
-    id: 'document-type',
-    name: 'Document Type',
-    tags: [
-      { id: 'd1', tagName: 'Invoice', source: 'ai' },
-      { id: 'd2', tagName: 'Receipt', source: 'human' },
-      { id: 'd3', tagName: 'Contract', source: 'human' },
-      { id: 'd4', tagName: 'Report', source: 'ai' },
-      { id: 'd5', tagName: 'Proposal', source: 'human' },
-      { id: 'd6', tagName: 'Statement', source: 'ai' },
-    ],
-  },
-  {
-    id: 'priority',
-    name: 'Priority',
-    tags: [
-      { id: 'p1', tagName: 'High', source: 'ai' },
-      { id: 'p2', tagName: 'Medium', source: 'human' },
-      { id: 'p3', tagName: 'Low', source: 'ai' },
-      { id: 'p4', tagName: 'Urgent', source: 'human' },
-    ],
-  },
-  {
-    id: 'status',
-    name: 'Status',
-    tags: [
-      { id: 's1', tagName: 'Draft', source: 'human' },
-      { id: 's2', tagName: 'Review', source: 'ai' },
-      { id: 's3', tagName: 'Approved', source: 'human' },
-      { id: 's4', tagName: 'Published', source: 'ai' },
-    ],
-  },
-  {
-    id: 'year',
-    name: 'Year',
-    tags: Array.from({ length: 76 }, (_, i) => ({
-      id: `y${i + 1}`,
-      tagName: (2025 - i).toString(),
-      source: i % 2 === 0 ? 'ai' : 'human',
-    })),
-  },
-]);
+// Development tag integration
+const devTags = useDevTags();
+const authStore = useAuthStore();
 
-// Locked category demo tags
-const lockedCategoryTags = ref([
-  {
-    id: 'locked1',
-    categoryId: 'document-type',
-    tagName: 'Invoice',
-    source: 'system',
-    confidence: 100,
-  },
-  {
-    id: 'locked2',
-    categoryId: 'priority',
-    tagName: 'High',
-    source: 'system',
-    confidence: 100,
-  },
-  {
-    id: 'locked3',
-    categoryId: 'status',
-    tagName: 'Approved',
-    source: 'system',
-    confidence: 100,
-  },
-  {
-    id: 'locked4',
-    categoryId: 'year',
-    tagName: '2024',
-    source: 'system',
-    confidence: 100,
-  },
-]);
+// Cleanup function for listeners
+let cleanup = null;
 
-// Open category demo tags
-const openCategoryTags = ref([
-  {
-    id: 'open1',
-    categoryId: 'document-type',
-    tagName: 'Proposal',
-    source: 'human',
-    confidence: 100,
-  },
-  {
-    id: 'open2',
-    categoryId: 'priority',
-    tagName: 'Medium',
-    source: 'human',
-    confidence: 100,
-  },
-  {
-    id: 'open3',
-    categoryId: 'status',
-    tagName: 'Draft',
-    source: 'human',
-    confidence: 100,
-  },
-  {
-    id: 'open4',
-    categoryId: 'year',
-    tagName: '2023',
-    source: 'human',
-    confidence: 100,
-  },
-]);
+// Initialize development environment
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    cleanup = await devTags.initializeDevEnvironment();
+  }
+});
+
+// Watch for auth changes and reload development environment
+watch(() => authStore.isAuthenticated, async (isAuth) => {
+  if (isAuth) {
+    cleanup = await devTags.initializeDevEnvironment();
+  } else {
+    if (cleanup) cleanup();
+    devTags.reset();
+  }
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (cleanup) cleanup();
+});
+
+// Use reactive test tags from development collections
+const lockedCategoryTags = devTags.lockedTestTags;
+const openCategoryTags = devTags.openTestTags;
 
 
 // Helper functions
-const getCategoryOptions = (categoryId) => {
-  const category = mockCategories.value.find((cat) => cat.id === categoryId);
-  return category ? category.tags : [];
-};
+const getCategoryOptions = devTags.getCategoryOptions;
 
 const getTagColor = (tag) => {
-  const categoryIndex = mockCategories.value.findIndex((cat) => cat.id === tag.categoryId);
+  const categoryIndex = devTags.categories.value.findIndex((cat) => cat.id === tag.categoryId);
   return getAutomaticTagColor(categoryIndex >= 0 ? categoryIndex : 0);
 };
 
-const handleTagUpdate = (updatedTag) => {
-  console.log('Tag updated:', updatedTag);
-};
+// Use event handlers from development composable
+const handleTagUpdate = devTags.handleTagUpdate;
+const handleTagCreated = devTags.handleTagCreated;
 </script>
 
 <style scoped>
