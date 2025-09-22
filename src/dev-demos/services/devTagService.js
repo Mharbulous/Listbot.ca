@@ -217,7 +217,7 @@ export class DevTagService {
   }
 
   /**
-   * Create default test tags (8 tags: 4 locked + 4 open)
+   * Create default test tags (8 tags: 4 fixed + 4 open)
    */
   static async initializeDefaultTestTags() {
     try {
@@ -253,9 +253,9 @@ export class DevTagService {
       }
 
       const defaultTestTags = [
-        // Fixed list tags (for testing locked behavior)
+        // Fixed list tags (for testing fixed list behavior)
         {
-          id: 'locked1',
+          id: 'fixed1',
           categoryId: 'document-type-fixed',
           categoryName: 'Document Type (Fixed)',
           tagName: 'Invoice',
@@ -266,7 +266,7 @@ export class DevTagService {
           testCategory: 'fixed', // Test-only field for demo purposes
         },
         {
-          id: 'locked2',
+          id: 'fixed2',
           categoryId: 'priority-fixed',
           categoryName: 'Priority (Fixed)',
           tagName: 'High',
@@ -277,7 +277,7 @@ export class DevTagService {
           testCategory: 'fixed',
         },
         {
-          id: 'locked3',
+          id: 'fixed3',
           categoryId: 'status-fixed',
           categoryName: 'Status (Fixed)',
           tagName: 'Approved',
@@ -288,7 +288,7 @@ export class DevTagService {
           testCategory: 'fixed',
         },
         {
-          id: 'locked4',
+          id: 'fixed4',
           categoryId: 'year-fixed',
           categoryName: 'Year (Fixed)',
           tagName: '2024',

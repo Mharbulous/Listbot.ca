@@ -135,7 +135,7 @@ export function useTagEditing(tag, isOpenCategory, categoryOptions, emit) {
     } else if (event.key.length === 1) {
       const tentativeText = newFilterText + event.key
       
-      // For Locked tags, only accept keystrokes that could form a valid prefix
+      // For Fixed List tags, only accept keystrokes that could form a valid prefix
       if (!isOpenCategory && !isValidPrefix(tentativeText)) {
         console.log(`Rejected keystroke "${event.key}" - "${tentativeText}" is not a valid prefix`)
         return // Don't process this keystroke
@@ -150,7 +150,7 @@ export function useTagEditing(tag, isOpenCategory, categoryOptions, emit) {
     tag.filterTextRaw = newFilterText  // Store original for filtering
     tag.isFiltering = capitalizedText.length > 0
     
-    // Mark that user has started typing (for cursor positioning) - applies to both locked and open tags
+    // Mark that user has started typing (for cursor positioning) - applies to both fixed and open tags
     if (capitalizedText.length > 0) {
       tag.hasStartedTyping = true
       console.log(`Set hasStartedTyping=true for text: "${capitalizedText}" (length: ${capitalizedText.length})`)
@@ -164,7 +164,7 @@ export function useTagEditing(tag, isOpenCategory, categoryOptions, emit) {
       tag.customInputValue = capitalizedText
       tag.highlightedIndex = -1 // No auto-highlight for open categories
     } else {
-      // For locked categories, would need access to filtered options to highlight first match
+      // For fixed categories, would need access to filtered options to highlight first match
       // This would be handled by the parent component
     }
     
@@ -227,12 +227,12 @@ export function useTagEditing(tag, isOpenCategory, categoryOptions, emit) {
         }
       }
     } else {
-      // For locked categories, select the top filtered option
+      // For fixed categories, select the top filtered option
       const topOption = getTopFilteredOption()
       if (topOption && topOption.tagName !== tag.tagName) {
         emit('tag-updated', { ...tag, tagName: topOption.tagName })
         tag.tagName = topOption.tagName
-        console.log(`Locked tag selected top option: ${topOption.tagName}`)
+        console.log(`Fixed List tag selected top option: ${topOption.tagName}`)
       }
     }
     
