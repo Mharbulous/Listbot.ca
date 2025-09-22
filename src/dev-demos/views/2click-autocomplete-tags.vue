@@ -113,11 +113,27 @@
           <div class="text-caption text-medium-emphasis">
             <strong>Collections:</strong>
             <code class="text-success">devTesting</code> •
-            <code class="text-success">devTesting/TestTags</code>
+            <code class="text-success">devTesting/config/TestTags</code>
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
-            Original four categories: Document Type, Priority, Status, Year (with all original
-            options)
+            Eight separate categories: Fixed List (locked options) and Open List (editable options) for Document Type, Priority, Status, Year
+          </div>
+
+          <!-- Force Recreate Button -->
+          <div class="mt-3">
+            <v-btn
+              @click="handleForceRecreate"
+              color="warning"
+              variant="outlined"
+              size="small"
+              prepend-icon="mdi-refresh"
+              :loading="recreating"
+            >
+              Force Recreate Demo Data
+            </v-btn>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Click to recreate demo with independent Fixed/Open categories
+            </div>
           </div>
         </v-card-text>
       </v-card>
@@ -140,12 +156,34 @@ const authStore = useAuthStore();
 // Cleanup function for listeners
 let cleanup = null;
 
-// Initialize development environment
+// State for recreate button
+const recreating = ref(false);
+
+// Initialize development environment on page load
+// Uses smart detection to only recreate if data structure is incompatible
 onMounted(async () => {
   if (authStore.isAuthenticated) {
-    cleanup = await devTags.initializeDevEnvironment();
+    // Normal initialization - preserves existing compatible data
+    cleanup = await devTags.initializeDevEnvironment(false);
   }
 });
+
+// Handle force recreate button
+const handleForceRecreate = async () => {
+  try {
+    recreating.value = true;
+    console.log('Force recreating demo data...');
+
+    if (cleanup) cleanup();
+    cleanup = await devTags.forceRecreateDemo();
+
+    console.log('Demo data recreated successfully');
+  } catch (error) {
+    console.error('Failed to recreate demo data:', error);
+  } finally {
+    recreating.value = false;
+  }
+};
 
 // Watch for auth changes and reload development environment
 watch(
@@ -173,6 +211,13 @@ const openListTags = devTags.openListTestTags;
 const getCategoryOptions = devTags.getCategoryOptions;
 
 const getTagColor = (tag) => {
+  // First try to get color from category
+  const category = devTags.categories.value.find((cat) => cat.id === tag.categoryId);
+  if (category?.color) {
+    return category.color;
+  }
+
+  // Fallback to triadic pattern based on category index
   const categoryIndex = devTags.categories.value.findIndex((cat) => cat.id === tag.categoryId);
   return getAutomaticTagColor(categoryIndex >= 0 ? categoryIndex : 0);
 };

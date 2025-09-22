@@ -1,6 +1,5 @@
 import { ref, computed, reactive } from 'vue';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase.js';
+import { onSnapshot } from 'firebase/firestore';
 import { useAuthStore } from '../../core/stores/auth.js';
 import { DevTagService } from '../services/devTagService.js';
 
@@ -23,13 +22,13 @@ export function useDevTags() {
   const categoryCount = computed(() => categories.value.length);
   const testTagCount = computed(() => testTags.value.length);
 
-  // Get reactive test tags split by type
+  // Get reactive test tags split by type (using testCategory field for demo)
   const fixedListTestTags = computed(() =>
-    testTags.value.filter(tag => !tag.isOpenCategory)
+    testTags.value.filter(tag => tag.testCategory === 'fixed')
   );
 
   const openListTestTags = computed(() =>
-    testTags.value.filter(tag => tag.isOpenCategory)
+    testTags.value.filter(tag => tag.testCategory === 'open')
   );
 
   /**
@@ -50,10 +49,17 @@ export function useDevTags() {
           const loadedCategories = [];
 
           snapshot.docs.forEach(doc => {
-            loadedCategories.push({
-              id: doc.id,
-              ...doc.data()
-            });
+            const data = doc.data();
+
+            // Handle soft delete - treat undefined isActive as true for backward compatibility
+            const isActive = data.isActive !== false;
+
+            if (isActive) {
+              loadedCategories.push({
+                id: doc.id,
+                ...data
+              });
+            }
           });
 
           // If no categories exist, create default ones
@@ -104,15 +110,24 @@ export function useDevTags() {
           snapshot.docs.forEach(doc => {
             const data = doc.data();
 
-            // Create reactive tag object with all required properties
+            // Create reactive tag object with production-compliant structure
             const reactiveTag = reactive({
               id: doc.id,
               categoryId: data.categoryId,
+              categoryName: data.categoryName,
               tagName: data.tagName,
-              isOpenCategory: data.isOpenCategory,
               source: data.source,
               confidence: data.confidence,
-              // Reactive properties for EditableTag component
+              autoApproved: data.autoApproved,
+              reviewRequired: data.reviewRequired,
+              testCategory: data.testCategory, // Test-only field for demo
+              createdBy: data.createdBy,
+              reviewedAt: data.reviewedAt,
+              reviewedBy: data.reviewedBy,
+              humanApproved: data.humanApproved,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+              // Reactive UI properties for EditableTag component (not stored in DB)
               isOpen: false,
               isHeaderEditing: false,
               hasStartedTyping: false,
@@ -120,9 +135,7 @@ export function useDevTags() {
               filterTextRaw: '',
               isFiltering: false,
               highlightedIndex: -1,
-              customInputValue: '',
-              createdAt: data.createdAt,
-              updatedAt: data.updatedAt
+              customInputValue: ''
             });
 
             loadedTestTags.push(reactiveTag);
@@ -165,7 +178,7 @@ export function useDevTags() {
   /**
    * Initialize complete development environment
    */
-  const initializeDevEnvironment = async () => {
+  const initializeDevEnvironment = async (forceRecreate = false) => {
     if (!authStore.isAuthenticated) {
       error.value = 'User not authenticated';
       return;
@@ -178,7 +191,7 @@ export function useDevTags() {
       console.log('[useDevTags] Initializing development environment...');
 
       // Initialize both categories and test tags
-      await DevTagService.initializeDevEnvironment();
+      await DevTagService.initializeDevEnvironment(forceRecreate);
 
       // Set up real-time listeners
       const unsubscribeCategories = await loadCategories();
@@ -197,35 +210,43 @@ export function useDevTags() {
   };
 
   /**
+   * Force recreate demo data (clear and rebuild)
+   */
+  const forceRecreateDemo = async () => {
+    console.log('[useDevTags] Force recreating demo data...');
+    return await initializeDevEnvironment(true);
+  };
+
+  /**
    * Get category options for a specific category ID
    */
   const getCategoryOptions = (categoryId) => {
     const category = categories.value.find(cat => cat.id === categoryId);
-    if (!category?.options) return [];
+    if (!category?.tags) return [];
 
     // Convert to format expected by EditableTag
-    return category.options.map(option => ({
-      id: option.id,
-      tagName: option.name,
-      source: option.source
+    return category.tags.map(tag => ({
+      id: tag.id,
+      tagName: tag.name,
+      color: tag.color
     }));
   };
 
   /**
-   * Add new option to a category (for open categories)
+   * Add new tag to a category (for open categories)
    */
-  const addOptionToCategory = async (categoryId, newOptionName) => {
+  const addTagToCategory = async (categoryId, newTagName) => {
     try {
-      console.log(`[useDevTags] Adding option "${newOptionName}" to category ${categoryId}`);
+      console.log(`[useDevTags] Adding tag "${newTagName}" to category ${categoryId}`);
 
       await DevTagService.addOptionToCategory(categoryId, {
-        name: newOptionName,
+        name: newTagName,
         source: 'human'
       });
 
-      console.log(`[useDevTags] Successfully added option "${newOptionName}"`);
+      console.log(`[useDevTags] Successfully added tag "${newTagName}"`);
     } catch (err) {
-      console.error('[useDevTags] Failed to add option to category:', err);
+      console.error('[useDevTags] Failed to add tag to category:', err);
       error.value = err.message;
       throw err;
     }
@@ -247,8 +268,8 @@ export function useDevTags() {
     try {
       console.log('[useDevTags] Creating new tag:', newTagData);
 
-      // Add the new option to the category
-      await addOptionToCategory(newTagData.categoryId, newTagData.tagName);
+      // Add the new tag to the category
+      await addTagToCategory(newTagData.categoryId, newTagData.tagName);
 
       console.log(`[useDevTags] Successfully created tag "${newTagData.tagName}"`);
     } catch (err) {
@@ -285,10 +306,11 @@ export function useDevTags() {
 
     // Actions
     initializeDevEnvironment,
+    forceRecreateDemo,
     loadCategories,
     loadTestTags,
     getCategoryOptions,
-    addOptionToCategory,
+    addTagToCategory,
     handleTagUpdate,
     handleTagCreated,
     reset
