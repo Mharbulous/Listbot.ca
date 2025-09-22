@@ -77,26 +77,26 @@ export class DevTagService {
       const TRIADIC_COLORS = ['#733381', '#589C48', '#F58024']; // Purple, Green, Orange
 
       const defaultCategories = [
-        // Fixed List Categories (read-only for demo)
+        // Fixed List Categories (isOpen: false)
         {
-          id: 'document-type-fixed',
+          id: 'document-type-1',
           name: 'Document Type (Fixed)',
           color: TRIADIC_COLORS[0], // Purple
           isActive: true,
+          isOpen: false, // Fixed List - cannot add new options
           tags: [
             { id: 'd1f', name: 'Invoice', color: TRIADIC_COLORS[0] },
             { id: 'd2f', name: 'Receipt', color: TRIADIC_COLORS[0] },
             { id: 'd3f', name: 'Contract', color: TRIADIC_COLORS[0] },
             { id: 'd4f', name: 'Report', color: TRIADIC_COLORS[0] },
-            { id: 'd5f', name: 'Proposal', color: TRIADIC_COLORS[0] },
-            { id: 'd6f', name: 'Statement', color: TRIADIC_COLORS[0] },
           ]
         },
         {
-          id: 'priority-fixed',
+          id: 'priority-1',
           name: 'Priority (Fixed)',
           color: TRIADIC_COLORS[1], // Green
           isActive: true,
+          isOpen: false, // Fixed List - cannot add new options
           tags: [
             { id: 'p1f', name: 'High', color: TRIADIC_COLORS[1] },
             { id: 'p2f', name: 'Medium', color: TRIADIC_COLORS[1] },
@@ -105,10 +105,11 @@ export class DevTagService {
           ]
         },
         {
-          id: 'status-fixed',
+          id: 'status-1',
           name: 'Status (Fixed)',
           color: TRIADIC_COLORS[2], // Orange
           isActive: true,
+          isOpen: false, // Fixed List - cannot add new options
           tags: [
             { id: 's1f', name: 'Draft', color: TRIADIC_COLORS[2] },
             { id: 's2f', name: 'Review', color: TRIADIC_COLORS[2] },
@@ -117,10 +118,11 @@ export class DevTagService {
           ]
         },
         {
-          id: 'year-fixed',
+          id: 'year-1',
           name: 'Year (Fixed)',
           color: TRIADIC_COLORS[0], // Purple (cycling back)
           isActive: true,
+          isOpen: false, // Fixed List - cannot add new options
           tags: [
             { id: 'y1f', name: '2024', color: TRIADIC_COLORS[0] },
             { id: 'y2f', name: '2023', color: TRIADIC_COLORS[0] },
@@ -128,26 +130,26 @@ export class DevTagService {
             { id: 'y4f', name: '2021', color: TRIADIC_COLORS[0] },
           ]
         },
-        // Open List Categories (editable for demo)
+        // Open List Categories (isOpen: true)
         {
-          id: 'document-type-open',
+          id: 'document-type-2',
           name: 'Document Type (Open)',
           color: TRIADIC_COLORS[0], // Purple
           isActive: true,
+          isOpen: true, // Open List - can add new options
           tags: [
             { id: 'd1o', name: 'Invoice', color: TRIADIC_COLORS[0] },
             { id: 'd2o', name: 'Receipt', color: TRIADIC_COLORS[0] },
             { id: 'd3o', name: 'Contract', color: TRIADIC_COLORS[0] },
             { id: 'd4o', name: 'Report', color: TRIADIC_COLORS[0] },
-            { id: 'd5o', name: 'Proposal', color: TRIADIC_COLORS[0] },
-            { id: 'd6o', name: 'Statement', color: TRIADIC_COLORS[0] },
           ]
         },
         {
-          id: 'priority-open',
+          id: 'priority-2',
           name: 'Priority (Open)',
           color: TRIADIC_COLORS[1], // Green
           isActive: true,
+          isOpen: true, // Open List - can add new options
           tags: [
             { id: 'p1o', name: 'High', color: TRIADIC_COLORS[1] },
             { id: 'p2o', name: 'Medium', color: TRIADIC_COLORS[1] },
@@ -156,10 +158,11 @@ export class DevTagService {
           ]
         },
         {
-          id: 'status-open',
+          id: 'status-2',
           name: 'Status (Open)',
           color: TRIADIC_COLORS[2], // Orange
           isActive: true,
+          isOpen: true, // Open List - can add new options
           tags: [
             { id: 's1o', name: 'Draft', color: TRIADIC_COLORS[2] },
             { id: 's2o', name: 'Review', color: TRIADIC_COLORS[2] },
@@ -168,10 +171,11 @@ export class DevTagService {
           ]
         },
         {
-          id: 'year-open',
+          id: 'year-2',
           name: 'Year (Open)',
           color: TRIADIC_COLORS[0], // Purple (cycling back)
           isActive: true,
+          isOpen: true, // Open List - can add new options
           tags: [
             { id: 'y1o', name: '2024', color: TRIADIC_COLORS[0] },
             { id: 'y2o', name: '2023', color: TRIADIC_COLORS[0] },
@@ -190,6 +194,7 @@ export class DevTagService {
           name: categoryData.name,
           color: categoryData.color,
           isActive: categoryData.isActive,
+          isOpen: categoryData.isOpen,
           deletedAt: null,
           tags: categoryData.tags,
           createdAt: serverTimestamp(),
@@ -256,92 +261,76 @@ export class DevTagService {
         // Fixed list tags (for testing fixed list behavior)
         {
           id: 'fixed1',
-          categoryId: 'document-type-fixed',
-          categoryName: 'Document Type (Fixed)',
+          tagCategoryId: 'document-type-1',
           tagName: 'Invoice',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'fixed', // Test-only field for demo purposes
         },
         {
           id: 'fixed2',
-          categoryId: 'priority-fixed',
-          categoryName: 'Priority (Fixed)',
+          tagCategoryId: 'priority-1',
           tagName: 'High',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'fixed',
         },
         {
           id: 'fixed3',
-          categoryId: 'status-fixed',
-          categoryName: 'Status (Fixed)',
+          tagCategoryId: 'status-1',
           tagName: 'Approved',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'fixed',
         },
         {
           id: 'fixed4',
-          categoryId: 'year-fixed',
-          categoryName: 'Year (Fixed)',
+          tagCategoryId: 'year-1',
           tagName: '2024',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'fixed',
         },
         // Open list tags (for testing open behavior)
         {
           id: 'open1',
-          categoryId: 'document-type-open',
-          categoryName: 'Document Type (Open)',
+          tagCategoryId: 'document-type-2',
           tagName: 'Proposal',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'open',
         },
         {
           id: 'open2',
-          categoryId: 'priority-open',
-          categoryName: 'Priority (Open)',
+          tagCategoryId: 'priority-2',
           tagName: 'Medium',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'open',
         },
         {
           id: 'open3',
-          categoryId: 'status-open',
-          categoryName: 'Status (Open)',
+          tagCategoryId: 'status-2',
           tagName: 'Draft',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'open',
         },
         {
           id: 'open4',
-          categoryId: 'year-open',
-          categoryName: 'Year (Open)',
+          tagCategoryId: 'year-2',
           tagName: '2023',
           source: 'human',
           confidence: 1.0,
           autoApproved: true,
           reviewRequired: false,
-          testCategory: 'open',
         },
       ];
 
@@ -351,14 +340,12 @@ export class DevTagService {
 
       for (const tagData of defaultTestTags) {
         const tagDoc = {
-          categoryId: tagData.categoryId,
-          categoryName: tagData.categoryName,
+          tagCategoryId: tagData.tagCategoryId,
           tagName: tagData.tagName,
           source: tagData.source,
           confidence: tagData.confidence,
           autoApproved: tagData.autoApproved,
           reviewRequired: tagData.reviewRequired,
-          testCategory: tagData.testCategory, // Test-only field for demo
           createdBy: 'dev-system',
           reviewedAt: null,
           reviewedBy: null,

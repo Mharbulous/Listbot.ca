@@ -22,13 +22,19 @@ export function useDevTags() {
   const categoryCount = computed(() => categories.value.length);
   const testTagCount = computed(() => testTags.value.length);
 
-  // Get reactive test tags split by type (using testCategory field for demo)
+  // Get reactive test tags split by type (using category.isOpen property)
   const fixedListTestTags = computed(() =>
-    testTags.value.filter(tag => tag.testCategory === 'fixed')
+    testTags.value.filter(tag => {
+      const category = categories.value.find(cat => cat.id === tag.tagCategoryId);
+      return category && !category.isOpen; // Fixed List = isOpen: false
+    })
   );
 
   const openListTestTags = computed(() =>
-    testTags.value.filter(tag => tag.testCategory === 'open')
+    testTags.value.filter(tag => {
+      const category = categories.value.find(cat => cat.id === tag.tagCategoryId);
+      return category && category.isOpen; // Open List = isOpen: true
+    })
   );
 
   /**
@@ -113,14 +119,12 @@ export function useDevTags() {
             // Create reactive tag object with production-compliant structure
             const reactiveTag = reactive({
               id: doc.id,
-              categoryId: data.categoryId,
-              categoryName: data.categoryName,
+              tagCategoryId: data.tagCategoryId,
               tagName: data.tagName,
               source: data.source,
               confidence: data.confidence,
               autoApproved: data.autoApproved,
               reviewRequired: data.reviewRequired,
-              testCategory: data.testCategory, // Test-only field for demo
               createdBy: data.createdBy,
               reviewedAt: data.reviewedAt,
               reviewedBy: data.reviewedBy,
@@ -269,7 +273,7 @@ export function useDevTags() {
       console.log('[useDevTags] Creating new tag:', newTagData);
 
       // Add the new tag to the category
-      await addTagToCategory(newTagData.categoryId, newTagData.tagName);
+      await addTagToCategory(newTagData.tagCategoryId, newTagData.tagName);
 
       console.log(`[useDevTags] Successfully created tag "${newTagData.tagName}"`);
     } catch (err) {

@@ -6,7 +6,7 @@ Last Updated: 2025-09-20
 
 **DO NOT** assume tags are stored in the evidence document. Tags use a subcollection architecture at `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}` for scalability.
 
-**ALWAYS** enforce one tag per category through categoryId as document ID.
+**ALWAYS** enforce one tag per category through tagCategoryId as document ID.
 
 **NEVER** store duplicate tag colors. Colors are computed using triadic pattern based on category position.
 
@@ -20,6 +20,7 @@ Last Updated: 2025-09-20
   color: string,                   // Hex format (#RRGGBB)
   isActive: boolean,               // Soft delete flag (undefined = true for legacy data)
   deletedAt: Timestamp,            // Set when soft deleted
+  isOpen: boolean,                 // true = Open List (allows new options), false = Fixed List (locked options)
   tags: [
     {
       id: string,                  // UUID
@@ -37,8 +38,7 @@ Last Updated: 2025-09-20
 ```javascript
 {
   // Core fields - REQUIRED
-  categoryId: string,              // Same as document ID
-  categoryName: string,
+  tagCategoryId: string,           // Same as document ID - the category this tag belongs to
   tagName: string,
   source: 'ai' | 'ai-auto' | 'human',
   confidence: number,              // 0.0-1.0, 1.0 for human
@@ -122,7 +122,7 @@ Last Updated: 2025-09-20
 
 - `tag` - Current tag object
 - `categoryOptions` - Available tags array
-- `isOpenCategory` - Boolean for Fixed vs Open List
+- `isOpenCategory` - Boolean for Fixed vs Open List (should match category.isOpen)
 - `tagColor` - Computed triadic color
 
 **Events**:
@@ -221,14 +221,14 @@ try {
 ### Access Tag for Specific Category
 
 ```javascript
-// Direct access via categoryId as document ID
+// Direct access via tagCategoryId as document ID
 const tagDoc = await db
   .collection('teams')
   .doc(teamId)
   .collection('evidence')
   .doc(evidenceId)
   .collection('tags')
-  .doc(categoryId)
+  .doc(tagCategoryId)
   .get();
 ```
 
@@ -264,7 +264,7 @@ const CONFIDENCE_THRESHOLD = parseFloat(process.env.VITE_CONFIDENCE_THRESHOLD) |
 ## Common Pitfalls
 
 **DO NOT** store tags in the evidence document - use subcollection.
-**DO NOT** allow multiple tags per category - one categoryId per tag document.
+**DO NOT** allow multiple tags per category - one tagCategoryId per tag document.
 **DO NOT** compute colors client-side differently than triadic pattern.
 **DO NOT** skip validation assuming Firestore rules will catch errors.
 **DO NOT** query all tags when counters are available on evidence document.

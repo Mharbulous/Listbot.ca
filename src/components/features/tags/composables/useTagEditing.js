@@ -200,12 +200,12 @@ export function useTagEditing(tag, isOpenCategory, categoryOptions, emit) {
         // If there's an exact match and no trailing space, select the match
         // If there are partial matches but no exact match, create new tag
         if (hasTrailingSpace) {
-          emit('tag-created', { tagName: trimmedValue, categoryId: tag.categoryId })
+          emit('tag-created', { tagName: trimmedValue, tagCategoryId: tag.tagCategoryId })
           emit('tag-updated', { ...tag, tagName: trimmedValue })
           tag.tagName = trimmedValue
           console.log(`Created new tag (trailing space): ${trimmedValue}`)
         } else if (matchingOptions.length === 0) {
-          emit('tag-created', { tagName: trimmedValue, categoryId: tag.categoryId })
+          emit('tag-created', { tagName: trimmedValue, tagCategoryId: tag.tagCategoryId })
           emit('tag-updated', { ...tag, tagName: trimmedValue })
           tag.tagName = trimmedValue
           console.log(`Created new tag (no matches): ${trimmedValue}`)

@@ -50,8 +50,8 @@
                   v-for="tag in fixedListTags"
                   :key="tag.id"
                   :tag="tag"
-                  :categoryOptions="getCategoryOptions(tag.categoryId)"
-                  :isOpenCategory="false"
+                  :categoryOptions="getCategoryOptions(tag.tagCategoryId)"
+                  :isOpenCategory="getCategoryIsOpen(tag.tagCategoryId)"
                   :tagColor="getTagColor(tag)"
                   @tag-updated="handleTagUpdate"
                   @tag-created="handleTagCreated"
@@ -80,8 +80,8 @@
                   v-for="tag in openListTags"
                   :key="tag.id"
                   :tag="tag"
-                  :categoryOptions="getCategoryOptions(tag.categoryId)"
-                  :isOpenCategory="true"
+                  :categoryOptions="getCategoryOptions(tag.tagCategoryId)"
+                  :isOpenCategory="getCategoryIsOpen(tag.tagCategoryId)"
                   :tagColor="getTagColor(tag)"
                   @tag-updated="handleTagUpdate"
                   @tag-created="handleTagCreated"
@@ -212,14 +212,19 @@ const getCategoryOptions = devTags.getCategoryOptions;
 
 const getTagColor = (tag) => {
   // First try to get color from category
-  const category = devTags.categories.value.find((cat) => cat.id === tag.categoryId);
+  const category = devTags.categories.value.find((cat) => cat.id === tag.tagCategoryId);
   if (category?.color) {
     return category.color;
   }
 
   // Fallback to triadic pattern based on category index
-  const categoryIndex = devTags.categories.value.findIndex((cat) => cat.id === tag.categoryId);
+  const categoryIndex = devTags.categories.value.findIndex((cat) => cat.id === tag.tagCategoryId);
   return getAutomaticTagColor(categoryIndex >= 0 ? categoryIndex : 0);
+};
+
+const getCategoryIsOpen = (categoryId) => {
+  const category = devTags.categories.value.find((cat) => cat.id === categoryId);
+  return category?.isOpen || false;
 };
 
 // Use event handlers from development composable
