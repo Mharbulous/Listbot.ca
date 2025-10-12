@@ -31,6 +31,7 @@ export const useCategoryStore = defineStore('category', () => {
 
       // Sanitize the data (colors are now automatically assigned by UI)
       const sanitizedData = {
+        ...categoryData, // Preserve all fields from categoryData
         name: validation.sanitizeCategoryName(categoryData.name),
         tags: (categoryData.tags || []).map(tag => ({
           ...tag,
