@@ -30,7 +30,12 @@
                 <div>
                   <div class="font-weight-medium">{{ category.name }}</div>
                   <div class="text-caption text-medium-emphasis">
-                    {{ getCategoryTypeText(category) }}, {{ category.tags?.length || 0 }} tags
+                    <template v-if="categoryTypeUsesTags(category)">
+                      {{ getCategoryTypeText(category) }}, {{ category.tags?.length || 0 }} tag options
+                    </template>
+                    <template v-else>
+                      {{ getCategoryTypeText(category) }}
+                    </template>
                   </div>
                 </div>
               </div>
@@ -55,7 +60,7 @@
                     {{ tag.name }}
                   </v-chip>
                 </div>
-                <p v-else class="text-body-2 text-medium-emphasis mb-4">No tags defined yet.</p>
+                <p v-else-if="categoryTypeUsesTags(category)" class="text-body-2 text-medium-emphasis mb-4">No tag options defined yet.</p>
 
                 <div class="border-t pt-4 d-flex justify-space-between">
                   <v-btn
@@ -139,6 +144,10 @@ const getCategoryIconColor = (category) => {
 
 const getCategoryTypeText = (category) => {
   return getCategoryTypeLabel(category.type);
+};
+
+const categoryTypeUsesTags = (category) => {
+  return category.type === 'Fixed List' || category.type === 'Open List';
 };
 
 const showNotification = (message, color = 'success') => {
