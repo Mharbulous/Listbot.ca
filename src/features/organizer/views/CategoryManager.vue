@@ -47,8 +47,9 @@
             </v-expansion-panel-title>
 
             <v-expansion-panel-text>
-              <div class="py-4">
-                <div v-if="category.tags?.length" class="mb-4">
+              <!-- Tags for Fixed List / Open List -->
+              <div v-if="categoryTypeUsesTags(category)" class="mb-4">
+                <div v-if="category.tags?.length" class="mb-2">
                   <v-chip
                     v-for="tag in category.tags"
                     :key="tag.id || tag.name"
@@ -60,28 +61,48 @@
                     {{ tag.name }}
                   </v-chip>
                 </div>
-                <p v-else-if="categoryTypeUsesTags(category)" class="text-body-2 text-medium-emphasis mb-4">No tag options defined yet.</p>
+                <p v-else class="text-body-2 text-medium-emphasis">No tag options defined yet.</p>
+              </div>
 
-                <div class="border-t pt-4 d-flex justify-space-between">
-                  <v-btn
-                    color="primary"
-                    variant="outlined"
-                    size="small"
-                    @click="editCategory(category)"
-                  >
-                    <v-icon start>mdi-pencil</v-icon>
-                    Edit
-                  </v-btn>
-                  <v-btn
-                    color="error"
-                    variant="outlined"
-                    size="small"
-                    @click="deleteCategory(category)"
-                  >
-                    <v-icon start>mdi-delete</v-icon>
-                    Delete
-                  </v-btn>
-                </div>
+              <!-- Properties for other category types -->
+              <v-list v-if="getCategoryProperties(category).length > 0" density="compact" class="mb-3">
+                <v-list-item
+                  v-for="(prop, propIdx) in getCategoryProperties(category)"
+                  :key="propIdx"
+                  :prepend-icon="prop.icon"
+                  :class="{ 'monospace-value': prop.monospace }"
+                >
+                  <template v-if="prop.symbol" #prepend>
+                    <span class="currency-symbol mr-3">{{ prop.symbol }}</span>
+                  </template>
+                  <v-list-item-title class="text-body-2">
+                    <span v-if="prop.label" class="text-medium-emphasis">{{ prop.label }}:</span>
+                    <span :class="[prop.color ? `text-${prop.color}` : '', prop.label ? 'ml-2' : '', 'font-weight-medium']">
+                      {{ prop.value }}
+                    </span>
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+
+              <div class="border-t pt-4 d-flex justify-space-between">
+                <v-btn
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                  @click="editCategory(category)"
+                >
+                  <v-icon start>mdi-pencil</v-icon>
+                  Edit
+                </v-btn>
+                <v-btn
+                  color="error"
+                  variant="outlined"
+                  size="small"
+                  @click="deleteCategory(category)"
+                >
+                  <v-icon start>mdi-delete</v-icon>
+                  Delete
+                </v-btn>
               </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
@@ -117,6 +138,7 @@ import { useRouter } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
+import { getCurrencyTitle, getCurrencySymbol } from '../utils/currencyOptions.js';
 
 const router = useRouter();
 const organizerStore = useOrganizerStore();
@@ -150,6 +172,107 @@ const getCategoryTypeText = (category) => {
 
 const categoryTypeUsesTags = (category) => {
   return category.type === 'Fixed List' || category.type === 'Open List';
+};
+
+// Helper functions to get category-specific properties for display
+const getCategoryProperties = (category) => {
+  const properties = [];
+
+  switch (category.type) {
+    case 'Currency':
+      if (category.defaultCurrency) {
+        properties.push({
+          symbol: getCurrencySymbol(category.defaultCurrency),
+          label: '',
+          value: getCurrencyTitle(category.defaultCurrency),
+        });
+      }
+      break;
+
+    case 'Date':
+      if (category.defaultDateFormat) {
+        properties.push({
+          icon: 'mdi-calendar',
+          label: 'Date Format',
+          value: category.defaultDateFormat,
+        });
+      }
+      break;
+
+    case 'Timestamp':
+      if (category.defaultDateFormat) {
+        properties.push({
+          icon: 'mdi-calendar',
+          label: 'Date Format',
+          value: category.defaultDateFormat,
+        });
+      }
+      if (category.defaultTimeFormat) {
+        properties.push({
+          icon: 'mdi-clock-outline',
+          label: 'Time Format',
+          value: category.defaultTimeFormat,
+        });
+      }
+      break;
+
+    case 'Sequence':
+      if (category.defaultSequenceFormat) {
+        properties.push({
+          icon: 'mdi-numeric',
+          label: 'Sequence Format',
+          value: category.defaultSequenceFormat,
+        });
+      }
+      properties.push({
+        icon: category.allowGaps ? 'mdi-check-circle' : 'mdi-close-circle',
+        label: 'Gaps',
+        value: category.allowGaps ? 'Allowed' : 'Not Allowed',
+        color: category.allowGaps ? 'success' : 'error',
+      });
+      properties.push({
+        icon: category.allowDuplicateValues ? 'mdi-check-circle' : 'mdi-close-circle',
+        label: 'Duplicates',
+        value: category.allowDuplicateValues ? 'Allowed' : 'Not Allowed',
+        color: category.allowDuplicateValues ? 'success' : 'error',
+      });
+      break;
+
+    case 'Regex':
+      if (category.regexDefinition) {
+        properties.push({
+          icon: 'mdi-regex',
+          label: 'Pattern',
+          value: category.regexDefinition,
+          monospace: true,
+        });
+      }
+      if (category.regexExamples) {
+        properties.push({
+          icon: 'mdi-lightbulb-outline',
+          label: 'Examples',
+          value: category.regexExamples,
+          monospace: true,
+        });
+      }
+      properties.push({
+        icon: category.allowDuplicateValues ? 'mdi-check-circle' : 'mdi-close-circle',
+        label: 'Duplicates',
+        value: category.allowDuplicateValues ? 'Allowed' : 'Not Allowed',
+        color: category.allowDuplicateValues ? 'success' : 'error',
+      });
+      break;
+
+    case 'TextArea':
+      properties.push({
+        icon: 'mdi-text-box-outline',
+        label: 'Type',
+        value: 'Multi-line text input',
+      });
+      break;
+  }
+
+  return properties;
 };
 
 const showNotification = (message, color = 'success') => {
@@ -190,6 +313,20 @@ onMounted(async () => {
 }
 .border-t {
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+.monospace-value span:last-child {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.currency-symbol {
+  font-size: 1.2em;
+  font-weight: bold;
+  min-width: 24px;
+  display: inline-block;
+  text-align: center;
 }
 </style>
 <!-- Streamlined from 312 lines to 188 lines on 2025-09-12 -->
