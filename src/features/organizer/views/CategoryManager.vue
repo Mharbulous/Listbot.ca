@@ -57,12 +57,11 @@
                 </div>
                 <p v-else class="text-body-2 text-medium-emphasis mb-4">No tags defined yet.</p>
 
-                <div class="border-t pt-4">
+                <div class="border-t pt-4 d-flex justify-space-between">
                   <v-btn
                     color="primary"
                     variant="outlined"
                     size="small"
-                    class="mr-2"
                     @click="editCategory(category)"
                   >
                     <v-icon start>mdi-pencil</v-icon>
