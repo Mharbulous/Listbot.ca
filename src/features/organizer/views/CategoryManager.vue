@@ -4,15 +4,6 @@
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-folder-multiple</v-icon>
         Categories List ({{ sortedCategories.length }})
-        <v-spacer />
-        <v-btn
-          color="primary"
-          :to="{ name: 'category-creation-wizard' }"
-          variant="elevated"
-        >
-          <v-icon start>mdi-plus</v-icon>
-          Create Category
-        </v-btn>
       </v-card-title>
       <v-card-text>
         <div v-if="loading" class="text-center py-6">
@@ -23,9 +14,6 @@
         <div v-else-if="!sortedCategories.length" class="text-center py-6">
           <v-icon size="64" color="grey">mdi-folder-outline</v-icon>
           <p class="text-h6 mt-2">No categories yet</p>
-          <p class="text-body-2 text-medium-emphasis">
-            Create your first category above to get started.
-          </p>
         </div>
 
         <v-expansion-panels v-else v-model="expandedPanels" multiple>
@@ -36,11 +24,13 @@
           >
             <v-expansion-panel-title>
               <div class="d-flex align-center">
-                <v-icon :color="getColor(idx)" class="mr-3">mdi-folder</v-icon>
+                <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                  {{ getCategoryIcon(category) }}
+                </v-icon>
                 <div>
                   <div class="font-weight-medium">{{ category.name }}</div>
                   <div class="text-caption text-medium-emphasis">
-                    {{ category.tags?.length || 0 }} tags
+                    {{ getCategoryTypeText(category) }}, {{ category.tags?.length || 0 }} tags
                   </div>
                 </div>
               </div>
@@ -53,7 +43,6 @@
 
             <v-expansion-panel-text>
               <div class="py-4">
-                <h4 class="text-subtitle-2 mb-2">Available Tags:</h4>
                 <div v-if="category.tags?.length" class="mb-4">
                   <v-chip
                     v-for="tag in category.tags"
@@ -93,6 +82,18 @@
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
+
+        <div class="text-center mt-6">
+          <v-btn
+            color="primary"
+            :to="{ name: 'category-creation-wizard' }"
+            variant="elevated"
+            size="large"
+          >
+            <v-icon start>mdi-plus</v-icon>
+            Create New Category
+          </v-btn>
+        </div>
       </v-card-text>
     </v-card>
 
@@ -110,6 +111,7 @@ import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
+import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
 
 const organizerStore = useOrganizerStore();
 const { categories, loading } = storeToRefs(organizerStore);
@@ -125,6 +127,20 @@ const sortedCategories = computed(() => {
 });
 
 const getColor = (index) => getAutomaticTagColor(index);
+
+const getCategoryIcon = (category) => {
+  const typeInfo = getCategoryTypeInfo(category.type);
+  return typeInfo ? typeInfo.icon : 'mdi-folder';
+};
+
+const getCategoryIconColor = (category) => {
+  const typeInfo = getCategoryTypeInfo(category.type);
+  return typeInfo ? typeInfo.color : 'grey';
+};
+
+const getCategoryTypeText = (category) => {
+  return getCategoryTypeLabel(category.type);
+};
 
 const showNotification = (message, color = 'success') => {
   snackbar.value = { show: true, message, color };

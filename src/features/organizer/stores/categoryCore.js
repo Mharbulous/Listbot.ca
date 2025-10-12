@@ -98,18 +98,6 @@ export function useCategoryCore() {
             });
           }
 
-          // If no categories exist, create default categories for first-time users
-          if (loadedCategories.length === 0) {
-            console.log('[CategoryCore] No categories found, creating defaults...');
-            try {
-              await CategoryService.createDefaultCategories(teamId);
-              // The onSnapshot will fire again after categories are created
-              return;
-            } catch (error) {
-              console.error('[CategoryCore] Failed to create default categories:', error);
-            }
-          }
-
           categories.value = loadedCategories;
           loading.value = false;
           isInitialized.value = true;
