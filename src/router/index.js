@@ -60,6 +60,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/organizer/categories/edit/:id',
+      name: 'category-edit',
+      component: () => import('../features/organizer/views/CategoryEditWizard.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../components/features/auth/LoginForm.vue'),

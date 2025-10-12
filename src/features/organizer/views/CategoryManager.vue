@@ -113,10 +113,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
 
+const router = useRouter();
 const organizerStore = useOrganizerStore();
 const { categories, loading } = storeToRefs(organizerStore);
 
@@ -155,8 +157,7 @@ const showNotification = (message, color = 'success') => {
 };
 
 const editCategory = (category) => {
-  showNotification('Category editing coming soon!', 'info');
-  console.log('Edit category:', category);
+  router.push({ name: 'category-edit', params: { id: category.id } });
 };
 
 const deleteCategory = async (category) => {
