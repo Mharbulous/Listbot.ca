@@ -3,7 +3,7 @@
     <v-card variant="outlined">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-folder-multiple</v-icon>
-        Categories List ({{ categories.length }})
+        Categories List ({{ sortedCategories.length }})
         <v-spacer />
         <v-btn
           color="primary"
@@ -20,7 +20,7 @@
           <p class="mt-2">Loading categories...</p>
         </div>
 
-        <div v-else-if="!categories.length" class="text-center py-6">
+        <div v-else-if="!sortedCategories.length" class="text-center py-6">
           <v-icon size="64" color="grey">mdi-folder-outline</v-icon>
           <p class="text-h6 mt-2">No categories yet</p>
           <p class="text-body-2 text-medium-emphasis">
@@ -30,7 +30,7 @@
 
         <v-expansion-panels v-else v-model="expandedPanels" multiple>
           <v-expansion-panel
-            v-for="(category, idx) in categories"
+            v-for="(category, idx) in sortedCategories"
             :key="category.id"
             :value="category.id"
           >
@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
@@ -116,6 +116,13 @@ const { categories, loading } = storeToRefs(organizerStore);
 
 const expandedPanels = ref([]);
 const snackbar = ref({ show: false, message: '', color: 'success' });
+
+// Computed property to sort categories alphabetically
+const sortedCategories = computed(() => {
+  return [...categories.value].sort((a, b) => {
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  });
+});
 
 const getColor = (index) => getAutomaticTagColor(index);
 
@@ -144,8 +151,8 @@ onMounted(async () => {
     console.log('[CategoryManager] Initializing organizer store for categories...');
     await organizerStore.initialize();
   }
-  if (categories.value.length > 0) {
-    expandedPanels.value = [categories.value[0].id];
+  if (sortedCategories.value.length > 0) {
+    expandedPanels.value = [sortedCategories.value[0].id];
   }
 });
 </script>
