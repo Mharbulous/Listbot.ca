@@ -43,18 +43,21 @@
           </v-list-item>
         </v-list>
 
-        <div class="text-center mt-6">
-          <v-btn
-            color="primary"
-            :to="{ name: 'category-creation-wizard' }"
-            variant="elevated"
-            size="large"
-          >
-            <v-icon start>mdi-plus</v-icon>
-            Create New Category
-          </v-btn>
-        </div>
       </v-card-text>
+
+      <v-card-actions class="px-6 pb-6">
+        <v-btn variant="outlined" :to="{ name: 'organizer' }">
+          <v-icon start>mdi-arrow-left</v-icon>
+          Back
+        </v-btn>
+
+        <v-spacer />
+
+        <v-btn color="primary" :to="{ name: 'category-creation-wizard' }" variant="elevated">
+          <v-icon start>mdi-plus</v-icon>
+          New Category
+        </v-btn>
+      </v-card-actions>
     </v-card>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000">

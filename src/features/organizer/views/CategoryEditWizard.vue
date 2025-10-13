@@ -1,6 +1,6 @@
 <template>
   <div class="category-edit-wizard">
-    <v-card variant="outlined" class="mx-auto" style="max-width: 800px">
+    <v-card variant="flat" class="mx-auto" style="max-width: 800px">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-pencil</v-icon>
         Edit Category
@@ -299,7 +299,7 @@
       <v-card-actions v-if="category" class="px-6 pb-6">
         <v-btn variant="outlined" :to="{ name: 'category-manager' }" class="mr-3">
           <v-icon start>mdi-arrow-left</v-icon>
-          CANCEL
+          Discard Changes
         </v-btn>
 
         <v-spacer />
