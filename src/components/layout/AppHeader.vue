@@ -158,7 +158,7 @@ export default {
         case '/organizer/categories':
           return 'Document Organizer >> Categories';
         case '/organizer/categories/new':
-          return 'Document Organizer >> Categories >> Create New Category';
+          return 'Document Organizer >> Categories >> New';
         case '/':
         case '/home':
           return 'Home';
