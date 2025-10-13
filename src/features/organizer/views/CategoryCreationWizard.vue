@@ -1,6 +1,6 @@
 <template>
   <div class="category-creation-wizard">
-    <v-card variant="flat" class="mx-auto" style="max-width: 800px">
+    <v-card variant="flat" class="mx-auto">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-plus-circle</v-icon>
         New Category
@@ -609,6 +609,7 @@ onMounted(async () => {
 
 <style scoped>
 .category-creation-wizard {
+  min-width: 50%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;

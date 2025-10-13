@@ -230,6 +230,7 @@ onMounted(async () => {
 
 <style scoped>
 .category-manager {
+  min-width: 50%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;

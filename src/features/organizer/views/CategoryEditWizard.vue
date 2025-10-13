@@ -1,6 +1,6 @@
 <template>
   <div class="category-edit-wizard">
-    <v-card variant="flat" class="mx-auto" style="max-width: 800px">
+    <v-card variant="flat" class="mx-auto">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-pencil</v-icon>
         Edit Category
@@ -800,6 +800,7 @@ onMounted(() => {
 
 <style scoped>
 .category-edit-wizard {
+  min-width: 50%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
