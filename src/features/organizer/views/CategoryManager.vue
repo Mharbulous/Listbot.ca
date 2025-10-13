@@ -21,6 +21,7 @@
             v-for="category in sortedCategories"
             :key="category.id"
             class="category-item"
+            @click="editCategory(category)"
           >
             <template #prepend>
               <v-icon :color="getCategoryIconColor(category)" class="mr-3">
@@ -37,15 +38,7 @@
             </v-list-item-title>
 
             <template #append>
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                color="primary"
-                @click="editCategory(category)"
-              >
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
+              <v-icon class="edit-icon" color="primary">mdi-pencil</v-icon>
             </template>
           </v-list-item>
         </v-list>
@@ -241,14 +234,20 @@ onMounted(async () => {
 
 .category-item {
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .category-item:hover {
   background-color: rgba(0, 0, 0, 0.04);
 }
 
-.category-item .v-btn:hover {
-  background-color: white !important;
+.category-item .edit-icon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.category-item:hover .edit-icon {
+  opacity: 1;
 }
 </style>
 <!-- Streamlined from 312 lines to 188 lines on 2025-09-12 -->
