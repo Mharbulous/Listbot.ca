@@ -1,6 +1,6 @@
 <template>
   <div class="category-manager">
-    <v-card variant="outlined">
+    <v-card variant="flat">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-folder-multiple</v-icon>
         Categories List ({{ sortedCategories.length }})
@@ -16,123 +16,39 @@
           <p class="text-h6 mt-2">No categories yet</p>
         </div>
 
-        <v-expansion-panels v-else v-model="expandedPanels" multiple>
-          <v-expansion-panel
-            v-for="(category, idx) in sortedCategories"
+        <v-list v-else>
+          <v-list-item
+            v-for="category in sortedCategories"
             :key="category.id"
-            :value="category.id"
+            class="category-item"
           >
-            <v-expansion-panel-title>
-              <div class="d-flex align-center">
-                <v-icon :color="getCategoryIconColor(category)" class="mr-3">
-                  {{ getCategoryIcon(category) }}
-                </v-icon>
-                <div>
-                  <div class="font-weight-medium">{{ category.name }}</div>
-                  <div
-                    class="text-caption text-medium-emphasis"
-                    v-html="getCategoryDisplayTextWithFormatting(category)"
-                  ></div>
-                </div>
-              </div>
-              <template #actions="{ expanded }">
-                <v-btn icon variant="text" size="small" :color="expanded ? 'primary' : 'default'">
-                  <v-icon>{{ expanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-                </v-btn>
-              </template>
-            </v-expansion-panel-title>
+            <template #prepend>
+              <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                {{ getCategoryIcon(category) }}
+              </v-icon>
+            </template>
 
-            <v-expansion-panel-text>
-              <!-- Tags for Fixed List / Open List -->
-              <div v-if="categoryTypeUsesTags(category)" class="mb-4">
-                <div v-if="category.tags?.length" class="mb-2">
-                  <v-chip
-                    v-for="tag in category.tags"
-                    :key="tag.id || tag.name"
-                    :color="getColor(idx)"
-                    size="small"
-                    class="ma-1"
-                  >
-                    <v-icon start size="14">mdi-tag</v-icon>
-                    {{ tag.name }}
-                  </v-chip>
-                </div>
-                <p v-else class="text-body-2 text-medium-emphasis">No tag options defined yet.</p>
-              </div>
-
-              <!-- Properties for other category types -->
-              <v-list
-                v-if="getCategoryProperties(category).length > 0"
-                density="compact"
-                class="mb-3"
-              >
-                <v-list-item
-                  v-for="(prop, propIdx) in getCategoryProperties(category)"
-                  :key="propIdx"
-                  :prepend-icon="prop.icon"
-                  :class="{ 'monospace-value': prop.monospace }"
-                >
-                  <template v-if="prop.symbol" #prepend>
-                    <span class="currency-symbol mr-3">{{ prop.symbol }}</span>
-                  </template>
-                  <v-list-item-title class="text-body-2">
-                    <span v-if="prop.label" class="text-medium-emphasis">{{ prop.label }}:</span>
-                    <span
-                      :class="[
-                        prop.color ? `text-${prop.color}` : '',
-                        prop.label ? 'ml-2' : '',
-                        'font-weight-medium',
-                      ]"
-                    >
-                      {{ prop.value }}
-                    </span>
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list>
-
-              <!-- Regex Examples as Chips -->
+            <v-list-item-title>
+              <div class="font-weight-medium">{{ category.name }}</div>
               <div
-                v-if="category.type === 'Regex' && getRegexExamples(category).length > 0"
-                class="mb-4"
-              >
-                <div class="text-subtitle-2 mb-2" style="color: rgba(0, 0, 0, 0.87)">Examples</div>
-                <div>
-                  <v-chip
-                    v-for="(example, exampleIdx) in getRegexExamples(category)"
-                    :key="exampleIdx"
-                    class="ma-1"
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  >
-                    {{ example }}
-                  </v-chip>
-                </div>
-              </div>
+                class="text-caption text-medium-emphasis"
+                v-html="getCategoryDisplayTextWithFormatting(category)"
+              ></div>
+            </v-list-item-title>
 
-              <div class="border-t pt-4 d-flex justify-space-between">
-                <v-btn
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                  @click="editCategory(category)"
-                >
-                  <v-icon start>mdi-pencil</v-icon>
-                  Edit
-                </v-btn>
-                <v-btn
-                  color="error"
-                  variant="outlined"
-                  size="small"
-                  @click="deleteCategory(category)"
-                >
-                  <v-icon start>mdi-delete</v-icon>
-                  Delete
-                </v-btn>
-              </div>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
+            <template #append>
+              <v-btn
+                icon
+                variant="text"
+                size="small"
+                color="primary"
+                @click="editCategory(category)"
+              >
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+            </template>
+          </v-list-item>
+        </v-list>
 
         <div class="text-center mt-6">
           <v-btn
@@ -162,15 +78,13 @@ import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
-import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
-import { getCurrencyTitle, getCurrencySymbol } from '../utils/currencyOptions.js';
+import { getCurrencySymbol } from '../utils/currencyOptions.js';
 
 const router = useRouter();
 const organizerStore = useOrganizerStore();
 const { categories, loading } = storeToRefs(organizerStore);
 
-const expandedPanels = ref([]);
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
 // Computed property to sort categories alphabetically
@@ -180,8 +94,6 @@ const sortedCategories = computed(() => {
   });
 });
 
-const getColor = (index) => getAutomaticTagColor(index);
-
 const getCategoryIcon = (category) => {
   const typeInfo = getCategoryTypeInfo(category.type);
   return typeInfo ? typeInfo.icon : 'mdi-folder';
@@ -190,10 +102,6 @@ const getCategoryIcon = (category) => {
 const getCategoryIconColor = (category) => {
   const typeInfo = getCategoryTypeInfo(category.type);
   return typeInfo ? typeInfo.color : 'grey';
-};
-
-const getCategoryTypeText = (category) => {
-  return getCategoryTypeLabel(category.type);
 };
 
 const getCategoryDisplayText = (category) => {
@@ -297,114 +205,6 @@ const getCategoryDisplayTextWithFormatting = (category) => {
   return getCategoryDisplayText(category);
 };
 
-const categoryTypeUsesTags = (category) => {
-  return category.type === 'Fixed List' || category.type === 'Open List';
-};
-
-const getRegexExamples = (category) => {
-  if (category.type !== 'Regex' || !category.regexExamples) {
-    return [];
-  }
-  return category.regexExamples
-    .split(',')
-    .map((ex) => ex.trim())
-    .filter((ex) => ex.length > 0);
-};
-
-// Helper functions to get category-specific properties for display
-const getCategoryProperties = (category) => {
-  const properties = [];
-
-  switch (category.type) {
-    case 'Currency':
-      if (category.defaultCurrency) {
-        properties.push({
-          symbol: getCurrencySymbol(category.defaultCurrency),
-          label: '',
-          value: getCurrencyTitle(category.defaultCurrency),
-        });
-      }
-      break;
-
-    case 'Date':
-      if (category.defaultDateFormat) {
-        properties.push({
-          icon: 'mdi-calendar',
-          label: 'Date Format',
-          value: category.defaultDateFormat,
-        });
-      }
-      break;
-
-    case 'Timestamp':
-      if (category.defaultDateFormat) {
-        properties.push({
-          icon: 'mdi-calendar',
-          label: 'Date Format',
-          value: category.defaultDateFormat,
-        });
-      }
-      if (category.defaultTimeFormat) {
-        properties.push({
-          icon: 'mdi-clock-outline',
-          label: 'Time Format',
-          value: category.defaultTimeFormat,
-        });
-      }
-      break;
-
-    case 'Sequence':
-      if (category.defaultSequenceFormat) {
-        properties.push({
-          icon: 'mdi-numeric',
-          label: 'Sequence Format',
-          value: category.defaultSequenceFormat,
-        });
-      }
-      properties.push({
-        icon: category.allowGaps ? 'mdi-check-circle' : 'mdi-close-circle',
-        label: 'Gaps',
-        value: category.allowGaps ? 'Allowed' : 'Not Allowed',
-        color: category.allowGaps ? 'success' : 'error',
-      });
-      properties.push({
-        icon: category.allowDuplicateValues ? 'mdi-check-circle' : 'mdi-close-circle',
-        label: 'Duplicates',
-        value: category.allowDuplicateValues ? 'Allowed' : 'Not Allowed',
-        color: category.allowDuplicateValues ? 'success' : 'error',
-      });
-      break;
-
-    case 'Regex':
-      if (category.regexDefinition) {
-        properties.push({
-          icon: 'mdi-regex',
-          label: 'Pattern',
-          value: category.regexDefinition,
-          monospace: true,
-        });
-      }
-      // Note: regexExamples are displayed as chips, not in properties list
-      properties.push({
-        icon: category.allowDuplicateValues ? 'mdi-check-circle' : 'mdi-close-circle',
-        label: 'Duplicates',
-        value: category.allowDuplicateValues ? 'Allowed' : 'Not Allowed',
-        color: category.allowDuplicateValues ? 'success' : 'error',
-      });
-      break;
-
-    case 'TextArea':
-      properties.push({
-        icon: 'mdi-text-box-outline',
-        label: 'Type',
-        value: 'Multi-line text input',
-      });
-      break;
-  }
-
-  return properties;
-};
-
 const showNotification = (message, color = 'success') => {
   snackbar.value = { show: true, message, color };
 };
@@ -429,9 +229,6 @@ onMounted(async () => {
     console.log('[CategoryManager] Initializing organizer store for categories...');
     await organizerStore.initialize();
   }
-  if (sortedCategories.value.length > 0) {
-    expandedPanels.value = [sortedCategories.value[0].id];
-  }
 });
 </script>
 
@@ -441,22 +238,17 @@ onMounted(async () => {
   margin: 0 auto;
   padding: 24px;
 }
-.border-t {
-  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+
+.category-item {
+  transition: background-color 0.2s ease;
 }
-.monospace-value span:last-child {
-  font-family: 'Courier New', monospace;
-  font-size: 0.9em;
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
+
+.category-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
-.currency-symbol {
-  font-size: 1.2em;
-  font-weight: bold;
-  min-width: 24px;
-  display: inline-block;
-  text-align: center;
+
+.category-item .v-btn:hover {
+  background-color: white !important;
 }
 </style>
 <!-- Streamlined from 312 lines to 188 lines on 2025-09-12 -->
