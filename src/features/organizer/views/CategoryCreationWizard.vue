@@ -218,6 +218,15 @@
               </v-col>
             </template>
 
+            <!-- Fixed List and Open List tag options -->
+            <v-col v-if="['Fixed List', 'Open List'].includes(newCategory.type)" cols="12">
+              <TagOptionsManager
+                v-model="newCategory.tags"
+                placeholder="Add tag option"
+                :max-length="32"
+              />
+            </v-col>
+
             <!-- Regex-specific child controls -->
             <v-col v-if="newCategory.type === 'Regex'" cols="12" class="pb-0">
               <v-textarea
@@ -334,8 +343,17 @@ import { useOrganizerStore } from '../stores/organizer.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
-import { dateFormatOptions, timeFormatOptions, sequenceFormatOptions } from '../utils/categoryFormOptions.js';
-import { generateRegexExamples, capitalizeFirstLetter, isRegexDefinitionValid } from '../utils/categoryFormHelpers.js';
+import {
+  dateFormatOptions,
+  timeFormatOptions,
+  sequenceFormatOptions,
+} from '../utils/categoryFormOptions.js';
+import {
+  generateRegexExamples,
+  capitalizeFirstLetter,
+  isRegexDefinitionValid,
+} from '../utils/categoryFormHelpers.js';
+import TagOptionsManager from '../components/TagOptionsManager.vue';
 
 const router = useRouter();
 const organizerStore = useOrganizerStore();

@@ -75,8 +75,8 @@ export function useCategoryValidation(categories) {
 
       if (!tag.name || typeof tag.name !== 'string' || !tag.name.trim()) {
         errors.push(`Tag ${index + 1}: name is required and must be a non-empty string`);
-      } else if (tag.name.trim().length > 30) {
-        errors.push(`Tag ${index + 1}: name must be 30 characters or less`);
+      } else if (tag.name.trim().length > 32) {
+        errors.push(`Tag ${index + 1}: name must be 32 characters or less`);
       } else if (tag.name.trim().length < 1) {
         errors.push(`Tag ${index + 1}: name must be at least 1 character`);
       }
@@ -200,7 +200,7 @@ export function useCategoryValidation(categories) {
     return name.trim()
       .replace(/[<>"'&]/g, '') // Remove problematic characters
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .substring(0, 30); // Truncate to max length
+      .substring(0, 32); // Truncate to max length
   };
 
   /**

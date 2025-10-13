@@ -230,6 +230,15 @@
               </v-col>
             </template>
 
+            <!-- Fixed List and Open List tag options -->
+            <v-col v-if="['Fixed List', 'Open List'].includes(editedCategory.type)" cols="12">
+              <TagOptionsManager
+                v-model="editedCategory.tags"
+                placeholder="Add tag option"
+                :max-length="32"
+              />
+            </v-col>
+
             <!-- Regex-specific child controls -->
             <v-col v-if="editedCategory.type === 'Regex'" cols="12" class="pb-0">
               <v-textarea
@@ -270,7 +279,10 @@
             </v-col>
 
             <!-- Allow Duplicate Values checkbox for Text Area, Sequence, and Regex -->
-            <v-col v-if="['Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)" cols="12">
+            <v-col
+              v-if="['Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)"
+              cols="12"
+            >
               <v-checkbox
                 v-model="editedCategory.allowDuplicateValues"
                 label="Allow duplicate values"
@@ -351,13 +363,22 @@ import { useRouter, useRoute } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
-import { dateFormatOptions, timeFormatOptions, sequenceFormatOptions } from '../utils/categoryFormOptions.js';
-import { generateRegexExamples, capitalizeFirstLetter, isRegexDefinitionValid } from '../utils/categoryFormHelpers.js';
+import {
+  dateFormatOptions,
+  timeFormatOptions,
+  sequenceFormatOptions,
+} from '../utils/categoryFormOptions.js';
+import {
+  generateRegexExamples,
+  capitalizeFirstLetter,
+  isRegexDefinitionValid,
+} from '../utils/categoryFormHelpers.js';
 import {
   getAllowedTypeConversions,
   requiresWarning,
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
+import TagOptionsManager from '../components/TagOptionsManager.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -375,6 +396,7 @@ const conversionWarningMessage = ref('');
 const editedCategory = ref({
   name: '',
   type: '',
+  tags: [],
   defaultCurrency: 'CAD',
   defaultDateFormat: 'YYYY-MM-DD',
   defaultTimeFormat: 'HH:mm',
@@ -461,6 +483,24 @@ const hasChanges = computed(() => {
     'allowDuplicateValues',
     'allowGaps',
   ];
+
+  // Special handling for tags array comparison
+  if (category.value.tags || editedCategory.value.tags) {
+    const originalTags = category.value.tags || [];
+    const editedTags = editedCategory.value.tags || [];
+
+    if (originalTags.length !== editedTags.length) {
+      return true;
+    }
+
+    // Compare tag names (order-independent)
+    const originalNames = originalTags.map((t) => t.name).sort();
+    const editedNames = editedTags.map((t) => t.name).sort();
+
+    if (JSON.stringify(originalNames) !== JSON.stringify(editedNames)) {
+      return true;
+    }
+  }
 
   return fields.some((field) => {
     const originalValue = category.value[field];
@@ -664,6 +704,11 @@ const saveCategory = async () => {
       type: editedCategory.value.type,
     };
 
+    // Add tags for Fixed List and Open List types
+    if (['Fixed List', 'Open List'].includes(editedCategory.value.type)) {
+      updates.tags = editedCategory.value.tags;
+    }
+
     // Add type-specific fields
     if (editedCategory.value.type === 'Currency') {
       updates.defaultCurrency = editedCategory.value.defaultCurrency;
@@ -731,6 +776,7 @@ const loadCategory = async () => {
     editedCategory.value = {
       name: foundCategory.name || '',
       type: foundCategory.type || 'Fixed List',
+      tags: foundCategory.tags || [],
       defaultCurrency: foundCategory.defaultCurrency || 'CAD',
       defaultDateFormat: foundCategory.defaultDateFormat || 'YYYY-MM-DD',
       defaultTimeFormat: foundCategory.defaultTimeFormat || 'HH:mm',
