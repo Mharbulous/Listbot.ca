@@ -257,8 +257,8 @@
               </div>
             </v-col>
 
-            <!-- Allow Duplicate Values checkbox for TextArea, Sequence, and Regex -->
-            <v-col v-if="['TextArea', 'Sequence', 'Regex'].includes(newCategory.type)" cols="12">
+            <!-- Allow Duplicate Values checkbox for Text Area, Sequence, and Regex -->
+            <v-col v-if="['Text Area', 'Sequence', 'Regex'].includes(newCategory.type)" cols="12">
               <v-checkbox
                 v-model="newCategory.allowDuplicateValues"
                 label="Allow duplicate values"
@@ -305,7 +305,7 @@
             (newCategory.type === 'Timestamp' && !newCategory.defaultTimeFormat) ||
             (newCategory.type === 'Sequence' && !newCategory.defaultSequenceFormat) ||
             !isRegexValid ||
-            (['TextArea', 'Sequence', 'Regex'].includes(newCategory.type) &&
+            (['Text Area', 'Sequence', 'Regex'].includes(newCategory.type) &&
               typeof newCategory.allowDuplicateValues !== 'boolean') ||
             (newCategory.type === 'Sequence' && typeof newCategory.allowGaps !== 'boolean')
           "
@@ -470,7 +470,7 @@ const validateNewCategory = () => {
   }
 
   // Validate allow duplicate values for applicable types
-  if (['TextArea', 'Sequence', 'Regex'].includes(type)) {
+  if (['Text Area', 'Sequence', 'Regex'].includes(type)) {
     if (typeof allowDuplicateValues !== 'boolean') {
       allowDuplicateValuesErrors.push('Allow duplicate values setting is required');
     }
@@ -563,7 +563,7 @@ const createCategory = async () => {
     }
 
     // Add allow duplicate values data if applicable type is selected
-    if (['TextArea', 'Sequence', 'Regex'].includes(type)) {
+    if (['Text Area', 'Sequence', 'Regex'].includes(type)) {
       categoryData.allowDuplicateValues = newCategory.value.allowDuplicateValues;
     }
 

@@ -53,8 +53,8 @@ export const categoryTypeOptions = [
     color: '#c62828', // Red
   },
   {
-    title: 'TextArea',
-    value: 'TextArea',
+    title: 'Text Area',
+    value: 'Text Area',
     icon: 'mdi-text-box-outline',
     color: '#5d4037', // Brown
   },

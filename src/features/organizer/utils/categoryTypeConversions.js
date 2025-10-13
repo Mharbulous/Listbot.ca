@@ -40,8 +40,8 @@ const conversionRules = {
     allowedConversions: ['Currency'], // Cannot convert to other types
     warnings: {},
   },
-  'TextArea': {
-    allowedConversions: ['TextArea'], // Cannot convert to other types
+  'Text Area': {
+    allowedConversions: ['Text Area'], // Cannot convert to other types
     warnings: {},
   },
 };
