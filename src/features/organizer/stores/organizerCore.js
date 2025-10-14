@@ -252,7 +252,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       }
 
       // Create query for evidence collection
-      const evidenceRef = collection(db, 'teams', teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', teamId, 'matters', 'general', 'evidence');
       const evidenceQuery = query(
         evidenceRef,
         orderBy('updatedAt', 'desc'),
@@ -295,7 +295,15 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
                   finalFileSize = storageFileSize;
 
                   // Auto-migrate: Update Evidence document with correct file size
-                  const evidenceDocRef = doc(db, 'teams', teamId, 'evidence', docSnapshot.id);
+                  const evidenceDocRef = doc(
+                    db,
+                    'teams',
+                    teamId,
+                    'matters',
+                    'general',
+                    'evidence',
+                    docSnapshot.id
+                  );
                   await updateDoc(evidenceDocRef, {
                     fileSize: storageFileSize,
                   });

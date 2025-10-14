@@ -50,7 +50,7 @@ class TagSubcollectionService {
     if (!teamId) {
       throw new Error('Team ID is required for tag operations');
     }
-    return collection(db, 'teams', teamId, 'evidence', docId, 'tags');
+    return collection(db, 'teams', teamId, 'matters', 'general', 'evidence', docId, 'tags');
   }
 
   /**
@@ -60,7 +60,7 @@ class TagSubcollectionService {
     if (!teamId) {
       throw new Error('Team ID is required for tag operations');
     }
-    return doc(db, 'teams', teamId, 'evidence', docId, 'tags', tagId);
+    return doc(db, 'teams', teamId, 'matters', 'general', 'evidence', docId, 'tags', tagId);
   }
 
   /**

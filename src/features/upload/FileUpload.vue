@@ -262,7 +262,14 @@ const generateStoragePath = (fileHash, originalFileName) => {
 
 const checkFileExists = async (fileHash) => {
   try {
-    const evidenceRef = collection(db, 'teams', authStore.currentTeam, 'evidence');
+    const evidenceRef = collection(
+      db,
+      'teams',
+      authStore.currentTeam,
+      'matters',
+      'general',
+      'evidence'
+    );
     const hashQuery = query(evidenceRef, where('storageRef.fileHash', '==', fileHash), limit(1));
     const querySnapshot = await getDocs(hashQuery);
     return !querySnapshot.empty;

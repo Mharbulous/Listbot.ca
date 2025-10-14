@@ -63,7 +63,7 @@ export class EvidenceService {
       };
 
       // Add to evidence collection
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const docRef = await addDoc(evidenceRef, evidenceData);
 
       console.log(`[EvidenceService] Created evidence document: ${docRef.id}`, {
@@ -94,7 +94,9 @@ export class EvidenceService {
       const evidenceIds = [];
 
       for (const uploadMetadata of uploadMetadataList) {
-        const evidenceRef = doc(collection(db, 'teams', this.teamId, 'evidence'));
+        const evidenceRef = doc(
+          collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence')
+        );
         evidenceIds.push(evidenceRef.id);
 
         const evidenceData = {
@@ -144,7 +146,15 @@ export class EvidenceService {
         throw new Error('Display name cannot be empty');
       }
 
-      const evidenceRef = doc(db, 'teams', this.teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        'general',
+        'evidence',
+        evidenceId
+      );
       await updateDoc(evidenceRef, {
         displayName: displayName.trim(),
         updatedAt: serverTimestamp(),
@@ -177,7 +187,15 @@ export class EvidenceService {
         ...additionalData,
       };
 
-      const evidenceRef = doc(db, 'teams', this.teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        'general',
+        'evidence',
+        evidenceId
+      );
       await updateDoc(evidenceRef, updateData);
 
       console.log(`[EvidenceService] Updated processing stage for ${evidenceId}: ${stage}`);
@@ -194,7 +212,15 @@ export class EvidenceService {
    */
   async deleteEvidence(evidenceId) {
     try {
-      const evidenceRef = doc(db, 'teams', this.teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        'general',
+        'evidence',
+        evidenceId
+      );
       await deleteDoc(evidenceRef);
 
       console.log(`[EvidenceService] Deleted evidence document: ${evidenceId}`);
@@ -211,7 +237,15 @@ export class EvidenceService {
    */
   async getEvidence(evidenceId) {
     try {
-      const evidenceRef = doc(db, 'teams', this.teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        'general',
+        'evidence',
+        evidenceId
+      );
       const docSnap = await getDoc(evidenceRef);
 
       if (docSnap.exists()) {

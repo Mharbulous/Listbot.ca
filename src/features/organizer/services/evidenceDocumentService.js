@@ -21,7 +21,7 @@ export class EvidenceDocumentService {
    */
   async getEvidenceDocument(evidenceId, teamId) {
     try {
-      const evidenceRef = doc(db, 'teams', teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
       const evidenceSnap = await getDoc(evidenceRef);
 
       if (evidenceSnap.exists()) {
@@ -101,7 +101,7 @@ export class EvidenceDocumentService {
       }
 
       // Update evidence document with AI processing metadata
-      const evidenceRef = doc(db, 'teams', teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
       await updateDoc(evidenceRef, {
         lastAIProcessed: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -121,7 +121,7 @@ export class EvidenceDocumentService {
    */
   async updateEvidenceDocument(evidenceId, teamId, updates) {
     try {
-      const evidenceRef = doc(db, 'teams', teamId, 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
 
       const updateData = {
         ...updates,

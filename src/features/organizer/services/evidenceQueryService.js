@@ -19,7 +19,7 @@ export class EvidenceQueryService {
    */
   async findEvidenceByHash(fileHash) {
     try {
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const q = query(
         evidenceRef,
         where('storageRef.fileHash', '==', fileHash),
@@ -55,7 +55,7 @@ export class EvidenceQueryService {
 
       // Note: With subcollection tags, we need to query each evidence document's tags subcollection
       // This is a more complex query that may need optimization for large datasets
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const evidenceSnapshot = await getDocs(evidenceRef);
       const matchingEvidence = [];
 
@@ -63,7 +63,16 @@ export class EvidenceQueryService {
         const evidenceData = { id: evidenceDoc.id, ...evidenceDoc.data() };
 
         // Get approved tags from subcollection for this evidence document
-        const tagsRef = collection(db, 'teams', this.teamId, 'evidence', evidenceDoc.id, 'tags');
+        const tagsRef = collection(
+          db,
+          'teams',
+          this.teamId,
+          'matters',
+          'general',
+          'evidence',
+          evidenceDoc.id,
+          'tags'
+        );
         const tagsSnapshot = await getDocs(tagsRef);
 
         const docTags = [];
@@ -109,7 +118,7 @@ export class EvidenceQueryService {
       const validStages = ['uploaded', 'splitting', 'merging', 'complete'];
       if (!validStages.includes(stage)) throw new Error(`Invalid processing stage: ${stage}`);
 
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const q = query(
         evidenceRef,
         where('processingStage', '==', stage),
@@ -135,7 +144,7 @@ export class EvidenceQueryService {
    */
   async findUnprocessedEvidence() {
     try {
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const q = query(evidenceRef, where('isProcessed', '==', false), orderBy('updatedAt', 'asc'));
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
@@ -192,7 +201,7 @@ export class EvidenceQueryService {
    */
   async getEvidenceStatistics() {
     try {
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const querySnapshot = await getDocs(evidenceRef);
 
       const stats = {
@@ -219,7 +228,16 @@ export class EvidenceQueryService {
         if (data.fileSize) stats.totalFileSize += data.fileSize;
 
         // Check if document has approved tags in subcollection
-        const tagsRef = collection(db, 'teams', this.teamId, 'evidence', doc.id, 'tags');
+        const tagsRef = collection(
+          db,
+          'teams',
+          this.teamId,
+          'matters',
+          'general',
+          'evidence',
+          doc.id,
+          'tags'
+        );
         const tagsSnapshot = await getDocs(tagsRef);
 
         let hasApprovedTags = false;
@@ -254,7 +272,7 @@ export class EvidenceQueryService {
     try {
       if (!searchTerm?.trim()) return [];
 
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const querySnapshot = await getDocs(evidenceRef);
       const results = [];
       const searchTermLower = searchTerm.toLowerCase().trim();
@@ -273,7 +291,16 @@ export class EvidenceQueryService {
 
         // Check approved tags from subcollection
         if (!isMatch) {
-          const tagsRef = collection(db, 'teams', this.teamId, 'evidence', doc.id, 'tags');
+          const tagsRef = collection(
+            db,
+            'teams',
+            this.teamId,
+            'matters',
+            'general',
+            'evidence',
+            doc.id,
+            'tags'
+          );
           const tagsSnapshot = await getDocs(tagsRef);
 
           for (const tagDoc of tagsSnapshot.docs) {
@@ -358,7 +385,7 @@ export class EvidenceQueryService {
    */
   async getAllEvidence(documentLimit = 50) {
     try {
-      const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
+      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
       const q = query(evidenceRef, orderBy('updatedAt', 'desc'), limit(documentLimit));
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
