@@ -15,6 +15,7 @@ import { useAuthStore } from '../../../core/stores/auth.js';
 import tagSubcollectionService from '../services/tagSubcollectionService.js';
 import { useCategoryStore } from './categoryStore.js';
 import { FileProcessingService } from '../services/fileProcessingService.js';
+import { deduplicateEvidence } from '../composables/useEvidenceDeduplication.js';
 
 export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   // State
@@ -25,6 +26,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
   // Cache for display information
   const displayInfoCache = ref(new Map());
+
+  // Track metadata selections for files with multiple metadata variants
+  const metadataSelections = ref(new Map()); // evidenceId -> selectedMetadataHash
 
   // Store references
   const authStore = useAuthStore();
@@ -339,7 +343,14 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             });
           }
 
-          evidenceList.value = evidence;
+          console.log(
+            `[DEBUG ORGANIZER LOADING] Raw evidence loaded: ${evidence.length} documents`
+          );
+
+          // Apply deduplication - group by fileHash, collect metadata options
+          const deduplicated = deduplicateEvidence(evidence);
+
+          evidenceList.value = deduplicated;
           loading.value = false;
           isInitialized.value = true;
 
@@ -347,7 +358,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             `[DEBUG ORGANIZER LOADING] Core store loading completed at: ${new Date().toISOString()} (${Date.now()})`
           );
           console.log(
-            `[OrganizerCore] Loaded ${evidence.length} evidence documents with display info`
+            `[OrganizerCore] Loaded ${evidence.length} raw documents → ${deduplicated.length} deduplicated with display info`
           );
 
           // Notify query store to update filters if it exists
@@ -469,6 +480,62 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   };
 
   /**
+   * Select a different metadata variant for a file with multiple options
+   * @param {string} evidenceId - Evidence document ID
+   * @param {string} metadataHash - displayCopy (metadataHash) to switch to
+   */
+  const selectMetadata = (evidenceId, metadataHash) => {
+    try {
+      // Find the evidence document
+      const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
+      if (evidenceIndex === -1) {
+        console.warn(`[OrganizerCore] Evidence ${evidenceId} not found for metadata selection`);
+        return;
+      }
+
+      const evidence = evidenceList.value[evidenceIndex];
+
+      // Check if this evidence has multiple metadata options
+      if (!evidence.metadataOptions || evidence.metadataOptions.length <= 1) {
+        console.warn(
+          `[OrganizerCore] Evidence ${evidenceId} has no multiple metadata options to select`
+        );
+        return;
+      }
+
+      // Find the requested metadata option
+      const option = evidence.metadataOptions.find((opt) => opt.displayCopy === metadataHash);
+      if (!option) {
+        console.warn(
+          `[OrganizerCore] Metadata ${metadataHash} not found in options for evidence ${evidenceId}`
+        );
+        return;
+      }
+
+      // Update the evidence with selected metadata display values
+      evidenceList.value[evidenceIndex] = {
+        ...evidence,
+        displayName: option.displayName,
+        createdAt: option.createdAt,
+        selectedMetadataHash: metadataHash,
+        displayCopy: metadataHash, // Update displayCopy to reflect selection
+      };
+
+      // Track the selection in state
+      metadataSelections.value.set(evidenceId, metadataHash);
+
+      console.log(
+        `[OrganizerCore] Selected metadata for evidence ${evidenceId}: ${option.displayName} (${metadataHash.substring(0, 8)}...)`
+      );
+
+      // Notify other stores
+      notifyDataChange();
+    } catch (err) {
+      console.error('[OrganizerCore] Failed to select metadata:', err);
+    }
+  };
+
+  /**
    * Reset store to initial state
    */
   const reset = () => {
@@ -477,6 +544,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
     error.value = null;
     isInitialized.value = false;
     displayInfoCache.value.clear();
+    metadataSelections.value.clear();
   };
 
   return {
@@ -485,6 +553,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
     loading,
     error,
     isInitialized,
+    metadataSelections,
 
     // Computed
     evidenceCount,
@@ -495,6 +564,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
     getEvidenceById,
     refreshEvidence,
     refreshEvidenceTags,
+
+    // Metadata selection
+    selectMetadata,
 
     // Cache management
     clearDisplayCache,

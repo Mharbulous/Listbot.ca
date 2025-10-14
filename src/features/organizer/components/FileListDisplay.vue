@@ -25,6 +25,7 @@
             :aiProcessing="props.getAIProcessing(evidence.id)"
             :get-evidence-tags="props.getEvidenceTags"
             @process-with-ai="$emit('process-with-ai', $event)"
+            @metadata-changed="handleMetadataChanged"
           />
         </template>
       </div>
@@ -44,6 +45,10 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import FileListItem from './FileListItem.vue';
 import { useLazyDocuments } from '@/composables/useLazyDocuments.js';
+import { useOrganizerStore } from '../stores/organizer.js';
+
+// Get store instance
+const organizerStore = useOrganizerStore();
 
 // Debug logging helper
 const debugLog = (message, data = null) => {
@@ -88,6 +93,15 @@ let dataLoadTime = null; // eslint-disable-line no-unused-vars
 
 // Emits
 const emit = defineEmits(['process-with-ai']);
+
+/**
+ * Handle metadata selection change from FileListItem
+ * Delegates to store to update evidence with selected metadata
+ */
+const handleMetadataChanged = (evidenceId, metadataHash) => {
+  debugLog(`Metadata changed: ${evidenceId} -> ${metadataHash.substring(0, 8)}...`);
+  organizerStore.selectMetadata(evidenceId, metadataHash);
+};
 
 // Debug: Watch filteredEvidence changes to track data loading timing
 watch(

@@ -6,13 +6,51 @@
       </v-icon>
     </div>
     <div class="file-details">
-      <h4 class="file-name text-subtitle-1 font-weight-medium">
-        {{ displayName }}
-      </h4>
-      <p class="file-metadata text-body-2 text-medium-emphasis">
-        {{ formattedFileSize }} • {{ fileExtension }} •
-        {{ formattedDate }}
-      </p>
+      <!-- File name: Show dropdown if multiple metadata options, else show static name -->
+      <div class="file-name-wrapper">
+        <!-- Single metadata - static display -->
+        <h4 v-if="!hasMultipleMetadata" class="file-name text-subtitle-1 font-weight-medium">
+          {{ displayName }}
+        </h4>
+
+        <!-- Multiple metadata - dropdown selector -->
+        <v-select
+          v-else
+          :model-value="selectedMetadataHash"
+          :items="metadataNameOptions"
+          item-title="displayName"
+          item-value="metadataHash"
+          density="compact"
+          variant="plain"
+          hide-details
+          class="metadata-name-selector text-subtitle-1 font-weight-medium"
+          @update:model-value="handleNameChange"
+        />
+
+      </div>
+
+      <!-- File metadata line with date dropdown if multiple options -->
+      <div class="file-metadata text-body-2 text-medium-emphasis">
+        <span>{{ formattedFileSize }} • {{ fileExtension }} •</span>
+
+        <!-- Single metadata - static date -->
+        <span v-if="!hasMultipleMetadata" class="ml-1">{{ formattedDate }}</span>
+
+        <!-- Multiple metadata - inline date dropdown -->
+        <v-select
+          v-else
+          :model-value="selectedMetadataHash"
+          :items="metadataDateOptions"
+          item-title="dateLabel"
+          item-value="metadataHash"
+          density="compact"
+          variant="plain"
+          hide-details
+          class="metadata-date-selector"
+          @update:model-value="handleDateChange"
+        />
+      </div>
+
       <div v-if="showProcessingStage && processingStage !== 'uploaded'" class="processing-stage">
         <span class="processing-badge" :class="`processing-badge--${processingStage}`">
           {{ processingStageText }}
@@ -50,6 +88,9 @@ const props = defineProps({
     default: false,
   },
 });
+
+// Emits
+const emit = defineEmits(['metadata-changed']);
 
 // Computed properties for file display
 const displayName = computed(() => {
@@ -132,6 +173,71 @@ const processingStageText = computed(() => {
   };
   return stageTexts[processingStage.value] || processingStage.value;
 });
+
+// === Metadata Deduplication Support ===
+
+/**
+ * Check if this evidence has multiple metadata variants
+ */
+const hasMultipleMetadata = computed(() => {
+  return props.evidence?.metadataOptions && props.evidence.metadataOptions.length > 1;
+});
+
+/**
+ * Currently selected metadata hash
+ */
+const selectedMetadataHash = computed(() => {
+  return props.evidence?.selectedMetadataHash || props.evidence?.displayCopy;
+});
+
+/**
+ * Options for filename dropdown (when multiple metadata exists)
+ */
+const metadataNameOptions = computed(() => {
+  if (!hasMultipleMetadata.value) return [];
+
+  return props.evidence.metadataOptions.map((opt) => ({
+    displayName: opt.displayName,
+    metadataHash: opt.displayCopy,
+  }));
+});
+
+/**
+ * Options for date dropdown (when multiple metadata exists)
+ */
+const metadataDateOptions = computed(() => {
+  if (!hasMultipleMetadata.value) return [];
+
+  return props.evidence.metadataOptions.map((opt) => {
+    const date = opt.createdAt?.toDate ? opt.createdAt.toDate() : new Date(opt.createdAt);
+    return {
+      dateLabel: date.toLocaleDateString(),
+      metadataHash: opt.displayCopy,
+    };
+  });
+});
+
+/**
+ * Handle filename dropdown change
+ * Emits metadata-changed event to propagate up to store
+ */
+const handleNameChange = (metadataHash) => {
+  console.log(
+    `[FileListItemContent] Name changed for evidence ${props.evidence.id}: ${metadataHash}`
+  );
+  emit('metadata-changed', props.evidence.id, metadataHash);
+};
+
+/**
+ * Handle date dropdown change
+ * Emits metadata-changed event to propagate up to store
+ */
+const handleDateChange = (metadataHash) => {
+  console.log(
+    `[FileListItemContent] Date changed for evidence ${props.evidence.id}: ${metadataHash}`
+  );
+  emit('metadata-changed', props.evidence.id, metadataHash);
+};
 
 // Performance tracking - mark setup completion
 setupComplete = performance.now();
@@ -237,5 +343,134 @@ onMounted(() => {
 
 .file-list-item.compact .file-details {
   gap: 2px;
+}
+
+/* Metadata dropdown selectors */
+.file-name-wrapper {
+  margin-bottom: 4px;
+}
+
+.metadata-name-selector {
+  max-width: 400px;
+  margin-bottom: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Make filename dropdown look identical to static text - collapse ALL nested containers */
+.metadata-name-selector :deep(*) {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.metadata-name-selector :deep(.v-input) {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.metadata-name-selector :deep(.v-input__control) {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.metadata-name-selector :deep(.v-field) {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.metadata-name-selector :deep(.v-field__field) {
+  height: auto !important;
+  min-height: auto !important;
+  display: flex;
+  align-items: center;
+}
+
+.metadata-name-selector :deep(.v-field__input) {
+  height: auto !important;
+  min-height: auto !important;
+  line-height: 1.2;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity)) !important;
+}
+
+/* Hide unnecessary Vuetify elements that add height */
+.metadata-name-selector :deep(.v-field__overlay) {
+  display: none !important;
+}
+
+.metadata-name-selector :deep(.v-field__outline) {
+  display: none !important;
+}
+
+.metadata-name-selector :deep(.v-field__loader) {
+  display: none !important;
+}
+
+.metadata-name-selector :deep(.v-progress-linear) {
+  display: none !important;
+}
+
+.metadata-name-selector :deep(input) {
+  display: none !important;
+}
+
+.metadata-name-selector :deep(.v-select__selection) {
+  height: auto !important;
+  min-height: auto !important;
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity)) !important;
+}
+
+.metadata-name-selector :deep(.v-select__selection-text) {
+  height: auto !important;
+  min-height: auto !important;
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity)) !important;
+}
+
+.metadata-name-selector :deep(.v-field__append-inner) {
+  margin-left: 4px !important;
+  align-items: center;
+}
+
+.metadata-date-selector {
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: middle;
+  max-width: 180px;
+}
+
+.metadata-date-selector :deep(.v-field) {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.metadata-date-selector :deep(.v-field__input) {
+  padding: 0;
+  min-height: auto;
+  font-size: 0.875rem;
+  opacity: 0.87;
+}
+
+.metadata-date-selector :deep(.v-field__prepend-inner) {
+  padding: 0;
+  margin-right: 2px;
+}
+
+.metadata-date-selector :deep(.v-field__append-inner) {
+  padding: 0;
+  margin-left: 2px;
+}
+
+/* Hover effects for dropdowns */
+.metadata-name-selector:hover,
+.metadata-date-selector:hover {
+  cursor: pointer;
 }
 </style>

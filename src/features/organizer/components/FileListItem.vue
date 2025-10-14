@@ -8,7 +8,11 @@
     <v-card-text class="pa-4">
       <div class="file-item-content">
         <!-- File info section -->
-        <FileListItemContent :evidence="evidence" :show-processing-stage="showProcessingStage" />
+        <FileListItemContent
+          :evidence="evidence"
+          :show-processing-stage="showProcessingStage"
+          @metadata-changed="handleMetadataChanged"
+        />
 
         <!-- Simplified Tags section - conditionally lazy loaded -->
         <div
@@ -145,7 +149,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['click', 'selection-change', 'process-with-ai']);
+const emit = defineEmits(['click', 'selection-change', 'process-with-ai', 'metadata-changed']);
 
 // Progressive/lazy loading state
 const tagsVisible = ref(false);
@@ -208,6 +212,13 @@ const handleSelectionChange = (selected) => {
 const handleProcessWithAI = () => {
   console.log('DEBUG: handleProcessWithAI called with evidence:', props.evidence.id);
   emit('process-with-ai', props.evidence);
+};
+
+const handleMetadataChanged = (evidenceId, metadataHash) => {
+  console.log(
+    `[FileListItem] Forwarding metadata-changed event: ${evidenceId} -> ${metadataHash}`
+  );
+  emit('metadata-changed', evidenceId, metadataHash);
 };
 
 // Track component mount performance

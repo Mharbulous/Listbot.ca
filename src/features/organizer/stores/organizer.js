@@ -70,6 +70,15 @@ export const useOrganizerStore = defineStore('organizer', () => {
   };
 
   /**
+   * Select metadata variant for evidence with multiple options
+   * @param {string} evidenceId - Evidence document ID
+   * @param {string} metadataHash - Metadata hash to select
+   */
+  const selectMetadata = (evidenceId, metadataHash) => {
+    coreStore.selectMetadata(evidenceId, metadataHash);
+  };
+
+  /**
    * Reset all stores
    */
   const reset = () => {
@@ -102,6 +111,7 @@ export const useOrganizerStore = defineStore('organizer', () => {
     getDisplayInfo: coreStore.getDisplayInfo,
     getAllTags,
     refreshEvidenceTags: coreStore.refreshEvidenceTags,
+    selectMetadata, // v1.4 - Metadata selection for deduplicated display
 
     // === NEW v1.1 FEATURES ===
     // Store access
