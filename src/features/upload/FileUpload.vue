@@ -16,22 +16,7 @@
 
     <!-- Folder Options Dialog -->
     <FolderOptionsDialog
-      :show="showFolderOptions"
-      :subfolder-count="subfolderCount"
-      :include-subfolders="includeSubfolders"
-      :is-analyzing="isAnalyzing"
-      :main-folder-analysis="mainFolderAnalysis"
-      :all-files-analysis="allFilesAnalysis"
-      :main-folder-progress="mainFolderProgress"
-      :all-files-progress="allFilesProgress"
-      :main-folder-complete="mainFolderComplete"
-      :all-files-complete="allFilesComplete"
-      :is-analyzing-main-folder="isAnalyzingMainFolder"
-      :is-analyzing-all-files="isAnalyzingAllFiles"
-      :analysis-timed-out="analysisTimedOut"
-      :timeout-error="timeoutError"
-      :current-progress-message="currentProgressMessage"
-      :total-directory-entry-count="totalDirectoryEntryCount"
+      v-bind="folderOptionsProps"
       @update:show="showFolderOptions = $event"
       @update:include-subfolders="includeSubfolders = $event"
       @confirm="confirmFolderOptions"
@@ -41,28 +26,8 @@
     <!-- Upload Queue/Preview -->
     <FileUploadQueue
       v-if="uploadQueue.length > 0 || isProcessingUIUpdate"
+      v-bind="queueProps"
       class="flex-grow-1"
-      :files="uploadQueue"
-      :is-processing-ui-update="isProcessingUIUpdate"
-      :ui-update-progress="uiUpdateProgress"
-      :total-analyzed-files="totalAnalyzedFiles"
-      :upload-status="uploadStatus"
-      :show-time-progress="
-        timeWarning.startTime.value !== null && (uploadQueue.length === 0 || isProcessingUIUpdate)
-      "
-      :time-progress="{
-        elapsedTime: timeWarning.elapsedTime.value,
-        progressPercentage: timeWarning.progressPercentage.value,
-        isOverdue: timeWarning.isOverdue.value,
-        overdueSeconds: timeWarning.overdueSeconds.value,
-        timeRemaining: timeWarning.timeRemaining.value,
-        formattedElapsedTime: timeWarning.formattedElapsedTime.value,
-        formattedTimeRemaining: timeWarning.formattedTimeRemaining.value,
-        estimatedDuration: timeWarning.estimatedDuration.value,
-      }"
-      :is-uploading="uploadStatus.isUploading"
-      :is-paused="uploadStatus.isPaused"
-      :is-starting-upload="isStartingUpload"
       @remove-file="removeFromQueue"
       @start-upload="handleStartUpload"
       @pause-upload="handlePauseUpload"
@@ -103,8 +68,6 @@
       @continue-waiting="handleContinueWaiting"
       @close="handleCloseWarning"
     />
-
-    <!-- Simple upload progress is now handled in the FileUploadQueue component directly -->
   </v-container>
 </template>
 
@@ -125,7 +88,12 @@ import {
   getStoredHardwarePerformanceFactor,
 } from './utils/hardwareCalibration.js';
 import { storage, db } from '../../services/firebase.js';
-import { ref as storageRef, getDownloadURL, getMetadata, uploadBytesResumable } from 'firebase/storage';
+import {
+  ref as storageRef,
+  getDownloadURL,
+  getMetadata,
+  uploadBytesResumable,
+} from 'firebase/storage';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useAuthStore } from '../../core/stores/auth.js';
 import { useLazyHashTooltip } from './composables/useLazyHashTooltip.js';
@@ -196,12 +164,10 @@ const {
   mainFolderAnalysis,
   allFilesAnalysis,
   totalDirectoryEntryCount,
-  // Timeout state
   analysisTimedOut,
   timeoutError,
   currentProgressMessage,
   skippedFolders,
-  // Progress tracking
   mainFolderProgress,
   allFilesProgress,
   mainFolderComplete,
@@ -232,16 +198,57 @@ const getCurrentSessionId = () => {
   return currentSessionId.value;
 };
 
+// Computed props for cleaner template bindings
+const folderOptionsProps = computed(() => ({
+  show: showFolderOptions.value,
+  subfolderCount: subfolderCount.value,
+  includeSubfolders: includeSubfolders.value,
+  isAnalyzing: isAnalyzing.value,
+  mainFolderAnalysis: mainFolderAnalysis.value,
+  allFilesAnalysis: allFilesAnalysis.value,
+  mainFolderProgress: mainFolderProgress.value,
+  allFilesProgress: allFilesProgress.value,
+  mainFolderComplete: mainFolderComplete.value,
+  allFilesComplete: allFilesComplete.value,
+  isAnalyzingMainFolder: isAnalyzingMainFolder.value,
+  isAnalyzingAllFiles: isAnalyzingAllFiles.value,
+  analysisTimedOut: analysisTimedOut.value,
+  timeoutError: timeoutError.value,
+  currentProgressMessage: currentProgressMessage.value,
+  totalDirectoryEntryCount: totalDirectoryEntryCount.value,
+}));
+
+const queueProps = computed(() => ({
+  files: uploadQueue.value,
+  isProcessingUiUpdate: isProcessingUIUpdate.value,
+  uiUpdateProgress: uiUpdateProgress.value,
+  uploadStatus: uploadStatus.value,
+  showTimeProgress:
+    timeWarning.startTime.value !== null &&
+    (uploadQueue.value.length === 0 || isProcessingUIUpdate.value),
+  timeProgress: {
+    elapsedTime: timeWarning.elapsedTime.value,
+    progressPercentage: timeWarning.progressPercentage.value,
+    isOverdue: timeWarning.isOverdue.value,
+    overdueSeconds: timeWarning.overdueSeconds.value,
+    timeRemaining: timeWarning.timeRemaining.value,
+    formattedElapsedTime: timeWarning.formattedElapsedTime.value,
+    formattedTimeRemaining: timeWarning.formattedTimeRemaining.value,
+    estimatedDuration: timeWarning.estimatedDuration.value,
+  },
+  isUploading: uploadStatus.value.isUploading,
+  isPaused: uploadStatus.value.isPaused,
+  isStartingUpload: isStartingUpload.value,
+  totalAnalyzedFiles: totalAnalyzedFiles.value,
+}));
+
 // Simple hash calculation function (same as worker)
 const calculateFileHash = async (file) => {
   try {
     const buffer = await file.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-    // Return standard SHA-256 hash of file content
-    return hash;
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   } catch (error) {
     throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);
   }
@@ -253,17 +260,10 @@ const generateStoragePath = (fileHash, originalFileName) => {
   return `teams/${authStore.currentTeam}/matters/general/uploads/${fileHash}.${extension}`;
 };
 
-const checkFileExists = async (fileHash, originalFileName) => {
+const checkFileExists = async (fileHash) => {
   try {
-    // Check Firestore evidence collection for existing file hash
-    // This avoids making storage requests that generate 404 console errors
     const evidenceRef = collection(db, 'teams', authStore.currentTeam, 'evidence');
-    const hashQuery = query(
-      evidenceRef, 
-      where('storageRef.fileHash', '==', fileHash),
-      limit(1)
-    );
-    
+    const hashQuery = query(evidenceRef, where('storageRef.fileHash', '==', fileHash), limit(1));
     const querySnapshot = await getDocs(hashQuery);
     return !querySnapshot.empty;
   } catch (error) {
@@ -297,19 +297,13 @@ const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = 
     uploadTask.on(
       'state_changed',
       () => {
-        // Check if aborted during progress
         if (abortSignal && abortSignal.aborted) {
           uploadTask.cancel();
           reject(new Error('AbortError'));
-          return;
         }
-        // Progress updates could be added here if needed
       },
-      (error) => {
-        reject(error);
-      },
+      (error) => reject(error),
       async () => {
-        // Upload completed successfully
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           resolve({ success: true, downloadURL });
@@ -321,11 +315,53 @@ const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = 
   });
 };
 
+// Helper function to check if processing was aborted
+const isAborted = () => analysisTimedOut.value;
+
+// Helper function to safely handle logging errors
+const safeLog = async (logFn, context) => {
+  try {
+    await logFn();
+  } catch (error) {
+    console.error(`Failed to log ${context}:`, error);
+  }
+};
+
+// Helper function to safely handle metadata operations
+const safeMetadata = async (metadataFn, context) => {
+  try {
+    await metadataFn();
+  } catch (error) {
+    console.error(`Failed to create metadata ${context}:`, error);
+  }
+};
+
+// Helper function for creating file metadata
+const createFileMetadataRecord = async (queueFile, fileHash) => {
+  await createMetadataRecord({
+    originalName: queueFile.name,
+    lastModified: queueFile.lastModified,
+    fileHash: fileHash,
+    size: queueFile.size,
+    sessionId: getCurrentSessionId(),
+    originalPath: queueFile.path,
+  });
+};
+
+// Helper function for logging upload events
+const logFileEvent = async (eventType, queueFile, fileHash) => {
+  const metadataHash = await generateMetadataHash(queueFile.name, queueFile.lastModified, fileHash);
+  await logUploadEvent({
+    eventType,
+    fileName: queueFile.name,
+    fileHash,
+    metadataHash,
+  });
+};
+
 // Connect time monitoring to deduplication processing
 queueDeduplication.setTimeMonitoringCallback({
-  onProcessingStart: () => {
-    // Time monitoring will be started when we have an estimate from folder analysis
-  },
+  onProcessingStart: () => {},
   onProcessingComplete: () => {
     timeWarning.resetMonitoring();
     queueDeduplication.terminateWorker();
@@ -341,74 +377,61 @@ queueDeduplication.setTimeMonitoringCallback({
   },
 });
 
-// Legacy: Complex cleanup function replaced by simple page refresh
-
-// Enhanced clearQueue that uses comprehensive cleanup
+// Enhanced clearQueue that uses page refresh for simplicity
 const clearQueue = () => {
-  // Simple and reliable: just refresh the page
   console.log('🔄 Clear All: Refreshing page to reset all state');
   window.location.reload();
+};
+
+// Helper to generate hardware-calibrated estimate
+const generateHardwareCalibratedEstimate = (files) => {
+  let hardwarePerformanceFactor = getStoredHardwarePerformanceFactor();
+  if (!hardwarePerformanceFactor || hardwarePerformanceFactor <= 0) {
+    hardwarePerformanceFactor = 1.61; // Baseline H-factor
+  }
+
+  const sizeMap = new Map();
+  files.forEach((file) => {
+    const size = file.size || 0;
+    sizeMap.set(size, (sizeMap.get(size) || 0) + 1);
+  });
+  const duplicateCandidates = files.filter((file) => sizeMap.get(file.size || 0) > 1);
+  const duplicateCandidatesSizeMB =
+    duplicateCandidates.reduce((sum, file) => sum + (file.size || 0), 0) / (1024 * 1024);
+
+  const folderData = {
+    totalFiles: files.length,
+    duplicateCandidates: duplicateCandidates.length,
+    duplicateCandidatesSizeMB: Math.round(duplicateCandidatesSizeMB * 10) / 10,
+    avgDirectoryDepth: 2.5,
+    totalDirectoryCount: 1,
+  };
+
+  const calibratedPrediction = calculateCalibratedProcessingTime(
+    folderData,
+    hardwarePerformanceFactor
+  );
+  return calibratedPrediction.totalTimeMs;
 };
 
 // Integrate processFiles with updateUploadQueue with safety filtering
 const processFilesWithQueue = async (files) => {
   const processId = Math.random().toString(36).substr(2, 9);
 
-  // Check if analysis has been aborted before processing
-  if (analysisTimedOut.value) {
-    console.log('Skipping file processing - analysis was aborted');
+  if (isAborted() || !files || files.length === 0) {
+    console.log('Skipping file processing - analysis was aborted or no files');
     return;
   }
 
-  // Additional safety check - if queue is empty, processing was likely cancelled
-  if (!files || files.length === 0) {
-    console.log('Skipping file processing - no files to process');
-    return;
-  }
-
-  // Start time monitoring if not already started and we have files to process
+  // Start time monitoring if not already started
   if (files.length > 0 && !timeWarning.startTime.value) {
     const folderAnalysis = allFilesAnalysis.value || mainFolderAnalysis.value;
     let estimatedTime = 0;
 
     if (folderAnalysis && folderAnalysis.timeMs && folderAnalysis.timeMs > 0) {
-      // Use existing folder analysis estimate (already hardware-calibrated)
       estimatedTime = folderAnalysis.timeMs;
     } else {
-      // Generate hardware-calibrated estimate on-the-fly for files without folder analysis
-      // No folder analysis available, generating hardware-calibrated estimate for file processing
-
-      // Get stored hardware performance factor or use baseline
-      let hardwarePerformanceFactor = getStoredHardwarePerformanceFactor();
-      if (!hardwarePerformanceFactor || hardwarePerformanceFactor <= 0) {
-        // Use baseline H-factor for new users (1.61 files/ms)
-        hardwarePerformanceFactor = 1.61;
-      }
-
-      // Create file analysis data for calibrated estimation
-      const sizeMap = new Map();
-      files.forEach((file) => {
-        const size = file.size || 0;
-        sizeMap.set(size, (sizeMap.get(size) || 0) + 1);
-      });
-      const duplicateCandidates = files.filter((file) => sizeMap.get(file.size || 0) > 1);
-      const duplicateCandidatesSizeMB =
-        duplicateCandidates.reduce((sum, file) => sum + (file.size || 0), 0) / (1024 * 1024);
-
-      const folderData = {
-        totalFiles: files.length,
-        duplicateCandidates: duplicateCandidates.length,
-        duplicateCandidatesSizeMB: Math.round(duplicateCandidatesSizeMB * 10) / 10,
-        avgDirectoryDepth: 2.5, // Default assumption for direct file processing
-        totalDirectoryCount: 1,
-      };
-
-      // Generate hardware-calibrated estimate
-      const calibratedPrediction = calculateCalibratedProcessingTime(
-        folderData,
-        hardwarePerformanceFactor
-      );
-      estimatedTime = calibratedPrediction.totalTimeMs;
+      estimatedTime = generateHardwareCalibratedEstimate(files);
     }
 
     if (estimatedTime > 0) {
@@ -418,16 +441,16 @@ const processFilesWithQueue = async (files) => {
     }
   }
 
-  // Check if processing was aborted after time monitoring setup
-  if (analysisTimedOut.value) {
+  if (isAborted()) {
     console.log('Aborting file processing - analysis was cancelled after time monitoring setup');
     return;
   }
 
-  // Double-check safety filter: exclude any files from skipped folders
+  // Safety filter: exclude any files from skipped folders
+  let filesToProcess = files;
   if (skippedFolders.value && skippedFolders.value.length > 0) {
     const originalCount = files.length;
-    const safeFiles = files.filter((file) => {
+    filesToProcess = files.filter((file) => {
       const filePath = file.path || file.webkitRelativePath || file.name;
       const isInSkippedFolder = skippedFolders.value.some((skippedPath) => {
         const normalizedFilePath = filePath.replace(/\\/g, '/').toLowerCase();
@@ -442,98 +465,50 @@ const processFilesWithQueue = async (files) => {
       return true;
     });
 
-    if (safeFiles.length !== originalCount) {
+    if (filesToProcess.length !== originalCount) {
       console.log(
-        `Upload safety filter: excluded ${originalCount - safeFiles.length} files from ${skippedFolders.value.length} skipped folders`
+        `Upload safety filter: excluded ${originalCount - filesToProcess.length} files from ${skippedFolders.value.length} skipped folders`
       );
-    }
-
-    // Final check before actually processing files
-    if (analysisTimedOut.value) {
-      console.log(`❌ [${processId}] EXIT EARLY: aborted during file preparation`);
-      return;
-    }
-
-    try {
-      // Final abort check immediately before processFiles call
-      if (analysisTimedOut.value) {
-        console.log(`❌ [${processId}] EXIT EARLY: aborted right before processFiles call`);
-        return;
-      }
-
-      await processFiles(safeFiles, updateUploadQueue);
-
-      // Check if processing was aborted after processFiles completed
-      if (analysisTimedOut.value) {
-        console.log(
-          `❌ [${processId}] EXIT ABORT: processing aborted after completion - skipping cleanup`
-        );
-        return;
-      }
-
-      // Processing completed successfully - perform cleanup
-      updateAllFilesToReady(); // Update all ready files to show blue dots
-      timeWarning.resetMonitoring();
-      queueDeduplication.clearTimeMonitoringCallback();
-    } catch (error) {
-      console.error('Error during file processing:', error);
-
-      // Check if error was due to abort
-      if (analysisTimedOut.value) {
-        console.log(`❌ [${processId}] EXIT ERROR ABORT: processing aborted during error handling`);
-        return;
-      }
-
-      // Cleanup on error as well
-      timeWarning.resetMonitoring();
-      queueDeduplication.clearTimeMonitoringCallback();
-      throw error; // Re-throw to maintain error handling
-    }
-  } else {
-    // Final check before actually processing files (no folder filtering path)
-    if (analysisTimedOut.value) {
-      console.log('Aborting file processing - analysis was cancelled during preparation');
-      return;
-    }
-
-    try {
-      // Final abort check immediately before processFiles call
-      if (analysisTimedOut.value) {
-        console.log(`❌ [${processId}] EXIT EARLY: aborted right before processFiles call`);
-        return;
-      }
-
-      await processFiles(files, updateUploadQueue);
-
-      // Check if processing was aborted after processFiles completed
-      if (analysisTimedOut.value) {
-        console.log(
-          `❌ [${processId}] EXIT ABORT: processing aborted after completion - skipping cleanup`
-        );
-        return;
-      }
-
-      // Processing completed successfully - perform cleanup
-      updateAllFilesToReady(); // Update all ready files to show blue dots
-      timeWarning.resetMonitoring();
-      queueDeduplication.clearTimeMonitoringCallback();
-    } catch (error) {
-      console.error('Error during file processing:', error);
-
-      // Check if error was due to abort
-      if (analysisTimedOut.value) {
-        console.log(`❌ [${processId}] EXIT ERROR ABORT: processing aborted during error handling`);
-        return;
-      }
-
-      // Cleanup on error as well
-      timeWarning.resetMonitoring();
-      queueDeduplication.clearTimeMonitoringCallback();
-      throw error; // Re-throw to maintain error handling
     }
   }
 
-  // 🔍 DEBUG: Log AsyncTracker state at successful exit
+  if (isAborted()) {
+    console.log(`❌ [${processId}] EXIT EARLY: aborted during file preparation`);
+    return;
+  }
+
+  try {
+    if (isAborted()) {
+      console.log(`❌ [${processId}] EXIT EARLY: aborted right before processFiles call`);
+      return;
+    }
+
+    await processFiles(filesToProcess, updateUploadQueue);
+
+    if (isAborted()) {
+      console.log(
+        `❌ [${processId}] EXIT ABORT: processing aborted after completion - skipping cleanup`
+      );
+      return;
+    }
+
+    updateAllFilesToReady();
+    timeWarning.resetMonitoring();
+    queueDeduplication.clearTimeMonitoringCallback();
+  } catch (error) {
+    console.error('Error during file processing:', error);
+
+    if (isAborted()) {
+      console.log(`❌ [${processId}] EXIT ERROR ABORT: processing aborted during error handling`);
+      return;
+    }
+
+    timeWarning.resetMonitoring();
+    queueDeduplication.clearTimeMonitoringCallback();
+    throw error;
+  }
+
+  // Debug: Log AsyncTracker state at successful exit
   if (window.__asyncTracker) {
     const exitStats = window.__asyncTracker.stats();
     console.log(`📊 [${processId}] AsyncTracker at EXIT:`, exitStats);
@@ -550,23 +525,16 @@ const handleFileSelect = async (event) => {
   } else {
     await addFilesToQueue(files, processFilesWithQueue);
   }
-  // Reset input
   event.target.value = '';
 };
 
 const handleFolderSelect = (event) => {
   updateRefs();
   const files = Array.from(event.target.files);
-
-  // File Explorer count will be compared automatically in processing
-  // Pass callback to handle no-subfolder case automatically
   processFolderFiles(files, async (files) => {
-    // Show Upload Queue instantly with first 100 files
     await initializeQueueInstantly(files);
-    // Then process all files for deduplication
     addFilesToQueue(files, processFilesWithQueue);
   });
-  // Reset input
   event.target.value = '';
 };
 
@@ -579,22 +547,15 @@ const handleDrop = async (event) => {
     addFilesToQueue: (files) => addFilesToQueue(files, processFilesWithQueue),
     processFolderEntry: (folder) =>
       processFolderEntry(folder, async (files) => {
-        // Check if analysis has been aborted
-        if (analysisTimedOut.value) {
+        if (isAborted()) {
           console.log('Aborting folder processing - analysis was cancelled');
           return;
         }
-
-        // Show Upload Queue instantly with first 100 files
         await initializeQueueInstantly(files);
-
-        // Check again before processing files for deduplication
-        if (analysisTimedOut.value) {
+        if (isAborted()) {
           console.log('Aborting file queue processing - analysis was cancelled');
           return;
         }
-
-        // Then process all files for deduplication
         addFilesToQueue(files, processFilesWithQueue);
       }),
   });
@@ -602,9 +563,7 @@ const handleDrop = async (event) => {
 
 const confirmFolderOptions = () => {
   baseConfirmFolderOptions(async (files) => {
-    // Show Upload Queue instantly with first 100 files
     await initializeQueueInstantly(files);
-    // Then process all files for deduplication (time monitoring will start automatically)
     addFilesToQueue(files, processFilesWithQueue);
   });
 };
@@ -617,7 +576,6 @@ const updateRefs = () => {
   }
 };
 
-// Ensure refs are updated after component mount
 const triggerFileSelectWrapper = () => {
   updateRefs();
   triggerFileSelect();
@@ -629,24 +587,12 @@ const triggerFolderSelectWrapper = () => {
 };
 
 // Handle cancel processing for progress modal
-const handleCancelProcessing = () => {
-  clearQueue();
-};
+const handleCancelProcessing = () => clearQueue();
 
 // Cloud file warning modal handlers
-const handleClearAll = () => {
-  clearQueue();
-};
-
-const handleContinueWaiting = () => {
-  // User chose to continue waiting
-  timeWarning.snoozeWarning();
-};
-
-const handleCloseWarning = () => {
-  // User closed warning without choosing action
-  timeWarning.dismissWarning();
-};
+const handleClearAll = () => clearQueue();
+const handleContinueWaiting = () => timeWarning.snoozeWarning();
+const handleCloseWarning = () => timeWarning.dismissWarning();
 
 // Pause/Resume upload handlers
 const handlePauseUpload = () => {
@@ -659,9 +605,74 @@ const handleResumeUpload = () => {
   console.log('Resume upload requested');
   isPaused.value = false;
   updateUploadStatus('resume');
-
-  // Continue upload from where we left off
   continueUpload();
+};
+
+// Process duplicate file (consolidated logic)
+const processDuplicateFile = async (queueFile) => {
+  console.log(`Processing duplicate file: ${queueFile.name}`);
+  updateUploadStatus('currentFile', queueFile.name, 'processing_duplicate');
+  updateFileStatus(queueFile, 'skipped');
+
+  await safeLog(
+    async () => await logFileEvent('upload_skipped_metadata_recorded', queueFile, queueFile.hash),
+    `duplicate file ${queueFile.name}`
+  );
+
+  await safeMetadata(
+    async () => await createFileMetadataRecord(queueFile, queueFile.hash),
+    `for duplicate ${queueFile.name}`
+  );
+
+  updateUploadStatus('skipped');
+  console.log(`Duplicate file processed: ${queueFile.name}`);
+};
+
+// Process existing file (consolidated logic)
+const processExistingFile = async (queueFile, fileHash) => {
+  console.log(`File skipped (already exists): ${queueFile.name}`);
+  updateUploadStatus('skipped');
+  updateFileStatus(queueFile, 'skipped');
+
+  await safeLog(
+    async () => await logFileEvent('upload_skipped_metadata_recorded', queueFile, fileHash),
+    `existing file ${queueFile.name}`
+  );
+
+  await safeMetadata(
+    async () => await createFileMetadataRecord(queueFile, fileHash),
+    `for existing file ${queueFile.name}`
+  );
+};
+
+// Process new file upload (consolidated logic)
+const processNewFileUpload = async (queueFile, fileHash) => {
+  updateUploadStatus('currentFile', queueFile.name, 'uploading');
+  console.log(`Uploading file: ${queueFile.name}`);
+
+  await safeLog(
+    async () => await logFileEvent('upload_interrupted', queueFile, fileHash),
+    `interrupted upload for ${queueFile.name}`
+  );
+
+  const uploadStartTime = Date.now();
+  await uploadSingleFile(queueFile.file, fileHash, queueFile.name, uploadAbortController.signal);
+  const uploadDurationMs = Date.now() - uploadStartTime;
+
+  console.log(`Upload duration for ${queueFile.name}: ${uploadDurationMs}ms`);
+  updateUploadStatus('successful');
+  updateFileStatus(queueFile, 'completed');
+  console.log(`Successfully uploaded: ${queueFile.name}`);
+
+  await safeLog(
+    async () => await logFileEvent('upload_success', queueFile, fileHash),
+    `upload completion for ${queueFile.name}`
+  );
+
+  await safeMetadata(
+    async () => await createFileMetadataRecord(queueFile, fileHash),
+    `for uploaded file ${queueFile.name}`
+  );
 };
 
 // Resumable upload loop function
@@ -669,25 +680,21 @@ const continueUpload = async () => {
   try {
     console.log('Continuing upload process...');
 
-    // Get all files from upload queue (including duplicates for processing)
     const filesToProcess = uploadQueue.value;
-
     if (filesToProcess.length === 0) {
       showNotification('No files to process', 'info');
       updateUploadStatus('complete');
       return;
     }
 
-    // Start from current index or beginning
     const startIndex = uploadStatus.value.currentUploadIndex || 0;
     console.log(`Continuing from file ${startIndex + 1} of ${filesToProcess.length}`);
 
-    // Process files from current index
     for (let i = startIndex; i < filesToProcess.length; i++) {
-      // Check if pause was requested before processing next file
+      // Check for pause request
       if (pauseRequested.value) {
         console.log(`Pause requested at file ${i + 1}. Pausing...`);
-        updateUploadStatus('setUploadIndex', i); // Save current position
+        updateUploadStatus('setUploadIndex', i);
         updateUploadStatus('pause');
         isPaused.value = true;
         pauseRequested.value = false;
@@ -695,204 +702,56 @@ const continueUpload = async () => {
       }
 
       const queueFile = filesToProcess[i];
-      updateUploadStatus('setUploadIndex', i); // Update current position
+      updateUploadStatus('setUploadIndex', i);
 
-      // Handle duplicate files - skip upload but log and save metadata
+      // Handle duplicate files
       if (queueFile.isDuplicate) {
-        console.log(`Processing duplicate file: ${queueFile.name}`);
-        updateUploadStatus('currentFile', queueFile.name, 'processing_duplicate');
-        updateFileStatus(queueFile, 'skipped');
-
         try {
-          // Log skipped event for duplicate file
-          const metadataHash = await generateMetadataHash(
-            queueFile.name,
-            queueFile.lastModified,
-            queueFile.hash
-          );
-          await logUploadEvent({
-            eventType: 'upload_skipped_metadata_recorded',
-            fileName: queueFile.name,
-            fileHash: queueFile.hash,
-            metadataHash: metadataHash,
-          });
-
-          // Create metadata record for duplicate (hash deduplication)
-          await createMetadataRecord({
-            originalName: queueFile.name,
-            lastModified: queueFile.lastModified,
-            fileHash: queueFile.hash,
-            size: queueFile.size,
-            sessionId: getCurrentSessionId(),
-            originalPath: queueFile.path, // webkitRelativePath for folder uploads
-          });
-
-          updateUploadStatus('skipped');
-          console.log(`Duplicate file processed: ${queueFile.name}`);
+          await processDuplicateFile(queueFile);
         } catch (error) {
           console.error(`Failed to process duplicate file ${queueFile.name}:`, error);
           updateFileStatus(queueFile, 'failed');
           updateUploadStatus('failed');
         }
-
-        continue; // Skip to next file
+        continue;
       }
 
       try {
-        // Create abort controller for this upload
         uploadAbortController = new AbortController();
 
-        // Calculate hash for the file (on-demand during upload)
+        // Calculate or reuse hash
         updateUploadStatus('currentFile', queueFile.name, 'calculating_hash');
         updateFileStatus(queueFile, 'uploading');
         console.log(`Calculating hash for: ${queueFile.name}`);
-        let fileHash;
 
-        // Check if file already has a hash (from deduplication process)
+        let fileHash;
         if (queueFile.hash) {
           fileHash = queueFile.hash;
           console.log(`Using existing hash for: ${queueFile.name}`);
         } else {
-          // Calculate hash now (for files with unique sizes or not previously processed)
           fileHash = await calculateFileHash(queueFile.file);
-          // Store calculated hash in the queue file for reuse by tooltip system
           queueFile.hash = fileHash;
-          // Also populate the tooltip cache immediately for instant tooltips
           populateExistingHash(queueFile.id || queueFile.name, fileHash);
           console.log(`Calculated new hash for: ${queueFile.name}`);
         }
 
-        // Check if upload was aborted during hash calculation
         if (uploadAbortController.signal.aborted) {
           console.log(`Upload aborted during hash calculation for: ${queueFile.name}`);
           break;
         }
 
-        // Check if file already exists in Firebase Storage
+        // Check if file exists
         updateUploadStatus('currentFile', queueFile.name, 'checking_existing');
-        const fileExists = await checkFileExists(fileHash, queueFile.name);
+        const fileExists = await checkFileExists(fileHash);
 
         if (fileExists) {
-          // File already exists, skipping
-          console.log(`File skipped (already exists): ${queueFile.name}`);
-          updateUploadStatus('skipped');
-          updateFileStatus(queueFile, 'skipped');
-
-          // Log individual upload event for skipped file
-          try {
-            const metadataHash = await generateMetadataHash(
-              queueFile.name,
-              queueFile.lastModified,
-              fileHash
-            );
-            await logUploadEvent({
-              eventType: 'upload_skipped_metadata_recorded',
-              fileName: queueFile.name,
-              fileHash: fileHash,
-              metadataHash: metadataHash,
-            });
-          } catch (logError) {
-            console.error(
-              `Failed to log upload event for existing file ${queueFile.name}:`,
-              logError
-            );
-            // Don't fail the upload process for logging errors
-          }
-
-          // Create metadata record even for existing files (metadata may be different)
-          try {
-            await createMetadataRecord({
-              originalName: queueFile.name,
-              lastModified: queueFile.lastModified,
-              fileHash: fileHash,
-              size: queueFile.size,
-              sessionId: getCurrentSessionId(),
-              originalPath: queueFile.path, // webkitRelativePath for folder uploads
-            });
-          } catch (metadataError) {
-            console.error(
-              `Failed to create metadata record for existing file ${queueFile.name}:`,
-              metadataError
-            );
-            // Don't fail the upload process for metadata errors
-          }
+          await processExistingFile(queueFile, fileHash);
         } else {
-          // Check if upload was aborted before uploading
           if (uploadAbortController.signal.aborted) {
             console.log(`Upload aborted before uploading: ${queueFile.name}`);
             break;
           }
-
-          // File needs to be uploaded
-          updateUploadStatus('currentFile', queueFile.name, 'uploading');
-          console.log(`Uploading file: ${queueFile.name}`);
-
-          // Log upload start event
-          try {
-            const metadataHash = await generateMetadataHash(
-              queueFile.name,
-              queueFile.lastModified,
-              fileHash
-            );
-            await logUploadEvent({
-              eventType: 'upload_interrupted',
-              fileName: queueFile.name,
-              fileHash: fileHash,
-              metadataHash: metadataHash,
-            });
-          } catch (logError) {
-            console.error(
-              `Failed to log interrupted upload event for ${queueFile.name}:`,
-              logError
-            );
-            // Don't fail the upload process for logging errors
-          }
-
-          const uploadStartTime = Date.now();
-          await uploadSingleFile(
-            queueFile.file,
-            fileHash,
-            queueFile.name,
-            uploadAbortController.signal
-          );
-          const uploadDurationMs = Date.now() - uploadStartTime;
-          console.log(`Upload duration for ${queueFile.name}: ${uploadDurationMs}ms`);
-          updateUploadStatus('successful');
-          updateFileStatus(queueFile, 'completed');
-          console.log(`Successfully uploaded: ${queueFile.name}`);
-
-          // Log successful upload completion
-          try {
-            const metadataHash = await generateMetadataHash(
-              queueFile.name,
-              queueFile.lastModified,
-              fileHash
-            );
-            await logUploadEvent({
-              eventType: 'upload_success',
-              fileName: queueFile.name,
-              fileHash: fileHash,
-              metadataHash: metadataHash,
-            });
-          } catch (logError) {
-            console.error(`Failed to log upload completion event for ${queueFile.name}:`, logError);
-            // Don't fail the upload process for logging errors
-          }
-
-          // Create metadata record for successfully uploaded file
-          try {
-            await createMetadataRecord({
-              originalName: queueFile.name,
-              lastModified: queueFile.lastModified,
-              fileHash: fileHash,
-              size: queueFile.size,
-              sessionId: getCurrentSessionId(),
-              originalPath: queueFile.path, // webkitRelativePath for folder uploads
-            });
-          } catch (metadataError) {
-            console.error(`Failed to create metadata record for ${queueFile.name}:`, metadataError);
-            // Don't fail the upload process for metadata errors
-          }
+          await processNewFileUpload(queueFile, fileHash);
         }
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -903,8 +762,8 @@ const continueUpload = async () => {
         updateUploadStatus('failed');
         updateFileStatus(queueFile, 'error');
 
-        // Log upload failure
-        try {
+        // Log failure
+        await safeLog(async () => {
           let currentFileHash = queueFile.hash || 'unknown_hash';
           if (currentFileHash === 'unknown_hash') {
             try {
@@ -914,30 +773,16 @@ const continueUpload = async () => {
                 `Could not calculate hash for failed upload: ${queueFile.name}`,
                 hashError
               );
-              currentFileHash = 'unknown_hash';
             }
           }
-          const metadataHash = await generateMetadataHash(
-            queueFile.name,
-            queueFile.lastModified,
-            currentFileHash
-          );
-          await logUploadEvent({
-            eventType: 'upload_failed',
-            fileName: queueFile.name,
-            fileHash: currentFileHash,
-            metadataHash: metadataHash,
-          });
-        } catch (logError) {
-          console.error(`Failed to log upload failure event for ${queueFile.name}:`, logError);
-          // Don't fail the upload process for logging errors
-        }
+          await logFileEvent('upload_failed', queueFile, currentFileHash);
+        }, `failure for ${queueFile.name}`);
       } finally {
         uploadAbortController = null;
       }
     }
 
-    // Check if we completed all files or were paused
+    // Handle completion or pause
     if (!isPaused.value) {
       updateUploadStatus('complete');
       console.log('Upload process completed:', {
@@ -946,7 +791,6 @@ const continueUpload = async () => {
         skipped: uploadStatus.value.skipped,
       });
 
-      // Show completion notification
       const totalProcessed = uploadStatus.value.successful + uploadStatus.value.skipped;
       if (uploadStatus.value.failed === 0) {
         showNotification(`All ${totalProcessed} files processed successfully!`, 'success');
@@ -976,19 +820,15 @@ const handleStartUpload = async () => {
     isStartingUpload.value = true;
     setPhaseComplete();
 
-    // Reset upload status counters only if not resuming
     if (!isPaused.value) {
       resetUploadStatus();
       currentUploadIndex.value = 0;
-      // Generate new session ID for this upload batch
       currentSessionId.value = null;
-      getCurrentSessionId(); // This will generate a new ID
+      getCurrentSessionId();
     }
 
     updateUploadStatus('start');
     console.log('Starting upload process...');
-
-    // Start the upload loop
     await continueUpload();
   } catch (error) {
     console.error('Upload process failed:', error);
@@ -1000,12 +840,8 @@ const handleStartUpload = async () => {
   }
 };
 
-// Legacy upload handlers removed - using simple upload system now
-
 // Computed property for total analyzed files count
-// Use directory entry count (File Explorer count) instead of processed files count
 const totalAnalyzedFiles = computed(() => {
-  // Return the directory entry count if available (shows what File Explorer sees)
   return totalDirectoryEntryCount.value > 0 ? totalDirectoryEntryCount.value : null;
 });
 </script>
