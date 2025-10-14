@@ -11,15 +11,15 @@ export class CategoryMigrationTest {
    */
   static async testMigrationFallback(teamId) {
     console.group('[CategoryMigrationTest] Testing isActive field migration');
-    
+
     try {
       // Test 1: Normal query with isActive field
       console.log('Test 1: Fetching categories with isActive field...');
       const activeCategories = await CategoryService.getActiveCategories(teamId);
       console.log(`Found ${activeCategories.length} active categories`);
-      
+
       // Verify all returned categories have isActive field
-      const missingIsActive = activeCategories.filter(cat => cat.isActive === undefined);
+      const missingIsActive = activeCategories.filter((cat) => cat.isActive === undefined);
       if (missingIsActive.length === 0) {
         console.log('✅ All categories have isActive field');
       } else {
@@ -43,8 +43,8 @@ export class CategoryMigrationTest {
       // Test 3: Verify migration happens automatically
       console.log('Test 3: Verifying automatic migration...');
       const categoriesAfterMigration = await CategoryService.getActiveCategories(teamId);
-      const stillMissing = categoriesAfterMigration.filter(cat => cat.isActive === undefined);
-      
+      const stillMissing = categoriesAfterMigration.filter((cat) => cat.isActive === undefined);
+
       if (stillMissing.length === 0) {
         console.log('✅ All categories now have isActive field after migration');
       } else {
@@ -55,14 +55,13 @@ export class CategoryMigrationTest {
         success: true,
         totalCategories: activeCategories.length,
         migrationNeeded: missingIsActive.length,
-        stillMissing: stillMissing.length
+        stillMissing: stillMissing.length,
       };
-
     } catch (error) {
       console.error('❌ Migration test failed:', error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     } finally {
       console.groupEnd();
@@ -80,7 +79,7 @@ export class CategoryMigrationTest {
       color: '#1976d2',
       tags: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
       // Note: isActive field is intentionally missing
     };
   }
@@ -90,17 +89,17 @@ export class CategoryMigrationTest {
    */
   static testMigrationLogic() {
     console.group('[CategoryMigrationTest] Testing migration logic');
-    
+
     const legacyCategory = this.simulateLegacyCategory();
     console.log('Legacy category (missing isActive):', legacyCategory);
-    
+
     // Test the logic used in the actual migration
     const shouldInclude = legacyCategory.isActive === undefined || legacyCategory.isActive === true;
     const defaultIsActive = legacyCategory.isActive === undefined ? true : legacyCategory.isActive;
-    
+
     console.log('Should include in results:', shouldInclude);
     console.log('Default isActive value:', defaultIsActive);
-    
+
     if (shouldInclude && defaultIsActive === true) {
       console.log('✅ Migration logic works correctly');
       console.groupEnd();

@@ -1,46 +1,41 @@
 <template>
   <div class="organizer-container">
-    <!-- Header with title and search -->
     <OrganizerHeader
       v-model:search-text="searchText"
       :evidence-count="evidenceCount"
       :filtered-count="filteredCount"
-      @search="handleSearch"
-      @manage-categories="navigateToCategories"
-      @view-mode-changed="handleViewModeChange"
+      @search="organizerStore.setFilter($event || '')"
+      @manage-categories="router.push('/organizer/categories')"
+      @view-mode-changed="viewMode = $event.mode"
     />
 
-    <!-- States (loading, error, empty) -->
     <OrganizerStates
       :loading="loading"
       :is-initialized="isInitialized"
       :error="error"
       :evidence-count="evidenceCount"
       :filtered-count="filteredCount"
-      @retry="retryLoad"
+      @retry="organizerStore.loadEvidence()"
       @clear-search="clearSearch"
     />
 
-    <!-- File list display -->
     <FileListDisplay
       v-if="showFileList"
       :key="refreshKey"
       v-model:view-mode="viewMode"
       :filtered-evidence="filteredEvidence"
-      :getEvidenceTags="getEvidenceTags"
-      :getTagUpdateLoading="getTagUpdateLoading"
-      :getAIProcessing="getAIProcessing"
+      :getEvidenceTags="organizerStore.getAllTags"
+      :getTagUpdateLoading="(id) => tagUpdateLoading.has(id)"
+      :getAIProcessing="(id) => aiProcessing.has(id)"
       @process-with-ai="processWithAI"
-      @manage-categories="navigateToCategories"
+      @manage-categories="router.push('/organizer/categories')"
     />
 
-    <!-- Loading overlay for updates -->
     <v-overlay v-model="showUpdateOverlay" class="d-flex align-center justify-center" contained>
       <v-progress-circular indeterminate size="48" />
       <p class="ml-4">Updating tags...</p>
     </v-overlay>
 
-    <!-- Snackbar for notifications -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="snackbar.timeout">
       {{ snackbar.message }}
       <template #actions>
@@ -60,92 +55,49 @@ import OrganizerHeader from '../components/OrganizerHeader.vue';
 import OrganizerStates from '../components/OrganizerStates.vue';
 import FileListDisplay from '../components/FileListDisplay.vue';
 
-// Define component name to satisfy Vue linting rules
-defineOptions({
-  name: 'OrganizerView',
-});
+defineOptions({ name: 'OrganizerView' });
 
-// Store and router
 const organizerStore = useOrganizerStore();
 const router = useRouter();
+const aiTagService = new AITagService();
 
 // State
 const searchText = ref('');
 const viewMode = ref('list');
 const showUpdateOverlay = ref(false);
 const tagUpdateLoading = ref(new Set());
-const aiProcessing = ref(new Set()); // Track AI processing by evidence ID
-const refreshKey = ref(0); // Force component refresh after AI processing
+const aiProcessing = ref(new Set());
+const refreshKey = ref(0);
 const unsubscribe = ref(null);
+const snackbar = ref({ show: false, message: '', color: 'success', timeout: 4000 });
 
-// AI Service instance
-const aiTagService = new AITagService();
-
-const snackbar = ref({
-  show: false,
-  message: '',
-  color: 'success',
-  timeout: 4000,
-});
-
-// Computed - use storeToRefs for reactive properties
+// Reactive store properties
 const { filteredEvidence, loading, error, evidenceCount, filteredCount, isInitialized } =
   storeToRefs(organizerStore);
 
-// Computed for conditional display
-const showFileList = computed(() => {
-  return (
-    !loading.value &&
-    !error.value &&
-    evidenceCount.value > 0 &&
-    filteredCount.value > 0 &&
-    isInitialized.value
-  );
-});
+// Show file list when ready
+const showFileList = computed(
+  () => !loading.value && !error.value && isInitialized.value && filteredCount.value > 0
+);
 
-// Methods
-const handleSearch = (value) => {
-  organizerStore.setFilter(value || '');
-};
-
+// Clear search and filters
 const clearSearch = () => {
   searchText.value = '';
   organizerStore.clearFilters();
 };
 
-const retryLoad = async () => {
-  await organizerStore.loadEvidence();
+// AI error messages mapping
+const getAIErrorMessage = (error) => {
+  if (error.message.includes('File size')) return 'File too large for AI processing (max 20MB)';
+  if (error.message.includes('categories'))
+    return 'Please create categories before using AI tagging';
+  if (error.message.includes('not found')) return 'Document not found';
+  return 'AI processing failed';
 };
 
-const navigateToCategories = () => {
-  router.push('/organizer/categories');
-};
-
-const handleViewModeChange = (event) => {
-  viewMode.value = event.mode;
-};
-
-// Helper methods for child components
-const getEvidenceTags = (evidence) => {
-  return organizerStore.getAllTags(evidence);
-};
-
-const getTagUpdateLoading = (evidenceId) => {
-  return tagUpdateLoading.value.has(evidenceId);
-};
-
-const getAIProcessing = (evidenceId) => {
-  return aiProcessing.value.has(evidenceId);
-};
-
-
-
+// Process document with AI
 const processWithAI = async (evidence) => {
-  console.log('DEBUG: processWithAI called with evidence:', evidence.id);
-  console.log('DEBUG: aiTagService.isAIEnabled():', aiTagService.isAIEnabled());
-
   if (!aiTagService.isAIEnabled()) {
-    console.log('DEBUG: AI features not enabled');
     showNotification('AI features are not enabled', 'warning');
     return;
   }
@@ -157,56 +109,35 @@ const processWithAI = async (evidence) => {
     const result = await aiTagService.processSingleDocument(evidence.id);
 
     if (result.success) {
-      if (result.suggestedTags.length > 0) {
-        showNotification(
-          `AI processing complete! ${result.suggestedTags.length} tags applied.`,
-          'success'
-        );
-      } else {
-        showNotification('AI processing complete, but no tags were suggested.', 'info');
-      }
-
-      // Refresh tags for this evidence document to get fresh data from Firestore
+      const tagCount = result.suggestedTags.length;
+      const message =
+        tagCount > 0
+          ? `AI processing complete! ${tagCount} tags applied.`
+          : 'AI processing complete, but no tags were suggested.';
+      showNotification(message, tagCount > 0 ? 'success' : 'info');
       await organizerStore.refreshEvidenceTags(evidence.id);
     } else {
       throw new Error(result.error || 'AI processing failed');
     }
   } catch (error) {
     console.error('AI processing failed:', error);
-
-    // User-friendly error messages
-    let errorMessage = 'AI processing failed';
-    if (error.message.includes('File size')) {
-      errorMessage = 'File too large for AI processing (max 20MB)';
-    } else if (error.message.includes('categories')) {
-      errorMessage = 'Please create categories before using AI tagging';
-    } else if (error.message.includes('not found')) {
-      errorMessage = 'Document not found';
-    }
-
-    showNotification(errorMessage, 'error');
+    showNotification(getAIErrorMessage(error), 'error');
   } finally {
     aiProcessing.value.delete(evidence.id);
   }
 };
 
+// Show notification
 const showNotification = (message, color = 'success', timeout = 4000) => {
-  snackbar.value = {
-    show: true,
-    message,
-    color,
-    timeout,
-  };
+  snackbar.value = { show: true, message, color, timeout };
 };
 
-// Lifecycle
+// Initialize on mount
 onMounted(async () => {
   try {
-    // Initialize all stores (evidence + categories)
     const { evidenceUnsubscribe } = await organizerStore.initialize();
     unsubscribe.value = evidenceUnsubscribe;
 
-    // Check for search query in URL parameters
     const urlSearchQuery = router.currentRoute.value.query.search;
     if (urlSearchQuery) {
       searchText.value = urlSearchQuery;
@@ -218,11 +149,9 @@ onMounted(async () => {
   }
 });
 
+// Cleanup on unmount
 onBeforeUnmount(() => {
-  // Clean up listeners
-  if (unsubscribe.value) {
-    unsubscribe.value();
-  }
+  if (unsubscribe.value) unsubscribe.value();
   organizerStore.reset();
 });
 </script>
@@ -233,6 +162,4 @@ onBeforeUnmount(() => {
   flex-direction: column;
   min-height: 100vh;
 }
-
-/* Simplified styles - component-specific styles moved to respective components */
 </style>

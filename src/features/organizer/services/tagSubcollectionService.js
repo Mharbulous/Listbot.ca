@@ -1,26 +1,26 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   setDoc,
-  query, 
-  where, 
-  orderBy, 
+  query,
+  where,
+  orderBy,
   serverTimestamp,
   writeBatch,
-  getDoc
-} from 'firebase/firestore'
-import { db } from '../../../services/firebase.js'
+  getDoc,
+} from 'firebase/firestore';
+import { db } from '../../../services/firebase.js';
 
 /**
  * Service for managing tags in Firestore subcollections (NEW structure)
- * 
+ *
  * Data Structure:
  * /teams/{teamId}/evidence/{docId}/tags/{categoryId}
- * 
+ *
  * Tag Document Structure:
  * {
  *   tagName: string,           // The actual tag text
@@ -40,7 +40,7 @@ import { db } from '../../../services/firebase.js'
 
 class TagSubcollectionService {
   constructor() {
-    this.confidenceThreshold = 85 // Default auto-approval threshold
+    this.confidenceThreshold = 85; // Default auto-approval threshold
   }
 
   /**
@@ -48,9 +48,9 @@ class TagSubcollectionService {
    */
   getTagsCollection(docId, teamId) {
     if (!teamId) {
-      throw new Error('Team ID is required for tag operations')
+      throw new Error('Team ID is required for tag operations');
     }
-    return collection(db, 'teams', teamId, 'evidence', docId, 'tags')
+    return collection(db, 'teams', teamId, 'evidence', docId, 'tags');
   }
 
   /**
@@ -58,9 +58,9 @@ class TagSubcollectionService {
    */
   getTagDoc(docId, tagId, teamId) {
     if (!teamId) {
-      throw new Error('Team ID is required for tag operations')
+      throw new Error('Team ID is required for tag operations');
     }
-    return doc(db, 'teams', teamId, 'evidence', docId, 'tags', tagId)
+    return doc(db, 'teams', teamId, 'evidence', docId, 'tags', tagId);
   }
 
   /**
@@ -68,17 +68,17 @@ class TagSubcollectionService {
    */
   async addTag(docId, tagData, teamId) {
     try {
-      const tagsCollection = this.getTagsCollection(docId, teamId)
-      
+      const tagsCollection = this.getTagsCollection(docId, teamId);
+
       // Use categoryId as the document ID (per migration plan)
       if (!tagData.categoryId) {
-        throw new Error('categoryId is required for new tag structure')
+        throw new Error('categoryId is required for new tag structure');
       }
-      
+
       // Determine status based on auto-approval (for consistency with previous batch logic)
-      const autoApproved = tagData.autoApproved ?? (tagData.confidence >= this.confidenceThreshold)
-      const status = autoApproved ? 'approved' : 'pending'
-      
+      const autoApproved = tagData.autoApproved ?? tagData.confidence >= this.confidenceThreshold;
+      const status = autoApproved ? 'approved' : 'pending';
+
       // Create the tag document with NEW structure from migration plan
       const tagDoc = {
         categoryId: tagData.categoryId,
@@ -92,22 +92,22 @@ class TagSubcollectionService {
         reviewRequired: tagData.reviewRequired,
         createdAt: serverTimestamp(),
         createdBy: tagData.createdBy,
-        metadata: tagData.metadata || {}
-      }
+        metadata: tagData.metadata || {},
+      };
 
       // Add reviewedAt timestamp if this is an auto-approved AI tag
       if (autoApproved && tagData.source !== 'human') {
-        tagDoc.reviewedAt = serverTimestamp()
+        tagDoc.reviewedAt = serverTimestamp();
       }
 
       // Use categoryId as document ID instead of generating random ID
-      const tagDocRef = doc(tagsCollection, tagData.categoryId)
-      await setDoc(tagDocRef, tagDoc)
-      
-      return { id: tagData.categoryId, ...tagDoc }
+      const tagDocRef = doc(tagsCollection, tagData.categoryId);
+      await setDoc(tagDocRef, tagDoc);
+
+      return { id: tagData.categoryId, ...tagDoc };
     } catch (error) {
-      console.error('Error adding tag:', error)
-      throw error
+      console.error('Error adding tag:', error);
+      throw error;
     }
   }
 
@@ -117,18 +117,18 @@ class TagSubcollectionService {
    */
   async addTagsBatch(docId, tagsArray, teamId) {
     try {
-      const addedTags = []
-      
+      const addedTags = [];
+
       // Process each tag individually using the single addTag method
       for (const tagData of tagsArray) {
-        const addedTag = await this.addTag(docId, tagData, teamId)
-        addedTags.push(addedTag)
+        const addedTag = await this.addTag(docId, tagData, teamId);
+        addedTags.push(addedTag);
       }
 
-      return addedTags
+      return addedTags;
     } catch (error) {
-      console.error('Error adding tags batch:', error)
-      throw error
+      console.error('Error adding tags batch:', error);
+      throw error;
     }
   }
 
@@ -137,26 +137,26 @@ class TagSubcollectionService {
    */
   async getTags(docId, options = {}, teamId) {
     try {
-      const tagsCollection = this.getTagsCollection(docId, teamId)
-      let q = query(tagsCollection, orderBy('createdAt', 'desc'))
+      const tagsCollection = this.getTagsCollection(docId, teamId);
+      let q = query(tagsCollection, orderBy('createdAt', 'desc'));
 
       // Note: No longer filtering by 'status' field - using new structure with autoApproved/reviewRequired
       // Filtering now handled by getTagsByStatus method
 
-      const querySnapshot = await getDocs(q)
-      const tags = []
-      
+      const querySnapshot = await getDocs(q);
+      const tags = [];
+
       querySnapshot.forEach((doc) => {
         tags.push({
           id: doc.id, // This is now the categoryId
-          ...doc.data()
-        })
-      })
+          ...doc.data(),
+        });
+      });
 
-      return tags
+      return tags;
     } catch (error) {
-      console.error('Error getting tags:', error)
-      throw error
+      console.error('Error getting tags:', error);
+      throw error;
     }
   }
 
@@ -165,23 +165,24 @@ class TagSubcollectionService {
    */
   async getTagsByStatus(docId, teamId) {
     try {
-      const allTags = await this.getTags(docId, {}, teamId)
-      
+      const allTags = await this.getTags(docId, {}, teamId);
+
       return {
         // Pending: AI tags that need review (reviewRequired = true)
-        pending: allTags.filter(tag => tag.reviewRequired === true),
+        pending: allTags.filter((tag) => tag.reviewRequired === true),
         // Approved: Either human tags or auto-approved AI tags or manually approved AI tags
-        approved: allTags.filter(tag => 
-          tag.source === 'human' || 
-          tag.autoApproved === true || 
-          (tag.source === 'ai' && tag.reviewRequired === false && tag.reviewedAt)
+        approved: allTags.filter(
+          (tag) =>
+            tag.source === 'human' ||
+            tag.autoApproved === true ||
+            (tag.source === 'ai' && tag.reviewRequired === false && tag.reviewedAt)
         ),
         // Rejected: AI tags that were manually rejected (for future use)
-        rejected: allTags.filter(tag => tag.rejected === true) // New field for rejected tags
-      }
+        rejected: allTags.filter((tag) => tag.rejected === true), // New field for rejected tags
+      };
     } catch (error) {
-      console.error('Error getting tags by status:', error)
-      throw error
+      console.error('Error getting tags by status:', error);
+      throw error;
     }
   }
 
@@ -189,16 +190,16 @@ class TagSubcollectionService {
    * Get only approved tags for a document (NEW structure)
    */
   async getApprovedTags(docId, teamId) {
-    const tagsByStatus = await this.getTagsByStatus(docId, teamId)
-    return tagsByStatus.approved
+    const tagsByStatus = await this.getTagsByStatus(docId, teamId);
+    return tagsByStatus.approved;
   }
 
   /**
    * Get only pending tags for a document (NEW structure)
    */
   async getPendingTags(docId, teamId) {
-    const tagsByStatus = await this.getTagsByStatus(docId, teamId)
-    return tagsByStatus.pending
+    const tagsByStatus = await this.getTagsByStatus(docId, teamId);
+    return tagsByStatus.pending;
   }
 
   /**
@@ -206,19 +207,19 @@ class TagSubcollectionService {
    */
   async approveAITag(docId, categoryId, teamId) {
     try {
-      const tagRef = this.getTagDoc(docId, categoryId, teamId)
-      
+      const tagRef = this.getTagDoc(docId, categoryId, teamId);
+
       const updateData = {
         reviewRequired: false,
         reviewedAt: serverTimestamp(),
-        humanApproved: true
-      }
+        humanApproved: true,
+      };
 
-      await updateDoc(tagRef, updateData)
-      return { id: categoryId, ...updateData }
+      await updateDoc(tagRef, updateData);
+      return { id: categoryId, ...updateData };
     } catch (error) {
-      console.error('Error approving AI tag:', error)
-      throw error
+      console.error('Error approving AI tag:', error);
+      throw error;
     }
   }
 
@@ -227,20 +228,20 @@ class TagSubcollectionService {
    */
   async rejectAITag(docId, categoryId, teamId) {
     try {
-      const tagRef = this.getTagDoc(docId, categoryId, teamId)
-      
+      const tagRef = this.getTagDoc(docId, categoryId, teamId);
+
       const updateData = {
         reviewRequired: false,
         rejected: true,
         reviewedAt: serverTimestamp(),
-        humanRejected: true
-      }
+        humanRejected: true,
+      };
 
-      await updateDoc(tagRef, updateData)
-      return { id: categoryId, ...updateData }
+      await updateDoc(tagRef, updateData);
+      return { id: categoryId, ...updateData };
     } catch (error) {
-      console.error('Error rejecting AI tag:', error)
-      throw error
+      console.error('Error rejecting AI tag:', error);
+      throw error;
     }
   }
 
@@ -248,14 +249,14 @@ class TagSubcollectionService {
    * Approve a tag (compatibility wrapper for NEW structure)
    */
   async approveTag(docId, categoryId, teamId) {
-    return await this.approveAITag(docId, categoryId, teamId)
+    return await this.approveAITag(docId, categoryId, teamId);
   }
 
   /**
    * Reject a tag (compatibility wrapper for NEW structure)
    */
   async rejectTag(docId, categoryId, teamId) {
-    return await this.rejectAITag(docId, categoryId, teamId)
+    return await this.rejectAITag(docId, categoryId, teamId);
   }
 
   /**
@@ -263,22 +264,22 @@ class TagSubcollectionService {
    */
   async approveTagsBatch(docId, categoryIds, teamId) {
     try {
-      const batch = writeBatch(db)
-      
+      const batch = writeBatch(db);
+
       for (const categoryId of categoryIds) {
-        const tagRef = this.getTagDoc(docId, categoryId, teamId)
+        const tagRef = this.getTagDoc(docId, categoryId, teamId);
         batch.update(tagRef, {
           reviewRequired: false,
           reviewedAt: serverTimestamp(),
-          humanApproved: true
-        })
+          humanApproved: true,
+        });
       }
 
-      await batch.commit()
-      return { approved: categoryIds.length }
+      await batch.commit();
+      return { approved: categoryIds.length };
     } catch (error) {
-      console.error('Error approving tags batch:', error)
-      throw error
+      console.error('Error approving tags batch:', error);
+      throw error;
     }
   }
 
@@ -287,23 +288,23 @@ class TagSubcollectionService {
    */
   async rejectTagsBatch(docId, categoryIds, teamId) {
     try {
-      const batch = writeBatch(db)
-      
+      const batch = writeBatch(db);
+
       for (const categoryId of categoryIds) {
-        const tagRef = this.getTagDoc(docId, categoryId, teamId)
+        const tagRef = this.getTagDoc(docId, categoryId, teamId);
         batch.update(tagRef, {
           reviewRequired: false,
           rejected: true,
           reviewedAt: serverTimestamp(),
-          humanRejected: true
-        })
+          humanRejected: true,
+        });
       }
 
-      await batch.commit()
-      return { rejected: categoryIds.length }
+      await batch.commit();
+      return { rejected: categoryIds.length };
     } catch (error) {
-      console.error('Error rejecting tags batch:', error)
-      throw error
+      console.error('Error rejecting tags batch:', error);
+      throw error;
     }
   }
 
@@ -312,12 +313,12 @@ class TagSubcollectionService {
    */
   async deleteTag(docId, tagId, teamId) {
     try {
-      const tagRef = this.getTagDoc(docId, tagId, teamId)
-      await deleteDoc(tagRef)
-      return { id: tagId, deleted: true }
+      const tagRef = this.getTagDoc(docId, tagId, teamId);
+      await deleteDoc(tagRef);
+      return { id: tagId, deleted: true };
     } catch (error) {
-      console.error('Error deleting tag:', error)
-      throw error
+      console.error('Error deleting tag:', error);
+      throw error;
     }
   }
 
@@ -326,19 +327,19 @@ class TagSubcollectionService {
    */
   async deleteAllTags(docId, teamId) {
     try {
-      const tags = await this.getTags(docId, {}, teamId)
-      const batch = writeBatch(db)
-      
+      const tags = await this.getTags(docId, {}, teamId);
+      const batch = writeBatch(db);
+
       for (const tag of tags) {
-        const tagRef = this.getTagDoc(docId, tag.id, teamId)
-        batch.delete(tagRef)
+        const tagRef = this.getTagDoc(docId, tag.id, teamId);
+        batch.delete(tagRef);
       }
 
-      await batch.commit()
-      return { deleted: tags.length }
+      await batch.commit();
+      return { deleted: tags.length };
     } catch (error) {
-      console.error('Error deleting all tags:', error)
-      throw error
+      console.error('Error deleting all tags:', error);
+      throw error;
     }
   }
 
@@ -347,8 +348,8 @@ class TagSubcollectionService {
    */
   async getTagStats(docId, teamId) {
     try {
-      const tags = await this.getTags(docId, {}, teamId)
-      
+      const tags = await this.getTags(docId, {}, teamId);
+
       const stats = {
         total: tags.length,
         pending: 0,
@@ -357,37 +358,37 @@ class TagSubcollectionService {
         autoApproved: 0,
         manuallyReviewed: 0,
         avgConfidence: 0,
-        highConfidence: 0 // Count of tags above threshold
-      }
+        highConfidence: 0, // Count of tags above threshold
+      };
 
-      if (tags.length === 0) return stats
+      if (tags.length === 0) return stats;
 
-      let confidenceSum = 0
-      
+      let confidenceSum = 0;
+
       for (const tag of tags) {
-        stats[tag.status]++
-        
+        stats[tag.status]++;
+
         if (tag.autoApproved) {
-          stats.autoApproved++
+          stats.autoApproved++;
         }
-        
+
         if (tag.reviewedAt && !tag.autoApproved) {
-          stats.manuallyReviewed++
+          stats.manuallyReviewed++;
         }
-        
-        confidenceSum += tag.confidence
-        
+
+        confidenceSum += tag.confidence;
+
         if (tag.confidence >= this.confidenceThreshold) {
-          stats.highConfidence++
+          stats.highConfidence++;
         }
       }
 
-      stats.avgConfidence = Math.round(confidenceSum / tags.length)
-      
-      return stats
+      stats.avgConfidence = Math.round(confidenceSum / tags.length);
+
+      return stats;
     } catch (error) {
-      console.error('Error getting tag stats:', error)
-      throw error
+      console.error('Error getting tag stats:', error);
+      throw error;
     }
   }
 
@@ -395,14 +396,14 @@ class TagSubcollectionService {
    * Update confidence threshold for auto-approval
    */
   setConfidenceThreshold(threshold) {
-    this.confidenceThreshold = Math.max(0, Math.min(100, threshold))
+    this.confidenceThreshold = Math.max(0, Math.min(100, threshold));
   }
 
   /**
    * Get current confidence threshold
    */
   getConfidenceThreshold() {
-    return this.confidenceThreshold
+    return this.confidenceThreshold;
   }
 
   /**
@@ -410,12 +411,12 @@ class TagSubcollectionService {
    */
   async tagExists(docId, tagId, teamId) {
     try {
-      const tagRef = this.getTagDoc(docId, tagId, teamId)
-      const doc = await getDoc(tagRef)
-      return doc.exists()
+      const tagRef = this.getTagDoc(docId, tagId, teamId);
+      const doc = await getDoc(tagRef);
+      return doc.exists();
     } catch (error) {
-      console.error('Error checking tag existence:', error)
-      return false
+      console.error('Error checking tag existence:', error);
+      return false;
     }
   }
 
@@ -424,24 +425,24 @@ class TagSubcollectionService {
    */
   async findDuplicateTags(docId, tagName, teamId) {
     try {
-      const tagsCollection = this.getTagsCollection(docId, teamId)
-      const q = query(tagsCollection, where('tagName', '==', tagName))
-      const querySnapshot = await getDocs(q)
-      
-      const duplicates = []
+      const tagsCollection = this.getTagsCollection(docId, teamId);
+      const q = query(tagsCollection, where('tagName', '==', tagName));
+      const querySnapshot = await getDocs(q);
+
+      const duplicates = [];
       querySnapshot.forEach((doc) => {
         duplicates.push({
           id: doc.id,
-          ...doc.data()
-        })
-      })
+          ...doc.data(),
+        });
+      });
 
-      return duplicates
+      return duplicates;
     } catch (error) {
-      console.error('Error finding duplicate tags:', error)
-      throw error
+      console.error('Error finding duplicate tags:', error);
+      throw error;
     }
   }
 }
 
-export default new TagSubcollectionService()
+export default new TagSubcollectionService();

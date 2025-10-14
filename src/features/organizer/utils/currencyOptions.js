@@ -37,7 +37,7 @@ export const currencyOptions = [
 export function getCurrencyTitle(currencyCode) {
   if (!currencyCode) return '';
 
-  const currency = currencyOptions.find(option => option.value === currencyCode);
+  const currency = currencyOptions.find((option) => option.value === currencyCode);
   return currency ? currency.title : currencyCode;
 }
 
@@ -49,6 +49,6 @@ export function getCurrencyTitle(currencyCode) {
 export function getCurrencySymbol(currencyCode) {
   if (!currencyCode) return '';
 
-  const currency = currencyOptions.find(option => option.value === currencyCode);
+  const currency = currencyOptions.find((option) => option.value === currencyCode);
   return currency ? currency.symbol : currencyCode;
 }

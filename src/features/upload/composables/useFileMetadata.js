@@ -73,7 +73,15 @@ export function useFileMetadata() {
       // Get existing metadata to check for existing folderPaths
       let existingFolderPaths = '';
       try {
-        const docRef = doc(db, 'teams', teamId, 'matters', 'general', 'originalMetadata', metadataHash);
+        const docRef = doc(
+          db,
+          'teams',
+          teamId,
+          'matters',
+          'general',
+          'originalMetadata',
+          metadataHash
+        );
         const existingDoc = await getDoc(docRef);
         if (existingDoc.exists()) {
           existingFolderPaths = existingDoc.data().folderPaths || '';
@@ -103,7 +111,15 @@ export function useFileMetadata() {
       };
 
       // Save to Firestore: /teams/{teamId}/matters/general/originalMetadata/{metadataHash}
-      const docRef = doc(db, 'teams', teamId, 'matters', 'general', 'originalMetadata', metadataHash);
+      const docRef = doc(
+        db,
+        'teams',
+        teamId,
+        'matters',
+        'general',
+        'originalMetadata',
+        metadataHash
+      );
       await setDoc(docRef, metadataRecord);
 
       console.log(`[DEBUG] Metadata record created: ${metadataHash}`, {
@@ -117,18 +133,19 @@ export function useFileMetadata() {
       // Create corresponding Evidence document for organization
       try {
         const evidenceService = new EvidenceService(teamId);
-        
+
         const uploadMetadata = {
           hash: fileHash,
           originalName: originalName,
           size: size || 0,
           folderPath: currentFolderPath || '/',
-          metadataHash: metadataHash
+          metadataHash: metadataHash,
         };
-        
+
         const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
-        console.log(`[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`);
-        
+        console.log(
+          `[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`
+        );
       } catch (evidenceError) {
         console.error('Failed to create evidence document:', evidenceError);
         // Don't fail the upload if evidence creation fails
@@ -180,7 +197,15 @@ export function useFileMetadata() {
       }
 
       // Try to get the document
-      const docRef = doc(db, 'teams', teamId, 'matters', 'general', 'originalMetadata', metadataHash);
+      const docRef = doc(
+        db,
+        'teams',
+        teamId,
+        'matters',
+        'general',
+        'originalMetadata',
+        metadataHash
+      );
       const docSnapshot = await docRef.get();
 
       return docSnapshot.exists();

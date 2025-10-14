@@ -68,7 +68,7 @@ export const categoryTypeOptions = [
 export function getCategoryTypeInfo(type) {
   if (!type) return null;
 
-  const typeInfo = categoryTypeOptions.find(option => option.value === type);
+  const typeInfo = categoryTypeOptions.find((option) => option.value === type);
   return typeInfo || null;
 }
 
@@ -88,5 +88,5 @@ export function getCategoryTypeLabel(type) {
  * @returns {boolean} True if the type is valid
  */
 export function isValidCategoryType(type) {
-  return categoryTypeOptions.some(option => option.value === type);
+  return categoryTypeOptions.some((option) => option.value === type);
 }

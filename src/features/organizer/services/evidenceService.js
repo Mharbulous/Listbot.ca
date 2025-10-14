@@ -1,13 +1,13 @@
 import { db } from '../../../services/firebase.js';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
   serverTimestamp,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore';
 
 /**
@@ -33,33 +33,33 @@ export class EvidenceService {
 
       // Use the metadataHash from uploadMetadata (created during upload process)
       const metadataHash = uploadMetadata.metadataHash;
-      
+
       // Create evidence document with refined structure
       const evidenceData = {
         // Reference to actual file in Storage
         storageRef: {
           storage: 'uploads',
-          fileHash: uploadMetadata.hash
+          fileHash: uploadMetadata.hash,
         },
-        
+
         // Display configuration (references specific metadata record)
         displayCopy: {
           metadataHash: metadataHash,
-          folderPath: uploadMetadata.folderPath || '/' // Default to root if no folder path
+          folderPath: uploadMetadata.folderPath || '/', // Default to root if no folder path
         },
-        
+
         // File properties (for quick access)
         fileSize: uploadMetadata.size || 0,
-        
+
         // Processing status (for future Document Processing Workflow)
         isProcessed: false,
         hasAllPages: null, // null = unknown, true/false after processing
         processingStage: 'uploaded', // uploaded|splitting|merging|complete
-        
+
         // Note: Tags are now stored in subcollection /teams/{teamId}/evidence/{docId}/tags/
-        
+
         // Timestamps
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Add to evidence collection
@@ -100,23 +100,23 @@ export class EvidenceService {
         const evidenceData = {
           storageRef: {
             storage: 'uploads',
-            fileHash: uploadMetadata.hash
+            fileHash: uploadMetadata.hash,
           },
-          
+
           displayCopy: {
             metadataHash: uploadMetadata.metadataHash || 'temp-hash', // Should be provided by upload process
-            folderPath: uploadMetadata.folderPath || '/'
+            folderPath: uploadMetadata.folderPath || '/',
           },
-          
+
           fileSize: uploadMetadata.size || 0,
-          
+
           isProcessed: false,
           hasAllPages: null,
           processingStage: 'uploaded',
-          
+
           // Tags stored in subcollection
-          
-          updatedAt: serverTimestamp()
+
+          updatedAt: serverTimestamp(),
         };
 
         batch.set(evidenceRef, evidenceData);
@@ -131,7 +131,6 @@ export class EvidenceService {
       throw error;
     }
   }
-
 
   /**
    * Update display name for an evidence document
@@ -175,7 +174,7 @@ export class EvidenceService {
       const updateData = {
         processingStage: stage,
         updatedAt: serverTimestamp(),
-        ...additionalData
+        ...additionalData,
       };
 
       const evidenceRef = doc(db, 'teams', this.teamId, 'evidence', evidenceId);
@@ -218,7 +217,7 @@ export class EvidenceService {
       if (docSnap.exists()) {
         return {
           id: docSnap.id,
-          ...docSnap.data()
+          ...docSnap.data(),
         };
       } else {
         return null;

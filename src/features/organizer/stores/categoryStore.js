@@ -10,7 +10,7 @@ import { useCategoryComposables } from './categoryComposables.js';
 export const useCategoryStore = defineStore('category', () => {
   // Core functionality (state, CRUD operations)
   const core = useCategoryCore();
-  
+
   // Validation and business rules
   const validation = useCategoryValidation(core.categories);
 
@@ -33,11 +33,11 @@ export const useCategoryStore = defineStore('category', () => {
       const sanitizedData = {
         ...categoryData, // Preserve all fields from categoryData
         name: validation.sanitizeCategoryName(categoryData.name),
-        tags: (categoryData.tags || []).map(tag => ({
+        tags: (categoryData.tags || []).map((tag) => ({
           ...tag,
           name: validation.sanitizeTagName(tag.name),
-          id: tag.id || crypto.randomUUID()
-        }))
+          id: tag.id || crypto.randomUUID(),
+        })),
       };
 
       // Validate tags if provided
@@ -73,10 +73,10 @@ export const useCategoryStore = defineStore('category', () => {
         sanitizedUpdates.name = validation.sanitizeCategoryName(updates.name);
       }
       if (updates.tags) {
-        sanitizedUpdates.tags = updates.tags.map(tag => ({
+        sanitizedUpdates.tags = updates.tags.map((tag) => ({
           ...tag,
           name: validation.sanitizeTagName(tag.name),
-          id: tag.id || crypto.randomUUID()
+          id: tag.id || crypto.randomUUID(),
         }));
       }
 
@@ -111,7 +111,7 @@ export const useCategoryStore = defineStore('category', () => {
     // Override with enhanced methods
     createCategory: createCategoryWithEnhancements,
     updateCategory: updateCategoryWithEnhancements,
-    deleteCategory: deleteCategoryWithEnhancements
+    deleteCategory: deleteCategoryWithEnhancements,
   };
 
   // Advanced composables (only expose the functions, not all returned values)
@@ -148,6 +148,6 @@ export const useCategoryStore = defineStore('category', () => {
     useFilteredCategories: composables.useFilteredCategories,
     useCategoryStats: composables.useCategoryStats,
     useCategoryForm: composables.useCategoryForm,
-    useCategorySelection: composables.useCategorySelection
+    useCategorySelection: composables.useCategorySelection,
   };
 });

@@ -3,11 +3,10 @@
  * General utilities for file viewer functionality
  */
 
-import { formatFileSize, formatDate } from './fileUtils.js'
+import { formatFileSize, formatDate } from './fileUtils.js';
 
 // Re-export utility functions for compatibility
-export { formatFileSize, formatDate }
-
+export { formatFileSize, formatDate };
 
 /**
  * Get file type from filename or MIME type
@@ -16,39 +15,39 @@ export { formatFileSize, formatDate }
  * @returns {string} File type category
  */
 export function getFileType(filename, mimeType = '') {
-  const ext = filename.toLowerCase().split('.').pop()
-  
+  const ext = filename.toLowerCase().split('.').pop();
+
   // Image files
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
-    return 'image'
+    return 'image';
   }
-  
+
   // Document files
   if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
-    return 'document'
+    return 'document';
   }
-  
+
   // Video files
   if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(ext)) {
-    return 'video'
+    return 'video';
   }
-  
+
   // Audio files
   if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) {
-    return 'audio'
+    return 'audio';
   }
-  
+
   // Archive files
   if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
-    return 'archive'
+    return 'archive';
   }
-  
+
   // Code files
   if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'html', 'css', 'php', 'rb', 'go'].includes(ext)) {
-    return 'code'
+    return 'code';
   }
-  
-  return 'unknown'
+
+  return 'unknown';
 }
 
 /**
@@ -64,10 +63,10 @@ export function getFileIcon(fileType) {
     audio: 'mdi-file-music',
     archive: 'mdi-file-cabinet',
     code: 'mdi-file-code',
-    unknown: 'mdi-file'
-  }
-  
-  return icons[fileType] || icons.unknown
+    unknown: 'mdi-file',
+  };
+
+  return icons[fileType] || icons.unknown;
 }
 
 /**
@@ -79,28 +78,27 @@ export function getFileIcon(fileType) {
  */
 export function sortFiles(files, sortBy = 'name', sortOrder = 'asc') {
   const sortedFiles = [...files].sort((a, b) => {
-    let comparison = 0
-    
+    let comparison = 0;
+
     switch (sortBy) {
       case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
+        comparison = a.name.localeCompare(b.name);
+        break;
       case 'size':
-        comparison = (a.size || 0) - (b.size || 0)
-        break
+        comparison = (a.size || 0) - (b.size || 0);
+        break;
       case 'date':
-        comparison = new Date(a.dateModified || 0) - new Date(b.dateModified || 0)
-        break
+        comparison = new Date(a.dateModified || 0) - new Date(b.dateModified || 0);
+        break;
       case 'type':
-        comparison = getFileType(a.name).localeCompare(getFileType(b.name))
-        break
+        comparison = getFileType(a.name).localeCompare(getFileType(b.name));
+        break;
       default:
-        comparison = a.name.localeCompare(b.name)
+        comparison = a.name.localeCompare(b.name);
     }
-    
-    return sortOrder === 'desc' ? -comparison : comparison
-  })
-  
-  return sortedFiles
-}
 
+    return sortOrder === 'desc' ? -comparison : comparison;
+  });
+
+  return sortedFiles;
+}

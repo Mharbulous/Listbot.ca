@@ -44,7 +44,6 @@
               Fixed List Tags
             </v-card-title>
             <v-card-text>
-
               <div class="tags-container mb-3">
                 <EditableTag
                   v-for="tag in fixedListTags"
@@ -74,7 +73,6 @@
               Open List Tags
             </v-card-title>
             <v-card-text>
-
               <div class="tags-container mb-3">
                 <EditableTag
                   v-for="tag in openListTags"
@@ -116,7 +114,8 @@
             <code class="text-success">devTesting/config/TestTags</code>
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
-            Eight separate categories: Fixed List (locked options) and Open List (editable options) for Document Type, Priority, Status, Year
+            Eight separate categories: Fixed List (locked options) and Open List (editable options)
+            for Document Type, Priority, Status, Year
           </div>
 
           <!-- Force Recreate Button -->

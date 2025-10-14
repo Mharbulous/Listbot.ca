@@ -9,9 +9,9 @@ const PATH_DELIMITER = '|';
 // Pattern types returned by identifyFolderPathPattern
 export const FOLDER_PATH_PATTERNS = {
   EXACT_MATCH: 'EXACT_MATCH',
-  EXTENSION: 'EXTENSION', 
+  EXTENSION: 'EXTENSION',
   REDUCTION: 'REDUCTION',
-  DIFFERENT_PATH: 'DIFFERENT_PATH'
+  DIFFERENT_PATH: 'DIFFERENT_PATH',
 };
 
 /**
@@ -26,21 +26,21 @@ export function normalizePath(path) {
 
   // Remove leading and trailing whitespace
   let normalized = path.trim();
-  
+
   // Handle root path cases
   if (normalized === '' || normalized === '/') {
     return '/';
   }
-  
+
   // Ensure path starts with '/' but doesn't end with '/' (unless it's root)
   if (!normalized.startsWith('/')) {
     normalized = '/' + normalized;
   }
-  
+
   if (normalized.endsWith('/') && normalized !== '/') {
     normalized = normalized.slice(0, -1);
   }
-  
+
   return normalized;
 }
 
@@ -56,8 +56,8 @@ export function parseExistingPaths(folderPaths) {
 
   return folderPaths
     .split(PATH_DELIMITER)
-    .map(path => normalizePath(path))
-    .filter(path => path !== ''); // Remove empty paths
+    .map((path) => normalizePath(path))
+    .filter((path) => path !== ''); // Remove empty paths
 }
 
 /**
@@ -71,8 +71,8 @@ export function serializePaths(paths) {
   }
 
   return paths
-    .map(path => normalizePath(path))
-    .filter(path => path !== '')
+    .map((path) => normalizePath(path))
+    .filter((path) => path !== '')
     .join(PATH_DELIMITER);
 }
 
@@ -84,29 +84,29 @@ export function serializePaths(paths) {
  */
 export function identifyFolderPathPattern(newPath, existingPaths) {
   const normalizedNew = normalizePath(newPath);
-  
+
   if (!normalizedNew) {
     return {
       type: FOLDER_PATH_PATTERNS.EXACT_MATCH,
       action: 'none',
-      message: 'Empty path provided'
+      message: 'Empty path provided',
     };
   }
 
   // Check each existing path for pattern matches
   for (let i = 0; i < existingPaths.length; i++) {
     const existingPath = existingPaths[i];
-    
+
     // Pattern 4: Exact Match
     if (normalizedNew === existingPath) {
       return {
         type: FOLDER_PATH_PATTERNS.EXACT_MATCH,
         action: 'none',
         message: 'Path already exists',
-        matchIndex: i
+        matchIndex: i,
       };
     }
-    
+
     // Pattern 1: Extension (new path contains existing path as suffix)
     // Example: existing="/2025", new="/General Account/2025"
     if (normalizedNew.endsWith(existingPath) && normalizedNew.length > existingPath.length) {
@@ -119,11 +119,11 @@ export function identifyFolderPathPattern(newPath, existingPaths) {
           message: 'New path extends existing path with more information',
           targetPath: existingPath,
           targetIndex: i,
-          newValue: normalizedNew
+          newValue: normalizedNew,
         };
       }
     }
-    
+
     // Pattern 2: Reduction (existing path contains new path as suffix)
     // Example: existing="/General Account/2025", new="/2025"
     if (existingPath.endsWith(normalizedNew) && existingPath.length > normalizedNew.length) {
@@ -135,7 +135,7 @@ export function identifyFolderPathPattern(newPath, existingPaths) {
           action: 'preserve',
           message: 'Existing path has more information, preserving it',
           preservedPath: existingPath,
-          preservedIndex: i
+          preservedIndex: i,
         };
       }
     }
@@ -146,7 +146,7 @@ export function identifyFolderPathPattern(newPath, existingPaths) {
     type: FOLDER_PATH_PATTERNS.DIFFERENT_PATH,
     action: 'append',
     message: 'Path is unrelated to existing paths, adding to collection',
-    newValue: normalizedNew
+    newValue: normalizedNew,
   };
 }
 
@@ -159,40 +159,40 @@ export function identifyFolderPathPattern(newPath, existingPaths) {
 export function updateFolderPaths(newPath, existingFolderPaths) {
   const existingPaths = parseExistingPaths(existingFolderPaths);
   const pattern = identifyFolderPathPattern(newPath, existingPaths);
-  
+
   let updatedPaths = [...existingPaths];
   let hasChanged = false;
-  
+
   switch (pattern.type) {
     case FOLDER_PATH_PATTERNS.EXACT_MATCH:
       // No change needed
       break;
-      
+
     case FOLDER_PATH_PATTERNS.EXTENSION:
       // Replace the existing path with the extended version
       updatedPaths[pattern.targetIndex] = pattern.newValue;
       hasChanged = true;
       break;
-      
+
     case FOLDER_PATH_PATTERNS.REDUCTION:
       // Keep existing path, no change
       break;
-      
+
     case FOLDER_PATH_PATTERNS.DIFFERENT_PATH:
       // Add new path to the collection
       updatedPaths.push(pattern.newValue);
       hasChanged = true;
       break;
-      
+
     default:
       console.warn('Unknown folder path pattern:', pattern.type);
   }
-  
+
   return {
     folderPaths: serializePaths(updatedPaths),
     pattern: pattern,
     hasChanged: hasChanged,
-    pathCount: updatedPaths.length
+    pathCount: updatedPaths.length,
   };
 }
 

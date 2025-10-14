@@ -9,9 +9,7 @@
  * @returns {string} File extension with dot (e.g., '.pdf')
  */
 export const getFileExtension = (filename) => {
-  return filename.includes('.')
-    ? '.' + filename.split('.').pop().toLowerCase()
-    : '';
+  return filename.includes('.') ? '.' + filename.split('.').pop().toLowerCase() : '';
 };
 
 /**
@@ -35,7 +33,7 @@ export const getFileIcon = (filename) => {
     '.png': 'mdi-file-image-outline',
     '.gif': 'mdi-file-image-outline',
     '.zip': 'mdi-folder-zip-outline',
-    '.rar': 'mdi-folder-zip-outline'
+    '.rar': 'mdi-folder-zip-outline',
   };
   return iconMap[ext] || 'mdi-file-outline';
 };
@@ -58,7 +56,7 @@ export const getFileIconColor = (filename) => {
     '.jpg': 'purple-darken-1',
     '.jpeg': 'purple-darken-1',
     '.png': 'purple-darken-1',
-    '.gif': 'purple-darken-1'
+    '.gif': 'purple-darken-1',
   };
   return colorMap[ext] || 'grey-darken-1';
 };

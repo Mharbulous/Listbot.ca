@@ -30,13 +30,13 @@ export class FileProcessingService {
       // UploadService hardcodes 'general' matter and converts extension to lowercase
       const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
-      
+
       // Get file bytes directly from Firebase Storage
       const arrayBuffer = await getBytes(fileRef);
-      
+
       // Convert ArrayBuffer to base64 efficiently (avoid stack overflow for large files)
       const base64Data = this.arrayBufferToBase64(arrayBuffer);
-      
+
       console.log(`[FileProcessingService] Retrieved file content from: ${storagePath}`);
       return base64Data;
     } catch (error) {
@@ -73,13 +73,13 @@ export class FileProcessingService {
 
       const displayName = evidence.displayName || '';
       const extension = displayName.split('.').pop() || 'pdf';
-      
+
       // Use the EXACT same path format as UploadService.generateStoragePath()
       const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
-      
+
       const downloadURL = await getDownloadURL(fileRef);
-      
+
       console.log(`[FileProcessingService] Generated download URL for: ${storagePath}`);
       return downloadURL;
     } catch (error) {
@@ -148,33 +148,42 @@ export class FileProcessingService {
       // Note: All files now use lowercase extensions after re-upload standardization
       const extensionVariations = [
         originalExtension.toLowerCase(), // UploadService standard
-        originalExtension,               // Original case fallback (if display name has different case)
+        originalExtension, // Original case fallback (if display name has different case)
       ];
 
       // Remove duplicates while preserving order
       const uniqueExtensions = [...new Set(extensionVariations)];
-      
+
       // Try each extension variation until one works
-      console.log(`[FileProcessingService] Attempting to find file for ${evidence.displayName} with extensions:`, uniqueExtensions);
-      
+      console.log(
+        `[FileProcessingService] Attempting to find file for ${evidence.displayName} with extensions:`,
+        uniqueExtensions
+      );
+
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
         // Use the EXACT same path format as UploadService.generateStoragePath()
         const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
-        
-        console.log(`[FileProcessingService] Trying path ${i + 1}/${uniqueExtensions.length}: ${storagePath}`);
-        
+
+        console.log(
+          `[FileProcessingService] Trying path ${i + 1}/${uniqueExtensions.length}: ${storagePath}`
+        );
+
         try {
           // Get file metadata from Firebase Storage
           const metadata = await getMetadata(fileRef);
-          
+
           if (i > 0) {
-            console.log(`[FileProcessingService] ✅ Found file using case variation ${i + 1}: ${storagePath}`);
+            console.log(
+              `[FileProcessingService] ✅ Found file using case variation ${i + 1}: ${storagePath}`
+            );
           } else {
             console.log(`[FileProcessingService] ✅ Found file on first try: ${storagePath}`);
           }
-          console.log(`[FileProcessingService] Retrieved file size from storage: ${metadata.size} bytes`);
+          console.log(
+            `[FileProcessingService] Retrieved file size from storage: ${metadata.size} bytes`
+          );
           return metadata.size || 0;
         } catch (extensionError) {
           console.log(`[FileProcessingService] ❌ Failed path ${i + 1}: ${extensionError.message}`);
@@ -185,10 +194,13 @@ export class FileProcessingService {
           }
         }
       }
-      
+
       return 0;
     } catch (error) {
-      console.error('[FileProcessingService] Failed to get file size from Firebase Storage:', error);
+      console.error(
+        '[FileProcessingService] Failed to get file size from Firebase Storage:',
+        error
+      );
       return 0;
     }
   }
@@ -206,7 +218,7 @@ export class FileProcessingService {
       fileSizeKB: ((evidence.fileSize || 0) / 1024).toFixed(1),
       extension: this.getFileExtension(evidence),
       fileHash: evidence.storageRef?.fileHash || null,
-      hasStorageRef: Boolean(evidence.storageRef?.fileHash)
+      hasStorageRef: Boolean(evidence.storageRef?.fileHash),
     };
   }
 }

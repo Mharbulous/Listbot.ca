@@ -1,6 +1,5 @@
 <template>
   <div class="file-list-container">
-
     <!-- File display with 2 view modes -->
     <div class="file-display">
       <!-- List view -->
@@ -76,7 +75,6 @@ const props = defineProps({
   },
 });
 
-
 // Add lazy loading composable
 const { isItemLoaded, loadItem, preloadInitialItems } = useLazyDocuments(
   computed(() => props.filteredEvidence),
@@ -89,9 +87,7 @@ let renderStartTime = null;
 let dataLoadTime = null; // eslint-disable-line no-unused-vars
 
 // Emits
-const emit = defineEmits([
-  'process-with-ai',
-]);
+const emit = defineEmits(['process-with-ai']);
 
 // Debug: Watch filteredEvidence changes to track data loading timing
 watch(
@@ -180,7 +176,6 @@ onUnmounted(() => {
   flex: 1;
   padding: 24px 32px;
 }
-
 
 .file-display {
   min-height: 0;

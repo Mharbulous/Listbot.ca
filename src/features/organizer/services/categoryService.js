@@ -1,4 +1,15 @@
-import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 
 /**
@@ -52,7 +63,9 @@ export class CategoryService {
       });
 
       // Check for duplicate tag names
-      const tagNames = categoryData.tags.map(tag => tag.name?.trim().toLowerCase()).filter(Boolean);
+      const tagNames = categoryData.tags
+        .map((tag) => tag.name?.trim().toLowerCase())
+        .filter(Boolean);
       const uniqueNames = [...new Set(tagNames)];
       if (tagNames.length !== uniqueNames.length) {
         errors.push('Category cannot have duplicate tag names');
@@ -87,7 +100,7 @@ export class CategoryService {
         tags: categoryData.tags || [],
         isActive: true,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Add to Firestore
@@ -97,7 +110,7 @@ export class CategoryService {
       console.log(`[CategoryService] Created category: ${categoryData.name} (${docRef.id})`);
       return {
         id: docRef.id,
-        ...categoryDoc
+        ...categoryDoc,
       };
     } catch (error) {
       console.error('[CategoryService] Failed to create category:', error);
@@ -120,9 +133,9 @@ export class CategoryService {
 
       // Validate updates
       if (updates.name !== undefined || updates.tags !== undefined) {
-        this.validateCategoryData({ 
+        this.validateCategoryData({
           name: updates.name || 'temp', // Temporary name for validation
-          ...updates 
+          ...updates,
         });
       }
 
@@ -134,11 +147,11 @@ export class CategoryService {
       // Prepare update document
       const updateDoc = {
         ...updates,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Clean up undefined values
-      Object.keys(updateDoc).forEach(key => {
+      Object.keys(updateDoc).forEach((key) => {
         if (updateDoc[key] === undefined) {
           delete updateDoc[key];
         }
@@ -174,7 +187,7 @@ export class CategoryService {
       await updateDoc(categoryRef, {
         isActive: false,
         deletedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[CategoryService] Deleted category: ${categoryId}`);
@@ -199,15 +212,14 @@ export class CategoryService {
 
       try {
         // Try querying with isActive filter first
-        q = query(
-          categoriesRef, 
-          where('isActive', '==', true),
-          orderBy('createdAt', 'asc')
-        );
+        q = query(categoriesRef, where('isActive', '==', true), orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
       } catch (queryError) {
-        console.log('[CategoryService] isActive query failed, trying fallback query:', queryError.message);
-        
+        console.log(
+          '[CategoryService] isActive query failed, trying fallback query:',
+          queryError.message
+        );
+
         // Fallback: Get all categories without isActive filter
         q = query(categoriesRef, orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
@@ -215,10 +227,10 @@ export class CategoryService {
 
       const categories = [];
       const categoriesToMigrate = [];
-      
-      snapshot.forEach(doc => {
+
+      snapshot.forEach((doc) => {
         const data = doc.data();
-        
+
         // Check if isActive field exists
         if (data.isActive === undefined) {
           // Mark for migration
@@ -227,13 +239,13 @@ export class CategoryService {
           categories.push({
             id: doc.id,
             ...data,
-            isActive: true // Default to true for missing field
+            isActive: true, // Default to true for missing field
           });
         } else if (data.isActive === true) {
           // Include active categories
           categories.push({
             id: doc.id,
-            ...data
+            ...data,
           });
         }
         // Skip categories where isActive === false
@@ -241,7 +253,9 @@ export class CategoryService {
 
       // Migrate categories missing isActive field
       if (categoriesToMigrate.length > 0) {
-        console.log(`[CategoryService] Migrating ${categoriesToMigrate.length} categories to add isActive field`);
+        console.log(
+          `[CategoryService] Migrating ${categoriesToMigrate.length} categories to add isActive field`
+        );
         await this.migrateIsActiveField(teamId, categoriesToMigrate);
       }
 
@@ -261,12 +275,14 @@ export class CategoryService {
         const categoryRef = doc(db, 'teams', teamId, 'categories', id);
         return updateDoc(categoryRef, {
           isActive: true,
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         });
       });
 
       await Promise.all(migrationPromises);
-      console.log(`[CategoryService] Successfully migrated ${categories.length} categories with isActive field`);
+      console.log(
+        `[CategoryService] Successfully migrated ${categories.length} categories with isActive field`
+      );
     } catch (error) {
       console.error('[CategoryService] Failed to migrate categories:', error);
       // Don't throw - this is a background migration
@@ -290,29 +306,30 @@ export class CategoryService {
         );
         snapshot = await getDocs(q);
       } catch (queryError) {
-        console.log('[CategoryService] isActive validation query failed, using fallback:', queryError.message);
-        
-        // Fallback: Get all categories with this name and filter manually
-        q = query(
-          categoriesRef,
-          where('name', '==', categoryName.trim())
+        console.log(
+          '[CategoryService] isActive validation query failed, using fallback:',
+          queryError.message
         );
+
+        // Fallback: Get all categories with this name and filter manually
+        q = query(categoriesRef, where('name', '==', categoryName.trim()));
         snapshot = await getDocs(q);
-        
+
         // Filter for active categories (including those missing isActive field)
         const filteredDocs = [];
-        snapshot.forEach(doc => {
+        snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.isActive !== false) { // Include undefined and true
+          if (data.isActive !== false) {
+            // Include undefined and true
             filteredDocs.push(doc);
           }
         });
-        
+
         // Create a mock snapshot-like object for consistency
         snapshot = { docs: filteredDocs };
       }
 
-      const existingCategories = snapshot.docs.filter(doc => doc.id !== excludeCategoryId);
+      const existingCategories = snapshot.docs.filter((doc) => doc.id !== excludeCategoryId);
 
       if (existingCategories.length > 0) {
         throw new Error(`Category name "${categoryName}" already exists`);
@@ -337,7 +354,9 @@ export class CategoryService {
       // Check if categories already exist
       const existingCategories = await this.getActiveCategories(teamId);
       if (existingCategories.length > 0) {
-        console.log(`[CategoryService] Team ${teamId} already has categories, skipping default creation`);
+        console.log(
+          `[CategoryService] Team ${teamId} already has categories, skipping default creation`
+        );
         return existingCategories;
       }
 
@@ -350,8 +369,8 @@ export class CategoryService {
             { name: 'Statement', color: '#1565c0' },
             { name: 'Receipt', color: '#0d47a1' },
             { name: 'Contract', color: '#1976d2' },
-            { name: 'Report', color: '#1565c0' }
-          ]
+            { name: 'Report', color: '#1565c0' },
+          ],
         },
         {
           name: 'Date/Period',
@@ -361,8 +380,8 @@ export class CategoryService {
             { name: 'Q2 2024', color: '#2e7d32' },
             { name: 'Q3 2024', color: '#1b5e20' },
             { name: 'Q4 2024', color: '#388e3c' },
-            { name: '2024', color: '#2e7d32' }
-          ]
+            { name: '2024', color: '#2e7d32' },
+          ],
         },
         {
           name: 'Institution',
@@ -372,9 +391,9 @@ export class CategoryService {
             { name: 'Chase', color: '#ef6c00' },
             { name: 'Wells Fargo', color: '#e65100' },
             { name: 'Credit Union', color: '#f57c00' },
-            { name: 'Other Bank', color: '#ef6c00' }
-          ]
-        }
+            { name: 'Other Bank', color: '#ef6c00' },
+          ],
+        },
       ];
 
       const createdCategories = [];
@@ -383,7 +402,9 @@ export class CategoryService {
         createdCategories.push(category);
       }
 
-      console.log(`[CategoryService] Created ${createdCategories.length} default categories for team ${teamId}`);
+      console.log(
+        `[CategoryService] Created ${createdCategories.length} default categories for team ${teamId}`
+      );
       return createdCategories;
     } catch (error) {
       console.error('[CategoryService] Failed to create default categories:', error);
@@ -395,9 +416,9 @@ export class CategoryService {
    * Generate tag IDs for category tags
    */
   static generateTagIds(tags) {
-    return tags.map(tag => ({
+    return tags.map((tag) => ({
       ...tag,
-      id: tag.id || crypto.randomUUID()
+      id: tag.id || crypto.randomUUID(),
     }));
   }
 

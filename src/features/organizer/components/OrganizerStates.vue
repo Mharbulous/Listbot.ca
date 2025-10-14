@@ -70,21 +70,23 @@ const props = defineProps({
 });
 
 // Emits
-defineEmits([
-  'retry',
-  'clearSearch',
-]);
+defineEmits(['retry', 'clearSearch']);
 
-// Computed state conditions  
+// Computed state conditions
 const showLoading = computed(() => {
   return props.loading && !props.isInitialized;
 });
 const showError = computed(() => props.error && !props.loading);
-const showEmptyState = computed(() => 
-  !props.loading && props.evidenceCount === 0 && props.isInitialized && !props.error
+const showEmptyState = computed(
+  () => !props.loading && props.evidenceCount === 0 && props.isInitialized && !props.error
 );
-const showEmptyFilterState = computed(() => 
-  !props.loading && props.evidenceCount > 0 && props.filteredCount === 0 && props.isInitialized && !props.error
+const showEmptyFilterState = computed(
+  () =>
+    !props.loading &&
+    props.evidenceCount > 0 &&
+    props.filteredCount === 0 &&
+    props.isInitialized &&
+    !props.error
 );
 </script>
 

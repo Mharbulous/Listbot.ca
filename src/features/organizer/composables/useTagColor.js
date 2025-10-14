@@ -21,7 +21,7 @@ export function useTagColor() {
       return getAutomaticTagColor(0); // Default first color
     }
 
-    const categoryIndex = categories.value.findIndex(cat => cat.id === tag.categoryId);
+    const categoryIndex = categories.value.findIndex((cat) => cat.id === tag.categoryId);
     return getAutomaticTagColor(categoryIndex >= 0 ? categoryIndex : 0);
   };
 
@@ -35,7 +35,7 @@ export function useTagColor() {
       return getAutomaticTagColor(0); // Default first color
     }
 
-    const categoryIndex = categories.value.findIndex(cat => cat.id === categoryId);
+    const categoryIndex = categories.value.findIndex((cat) => cat.id === categoryId);
     return getAutomaticTagColor(categoryIndex >= 0 ? categoryIndex : 0);
   };
 
@@ -64,7 +64,7 @@ export function useTagColor() {
     });
 
     // Map tag IDs to colors using automatic assignment
-    tags.forEach(tag => {
+    tags.forEach((tag) => {
       if (tag.id && tag.categoryId) {
         const categoryIndex = categoryIndexMap.get(tag.categoryId);
         colorMap[tag.id] = getAutomaticTagColor(categoryIndex !== undefined ? categoryIndex : 0);
@@ -78,6 +78,6 @@ export function useTagColor() {
     getTagColor,
     getColorByCategoryId,
     tagColorComputed,
-    getMultipleTagColors
+    getMultipleTagColors,
   };
 }

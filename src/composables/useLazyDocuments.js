@@ -21,7 +21,7 @@ export function useLazyDocuments(documents, options = {}) {
   const preloadInitialItems = () => {
     const docCount = documents.value?.length || 0;
     const toLoad = Math.min(initialCount, docCount);
-    
+
     for (let i = 0; i < toLoad; i++) {
       loadedIndices.value.add(i);
     }

@@ -9,7 +9,7 @@ import {
   parseExistingPaths,
   serializePaths,
   normalizePath,
-  FOLDER_PATH_PATTERNS
+  FOLDER_PATH_PATTERNS,
 } from './folderPathUtils.js';
 
 /**
@@ -24,16 +24,23 @@ export function runFolderPathTests() {
   let result = updateFolderPaths('/General Account/2025', '/2025');
   console.log('Result:', result);
   console.log('Expected: Extension pattern, folderPaths updated to "/General Account/2025"');
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION && result.folderPaths === '/General Account/2025');
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION &&
+      result.folderPaths === '/General Account/2025'
+  );
   console.log('');
 
-  // Test 2: Reduction Pattern  
+  // Test 2: Reduction Pattern
   console.log('Test 2: Reduction Pattern');
   console.log('Existing: "/2025", New: "/"');
   result = updateFolderPaths('/', '/2025');
   console.log('Result:', result);
   console.log('Expected: Reduction pattern, existing path preserved');
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.REDUCTION && result.folderPaths === '/2025');
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.REDUCTION && result.folderPaths === '/2025'
+  );
   console.log('');
 
   // Test 3: Different Path Pattern
@@ -43,7 +50,11 @@ export function runFolderPathTests() {
   console.log('Result:', result);
   console.log('Expected: Different path pattern, both paths saved');
   const expectedMultiple = '/2025|/Bank Statements';
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH && result.folderPaths === expectedMultiple);
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH &&
+      result.folderPaths === expectedMultiple
+  );
   console.log('');
 
   // Test 4: Exact Match Pattern
@@ -52,7 +63,12 @@ export function runFolderPathTests() {
   result = updateFolderPaths('/2025', '/2025');
   console.log('Result:', result);
   console.log('Expected: Exact match pattern, no change');
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.EXACT_MATCH && result.folderPaths === '/2025' && !result.hasChanged);
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.EXACT_MATCH &&
+      result.folderPaths === '/2025' &&
+      !result.hasChanged
+  );
   console.log('');
 
   // Test 5: Complex Extension Pattern
@@ -61,7 +77,11 @@ export function runFolderPathTests() {
   result = updateFolderPaths('/Legal/Contracts/2025', '/Contracts/2025');
   console.log('Result:', result);
   console.log('Expected: Extension pattern, path updated');
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION && result.folderPaths === '/Legal/Contracts/2025');
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION &&
+      result.folderPaths === '/Legal/Contracts/2025'
+  );
   console.log('');
 
   // Test 6: Multiple Existing Paths - Add Different
@@ -71,7 +91,11 @@ export function runFolderPathTests() {
   console.log('Result:', result);
   console.log('Expected: Different path pattern, three paths total');
   const expectedThree = '/2025|/Bank Statements|/Invoices';
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH && result.folderPaths === expectedThree);
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH &&
+      result.folderPaths === expectedThree
+  );
   console.log('');
 
   // Test 7: Multiple Existing Paths - Extend One
@@ -81,7 +105,11 @@ export function runFolderPathTests() {
   console.log('Result:', result);
   console.log('Expected: Extension pattern, first path updated');
   const expectedExtended = '/Company A/2025|/Bank Statements';
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION && result.folderPaths === expectedExtended);
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.EXTENSION &&
+      result.folderPaths === expectedExtended
+  );
   console.log('');
 
   // Test 8: Empty/Root Path Handling
@@ -90,7 +118,11 @@ export function runFolderPathTests() {
   result = updateFolderPaths('/Documents', '');
   console.log('Result:', result);
   console.log('Expected: Different path pattern (empty existing treated as no paths)');
-  console.log('✅ Pass:', result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH && result.folderPaths === '/Documents');
+  console.log(
+    '✅ Pass:',
+    result.pattern.type === FOLDER_PATH_PATTERNS.DIFFERENT_PATH &&
+      result.folderPaths === '/Documents'
+  );
   console.log('');
 
   // Test Utility Functions
@@ -114,7 +146,10 @@ export function runFolderPathTests() {
 
   // Test serializePaths
   console.log('Testing serializePaths:');
-  console.log('serialize(["/2025", "/Bank Statements"]) =', serializePaths(['/2025', '/Bank Statements']));
+  console.log(
+    'serialize(["/2025", "/Bank Statements"]) =',
+    serializePaths(['/2025', '/Bank Statements'])
+  );
   console.log('serialize([]) =', serializePaths([]));
   console.log('');
 

@@ -1,8 +1,5 @@
 <template>
-  <v-card
-    variant="outlined"
-    class="file-item mb-3"
-  >
+  <v-card variant="outlined" class="file-item mb-3">
     <v-card-text class="pa-4">
       <div class="file-item-content">
         <!-- File info section -->
@@ -17,8 +14,7 @@
               {{ evidence.displayName }}
             </h4>
             <p class="file-metadata text-body-2 text-medium-emphasis">
-              {{ formattedFileSize }} • 
-              {{ fileExtension }} • 
+              {{ formattedFileSize }} • {{ fileExtension }} •
               {{ formattedDate }}
             </p>
           </div>
@@ -37,23 +33,13 @@
 
         <!-- Actions section -->
         <div class="file-actions">
-          <v-btn
-            icon
-            variant="text"
-            size="small"
-            @click="$emit('download', evidence)"
-          >
+          <v-btn icon variant="text" size="small" @click="$emit('download', evidence)">
             <v-icon>mdi-download</v-icon>
             <v-tooltip activator="parent">Download</v-tooltip>
           </v-btn>
           <v-menu>
             <template #activator="{ props }">
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                v-bind="props"
-              >
+              <v-btn icon variant="text" size="small" v-bind="props">
                 <v-icon>mdi-dots-vertical</v-icon>
               </v-btn>
             </template>
@@ -81,7 +67,13 @@
 <script setup>
 import { computed } from 'vue';
 import TagSelector from './TagSelector.vue';
-import { getFileExtension, getFileIcon, getFileIconColor, formatFileSize, formatDate } from '../utils/fileUtils.js';
+import {
+  getFileExtension,
+  getFileIcon,
+  getFileIconColor,
+  formatFileSize,
+  formatDate,
+} from '../utils/fileUtils.js';
 
 // Props
 const props = defineProps({
@@ -100,12 +92,7 @@ const props = defineProps({
 });
 
 // Emits
-defineEmits([
-  'tagsUpdated',
-  'download',
-  'rename',
-  'viewDetails',
-]);
+defineEmits(['tagsUpdated', 'download', 'rename', 'viewDetails']);
 
 // Computed properties using utility functions
 const fileExtension = computed(() => getFileExtension(props.evidence.displayName));
@@ -180,11 +167,11 @@ const formattedDate = computed(() => formatDate(props.evidence.createdAt));
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .file-info {
     gap: 16px;
   }
-  
+
   .tags-section {
     min-width: 0;
   }

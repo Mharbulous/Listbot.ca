@@ -129,7 +129,7 @@ export default {
         // Navigate to organizer with search query
         this.$router.push({
           path: '/organizer',
-          query: { search: query.trim() }
+          query: { search: query.trim() },
         });
       }
     },

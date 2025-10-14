@@ -42,7 +42,6 @@
             </template>
           </v-list-item>
         </v-list>
-
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6">
@@ -115,7 +114,9 @@ const getCategoryDisplayText = (category) => {
     case 'Regex': {
       const parts = [];
       if (category.allowDuplicateValues !== undefined) {
-        const duplicateStatus = category.allowDuplicateValues ? 'duplicates allowed' : 'unique values';
+        const duplicateStatus = category.allowDuplicateValues
+          ? 'duplicates allowed'
+          : 'unique values';
         parts.push(duplicateStatus);
       }
       if (category.regexDefinition) {
@@ -179,7 +180,9 @@ const getCategoryDisplayTextWithFormatting = (category) => {
   if (category.type === 'Regex') {
     const parts = [];
     if (category.allowDuplicateValues !== undefined) {
-      const duplicateStatus = category.allowDuplicateValues ? 'duplicates allowed' : 'unique values';
+      const duplicateStatus = category.allowDuplicateValues
+        ? 'duplicates allowed'
+        : 'unique values';
       parts.push(duplicateStatus);
     }
     if (category.regexDefinition) {

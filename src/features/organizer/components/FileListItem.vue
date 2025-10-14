@@ -145,11 +145,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits([
-  'click',
-  'selection-change',
-  'process-with-ai',
-]);
+const emit = defineEmits(['click', 'selection-change', 'process-with-ai']);
 
 // Progressive/lazy loading state
 const tagsVisible = ref(false);
@@ -204,8 +200,6 @@ const autoLoadAll = () => {
 const handleClick = () => {
   emit('click', props.evidence);
 };
-
-
 
 const handleSelectionChange = (selected) => {
   emit('selection-change', props.evidence.id, selected);

@@ -2,7 +2,7 @@
   <div v-if="hasAnyTags" class="tags-readonly">
     <!-- Pending AI tags notification (if any high confidence tags) -->
     <div v-if="hasHighConfidencePendingTags" class="pending-tags-indicator">
-      <div class="smart-tag pending-indicator" style="border-color: #ff9800; color: #ff9800;">
+      <div class="smart-tag pending-indicator" style="border-color: #ff9800; color: #ff9800">
         <div class="tag-button">
           <i class="tag-icon mdi mdi-clock-fast" />
           <span class="tag-text">{{ pendingAITagsCount }} pending</span>
@@ -28,7 +28,10 @@
       v-for="(tag, index) in aiTags"
       :key="`ai-${tag.id || tag.tagName}-${tag.confidence}`"
       class="smart-tag"
-      :style="{ borderColor: getTagColor(tag, index + humanTags.length), color: getTagColor(tag, index + humanTags.length) }"
+      :style="{
+        borderColor: getTagColor(tag, index + humanTags.length),
+        color: getTagColor(tag, index + humanTags.length),
+      }"
     >
       <div class="tag-button">
         <i class="tag-icon mdi mdi-robot" />
@@ -137,7 +140,7 @@ const getTagColor = (tag, index) => {
   if (tag.metadata?.color) {
     return tag.metadata.color;
   }
-  
+
   // Use automatic triadic color based on index
   return getAutomaticTagColor(index);
 };

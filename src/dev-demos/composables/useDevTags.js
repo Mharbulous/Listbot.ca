@@ -24,15 +24,15 @@ export function useDevTags() {
 
   // Get reactive test tags split by type (using category.isOpen property)
   const fixedListTestTags = computed(() =>
-    testTags.value.filter(tag => {
-      const category = categories.value.find(cat => cat.id === tag.tagCategoryId);
+    testTags.value.filter((tag) => {
+      const category = categories.value.find((cat) => cat.id === tag.tagCategoryId);
       return category && !category.isOpen; // Fixed List = isOpen: false
     })
   );
 
   const openListTestTags = computed(() =>
-    testTags.value.filter(tag => {
-      const category = categories.value.find(cat => cat.id === tag.tagCategoryId);
+    testTags.value.filter((tag) => {
+      const category = categories.value.find((cat) => cat.id === tag.tagCategoryId);
       return category && category.isOpen; // Open List = isOpen: true
     })
   );
@@ -54,7 +54,7 @@ export function useDevTags() {
         async (snapshot) => {
           const loadedCategories = [];
 
-          snapshot.docs.forEach(doc => {
+          snapshot.docs.forEach((doc) => {
             const data = doc.data();
 
             // Handle soft delete - treat undefined isActive as true for backward compatibility
@@ -63,7 +63,7 @@ export function useDevTags() {
             if (isActive) {
               loadedCategories.push({
                 id: doc.id,
-                ...data
+                ...data,
               });
             }
           });
@@ -113,7 +113,7 @@ export function useDevTags() {
         async (snapshot) => {
           const loadedTestTags = [];
 
-          snapshot.docs.forEach(doc => {
+          snapshot.docs.forEach((doc) => {
             const data = doc.data();
 
             // Create reactive tag object with production-compliant structure
@@ -139,7 +139,7 @@ export function useDevTags() {
               filterTextRaw: '',
               isFiltering: false,
               highlightedIndex: -1,
-              customInputValue: ''
+              customInputValue: '',
             });
 
             loadedTestTags.push(reactiveTag);
@@ -225,14 +225,14 @@ export function useDevTags() {
    * Get category options for a specific category ID
    */
   const getCategoryOptions = (categoryId) => {
-    const category = categories.value.find(cat => cat.id === categoryId);
+    const category = categories.value.find((cat) => cat.id === categoryId);
     if (!category?.tags) return [];
 
     // Convert to format expected by EditableTag
-    return category.tags.map(tag => ({
+    return category.tags.map((tag) => ({
       id: tag.id,
       tagName: tag.name,
-      color: tag.color
+      color: tag.color,
     }));
   };
 
@@ -245,7 +245,7 @@ export function useDevTags() {
 
       await DevTagService.addOptionToCategory(categoryId, {
         name: newTagName,
-        source: 'human'
+        source: 'human',
       });
 
       console.log(`[useDevTags] Successfully added tag "${newTagName}"`);
@@ -317,6 +317,6 @@ export function useDevTags() {
     addTagToCategory,
     handleTagUpdate,
     handleTagCreated,
-    reset
+    reset,
   };
 }

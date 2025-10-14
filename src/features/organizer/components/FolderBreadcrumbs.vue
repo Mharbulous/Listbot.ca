@@ -66,27 +66,24 @@ const props = defineProps({
   // Maximum breadcrumb items before collapsing (responsive)
   maxVisibleItems: {
     type: Number,
-    default: 3
+    default: 3,
   },
-  
+
   // Show root crumb even when at root level
   showRootCrumb: {
     type: Boolean,
-    default: true
+    default: true,
   },
-  
+
   // Enable responsive collapsing behavior
   responsive: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 // Emits
-const emit = defineEmits([
-  'navigate-to-root',
-  'navigate-to-depth'
-]);
+const emit = defineEmits(['navigate-to-root', 'navigate-to-depth']);
 
 // Store and reactive state
 const organizerStore = useOrganizerStore();
@@ -104,7 +101,7 @@ const currentPath = computed(() => organizerStore.currentPath);
  */
 const breadcrumbItems = computed(() => {
   if (!breadcrumbPath.value?.length) return [];
-  
+
   const items = breadcrumbPath.value.map((pathItem, index) => ({
     title: pathItem.tagName,
     href: !pathItem.isLast,
@@ -112,7 +109,7 @@ const breadcrumbItems = computed(() => {
     depth: pathItem.depth,
     icon: 'mdi-folder',
     categoryName: pathItem.categoryName,
-    categoryId: pathItem.categoryId
+    categoryId: pathItem.categoryId,
   }));
 
   // Apply collapsing logic for responsive design
@@ -120,7 +117,7 @@ const breadcrumbItems = computed(() => {
     const visibleItems = props.maxVisibleItems - 1; // Reserve space for ellipsis
     const firstItems = items.slice(0, 1); // Always show first
     const lastItems = items.slice(-visibleItems + 1); // Show last N-1 items
-    
+
     if (items.length > visibleItems) {
       return [
         ...firstItems,
@@ -130,9 +127,9 @@ const breadcrumbItems = computed(() => {
           disabled: true,
           depth: -1,
           icon: 'mdi-dots-horizontal',
-          isEllipsis: true
+          isEllipsis: true,
         },
-        ...lastItems
+        ...lastItems,
       ];
     }
   }
@@ -144,9 +141,11 @@ const breadcrumbItems = computed(() => {
  * Check if breadcrumbs can be collapsed (has enough items and responsive enabled)
  */
 const canCollapse = computed(() => {
-  return props.responsive && 
-         breadcrumbPath.value.length > props.maxVisibleItems && 
-         screenWidth.value < 768; // Mobile breakpoint
+  return (
+    props.responsive &&
+    breadcrumbPath.value.length > props.maxVisibleItems &&
+    screenWidth.value < 768
+  ); // Mobile breakpoint
 });
 
 /**
@@ -176,7 +175,7 @@ const toggleCollapsed = () => {
 // Responsive behavior
 const handleResize = () => {
   screenWidth.value = window.innerWidth;
-  
+
   // Auto-collapse on small screens
   if (shouldAutoCollapse.value) {
     isCollapsed.value = true;
@@ -256,11 +255,11 @@ onUnmounted(() => {
     align-items: stretch;
     gap: 8px;
   }
-  
+
   .folder-breadcrumbs__main {
     order: 2;
   }
-  
+
   .collapse-toggle {
     order: 1;
     align-self: flex-end;
@@ -285,12 +284,12 @@ onUnmounted(() => {
   .breadcrumb-divider {
     opacity: 1;
   }
-  
+
   .root-breadcrumb,
   .breadcrumb-item {
     border: 1px solid transparent;
   }
-  
+
   .root-breadcrumb:focus,
   .breadcrumb-item:focus {
     border-color: currentColor;

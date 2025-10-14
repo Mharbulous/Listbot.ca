@@ -1,4 +1,12 @@
-import { collection, doc, updateDoc, getDocs, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  updateDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../../services/firebase.js';
 
 /**
@@ -17,7 +25,7 @@ export class DevTagService {
       await updateDoc(categoryRef, {
         isActive: false,
         deletedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[DevTagService] Soft deleted category: ${categoryId}`);
@@ -38,7 +46,7 @@ export class DevTagService {
       await updateDoc(categoryRef, {
         isActive: true,
         deletedAt: null,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[DevTagService] Restored category: ${categoryId}`);
@@ -89,7 +97,7 @@ export class DevTagService {
             { id: 'd2f', name: 'Receipt', color: TRIADIC_COLORS[0] },
             { id: 'd3f', name: 'Contract', color: TRIADIC_COLORS[0] },
             { id: 'd4f', name: 'Report', color: TRIADIC_COLORS[0] },
-          ]
+          ],
         },
         {
           id: 'priority-1',
@@ -102,7 +110,7 @@ export class DevTagService {
             { id: 'p2f', name: 'Medium', color: TRIADIC_COLORS[1] },
             { id: 'p3f', name: 'Low', color: TRIADIC_COLORS[1] },
             { id: 'p4f', name: 'Urgent', color: TRIADIC_COLORS[1] },
-          ]
+          ],
         },
         {
           id: 'status-1',
@@ -115,7 +123,7 @@ export class DevTagService {
             { id: 's2f', name: 'Review', color: TRIADIC_COLORS[2] },
             { id: 's3f', name: 'Approved', color: TRIADIC_COLORS[2] },
             { id: 's4f', name: 'Published', color: TRIADIC_COLORS[2] },
-          ]
+          ],
         },
         {
           id: 'year-1',
@@ -128,7 +136,7 @@ export class DevTagService {
             { id: 'y2f', name: '2023', color: TRIADIC_COLORS[0] },
             { id: 'y3f', name: '2022', color: TRIADIC_COLORS[0] },
             { id: 'y4f', name: '2021', color: TRIADIC_COLORS[0] },
-          ]
+          ],
         },
         // Open List Categories (isOpen: true)
         {
@@ -142,7 +150,7 @@ export class DevTagService {
             { id: 'd2o', name: 'Receipt', color: TRIADIC_COLORS[0] },
             { id: 'd3o', name: 'Contract', color: TRIADIC_COLORS[0] },
             { id: 'd4o', name: 'Report', color: TRIADIC_COLORS[0] },
-          ]
+          ],
         },
         {
           id: 'priority-2',
@@ -155,7 +163,7 @@ export class DevTagService {
             { id: 'p2o', name: 'Medium', color: TRIADIC_COLORS[1] },
             { id: 'p3o', name: 'Low', color: TRIADIC_COLORS[1] },
             { id: 'p4o', name: 'Urgent', color: TRIADIC_COLORS[1] },
-          ]
+          ],
         },
         {
           id: 'status-2',
@@ -168,7 +176,7 @@ export class DevTagService {
             { id: 's2o', name: 'Review', color: TRIADIC_COLORS[2] },
             { id: 's3o', name: 'Approved', color: TRIADIC_COLORS[2] },
             { id: 's4o', name: 'Published', color: TRIADIC_COLORS[2] },
-          ]
+          ],
         },
         {
           id: 'year-2',
@@ -181,8 +189,8 @@ export class DevTagService {
             { id: 'y2o', name: '2023', color: TRIADIC_COLORS[0] },
             { id: 'y3o', name: '2022', color: TRIADIC_COLORS[0] },
             { id: 'y4o', name: '2021', color: TRIADIC_COLORS[0] },
-          ]
-        }
+          ],
+        },
       ];
 
       // Create categories with fixed document IDs
@@ -198,7 +206,7 @@ export class DevTagService {
           deletedAt: null,
           tags: categoryData.tags,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         // Use setDoc with the category ID as document ID
@@ -207,7 +215,7 @@ export class DevTagService {
 
         createdCategories.push({
           id: categoryData.id,
-          ...categoryDoc
+          ...categoryDoc,
         });
 
         console.log(`[DevTagService] Created category: ${categoryData.name} (${categoryData.id})`);
@@ -228,10 +236,14 @@ export class DevTagService {
     try {
       // First ensure the config document exists
       const configRef = doc(db, 'devTesting', 'config');
-      await setDoc(configRef, {
-        initialized: true,
-        createdAt: serverTimestamp()
-      }, { merge: true });
+      await setDoc(
+        configRef,
+        {
+          initialized: true,
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       // Check if test tags already exist
       const existingTags = await this.getDevTestTags();
@@ -239,7 +251,7 @@ export class DevTagService {
         console.log(`[DevTagService] Found ${existingTags.length} existing test tags`);
 
         // Check if existing tags have the correct structure (testCategory field)
-        const hasCorrectStructure = existingTags.every(tag => tag.testCategory);
+        const hasCorrectStructure = existingTags.every((tag) => tag.testCategory);
 
         if (hasCorrectStructure) {
           console.log('[DevTagService] Test tags have correct structure, skipping initialization');
@@ -351,7 +363,7 @@ export class DevTagService {
           reviewedBy: null,
           humanApproved: null,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         };
 
         // Use setDoc with the tag ID as document ID
@@ -360,7 +372,7 @@ export class DevTagService {
 
         createdTags.push({
           id: tagData.id,
-          ...tagDoc
+          ...tagDoc,
         });
 
         console.log(`[DevTagService] Created test tag: ${tagData.tagName} (${tagData.id})`);
@@ -383,7 +395,7 @@ export class DevTagService {
       const snapshot = await getDocs(categoriesRef);
 
       const categories = [];
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         const data = doc.data();
 
         // Handle soft delete - treat undefined isActive as true for backward compatibility
@@ -392,7 +404,7 @@ export class DevTagService {
         if (isActive) {
           categories.push({
             id: doc.id,
-            ...data
+            ...data,
           });
         }
       });
@@ -413,10 +425,10 @@ export class DevTagService {
       const snapshot = await getDocs(testTagsRef);
 
       const testTags = [];
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         testTags.push({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         });
       });
 
@@ -442,19 +454,21 @@ export class DevTagService {
 
       // Get current options
       const categories = await this.getDevCategories();
-      const category = categories.find(cat => cat.id === categoryId);
+      const category = categories.find((cat) => cat.id === categoryId);
 
       if (!category) {
         throw new Error(`Category ${categoryId} not found`);
       }
 
       // Check if tag already exists
-      const existingTag = category.tags.find(tag =>
-        tag.name.toLowerCase() === newOption.name.toLowerCase()
+      const existingTag = category.tags.find(
+        (tag) => tag.name.toLowerCase() === newOption.name.toLowerCase()
       );
 
       if (existingTag) {
-        console.log(`[DevTagService] Tag "${newOption.name}" already exists in category ${categoryId}`);
+        console.log(
+          `[DevTagService] Tag "${newOption.name}" already exists in category ${categoryId}`
+        );
         return category;
       }
 
@@ -464,21 +478,21 @@ export class DevTagService {
         {
           id: newOption.id || crypto.randomUUID(),
           name: newOption.name,
-          color: category.color // Inherit category color
-        }
+          color: category.color, // Inherit category color
+        },
       ];
 
       // Update category
       await updateDoc(categoryRef, {
         tags: updatedTags,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[DevTagService] Added option "${newOption.name}" to category ${categoryId}`);
 
       return {
         ...category,
-        tags: updatedTags
+        tags: updatedTags,
       };
     } catch (error) {
       console.error('[DevTagService] Failed to add option to category:', error);
@@ -550,7 +564,7 @@ export class DevTagService {
 
       return {
         categories,
-        testTags
+        testTags,
       };
     } catch (error) {
       console.error('[DevTagService] Failed to initialize development environment:', error);

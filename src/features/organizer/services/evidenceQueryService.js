@@ -1,12 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { 
-  collection, 
-  getDocs,
-  query, 
-  where, 
-  orderBy,
-  limit
-} from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { EvidenceService } from './evidenceService.js';
 
 /**
@@ -39,7 +32,7 @@ export class EvidenceQueryService {
       querySnapshot.forEach((doc) => {
         evidenceList.push({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         });
       });
 
@@ -68,33 +61,38 @@ export class EvidenceQueryService {
 
       for (const evidenceDoc of evidenceSnapshot.docs) {
         const evidenceData = { id: evidenceDoc.id, ...evidenceDoc.data() };
-        
+
         // Get approved tags from subcollection for this evidence document
         const tagsRef = collection(db, 'teams', this.teamId, 'evidence', evidenceDoc.id, 'tags');
         const tagsSnapshot = await getDocs(tagsRef);
-        
+
         const docTags = [];
         tagsSnapshot.forEach((tagDoc) => {
           const tagData = tagDoc.data();
           // Only include approved tags (either human tags or auto-approved AI tags)
-          if (tagData.source === 'human' || tagData.autoApproved === true || 
-              (tagData.source === 'ai' && tagData.reviewRequired === false && tagData.reviewedAt)) {
+          if (
+            tagData.source === 'human' ||
+            tagData.autoApproved === true ||
+            (tagData.source === 'ai' && tagData.reviewRequired === false && tagData.reviewedAt)
+          ) {
             docTags.push(tagData.tagName);
           }
         });
-        
+
         // Check if document matches the tag criteria
-        const hasMatchingTags = matchAll 
-          ? tags.every(tag => docTags.includes(tag))
-          : tags.some(tag => docTags.includes(tag));
-          
+        const hasMatchingTags = matchAll
+          ? tags.every((tag) => docTags.includes(tag))
+          : tags.some((tag) => docTags.includes(tag));
+
         if (hasMatchingTags) {
           matchingEvidence.push(evidenceData);
         }
       }
 
       // Sort by updatedAt descending
-      return matchingEvidence.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+      return matchingEvidence.sort(
+        (a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)
+      );
     } catch (error) {
       console.error('[EvidenceQueryService] Failed to find evidence by tags:', error);
       throw error;
@@ -112,7 +110,11 @@ export class EvidenceQueryService {
       if (!validStages.includes(stage)) throw new Error(`Invalid processing stage: ${stage}`);
 
       const evidenceRef = collection(db, 'teams', this.teamId, 'evidence');
-      const q = query(evidenceRef, where('processingStage', '==', stage), orderBy('updatedAt', 'desc'));
+      const q = query(
+        evidenceRef,
+        where('processingStage', '==', stage),
+        orderBy('updatedAt', 'desc')
+      );
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
 
@@ -157,11 +159,15 @@ export class EvidenceQueryService {
    */
   async getAvailableOriginalNames(fileHash, matterId = 'general') {
     try {
-      const originalMetadataRef = collection(db, 'teams', this.teamId, 'matters', matterId, 'originalMetadata');
-      const q = query(
-        originalMetadataRef,
-        where('fileHash', '==', fileHash)
+      const originalMetadataRef = collection(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        matterId,
+        'originalMetadata'
       );
+      const q = query(originalMetadataRef, where('fileHash', '==', fileHash));
 
       const querySnapshot = await getDocs(q);
       const originalNames = [];
@@ -190,36 +196,45 @@ export class EvidenceQueryService {
       const querySnapshot = await getDocs(evidenceRef);
 
       const stats = {
-        total: 0, processed: 0, unprocessed: 0,
+        total: 0,
+        processed: 0,
+        unprocessed: 0,
         byStage: { uploaded: 0, splitting: 0, merging: 0, complete: 0 },
-        totalFileSize: 0, taggedDocuments: 0
+        totalFileSize: 0,
+        taggedDocuments: 0,
       };
 
       for (const doc of querySnapshot.docs) {
         const data = doc.data();
         stats.total++;
         data.isProcessed ? stats.processed++ : stats.unprocessed++;
-        
-        if (data.processingStage && Object.prototype.hasOwnProperty.call(stats.byStage, data.processingStage)) {
+
+        if (
+          data.processingStage &&
+          Object.prototype.hasOwnProperty.call(stats.byStage, data.processingStage)
+        ) {
           stats.byStage[data.processingStage]++;
         }
-        
+
         if (data.fileSize) stats.totalFileSize += data.fileSize;
-        
+
         // Check if document has approved tags in subcollection
         const tagsRef = collection(db, 'teams', this.teamId, 'evidence', doc.id, 'tags');
         const tagsSnapshot = await getDocs(tagsRef);
-        
+
         let hasApprovedTags = false;
         for (const tagDoc of tagsSnapshot.docs) {
           const tagData = tagDoc.data();
-          if (tagData.source === 'human' || tagData.autoApproved === true || 
-              (tagData.source === 'ai' && tagData.reviewRequired === false && tagData.reviewedAt)) {
+          if (
+            tagData.source === 'human' ||
+            tagData.autoApproved === true ||
+            (tagData.source === 'ai' && tagData.reviewRequired === false && tagData.reviewedAt)
+          ) {
             hasApprovedTags = true;
             break;
           }
         }
-        
+
         if (hasApprovedTags) stats.taggedDocuments++;
       }
 
@@ -247,24 +262,31 @@ export class EvidenceQueryService {
       for (const doc of querySnapshot.docs) {
         const data = doc.data();
         let isMatch = false;
-        
+
         // Check displayName and folderPath
-        if (data.displayName?.toLowerCase().includes(searchTermLower) ||
-            data.displayCopy?.folderPath?.toLowerCase().includes(searchTermLower)) {
+        if (
+          data.displayName?.toLowerCase().includes(searchTermLower) ||
+          data.displayCopy?.folderPath?.toLowerCase().includes(searchTermLower)
+        ) {
           isMatch = true;
         }
-        
+
         // Check approved tags from subcollection
         if (!isMatch) {
           const tagsRef = collection(db, 'teams', this.teamId, 'evidence', doc.id, 'tags');
           const tagsSnapshot = await getDocs(tagsRef);
-          
+
           for (const tagDoc of tagsSnapshot.docs) {
             const tagData = tagDoc.data();
             // Only search in approved tags
-            if ((tagData.source === 'human' || tagData.autoApproved === true || 
-                 (tagData.source === 'ai' && tagData.reviewRequired === false && tagData.reviewedAt)) &&
-                tagData.tagName?.toLowerCase().includes(searchTermLower)) {
+            if (
+              (tagData.source === 'human' ||
+                tagData.autoApproved === true ||
+                (tagData.source === 'ai' &&
+                  tagData.reviewRequired === false &&
+                  tagData.reviewedAt)) &&
+              tagData.tagName?.toLowerCase().includes(searchTermLower)
+            ) {
               isMatch = true;
               break;
             }
@@ -288,24 +310,36 @@ export class EvidenceQueryService {
    */
   async migrateUploadsToEvidence(uploadMetadataList) {
     try {
-      console.log(`[EvidenceQueryService] Starting migration of ${uploadMetadataList.length} uploads`);
+      console.log(
+        `[EvidenceQueryService] Starting migration of ${uploadMetadataList.length} uploads`
+      );
       const results = { successful: [], skipped: [], failed: [] };
 
       for (const uploadMeta of uploadMetadataList) {
         try {
           const existingEvidence = await this.findEvidenceByHash(uploadMeta.hash);
-          
+
           if (existingEvidence.length > 0) {
             results.skipped.push({ hash: uploadMeta.hash, reason: 'Evidence already exists' });
             continue;
           }
 
           const evidenceId = await this.evidenceService.createEvidenceFromUpload(uploadMeta);
-          results.successful.push({ evidenceId, hash: uploadMeta.hash, originalName: uploadMeta.originalName });
-
+          results.successful.push({
+            evidenceId,
+            hash: uploadMeta.hash,
+            originalName: uploadMeta.originalName,
+          });
         } catch (error) {
-          console.error(`[EvidenceQueryService] Failed to migrate ${uploadMeta.originalName}:`, error);
-          results.failed.push({ hash: uploadMeta.hash, originalName: uploadMeta.originalName, error: error.message });
+          console.error(
+            `[EvidenceQueryService] Failed to migrate ${uploadMeta.originalName}:`,
+            error
+          );
+          results.failed.push({
+            hash: uploadMeta.hash,
+            originalName: uploadMeta.originalName,
+            error: error.message,
+          });
         }
       }
 

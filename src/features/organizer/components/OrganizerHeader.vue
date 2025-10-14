@@ -23,22 +23,12 @@
         >
           {{ filteredCount }} of {{ evidenceCount }} documents
         </v-chip>
-        <v-chip
-          v-else
-          size="small"
-          variant="text"
-          color="medium-emphasis"
-        >
+        <v-chip v-else size="small" variant="text" color="medium-emphasis">
           {{ evidenceCount }} documents
         </v-chip>
       </div>
       <div class="header-controls">
-        <v-btn
-          color="primary"
-          variant="outlined"
-          size="small"
-          @click="$emit('manage-categories')"
-        >
+        <v-btn color="primary" variant="outlined" size="small" @click="$emit('manage-categories')">
           <v-icon start>mdi-cog</v-icon>
           Manage Categories
         </v-btn>
@@ -68,12 +58,7 @@ defineProps({
 });
 
 // Emits
-defineEmits([
-  'update:searchText',
-  'search',
-  'manage-categories',
-  'view-mode-changed',
-]);
+defineEmits(['update:searchText', 'search', 'manage-categories', 'view-mode-changed']);
 </script>
 
 <style scoped>

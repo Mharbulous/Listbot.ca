@@ -23,7 +23,7 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
     }
 
     const searchTerm = filterText.value.toLowerCase().trim();
-    
+
     filteredEvidence.value = coreStore.evidenceList.filter((evidence) => {
       // Search in display name
       if (evidence.displayName?.toLowerCase().includes(searchTerm)) {
@@ -34,24 +34,29 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
       const fileExtension = evidence.displayName?.includes('.')
         ? '.' + evidence.displayName.split('.').pop().toLowerCase()
         : '';
-      
+
       if (fileExtension.includes(searchTerm)) {
         return true;
       }
 
       // Search in subcollection tags (new tag system)
       const allTags = getAllTags(evidence);
-      if (allTags.some(tag => 
-        tag.tagName?.toLowerCase().includes(searchTerm) ||
-        tag.categoryName?.toLowerCase().includes(searchTerm)
-      )) {
+      if (
+        allTags.some(
+          (tag) =>
+            tag.tagName?.toLowerCase().includes(searchTerm) ||
+            tag.categoryName?.toLowerCase().includes(searchTerm)
+        )
+      ) {
         return true;
       }
 
       return false;
     });
 
-    console.log(`[OrganizerQuery] Filtered ${filteredEvidence.value.length} from ${coreStore.evidenceList.length} documents`);
+    console.log(
+      `[OrganizerQuery] Filtered ${filteredEvidence.value.length} from ${coreStore.evidenceList.length} documents`
+    );
   };
 
   /**
@@ -69,21 +74,24 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
     if (filterText.value.trim()) {
       const searchTerm = filterText.value.toLowerCase().trim();
       filtered = filtered.filter((evidence) => {
-        return evidence.displayName?.toLowerCase().includes(searchTerm) ||
-          getAllTags(evidence).some(tag => 
-            tag.tagName?.toLowerCase().includes(searchTerm) ||
-            tag.categoryName?.toLowerCase().includes(searchTerm)
-          );
+        return (
+          evidence.displayName?.toLowerCase().includes(searchTerm) ||
+          getAllTags(evidence).some(
+            (tag) =>
+              tag.tagName?.toLowerCase().includes(searchTerm) ||
+              tag.categoryName?.toLowerCase().includes(searchTerm)
+          )
+        );
       });
     }
 
     // Apply category filters
     Object.entries(categoryFilters).forEach(([categoryId, selectedTags]) => {
       if (selectedTags.length > 0) {
-        filtered = filtered.filter(evidence => {
+        filtered = filtered.filter((evidence) => {
           const allTags = getAllTags(evidence);
-          return allTags.some(tag => 
-            tag.categoryId === categoryId && selectedTags.includes(tag.tagName)
+          return allTags.some(
+            (tag) => tag.categoryId === categoryId && selectedTags.includes(tag.tagName)
           );
         });
       }
@@ -126,17 +134,17 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
   const getStructuredTagsByCategory = (evidence) => {
     const allTags = getAllTags(evidence);
     const grouped = {};
-    
-    allTags.forEach(tag => {
+
+    allTags.forEach((tag) => {
       if (!grouped[tag.categoryId]) {
         grouped[tag.categoryId] = {
           categoryName: tag.categoryName,
-          tags: []
+          tags: [],
         };
       }
       grouped[tag.categoryId].tags.push(tag);
     });
-    
+
     return grouped;
   };
 
@@ -159,10 +167,6 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
       applyFilters();
     }
   };
-
-
-
-
 
   /**
    * Reset query store to initial state
@@ -192,8 +196,7 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
     getStructuredTagsByCategory,
     hasAnyTags,
 
-
     // Utility
-    reset
+    reset,
   };
 });

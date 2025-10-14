@@ -12,7 +12,6 @@
       <span class="action-icon">🤖</span>
       <span v-if="aiProcessing" class="processing-spinner">⟳</span>
     </button>
-    
   </div>
 </template>
 
@@ -37,7 +36,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  
+
   // Display options
   readonly: {
     type: Boolean,
@@ -47,7 +46,7 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  
+
   // Loading states
   actionLoading: {
     type: Boolean,
@@ -60,26 +59,20 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits([
-  'process-with-ai',
-]);
+const emit = defineEmits(['process-with-ai']);
 
 // Check if AI features are enabled
 const isAIEnabled = computed(() => {
   return import.meta.env.VITE_ENABLE_AI_FEATURES === 'true';
 });
 
-
 // Event handlers
 const handleProcessWithAI = () => {
   emit('process-with-ai', props.evidence);
 };
 
-
-
 // Performance tracking - mark setup completion
 setupComplete = performance.now();
-
 </script>
 
 <style scoped>
@@ -134,10 +127,13 @@ setupComplete = performance.now();
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
-
 
 /* Responsive design */
 @media (max-width: 768px) {

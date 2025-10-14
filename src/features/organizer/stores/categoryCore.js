@@ -1,5 +1,15 @@
 import { ref, computed } from 'vue';
-import { collection, query, where, orderBy, onSnapshot, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  addDoc,
+  updateDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { CategoryService } from '../services/categoryService.js';
@@ -14,13 +24,13 @@ export function useCategoryCore() {
   const loading = ref(false);
   const error = ref(null);
   const isInitialized = ref(false);
-  
+
   // Auth store reference
   const authStore = useAuthStore();
 
   // Computed
   const categoryCount = computed(() => categories.value.length);
-  const activeCategories = computed(() => categories.value.filter(cat => cat.isActive));
+  const activeCategories = computed(() => categories.value.filter((cat) => cat.isActive));
 
   /**
    * Load categories from Firestore with real-time updates
@@ -34,9 +44,11 @@ export function useCategoryCore() {
     try {
       loading.value = true;
       error.value = null;
-      
+
       // DEBUG: Log when category loading starts
-      console.log(`[DEBUG ORGANIZER LOADING] Category store loading started at: ${new Date().toISOString()} (${Date.now()})`);
+      console.log(
+        `[DEBUG ORGANIZER LOADING] Category store loading started at: ${new Date().toISOString()} (${Date.now()})`
+      );
 
       const teamId = authStore.currentTeam;
       if (!teamId) {
@@ -55,7 +67,10 @@ export function useCategoryCore() {
           orderBy('createdAt', 'asc')
         );
       } catch (queryError) {
-        console.log('[CategoryCore] isActive query setup failed, using fallback query:', queryError.message);
+        console.log(
+          '[CategoryCore] isActive query setup failed, using fallback query:',
+          queryError.message
+        );
         // Fallback: Query without isActive filter
         categoriesQuery = query(categoriesRef, orderBy('createdAt', 'asc'));
       }
@@ -66,10 +81,10 @@ export function useCategoryCore() {
         async (snapshot) => {
           const loadedCategories = [];
           const categoriesToMigrate = [];
-          
-          snapshot.docs.forEach(doc => {
+
+          snapshot.docs.forEach((doc) => {
             const data = doc.data();
-            
+
             // Handle missing isActive field
             if (data.isActive === undefined) {
               // Mark for migration
@@ -78,13 +93,13 @@ export function useCategoryCore() {
               loadedCategories.push({
                 id: doc.id,
                 ...data,
-                isActive: true
+                isActive: true,
               });
             } else if (data.isActive === true) {
               // Include active categories
               loadedCategories.push({
                 id: doc.id,
-                ...data
+                ...data,
               });
             }
             // Skip categories where isActive === false
@@ -92,8 +107,10 @@ export function useCategoryCore() {
 
           // Migrate categories missing isActive field
           if (categoriesToMigrate.length > 0) {
-            console.log(`[CategoryCore] Migrating ${categoriesToMigrate.length} categories to add isActive field`);
-            CategoryService.migrateIsActiveField(teamId, categoriesToMigrate).catch(err => {
+            console.log(
+              `[CategoryCore] Migrating ${categoriesToMigrate.length} categories to add isActive field`
+            );
+            CategoryService.migrateIsActiveField(teamId, categoriesToMigrate).catch((err) => {
               console.error('[CategoryCore] Migration failed:', err);
             });
           }
@@ -102,7 +119,9 @@ export function useCategoryCore() {
           loading.value = false;
           isInitialized.value = true;
 
-          console.log(`[DEBUG ORGANIZER LOADING] Category store loading completed at: ${new Date().toISOString()} (${Date.now()})`);
+          console.log(
+            `[DEBUG ORGANIZER LOADING] Category store loading completed at: ${new Date().toISOString()} (${Date.now()})`
+          );
           console.log(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
         },
         (err) => {
@@ -141,7 +160,7 @@ export function useCategoryCore() {
 
       // Check for duplicate names
       const existingCategory = categories.value.find(
-        cat => cat.name.toLowerCase() === categoryData.name.trim().toLowerCase()
+        (cat) => cat.name.toLowerCase() === categoryData.name.trim().toLowerCase()
       );
       if (existingCategory) {
         throw new Error('Category name already exists');
@@ -155,7 +174,7 @@ export function useCategoryCore() {
         tags: categoryData.tags || [],
         isActive: true,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       const categoriesRef = collection(db, 'teams', teamId, 'categories');
@@ -186,8 +205,8 @@ export function useCategoryCore() {
       // Validate name if being updated
       if (updates.name) {
         const existingCategory = categories.value.find(
-          cat => cat.id !== categoryId && 
-          cat.name.toLowerCase() === updates.name.trim().toLowerCase()
+          (cat) =>
+            cat.id !== categoryId && cat.name.toLowerCase() === updates.name.trim().toLowerCase()
         );
         if (existingCategory) {
           throw new Error('Category name already exists');
@@ -197,7 +216,7 @@ export function useCategoryCore() {
       const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         ...updates,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[CategoryCore] Updated category: ${categoryId}`);
@@ -225,7 +244,7 @@ export function useCategoryCore() {
       const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         isActive: false,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       console.log(`[CategoryCore] Deleted category: ${categoryId}`);
@@ -240,7 +259,7 @@ export function useCategoryCore() {
    * Get category by ID
    */
   const getCategoryById = (categoryId) => {
-    return categories.value.find(cat => cat.id === categoryId);
+    return categories.value.find((cat) => cat.id === categoryId);
   };
 
   /**
@@ -270,6 +289,6 @@ export function useCategoryCore() {
     updateCategory,
     deleteCategory,
     getCategoryById,
-    reset
+    reset,
   };
 }

@@ -10,15 +10,11 @@
         {{ displayName }}
       </h4>
       <p class="file-metadata text-body-2 text-medium-emphasis">
-        {{ formattedFileSize }} • 
-        {{ fileExtension }} • 
+        {{ formattedFileSize }} • {{ fileExtension }} •
         {{ formattedDate }}
       </p>
       <div v-if="showProcessingStage && processingStage !== 'uploaded'" class="processing-stage">
-        <span
-          class="processing-badge"
-          :class="`processing-badge--${processingStage}`"
-        >
+        <span class="processing-badge" :class="`processing-badge--${processingStage}`">
           {{ processingStageText }}
         </span>
       </div>
@@ -47,7 +43,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  
+
   // Display options
   showProcessingStage: {
     type: Boolean,
@@ -62,9 +58,7 @@ const displayName = computed(() => {
 
 const fileExtension = computed(() => {
   const filename = props.evidence?.displayName || '';
-  return filename.includes('.')
-    ? '.' + filename.split('.').pop().toLowerCase()
-    : '';
+  return filename.includes('.') ? '.' + filename.split('.').pop().toLowerCase() : '';
 });
 
 const processingStage = computed(() => {
@@ -74,7 +68,7 @@ const processingStage = computed(() => {
 const formattedFileSize = computed(() => {
   const bytes = props.evidence?.fileSize || 0;
   if (!bytes) return '0 B';
-  
+
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
@@ -83,7 +77,7 @@ const formattedFileSize = computed(() => {
 const formattedDate = computed(() => {
   const timestamp = props.evidence?.createdAt;
   if (!timestamp) return '';
-  
+
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
   return date.toLocaleDateString();
 });
@@ -104,7 +98,7 @@ const fileIcon = computed(() => {
     '.png': 'mdi-file-image-outline',
     '.gif': 'mdi-file-image-outline',
     '.zip': 'mdi-folder-zip-outline',
-    '.rar': 'mdi-folder-zip-outline'
+    '.rar': 'mdi-folder-zip-outline',
   };
   return iconMap[ext] || 'mdi-file-outline';
 });
@@ -122,7 +116,7 @@ const fileIconColor = computed(() => {
     '.jpg': 'purple-darken-1',
     '.jpeg': 'purple-darken-1',
     '.png': 'purple-darken-1',
-    '.gif': 'purple-darken-1'
+    '.gif': 'purple-darken-1',
   };
   return colorMap[ext] || 'grey-darken-1';
 });
@@ -131,10 +125,10 @@ const fileIconColor = computed(() => {
 
 const processingStageText = computed(() => {
   const stageTexts = {
-    'uploaded': 'Uploaded',
-    'splitting': 'Processing',
-    'merging': 'Merging',
-    'complete': 'Complete'
+    uploaded: 'Uploaded',
+    splitting: 'Processing',
+    merging: 'Merging',
+    complete: 'Complete',
   };
   return stageTexts[processingStage.value] || processingStage.value;
 });

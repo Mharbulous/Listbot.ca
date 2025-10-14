@@ -15,10 +15,7 @@ export class AIProcessingService {
    * @returns {boolean} - True if AI features are available
    */
   isAIEnabled() {
-    return (
-      import.meta.env.VITE_ENABLE_AI_FEATURES === 'true' &&
-      firebaseAI !== null
-    );
+    return import.meta.env.VITE_ENABLE_AI_FEATURES === 'true' && firebaseAI !== null;
   }
 
   /**
@@ -29,7 +26,9 @@ export class AIProcessingService {
   validateFileSize(evidence) {
     const fileSizeMB = (evidence.fileSize || 0) / (1024 * 1024);
     if (fileSizeMB > this.maxFileSizeMB) {
-      throw new Error(`File size (${fileSizeMB.toFixed(1)}MB) exceeds maximum allowed (${this.maxFileSizeMB}MB)`);
+      throw new Error(
+        `File size (${fileSizeMB.toFixed(1)}MB) exceeds maximum allowed (${this.maxFileSizeMB}MB)`
+      );
     }
   }
 
@@ -53,14 +52,16 @@ export class AIProcessingService {
       console.log('[AIProcessingService] Using full document content analysis');
 
       // Build category context for AI
-      const categoryContext = categories.map(cat => {
-        const tagList = cat.tags.map(tag => tag.name).join(', ');
-        return `Category "${cat.name}": ${tagList || 'No existing tags'}`;
-      }).join('\n');
+      const categoryContext = categories
+        .map((cat) => {
+          const tagList = cat.tags.map((tag) => tag.name).join(', ');
+          return `Category "${cat.name}": ${tagList || 'No existing tags'}`;
+        })
+        .join('\n');
 
       console.log(`[AIProcessingService] DEBUG: Sending ${categories.length} categories to AI:`);
-      categories.forEach(cat => {
-        console.log(`  - ${cat.name}: [${cat.tags.map(tag => tag.name).join(', ')}]`);
+      categories.forEach((cat) => {
+        console.log(`  - ${cat.name}: [${cat.tags.map((tag) => tag.name).join(', ')}]`);
       });
 
       // Create AI prompt
@@ -72,12 +73,14 @@ export class AIProcessingService {
         // Use passed extension as fallback
         mimeType = this.getMimeType(`dummy.${extension}`);
       }
-      console.log(`[AIProcessingService] File: ${evidence.displayName}, Extension: ${extension}, MIME type: ${mimeType}`);
-      
+      console.log(
+        `[AIProcessingService] File: ${evidence.displayName}, Extension: ${extension}, MIME type: ${mimeType}`
+      );
+
       // Generate AI response using inline data (full content analysis)
       const result = await model.generateContent([
         { text: prompt },
-        { inlineData: { mimeType: mimeType, data: base64Data } }
+        { inlineData: { mimeType: mimeType, data: base64Data } },
       ]);
 
       const response = await result.response;
@@ -88,12 +91,13 @@ export class AIProcessingService {
       // Parse AI response
       const parsedSuggestions = this.parseAIResponse(text, categories);
       console.log(`[AIProcessingService] DEBUG: Parsed ${parsedSuggestions.length} suggestions:`);
-      parsedSuggestions.forEach(suggestion => {
-        console.log(`  - ${suggestion.categoryName}: ${suggestion.tagName} (confidence: ${suggestion.confidence})`);
+      parsedSuggestions.forEach((suggestion) => {
+        console.log(
+          `  - ${suggestion.categoryName}: ${suggestion.tagName} (confidence: ${suggestion.confidence})`
+        );
       });
 
       return parsedSuggestions;
-
     } catch (error) {
       console.error('[AIProcessingService] Failed to generate AI suggestions:', error);
       throw error;
@@ -157,7 +161,7 @@ Please analyze the document and provide tag suggestions:
       const validatedSuggestions = [];
 
       console.log(`[AIProcessingService] DEBUG: Raw suggestions from AI: ${suggestions.length}`);
-      suggestions.forEach(suggestion => {
+      suggestions.forEach((suggestion) => {
         console.log(`  - Raw: ${suggestion.categoryName} → ${suggestion.tagName}`);
       });
 
@@ -169,12 +173,14 @@ Please analyze the document and provide tag suggestions:
         }
 
         // Find matching category
-        const category = categories.find(cat => 
-          cat.name.toLowerCase() === suggestion.categoryName.toLowerCase()
+        const category = categories.find(
+          (cat) => cat.name.toLowerCase() === suggestion.categoryName.toLowerCase()
         );
 
         if (!category) {
-          console.log(`[AIProcessingService] DEBUG: Skipped - category not found: "${suggestion.categoryName}"`);
+          console.log(
+            `[AIProcessingService] DEBUG: Skipped - category not found: "${suggestion.categoryName}"`
+          );
           continue;
         }
 
@@ -187,7 +193,7 @@ Please analyze the document and provide tag suggestions:
           confidence: Math.min(suggestion.confidence || 0.8, 1.0),
           reasoning: suggestion.reasoning || 'AI suggested',
           suggestedAt: new Date(),
-          status: 'suggested'
+          status: 'suggested',
         });
       }
 
@@ -205,16 +211,20 @@ Please analyze the document and provide tag suggestions:
    */
   getMimeType(filename) {
     if (!filename) return 'application/octet-stream';
-    
+
     const ext = filename.toLowerCase().split('.').pop();
     const mimeTypes = {
-      'pdf': 'application/pdf', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-      'png': 'image/png', 'gif': 'image/gif', 'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'xls': 'application/vnd.ms-excel',
-      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xls: 'application/vnd.ms-excel',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     };
-    
+
     return mimeTypes[ext] || 'application/octet-stream';
   }
 }

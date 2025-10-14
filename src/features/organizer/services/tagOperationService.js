@@ -29,8 +29,8 @@ export class TagOperationService {
 
       // Get current AI tag from subcollection
       const aiTags = await this.tagService.getPendingTags(evidenceId, this.teamId);
-      const currentAITag = aiTags.find(tag => tag.id === aiTag.id);
-      
+      const currentAITag = aiTags.find((tag) => tag.id === aiTag.id);
+
       if (!currentAITag) {
         throw new Error('AI tag not found in subcollection');
       }
@@ -43,9 +43,8 @@ export class TagOperationService {
       return {
         success: true,
         approvedTag: updatedTag,
-        evidenceId
+        evidenceId,
       };
-
     } catch (error) {
       console.error('[TagOperationService] Failed to approve AI tag:', error);
       throw error;
@@ -73,9 +72,8 @@ export class TagOperationService {
       return {
         success: true,
         rejectedTag: updatedTag,
-        evidenceId
+        evidenceId,
       };
-
     } catch (error) {
       console.error('[TagOperationService] Failed to reject AI tag:', error);
       throw error;
@@ -95,7 +93,7 @@ export class TagOperationService {
       const results = {
         approvedCount: 0,
         rejectedCount: 0,
-        errors: []
+        errors: [],
       };
 
       // Process approvals and rejections sequentially to avoid conflicts
@@ -119,14 +117,15 @@ export class TagOperationService {
         }
       }
 
-      console.log(`[TagOperationService] Processed review changes: ${results.approvedCount} approved, ${results.rejectedCount} rejected`);
+      console.log(
+        `[TagOperationService] Processed review changes: ${results.approvedCount} approved, ${results.rejectedCount} rejected`
+      );
 
       return {
         success: true,
         results,
-        evidenceId
+        evidenceId,
       };
-
     } catch (error) {
       console.error('[TagOperationService] Failed to process review changes:', error);
       throw error;
@@ -144,17 +143,18 @@ export class TagOperationService {
     try {
       // Get all tags and filter for AI source
       const allTags = await this.tagService.getTags(evidenceId, {}, teamId);
-      const aiTags = allTags.filter(tag => tag.source === 'ai');
-      
+      const aiTags = allTags.filter((tag) => tag.source === 'ai');
+
       if (status === 'pending') {
-        return aiTags.filter(tag => tag.reviewRequired === true);
+        return aiTags.filter((tag) => tag.reviewRequired === true);
       } else if (status === 'approved') {
-        return aiTags.filter(tag => tag.autoApproved === true || 
-                                  (tag.reviewRequired === false && tag.reviewedAt));
+        return aiTags.filter(
+          (tag) => tag.autoApproved === true || (tag.reviewRequired === false && tag.reviewedAt)
+        );
       } else if (status === 'rejected') {
-        return aiTags.filter(tag => tag.rejected === true);
+        return aiTags.filter((tag) => tag.rejected === true);
       }
-      
+
       return aiTags;
     } catch (error) {
       console.error('[TagOperationService] Failed to get AI tags by status:', error);

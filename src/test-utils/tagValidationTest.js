@@ -13,11 +13,11 @@ export class TagValidationTest {
    */
   static async testTagValidation(evidenceId, teamId) {
     console.group('[TagValidationTest] Testing tag validation and cleanup');
-    
+
     try {
       const coreStore = useOrganizerCoreStore();
       const categoryStore = useCategoryStore();
-      
+
       // Test 1: Check that category store is initialized
       console.log('Test 1: Checking category store initialization...');
       if (!categoryStore.isInitialized) {
@@ -40,7 +40,7 @@ export class TagValidationTest {
       for (const tag of rawTags) {
         const categoryId = tag.id;
         const category = categoryStore.getCategoryById(categoryId);
-        
+
         if (!category) {
           console.log(`❌ Orphaned tag found: ${tag.tagName} (category ${categoryId} deleted)`);
           invalidTags.push({ tag, categoryId, reason: 'deleted' });
@@ -62,25 +62,29 @@ export class TagValidationTest {
       console.log('Test 5: Verifying filtering results...');
       const expectedValidCount = validTags.length;
       const actualValidCount = tagData.subcollectionTags.length;
-      
+
       if (expectedValidCount === actualValidCount) {
         console.log('✅ Tag filtering worked correctly');
       } else {
-        console.log(`❌ Tag filtering mismatch: expected ${expectedValidCount}, got ${actualValidCount}`);
+        console.log(
+          `❌ Tag filtering mismatch: expected ${expectedValidCount}, got ${actualValidCount}`
+        );
       }
 
       // Test 6: Check for cleanup attempts
       if (invalidTags.length > 0) {
-        console.log(`Test 6: ${invalidTags.length} orphaned tags should be cleaned up in background`);
-        
+        console.log(
+          `Test 6: ${invalidTags.length} orphaned tags should be cleaned up in background`
+        );
+
         // Wait a moment for background cleanup
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // Check if tags were actually deleted
         console.log('Verifying cleanup by re-fetching raw tags...');
         const rawTagsAfterCleanup = await tagSubcollectionService.getTags(evidenceId, {}, teamId);
         const cleanupCount = rawTags.length - rawTagsAfterCleanup.length;
-        
+
         if (cleanupCount > 0) {
           console.log(`✅ ${cleanupCount} orphaned tags were successfully cleaned up`);
         } else {
@@ -97,14 +101,13 @@ export class TagValidationTest {
         inactiveTagCount: inactiveTags.length,
         orphanedTagCount: invalidTags.length,
         filteredTagCount: tagData.subcollectionTags.length,
-        filteringWorked: expectedValidCount === actualValidCount
+        filteringWorked: expectedValidCount === actualValidCount,
       };
-
     } catch (error) {
       console.error('❌ Tag validation test failed:', error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     } finally {
       console.groupEnd();
@@ -116,18 +119,30 @@ export class TagValidationTest {
    */
   static testValidationLogic() {
     console.group('[TagValidationTest] Testing validation logic');
-    
+
     // Mock category scenarios
     const scenarios = [
       { category: null, expected: 'delete', description: 'Deleted category' },
-      { category: { isActive: false, name: 'Test' }, expected: 'hide', description: 'Inactive category' },
-      { category: { isActive: true, name: 'Test' }, expected: 'show', description: 'Active category' },
-      { category: { name: 'Test' }, expected: 'show', description: 'Category without isActive field (defaults to active)' }
+      {
+        category: { isActive: false, name: 'Test' },
+        expected: 'hide',
+        description: 'Inactive category',
+      },
+      {
+        category: { isActive: true, name: 'Test' },
+        expected: 'show',
+        description: 'Active category',
+      },
+      {
+        category: { name: 'Test' },
+        expected: 'show',
+        description: 'Category without isActive field (defaults to active)',
+      },
     ];
-    
-    scenarios.forEach(scenario => {
+
+    scenarios.forEach((scenario) => {
       const { category, expected, description } = scenario;
-      
+
       let result;
       if (!category) {
         result = 'delete';
@@ -136,14 +151,14 @@ export class TagValidationTest {
       } else {
         result = 'show';
       }
-      
+
       if (result === expected) {
         console.log(`✅ ${description}: ${result}`);
       } else {
         console.log(`❌ ${description}: expected ${expected}, got ${result}`);
       }
     });
-    
+
     console.groupEnd();
   }
 
@@ -153,17 +168,17 @@ export class TagValidationTest {
    */
   static async simulateOrphanedTag(evidenceId, teamId, fakeTagData) {
     console.warn('[TagValidationTest] Creating orphaned tag for testing purposes');
-    
+
     try {
       // Create a tag with a non-existent category ID
       const orphanedTag = {
         ...fakeTagData,
-        categoryId: 'deleted-category-' + Date.now()
+        categoryId: 'deleted-category-' + Date.now(),
       };
-      
+
       await tagSubcollectionService.addTag(evidenceId, orphanedTag, teamId);
       console.log('Orphaned tag created for testing');
-      
+
       return orphanedTag.categoryId;
     } catch (error) {
       console.error('Failed to create orphaned tag:', error);
@@ -176,19 +191,19 @@ export class TagValidationTest {
    */
   static async runFullTestSuite(evidenceId, teamId) {
     console.group('[TagValidationTest] Running full test suite');
-    
+
     try {
       // Test 1: Logic validation
       console.log('Running logic validation tests...');
       this.testValidationLogic();
-      
+
       // Test 2: Live tag validation
       console.log('Running live tag validation tests...');
       const results = await this.testTagValidation(evidenceId, teamId);
-      
+
       console.log('Test suite completed:');
       console.log('Results:', results);
-      
+
       return results;
     } catch (error) {
       console.error('Test suite failed:', error);

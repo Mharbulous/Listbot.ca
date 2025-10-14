@@ -28,8 +28,7 @@ export function useCategoryValidation(categories) {
 
     // Check for duplicate names
     const existingCategory = categories.value.find(
-      cat => cat.id !== excludeId && 
-      cat.name.toLowerCase() === trimmedName.toLowerCase()
+      (cat) => cat.id !== excludeId && cat.name.toLowerCase() === trimmedName.toLowerCase()
     );
     if (existingCategory) {
       errors.push('Category name already exists');
@@ -89,7 +88,7 @@ export function useCategoryValidation(categories) {
     });
 
     // Check for duplicate tag names within the category
-    const tagNames = tags.map(tag => tag.name?.trim().toLowerCase()).filter(Boolean);
+    const tagNames = tags.map((tag) => tag.name?.trim().toLowerCase()).filter(Boolean);
     const uniqueNames = [...new Set(tagNames)];
     if (tagNames.length !== uniqueNames.length) {
       errors.push('Category cannot have duplicate tag names');
@@ -126,7 +125,7 @@ export function useCategoryValidation(categories) {
       return { canDelete: false, errors };
     }
 
-    const category = categories.value.find(cat => cat.id === categoryId);
+    const category = categories.value.find((cat) => cat.id === categoryId);
     if (!category) {
       errors.push('Category not found');
       return { canDelete: false, errors };
@@ -183,7 +182,8 @@ export function useCategoryValidation(categories) {
       return '';
     }
 
-    return name.trim()
+    return name
+      .trim()
       .replace(/[<>"'&]/g, '') // Remove problematic characters
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
       .substring(0, 50); // Truncate to max length
@@ -197,7 +197,8 @@ export function useCategoryValidation(categories) {
       return '';
     }
 
-    return name.trim()
+    return name
+      .trim()
       .replace(/[<>"'&]/g, '') // Remove problematic characters
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
       .substring(0, 32); // Truncate to max length
@@ -224,15 +225,15 @@ export function useCategoryValidation(categories) {
     // Check tags changes (simple array comparison)
     const originalTags = originalCategory.tags || [];
     const newTags = newData.tags || [];
-    
+
     if (originalTags.length !== newTags.length) {
       return true;
     }
 
     // Compare tag names (assuming order doesn't matter for this simple check)
-    const originalTagNames = originalTags.map(tag => tag.name).sort();
-    const newTagNames = newTags.map(tag => tag.name).sort();
-    
+    const originalTagNames = originalTags.map((tag) => tag.name).sort();
+    const newTagNames = newTags.map((tag) => tag.name).sort();
+
     return JSON.stringify(originalTagNames) !== JSON.stringify(newTagNames);
   };
 
@@ -253,6 +254,6 @@ export function useCategoryValidation(categories) {
     sanitizeTagName,
 
     // Utility
-    hasChanges
+    hasChanges,
   };
 }

@@ -18,25 +18,26 @@ const conversionRules = {
     allowedConversions: ['Open List', 'Fixed List'],
     warnings: {},
   },
-  'Date': {
+  Date: {
     allowedConversions: ['Date', 'Timestamp'],
     warnings: {},
   },
-  'Timestamp': {
+  Timestamp: {
     allowedConversions: ['Timestamp', 'Date'],
     warnings: {},
   },
-  'Sequence': {
+  Sequence: {
     allowedConversions: ['Sequence', 'Regex'],
     warnings: {
-      'Regex': 'Converting from Sequence to Regex is a one-way conversion that cannot be undone. Your sequence format and gap settings will be replaced with regex pattern matching.',
+      Regex:
+        'Converting from Sequence to Regex is a one-way conversion that cannot be undone. Your sequence format and gap settings will be replaced with regex pattern matching.',
     },
   },
-  'Regex': {
+  Regex: {
     allowedConversions: ['Regex'], // Can only stay as Regex
     warnings: {},
   },
-  'Currency': {
+  Currency: {
     allowedConversions: ['Currency'], // Cannot convert to other types
     warnings: {},
   },
