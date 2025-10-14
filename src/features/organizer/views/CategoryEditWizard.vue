@@ -5,9 +5,16 @@
         <v-icon class="mr-2">mdi-pencil</v-icon>
         Edit Category
         <v-spacer />
-        <v-btn variant="text" icon :to="{ name: 'category-manager' }" color="default">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <HoldToConfirmButton
+          v-if="category"
+          :duration="2000"
+          text="DELETE"
+          confirming-text="Deleting..."
+          icon="mdi-delete"
+          color="error"
+          variant="outlined"
+          @confirmed="deleteCategory"
+        />
       </v-card-title>
 
       <v-card-text class="pt-6">
@@ -309,7 +316,7 @@
       </v-card-text>
 
       <v-card-actions v-if="category" class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'category-manager' }" class="mr-3">
+        <v-btn variant="outlined" :to="{ name: 'category-manager' }">
           <v-icon start>mdi-arrow-left</v-icon>
           Discard Changes
         </v-btn>
@@ -379,6 +386,7 @@ import {
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
+import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -517,6 +525,19 @@ const hasChanges = computed(() => {
 
 const showNotification = (message, color = 'success') => {
   snackbar.value = { show: true, message, color };
+};
+
+const deleteCategory = async () => {
+  try {
+    const categoryName = category.value.name;
+    await organizerStore.deleteCategory(category.value.id);
+    showNotification(`Category "${categoryName}" deleted successfully`, 'success');
+    setTimeout(() => {
+      router.push({ name: 'category-manager' });
+    }, 1500);
+  } catch (error) {
+    showNotification('Failed to delete category: ' + error.message, 'error');
+  }
 };
 
 const capitalizeFirstLetters = (event) => {
