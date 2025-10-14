@@ -1,8 +1,20 @@
 <template>
   <div class="tag-options-manager">
     <!-- Input field for adding new tag options -->
-    <v-row dense>
-      <v-col cols="12">
+    <v-row dense align="center">
+      <v-col cols="auto" class="d-flex align-center">
+        <v-btn
+          color="primary"
+          variant="elevated"
+          size="large"
+          class="add-tag-button"
+          :disabled="!canAddTag || disabled"
+          @click="addTag"
+        >
+          ADD TAG
+        </v-btn>
+      </v-col>
+      <v-col class="d-flex align-center">
         <v-text-field
           v-model="newTagInput"
           :label="placeholder"
@@ -15,18 +27,7 @@
           @keydown.enter.prevent="addTag"
           @keydown.escape="clearInput"
           @input="clearError"
-        >
-          <template #append>
-            <v-btn
-              color="primary"
-              variant="text"
-              :disabled="!canAddTag || disabled"
-              @click="addTag"
-            >
-              Add
-            </v-btn>
-          </template>
-        </v-text-field>
+        />
       </v-col>
     </v-row>
 
@@ -46,7 +47,7 @@
 
     <!-- Empty state message -->
     <div v-else class="text-caption text-medium-emphasis mt-2">
-      No tag options added yet. Enter a tag option above and click "Add".
+      No tag options added yet. Enter a tag option above and click "Add Tag" .
     </div>
   </div>
 </template>
@@ -192,5 +193,10 @@ const clearError = () => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.add-tag-button {
+  height: 40px;
+  min-height: 40px;
 }
 </style>
