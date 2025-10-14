@@ -1,8 +1,9 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /teams/{teamId}/matters/{matterId}/{fileName} {
-      allow read, write: if request.auth != null && 
+    // Match files in matter directories (with or without uploads subdirectory)
+    match /teams/{teamId}/matters/{matterId}/{allPaths=**} {
+      allow read, write: if request.auth != null &&
                            request.auth.uid == teamId;  // Solo team
     }
   }
