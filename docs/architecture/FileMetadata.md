@@ -57,7 +57,8 @@ Result: ONE file in storage (`abc123...def.pdf`), THREE metadata records preserv
 
 ### 2. evidence Collection
 
-**Path**: `/teams/{teamId}/evidence/{evidenceId}`
+**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{evidenceId}`
+**Current**: `/teams/{teamId}/matters/general/evidence/{evidenceId}`
 
 **Purpose**: Links deduplicated storage files to their display metadata
 

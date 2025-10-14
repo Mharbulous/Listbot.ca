@@ -3,8 +3,10 @@
 ## Database Path
 
 ```
-/teams/{teamId}/evidence/{evidenceId}
+/teams/{teamId}/matters/general/evidence/{evidenceId}
 ```
+
+**Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
 ## Document Schema
 
@@ -74,7 +76,7 @@
 ### Path Structure
 
 ```
-/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}
+/teams/{teamId}/matters/general/evidence/{evidenceId}/tags/{categoryId}
 ```
 
 ### Tag Document Schema
@@ -119,7 +121,7 @@
 ## Firestore Security Rules
 
 ```javascript
-match /teams/{teamId}/evidence/{evidenceId} {
+match /teams/{teamId}/matters/general/evidence/{evidenceId} {
   // Evidence document access
   allow read: if request.auth != null &&
                  request.auth.token.teamId == teamId;
@@ -184,6 +186,8 @@ function validateTagDocument(data) {
 const evidenceDoc = await db
   .collection('teams')
   .doc(teamId)
+  .collection('matters')
+  .doc('general')
   .collection('evidence')
   .doc(evidenceId)
   .get();
@@ -213,6 +217,8 @@ const tagMetrics = {
 const tagsSnapshot = await db
   .collection('teams')
   .doc(teamId)
+  .collection('matters')
+  .doc('general')
   .collection('evidence')
   .doc(evidenceId)
   .collection('tags')
@@ -222,6 +228,8 @@ const tagsSnapshot = await db
 const pendingTags = await db
   .collection('teams')
   .doc(teamId)
+  .collection('matters')
+  .doc('general')
   .collection('evidence')
   .doc(evidenceId)
   .collection('tags')
@@ -234,7 +242,13 @@ const pendingTags = await db
 ```javascript
 // MUST use transaction to maintain counter integrity
 await db.runTransaction(async (transaction) => {
-  const evidenceRef = db.collection('teams').doc(teamId).collection('evidence').doc(evidenceId);
+  const evidenceRef = db
+    .collection('teams')
+    .doc(teamId)
+    .collection('matters')
+    .doc('general')
+    .collection('evidence')
+    .doc(evidenceId);
 
   const tagRef = evidenceRef.collection('tags').doc(categoryId);
 
