@@ -21,7 +21,9 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
   preferences: {
     theme: 'light',
     notifications: true,
-    language: 'en'
+    language: 'en',
+    dateFormat: 'YYYY-MM-DD',  // Default date format for display
+    darkMode: false             // Dark mode preference
   },
 
   // Activity tracking

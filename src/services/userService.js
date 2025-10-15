@@ -105,6 +105,42 @@ export class UserService {
   }
 
   /**
+   * Update user preferences only (without affecting other user data)
+   * @param {string} userId - Firebase user UID
+   * @param {Object} preferences - Preferences object to update
+   * @returns {Promise<void>}
+   */
+  static async updateUserPreferences(userId, preferences) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    if (!preferences || typeof preferences !== 'object') {
+      throw new Error('Valid preferences object required');
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', userId);
+
+      // Merge update to preserve other user data
+      await setDoc(
+        userDocRef,
+        {
+          preferences,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Clear cache to force refresh
+      this.userCache.delete(userId);
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Clear the user cache (useful for testing or when user data changes)
    */
   static clearCache() {

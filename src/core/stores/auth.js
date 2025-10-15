@@ -118,7 +118,10 @@ export const useAuthStore = defineStore('auth', {
           this.userRole = 'admin';
         }
 
-        // 3. Update state
+        // 3. Initialize user preferences
+        await this._initializeUserPreferences(firebaseUser.uid);
+
+        // 4. Update state
         this.authState = 'authenticated';
         this.error = null;
       } catch (error) {
@@ -137,6 +140,27 @@ export const useAuthStore = defineStore('auth', {
       this.teamId = null;
       this.authState = 'unauthenticated';
       this.error = null;
+
+      // Clear user preferences on logout
+      try {
+        const { useUserPreferencesStore } = await import('./userPreferences');
+        const preferencesStore = useUserPreferencesStore();
+        preferencesStore.clear();
+      } catch (error) {
+        console.error('Error clearing preferences:', error);
+      }
+    },
+
+    // Initialize user preferences
+    async _initializeUserPreferences(userId) {
+      try {
+        const { useUserPreferencesStore } = await import('./userPreferences');
+        const preferencesStore = useUserPreferencesStore();
+        await preferencesStore.initialize(userId);
+      } catch (error) {
+        console.error('Error initializing user preferences:', error);
+        // Don't fail auth for this - preferences are not critical
+      }
     },
 
     // Simple check for existing team
@@ -210,13 +234,15 @@ export const useAuthStore = defineStore('auth', {
           isSystemMatter: true,
         });
 
-        // 3. Create user document with preferences
+        // 3. Create user document with preferences (including new display preferences)
         const { UserService } = await import('../../services/userService');
         await UserService.createOrUpdateUserDocument(firebaseUser, {
           preferences: {
             theme: 'light',
             notifications: true,
             language: 'en',
+            dateFormat: 'YYYY-MM-DD', // Default date format
+            darkMode: false, // Default dark mode
           },
         });
 
