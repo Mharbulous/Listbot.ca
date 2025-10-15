@@ -1,12 +1,13 @@
 /**
  * Evidence Deduplication Composable
  *
- * Groups evidence documents by fileHash (storage-level deduplication)
+ * Groups evidence documents by document ID (which is the fileHash)
  * and provides metadata options for files with multiple metadata variants.
  *
  * Use Case:
- * - Same file uploaded twice → 2 evidence docs, same fileHash → 1 display row
- * - Same file with different names → 2 evidence docs, same fileHash, different metadataHash → 1 display row with dropdown
+ * - With the new schema, each unique fileHash gets ONE evidence document (automatic deduplication)
+ * - Different metadata variants are handled through the originalMetadata collection
+ * - This composable primarily handles UI display and metadata selection
  */
 
 /**
@@ -52,91 +53,26 @@ function uniqueBy(array, key) {
 }
 
 /**
- * Deduplicate evidence list by fileHash
+ * Deduplicate evidence list by document ID (fileHash)
  *
  * @param {Array} evidenceList - Raw evidence documents from Firestore
- * @returns {Array} - Deduplicated list with metadata options
+ * @returns {Array} - Deduplicated list (already unique by design)
  *
- * Output Structure:
- * {
- *   ...evidence, // All fields from primary evidence doc
- *   metadataOptions: [ // Only present if multiple metadata variants exist
- *     {
- *       displayCopy: 'metadataHash1',
- *       displayName: 'File_v1.pdf',
- *       createdAt: timestamp1,
- *       evidenceId: 'evidence_1'
- *     },
- *     {
- *       displayCopy: 'metadataHash2',
- *       displayName: 'File_v2.pdf',
- *       createdAt: timestamp2,
- *       evidenceId: 'evidence_2'
- *     }
- *   ],
- *   selectedMetadataHash: 'metadataHash1' // Currently selected metadata
- * }
+ * Note: With the new schema, each fileHash is a document ID, so duplicates are impossible.
+ * This function now primarily serves to ensure list consistency and could be simplified further.
  */
 export function deduplicateEvidence(evidenceList) {
   if (!Array.isArray(evidenceList) || evidenceList.length === 0) {
     return [];
   }
 
-  console.log(`[Deduplication] Starting with ${evidenceList.length} evidence documents`);
+  console.log(`[Deduplication] Processing ${evidenceList.length} evidence documents`);
 
-  // Step 1: Group by fileHash (same file content)
-  const fileHashGroups = groupBy(evidenceList, 'storageRef.fileHash');
+  // With new schema: document ID = fileHash, so deduplication is automatic
+  // Just return the list as-is since each document is already unique
+  console.log(`[Deduplication] All documents are unique by design (fileHash as document ID)`);
 
-  console.log(`[Deduplication] Grouped into ${Object.keys(fileHashGroups).length} unique files`);
-
-  // Step 2: For each fileHash group, collect unique metadata variants
-  const deduplicated = Object.entries(fileHashGroups).map(([fileHash, docs]) => {
-    // Get unique metadata variations (different displayCopy = different metadata)
-    const uniqueMetadata = uniqueBy(docs, 'displayCopy');
-
-    console.log(
-      `[Deduplication] File ${fileHash.substring(0, 8)}... has ${docs.length} evidence docs → ${uniqueMetadata.length} unique metadata`
-    );
-
-    // Use the first unique metadata variant as the primary
-    const primaryDoc = uniqueMetadata[0];
-
-    // Build metadata options if multiple variants exist
-    const metadataOptions =
-      uniqueMetadata.length > 1
-        ? uniqueMetadata.map((doc) => ({
-            displayCopy: doc.displayCopy,
-            displayName: doc.displayName,
-            createdAt: doc.createdAt,
-            evidenceId: doc.id,
-          }))
-        : null;
-
-    return {
-      ...primaryDoc, // Spread all fields from primary doc
-      metadataOptions, // Add metadata options (null if only 1 variant)
-      selectedMetadataHash: primaryDoc.displayCopy, // Track current selection
-    };
-  });
-
-  console.log(
-    `[Deduplication] Completed: ${evidenceList.length} → ${deduplicated.length} documents`
-  );
-
-  // Log files with multiple metadata for debugging
-  const multiMetadata = deduplicated.filter((d) => d.metadataOptions);
-  if (multiMetadata.length > 0) {
-    console.log(
-      `[Deduplication] ${multiMetadata.length} files have multiple metadata variants:`,
-      multiMetadata.map((d) => ({
-        id: d.id,
-        displayName: d.displayName,
-        variantCount: d.metadataOptions.length,
-      }))
-    );
-  }
-
-  return deduplicated;
+  return evidenceList;
 }
 
 /**

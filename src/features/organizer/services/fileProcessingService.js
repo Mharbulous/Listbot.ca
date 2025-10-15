@@ -18,8 +18,10 @@ export class FileProcessingService {
    */
   async getFileForProcessing(evidence, teamId) {
     try {
-      if (!evidence.storageRef?.fileHash) {
-        throw new Error('No file hash found in evidence document');
+      // Document ID is the fileHash
+      const fileHash = evidence.id;
+      if (!fileHash) {
+        throw new Error('No file hash found in evidence document ID');
       }
 
       // Get file extension from displayName (preserve original case to match storage)
@@ -28,7 +30,7 @@ export class FileProcessingService {
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
       // UploadService hardcodes 'general' matter and converts extension to lowercase
-      const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       // Get file bytes directly from Firebase Storage
@@ -67,15 +69,17 @@ export class FileProcessingService {
    */
   async getFileDownloadURL(evidence, teamId) {
     try {
-      if (!evidence.storageRef?.fileHash) {
-        throw new Error('No file hash found in evidence document');
+      // Document ID is the fileHash
+      const fileHash = evidence.id;
+      if (!fileHash) {
+        throw new Error('No file hash found in evidence document ID');
       }
 
       const displayName = evidence.displayName || '';
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       const downloadURL = await getDownloadURL(fileRef);
@@ -135,8 +139,10 @@ export class FileProcessingService {
    */
   async getFileSize(evidence, teamId) {
     try {
-      if (!evidence.storageRef?.fileHash) {
-        console.warn('[FileProcessingService] No file hash found in evidence document');
+      // Document ID is the fileHash
+      const fileHash = evidence.id;
+      if (!fileHash) {
+        console.warn('[FileProcessingService] No file hash found in evidence document ID');
         return 0;
       }
 
@@ -163,7 +169,7 @@ export class FileProcessingService {
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
         // Use the EXACT same path format as UploadService.generateStoragePath()
-        const storagePath = `teams/${teamId}/matters/general/uploads/${evidence.storageRef.fileHash}.${extension}`;
+        const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
 
         console.log(
@@ -217,8 +223,8 @@ export class FileProcessingService {
       fileSizeMB: ((evidence.fileSize || 0) / (1024 * 1024)).toFixed(1),
       fileSizeKB: ((evidence.fileSize || 0) / 1024).toFixed(1),
       extension: this.getFileExtension(evidence),
-      fileHash: evidence.storageRef?.fileHash || null,
-      hasStorageRef: Boolean(evidence.storageRef?.fileHash),
+      fileHash: evidence.id || null,
+      hasFileHash: Boolean(evidence.id),
     };
   }
 }

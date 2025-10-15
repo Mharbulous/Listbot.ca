@@ -94,7 +94,7 @@ import {
   getMetadata,
   uploadBytesResumable,
 } from 'firebase/storage';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from '../../core/stores/auth.js';
 import { useLazyHashTooltip } from './composables/useLazyHashTooltip.js';
 import { useUploadLogger } from './composables/useUploadLogger.js';
@@ -262,17 +262,10 @@ const generateStoragePath = (fileHash, originalFileName) => {
 
 const checkFileExists = async (fileHash) => {
   try {
-    const evidenceRef = collection(
-      db,
-      'teams',
-      authStore.currentTeam,
-      'matters',
-      'general',
-      'evidence'
-    );
-    const hashQuery = query(evidenceRef, where('storageRef.fileHash', '==', fileHash), limit(1));
-    const querySnapshot = await getDocs(hashQuery);
-    return !querySnapshot.empty;
+    // Direct document lookup using fileHash as document ID
+    const evidenceRef = doc(db, 'teams', authStore.currentTeam, 'matters', 'general', 'evidence', fileHash);
+    const docSnap = await getDoc(evidenceRef);
+    return docSnap.exists();
   } catch (error) {
     console.warn('Error checking file existence via Firestore, falling back to false:', error);
     return false;

@@ -13,30 +13,23 @@ export class EvidenceQueryService {
   }
 
   /**
-   * Find evidence documents by file hash
-   * @param {string} fileHash - File hash from upload system
-   * @returns {Promise<Array>} - Array of evidence documents
+   * Find evidence document by file hash (direct lookup)
+   * @param {string} fileHash - File hash from upload system (document ID)
+   * @returns {Promise<Object|null>} - Evidence document or null if not found
    */
   async findEvidenceByHash(fileHash) {
     try {
-      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
-      const q = query(
-        evidenceRef,
-        where('storageRef.fileHash', '==', fileHash),
-        orderBy('createdAt', 'desc')
-      );
+      const evidenceRef = doc(db, 'teams', this.teamId, 'matters', 'general', 'evidence', fileHash);
+      const docSnap = await getDoc(evidenceRef);
 
-      const querySnapshot = await getDocs(q);
-      const evidenceList = [];
+      if (docSnap.exists()) {
+        return {
+          id: docSnap.id,
+          ...docSnap.data(),
+        };
+      }
 
-      querySnapshot.forEach((doc) => {
-        evidenceList.push({
-          id: doc.id,
-          ...doc.data(),
-        });
-      });
-
-      return evidenceList;
+      return null;
     } catch (error) {
       console.error('[EvidenceQueryService] Failed to find evidence by hash:', error);
       throw error;
@@ -281,11 +274,8 @@ export class EvidenceQueryService {
         const data = doc.data();
         let isMatch = false;
 
-        // Check displayName and folderPath
-        if (
-          data.displayName?.toLowerCase().includes(searchTermLower) ||
-          data.displayCopy?.folderPath?.toLowerCase().includes(searchTermLower)
-        ) {
+        // Check displayName (displayCopy is now just a metadataHash string)
+        if (data.displayName?.toLowerCase().includes(searchTermLower)) {
           isMatch = true;
         }
 
@@ -346,7 +336,7 @@ export class EvidenceQueryService {
         try {
           const existingEvidence = await this.findEvidenceByHash(uploadMeta.hash);
 
-          if (existingEvidence.length > 0) {
+          if (existingEvidence !== null) {
             results.skipped.push({ hash: uploadMeta.hash, reason: 'Evidence already exists' });
             continue;
           }

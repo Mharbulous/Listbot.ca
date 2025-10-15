@@ -2,7 +2,7 @@ import { db } from '../../../services/firebase.js';
 import {
   collection,
   doc,
-  addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   getDoc,
@@ -23,7 +23,7 @@ export class EvidenceService {
    * Create a new evidence document from uploaded file metadata
    * @param {Object} uploadMetadata - Metadata from the upload system
    * @param {Object} options - Additional options
-   * @returns {Promise<string>} - Evidence document ID
+   * @returns {Promise<string>} - Evidence document ID (fileHash)
    */
   async createEvidenceFromUpload(uploadMetadata, options = {}) {
     try {
@@ -31,22 +31,14 @@ export class EvidenceService {
         throw new Error('Missing required upload metadata: hash and originalName');
       }
 
-      // Use the metadataHash from uploadMetadata (created during upload process)
+      // Use fileHash as document ID
+      const fileHash = uploadMetadata.hash;
       const metadataHash = uploadMetadata.metadataHash;
 
-      // Create evidence document with refined structure
+      // Create evidence document with simplified structure
       const evidenceData = {
-        // Reference to actual file in Storage
-        storageRef: {
-          storage: 'uploads',
-          fileHash: uploadMetadata.hash,
-        },
-
-        // Display configuration (references specific metadata record)
-        displayCopy: {
-          metadataHash: metadataHash,
-          folderPath: uploadMetadata.folderPath || '/', // Default to root if no folder path
-        },
+        // Display configuration (simplified to just metadataHash string)
+        displayCopy: metadataHash,
 
         // File properties (for quick access)
         fileSize: uploadMetadata.size || 0,
@@ -56,23 +48,26 @@ export class EvidenceService {
         hasAllPages: null, // null = unknown, true/false after processing
         processingStage: 'uploaded', // uploaded|splitting|merging|complete
 
-        // Note: Tags are now stored in subcollection /teams/{teamId}/evidence/{docId}/tags/
+        // Tag counters (for subcollection)
+        tagCount: 0,
+        autoApprovedCount: 0,
+        reviewRequiredCount: 0,
 
         // Timestamps
         updatedAt: serverTimestamp(),
       };
 
-      // Add to evidence collection
-      const evidenceRef = collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence');
-      const docRef = await addDoc(evidenceRef, evidenceData);
+      // Use setDoc with fileHash as document ID (automatic deduplication)
+      const docRef = doc(db, 'teams', this.teamId, 'matters', 'general', 'evidence', fileHash);
+      await setDoc(docRef, evidenceData);
 
-      console.log(`[EvidenceService] Created evidence document: ${docRef.id}`, {
+      console.log(`[EvidenceService] Created evidence document: ${fileHash.substring(0, 8)}...`, {
         metadataHash: metadataHash.substring(0, 8) + '...',
-        fileHash: uploadMetadata.hash.substring(0, 8) + '...',
+        fileHash: fileHash.substring(0, 8) + '...',
         processingStage: evidenceData.processingStage,
       });
 
-      return docRef.id;
+      return fileHash;
     } catch (error) {
       console.error('[EvidenceService] Failed to create evidence:', error);
       throw error;
@@ -82,7 +77,7 @@ export class EvidenceService {
   /**
    * Batch create evidence documents from multiple uploaded files
    * @param {Array} uploadMetadataList - Array of upload metadata objects
-   * @returns {Promise<Array>} - Array of evidence document IDs
+   * @returns {Promise<Array>} - Array of evidence document IDs (fileHashes)
    */
   async createEvidenceFromUploads(uploadMetadataList) {
     try {
@@ -94,21 +89,21 @@ export class EvidenceService {
       const evidenceIds = [];
 
       for (const uploadMetadata of uploadMetadataList) {
+        const fileHash = uploadMetadata.hash;
         const evidenceRef = doc(
-          collection(db, 'teams', this.teamId, 'matters', 'general', 'evidence')
+          db,
+          'teams',
+          this.teamId,
+          'matters',
+          'general',
+          'evidence',
+          fileHash
         );
-        evidenceIds.push(evidenceRef.id);
+        evidenceIds.push(fileHash);
 
         const evidenceData = {
-          storageRef: {
-            storage: 'uploads',
-            fileHash: uploadMetadata.hash,
-          },
-
-          displayCopy: {
-            metadataHash: uploadMetadata.metadataHash || 'temp-hash', // Should be provided by upload process
-            folderPath: uploadMetadata.folderPath || '/',
-          },
+          // Simplified displayCopy (just metadataHash string)
+          displayCopy: uploadMetadata.metadataHash || 'temp-hash',
 
           fileSize: uploadMetadata.size || 0,
 
@@ -116,7 +111,10 @@ export class EvidenceService {
           hasAllPages: null,
           processingStage: 'uploaded',
 
-          // Tags stored in subcollection
+          // Tag counters
+          tagCount: 0,
+          autoApprovedCount: 0,
+          reviewRequiredCount: 0,
 
           updatedAt: serverTimestamp(),
         };

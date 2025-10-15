@@ -57,42 +57,39 @@ Result: ONE file in storage (`abc123...def.pdf`), THREE metadata records preserv
 
 ### 2. evidence Collection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{evidenceId}`
-**Current**: `/teams/{teamId}/matters/general/evidence/{evidenceId}`
+**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}`
+**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}`
 
 **Purpose**: Links deduplicated storage files to their display metadata
 
-**Document ID**: Auto-generated Firestore ID
+**Document ID**: `fileHash` - SHA-256 hash of file content (provides automatic deduplication)
 
 **Fields**:
 
 ```javascript
 {
-  storageRef: {
-    fileHash: string,        // Points to Firebase Storage file
-    fileName: string,        // Storage filename (hash.extension)
-    storagePath: string,     // Full Firebase Storage path
-    fileTypes: string        // File extension in lowercase (e.g., ".pdf")
-  },
+  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
+
   displayCopy: string,       // metadataHash pointing to originalMetadata record
-  displayName: string,       // User-friendly name for display (from originalMetadata)
   fileSize: number,          // File size in bytes
   processingStage: string,   // Upload/processing status
   isProcessed: boolean,      // Whether file has been processed
   hasAllPages: boolean|null, // Page completeness check
+  tagCount: number,          // Count of tags (for performance)
+  autoApprovedCount: number, // Count of auto-approved tags
+  reviewRequiredCount: number, // Count of tags needing review
   updatedAt: timestamp,      // Last modified time
-  uploadEventId: string,     // Links to uploadEvents record
-  isDuplicate: boolean,      // Whether file already existed in storage
   tags: subcollection        // Tag documents for categorization
 }
 ```
 
-**displayName Field**:
+**Key Differences from Old Schema**:
 
-- Initially populated from the `originalName` of the linked originalMetadata record
-- Can be updated by users to provide custom display names
-- Used throughout the UI for file listings and search results
-- Falls back to showing file hash if not set
+- **No `storageRef` field**: File hash is now the document ID itself
+- **Simplified `displayCopy`**: Changed from object to simple string (metadataHash)
+- **Automatic Deduplication**: Using fileHash as document ID prevents duplicate evidence records
+- **Tag Counters**: Added for performance optimization
+- **Access file hash**: Use `evidence.id` (document ID) instead of `evidence.storageRef.fileHash`
 
 **Key Files Using This**:
 
@@ -148,9 +145,8 @@ Check if fileHash exists in Storage →
   ↓
 Create/find originalMetadata record (using metadataHash as ID) →
   ↓
-Create evidence record (links to storage file and originalMetadata) →
-  ↓
-Populate displayName from originalMetadata.originalName
+Create evidence record using fileHash as document ID →
+  (Automatic deduplication - identical files = same document)
 ```
 
 ## File Extension Handling
@@ -160,7 +156,6 @@ Populate displayName from originalMetadata.originalName
 **Standardization**: Everywhere else uses lowercase:
 
 - Firebase Storage paths: `{fileHash}.pdf` (always lowercase)
-- Evidence storageRef.fileTypes: `.pdf` (always lowercase)
 - UI display logic: Converts to lowercase for consistency
 - File type detection: Uses lowercase for comparisons
 
@@ -169,15 +164,20 @@ Populate displayName from originalMetadata.originalName
 - User uploads: `Report.PDF`
 - originalMetadata: `{ originalName: "Report.PDF" }` (preserved)
 - Firebase Storage: `abc123...def.pdf` (lowercase)
-- Evidence: `{ storageRef: { fileTypes: ".pdf" } }` (lowercase)
+- Evidence: Document ID is the fileHash (no extension field)
 
 ## Deduplication Logic
 
-**Storage Level**: Files with identical content (same `fileHash`) are stored once
+**Storage Level (Firebase Storage)**: Files with identical content (same `fileHash`) are stored once
 
-**Metadata Level**: Metadata combinations (same `metadataHash`) are stored once
+**Evidence Level (NEW)**: Files with identical content get ONE evidence document
+- Document ID = fileHash (Firestore enforces uniqueness)
+- Automatic deduplication without manual checking
+- setDoc() safely overwrites if the same file is uploaded again
 
-**Result**: Efficient storage while preserving all original contexts
+**Metadata Level (originalMetadata)**: Metadata combinations (same `metadataHash`) are stored once
+
+**Result**: Triple-layer deduplication - efficient storage while preserving all original contexts
 
 ## Folder Paths System
 
@@ -210,5 +210,6 @@ The `folderPaths` field captures folder structure from webkitdirectory uploads:
 **Understanding the deduplication?**
 
 - Same file content = one storage file (named by fileHash)
+- Same file content = ONE evidence document (fileHash as document ID)
 - Same metadata = one originalMetadata record (identified by metadataHash)
-- Every upload = new uploadEvent and evidence record
+- Every upload = new uploadEvent (for audit trail)

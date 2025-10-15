@@ -3,8 +3,10 @@
 ## Database Path
 
 ```
-/teams/{teamId}/matters/general/evidence/{evidenceId}
+/teams/{teamId}/matters/general/evidence/{fileHash}
 ```
+
+**IMPORTANT**: Document ID is the SHA-256 hash of the file content (64 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
 
 **Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
@@ -14,14 +16,10 @@
 
 ```javascript
 {
-  // File References - REQUIRED
-  storageRef: {
-    storage: 'uploads',           // MUST be 'uploads'
-    fileHash: string,            // SHA-256 hash - REQUIRED, 64 chars
-    fileTypes: string            // File extension with dot (e.g., '.pdf')
-  },
+  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
 
-  displayCopy: string,           // Metadata hash - REQUIRED, references originalMetadata
+  // Display Configuration - REQUIRED
+  displayCopy: string,           // Metadata hash - references originalMetadata collection
 
   // File Properties - REQUIRED
   fileSize: number,              // Bytes, must be > 0
@@ -43,17 +41,18 @@
 
 ### Field Constraints
 
-**storageRef:**
+**Document ID (fileHash):**
 
-- **ALWAYS** verify fileHash exists in uploads collection before creating document
-- **NEVER** create evidence without valid storageRef
-- **MUST** use SHA-256 hash (64 character string)
+- **MUST** be a valid SHA-256 hash (64 hexadecimal characters)
+- **AUTOMATIC DEDUPLICATION**: Using fileHash as document ID prevents duplicate evidence records
+- **ALWAYS** verify file exists in Firebase Storage before creating evidence document
+- **NEVER** manually set document ID - use the fileHash from upload process
 
 **displayCopy:**
 
 - **ALWAYS** verify hash exists in originalMetadata collection
-- **NEVER** store actual metadata in evidence document
-- **USE** hash-based lookup for deduplication
+- **MUST** be a valid metadataHash (SHA-256, 64 characters)
+- **USE** hash-based lookup for metadata retrieval
 
 **Note**: For understanding the critical distinction between original file metadata and storage file references, including the three-collection deduplication system, see [FileMetadata.md](FileMetadata.md).
 
@@ -121,14 +120,15 @@
 ## Firestore Security Rules
 
 ```javascript
-match /teams/{teamId}/matters/general/evidence/{evidenceId} {
+match /teams/{teamId}/matters/general/evidence/{fileHash} {
   // Evidence document access
+  // Note: fileHash is the document ID (SHA-256, 64 hex chars)
   allow read: if request.auth != null &&
                  request.auth.token.teamId == teamId;
 
   allow create: if request.auth != null &&
                    request.auth.token.teamId == teamId &&
-                   validateEvidenceCreate(request.resource.data);
+                   validateEvidenceCreate(request.resource.data, fileHash);
 
   allow update: if request.auth != null &&
                    request.auth.token.teamId == teamId &&
@@ -149,12 +149,12 @@ match /teams/{teamId}/matters/general/evidence/{evidenceId} {
 }
 
 // Validation Functions
-function validateEvidenceCreate(data) {
-  return data.keys().hasAll(['storageRef', 'displayCopy', 'fileSize',
+function validateEvidenceCreate(data, fileHash) {
+  return data.keys().hasAll(['displayCopy', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
                               'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
-         data.storageRef.storage == 'uploads' &&
-         data.storageRef.fileHash.size() == 64 &&
+         fileHash.size() == 64 &&  // Document ID must be valid SHA-256 hash
+         data.displayCopy.size() == 64 &&  // Must be valid metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&
@@ -344,16 +344,18 @@ Collection: tags
 ### Data Integrity
 
 - **NEVER** delete evidence documents
-- **NEVER** modify fileHash after creation
+- **NEVER** modify document ID (fileHash) after creation
+- **AUTOMATIC DEDUPLICATION**: Same fileHash = same document (setDoc overwrites safely)
 - **ALWAYS** maintain counter accuracy with transactions
 - **NEVER** allow orphaned tags (evidence deleted but tags remain)
 
 ### File References
 
-- **ALWAYS** verify file exists in storage before creating evidence
+- **ALWAYS** verify file exists in Firebase Storage before creating evidence
 - **NEVER** store file content in Firestore
-- **USE** SHA-256 hash for deduplication
+- **USE** fileHash (document ID) to locate files in Storage: `teams/{teamId}/matters/general/uploads/{fileHash}.{extension}`
 - **ALWAYS** verify metadata hash exists in originalMetadata collection
+- **ACCESS** file using: `evidence.id` (which is the fileHash)
 
 **Note**: For understanding team-based data isolation including solo user patterns where teamId === userId, see [SoloTeamMatters.md](SoloTeamMatters.md).
 
