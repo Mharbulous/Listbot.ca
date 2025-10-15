@@ -150,6 +150,17 @@ service cloud.firestore {
         );
     }
 
+    // Evidence originalMetadata subcollection (explicit rule for clarity)
+    match /teams/{teamId}/matters/{matterId}/evidence/{evidenceId}/originalMetadata/{metadataHash} {
+      allow read, write: if request.auth != null &&
+        (
+          request.auth.token.teamId == teamId ||
+          teamId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/teams/$(teamId)) &&
+           request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys())
+        );
+    }
+
     // Global admin access (optional - for super admins)
     match /{document=**} {
       allow read, write: if request.auth != null &&

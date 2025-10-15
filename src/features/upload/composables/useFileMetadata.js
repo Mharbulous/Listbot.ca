@@ -1,5 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
 import { EvidenceService } from '../../organizer/services/evidenceService.js';
@@ -79,6 +79,8 @@ export function useFileMetadata() {
           teamId,
           'matters',
           'general',
+          'evidence',
+          fileHash,
           'originalMetadata',
           metadataHash
         );
@@ -96,7 +98,21 @@ export function useFileMetadata() {
       // Update folder paths using pattern recognition
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
 
-      // Create metadata record
+      // STEP 1: Create Evidence document FIRST (parent document must exist before subcollections)
+      const evidenceService = new EvidenceService(teamId);
+
+      const uploadMetadata = {
+        hash: fileHash,
+        originalName: originalName,
+        size: size || 0,
+        folderPath: currentFolderPath || '/',
+        metadataHash: metadataHash,
+      };
+
+      const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
+      console.log(`[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`);
+
+      // STEP 2: Create originalMetadata subcollection document (now that parent exists)
       const metadataRecord = {
         // Core file metadata (only what varies between identical files)
         originalName: originalName,
@@ -110,13 +126,15 @@ export function useFileMetadata() {
         metadataHash: metadataHash,
       };
 
-      // Save to Firestore: /teams/{teamId}/matters/general/originalMetadata/{metadataHash}
+      // Save to Firestore: /teams/{teamId}/matters/general/evidence/{fileHash}/originalMetadata/{metadataHash}
       const docRef = doc(
         db,
         'teams',
         teamId,
         'matters',
         'general',
+        'evidence',
+        fileHash,
         'originalMetadata',
         metadataHash
       );
@@ -129,27 +147,6 @@ export function useFileMetadata() {
         pathChanged: pathUpdate.hasChanged,
         fileHash: fileHash.substring(0, 8) + '...',
       });
-
-      // Create corresponding Evidence document for organization
-      try {
-        const evidenceService = new EvidenceService(teamId);
-
-        const uploadMetadata = {
-          hash: fileHash,
-          originalName: originalName,
-          size: size || 0,
-          folderPath: currentFolderPath || '/',
-          metadataHash: metadataHash,
-        };
-
-        const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
-        console.log(
-          `[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`
-        );
-      } catch (evidenceError) {
-        console.error('Failed to create evidence document:', evidenceError);
-        // Don't fail the upload if evidence creation fails
-      }
 
       return metadataHash;
     } catch (error) {
@@ -196,17 +193,19 @@ export function useFileMetadata() {
         throw new Error('No team ID available');
       }
 
-      // Try to get the document
+      // Try to get the document from subcollection
       const docRef = doc(
         db,
         'teams',
         teamId,
         'matters',
         'general',
+        'evidence',
+        fileHash,
         'originalMetadata',
         metadataHash
       );
-      const docSnapshot = await docRef.get();
+      const docSnapshot = await getDoc(docRef);
 
       return docSnapshot.exists();
     } catch (error) {

@@ -54,7 +54,7 @@
 - **MUST** be a valid metadataHash (SHA-256, 64 characters)
 - **USE** hash-based lookup for metadata retrieval
 
-**Note**: For understanding the critical distinction between original file metadata and storage file references, including the three-collection deduplication system, see [FileMetadata.md](FileMetadata.md).
+**Note**: For understanding the critical distinction between original file metadata and storage file references, including how originalMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
 
 **processingStage:**
 
@@ -69,6 +69,42 @@
 - **UPDATE** updatedAt whenever counters change
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
+
+## Original Metadata Subcollection
+
+### Path Structure
+
+```
+/teams/{teamId}/matters/general/evidence/{evidenceId}/originalMetadata/{metadataHash}
+```
+
+### Purpose
+
+The originalMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all original file contexts while maintaining efficient storage deduplication.
+
+### Original Metadata Document Schema
+
+```javascript
+{
+  // Core file metadata
+  originalName: string,      // Exact filename with ORIGINAL CASE PRESERVED
+  lastModified: number,       // Original file's timestamp (milliseconds since epoch)
+  fileHash: string,          // SHA-256 of file content (64 hex chars)
+
+  // File path information
+  folderPaths: string,       // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
+
+  // Computed fields
+  metadataHash: string       // SHA-256 of metadata string (64 hex chars) - matches document ID
+}
+```
+
+### Key Characteristics
+
+- **Multiple variants per evidence**: One evidence document can have multiple originalMetadata subcollection documents
+- **Automatic deduplication**: Identical metadata (same metadataHash) stored only once per evidence document
+- **Preserves original context**: Each document represents a unique upload context with different name, timestamp, or path
+- **Case preservation**: The ONLY place where original file extension case is preserved
 
 ## Tag Subcollection
 

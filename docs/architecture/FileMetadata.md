@@ -25,12 +25,12 @@ Result: ONE file in storage (`abc123...def.pdf`), THREE metadata records preserv
 
 ## The Three Collections
 
-### 1. originalMetadata Collection
+### 1. originalMetadata Subcollection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/originalMetadata/{metadataHash}`  
-**Current**: `/teams/{teamId}/matters/general/originalMetadata/{metadataHash}`
+**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}/originalMetadata/{metadataHash}`
+**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}/originalMetadata/{metadataHash}`
 
-**Purpose**: Preserves metadata about original desktop files
+**Purpose**: Preserves metadata about original desktop files as a subcollection under evidence documents
 
 **Document ID**: `metadataHash` - SHA-256 hash of `originalName|lastModified|fileHash`
 
@@ -143,10 +143,11 @@ Check if fileHash exists in Storage →
   ├─ No: Upload file to Storage (with lowercase extension)
   └─ Yes: Skip upload (file already exists)
   ↓
-Create/find originalMetadata record (using metadataHash as ID) →
-  ↓
 Create evidence record using fileHash as document ID →
   (Automatic deduplication - identical files = same document)
+  ↓
+Create originalMetadata record as subcollection under evidence document →
+  Path: /evidence/{fileHash}/originalMetadata/{metadataHash}
 ```
 
 ## File Extension Handling
@@ -170,14 +171,17 @@ Create evidence record using fileHash as document ID →
 
 **Storage Level (Firebase Storage)**: Files with identical content (same `fileHash`) are stored once
 
-**Evidence Level (NEW)**: Files with identical content get ONE evidence document
+**Evidence Level**: Files with identical content get ONE evidence document
 - Document ID = fileHash (Firestore enforces uniqueness)
 - Automatic deduplication without manual checking
 - setDoc() safely overwrites if the same file is uploaded again
 
-**Metadata Level (originalMetadata)**: Metadata combinations (same `metadataHash`) are stored once
+**Metadata Level (originalMetadata Subcollection)**: Metadata combinations (same `metadataHash`) are stored once as subcollection documents under the evidence document
+- Multiple originalMetadata documents can exist under one evidence document
+- Each represents a different upload context (different name, timestamp, or path)
+- Path: `/evidence/{fileHash}/originalMetadata/{metadataHash}`
 
-**Result**: Triple-layer deduplication - efficient storage while preserving all original contexts
+**Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
 ## Folder Paths System
 
@@ -211,5 +215,6 @@ The `folderPaths` field captures folder structure from webkitdirectory uploads:
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one originalMetadata record (identified by metadataHash)
+- Same metadata = one originalMetadata subcollection document under evidence (identified by metadataHash)
+- Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

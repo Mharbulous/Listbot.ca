@@ -1,5 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { EvidenceService } from './evidenceService.js';
 
 /**
@@ -155,23 +155,25 @@ export class EvidenceQueryService {
 
   /**
    * Get available original names for a file hash (for displayName dropdown)
-   * @param {string} fileHash - File hash from upload system
+   * @param {string} fileHash - File hash from upload system (evidence document ID)
    * @param {string} matterId - Matter ID (defaults to 'general')
    * @returns {Promise<Array<string>>} - Array of original filenames
    */
   async getAvailableOriginalNames(fileHash, matterId = 'general') {
     try {
+      // Query the originalMetadata subcollection under the specific evidence document
       const originalMetadataRef = collection(
         db,
         'teams',
         this.teamId,
         'matters',
         matterId,
+        'evidence',
+        fileHash,
         'originalMetadata'
       );
-      const q = query(originalMetadataRef, where('fileHash', '==', fileHash));
 
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(originalMetadataRef);
       const originalNames = [];
 
       querySnapshot.forEach((doc) => {

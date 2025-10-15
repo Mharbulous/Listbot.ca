@@ -174,22 +174,24 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   };
 
   /**
-   * Fetch display information from originalMetadata collection
+   * Fetch display information from originalMetadata subcollection
    */
-  const getDisplayInfo = async (metadataHash, teamId) => {
+  const getDisplayInfo = async (metadataHash, teamId, fileHash) => {
     try {
       // Check cache first
       if (displayInfoCache.value.has(metadataHash)) {
         return displayInfoCache.value.get(metadataHash);
       }
 
-      // Fetch from Firestore
+      // Fetch from Firestore subcollection
       const metadataRef = doc(
         db,
         'teams',
         teamId,
         'matters',
         'general',
+        'evidence',
+        fileHash,
         'originalMetadata',
         metadataHash
       );
@@ -281,7 +283,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             // Fetch display information from referenced metadata
             const displayInfo = await getDisplayInfo(
               evidenceData.displayCopy,
-              teamId
+              teamId,
+              docSnapshot.id
             );
 
             // Load tags for this evidence document
@@ -412,7 +415,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Re-fetch display info to ensure cache is fresh
       const evidence = evidenceList.value[evidenceIndex];
-      const displayInfo = await getDisplayInfo(evidence.displayCopy, teamId);
+      const displayInfo = await getDisplayInfo(evidence.displayCopy, teamId, evidenceId);
 
       // Update the evidence with fresh display info
       evidenceList.value[evidenceIndex] = {

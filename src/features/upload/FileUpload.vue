@@ -115,7 +115,7 @@ const authStore = useAuthStore();
 const { populateExistingHash } = useLazyHashTooltip();
 
 // Upload logging system
-const { logUploadEvent } = useUploadLogger();
+const { logUploadEvent, updateUploadEvent } = useUploadLogger();
 
 // File metadata system
 const { createMetadataRecord, generateMetadataHash } = useFileMetadata();
@@ -327,12 +327,21 @@ const safeLog = async (logFn, context) => {
   }
 };
 
-// Helper function to safely handle metadata operations
+// Helper function to handle metadata operations with detailed error logging
 const safeMetadata = async (metadataFn, context) => {
   try {
     await metadataFn();
   } catch (error) {
     console.error(`Failed to create metadata ${context}:`, error);
+    console.error('Full error details:', {
+      message: error.message,
+      stack: error.stack,
+      context,
+    });
+    // Rethrow in development to surface issues
+    if (import.meta.env.DEV) {
+      throw error;
+    }
   }
 };
 
@@ -351,7 +360,7 @@ const createFileMetadataRecord = async (queueFile, fileHash) => {
 // Helper function for logging upload events
 const logFileEvent = async (eventType, queueFile, fileHash) => {
   const metadataHash = await generateMetadataHash(queueFile.name, queueFile.lastModified, fileHash);
-  await logUploadEvent({
+  return await logUploadEvent({
     eventType,
     fileName: queueFile.name,
     fileHash,
@@ -650,10 +659,14 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   updateUploadStatus('currentFile', queueFile.name, 'uploading');
   console.log(`Uploading file: ${queueFile.name}`);
 
-  await safeLog(
-    async () => await logFileEvent('upload_interrupted', queueFile, fileHash),
-    `interrupted upload for ${queueFile.name}`
-  );
+  // Log upload_interrupted preemptively and capture event ID
+  let uploadEventId = null;
+  try {
+    uploadEventId = await logFileEvent('upload_interrupted', queueFile, fileHash);
+    console.log(`[DEBUG] Preemptive event logged with ID: ${uploadEventId} for ${queueFile.name}`);
+  } catch (error) {
+    console.error(`Failed to log preemptive event for ${queueFile.name}:`, error);
+  }
 
   const uploadStartTime = Date.now();
   await uploadSingleFile(queueFile.file, fileHash, queueFile.name, uploadAbortController.signal);
@@ -664,10 +677,25 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   updateFileStatus(queueFile, 'completed');
   console.log(`Successfully uploaded: ${queueFile.name}`);
 
-  await safeLog(
-    async () => await logFileEvent('upload_success', queueFile, fileHash),
-    `upload completion for ${queueFile.name}`
-  );
+  // Update the preemptive log to upload_success
+  if (uploadEventId) {
+    console.log(`[DEBUG] Attempting to update event ${uploadEventId} to upload_success`);
+    try {
+      await updateUploadEvent(uploadEventId, { eventType: 'upload_success' });
+      console.log(`[DEBUG] Successfully updated event ${uploadEventId} to upload_success`);
+    } catch (error) {
+      console.error(`Failed to update upload event ${uploadEventId}:`, error);
+      console.error('Update error details:', {
+        eventId: uploadEventId,
+        fileName: queueFile.name,
+        fileHash: fileHash,
+        errorMessage: error.message,
+        errorStack: error.stack,
+      });
+    }
+  } else {
+    console.warn(`[WARNING] No upload event ID captured for ${queueFile.name} - cannot update event`);
+  }
 
   await safeMetadata(
     async () => await createFileMetadataRecord(queueFile, fileHash),

@@ -1,5 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
 
 export function useUploadLogger() {
@@ -53,7 +53,44 @@ export function useUploadLogger() {
     }
   };
 
+  /**
+   * Update an existing upload event document
+   * @param {string} eventId - Document ID of the event to update
+   * @param {Object} updates - Fields to update (e.g., { eventType: 'upload_success' })
+   */
+  const updateUploadEvent = async (eventId, updates) => {
+    try {
+      const teamId = authStore.currentTeam;
+      if (!teamId) {
+        throw new Error('No team ID available for updating event');
+      }
+
+      if (!eventId) {
+        throw new Error('Event ID is required for updating upload event');
+      }
+
+      const eventDocRef = doc(
+        db,
+        'teams',
+        teamId,
+        'matters',
+        'general',
+        'uploadEvents',
+        eventId
+      );
+
+      await updateDoc(eventDocRef, updates);
+
+      console.log(`Upload event updated: ${eventId}`, updates);
+      return eventId;
+    } catch (error) {
+      console.error('Failed to update upload event:', error);
+      throw error;
+    }
+  };
+
   return {
     logUploadEvent,
+    updateUploadEvent,
   };
 }
