@@ -66,12 +66,8 @@ export function deduplicateEvidence(evidenceList) {
     return [];
   }
 
-  console.log(`[Deduplication] Processing ${evidenceList.length} evidence documents`);
-
   // With new schema: document ID = fileHash, so deduplication is automatic
   // Just return the list as-is since each document is already unique
-  console.log(`[Deduplication] All documents are unique by design (fileHash as document ID)`);
-
   return evidenceList;
 }
 

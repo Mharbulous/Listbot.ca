@@ -223,7 +223,6 @@ export function useWorkerManager() {
       }
     }
 
-    console.info(`Terminated ${terminatedCount} workers`);
     return terminatedCount;
   };
 

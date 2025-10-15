@@ -45,11 +45,6 @@ export function useCategoryCore() {
       loading.value = true;
       error.value = null;
 
-      // DEBUG: Log when category loading starts
-      console.log(
-        `[DEBUG ORGANIZER LOADING] Category store loading started at: ${new Date().toISOString()} (${Date.now()})`
-      );
-
       const teamId = authStore.currentTeam;
       if (!teamId) {
         throw new Error('No team ID available');
@@ -119,9 +114,6 @@ export function useCategoryCore() {
           loading.value = false;
           isInitialized.value = true;
 
-          console.log(
-            `[DEBUG ORGANIZER LOADING] Category store loading completed at: ${new Date().toISOString()} (${Date.now()})`
-          );
           console.log(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
         },
         (err) => {

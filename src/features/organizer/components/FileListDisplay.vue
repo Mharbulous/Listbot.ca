@@ -50,12 +50,6 @@ import { useOrganizerStore } from '../stores/organizer.js';
 // Get store instance
 const organizerStore = useOrganizerStore();
 
-// Debug logging helper
-const debugLog = (message, data = null) => {
-  const timestamp = new Date().toISOString().substring(11, 23);
-  console.log(`[${timestamp}] [FileListDisplay] ${message}`, data || '');
-};
-
 // Props
 const props = defineProps({
   filteredEvidence: {
@@ -88,8 +82,6 @@ const { isItemLoaded, loadItem, preloadInitialItems } = useLazyDocuments(
 
 // Intersection Observer for lazy loading
 let observer = null;
-let renderStartTime = null;
-let dataLoadTime = null; // eslint-disable-line no-unused-vars
 
 // Emits
 const emit = defineEmits(['process-with-ai']);
@@ -99,48 +91,8 @@ const emit = defineEmits(['process-with-ai']);
  * Delegates to store to update evidence with selected metadata
  */
 const handleMetadataChanged = (evidenceId, metadataHash) => {
-  debugLog(`Metadata changed: ${evidenceId} -> ${metadataHash.substring(0, 8)}...`);
   organizerStore.selectMetadata(evidenceId, metadataHash);
 };
-
-// Debug: Watch filteredEvidence changes to track data loading timing
-watch(
-  () => props.filteredEvidence,
-  () => {
-    dataLoadTime = performance.now();
-    // Data loading log removed - focusing on loop-level timing only
-  },
-  { immediate: true, deep: false }
-);
-
-// Debug: Track FileListItem loop start/completion
-watch(
-  () => props.viewMode,
-  (newMode) => {
-    if (newMode === 'list') {
-      renderStartTime = performance.now();
-
-      // Log when FileListItem loop starts
-      debugLog(`🚀 Starting FileListItem loop processing...`);
-
-      // Track render performance
-      nextTick(() => {
-        const loadedCount =
-          props.filteredEvidence?.reduce((count, _, index) => {
-            return isItemLoaded(index) ? count + 1 : count;
-          }, 0) || 0;
-
-        const renderTime = performance.now() - renderStartTime;
-
-        // Log when FileListItem loop completes
-        debugLog(
-          `✅ FileListItem loop completed - rendered ${loadedCount}/${props.filteredEvidence?.length || 0} items in ${renderTime.toFixed(1)}ms`
-        );
-      });
-    }
-  },
-  { immediate: true }
-);
 
 // Setup lazy loading on mount
 onMounted(async () => {
@@ -153,10 +105,6 @@ onMounted(async () => {
   // Setup Intersection Observer for remaining items
   observer = new IntersectionObserver(
     (entries) => {
-      const loadedItems = entries.filter((entry) => entry.isIntersecting).length;
-      if (loadedItems > 0) {
-        debugLog(`👁️ Loading ${loadedItems} more items`);
-      }
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const index = parseInt(entry.target.dataset.index);
@@ -177,7 +125,6 @@ onMounted(async () => {
 
 // Cleanup on unmount
 onUnmounted(() => {
-  debugLog(`🧹 Component unmounting, cleaning up observer`);
   if (observer) {
     observer.disconnect();
     observer = null;

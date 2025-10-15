@@ -11,7 +11,12 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 
 const app = createApp(App);
+
+// Create Pinia with devtools disabled to prevent console spam
 const pinia = createPinia();
+
+// Disable devtools integration in development to prevent store installation logs
+app.config.devtools = false;
 
 app.use(pinia);
 app.use(router);
