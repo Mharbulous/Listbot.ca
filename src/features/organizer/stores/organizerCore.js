@@ -280,7 +280,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
             // Fetch display information from referenced metadata
             const displayInfo = await getDisplayInfo(
-              evidenceData.displayCopy?.metadataHash,
+              evidenceData.displayCopy,
               teamId
             );
 
@@ -412,7 +412,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Re-fetch display info to ensure cache is fresh
       const evidence = evidenceList.value[evidenceIndex];
-      const displayInfo = await getDisplayInfo(evidence.displayCopy?.metadataHash, teamId);
+      const displayInfo = await getDisplayInfo(evidence.displayCopy, teamId);
 
       // Update the evidence with fresh display info
       evidenceList.value[evidenceIndex] = {

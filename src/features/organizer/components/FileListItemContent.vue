@@ -31,24 +31,24 @@
 
       <!-- File metadata line with date dropdown if multiple options -->
       <div class="file-metadata text-body-2 text-medium-emphasis">
-        <span>{{ formattedFileSize }} • {{ fileExtension }} •</span>
-
         <!-- Single metadata - static date -->
-        <span v-if="!hasMultipleMetadata" class="ml-1">{{ formattedDate }}</span>
+        <span v-if="!hasMultipleMetadata">{{ formattedDate }} • {{ formattedFileSize }}</span>
 
         <!-- Multiple metadata - inline date dropdown -->
-        <v-select
-          v-else
-          :model-value="selectedMetadataHash"
-          :items="metadataDateOptions"
-          item-title="dateLabel"
-          item-value="metadataHash"
-          density="compact"
-          variant="plain"
-          hide-details
-          class="metadata-date-selector"
-          @update:model-value="handleDateChange"
-        />
+        <template v-else>
+          <v-select
+            :model-value="selectedMetadataHash"
+            :items="metadataDateOptions"
+            item-title="dateLabel"
+            item-value="metadataHash"
+            density="compact"
+            variant="plain"
+            hide-details
+            class="metadata-date-selector"
+            @update:model-value="handleDateChange"
+          />
+          <span class="ml-1">• {{ formattedFileSize }}</span>
+        </template>
       </div>
 
       <div v-if="showProcessingStage && processingStage !== 'uploaded'" class="processing-stage">
