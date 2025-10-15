@@ -242,6 +242,7 @@ export const useAuthStore = defineStore('auth', {
             notifications: true,
             language: 'en',
             dateFormat: 'YYYY-MM-DD', // Default date format
+            timeFormat: 'HH:mm', // Default time format
             darkMode: false, // Default dark mode
           },
         });

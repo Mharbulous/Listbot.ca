@@ -12,6 +12,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
   state: () => ({
     // Display preferences
     dateFormat: 'YYYY-MM-DD', // Default date format
+    timeFormat: 'HH:mm', // Default time format
     darkMode: false, // Dark mode toggle
 
     // Store state
@@ -28,6 +29,11 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      * Get the current date format preference
      */
     currentDateFormat: (state) => state.dateFormat,
+
+    /**
+     * Get the current time format preference
+     */
+    currentTimeFormat: (state) => state.timeFormat,
 
     /**
      * Check if dark mode is enabled
@@ -69,6 +75,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
         this.error = error.message;
         // Set defaults on error
         this.dateFormat = 'YYYY-MM-DD';
+        this.timeFormat = 'HH:mm';
         this.darkMode = false;
         this.isInitialized = true;
       } finally {
@@ -92,12 +99,41 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
       try {
         await this._savePreferences(this._userId, {
           dateFormat: format,
+          timeFormat: this.timeFormat,
           darkMode: this.darkMode,
         });
       } catch (error) {
         console.error('[UserPreferences] Error updating date format:', error);
         // Revert on error
         this.dateFormat = previousFormat;
+        this.error = error.message;
+        throw error;
+      }
+    },
+
+    /**
+     * Update the time format preference
+     * @param {string} format - Time format string (e.g., 'HH:mm')
+     */
+    async updateTimeFormat(format) {
+      if (!this._userId) {
+        console.error('[UserPreferences] Cannot update timeFormat without initialized user');
+        return;
+      }
+
+      const previousFormat = this.timeFormat;
+      this.timeFormat = format;
+
+      try {
+        await this._savePreferences(this._userId, {
+          dateFormat: this.dateFormat,
+          timeFormat: format,
+          darkMode: this.darkMode,
+        });
+      } catch (error) {
+        console.error('[UserPreferences] Error updating time format:', error);
+        // Revert on error
+        this.timeFormat = previousFormat;
         this.error = error.message;
         throw error;
       }
@@ -119,6 +155,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
       try {
         await this._savePreferences(this._userId, {
           dateFormat: this.dateFormat,
+          timeFormat: this.timeFormat,
           darkMode: enabled,
         });
       } catch (error) {
@@ -146,10 +183,12 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
 
           // Load preferences with defaults
           this.dateFormat = preferences.dateFormat || 'YYYY-MM-DD';
+          this.timeFormat = preferences.timeFormat || 'HH:mm';
           this.darkMode = preferences.darkMode || false;
         } else {
           // No user document yet - use defaults
           this.dateFormat = 'YYYY-MM-DD';
+          this.timeFormat = 'HH:mm';
           this.darkMode = false;
         }
       } catch (error) {
@@ -174,6 +213,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           {
             preferences: {
               dateFormat: preferences.dateFormat,
+              timeFormat: preferences.timeFormat,
               darkMode: preferences.darkMode,
               // Preserve other preference fields that might exist
               theme: 'light', // Legacy field - keep for backward compatibility
@@ -194,6 +234,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     resetToDefaults() {
       this.dateFormat = 'YYYY-MM-DD';
+      this.timeFormat = 'HH:mm';
       this.darkMode = false;
     },
 
@@ -202,6 +243,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     clear() {
       this.dateFormat = 'YYYY-MM-DD';
+      this.timeFormat = 'HH:mm';
       this.darkMode = false;
       this.isInitialized = false;
       this.isLoading = false;

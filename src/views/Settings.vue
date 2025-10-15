@@ -4,9 +4,9 @@
       <h1 class="text-3xl font-bold text-slate-800 mb-8">Settings</h1>
 
       <div class="space-y-6">
-        <!-- Display Settings -->
+        <!-- Preferences -->
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          <h2 class="text-xl font-semibold text-slate-800 mb-4">Display Settings</h2>
+          <h2 class="text-xl font-semibold text-slate-800 mb-4">Preferences</h2>
 
           <div class="space-y-4">
             <div class="flex items-start justify-between gap-4">
@@ -40,6 +40,49 @@
                     <v-list-item v-bind="props" :title="item.raw.title">
                       <template #prepend>
                         <v-icon color="orange" size="20"> mdi-calendar </v-icon>
+                      </template>
+                      <template #append>
+                        <span class="text-caption text-medium-emphasis">
+                          {{ item.raw.example }}
+                        </span>
+                      </template>
+                    </v-list-item>
+                  </template>
+                </v-select>
+              </div>
+            </div>
+
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-shrink-0" style="min-width: 200px">
+                <h3 class="text-sm font-medium text-slate-800">Time Format</h3>
+                <p class="text-sm text-slate-600">Set default time format</p>
+              </div>
+              <div class="flex-grow" style="max-width: 400px">
+                <v-select
+                  v-model="selectedTimeFormat"
+                  variant="outlined"
+                  density="comfortable"
+                  :items="timeFormatOptions"
+                  item-title="title"
+                  item-value="value"
+                  placeholder="Select time format"
+                  hide-details
+                  :disabled="isLoading"
+                  :loading="isLoading"
+                >
+                  <template #selection="{ item }">
+                    <div class="d-flex align-center">
+                      <v-icon color="#7b1fa2" size="20" class="mr-2">mdi-clock-outline</v-icon>
+                      <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
+                      <span class="text-caption text-medium-emphasis"
+                        >({{ item.raw.example }})</span
+                      >
+                    </div>
+                  </template>
+                  <template #item="{ props, item }">
+                    <v-list-item v-bind="props" :title="item.raw.title">
+                      <template #prepend>
+                        <v-icon color="#7b1fa2" size="20"> mdi-clock-outline </v-icon>
                       </template>
                       <template #append>
                         <span class="text-caption text-medium-emphasis">
@@ -99,10 +142,13 @@
 import { computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
-import { dateFormatOptions } from '@/features/organizer/utils/categoryFormOptions.js';
+import {
+  dateFormatOptions,
+  timeFormatOptions,
+} from '@/features/organizer/utils/categoryFormOptions.js';
 
 const preferencesStore = useUserPreferencesStore();
-const { dateFormat, darkMode, isLoading } = storeToRefs(preferencesStore);
+const { dateFormat, timeFormat, darkMode, isLoading } = storeToRefs(preferencesStore);
 
 // Computed properties for v-model binding
 const selectedDateFormat = computed({
@@ -112,6 +158,17 @@ const selectedDateFormat = computed({
       await preferencesStore.updateDateFormat(value);
     } catch (error) {
       console.error('Error updating date format:', error);
+    }
+  },
+});
+
+const selectedTimeFormat = computed({
+  get: () => timeFormat.value,
+  set: async (value) => {
+    try {
+      await preferencesStore.updateTimeFormat(value);
+    } catch (error) {
+      console.error('Error updating time format:', error);
     }
   },
 });
