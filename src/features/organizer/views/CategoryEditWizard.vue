@@ -126,117 +126,6 @@
               />
             </v-col>
 
-            <!-- Date and Time Format Controls -->
-            <!-- For Date category: Full width Date Format -->
-            <v-col v-if="editedCategory.type === 'Date'" cols="12">
-              <v-select
-                v-model="editedCategory.defaultDateFormat"
-                label="Date Format"
-                variant="outlined"
-                density="comfortable"
-                :error-messages="categoryErrors.defaultDateFormat"
-                :items="dateFormatOptions"
-                item-title="title"
-                item-value="value"
-                placeholder="Select date format"
-              >
-                <template #selection="{ item }">
-                  <div class="d-flex align-center">
-                    <v-icon color="orange" size="20" class="mr-2">mdi-calendar</v-icon>
-                    <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
-                    <span class="text-caption text-medium-emphasis">({{ item.raw.example }})</span>
-                  </div>
-                </template>
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :title="item.raw.title">
-                    <template #prepend>
-                      <v-icon color="orange" size="20"> mdi-calendar </v-icon>
-                    </template>
-                    <template #append>
-                      <span class="text-caption text-medium-emphasis">
-                        {{ item.raw.example }}
-                      </span>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-select>
-            </v-col>
-
-            <!-- For Timestamp category: Side-by-side Date and Time Formats -->
-            <template v-if="editedCategory.type === 'Timestamp'">
-              <v-col cols="12" sm="6">
-                <v-select
-                  v-model="editedCategory.defaultDateFormat"
-                  label="Date Format"
-                  variant="outlined"
-                  density="comfortable"
-                  :error-messages="categoryErrors.defaultDateFormat"
-                  :items="dateFormatOptions"
-                  item-title="title"
-                  item-value="value"
-                  placeholder="Select date format"
-                >
-                  <template #selection="{ item }">
-                    <div class="d-flex align-center">
-                      <v-icon color="orange" size="20" class="mr-2">mdi-calendar</v-icon>
-                      <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
-                      <span class="text-caption text-medium-emphasis"
-                        >({{ item.raw.example }})</span
-                      >
-                    </div>
-                  </template>
-                  <template #item="{ props, item }">
-                    <v-list-item v-bind="props" :title="item.raw.title">
-                      <template #prepend>
-                        <v-icon color="orange" size="20"> mdi-calendar </v-icon>
-                      </template>
-                      <template #append>
-                        <span class="text-caption text-medium-emphasis">
-                          {{ item.raw.example }}
-                        </span>
-                      </template>
-                    </v-list-item>
-                  </template>
-                </v-select>
-              </v-col>
-
-              <v-col cols="12" sm="6">
-                <v-select
-                  v-model="editedCategory.defaultTimeFormat"
-                  label="Time Format"
-                  variant="outlined"
-                  density="comfortable"
-                  :error-messages="categoryErrors.defaultTimeFormat"
-                  :items="timeFormatOptions"
-                  item-title="title"
-                  item-value="value"
-                  placeholder="Select time format"
-                >
-                  <template #selection="{ item }">
-                    <div class="d-flex align-center">
-                      <v-icon color="#7b1fa2" size="20" class="mr-2">mdi-clock-outline</v-icon>
-                      <span class="font-weight-medium mr-2">{{ item.raw.title }}</span>
-                      <span class="text-caption text-medium-emphasis"
-                        >({{ item.raw.example }})</span
-                      >
-                    </div>
-                  </template>
-                  <template #item="{ props, item }">
-                    <v-list-item v-bind="props" :title="item.raw.title">
-                      <template #prepend>
-                        <v-icon color="#7b1fa2" size="20"> mdi-clock-outline </v-icon>
-                      </template>
-                      <template #append>
-                        <span class="text-caption text-medium-emphasis">
-                          {{ item.raw.example }}
-                        </span>
-                      </template>
-                    </v-list-item>
-                  </template>
-                </v-select>
-              </v-col>
-            </template>
-
             <!-- Fixed List and Open List tag options -->
             <v-col v-if="['Fixed List', 'Open List'].includes(editedCategory.type)" cols="12">
               <TagOptionsManager
@@ -371,8 +260,6 @@ import { useOrganizerStore } from '../stores/organizer.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
 import {
-  dateFormatOptions,
-  timeFormatOptions,
   sequenceFormatOptions,
 } from '../utils/categoryFormOptions.js';
 import {
@@ -406,8 +293,6 @@ const editedCategory = ref({
   type: '',
   tags: [],
   defaultCurrency: 'CAD',
-  defaultDateFormat: 'YYYY-MM-DD',
-  defaultTimeFormat: 'HH:mm',
   defaultSequenceFormat: '1, 2, 3, ...',
   regexDefinition: '.*',
   allowDuplicateValues: false,
@@ -418,8 +303,6 @@ const categoryErrors = ref({
   name: [],
   type: [],
   defaultCurrency: [],
-  defaultDateFormat: [],
-  defaultTimeFormat: [],
   defaultSequenceFormat: [],
   regexDefinition: [],
   allowDuplicateValues: [],
@@ -463,9 +346,6 @@ const isFormValid = computed(() => {
     name.length >= 3 &&
     type &&
     (editedCategory.value.type !== 'Currency' || editedCategory.value.defaultCurrency) &&
-    ((editedCategory.value.type !== 'Date' && editedCategory.value.type !== 'Timestamp') ||
-      editedCategory.value.defaultDateFormat) &&
-    (editedCategory.value.type !== 'Timestamp' || editedCategory.value.defaultTimeFormat) &&
     (editedCategory.value.type !== 'Sequence' || editedCategory.value.defaultSequenceFormat) &&
     isRegexValid.value &&
     (!['Text Area', 'Sequence', 'Regex'].includes(editedCategory.value.type) ||
@@ -484,8 +364,6 @@ const hasChanges = computed(() => {
     'name',
     'type',
     'defaultCurrency',
-    'defaultDateFormat',
-    'defaultTimeFormat',
     'defaultSequenceFormat',
     'regexDefinition',
     'allowDuplicateValues',
@@ -557,13 +435,6 @@ const handleTypeChange = (newType) => {
 
 const applyTypeChange = (newType) => {
   // Handle data transformations based on type change
-  if (newType === 'Timestamp' && originalType.value === 'Date') {
-    // Add time format when converting from Date to Timestamp
-    if (!editedCategory.value.defaultTimeFormat) {
-      editedCategory.value.defaultTimeFormat = 'HH:mm';
-    }
-  }
-
   if (newType === 'Regex' && originalType.value === 'Sequence') {
     // Set default regex when converting from Sequence
     if (!editedCategory.value.regexDefinition || editedCategory.value.regexDefinition === '.*') {
@@ -591,8 +462,6 @@ const validateCategory = () => {
   const nameErrors = [];
   const typeErrors = [];
   const defaultCurrencyErrors = [];
-  const defaultDateFormatErrors = [];
-  const defaultTimeFormatErrors = [];
   const defaultSequenceFormatErrors = [];
   const allowDuplicateValuesErrors = [];
   const allowGapsErrors = [];
@@ -601,8 +470,6 @@ const validateCategory = () => {
   const name = editedCategory.value.name.trim();
   const type = editedCategory.value.type;
   const defaultCurrency = editedCategory.value.defaultCurrency;
-  const defaultDateFormat = editedCategory.value.defaultDateFormat;
-  const defaultTimeFormat = editedCategory.value.defaultTimeFormat;
   const defaultSequenceFormat = editedCategory.value.defaultSequenceFormat;
   const regexDefinition = editedCategory.value.regexDefinition;
   const allowDuplicateValues = editedCategory.value.allowDuplicateValues;
@@ -634,24 +501,6 @@ const validateCategory = () => {
       defaultCurrencyErrors.push('Default currency is required for Currency categories');
     } else if (!currencyOptions.find((option) => option.value === defaultCurrency)) {
       defaultCurrencyErrors.push('Please select a valid currency');
-    }
-  }
-
-  // Validate date-specific fields (for Date and Timestamp)
-  if (type === 'Date' || type === 'Timestamp') {
-    if (!defaultDateFormat) {
-      defaultDateFormatErrors.push('Date format is required for Date and Timestamp categories');
-    } else if (!dateFormatOptions.find((option) => option.value === defaultDateFormat)) {
-      defaultDateFormatErrors.push('Please select a valid date format');
-    }
-  }
-
-  // Validate time-specific fields (for Timestamp only)
-  if (type === 'Timestamp') {
-    if (!defaultTimeFormat) {
-      defaultTimeFormatErrors.push('Time format is required for Timestamp categories');
-    } else if (!timeFormatOptions.find((option) => option.value === defaultTimeFormat)) {
-      defaultTimeFormatErrors.push('Please select a valid time format');
     }
   }
 
@@ -695,8 +544,6 @@ const validateCategory = () => {
   categoryErrors.value.name = nameErrors;
   categoryErrors.value.type = typeErrors;
   categoryErrors.value.defaultCurrency = defaultCurrencyErrors;
-  categoryErrors.value.defaultDateFormat = defaultDateFormatErrors;
-  categoryErrors.value.defaultTimeFormat = defaultTimeFormatErrors;
   categoryErrors.value.defaultSequenceFormat = defaultSequenceFormatErrors;
   categoryErrors.value.regexDefinition = regexDefinitionErrors;
   categoryErrors.value.allowDuplicateValues = allowDuplicateValuesErrors;
@@ -706,8 +553,6 @@ const validateCategory = () => {
     nameErrors.length === 0 &&
     typeErrors.length === 0 &&
     defaultCurrencyErrors.length === 0 &&
-    defaultDateFormatErrors.length === 0 &&
-    defaultTimeFormatErrors.length === 0 &&
     defaultSequenceFormatErrors.length === 0 &&
     regexDefinitionErrors.length === 0 &&
     allowDuplicateValuesErrors.length === 0 &&
@@ -733,14 +578,6 @@ const saveCategory = async () => {
     // Add type-specific fields
     if (editedCategory.value.type === 'Currency') {
       updates.defaultCurrency = editedCategory.value.defaultCurrency;
-    }
-
-    if (editedCategory.value.type === 'Date' || editedCategory.value.type === 'Timestamp') {
-      updates.defaultDateFormat = editedCategory.value.defaultDateFormat;
-    }
-
-    if (editedCategory.value.type === 'Timestamp') {
-      updates.defaultTimeFormat = editedCategory.value.defaultTimeFormat;
     }
 
     if (editedCategory.value.type === 'Sequence') {
@@ -799,8 +636,6 @@ const loadCategory = async () => {
       type: foundCategory.type || 'Fixed List',
       tags: foundCategory.tags || [],
       defaultCurrency: foundCategory.defaultCurrency || 'CAD',
-      defaultDateFormat: foundCategory.defaultDateFormat || 'YYYY-MM-DD',
-      defaultTimeFormat: foundCategory.defaultTimeFormat || 'HH:mm',
       defaultSequenceFormat: foundCategory.defaultSequenceFormat || '1, 2, 3, ...',
       regexDefinition: foundCategory.regexDefinition || '.*',
       allowDuplicateValues: foundCategory.allowDuplicateValues || false,
