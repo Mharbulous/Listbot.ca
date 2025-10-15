@@ -62,6 +62,13 @@
 
 <script setup>
 import { computed, onMounted, onBeforeMount } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { formatDate as formatDateUtil } from '@/utils/dateFormatter.js';
+
+// Get user preferences store
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat } = storeToRefs(preferencesStore);
 
 // Debug logging helper
 const debugLog = (message, data = null) => {
@@ -119,8 +126,8 @@ const formattedDate = computed(() => {
   const timestamp = props.evidence?.createdAt;
   if (!timestamp) return '';
 
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleDateString();
+  // Use user's selected date format from preferences
+  return formatDateUtil(timestamp, dateFormat.value);
 });
 
 const fileIcon = computed(() => {
@@ -209,9 +216,9 @@ const metadataDateOptions = computed(() => {
   if (!hasMultipleMetadata.value) return [];
 
   return props.evidence.metadataOptions.map((opt) => {
-    const date = opt.createdAt?.toDate ? opt.createdAt.toDate() : new Date(opt.createdAt);
+    // Use user's selected date format from preferences
     return {
-      dateLabel: date.toLocaleDateString(),
+      dateLabel: formatDateUtil(opt.createdAt, dateFormat.value),
       metadataHash: opt.displayCopy,
     };
   });

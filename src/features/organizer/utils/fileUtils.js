@@ -3,6 +3,8 @@
  * Extracted from Organizer.vue for reusability and maintainability
  */
 
+import { formatDate as formatDateUtil } from '@/utils/dateFormatter.js';
+
 /**
  * Get file extension from filename
  * @param {string} filename - The filename to extract extension from
@@ -76,10 +78,12 @@ export const formatFileSize = (bytes) => {
 /**
  * Format timestamp to human readable date
  * @param {*} timestamp - Firestore timestamp or Date object
+ * @param {string} format - Optional date format pattern (e.g., 'YYYY-MM-DD', 'DD/MM/YYYY')
  * @returns {string} Formatted date string
  */
-export const formatDate = (timestamp) => {
+export const formatDate = (timestamp, format = 'YYYY-MM-DD') => {
   if (!timestamp) return '';
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleDateString();
+
+  // Use the centralized date formatter
+  return formatDateUtil(timestamp, format);
 };
