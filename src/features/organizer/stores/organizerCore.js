@@ -247,11 +247,6 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       loading.value = true;
       error.value = null;
 
-      // DEBUG: Log when loading starts
-      console.log(
-        `[DEBUG ORGANIZER LOADING] Core store loading started at: ${new Date().toISOString()} (${Date.now()})`
-      );
-
       const teamId = authStore.currentTeam;
       if (!teamId) {
         throw new Error('No team ID available');
@@ -269,10 +264,6 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       const unsubscribe = onSnapshot(
         evidenceQuery,
         async (snapshot) => {
-          console.log(
-            `[DEBUG ORGANIZER LOADING] Firestore snapshot received at: ${new Date().toISOString()} (${Date.now()}) with ${snapshot.docs.length} documents`
-          );
-
           const evidence = [];
 
           // Process each evidence document
@@ -327,11 +318,6 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             }
 
             processedCount++;
-            if (processedCount % 10 === 0 || processedCount === snapshot.docs.length) {
-              console.log(
-                `[DEBUG ORGANIZER LOADING] Processed ${processedCount}/${snapshot.docs.length} documents at: ${new Date().toISOString()}`
-              );
-            }
 
             evidence.push({
               id: docSnapshot.id,
@@ -346,10 +332,6 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             });
           }
 
-          console.log(
-            `[DEBUG ORGANIZER LOADING] Raw evidence loaded: ${evidence.length} documents`
-          );
-
           // Apply deduplication - group by fileHash, collect metadata options
           const deduplicated = deduplicateEvidence(evidence);
 
@@ -357,9 +339,6 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           loading.value = false;
           isInitialized.value = true;
 
-          console.log(
-            `[DEBUG ORGANIZER LOADING] Core store loading completed at: ${new Date().toISOString()} (${Date.now()})`
-          );
           console.log(
             `[OrganizerCore] Loaded ${evidence.length} raw documents → ${deduplicated.length} deduplicated with display info`
           );
