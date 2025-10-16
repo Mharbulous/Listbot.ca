@@ -104,6 +104,7 @@
 
 <script>
 import { useAuthStore } from '../../core/stores/auth';
+import { useDocumentViewStore } from '../../stores/documentView';
 import BaseSearchBar from '../base/BaseSearchBar.vue';
 
 export default {
@@ -113,9 +114,11 @@ export default {
   },
   setup() {
     const authStore = useAuthStore();
+    const documentViewStore = useDocumentViewStore();
 
     return {
       authStore,
+      documentViewStore,
     };
   },
   data() {
@@ -144,6 +147,12 @@ export default {
   },
   computed: {
     pageTitle() {
+      // Handle view document route with breadcrumb
+      if (this.$route.path.startsWith('/organizer/view/')) {
+        const documentName = this.documentViewStore.documentName || 'Loading...';
+        return `Document Organizer >> View >> ${documentName}`;
+      }
+
       switch (this.$route.path) {
         case '/about':
           return 'About';

@@ -1,16 +1,5 @@
 <template>
   <div class="view-document-container">
-    <!-- Header -->
-    <div class="view-document-header">
-      <v-btn icon variant="text" @click="goBack">
-        <v-icon>mdi-arrow-left</v-icon>
-      </v-btn>
-      <div class="header-content">
-        <h1 v-if="!loading && evidence" class="text-h5">{{ evidence.displayName }}</h1>
-        <h1 v-else class="text-h5">Loading...</h1>
-      </div>
-    </div>
-
     <!-- Loading state -->
     <div v-if="loading" class="content-center">
       <v-progress-circular indeterminate size="64" color="primary" />
@@ -72,15 +61,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
+import { useDocumentViewStore } from '@/stores/documentView.js';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const documentViewStore = useDocumentViewStore();
 
 // State
 const fileHash = ref(route.params.fileHash);
@@ -175,6 +166,9 @@ const loadEvidence = async () => {
       displayName,
       createdAt,
     };
+
+    // Update document view store for breadcrumb display
+    documentViewStore.setDocumentName(displayName);
   } catch (err) {
     console.error('Failed to load evidence:', err);
     error.value = err.message || 'Failed to load document';
@@ -187,28 +181,19 @@ const loadEvidence = async () => {
 onMounted(() => {
   loadEvidence();
 });
+
+// Clean up store when component unmounts
+onUnmounted(() => {
+  documentViewStore.clearDocumentName();
+});
 </script>
 
 <style scoped>
 .view-document-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 80px); /* Subtract AppHeader height */
   background-color: #f5f5f5;
-}
-
-.view-document-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
-  background-color: white;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.header-content {
-  flex: 1;
 }
 
 .view-document-content {
