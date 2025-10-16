@@ -16,6 +16,49 @@
 
     <!-- Main content -->
     <div v-else-if="evidence" class="view-document-content">
+      <!-- File metadata box -->
+      <div class="metadata-box">
+        <v-card variant="outlined">
+          <v-card-title class="text-subtitle-1">Metadata</v-card-title>
+          <v-card-text>
+            <div class="metadata-item">
+              <span class="metadata-label">Name:</span>
+              <span class="metadata-value">{{ evidence.displayName }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">MIME Type:</span>
+              <span class="metadata-value">{{
+                storageMetadata?.contentType || (storageMetadata === null ? 'Unknown' : 'Loading...')
+              }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Size:</span>
+              <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Date Modified:</span>
+              <span class="metadata-value">{{
+                formatDateTime(evidence.createdAt, dateFormat, timeFormat)
+              }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Date Uploaded:</span>
+              <span class="metadata-value">{{
+                storageMetadata?.timeCreated
+                  ? formatDateTime(new Date(storageMetadata.timeCreated), dateFormat, timeFormat)
+                  : storageMetadata === null
+                    ? 'Unknown'
+                    : 'Loading...'
+              }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">File Hash:</span>
+              <span class="metadata-value text-caption">{{ fileHash }}</span>
+            </div>
+          </v-card-text>
+        </v-card>
+      </div>
+
       <!-- PDF Viewer Placeholder -->
       <div class="viewer-area">
         <v-card variant="outlined" class="viewer-placeholder">
@@ -31,31 +74,6 @@
           </div>
         </v-card>
       </div>
-
-      <!-- File metadata sidebar -->
-      <div class="metadata-sidebar">
-        <v-card variant="outlined">
-          <v-card-title class="text-subtitle-1">File Information</v-card-title>
-          <v-card-text>
-            <div class="metadata-item">
-              <span class="metadata-label">Name:</span>
-              <span class="metadata-value">{{ evidence.displayName }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">Size:</span>
-              <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">Date:</span>
-              <span class="metadata-value">{{ formatDate(evidence.createdAt) }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">File Hash:</span>
-              <span class="metadata-value text-caption">{{ fileHash }}</span>
-            </div>
-          </v-card-text>
-        </v-card>
-      </div>
     </div>
   </div>
 </template>
@@ -64,18 +82,25 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase.js';
+import { ref as storageRef, getMetadata } from 'firebase/storage';
+import { db, storage } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
 import { useDocumentViewStore } from '@/stores/documentView.js';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { storeToRefs } from 'pinia';
+import { formatDateTime } from '@/utils/dateFormatter.js';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
 
 // State
 const fileHash = ref(route.params.fileHash);
 const evidence = ref(null);
+const storageMetadata = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
@@ -106,6 +131,26 @@ const formatDate = (timestamp) => {
 // Navigate back to organizer
 const goBack = () => {
   router.push('/organizer');
+};
+
+// Fetch Firebase Storage metadata
+const fetchStorageMetadata = async (teamId, displayName) => {
+  try {
+    // Get file extension from displayName
+    const extension = displayName.split('.').pop() || 'pdf';
+
+    // Build storage path (same format as used in fileProcessingService)
+    const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+    const fileRef = storageRef(storage, storagePath);
+
+    // Get metadata from Firebase Storage
+    const metadata = await getMetadata(fileRef);
+    storageMetadata.value = metadata;
+  } catch (err) {
+    console.error('Failed to load storage metadata:', err);
+    // Don't set error state - storage metadata is optional
+    storageMetadata.value = null;
+  }
 };
 
 // Load evidence document directly from Firestore (single document)
@@ -169,6 +214,9 @@ const loadEvidence = async () => {
 
     // Update document view store for breadcrumb display
     documentViewStore.setDocumentName(displayName);
+
+    // Fetch Firebase Storage metadata
+    await fetchStorageMetadata(teamId, displayName);
   } catch (err) {
     console.error('Failed to load evidence:', err);
     error.value = err.message || 'Failed to load document';
@@ -198,15 +246,18 @@ onUnmounted(() => {
 
 .view-document-content {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   flex: 1;
   gap: 24px;
   padding: 24px;
   overflow: hidden;
 }
 
-.metadata-sidebar {
-  width: 300px;
+.metadata-box {
+  width: 500px;
   flex-shrink: 0;
+  overflow-y: auto;
 }
 
 .metadata-item {
@@ -231,8 +282,12 @@ onUnmounted(() => {
 
 .viewer-area {
   flex: 1;
+  min-width: 500px;
+  max-width: 9.2in; /* Slightly larger than US Letter paper width for better visibility */
   display: flex;
   flex-direction: column;
+  min-height: 11in; /* US Letter paper height */
+  overflow-y: auto;
 }
 
 .viewer-placeholder {
@@ -266,17 +321,19 @@ onUnmounted(() => {
   text-align: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1150px) {
   .view-document-content {
     flex-direction: column;
-    overflow-y: auto;
   }
 
-  .metadata-sidebar {
+  .metadata-box {
     width: 100%;
+    max-width: 100%;
   }
 
   .viewer-area {
+    width: 100%;
+    max-width: 100%;
     min-height: 400px;
   }
 }
