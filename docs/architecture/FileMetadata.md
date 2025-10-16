@@ -1,6 +1,6 @@
 # File Metadata Data Structures
 
-Last Updated: 2025-09-07
+Last Updated: 2025-10-16
 
 ## Critical Concept: Original Files vs Storage Files
 
@@ -16,6 +16,79 @@ This application preserves complete legal metadata about **original files** whil
 - Client C: `contract.pdf` modified Feb 1, 2025
 
 Result: ONE file in storage (`abc123...def.pdf`), THREE metadata records preserving each original context.
+
+## UI Metadata Presentation
+
+The application presents metadata to users in three distinct categories, reflecting the source and nature of each piece of information:
+
+### File Attributes
+
+**Definition**: Intrinsic properties of the original file as it existed on the user's computer.
+
+**Displayed Fields**:
+- **Name**: Original filename with preserved case from `originalMetadata.originalName`
+- **Date Modified (Source File)**: File system modification timestamp from `originalMetadata.lastModified`
+- **Size**: File size in bytes from `evidence.fileSize`
+- **MIME Type**: Content type from Firebase Storage metadata
+
+**Data Sources**: Combines data from `originalMetadata` subcollection and `evidence` collection.
+
+**Purpose**: Shows users the file's original properties for identification and context.
+
+### Embedded Metadata
+
+**Definition**: Data extracted from within the file's content, following format-specific standards.
+
+**Current Fields**:
+- **Date Modified (Source File)**: File system timestamp (currently shown in File Attributes section)
+
+**Future Expansion**: Will include format-specific embedded metadata such as:
+- PDF: Author, Creator, Producer, DocumentID (XMP metadata)
+- Images: EXIF data, GPS coordinates, camera information
+- Office Docs: Author, Company, Revision history, Track Changes
+- Media: Recording timestamps, device information, GPS tracks
+
+**Data Sources**:
+- Current: `originalMetadata.lastModified` (file system timestamp)
+- Future: Extracted metadata stored in `evidence` collection or dedicated subcollections
+
+**Technical Reference**: See `docs/architecture/MetadataSpecs.md` for detailed specifications of embedded metadata standards for 17+ file types.
+
+**Purpose**: Provides forensically valuable metadata embedded within files for authenticity verification and chain of custody.
+
+### Storage Properties
+
+**Definition**: System-level information about how and when the file is stored in the application's infrastructure.
+
+**Displayed Fields**:
+- **Date Uploaded**: Firebase Storage upload timestamp from storage metadata `timeCreated`
+- **File Hash**: SHA-256 hash of file content, used as both `evidence` document ID and storage filename
+
+**Data Sources**: Firebase Storage metadata API and `evidence` document ID.
+
+**Purpose**: Provides audit trail and deduplication information for system management.
+
+### Data Source Mapping
+
+```
+UI Category          → Firestore Collection/Field
+────────────────────────────────────────────────────────────
+File Attributes:
+  Name               → originalMetadata.originalName
+  Date Modified      → originalMetadata.lastModified
+  Size               → evidence.fileSize
+  MIME Type          → Firebase Storage metadata.contentType
+
+Embedded Metadata:
+  (Future)           → evidence collection fields or subcollections
+                       (See MetadataSpecs.md for extraction targets)
+
+Storage Properties:
+  Date Uploaded      → Firebase Storage metadata.timeCreated
+  File Hash          → evidence.id (document ID)
+```
+
+**Implementation Reference**: See `src/features/organizer/views/ViewDocument.vue` for current UI implementation of these metadata categories.
 
 ## Matter Organization (Current Testing Phase)
 
@@ -47,6 +120,8 @@ Result: ONE file in storage (`abc123...def.pdf`), THREE metadata records preserv
 ```
 
 **Important**: The `originalName` field is the ONLY place where the original file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
+
+**Metadata Capture Implementation**: For detailed information about how original file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../uploading.md#metadata-management)**.
 
 **Key Files Using This**:
 
@@ -205,11 +280,13 @@ The `folderPaths` field captures folder structure from webkitdirectory uploads:
 
 **Need to find where files are processed?**
 
-- Upload logic: `src/services/StorageService.js`, `src/features/upload/FileUpload.vue`
-- Hash calculation: `src/workers/hashWorker.js`
-- Metadata management: `src/features/upload/composables/useFileMetadata.js`
-- Evidence management: `src/features/organizer/services/evidenceService.js`
-- Display components: `src/features/organizer/stores/organizerCore.js`, `DocumentList.vue`
+- **Upload workflow and implementation details**: See **[uploading.md](../uploading.md)** for complete upload process flow, smart folder path pattern recognition, and metadata capture algorithms
+- **Code locations**:
+  - Upload logic: `src/services/StorageService.js`, `src/features/upload/FileUpload.vue`
+  - Hash calculation: `src/workers/hashWorker.js`
+  - Metadata management: `src/features/upload/composables/useFileMetadata.js`
+  - Evidence management: `src/features/organizer/services/evidenceService.js`
+  - Display components: `src/features/organizer/stores/organizerCore.js`, `DocumentList.vue`
 
 **Understanding the deduplication?**
 
