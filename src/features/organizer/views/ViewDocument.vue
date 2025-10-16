@@ -21,39 +21,48 @@
         <v-card variant="outlined">
           <v-card-title class="text-subtitle-1">Metadata</v-card-title>
           <v-card-text>
-            <div class="metadata-item">
-              <span class="metadata-label">Name:</span>
-              <span class="metadata-value">{{ evidence.displayName }}</span>
+            <!-- File Attributes Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">File Attributes</h3>
+              <div class="metadata-item">
+                <span class="metadata-label">Name:</span>
+                <span class="metadata-value">{{ evidence.displayName }}</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Date Modified (Source File):</span>
+                <span class="metadata-value">{{
+                  formatDateTime(evidence.createdAt, dateFormat, timeFormat)
+                }}</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">Size:</span>
+                <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">MIME Type:</span>
+                <span class="metadata-value">{{
+                  storageMetadata?.contentType || (storageMetadata === null ? 'Unknown' : 'Loading...')
+                }}</span>
+              </div>
             </div>
-            <div class="metadata-item">
-              <span class="metadata-label">MIME Type:</span>
-              <span class="metadata-value">{{
-                storageMetadata?.contentType || (storageMetadata === null ? 'Unknown' : 'Loading...')
-              }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">Size:</span>
-              <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">Date Modified:</span>
-              <span class="metadata-value">{{
-                formatDateTime(evidence.createdAt, dateFormat, timeFormat)
-              }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">Date Uploaded:</span>
-              <span class="metadata-value">{{
-                storageMetadata?.timeCreated
-                  ? formatDateTime(new Date(storageMetadata.timeCreated), dateFormat, timeFormat)
-                  : storageMetadata === null
-                    ? 'Unknown'
-                    : 'Loading...'
-              }}</span>
-            </div>
-            <div class="metadata-item">
-              <span class="metadata-label">File Hash:</span>
-              <span class="metadata-value text-caption">{{ fileHash }}</span>
+
+            <!-- Storage Properties Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Storage Properties</h3>
+              <div class="metadata-item">
+                <span class="metadata-label">Date Uploaded:</span>
+                <span class="metadata-value">{{
+                  storageMetadata?.timeCreated
+                    ? formatDateTime(new Date(storageMetadata.timeCreated), dateFormat, timeFormat)
+                    : storageMetadata === null
+                      ? 'Unknown'
+                      : 'Loading...'
+                }}</span>
+              </div>
+              <div class="metadata-item">
+                <span class="metadata-label">File Hash:</span>
+                <span class="metadata-value text-caption">{{ fileHash }}</span>
+              </div>
             </div>
           </v-card-text>
         </v-card>
@@ -258,6 +267,23 @@ onUnmounted(() => {
   width: 500px;
   flex-shrink: 0;
   overflow-y: auto;
+}
+
+.metadata-section {
+  margin-bottom: 24px;
+}
+
+.metadata-section:last-child {
+  margin-bottom: 0;
+}
+
+.metadata-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .metadata-item {
