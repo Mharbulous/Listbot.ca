@@ -66,9 +66,12 @@
 
 <script setup>
 import { onMounted, ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import FileListItemContent from './FileListItemContent.vue';
 import SimplifiedTagDisplay from './SimplifiedTagDisplay.vue';
 import FileListItemActions from './FileListItemActions.vue';
+
+const router = useRouter();
 
 // Debug logging helper - disabled for production
 // const debugLog = (message, data = null) => {
@@ -202,6 +205,8 @@ const autoLoadAll = () => {
 
 // Event handlers
 const handleClick = () => {
+  // Navigate to the document view page
+  router.push(`/organizer/view/${props.evidence.id}`);
   emit('click', props.evidence);
 };
 

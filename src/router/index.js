@@ -48,6 +48,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/organizer/view/:fileHash',
+      name: 'view-document',
+      component: () => import('../features/organizer/views/ViewDocument.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/organizer/categories',
       name: 'category-manager',
       component: () => import('../features/organizer/views/CategoryManager.vue'),
