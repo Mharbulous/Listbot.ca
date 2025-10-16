@@ -177,7 +177,7 @@ if (evidence.storageRef?.fileTypes) {
    - Test file upload flow
    - Verify displayName appears in UI
    - Confirm fileTypes field is populated
-   - Check that displayCopy correctly links to originalMetadata
+   - Check that displayCopy correctly links to sourceMetadata
 
 ## Testing Checklist
 
@@ -212,4 +212,4 @@ const displayInfo = await getDisplayInfo(metadataHash, teamId);
 
 - These changes maintain backward compatibility where possible
 - The 'general' matter hardcoding remains unchanged (as intended for testing)
-- File extension standardization (lowercase) is preserved except in originalMetadata.originalName
+- File extension standardization (lowercase) is preserved except in sourceMetadata.originalName

@@ -41,7 +41,8 @@
               <div class="metadata-item">
                 <span class="metadata-label">MIME Type:</span>
                 <span class="metadata-value">{{
-                  storageMetadata?.contentType || (storageMetadata === null ? 'Unknown' : 'Loading...')
+                  storageMetadata?.contentType ||
+                  (storageMetadata === null ? 'Unknown' : 'Loading...')
                 }}</span>
               </div>
             </div>
@@ -74,9 +75,7 @@
           <div class="placeholder-content">
             <v-icon size="120" color="grey-lighten-1">mdi-file-document-outline</v-icon>
             <h2 class="mt-6 text-h5 text-grey-darken-1">PDF Viewer Coming Soon</h2>
-            <p class="mt-2 text-body-2 text-grey">
-              This is where the document will be displayed
-            </p>
+            <p class="mt-2 text-body-2 text-grey">This is where the document will be displayed</p>
             <p class="mt-1 text-caption text-grey">
               File: <strong>{{ evidence.displayName }}</strong>
             </p>
@@ -188,8 +187,8 @@ const loadEvidence = async () => {
 
     const evidenceData = evidenceSnap.data();
 
-    // Fetch display metadata from originalMetadata subcollection
-    // Path: /teams/{teamId}/matters/general/evidence/{fileHash}/originalMetadata/{metadataHash}
+    // Fetch display metadata from sourceMetadata subcollection
+    // Path: /teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
     const metadataHash = evidenceData.displayCopy;
     const metadataRef = doc(
       db,
@@ -199,7 +198,7 @@ const loadEvidence = async () => {
       'general',
       'evidence',
       fileHash.value,
-      'originalMetadata',
+      'sourceMetadata',
       metadataHash
     );
     const metadataSnap = await getDoc(metadataRef);

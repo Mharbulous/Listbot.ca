@@ -81,7 +81,7 @@ export function useFileMetadata() {
           'general',
           'evidence',
           fileHash,
-          'originalMetadata',
+          'sourceMetadata',
           metadataHash
         );
         const existingDoc = await getDoc(docRef);
@@ -112,7 +112,7 @@ export function useFileMetadata() {
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
       console.log(`[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`);
 
-      // STEP 2: Create originalMetadata subcollection document (now that parent exists)
+      // STEP 2: Create sourceMetadata subcollection document (now that parent exists)
       const metadataRecord = {
         // Core file metadata (only what varies between identical files)
         originalName: originalName,
@@ -126,7 +126,7 @@ export function useFileMetadata() {
         metadataHash: metadataHash,
       };
 
-      // Save to Firestore: /teams/{teamId}/matters/general/evidence/{fileHash}/originalMetadata/{metadataHash}
+      // Save to Firestore: /teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
       const docRef = doc(
         db,
         'teams',
@@ -135,7 +135,7 @@ export function useFileMetadata() {
         'general',
         'evidence',
         fileHash,
-        'originalMetadata',
+        'sourceMetadata',
         metadataHash
       );
       await setDoc(docRef, metadataRecord);
@@ -202,7 +202,7 @@ export function useFileMetadata() {
         'general',
         'evidence',
         fileHash,
-        'originalMetadata',
+        'sourceMetadata',
         metadataHash
       );
       const docSnapshot = await getDoc(docRef);

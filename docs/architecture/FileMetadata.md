@@ -26,12 +26,13 @@ The application presents metadata to users in three distinct categories, reflect
 **Definition**: Intrinsic properties of the original file as it existed on the user's computer.
 
 **Displayed Fields**:
-- **Name**: Original filename with preserved case from `originalMetadata.originalName`
-- **Date Modified (Source File)**: File system modification timestamp from `originalMetadata.lastModified`
+
+- **Name**: Original filename with preserved case from `sourceMetadata.originalName`
+- **Date Modified (Source File)**: File system modification timestamp from `sourceMetadata.lastModified`
 - **Size**: File size in bytes from `evidence.fileSize`
 - **MIME Type**: Content type from Firebase Storage metadata
 
-**Data Sources**: Combines data from `originalMetadata` subcollection and `evidence` collection.
+**Data Sources**: Combines data from `sourceMetadata` subcollection and `evidence` collection.
 
 **Purpose**: Shows users the file's original properties for identification and context.
 
@@ -40,16 +41,19 @@ The application presents metadata to users in three distinct categories, reflect
 **Definition**: Data extracted from within the file's content, following format-specific standards.
 
 **Current Fields**:
+
 - **Date Modified (Source File)**: File system timestamp (currently shown in File Attributes section)
 
 **Future Expansion**: Will include format-specific embedded metadata such as:
+
 - PDF: Author, Creator, Producer, DocumentID (XMP metadata)
 - Images: EXIF data, GPS coordinates, camera information
 - Office Docs: Author, Company, Revision history, Track Changes
 - Media: Recording timestamps, device information, GPS tracks
 
 **Data Sources**:
-- Current: `originalMetadata.lastModified` (file system timestamp)
+
+- Current: `sourceMetadata.lastModified` (file system timestamp)
 - Future: Extracted metadata stored in `evidence` collection or dedicated subcollections
 
 **Technical Reference**: See `docs/architecture/MetadataSpecs.md` for detailed specifications of embedded metadata standards for 17+ file types.
@@ -61,6 +65,7 @@ The application presents metadata to users in three distinct categories, reflect
 **Definition**: System-level information about how and when the file is stored in the application's infrastructure.
 
 **Displayed Fields**:
+
 - **Date Uploaded**: Firebase Storage upload timestamp from storage metadata `timeCreated`
 - **File Hash**: SHA-256 hash of file content, used as both `evidence` document ID and storage filename
 
@@ -74,8 +79,8 @@ The application presents metadata to users in three distinct categories, reflect
 UI Category          → Firestore Collection/Field
 ────────────────────────────────────────────────────────────
 File Attributes:
-  Name               → originalMetadata.originalName
-  Date Modified      → originalMetadata.lastModified
+  Name               → sourceMetadata.originalName
+  Date Modified      → sourceMetadata.lastModified
   Size               → evidence.fileSize
   MIME Type          → Firebase Storage metadata.contentType
 
@@ -98,10 +103,10 @@ Storage Properties:
 
 ## The Three Collections
 
-### 1. originalMetadata Subcollection
+### 1. sourceMetadata Subcollection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}/originalMetadata/{metadataHash}`
-**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}/originalMetadata/{metadataHash}`
+**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 
 **Purpose**: Preserves metadata about original desktop files as a subcollection under evidence documents
 
@@ -145,7 +150,7 @@ Storage Properties:
 {
   // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
 
-  displayCopy: string,       // metadataHash pointing to originalMetadata record
+  displayCopy: string,       // metadataHash pointing to sourceMetadata record
   fileSize: number,          // File size in bytes
   processingStage: string,   // Upload/processing status
   isProcessed: boolean,      // Whether file has been processed
@@ -172,7 +177,7 @@ Storage Properties:
 - `src/components/DocumentList.vue` - Displays evidence with metadata
 - `src/stores/documentsStore.js` - Manages evidence state
 - `src/features/organizer/services/evidenceService.js` - Core evidence operations
-- `src/features/organizer/stores/organizerCore.js` - Fetches displayName from originalMetadata
+- `src/features/organizer/stores/organizerCore.js` - Fetches displayName from sourceMetadata
 
 ### 3. uploadEvents Collection
 
@@ -221,13 +226,13 @@ Check if fileHash exists in Storage →
 Create evidence record using fileHash as document ID →
   (Automatic deduplication - identical files = same document)
   ↓
-Create originalMetadata record as subcollection under evidence document →
-  Path: /evidence/{fileHash}/originalMetadata/{metadataHash}
+Create sourceMetadata record as subcollection under evidence document →
+  Path: /evidence/{fileHash}/sourceMetadata/{metadataHash}
 ```
 
 ## File Extension Handling
 
-**Preservation**: Original file extension case is preserved ONLY in `originalMetadata.originalName`
+**Preservation**: Original file extension case is preserved ONLY in `sourceMetadata.originalName`
 
 **Standardization**: Everywhere else uses lowercase:
 
@@ -238,7 +243,7 @@ Create originalMetadata record as subcollection under evidence document →
 **Example**:
 
 - User uploads: `Report.PDF`
-- originalMetadata: `{ originalName: "Report.PDF" }` (preserved)
+- sourceMetadata: `{ originalName: "Report.PDF" }` (preserved)
 - Firebase Storage: `abc123...def.pdf` (lowercase)
 - Evidence: Document ID is the fileHash (no extension field)
 
@@ -247,14 +252,16 @@ Create originalMetadata record as subcollection under evidence document →
 **Storage Level (Firebase Storage)**: Files with identical content (same `fileHash`) are stored once
 
 **Evidence Level**: Files with identical content get ONE evidence document
+
 - Document ID = fileHash (Firestore enforces uniqueness)
 - Automatic deduplication without manual checking
 - setDoc() safely overwrites if the same file is uploaded again
 
-**Metadata Level (originalMetadata Subcollection)**: Metadata combinations (same `metadataHash`) are stored once as subcollection documents under the evidence document
-- Multiple originalMetadata documents can exist under one evidence document
+**Metadata Level (sourceMetadata Subcollection)**: Metadata combinations (same `metadataHash`) are stored once as subcollection documents under the evidence document
+
+- Multiple sourceMetadata documents can exist under one evidence document
 - Each represents a different upload context (different name, timestamp, or path)
-- Path: `/evidence/{fileHash}/originalMetadata/{metadataHash}`
+- Path: `/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 
 **Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
@@ -292,6 +299,6 @@ The `folderPaths` field captures folder structure from webkitdirectory uploads:
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one originalMetadata subcollection document under evidence (identified by metadataHash)
+- Same metadata = one sourceMetadata subcollection document under evidence (identified by metadataHash)
 - Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

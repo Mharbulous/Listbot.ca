@@ -150,8 +150,8 @@ service cloud.firestore {
         );
     }
 
-    // Evidence originalMetadata subcollection (explicit rule for clarity)
-    match /teams/{teamId}/matters/{matterId}/evidence/{evidenceId}/originalMetadata/{metadataHash} {
+    // Evidence sourceMetadata subcollection (explicit rule for clarity)
+    match /teams/{teamId}/matters/{matterId}/evidence/{evidenceId}/sourceMetadata/{metadataHash} {
       allow read, write: if request.auth != null &&
         (
           request.auth.token.teamId == teamId ||

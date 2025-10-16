@@ -24,7 +24,7 @@ This document outlines the incremental implementation phases for the Organizer f
 - ✅ New "Organizer" view in navigation - Added to router and sidebar
 - ✅ File list component using Evidence collection with displayCopy references - Card-based layout
 - ✅ Tag input interface for human tags (tagsByHuman array) - TagInput.vue with keyboard shortcuts
-- ✅ Evidence documents reference originalMetadata for display names - Store fetches and caches display info
+- ✅ Evidence documents reference sourceMetadata for display names - Store fetches and caches display info
 - ✅ Basic text-based filtering combining tagsByAI and tagsByHuman - Real-time search in store
 
 **User Flow** (Implemented):
@@ -38,7 +38,7 @@ This document outlines the incremental implementation phases for the Organizer f
 **Architecture Implemented**:
 
 - **Evidence Collection**: `/teams/{teamId}/evidence/` with refined structure
-- **Display Info Caching**: Store caches originalMetadata lookups for performance
+- **Display Info Caching**: Store caches sourceMetadata lookups for performance
 - **Real-time Updates**: Firestore listeners provide instant visibility after upload
 - **Upload Integration**: Evidence documents created automatically during upload process
 - **Modern UI**: Vuetify card-based responsive layout with loading states

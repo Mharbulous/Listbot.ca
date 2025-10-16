@@ -174,7 +174,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   };
 
   /**
-   * Fetch display information from originalMetadata subcollection
+   * Fetch display information from sourceMetadata subcollection
    */
   const getDisplayInfo = async (metadataHash, teamId, fileHash) => {
     try {
@@ -192,7 +192,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         'general',
         'evidence',
         fileHash,
-        'originalMetadata',
+        'sourceMetadata',
         metadataHash
       );
       const metadataDoc = await getDoc(metadataRef);

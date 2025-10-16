@@ -6,7 +6,7 @@
  *
  * Use Case:
  * - With the new schema, each unique fileHash gets ONE evidence document (automatic deduplication)
- * - Different metadata variants are handled through the originalMetadata collection
+ * - Different metadata variants are handled through the sourceMetadata collection
  * - This composable primarily handles UI display and metadata selection
  */
 

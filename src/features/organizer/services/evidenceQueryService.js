@@ -161,8 +161,8 @@ export class EvidenceQueryService {
    */
   async getAvailableOriginalNames(fileHash, matterId = 'general') {
     try {
-      // Query the originalMetadata subcollection under the specific evidence document
-      const originalMetadataRef = collection(
+      // Query the sourceMetadata subcollection under the specific evidence document
+      const sourceMetadataRef = collection(
         db,
         'teams',
         this.teamId,
@@ -170,10 +170,10 @@ export class EvidenceQueryService {
         matterId,
         'evidence',
         fileHash,
-        'originalMetadata'
+        'sourceMetadata'
       );
 
-      const querySnapshot = await getDocs(originalMetadataRef);
+      const querySnapshot = await getDocs(sourceMetadataRef);
       const originalNames = [];
 
       querySnapshot.forEach((doc) => {

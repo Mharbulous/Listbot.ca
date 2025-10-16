@@ -165,7 +165,7 @@ The **Organizer** is an AI-powered document discovery and organization system de
   - `storageRef.storage`: Which storage folder (uploads/split/merged)
   - `storageRef.fileHash`: Unique file identifier
 - **Display References**: Evidence points to specific metadata records via:
-  - `displayCopy.metadataHash`: Points to chosen originalMetadata record
+  - `displayCopy.metadataHash`: Points to chosen sourceMetadata record
   - `displayCopy.folderPath`: User-chosen folder path from that record
 - **Processing Metadata**: Evidence tracks isProcessed, hasAllPages, processingStage
 - **Tag Storage**: Separated by source (tagsByAI, tagsByHuman arrays)

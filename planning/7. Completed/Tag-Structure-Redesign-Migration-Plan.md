@@ -394,7 +394,7 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // Original Metadata Record
-// teams/team-abc-123/matters/general/originalMetadata/meta456def789abc123456789abc123456789abc123456789abc
+// teams/team-abc-123/matters/general/sourceMetadata/meta456def789abc123456789abc123456789abc123456789abc
 {
   originalName: 'Service_Agreement_ClientABC_2025.pdf',
   lastModified: 1704067200000,  // 2025-01-01 00:00:00

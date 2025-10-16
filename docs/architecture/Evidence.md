@@ -19,7 +19,7 @@
   // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
 
   // Display Configuration - REQUIRED
-  displayCopy: string,           // Metadata hash - references originalMetadata collection
+  displayCopy: string,           // Metadata hash - references sourceMetadata collection
 
   // File Properties - REQUIRED
   fileSize: number,              // Bytes, must be > 0
@@ -50,11 +50,11 @@
 
 **displayCopy:**
 
-- **ALWAYS** verify hash exists in originalMetadata collection
+- **ALWAYS** verify hash exists in sourceMetadata collection
 - **MUST** be a valid metadataHash (SHA-256, 64 characters)
 - **USE** hash-based lookup for metadata retrieval
 
-**Note**: For understanding the critical distinction between original file metadata and storage file references, including how originalMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
+**Note**: For understanding the critical distinction between original file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
 
 **processingStage:**
 
@@ -75,12 +75,12 @@
 ### Path Structure
 
 ```
-/teams/{teamId}/matters/general/evidence/{evidenceId}/originalMetadata/{metadataHash}
+/teams/{teamId}/matters/general/evidence/{evidenceId}/sourceMetadata/{metadataHash}
 ```
 
 ### Purpose
 
-The originalMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all original file contexts while maintaining efficient storage deduplication.
+The sourceMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all original file contexts while maintaining efficient storage deduplication.
 
 ### Original Metadata Document Schema
 
@@ -101,7 +101,7 @@ The originalMetadata subcollection stores variant metadata for files with identi
 
 ### Key Characteristics
 
-- **Multiple variants per evidence**: One evidence document can have multiple originalMetadata subcollection documents
+- **Multiple variants per evidence**: One evidence document can have multiple sourceMetadata subcollection documents
 - **Automatic deduplication**: Identical metadata (same metadataHash) stored only once per evidence document
 - **Preserves original context**: Each document represents a unique upload context with different name, timestamp, or path
 - **Case preservation**: The ONLY place where original file extension case is preserved
@@ -390,7 +390,7 @@ Collection: tags
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence
 - **NEVER** store file content in Firestore
 - **USE** fileHash (document ID) to locate files in Storage: `teams/{teamId}/matters/general/uploads/{fileHash}.{extension}`
-- **ALWAYS** verify metadata hash exists in originalMetadata collection
+- **ALWAYS** verify metadata hash exists in sourceMetadata collection
 - **ACCESS** file using: `evidence.id` (which is the fileHash)
 
 **Note**: For understanding team-based data isolation including solo user patterns where teamId === userId, see [SoloTeamMatters.md](SoloTeamMatters.md).

@@ -1,15 +1,18 @@
 # Organizer Version 1.0 Implementation Plan
 
 ## 🎉 STATUS: COMPLETED ✅
+
 **Implementation Date:** August 29, 2025  
 **Version 1.0 is fully functional and deployed**
 
 ## Executive Summary
 
 ### Problem Statement
+
 Users currently have no way to organize, categorize, or efficiently locate previously uploaded documents in the Bookkeeper application. Files exist only as an unstructured list from the upload system, making document discovery time-consuming and inefficient, particularly for legal professionals who need to quickly locate specific documents among hundreds or thousands of uploaded files.
 
 ### Solution Overview
+
 Implement a basic file listing interface with manual tag assignment capability, providing users with fundamental document organization through text-based tags and simple search functionality.
 
 ## Core Goal
@@ -21,6 +24,7 @@ Create a simple file list view with manual tag assignment capability, providing 
 ### Two-Database Design
 
 1. **Storage 1: Uploads** (Existing) - Raw file storage in Firebase Storage
+
    - Contains actual file bytes stored by hash
    - Maintains upload metadata for deduplication
    - Single source of truth for file content
@@ -32,6 +36,7 @@ Create a simple file list view with manual tag assignment capability, providing 
    - Enables multiple evidence entries pointing to same file
 
 ### Key Design Decisions
+
 - Evidence database is separate from upload metadata
 - One uploaded file can have multiple evidence entries (different matters, different tags)
 - Evidence entries reference storage files, never duplicate them
@@ -40,21 +45,25 @@ Create a simple file list view with manual tag assignment capability, providing 
 ## Features to Implement
 
 ### 1. Basic File List View
+
 - Display all uploaded files with metadata (filename, extension, upload date)
 - Integration with existing Firebase storage system
 - Simple table/list interface using Vuetify components
 
 ### 2. Manual Tag Assignment
+
 - Tag input interface for each file (text-based input)
 - Tags stored as array of strings in Firestore
 - Ability to add/remove tags per file
 
 ### 3. Basic Search/Filter
+
 - Text-based filtering by tag names
 - Simple search interface at top of file list
 - Real-time filtering as user types
 
 ### 4. Navigation Integration
+
 - New "Organizer" route and navigation item
 - Proper Vue Router integration
 - Route guards for authenticated access
@@ -62,47 +71,49 @@ Create a simple file list view with manual tag assignment capability, providing 
 ## Technical Architecture
 
 ### Data Model
+
 ```javascript
 // NEW: Evidence Database Structure (Database 2: Evidence)
 // Collection: /teams/{teamId}/evidence/{evidenceId}
 {
   evidenceId: "auto-generated", // Firestore auto-ID
-  
+
   // Reference to actual file in Storage 1
   storageRef: {
     storage: "uploads", // or "split", "merged" in future versions
     fileHash: "abc123..." // Points to file in Storage 1
   },
-  
+
   // Display configuration (references specific metadata record and folder path)
   displayCopy: {
-    metadataHash: "xyz789abc123def456...", // Points to chosen originalMetadata record
+    metadataHash: "xyz789abc123def456...", // Points to chosen sourceMetadata record
     folderPath: "/2025/Statements" // User's chosen folder path from that metadata record
   },
-  
+
   // File properties (for quick access)
   fileSize: 245632,
-  
+
   // Processing status (for future Document Processing Workflow)
   isProcessed: false, // Will be true after v2.0 processing
   hasAllPages: null, // null = unknown, true/false after processing
   processingStage: "uploaded", // uploaded|splitting|merging|complete
-  
+
   // Organization tags (separated by source - v1.0 focus)
   tagsByAI: ["financial-document", "bank-statement", "pdf"], // AI-generated tags
   tagsByHuman: ["important", "march-2024", "rbc"], // Human-applied tags
-  
+
   // Timestamps
   updatedAt: "2024-01-01T00:00:00.000Z"
 }
 
 // Derived information (not stored, computed from references):
-// displayName: Retrieved from originalMetadata[displayCopy.metadataHash].originalName
-// createdDate: Retrieved from originalMetadata[displayCopy.metadataHash].lastModified
+// displayName: Retrieved from sourceMetadata[displayCopy.metadataHash].originalName
+// createdDate: Retrieved from sourceMetadata[displayCopy.metadataHash].lastModified
 // fileExtension: Derived from displayName
 ```
 
 ### Component Structure
+
 ```
 views/
   Organizer.vue                 // Main organizer page
@@ -114,21 +125,23 @@ components/features/organizer/
 ```
 
 ### Store Integration
+
 ```javascript
 // New Pinia store for organizer functionality
 stores/organizer.js
 - evidenceList: [] // Array of evidence objects
-- filteredEvidence: [] // Computed filtered results  
+- filteredEvidence: [] // Computed filtered results
 - filterText: "" // Current filter string
 - actions: loadEvidence(), updateEvidenceTags(), applyFilters(), getDisplayInfo()
-// getDisplayInfo() - fetches display name/date from referenced originalMetadata
+// getDisplayInfo() - fetches display name/date from referenced sourceMetadata
 ```
 
 ## Existing Codebase Assessment
 
 ### Current Organizer Files (Lines of Code)
+
 - `FileListItem.vue`: 16 lines (skeleton with TODO comments)
-- `FileSearch.vue`: 16 lines (skeleton with TODO comments)  
+- `FileSearch.vue`: 16 lines (skeleton with TODO comments)
 - `useFileSearch.js`: 44 lines (partial implementation with basic search logic)
 - Additional skeleton files: `FileGrid.vue`, `FilePreview.vue`, `FileDetails.vue`, `ViewModeToggle.vue`, `FileTypeFilters.vue` (all basic skeletons)
 - Composables: `useFileViewer.js`, `useFilePreview.js`, `useViewerNavigation.js` (skeleton files)
@@ -137,6 +150,7 @@ stores/organizer.js
 **Total Existing**: ~15 skeleton files with approximately 200 lines of placeholder code
 
 ### Integration Points
+
 - Existing upload system uses hash-based file identification
 - Firebase Storage already configured and working
 - Authentication system with team-based isolation (teamId === userId for solo users)
@@ -145,6 +159,7 @@ stores/organizer.js
 ## Implementation Steps
 
 ### Step 1: Data Layer Setup (High Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Medium  
 **Dependencies**: None  
 **Internet Research Summary**: Based on Firebase documentation and 2024 best practices, optimal Firestore collection patterns recommend using lowerCamelCase field names, avoiding sequential document IDs to prevent hotspots, and implementing subcollections for hierarchical data. For file metadata, the recommendation is to denormalize data for query performance while keeping documents under 1MB. The pattern of using hash-based IDs (already implemented in upload system) aligns with best practices for avoiding monotonically increasing IDs that can cause latency issues.
@@ -160,17 +175,19 @@ stores/organizer.js
 - [x] Create Pinia store for evidence management (separate from upload store) - `src/features/organizer/stores/organizer.js`
 
 ### Step 2: Core Components (Low Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Low  
-**Dependencies**: Step 1 (data layer)  
+**Dependencies**: Step 1 (data layer)
 
 **Implementation Notes**: Used card-based layout instead of separate FileList component for better mobile responsiveness and visual separation.
 
-- [x] Enhance existing `Organizer.vue` view component - `src/features/organizer/views/Organizer.vue` 
+- [x] Enhance existing `Organizer.vue` view component - `src/features/organizer/views/Organizer.vue`
 - [x] ~~Build `FileList.vue` component~~ **REPLACED:** Integrated directly into Organizer.vue as card layout
 - [x] Complete implementation of existing `FileListItem.vue` skeleton - `src/features/organizer/components/FileListItem.vue`
 - [x] Create `TagInput.vue` component for tag management - `src/features/organizer/components/TagInput.vue`
 
 ### Step 3: Tag Management System (High Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Medium
 **Dependencies**: Step 1, Step 2  
 **Internet Research Summary**: Vue 3 tag input best practices for 2024 recommend using established UI libraries (PrimeVue, Vuetify, Shadcn/Vue) for production applications. Vuetify's chip component provides built-in accessibility with proper ARIA labels and keyboard navigation. Custom implementations should leverage Composition API with composable patterns for reusability. The recommended pattern includes reactive tag arrays, input validation, and proper event handling for add/remove operations.
@@ -186,8 +203,9 @@ stores/organizer.js
 - [x] ~~Add display name selection dropdown~~ **NOT NEEDED:** Single displayCopy reference sufficient for v1.0
 
 ### Step 4: Search and Filter (Low Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Low
-**Dependencies**: Step 2, Step 3  
+**Dependencies**: Step 2, Step 3
 
 **Implementation Notes**: Search integrated directly into main Organizer view header for better UX. Store-based filtering provides real-time results.
 
@@ -197,6 +215,7 @@ stores/organizer.js
 - [x] Add filter state management and persistence - filterText state in store
 
 ### Step 5: Navigation and Routing (Low Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Low  
 **Dependencies**: Step 2
 
@@ -206,6 +225,7 @@ stores/organizer.js
 - [x] Add proper page titles and meta information - Page titled "Document Organizer"
 
 ### Step 6: Integration with Existing System (High Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: High  
 **Dependencies**: Step 1, Step 5  
 **Internet Research Summary**: VueFire (official Vue.js Firebase bindings) provides the recommended 2024 approach for Firebase Storage integration with Vue 3. The `useStorageFile()`, `useStorageFileUrl()`, and `useStorageFileMetadata()` composables offer reactive bindings that automatically sync metadata changes. The pattern involves importing composables from VueFire and using reactive references for file operations, which aligns with our existing Firebase setup.
@@ -220,8 +240,9 @@ stores/organizer.js
 - [x] Test integration with existing authentication system - Working with existing auth store and guards
 
 ### Step 7: Testing and Polish (Medium Complexity) ✅ **COMPLETED**
+
 **Breaking Risk Level**: Low  
-**Dependencies**: All previous steps  
+**Dependencies**: All previous steps
 
 **Implementation Notes**: Manual testing completed successfully with real file uploads and user workflows. UI includes loading states and error handling.
 
@@ -235,6 +256,7 @@ stores/organizer.js
 **All 7 Implementation Steps Completed Successfully**
 
 ### Key Achievements:
+
 1. **Clean Architecture**: Evidence database integrated directly with upload workflow (no migration needed)
 2. **Real-time Updates**: Firestore listeners provide instant document visibility after upload
 3. **Performance Optimized**: Caching system for metadata lookups, pagination for large collections
@@ -243,6 +265,7 @@ stores/organizer.js
 6. **User-Centric**: Manual tagging with keyboard shortcuts, real-time search filtering
 
 ### Files Created/Modified:
+
 - **Core Store**: `src/features/organizer/stores/organizer.js` (341 lines)
 - **Main View**: `src/features/organizer/views/Organizer.vue` (enhanced)
 - **Components**: `TagInput.vue`, `FileListItem.vue` (enhanced)
@@ -255,11 +278,12 @@ stores/organizer.js
 ## File Structure
 
 ### Files to Enhance (Already Exist as Skeletons)
+
 ```
 src/features/organizer/
 ├── components/
 │   ├── FileListItem.vue (16 lines → enhance)
-│   ├── FileSearch.vue (16 lines → enhance)  
+│   ├── FileSearch.vue (16 lines → enhance)
 │   ├── FileGrid.vue (skeleton → enhance for list view)
 │   └── FileDetails.vue (skeleton → enhance for tag display)
 ├── composables/
@@ -270,6 +294,7 @@ src/features/organizer/
 ```
 
 ### New Files to Create
+
 ```
 src/features/organizer/
 ├── components/
@@ -285,6 +310,7 @@ src/features/organizer/
 ## User Interface Design
 
 ### Layout Structure
+
 - Header with search/filter bar
 - Main content area with file list table
 - Each row shows: filename, file type icon, upload date, tags, actions
@@ -292,6 +318,7 @@ src/features/organizer/
 - Inline tag editing capability
 
 ### Vuetify Components
+
 - `v-data-table` or `v-list` for file listing
 - `v-chip` for tag display
 - `v-text-field` for search and tag input
@@ -308,18 +335,21 @@ src/features/organizer/
 ## Testing Strategy
 
 ### Unit Tests
+
 - Store actions and getters
 - Component prop handling and events
 - Tag input validation and formatting
 - Filter logic correctness
 
 ### Integration Tests
+
 - Firestore data operations
 - Authentication integration
 - Route navigation and guards
 - Cross-component data flow
 
 ### E2E Tests
+
 - Complete organizer workflow
 - Tag assignment and search
 - Integration with existing upload system
@@ -328,12 +358,14 @@ src/features/organizer/
 ## Single Source of Truth Compliance
 
 ### Data Architecture
+
 - **Primary Source**: Existing upload system hash-based file identification remains authoritative
 - **Metadata Extension**: Tags stored as additional field in existing file documents, not separate collection
 - **Firestore Integration**: Leverages existing file metadata structure to avoid duplication
 - **No Data Duplication**: Tag data extends existing documents rather than creating parallel storage
 
 ### Reference Integration
+
 - File metadata continues using existing Firebase Storage references
 - Tag data stored in same Firestore documents as existing upload metadata
 - Upload system remains unchanged and authoritative for file operations
@@ -342,27 +374,30 @@ src/features/organizer/
 ## Performance Considerations
 
 ### Initial Implementation (v1.0 Scope Only)
+
 - Simple approach suitable for moderate file collections (100-1000 files)
 - Client-side filtering for responsive UI
 - Basic loading states during data fetch
 - **No premature optimization** - defer performance enhancements to later versions
 
 ### Explicitly Deferred to Future Versions
+
 - Virtual scrolling for large collections (planned for v1.9)
-- Server-side filtering for very large datasets  
+- Server-side filtering for very large datasets
 - Lazy loading of file metadata
 - Caching strategies for frequently accessed data
 
 ## Security Requirements
 
 ### Firestore Rules
+
 ```javascript
 // Ensure users can only access their own team's files
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /fileMetadata/{fileId} {
-      allow read, write: if request.auth != null 
+      allow read, write: if request.auth != null
         && resource.data.teamId == request.auth.uid;
     }
   }
@@ -370,6 +405,7 @@ service cloud.firestore {
 ```
 
 ### Data Validation
+
 - Sanitize tag input to prevent XSS
 - Validate file access permissions
 - Ensure team isolation in all operations
@@ -377,11 +413,12 @@ service cloud.firestore {
 ## Migration Strategy
 
 ### Existing File Indexing
+
 ```javascript
 // On first Organizer access:
-// 1. Query originalMetadata collection for uploaded files
+// 1. Query sourceMetadata collection for uploaded files
 // 2. For each unique fileHash, create Evidence document if not exists
-// 3. Set displayCopy to first found metadata record for each fileHash  
+// 3. Set displayCopy to first found metadata record for each fileHash
 // 4. Initialize tagsByAI: [] and tagsByHuman: [] arrays
 // 5. Show one-time "Indexing files..." progress modal
 // 6. Cache indexing completion in localStorage to avoid re-runs
@@ -390,12 +427,14 @@ service cloud.firestore {
 ## Integration Points
 
 ### Existing Systems
+
 - **Upload System**: Leverage existing file metadata and hash-based deduplication
 - **Authentication**: Use existing team-based isolation (teamId === userId for solo users)
 - **Storage**: Connect to existing Firebase Storage for file access
 - **Routing**: Integrate with existing Vue Router and navigation
 
 ### Future Versions
+
 - Tag structure extensible to category-based system (v1.1)
 - Component architecture supports AI integration (v1.3)
 - Data model compatible with confidence scoring (v1.4)
@@ -404,6 +443,7 @@ service cloud.firestore {
 ## Success Criteria
 
 ### Functional Requirements
+
 - [ ] Users can view all uploaded files in organized list
 - [ ] Users can assign text-based tags to any file
 - [ ] Users can search/filter files by tag text
@@ -411,12 +451,14 @@ service cloud.firestore {
 - [ ] All operations respect team-based data isolation
 
 ### Performance Requirements
+
 - [ ] File list loads within 2 seconds for 100 files
 - [ ] Tag filtering responds within 500ms
 - [ ] Tag assignment saves within 1 second
 - [ ] UI remains responsive during all operations
 
 ### User Experience Requirements
+
 - [ ] Intuitive interface requiring minimal learning
 - [ ] Consistent with existing application design patterns
 - [ ] Clear visual feedback for all user actions
@@ -425,11 +467,13 @@ service cloud.firestore {
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **Large File Collections**: Start with client-side filtering, monitor performance
 - **Concurrent Tag Updates**: Implement optimistic updates with rollback capability
 - **Firestore Costs**: Monitor query patterns and implement pagination if needed
 
 ### User Experience Risks
+
 - **Feature Discoverability**: Clear navigation and introductory help text
 - **Tag Management Complexity**: Keep v1.0 simple, defer advanced features to later versions
 - **Data Migration**: Ensure existing uploaded files are properly indexed
@@ -437,12 +481,14 @@ service cloud.firestore {
 ## Documentation Requirements
 
 ### Developer Documentation
+
 - Component API documentation
 - Store structure and actions
 - Data model and relationships
 - Testing guidelines and examples
 
 ### User Documentation
+
 - Feature introduction and benefits
 - Step-by-step usage guide
 - Tag best practices
@@ -451,12 +497,14 @@ service cloud.firestore {
 ## Deployment Strategy
 
 ### Development Phases
+
 1. **Local Development**: Build and test all components in isolation
 2. **Integration Testing**: Test with existing system on development Firebase
 3. **User Acceptance Testing**: Deploy to staging environment for feedback
 4. **Production Deployment**: Roll out with feature flag capability
 
 ### Rollback Plan
+
 - Feature toggle for organizer navigation item
 - Database schema changes are additive only
 - Component lazy loading allows graceful fallback
@@ -465,16 +513,19 @@ service cloud.firestore {
 ## Timeline Estimation
 
 ### Week 1: Foundation
+
 - Data model design and Firestore setup
 - Basic component structure
 - Store implementation and integration
 
 ### Week 2: Core Features
+
 - File list display and tag input
 - Basic search/filter functionality
 - Navigation integration
 
 ### Week 3: Polish and Testing
+
 - UI refinement and responsive design
 - Comprehensive testing suite
 - Performance optimization and error handling
