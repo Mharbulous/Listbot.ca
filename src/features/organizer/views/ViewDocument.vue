@@ -24,17 +24,51 @@
             <!-- Source File Section -->
             <div class="metadata-section">
               <h3 class="metadata-section-title">Source File</h3>
-              <div class="metadata-item-simple">
-                <span class="metadata-value">{{ evidence.displayName }}</span>
+
+              <!-- File name dropdown for selecting metadata variants -->
+              <div class="metadata-item-simple dropdown-container" @click="toggleDropdown">
+                <div
+                  class="source-file-selector"
+                  :class="{ disabled: updatingMetadata || sourceMetadataVariants.length === 0 }"
+                >
+                  {{
+                    sourceMetadataVariants.find((v) => v.metadataHash === selectedMetadataHash)
+                      ?.sourceFileName || 'Unknown File'
+                  }}
+                  <span v-if="sourceMetadataVariants.length > 1" class="dropdown-arrow">▼</span>
+                </div>
+                <span v-if="updatingMetadata" class="updating-indicator">Updating...</span>
+
+                <!-- Custom dropdown menu -->
+                <div v-if="dropdownOpen" class="dropdown-menu" @click.stop>
+                  <div
+                    v-for="variant in sourceMetadataVariants"
+                    :key="variant.metadataHash"
+                    class="dropdown-item"
+                    :class="{ selected: variant.metadataHash === selectedMetadataHash }"
+                    @click="selectVariant(variant.metadataHash)"
+                  >
+                    {{ variant.sourceFileName }}
+                  </div>
+                </div>
               </div>
-              <div class="metadata-item-simple">
+
+              <!-- Date modified display -->
+              <div class="metadata-item-simple date-with-notification">
                 <span class="metadata-value">{{
                   formatDateTime(evidence.createdAt, dateFormat, timeFormat)
                 }}</span>
+                <span v-if="earlierCopyMessage" class="earlier-copy-message">{{
+                  earlierCopyMessage
+                }}</span>
               </div>
+
+              <!-- File size -->
               <div class="metadata-item-simple">
                 <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
               </div>
+
+              <!-- MIME type -->
               <div class="metadata-item-simple">
                 <span class="metadata-value">{{
                   storageMetadata?.contentType ||
@@ -83,9 +117,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref as storageRef, getMetadata } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
@@ -93,6 +127,7 @@ import { useDocumentViewStore } from '@/stores/documentView.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { storeToRefs } from 'pinia';
 import { formatDateTime } from '@/utils/dateFormatter.js';
+import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -107,6 +142,10 @@ const evidence = ref(null);
 const storageMetadata = ref(null);
 const loading = ref(true);
 const error = ref(null);
+const sourceMetadataVariants = ref([]);
+const selectedMetadataHash = ref(null);
+const updatingMetadata = ref(false);
+const dropdownOpen = ref(false);
 
 // Format file size helper
 const formatFileSize = (bytes) => {
@@ -135,6 +174,97 @@ const formatDate = (timestamp) => {
 // Navigate back to organizer
 const goBack = () => {
   router.push('/organizer');
+};
+
+// Compute earlier copy notification message
+const earlierCopyMessage = computed(() => {
+  // Only show message if there are multiple variants
+  if (sourceMetadataVariants.value.length <= 1) {
+    return '';
+  }
+
+  // Find the currently selected variant
+  const currentVariant = sourceMetadataVariants.value.find(
+    (v) => v.metadataHash === selectedMetadataHash.value
+  );
+
+  if (!currentVariant) {
+    return '';
+  }
+
+  // Check if any other variant has an earlier lastModified date
+  const hasEarlierCopy = sourceMetadataVariants.value.some(
+    (v) => v.metadataHash !== selectedMetadataHash.value && v.lastModified < currentVariant.lastModified
+  );
+
+  return hasEarlierCopy ? 'earlier copy found' : 'no earlier copies found';
+});
+
+// Toggle dropdown menu
+const toggleDropdown = () => {
+  if (updatingMetadata.value || sourceMetadataVariants.value.length === 0) return;
+  dropdownOpen.value = !dropdownOpen.value;
+};
+
+// Select a variant from dropdown
+const selectVariant = (metadataHash) => {
+  dropdownOpen.value = false;
+  if (metadataHash !== selectedMetadataHash.value) {
+    handleMetadataSelection(metadataHash);
+  }
+};
+
+// Handle metadata variant selection from dropdown
+const handleMetadataSelection = async (newMetadataHash) => {
+  if (!newMetadataHash || updatingMetadata.value) return;
+
+  try {
+    updatingMetadata.value = true;
+
+    const teamId = authStore.currentTeam;
+    if (!teamId || !fileHash.value) {
+      throw new Error('Missing team ID or file hash');
+    }
+
+    // Find the selected variant
+    const selectedVariant = sourceMetadataVariants.value.find(
+      (v) => v.metadataHash === newMetadataHash
+    );
+
+    if (!selectedVariant) {
+      throw new Error('Selected metadata variant not found');
+    }
+
+    // Update Firestore evidence document with new displayCopy
+    const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', fileHash.value);
+    await updateDoc(evidenceRef, {
+      displayCopy: newMetadataHash,
+    });
+
+    // Update local state with new display information
+    evidence.value = {
+      ...evidence.value,
+      displayCopy: newMetadataHash,
+      displayName: selectedVariant.sourceFileName || 'Unknown File',
+      createdAt: selectedVariant.lastModified,
+    };
+
+    // Update selected hash
+    selectedMetadataHash.value = newMetadataHash;
+
+    // Update document view store for breadcrumb
+    documentViewStore.setDocumentName(selectedVariant.sourceFileName || 'Unknown File');
+
+    console.log(
+      `[ViewDocument] Updated displayCopy to: ${selectedVariant.sourceFileName} (${newMetadataHash.substring(0, 8)}...)`
+    );
+  } catch (err) {
+    console.error('[ViewDocument] Failed to update metadata selection:', err);
+    // Revert selection on error
+    selectedMetadataHash.value = evidence.value.displayCopy;
+  } finally {
+    updatingMetadata.value = false;
+  }
 };
 
 // Fetch Firebase Storage metadata
@@ -183,29 +313,29 @@ const loadEvidence = async () => {
 
     const evidenceData = evidenceSnap.data();
 
-    // Fetch display metadata from sourceMetadata subcollection
-    // Path: /teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
-    const metadataHash = evidenceData.displayCopy;
-    const metadataRef = doc(
-      db,
-      'teams',
-      teamId,
-      'matters',
-      'general',
-      'evidence',
-      fileHash.value,
-      'sourceMetadata',
-      metadataHash
-    );
-    const metadataSnap = await getDoc(metadataRef);
+    // Fetch ALL sourceMetadata variants for this file
+    const evidenceService = new EvidenceService(teamId);
+    const variants = await evidenceService.getAllSourceMetadata(fileHash.value);
+    sourceMetadataVariants.value = variants;
+
+    // Get currently selected metadata (from displayCopy field)
+    const currentMetadataHash = evidenceData.displayCopy;
+    selectedMetadataHash.value = currentMetadataHash;
+
+    // Find the currently selected variant
+    const currentVariant = variants.find((v) => v.metadataHash === currentMetadataHash);
 
     let displayName = 'Unknown File';
     let createdAt = null;
 
-    if (metadataSnap.exists()) {
-      const metadataData = metadataSnap.data();
-      displayName = metadataData.sourceFileName || 'Unknown File';
-      createdAt = metadataData.lastModified;
+    if (currentVariant) {
+      displayName = currentVariant.sourceFileName || 'Unknown File';
+      createdAt = currentVariant.lastModified;
+    } else if (variants.length > 0) {
+      // Fallback to first variant if displayCopy doesn't match any
+      displayName = variants[0].sourceFileName || 'Unknown File';
+      createdAt = variants[0].lastModified;
+      selectedMetadataHash.value = variants[0].metadataHash;
     }
 
     // Combine evidence and display metadata
@@ -229,14 +359,29 @@ const loadEvidence = async () => {
   }
 };
 
+// Close dropdown when clicking outside
+const closeDropdown = (event) => {
+  const dropdown = event.target.closest('.dropdown-container');
+  if (!dropdown) {
+    dropdownOpen.value = false;
+  }
+};
+
 // Initialize on mount
 onMounted(() => {
   loadEvidence();
+  // Add click listener to close dropdown when clicking outside
+  document.addEventListener('click', closeDropdown);
 });
 
 // Clean up store when component unmounts
 onUnmounted(() => {
   documentViewStore.clearDocumentName();
+});
+
+// Clean up event listener
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeDropdown);
 });
 </script>
 
@@ -283,6 +428,96 @@ onUnmounted(() => {
 
 .metadata-item-simple {
   margin-bottom: 8px;
+}
+
+.date-with-notification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.earlier-copy-message {
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  margin-left: 12px;
+}
+
+.dropdown-container {
+  position: relative;
+}
+
+.source-file-selector {
+  width: 100%;
+  padding: 0;
+  font-size: 0.875rem;
+  color: #333;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.source-file-selector.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dropdown-arrow {
+  font-size: 0.6rem;
+  margin-left: 6px;
+  color: #666;
+  opacity: 0.7;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background-color: white;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #333;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #475569;
+  color: white;
+}
+
+.dropdown-item.selected {
+  background-color: #e2e8f0;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.dropdown-item.selected:hover {
+  background-color: #475569;
+  color: white;
+}
+
+.updating-indicator {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
 }
 
 .metadata-item {

@@ -259,6 +259,49 @@ export class EvidenceService {
       throw error;
     }
   }
+
+  /**
+   * Get all source metadata variants for a file (all copies with different names/dates)
+   * @param {string} fileHash - Evidence document ID (file hash)
+   * @returns {Promise<Array>} - Array of metadata variants sorted by lastModified (oldest to newest)
+   */
+  async getAllSourceMetadata(fileHash) {
+    try {
+      const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
+
+      const metadataRef = collection(
+        db,
+        'teams',
+        this.teamId,
+        'matters',
+        'general',
+        'evidence',
+        fileHash,
+        'sourceMetadata'
+      );
+
+      // Query and sort by lastModified (oldest first)
+      const metadataQuery = query(metadataRef, orderBy('lastModified', 'asc'));
+      const querySnapshot = await getDocs(metadataQuery);
+
+      const variants = [];
+      querySnapshot.forEach((doc) => {
+        variants.push({
+          metadataHash: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      console.log(
+        `[EvidenceService] Found ${variants.length} metadata variants for ${fileHash.substring(0, 8)}...`
+      );
+
+      return variants;
+    } catch (error) {
+      console.error('[EvidenceService] Failed to get source metadata variants:', error);
+      throw error;
+    }
+  }
 }
 
 export default EvidenceService;
