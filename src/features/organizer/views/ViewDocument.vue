@@ -21,25 +21,21 @@
         <v-card variant="outlined">
           <v-card-title class="text-subtitle-1">Metadata</v-card-title>
           <v-card-text>
-            <!-- File Attributes Section -->
+            <!-- Source File Section -->
             <div class="metadata-section">
-              <h3 class="metadata-section-title">File Attributes</h3>
-              <div class="metadata-item">
-                <span class="metadata-label">Name:</span>
+              <h3 class="metadata-section-title">Source File</h3>
+              <div class="metadata-item-simple">
                 <span class="metadata-value">{{ evidence.displayName }}</span>
               </div>
-              <div class="metadata-item">
-                <span class="metadata-label">Date Modified (Source File):</span>
+              <div class="metadata-item-simple">
                 <span class="metadata-value">{{
                   formatDateTime(evidence.createdAt, dateFormat, timeFormat)
                 }}</span>
               </div>
-              <div class="metadata-item">
-                <span class="metadata-label">Size:</span>
+              <div class="metadata-item-simple">
                 <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
               </div>
-              <div class="metadata-item">
-                <span class="metadata-label">MIME Type:</span>
+              <div class="metadata-item-simple">
                 <span class="metadata-value">{{
                   storageMetadata?.contentType ||
                   (storageMetadata === null ? 'Unknown' : 'Loading...')
@@ -47,9 +43,9 @@
               </div>
             </div>
 
-            <!-- Storage Properties Section -->
+            <!-- Cloud Section -->
             <div class="metadata-section">
-              <h3 class="metadata-section-title">Storage Properties</h3>
+              <h3 class="metadata-section-title">Cloud</h3>
               <div class="metadata-item">
                 <span class="metadata-label">Date Uploaded:</span>
                 <span class="metadata-value">{{
@@ -283,6 +279,10 @@ onUnmounted(() => {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #e0e0e0;
+}
+
+.metadata-item-simple {
+  margin-bottom: 8px;
 }
 
 .metadata-item {
