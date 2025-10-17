@@ -1,21 +1,21 @@
 <template>
   <div class="view-document-container">
-    <!-- Loading state -->
-    <div v-if="loading" class="content-center">
+    <!-- Initial loading state (first visit only) -->
+    <div v-if="loading && !evidence" class="content-center">
       <v-progress-circular indeterminate size="64" color="primary" />
       <p class="mt-4 text-body-1">Loading document...</p>
     </div>
 
-    <!-- Error state -->
-    <div v-else-if="error" class="content-center error-state">
+    <!-- Error state (only show if no evidence loaded yet) -->
+    <div v-else-if="error && !evidence" class="content-center error-state">
       <v-icon size="64" color="error">mdi-alert-circle</v-icon>
       <h2 class="mt-4 text-h6">Error Loading Document</h2>
       <p class="mt-2 text-body-2">{{ error }}</p>
       <v-btn class="mt-4" color="primary" @click="goBack"> Back to Organizer </v-btn>
     </div>
 
-    <!-- Main content -->
-    <div v-else-if="evidence" class="view-document-content">
+    <!-- Main content (visible once evidence is loaded, persists during navigation) -->
+    <div v-else class="view-document-content">
       <!-- Sidebar containing document navigation and metadata panels -->
       <div class="sidebar-container">
         <!-- Document navigation control panel -->
@@ -271,14 +271,23 @@
       </div>
       </div>
 
-      <!-- PDF Viewer Placeholder -->
+      <!-- PDF Viewer Area -->
       <div class="viewer-area">
-        <v-card variant="outlined" class="viewer-placeholder">
+        <!-- Loading state during document transitions -->
+        <v-card v-if="viewerLoading" variant="outlined" class="viewer-placeholder">
+          <div class="placeholder-content">
+            <v-progress-circular indeterminate size="64" color="primary" />
+            <p class="mt-4 text-body-1">Loading document...</p>
+          </div>
+        </v-card>
+
+        <!-- PDF Viewer Placeholder (when not loading) -->
+        <v-card v-else variant="outlined" class="viewer-placeholder">
           <div class="placeholder-content">
             <v-icon size="120" color="grey-lighten-1">mdi-file-document-outline</v-icon>
             <h2 class="mt-6 text-h5 text-grey-darken-1">PDF Viewer Coming Soon</h2>
             <p class="mt-2 text-body-2 text-grey">This is where the document will be displayed</p>
-            <p class="mt-1 text-caption text-grey">
+            <p v-if="evidence" class="mt-1 text-caption text-grey">
               File: <strong>{{ evidence.displayName }}</strong>
             </p>
           </div>
@@ -318,7 +327,8 @@ const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadat
 const fileHash = ref(route.params.fileHash);
 const evidence = ref(null);
 const storageMetadata = ref(null);
-const loading = ref(true);
+const loading = ref(true); // Initial page load
+const viewerLoading = ref(false); // Viewer area loading during navigation
 const error = ref(null);
 const sourceMetadataVariants = ref([]);
 const selectedMetadataHash = ref(null);
@@ -540,7 +550,15 @@ const fetchStorageMetadata = async (teamId, displayName) => {
 // Load evidence document directly from Firestore (single document)
 const loadEvidence = async () => {
   try {
-    loading.value = true;
+    // Distinguish between initial load and navigation
+    const isInitialLoad = !evidence.value;
+
+    if (isInitialLoad) {
+      loading.value = true;
+    } else {
+      viewerLoading.value = true;
+    }
+
     error.value = null;
 
     const teamId = authStore.currentTeam;
@@ -606,6 +624,7 @@ const loadEvidence = async () => {
     error.value = err.message || 'Failed to load document';
   } finally {
     loading.value = false;
+    viewerLoading.value = false;
   }
 };
 
@@ -720,6 +739,7 @@ onBeforeUnmount(() => {
   padding: 0 12px;
   flex-grow: 1;
   text-align: center;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .metadata-box {
@@ -765,6 +785,7 @@ onBeforeUnmount(() => {
 
 .metadata-section {
   margin-bottom: 24px;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .metadata-section:last-child {
@@ -916,6 +937,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   min-height: 11in; /* US Letter paper height */
   overflow-y: auto;
+  transition: opacity 0.2s ease-in-out;
 }
 
 .viewer-placeholder {
