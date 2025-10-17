@@ -85,6 +85,7 @@ export const useOrganizerStore = defineStore('organizer', () => {
     // === BACKWARD COMPATIBILITY - Existing v1.0 Interface ===
     // State (delegated to stores)
     evidenceList: computed(() => coreStore.evidenceList),
+    sortedEvidenceList: computed(() => coreStore.sortedEvidenceList),
     filteredEvidence: computed(() => queryStore.filteredEvidence),
     loading: computed(() => coreStore.loading || categoryStore.loading),
     error: computed(() => coreStore.error || categoryStore.error),

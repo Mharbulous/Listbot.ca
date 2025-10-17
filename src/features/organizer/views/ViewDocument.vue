@@ -289,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref as storageRef, getMetadata } from 'firebase/storage';
@@ -329,8 +329,19 @@ const dropdownOpen = ref(false);
 const metadataVisible = metadataBoxVisible;
 
 // Document navigation state
-const currentDocumentIndex = ref(1);
+// Get sorted evidence list for consistent ordering
+const sortedEvidence = computed(() => organizerStore.sortedEvidenceList || []);
 const totalDocuments = computed(() => organizerStore.evidenceCount || 1);
+
+// Calculate current document index based on current route's fileHash
+const currentDocumentIndex = computed(() => {
+  if (!fileHash.value || sortedEvidence.value.length === 0) {
+    return 1;
+  }
+
+  const index = sortedEvidence.value.findIndex((ev) => ev.id === fileHash.value);
+  return index >= 0 ? index + 1 : 1; // Convert 0-based to 1-based index
+});
 
 // Format file size helper
 const formatFileSize = (bytes) => {
@@ -368,23 +379,35 @@ const toggleMetadataVisibility = async () => {
 
 // Document navigation methods
 const goToFirstDocument = () => {
-  currentDocumentIndex.value = 1;
+  if (sortedEvidence.value.length === 0) return;
+  const firstDoc = sortedEvidence.value[0];
+  router.push(`/organizer/view/${firstDoc.id}`);
 };
 
 const goToPreviousDocument = () => {
-  if (currentDocumentIndex.value > 1) {
-    currentDocumentIndex.value--;
+  if (sortedEvidence.value.length === 0) return;
+
+  const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
+  if (currentIndex > 0) {
+    const prevDoc = sortedEvidence.value[currentIndex - 1];
+    router.push(`/organizer/view/${prevDoc.id}`);
   }
 };
 
 const goToNextDocument = () => {
-  if (currentDocumentIndex.value < totalDocuments.value) {
-    currentDocumentIndex.value++;
+  if (sortedEvidence.value.length === 0) return;
+
+  const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
+  if (currentIndex < sortedEvidence.value.length - 1) {
+    const nextDoc = sortedEvidence.value[currentIndex + 1];
+    router.push(`/organizer/view/${nextDoc.id}`);
   }
 };
 
 const goToLastDocument = () => {
-  currentDocumentIndex.value = totalDocuments.value;
+  if (sortedEvidence.value.length === 0) return;
+  const lastDoc = sortedEvidence.value[sortedEvidence.value.length - 1];
+  router.push(`/organizer/view/${lastDoc.id}`);
 };
 
 // Compute earlier copy notification message
@@ -593,6 +616,17 @@ const closeDropdown = (event) => {
     dropdownOpen.value = false;
   }
 };
+
+// Watch for route changes to reload document when navigating between documents
+watch(
+  () => route.params.fileHash,
+  (newHash, oldHash) => {
+    if (newHash && newHash !== oldHash) {
+      fileHash.value = newHash;
+      loadEvidence();
+    }
+  }
+);
 
 // Initialize on mount
 onMounted(async () => {

@@ -48,6 +48,17 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const evidenceCount = computed(() => evidenceList.value.length);
 
   /**
+   * Sorted evidence list by hash (ID) in ascending order
+   * Used for consistent document navigation ordering
+   */
+  const sortedEvidenceList = computed(() => {
+    return [...evidenceList.value].sort((a, b) => {
+      // Sort by ID (hash) in ascending lexicographic order
+      return a.id.localeCompare(b.id);
+    });
+  });
+
+  /**
    * Load tags for an evidence document and structure them for both query and virtual folder stores
    * Includes category validation and orphaned tag cleanup
    */
@@ -559,6 +570,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
     // Computed
     evidenceCount,
+    sortedEvidenceList,
 
     // Core data management actions
     loadEvidence,
