@@ -178,8 +178,8 @@ export class EvidenceQueryService {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.originalName && !originalNames.includes(data.originalName)) {
-          originalNames.push(data.originalName);
+        if (data.sourceFileName && !originalNames.includes(data.sourceFileName)) {
+          originalNames.push(data.sourceFileName);
         }
       });
 

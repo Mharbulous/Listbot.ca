@@ -208,7 +208,7 @@ const loadEvidence = async () => {
 
     if (metadataSnap.exists()) {
       const metadataData = metadataSnap.data();
-      displayName = metadataData.originalName || 'Unknown File';
+      displayName = metadataData.sourceFileName || 'Unknown File';
       createdAt = metadataData.lastModified;
     }
 

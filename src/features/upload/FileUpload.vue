@@ -348,12 +348,13 @@ const safeMetadata = async (metadataFn, context) => {
 // Helper function for creating file metadata
 const createFileMetadataRecord = async (queueFile, fileHash) => {
   await createMetadataRecord({
-    originalName: queueFile.name,
+    sourceFileName: queueFile.name,
     lastModified: queueFile.lastModified,
     fileHash: fileHash,
     size: queueFile.size,
     sessionId: getCurrentSessionId(),
     originalPath: queueFile.path,
+    sourceFileType: queueFile.file?.type || '',
   });
 };
 

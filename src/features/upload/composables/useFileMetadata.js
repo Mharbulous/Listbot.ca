@@ -9,16 +9,16 @@ export function useFileMetadata() {
 
   /**
    * Generate metadata hash from file metadata
-   * Uses concatenated string: originalName|lastModified|fileHash
-   * @param {string} originalName - Original filename
+   * Uses concatenated string: sourceFileName|lastModified|fileHash
+   * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
    * @returns {Promise<string>} - SHA-256 hash of metadata string
    */
-  const generateMetadataHash = async (originalName, lastModified, fileHash) => {
+  const generateMetadataHash = async (sourceFileName, lastModified, fileHash) => {
     try {
       // Create deterministic concatenated string with pipe delimiters
-      const metadataString = `${originalName}|${lastModified}|${fileHash}`;
+      const metadataString = `${sourceFileName}|${lastModified}|${fileHash}`;
 
       // Generate SHA-256 hash of the metadata string
       const buffer = new TextEncoder().encode(metadataString);
@@ -36,20 +36,21 @@ export function useFileMetadata() {
   /**
    * Create a file metadata record in Firestore
    * @param {Object} fileData - File metadata information
-   * @param {string} fileData.originalName - Original filename
+   * @param {string} fileData.sourceFileName - Original filename
    * @param {number} fileData.lastModified - File's last modified timestamp
    * @param {string} fileData.fileHash - Content hash of the file
    * @param {number} fileData.size - File size in bytes (used for Evidence document creation)
    * @param {string} [fileData.originalPath] - Full relative path from folder upload (used to extract folderPath)
+   * @param {string} [fileData.sourceFileType] - MIME type of the file
    * @returns {Promise<string>} - The metadata hash used as document ID
    */
   const createMetadataRecord = async (fileData) => {
     try {
-      const { originalName, lastModified, fileHash, size, originalPath } = fileData;
+      const { sourceFileName, lastModified, fileHash, size, originalPath, sourceFileType } = fileData;
 
-      if (!originalName || !lastModified || !fileHash) {
+      if (!sourceFileName || !lastModified || !fileHash) {
         throw new Error(
-          'Missing required metadata fields: originalName, lastModified, or fileHash'
+          'Missing required metadata fields: sourceFileName, lastModified, or fileHash'
         );
       }
 
@@ -59,7 +60,7 @@ export function useFileMetadata() {
       }
 
       // Generate metadata hash for document ID
-      const metadataHash = await generateMetadataHash(originalName, lastModified, fileHash);
+      const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
 
       // Extract folder path from original path if available
       let currentFolderPath = '';
@@ -70,7 +71,7 @@ export function useFileMetadata() {
         }
       }
 
-      // Get existing metadata to check for existing folderPaths
+      // Get existing metadata to check for existing sourceFolderPath
       let existingFolderPaths = '';
       try {
         const docRef = doc(
@@ -86,11 +87,11 @@ export function useFileMetadata() {
         );
         const existingDoc = await getDoc(docRef);
         if (existingDoc.exists()) {
-          existingFolderPaths = existingDoc.data().folderPaths || '';
+          existingFolderPaths = existingDoc.data().sourceFolderPath || '';
         }
       } catch (error) {
         console.warn(
-          'Could not retrieve existing folderPaths, proceeding with new path only:',
+          'Could not retrieve existing sourceFolderPath, proceeding with new path only:',
           error
         );
       }
@@ -103,7 +104,7 @@ export function useFileMetadata() {
 
       const uploadMetadata = {
         hash: fileHash,
-        originalName: originalName,
+        originalName: sourceFileName,
         size: size || 0,
         folderPath: currentFolderPath || '/',
         metadataHash: metadataHash,
@@ -115,15 +116,15 @@ export function useFileMetadata() {
       // STEP 2: Create sourceMetadata subcollection document (now that parent exists)
       const metadataRecord = {
         // Core file metadata (only what varies between identical files)
-        originalName: originalName,
+        sourceFileName: sourceFileName,
         lastModified: lastModified,
         fileHash: fileHash,
 
         // File path information
-        folderPaths: pathUpdate.folderPaths,
+        sourceFolderPath: pathUpdate.folderPaths,
 
-        // Computed fields for convenience
-        metadataHash: metadataHash,
+        // MIME type information
+        sourceFileType: sourceFileType || '',
       };
 
       // Save to Firestore: /teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
@@ -141,8 +142,9 @@ export function useFileMetadata() {
       await setDoc(docRef, metadataRecord);
 
       console.log(`[DEBUG] Metadata record created: ${metadataHash}`, {
-        originalName,
-        folderPaths: pathUpdate.folderPaths || '(root level)',
+        sourceFileName,
+        sourceFolderPath: pathUpdate.folderPaths || '(root level)',
+        sourceFileType: sourceFileType || '(unknown)',
         pathPattern: pathUpdate.pattern.type,
         pathChanged: pathUpdate.hasChanged,
         fileHash: fileHash.substring(0, 8) + '...',
@@ -179,14 +181,14 @@ export function useFileMetadata() {
 
   /**
    * Check if a metadata record already exists
-   * @param {string} originalName - Original filename
+   * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
    * @returns {Promise<boolean>} - Whether the metadata record exists
    */
-  const metadataRecordExists = async (originalName, lastModified, fileHash) => {
+  const metadataRecordExists = async (sourceFileName, lastModified, fileHash) => {
     try {
-      const metadataHash = await generateMetadataHash(originalName, lastModified, fileHash);
+      const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
       const teamId = authStore.currentTeam;
 
       if (!teamId) {

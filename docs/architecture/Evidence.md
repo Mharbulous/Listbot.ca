@@ -87,15 +87,15 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ```javascript
 {
   // Core file metadata
-  originalName: string,      // Exact filename with ORIGINAL CASE PRESERVED
-  lastModified: number,       // Original file's timestamp (milliseconds since epoch)
-  fileHash: string,          // SHA-256 of file content (64 hex chars)
+  sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED
+  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
+  fileHash: string,            // SHA-256 of file content (64 hex chars)
 
   // File path information
-  folderPaths: string,       // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
+  sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
 
-  // Computed fields
-  metadataHash: string       // SHA-256 of metadata string (64 hex chars) - matches document ID
+  // MIME type information
+  sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
 }
 ```
 

@@ -427,11 +427,12 @@ const { createMetadataRecord, generateMetadataHash } = useFileMetadata();
 
 // See data-structures.md for complete field definitions
 await createMetadataRecord({
-  originalName: 'document.pdf',
+  sourceFileName: 'document.pdf',
   lastModified: timestamp,
   fileHash: 'abc123...',
-  folderPaths: 'Documents/2023', // Generated from webkitRelativePath via smart pattern recognition
-  // Note: folderPaths field is automatically generated with pattern recognition
+  sourceFolderPath: 'Documents/2023', // Generated from webkitRelativePath via smart pattern recognition
+  sourceFileType: 'application/pdf', // MIME type from file.type property
+  // Note: sourceFolderPath field is automatically generated with pattern recognition
   // See data-structures.md#folder-path-system for complete documentation
 });
 ```

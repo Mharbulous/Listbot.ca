@@ -87,7 +87,7 @@ export const generateMockEvidence = (count = 20, categories = null) => {
     const doc = {
       id: `evidence-${i + 1}`,
       fileName: `document-${i + 1}.pdf`,
-      originalName: `Document ${i + 1}.pdf`,
+      sourceFileName: `Document ${i + 1}.pdf`,
       size: Math.floor(Math.random() * 5000000) + 10000, // 10KB to 5MB
       fileUrl: `https://storage.example.com/evidence-${i + 1}.pdf`,
       uploadedAt: new Date(

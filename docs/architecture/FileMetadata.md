@@ -27,10 +27,10 @@ The application presents metadata to users in three distinct categories, reflect
 
 **Displayed Fields**:
 
-- **Name**: Original filename with preserved case from `sourceMetadata.originalName`
+- **Name**: Original filename with preserved case from `sourceMetadata.sourceFileName`
 - **Date Modified (Source File)**: File system modification timestamp from `sourceMetadata.lastModified`
 - **Size**: File size in bytes from `evidence.fileSize`
-- **MIME Type**: Content type from Firebase Storage metadata
+- **MIME Type**: Content type from `sourceMetadata.sourceFileType`
 
 **Data Sources**: Combines data from `sourceMetadata` subcollection and `evidence` collection.
 
@@ -79,10 +79,10 @@ The application presents metadata to users in three distinct categories, reflect
 UI Category          → Firestore Collection/Field
 ────────────────────────────────────────────────────────────
 File Attributes:
-  Name               → sourceMetadata.originalName
+  Name               → sourceMetadata.sourceFileName
   Date Modified      → sourceMetadata.lastModified
   Size               → evidence.fileSize
-  MIME Type          → Firebase Storage metadata.contentType
+  MIME Type          → sourceMetadata.sourceFileType
 
 Embedded Metadata:
   (Future)           → evidence collection fields or subcollections
@@ -116,15 +116,15 @@ Storage Properties:
 
 ```javascript
 {
-  originalName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
-  lastModified: number,       // Original file's timestamp (milliseconds since epoch)
-  fileHash: string,          // SHA-256 of file content (64 hex chars)
-  metadataHash: string,      // SHA-256 of metadata string (64 hex chars)
-  folderPaths: string        // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
+  sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
+  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
+  fileHash: string,            // SHA-256 of file content (64 hex chars)
+  sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
+  sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
 }
 ```
 
-**Important**: The `originalName` field is the ONLY place where the original file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
+**Important**: The `sourceFileName` field is the ONLY place where the original file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
 
 **Metadata Capture Implementation**: For detailed information about how original file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../uploading.md#metadata-management)**.
 
@@ -170,6 +170,8 @@ Storage Properties:
 - **Automatic Deduplication**: Using fileHash as document ID prevents duplicate evidence records
 - **Tag Counters**: Added for performance optimization
 - **Access file hash**: Use `evidence.id` (document ID) instead of `evidence.storageRef.fileHash`
+- **Updated sourceMetadata field names**: `originalName` → `sourceFileName`, `folderPaths` → `sourceFolderPath`
+- **Added MIME type capture**: New `sourceFileType` field stores file MIME type
 
 **Key Files Using This**:
 
@@ -232,7 +234,7 @@ Create sourceMetadata record as subcollection under evidence document →
 
 ## File Extension Handling
 
-**Preservation**: Original file extension case is preserved ONLY in `sourceMetadata.originalName`
+**Preservation**: Original file extension case is preserved ONLY in `sourceMetadata.sourceFileName`
 
 **Standardization**: Everywhere else uses lowercase:
 
@@ -243,7 +245,7 @@ Create sourceMetadata record as subcollection under evidence document →
 **Example**:
 
 - User uploads: `Report.PDF`
-- sourceMetadata: `{ originalName: "Report.PDF" }` (preserved)
+- sourceMetadata: `{ sourceFileName: "Report.PDF" }` (preserved)
 - Firebase Storage: `abc123...def.pdf` (lowercase)
 - Evidence: Document ID is the fileHash (no extension field)
 
@@ -262,12 +264,13 @@ Create sourceMetadata record as subcollection under evidence document →
 - Multiple sourceMetadata documents can exist under one evidence document
 - Each represents a different upload context (different name, timestamp, or path)
 - Path: `/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+- Note: The `metadataHash` is generated from `sourceFileName|lastModified|fileHash`
 
 **Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
 ## Folder Paths System
 
-The `folderPaths` field captures folder structure from webkitdirectory uploads:
+The `sourceFolderPath` field captures folder structure from webkitdirectory uploads:
 
 - **Format**: Pipe-delimited paths using forward slashes
 - **Examples**:
@@ -299,6 +302,6 @@ The `folderPaths` field captures folder structure from webkitdirectory uploads:
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one sourceMetadata subcollection document under evidence (identified by metadataHash)
+- Same metadata = one sourceMetadata subcollection document under evidence (identified by metadataHash from `sourceFileName|lastModified|fileHash`)
 - Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

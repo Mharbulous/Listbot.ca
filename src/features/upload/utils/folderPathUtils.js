@@ -45,16 +45,16 @@ export function normalizePath(path) {
 }
 
 /**
- * Parses existing folderPaths field into an array of normalized paths
- * @param {string|null|undefined} folderPaths - Pipe-delimited string of folder paths
+ * Parses existing sourceFolderPath field into an array of normalized paths
+ * @param {string|null|undefined} sourceFolderPath - Pipe-delimited string of folder paths
  * @returns {string[]} - Array of normalized folder paths
  */
-export function parseExistingPaths(folderPaths) {
-  if (!folderPaths || typeof folderPaths !== 'string') {
+export function parseExistingPaths(sourceFolderPath) {
+  if (!sourceFolderPath || typeof sourceFolderPath !== 'string') {
     return [];
   }
 
-  return folderPaths
+  return sourceFolderPath
     .split(PATH_DELIMITER)
     .map((path) => normalizePath(path))
     .filter((path) => path !== ''); // Remove empty paths
@@ -153,11 +153,11 @@ export function identifyFolderPathPattern(newPath, existingPaths) {
 /**
  * Updates folder paths based on the identified pattern
  * @param {string} newPath - New folder path to process
- * @param {string} existingFolderPaths - Current folderPaths field value
- * @returns {Object} - Update result with new folderPaths value and metadata
+ * @param {string} existingSourceFolderPath - Current sourceFolderPath field value
+ * @returns {Object} - Update result with new sourceFolderPath value and metadata
  */
-export function updateFolderPaths(newPath, existingFolderPaths) {
-  const existingPaths = parseExistingPaths(existingFolderPaths);
+export function updateFolderPaths(newPath, existingSourceFolderPath) {
+  const existingPaths = parseExistingPaths(existingSourceFolderPath);
   const pattern = identifyFolderPathPattern(newPath, existingPaths);
 
   let updatedPaths = [...existingPaths];
@@ -197,23 +197,23 @@ export function updateFolderPaths(newPath, existingFolderPaths) {
 }
 
 /**
- * Helper function to get all unique folder paths from a folderPaths field
- * @param {string} folderPaths - Pipe-delimited folder paths string
+ * Helper function to get all unique folder paths from a sourceFolderPath field
+ * @param {string} sourceFolderPath - Pipe-delimited folder paths string
  * @returns {string[]} - Array of unique normalized folder paths
  */
-export function getAllFolderPaths(folderPaths) {
-  const paths = parseExistingPaths(folderPaths);
+export function getAllFolderPaths(sourceFolderPath) {
+  const paths = parseExistingPaths(sourceFolderPath);
   return [...new Set(paths)]; // Remove duplicates, though they shouldn't exist
 }
 
 /**
- * Checks if a specific folder path exists in the folderPaths field
+ * Checks if a specific folder path exists in the sourceFolderPath field
  * @param {string} targetPath - Path to search for
- * @param {string} folderPaths - Pipe-delimited folder paths string
+ * @param {string} sourceFolderPath - Pipe-delimited folder paths string
  * @returns {boolean} - Whether the path exists
  */
-export function containsFolderPath(targetPath, folderPaths) {
+export function containsFolderPath(targetPath, sourceFolderPath) {
   const normalized = normalizePath(targetPath);
-  const existing = parseExistingPaths(folderPaths);
+  const existing = parseExistingPaths(sourceFolderPath);
   return existing.includes(normalized);
 }

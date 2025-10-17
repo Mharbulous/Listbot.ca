@@ -28,7 +28,7 @@ export class EvidenceService {
   async createEvidenceFromUpload(uploadMetadata, options = {}) {
     try {
       if (!uploadMetadata.hash || !uploadMetadata.originalName) {
-        throw new Error('Missing required upload metadata: hash and originalName');
+        throw new Error('Missing required upload metadata: hash and sourceFileName');
       }
 
       // Use fileHash as document ID

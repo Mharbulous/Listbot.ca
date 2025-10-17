@@ -201,7 +201,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         const data = metadataDoc.data();
 
         // Normalize display name to use lowercase extension for consistency
-        let displayName = data.originalName || 'Unknown File';
+        let displayName = data.sourceFileName || 'Unknown File';
         if (displayName !== 'Unknown File') {
           const parts = displayName.split('.');
           if (parts.length > 1) {
