@@ -19,7 +19,6 @@
       <!-- File metadata box -->
       <div class="metadata-box">
         <v-card variant="outlined">
-          <v-card-title class="text-subtitle-1">Metadata</v-card-title>
           <v-card-text>
             <!-- Source File Section -->
             <div class="metadata-section">
@@ -70,10 +69,7 @@
 
               <!-- MIME type -->
               <div class="metadata-item-simple">
-                <span class="metadata-value">{{
-                  storageMetadata?.contentType ||
-                  (storageMetadata === null ? 'Unknown' : 'Loading...')
-                }}</span>
+                <span class="metadata-value">{{ mimeType }}</span>
               </div>
             </div>
 
@@ -93,6 +89,112 @@
               <div class="metadata-item">
                 <span class="metadata-label">File Hash:</span>
                 <span class="metadata-value text-caption">{{ fileHash }}</span>
+              </div>
+            </div>
+
+            <!-- Embedded Metadata Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Embedded Metadata</h3>
+
+              <!-- Loading state -->
+              <div v-if="isPdfFile && metadataLoading" class="metadata-notice">
+                <p>Loading PDF metadata...</p>
+              </div>
+
+              <!-- Error state -->
+              <div v-else-if="isPdfFile && metadataError" class="metadata-error">
+                <p>Failed to load PDF metadata</p>
+                <p class="error-detail">{{ metadataError }}</p>
+              </div>
+
+              <!-- PDF Metadata Display -->
+              <div v-else-if="isPdfFile && hasMetadata" class="pdf-metadata-container">
+                <!-- Document Information Dictionary -->
+                <div v-if="pdfMetadata.info" class="metadata-field-group">
+                  <div v-if="pdfMetadata.info.title" class="metadata-item">
+                    <span class="metadata-label">Title:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.title }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.author" class="metadata-item">
+                    <span class="metadata-label">Author:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.author }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.subject" class="metadata-item">
+                    <span class="metadata-label">Subject:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.subject }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.creator" class="metadata-item">
+                    <span class="metadata-label">Creator:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.creator }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.producer" class="metadata-item">
+                    <span class="metadata-label">Producer:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.producer }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.creationDate" class="metadata-item">
+                    <span class="metadata-label">Creation Date:</span>
+                    <span class="metadata-value">
+                      {{ pdfMetadata.info.creationDate.formatted || pdfMetadata.info.creationDate }}
+                    </span>
+                    <span v-if="pdfMetadata.info.creationDate.timezone" class="metadata-timezone">
+                      ({{ pdfMetadata.info.creationDate.timezone }})
+                    </span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.modDate" class="metadata-item">
+                    <span class="metadata-label">Modified Date:</span>
+                    <span class="metadata-value">
+                      {{ pdfMetadata.info.modDate.formatted || pdfMetadata.info.modDate }}
+                    </span>
+                    <span v-if="pdfMetadata.info.modDate.timezone" class="metadata-timezone">
+                      ({{ pdfMetadata.info.modDate.timezone }})
+                    </span>
+                  </div>
+
+                  <div v-if="pdfMetadata.info.keywords" class="metadata-item">
+                    <span class="metadata-label">Keywords:</span>
+                    <span class="metadata-value">{{ pdfMetadata.info.keywords }}</span>
+                  </div>
+                </div>
+
+                <!-- XMP Metadata (forensically valuable fields) -->
+                <div v-if="pdfMetadata.xmp" class="metadata-field-group xmp-metadata">
+                  <h4 class="xmp-title">XMP Metadata</h4>
+
+                  <div v-if="pdfMetadata.xmp.documentId" class="metadata-item">
+                    <span class="metadata-label">Document ID:</span>
+                    <span class="metadata-value text-caption">{{ pdfMetadata.xmp.documentId }}</span>
+                  </div>
+
+                  <div v-if="pdfMetadata.xmp.instanceId" class="metadata-item">
+                    <span class="metadata-label">Instance ID:</span>
+                    <span class="metadata-value text-caption">{{ pdfMetadata.xmp.instanceId }}</span>
+                  </div>
+
+                  <!-- Revision History - Complete Audit Trail -->
+                  <div v-if="pdfMetadata.xmp.history" class="metadata-item revision-history">
+                    <span class="metadata-label">Revision History:</span>
+                    <div class="revision-history-content">
+                      <pre class="revision-history-data">{{ JSON.stringify(pdfMetadata.xmp.history, null, 2) }}</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No metadata available for PDF -->
+              <div v-else-if="isPdfFile && !metadataLoading" class="metadata-notice">
+                <p>No embedded metadata found in this PDF</p>
+              </div>
+
+              <!-- Not a PDF file -->
+              <div v-else class="metadata-notice">
+                <p>Metadata viewing has not been implemented for file type:</p>
+                <p>{{ mimeType }}</p>
               </div>
             </div>
           </v-card-text>
@@ -128,6 +230,7 @@ import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { storeToRefs } from 'pinia';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
+import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -135,6 +238,9 @@ const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const preferencesStore = useUserPreferencesStore();
 const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
+
+// PDF Metadata composable
+const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadata } = usePdfMetadata();
 
 // State
 const fileHash = ref(route.params.fileHash);
@@ -198,6 +304,17 @@ const earlierCopyMessage = computed(() => {
   );
 
   return hasEarlierCopy ? 'earlier copy found' : 'no earlier copies found';
+});
+
+// Compute MIME type (DRY principle - single source of truth)
+const mimeType = computed(() => {
+  return storageMetadata.value?.contentType ||
+    (storageMetadata.value === null ? 'Unknown' : 'Loading...');
+});
+
+// Check if file is PDF
+const isPdfFile = computed(() => {
+  return mimeType.value?.toLowerCase().includes('pdf') || evidence.value?.displayName?.toLowerCase().endsWith('.pdf');
 });
 
 // Toggle dropdown menu
@@ -280,6 +397,11 @@ const fetchStorageMetadata = async (teamId, displayName) => {
     // Get metadata from Firebase Storage
     const metadata = await getMetadata(fileRef);
     storageMetadata.value = metadata;
+
+    // Extract PDF embedded metadata if this is a PDF file
+    if (displayName?.toLowerCase().endsWith('.pdf')) {
+      await extractMetadata(teamId, fileHash.value, displayName);
+    }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
     // Don't set error state - storage metadata is optional
@@ -424,6 +546,20 @@ onBeforeUnmount(() => {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #e0e0e0;
+}
+
+.metadata-notice {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.metadata-notice p {
+  margin: 0;
+  padding: 0;
 }
 
 .metadata-item-simple {
@@ -579,6 +715,79 @@ onBeforeUnmount(() => {
 
 .error-state {
   text-align: center;
+}
+
+/* PDF Metadata Styling */
+.pdf-metadata-container {
+  margin-top: 8px;
+}
+
+.metadata-field-group {
+  margin-bottom: 20px;
+}
+
+.metadata-field-group:last-child {
+  margin-bottom: 0;
+}
+
+.metadata-error {
+  font-size: 0.8rem;
+  color: #dc3545;
+  font-style: italic;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.metadata-error .error-detail {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+}
+
+.metadata-timezone {
+  font-size: 0.7rem;
+  color: #888;
+  margin-left: 6px;
+  font-style: italic;
+}
+
+.xmp-metadata {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.xmp-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Revision History Styling */
+.revision-history {
+  margin-top: 16px;
+}
+
+.revision-history-content {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.revision-history-data {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  color: #212529;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 @media (max-width: 1150px) {
