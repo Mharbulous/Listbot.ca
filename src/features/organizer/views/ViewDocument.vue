@@ -16,19 +16,19 @@
 
     <!-- Main content -->
     <div v-else-if="evidence" class="view-document-content">
-      <!-- Sidebar containing pagination and metadata panels -->
+      <!-- Sidebar containing document navigation and metadata panels -->
       <div class="sidebar-container">
-        <!-- Pagination control panel -->
-        <div class="pagination-panel">
-          <v-card class="pagination-card">
+        <!-- Document navigation control panel -->
+        <div class="document-nav-panel">
+          <v-card class="document-nav-card">
             <!-- Left controls -->
             <v-btn
               icon
               variant="text"
               size="small"
-              :disabled="currentPage === 1"
-              title="First page"
-              @click="goToFirstPage"
+              :disabled="currentDocumentIndex === 1"
+              title="First document"
+              @click="goToFirstDocument"
             >
               <v-icon>mdi-page-first</v-icon>
             </v-btn>
@@ -36,24 +36,24 @@
               icon
               variant="text"
               size="small"
-              :disabled="currentPage === 1"
-              title="Previous page"
-              @click="goToPreviousPage"
+              :disabled="currentDocumentIndex === 1"
+              title="Previous document"
+              @click="goToPreviousDocument"
             >
               <v-icon>mdi-chevron-left</v-icon>
             </v-btn>
 
-            <!-- Center page indicator -->
-            <span class="page-indicator">{{ currentPage }} of {{ totalPages }}</span>
+            <!-- Center document indicator -->
+            <span class="document-indicator">Document {{ currentDocumentIndex }} of {{ totalDocuments }}</span>
 
             <!-- Right controls -->
             <v-btn
               icon
               variant="text"
               size="small"
-              :disabled="currentPage === totalPages"
-              title="Next page"
-              @click="goToNextPage"
+              :disabled="currentDocumentIndex === totalDocuments"
+              title="Next document"
+              @click="goToNextDocument"
             >
               <v-icon>mdi-chevron-right</v-icon>
             </v-btn>
@@ -61,9 +61,9 @@
               icon
               variant="text"
               size="small"
-              :disabled="currentPage === totalPages"
-              title="Last page"
-              @click="goToLastPage"
+              :disabled="currentDocumentIndex === totalDocuments"
+              title="Last document"
+              @click="goToLastDocument"
             >
               <v-icon>mdi-page-last</v-icon>
             </v-btn>
@@ -297,6 +297,7 @@ import { db, storage } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
 import { useDocumentViewStore } from '@/stores/documentView.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { useOrganizerStore } from '@/features/organizer/stores/organizer.js';
 import { storeToRefs } from 'pinia';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
@@ -307,6 +308,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const preferencesStore = useUserPreferencesStore();
+const organizerStore = useOrganizerStore();
 const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesStore);
 
 // PDF Metadata composable
@@ -326,9 +328,9 @@ const dropdownOpen = ref(false);
 // Metadata visibility state (bound to user preferences)
 const metadataVisible = metadataBoxVisible;
 
-// Pagination state
-const currentPage = ref(1);
-const totalPages = ref(1);
+// Document navigation state
+const currentDocumentIndex = ref(1);
+const totalDocuments = computed(() => organizerStore.evidenceCount || 1);
 
 // Format file size helper
 const formatFileSize = (bytes) => {
@@ -364,25 +366,25 @@ const toggleMetadataVisibility = async () => {
   await preferencesStore.updateMetadataBoxVisible(!metadataVisible.value);
 };
 
-// Pagination navigation methods
-const goToFirstPage = () => {
-  currentPage.value = 1;
+// Document navigation methods
+const goToFirstDocument = () => {
+  currentDocumentIndex.value = 1;
 };
 
-const goToPreviousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
+const goToPreviousDocument = () => {
+  if (currentDocumentIndex.value > 1) {
+    currentDocumentIndex.value--;
   }
 };
 
-const goToNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
+const goToNextDocument = () => {
+  if (currentDocumentIndex.value < totalDocuments.value) {
+    currentDocumentIndex.value++;
   }
 };
 
-const goToLastPage = () => {
-  currentPage.value = totalPages.value;
+const goToLastDocument = () => {
+  currentDocumentIndex.value = totalDocuments.value;
 };
 
 // Compute earlier copy notification message
@@ -593,7 +595,18 @@ const closeDropdown = (event) => {
 };
 
 // Initialize on mount
-onMounted(() => {
+onMounted(async () => {
+  // Initialize organizer store if not already initialized
+  if (!organizerStore.isInitialized) {
+    try {
+      await organizerStore.initialize();
+      console.log('[ViewDocument] Organizer store initialized, evidenceCount:', organizerStore.evidenceCount);
+    } catch (err) {
+      console.error('[ViewDocument] Failed to initialize organizer store:', err);
+      // Continue loading document even if organizer init fails
+    }
+  }
+
   loadEvidence();
   // Add click listener to close dropdown when clicking outside
   document.addEventListener('click', closeDropdown);
@@ -637,12 +650,12 @@ onBeforeUnmount(() => {
   overflow-y: auto;
 }
 
-.pagination-panel {
+.document-nav-panel {
   width: 100%;
   flex-shrink: 0;
 }
 
-.pagination-card {
+.document-nav-card {
   background-color: #475569; /* Dark slate gray */
   display: flex;
   align-items: center;
@@ -652,21 +665,21 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
-.pagination-card .v-btn {
+.document-nav-card .v-btn {
   color: white;
   border-radius: 6px;
 }
 
-.pagination-card .v-btn:hover {
+.document-nav-card .v-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.pagination-card .v-btn:disabled {
+.document-nav-card .v-btn:disabled {
   color: rgba(255, 255, 255, 0.4);
   cursor: not-allowed;
 }
 
-.page-indicator {
+.document-indicator {
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
