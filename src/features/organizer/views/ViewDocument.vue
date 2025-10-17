@@ -17,9 +17,24 @@
     <!-- Main content -->
     <div v-else-if="evidence" class="view-document-content">
       <!-- File metadata box -->
-      <div class="metadata-box">
-        <v-card variant="outlined">
-          <v-card-text>
+      <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
+        <v-card variant="outlined" class="metadata-card">
+          <!-- Card header with toggle button -->
+          <div class="metadata-card-header">
+            <h3 class="metadata-card-title">Document Information</h3>
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              :title="metadataVisible ? 'Hide metadata' : 'Show metadata'"
+              class="toggle-btn"
+              @click="toggleMetadataVisibility"
+            >
+              <v-icon>{{ metadataVisible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
+            </v-btn>
+          </div>
+
+          <v-card-text v-if="metadataVisible">
             <!-- Source File Section -->
             <div class="metadata-section">
               <h3 class="metadata-section-title">Source File</h3>
@@ -237,7 +252,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const preferencesStore = useUserPreferencesStore();
-const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
+const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesStore);
 
 // PDF Metadata composable
 const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadata } = usePdfMetadata();
@@ -252,6 +267,9 @@ const sourceMetadataVariants = ref([]);
 const selectedMetadataHash = ref(null);
 const updatingMetadata = ref(false);
 const dropdownOpen = ref(false);
+
+// Metadata visibility state (bound to user preferences)
+const metadataVisible = metadataBoxVisible;
 
 // Format file size helper
 const formatFileSize = (bytes) => {
@@ -280,6 +298,11 @@ const formatDate = (timestamp) => {
 // Navigate back to organizer
 const goBack = () => {
   router.push('/organizer');
+};
+
+// Toggle metadata visibility
+const toggleMetadataVisibility = async () => {
+  await preferencesStore.updateMetadataBoxVisible(!metadataVisible.value);
 };
 
 // Compute earlier copy notification message
@@ -529,6 +552,40 @@ onBeforeUnmount(() => {
   width: 500px;
   flex-shrink: 0;
   overflow-y: auto;
+}
+
+.metadata-box--collapsed {
+  overflow-y: hidden;
+}
+
+.metadata-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.metadata-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 56px;
+}
+
+.metadata-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.toggle-btn {
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .metadata-section {

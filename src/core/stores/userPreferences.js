@@ -14,6 +14,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
     dateFormat: 'YYYY-MM-DD', // Default date format
     timeFormat: 'HH:mm', // Default time format
     darkMode: false, // Dark mode toggle
+    metadataBoxVisible: true, // Metadata box visibility in ViewDocument
 
     // Store state
     isInitialized: false,
@@ -39,6 +40,11 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      * Check if dark mode is enabled
      */
     isDarkMode: (state) => state.darkMode,
+
+    /**
+     * Check if metadata box should be visible
+     */
+    isMetadataBoxVisible: (state) => state.metadataBoxVisible,
 
     /**
      * Check if preferences are loaded and ready
@@ -77,6 +83,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
         this.dateFormat = 'YYYY-MM-DD';
         this.timeFormat = 'HH:mm';
         this.darkMode = false;
+        this.metadataBoxVisible = true;
         this.isInitialized = true;
       } finally {
         this.isLoading = false;
@@ -101,6 +108,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           dateFormat: format,
           timeFormat: this.timeFormat,
           darkMode: this.darkMode,
+          metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
         console.error('[UserPreferences] Error updating date format:', error);
@@ -129,6 +137,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           dateFormat: this.dateFormat,
           timeFormat: format,
           darkMode: this.darkMode,
+          metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
         console.error('[UserPreferences] Error updating time format:', error);
@@ -157,11 +166,41 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           dateFormat: this.dateFormat,
           timeFormat: this.timeFormat,
           darkMode: enabled,
+          metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
         console.error('[UserPreferences] Error updating dark mode:', error);
         // Revert on error
         this.darkMode = previousMode;
+        this.error = error.message;
+        throw error;
+      }
+    },
+
+    /**
+     * Update the metadata box visibility preference
+     * @param {boolean} visible - Whether metadata box is visible
+     */
+    async updateMetadataBoxVisible(visible) {
+      if (!this._userId) {
+        console.error('[UserPreferences] Cannot update metadataBoxVisible without initialized user');
+        return;
+      }
+
+      const previousVisible = this.metadataBoxVisible;
+      this.metadataBoxVisible = visible;
+
+      try {
+        await this._savePreferences(this._userId, {
+          dateFormat: this.dateFormat,
+          timeFormat: this.timeFormat,
+          darkMode: this.darkMode,
+          metadataBoxVisible: visible,
+        });
+      } catch (error) {
+        console.error('[UserPreferences] Error updating metadata box visibility:', error);
+        // Revert on error
+        this.metadataBoxVisible = previousVisible;
         this.error = error.message;
         throw error;
       }
@@ -185,11 +224,13 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           this.dateFormat = preferences.dateFormat || 'YYYY-MM-DD';
           this.timeFormat = preferences.timeFormat || 'HH:mm';
           this.darkMode = preferences.darkMode || false;
+          this.metadataBoxVisible = preferences.metadataBoxVisible !== undefined ? preferences.metadataBoxVisible : true;
         } else {
           // No user document yet - use defaults
           this.dateFormat = 'YYYY-MM-DD';
           this.timeFormat = 'HH:mm';
           this.darkMode = false;
+          this.metadataBoxVisible = true;
         }
       } catch (error) {
         console.error('[UserPreferences] Error loading preferences:', error);
@@ -215,6 +256,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
               dateFormat: preferences.dateFormat,
               timeFormat: preferences.timeFormat,
               darkMode: preferences.darkMode,
+              metadataBoxVisible: preferences.metadataBoxVisible,
               // Preserve other preference fields that might exist
               theme: 'light', // Legacy field - keep for backward compatibility
               notifications: true, // Legacy field - keep for backward compatibility
@@ -236,6 +278,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
       this.dateFormat = 'YYYY-MM-DD';
       this.timeFormat = 'HH:mm';
       this.darkMode = false;
+      this.metadataBoxVisible = true;
     },
 
     /**
@@ -245,6 +288,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
       this.dateFormat = 'YYYY-MM-DD';
       this.timeFormat = 'HH:mm';
       this.darkMode = false;
+      this.metadataBoxVisible = true;
       this.isInitialized = false;
       this.isLoading = false;
       this.error = null;
