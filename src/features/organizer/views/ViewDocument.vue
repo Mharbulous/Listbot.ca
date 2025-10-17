@@ -596,7 +596,7 @@ const closeDropdown = (event) => {
 
 // Initialize on mount
 onMounted(async () => {
-  // Initialize organizer store if not already initialized
+  // Ensure organizer store is initialized (idempotent - safe to call multiple times)
   if (!organizerStore.isInitialized) {
     try {
       await organizerStore.initialize();

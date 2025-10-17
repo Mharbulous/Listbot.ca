@@ -23,12 +23,16 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const loading = ref(false);
   const error = ref(null);
   const isInitialized = ref(false);
+  const isInitializing = ref(false);
 
   // Cache for display information
   const displayInfoCache = ref(new Map());
 
   // Track metadata selections for files with multiple metadata variants
   const metadataSelections = ref(new Map()); // evidenceId -> selectedMetadataHash
+
+  // Track active Firestore listener for cleanup
+  let activeUnsubscribe = null;
 
   // Store references
   const authStore = useAuthStore();
@@ -236,14 +240,22 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
   /**
    * Load evidence documents from Firestore with real-time updates
+   * Idempotent: safe to call multiple times, will reuse existing listener
    */
   const loadEvidence = async () => {
+    // If already initialized or initializing, return existing unsubscribe
+    if (isInitialized.value || isInitializing.value) {
+      console.log('[OrganizerCore] Already initialized or initializing, reusing existing listener');
+      return activeUnsubscribe;
+    }
+
     if (!authStore.isAuthenticated) {
       error.value = 'User not authenticated';
       return;
     }
 
     try {
+      isInitializing.value = true;
       loading.value = true;
       error.value = null;
 
@@ -338,6 +350,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           evidenceList.value = deduplicated;
           loading.value = false;
           isInitialized.value = true;
+          isInitializing.value = false;
 
           console.log(
             `[OrganizerCore] Loaded ${evidence.length} raw documents → ${deduplicated.length} deduplicated with display info`
@@ -350,8 +363,12 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           console.error('[OrganizerCore] Error loading evidence:', err);
           error.value = err.message;
           loading.value = false;
+          isInitializing.value = false;
         }
       );
+
+      // Store unsubscribe globally for reuse
+      activeUnsubscribe = unsubscribe;
 
       // Return unsubscribe function for cleanup
       return unsubscribe;
@@ -359,6 +376,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       console.error('[OrganizerCore] Failed to load evidence:', err);
       error.value = err.message;
       loading.value = false;
+      isInitializing.value = false;
     }
   };
 
@@ -525,8 +543,10 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
     loading.value = false;
     error.value = null;
     isInitialized.value = false;
+    isInitializing.value = false;
     displayInfoCache.value.clear();
     metadataSelections.value.clear();
+    activeUnsubscribe = null;
   };
 
   return {
