@@ -12,14 +12,48 @@ Last Updated: 2025-09-20
 
 ## Data Structures - Single Source of Truth
 
-### Categories Collection: `/teams/{teamId}/categories/{categoryId}`
+### System Categories Collection: `/systemCategories/{categoryId}`
+
+Global collection containing predefined system categories that should exist for all matters:
+
+```javascript
+{
+  name: string,                    // Category display name
+  type: string,                    // Category type (Date, Fixed List, Open List, Text Area, etc.)
+  isActive: boolean,               // Always true for system categories
+  isSystemCategory: boolean,       // Always true - identifies system categories
+  description: string,             // Description of the category's purpose
+  tags: [                          // Pre-defined tags for Fixed List and Open List types
+    {
+      id: string,                  // UUID
+      name: string,                // Tag name
+    }
+  ],
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+
+**Reserved System Category IDs:**
+- `DocumentDate` - Date type category for document dates
+- `Privilege` - Fixed List for privilege classification (Attorney-Client, Work Product, Not Privileged)
+- `Description` - Text Area for free-form document descriptions
+- `DocumentType` - Open List for document type classification
+- `Author` - Open List for document authors
+- `Custodian` - Open List for document custodians
+
+### Matter-Specific Categories Collection: `/teams/{teamId}/matters/{matterId}/categories/{categoryId}`
+
+Each matter has its own categories collection that includes both system categories (copied from `/systemCategories`) and custom categories:
 
 ```javascript
 {
   name: string,                    // Max 50 chars
-  color: string,                   // Hex format (#RRGGBB)
+  type: string,                    // Category type
+  color: string,                   // Hex format (#RRGGBB) - optional, auto-assigned by UI
   isActive: boolean,               // Soft delete flag (undefined = true for legacy data)
-  deletedAt: Timestamp,            // Set when soft deleted
+  isSystemCategory: boolean,       // true for system categories, false/undefined for custom
+  deletedAt: Timestamp,            // Set when soft deleted (not used for system categories)
   isOpen: boolean,                 // true = Open List (allows new options), false = Fixed List (locked options)
   tags: [
     {
@@ -28,10 +62,17 @@ Last Updated: 2025-09-20
       color: string                // Hex color (optional, inherits category color)
     }
   ],
+  description: string,             // Optional description
   createdAt: Timestamp,
   updatedAt: Timestamp
 }
 ```
+
+**Important Notes:**
+- System categories use reserved document IDs (e.g., `DocumentDate`, `Privilege`)
+- Custom categories use auto-generated document IDs
+- System categories cannot be deleted, only edited
+- Each matter gets its own copy of system categories during initialization
 
 ### Tags Subcollection: `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}`
 
@@ -79,12 +120,52 @@ Last Updated: 2025-09-20
 }
 ```
 
+## System Categories Architecture
+
+### Initialization Process
+
+1. **Global Seed**: System categories are defined in `/systemCategories` collection (one-time setup)
+2. **Matter Initialization**: When a user accesses `/organizer/categories`, the app checks if the matter has all system categories
+3. **Auto-Copy**: Missing system categories are automatically copied from `/systemCategories` to `/teams/{teamId}/matters/{matterId}/categories/`
+4. **Reserved IDs**: System categories use reserved document IDs (e.g., `DocumentDate`) instead of auto-generated IDs
+
+### System Category Behavior
+
+**Initialization:**
+- System categories are automatically created when first accessing the category manager
+- Each matter gets its own copy of system categories
+- Categories are copied from `/systemCategories` to matter-specific collection
+
+**Deletion Prevention:**
+- System categories cannot be deleted through the UI or API
+- `SystemCategoryService.validateNotSystemCategory()` throws error on deletion attempts
+- Delete button is disabled in UI for system categories
+
+**Editing:**
+- System categories CAN be edited (field values, tags, etc.)
+- Changes are matter-specific and don't affect other matters
+- No automatic synchronization with `/systemCategories` after initial copy
+
+**UI Indicators:**
+- System categories display a "System" badge in the category list
+- System categories are sorted to appear first in the list
+- Delete functionality is disabled for system categories
+
+### Matter-Specific Categories
+
+All categories (system and custom) are stored at the matter level:
+- Path: `/teams/{teamId}/matters/{matterId}/categories/{categoryId}`
+- Default matter is `general` for backward compatibility
+- Each matter has independent category data
+- System categories are copied to each matter during initialization
+
 ## Critical Constraints and Rules
 
 ### Validation Rules
 
 **NEVER** allow:
 
+- Deletion of system categories (reserved IDs: DocumentDate, Privilege, Description, DocumentType, Author, Custodian)
 - Category names starting with `system_` or `ai_`
 - Tag names containing: `< > " ' & |`
 - More than 100 tags per evidence document
@@ -98,6 +179,7 @@ Last Updated: 2025-09-20
 - Store original case in database
 - Validate hex color format for colors
 - Maintain one tag per category (enforced by document ID)
+- Check `isSystemCategory(categoryId)` before allowing deletion
 
 ### Auto-Approval Rules
 
@@ -200,6 +282,19 @@ UI display strategy:
 
 ## Query Patterns
 
+### Initialize System Categories for Matter
+
+```javascript
+import { SystemCategoryService } from '../services/systemCategoryService.js';
+
+// Check for missing system categories
+const missingIds = await SystemCategoryService.checkMissingCategories(teamId, matterId);
+
+// Initialize missing system categories
+const result = await SystemCategoryService.initializeSystemCategories(teamId, matterId);
+console.log(`Created ${result.created} system categories`);
+```
+
 ### Get Active Categories with Fallback
 
 ```javascript
@@ -208,13 +303,25 @@ try {
   const snapshot = await db
     .collection('teams')
     .doc(teamId)
+    .collection('matters')
+    .doc(matterId) // Can be 'general' or any other matter ID
     .collection('categories')
     .where('isActive', '==', true)
     .get();
 } catch (error) {
   // Fallback to client-side filtering if index missing
-  const snapshot = await db.collection('teams').doc(teamId).collection('categories').get();
+  const snapshot = await db.collection('teams').doc(teamId).collection('matters').doc(matterId).collection('categories').get();
   // Filter client-side for isActive !== false
+}
+```
+
+### Check if Category is System Category
+
+```javascript
+import { isSystemCategory } from '../constants/systemCategories.js';
+
+if (isSystemCategory(categoryId)) {
+  console.log('This is a system category - cannot be deleted');
 }
 ```
 

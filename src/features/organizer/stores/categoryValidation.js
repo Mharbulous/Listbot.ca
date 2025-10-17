@@ -1,3 +1,5 @@
+import { isSystemCategory } from '../constants/systemCategories.js';
+
 /**
  * Category Validation Module
  * Handles validation rules and business logic for categories
@@ -125,6 +127,12 @@ export function useCategoryValidation(categories) {
       return { canDelete: false, errors };
     }
 
+    // Business rule: System categories cannot be deleted
+    if (isSystemCategory(categoryId)) {
+      errors.push('System categories cannot be deleted. They can be edited but must remain in the system.');
+      return { canDelete: false, errors };
+    }
+
     const category = categories.value.find((cat) => cat.id === categoryId);
     if (!category) {
       errors.push('Category not found');
@@ -133,7 +141,7 @@ export function useCategoryValidation(categories) {
 
     // Business rule: Cannot delete category if it has tags that are in use
     // This would need to be implemented based on your specific business requirements
-    // For now, we'll allow deletion of any category
+    // For now, we'll allow deletion of any non-system category
 
     // Future enhancement: Check if category is referenced by any documents
     // const isInUse = await checkIfCategoryInUse(categoryId);

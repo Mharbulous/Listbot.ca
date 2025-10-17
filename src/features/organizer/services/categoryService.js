@@ -11,6 +11,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
+import { SystemCategoryService } from './systemCategoryService.js';
 
 /**
  * Category Service - Handles all category-related Firestore operations
@@ -19,9 +20,12 @@ import { db } from '../../../services/firebase.js';
 export class CategoryService {
   /**
    * Create categories collection reference
+   * @param {string} teamId - The team ID
+   * @param {string} matterId - The matter ID (default: 'general')
+   * @returns {CollectionReference} Firestore collection reference
    */
-  static getCategoriesCollection(teamId) {
-    return collection(db, 'teams', teamId, 'categories');
+  static getCategoriesCollection(teamId, matterId = 'general') {
+    return collection(db, 'teams', teamId, 'matters', matterId, 'categories');
   }
 
   /**
@@ -81,8 +85,11 @@ export class CategoryService {
 
   /**
    * Create a new category
+   * @param {string} teamId - The team ID
+   * @param {Object} categoryData - The category data
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async createCategory(teamId, categoryData) {
+  static async createCategory(teamId, categoryData, matterId = 'general') {
     try {
       // Validate input
       if (!teamId || typeof teamId !== 'string') {
@@ -92,7 +99,7 @@ export class CategoryService {
       this.validateCategoryData(categoryData);
 
       // Check for duplicate category name
-      await this.validateUniqueName(teamId, categoryData.name.trim());
+      await this.validateUniqueName(teamId, categoryData.name.trim(), null, matterId);
 
       // Prepare category document
       const categoryDoc = {
@@ -104,7 +111,7 @@ export class CategoryService {
       };
 
       // Add to Firestore
-      const categoriesRef = this.getCategoriesCollection(teamId);
+      const categoriesRef = this.getCategoriesCollection(teamId, matterId);
       const docRef = await addDoc(categoriesRef, categoryDoc);
 
       console.log(`[CategoryService] Created category: ${categoryData.name} (${docRef.id})`);
@@ -120,8 +127,12 @@ export class CategoryService {
 
   /**
    * Update an existing category
+   * @param {string} teamId - The team ID
+   * @param {string} categoryId - The category ID
+   * @param {Object} updates - The updates to apply
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async updateCategory(teamId, categoryId, updates) {
+  static async updateCategory(teamId, categoryId, updates, matterId = 'general') {
     try {
       // Validate input
       if (!teamId || typeof teamId !== 'string') {
@@ -141,7 +152,7 @@ export class CategoryService {
 
       // Check for duplicate name if name is being updated
       if (updates.name) {
-        await this.validateUniqueName(teamId, updates.name.trim(), categoryId);
+        await this.validateUniqueName(teamId, updates.name.trim(), categoryId, matterId);
       }
 
       // Prepare update document
@@ -158,7 +169,7 @@ export class CategoryService {
       });
 
       // Update in Firestore
-      const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
+      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, updateDoc);
 
       console.log(`[CategoryService] Updated category: ${categoryId}`);
@@ -171,8 +182,11 @@ export class CategoryService {
 
   /**
    * Soft delete a category
+   * @param {string} teamId - The team ID
+   * @param {string} categoryId - The category ID
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async deleteCategory(teamId, categoryId) {
+  static async deleteCategory(teamId, categoryId, matterId = 'general') {
     try {
       // Validate input
       if (!teamId || typeof teamId !== 'string') {
@@ -182,8 +196,11 @@ export class CategoryService {
         throw new Error('Valid category ID is required');
       }
 
+      // Prevent deletion of system categories
+      SystemCategoryService.validateNotSystemCategory(categoryId);
+
       // Soft delete by setting isActive to false
-      const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
+      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         isActive: false,
         deletedAt: serverTimestamp(),
@@ -199,15 +216,17 @@ export class CategoryService {
   }
 
   /**
-   * Get all active categories for a team
+   * Get all active categories for a team and matter
+   * @param {string} teamId - The team ID
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async getActiveCategories(teamId) {
+  static async getActiveCategories(teamId, matterId = 'general') {
     try {
       if (!teamId || typeof teamId !== 'string') {
         throw new Error('Valid team ID is required');
       }
 
-      const categoriesRef = this.getCategoriesCollection(teamId);
+      const categoriesRef = this.getCategoriesCollection(teamId, matterId);
       let q, snapshot;
 
       try {
@@ -256,7 +275,7 @@ export class CategoryService {
         console.log(
           `[CategoryService] Migrating ${categoriesToMigrate.length} categories to add isActive field`
         );
-        await this.migrateIsActiveField(teamId, categoriesToMigrate);
+        await this.migrateIsActiveField(teamId, categoriesToMigrate, matterId);
       }
 
       return categories;
@@ -268,11 +287,14 @@ export class CategoryService {
 
   /**
    * Migrate categories to add missing isActive field
+   * @param {string} teamId - The team ID
+   * @param {Array} categories - Categories to migrate
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async migrateIsActiveField(teamId, categories) {
+  static async migrateIsActiveField(teamId, categories, matterId = 'general') {
     try {
       const migrationPromises = categories.map(async ({ id }) => {
-        const categoryRef = doc(db, 'teams', teamId, 'categories', id);
+        const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', id);
         return updateDoc(categoryRef, {
           isActive: true,
           updatedAt: serverTimestamp(),
@@ -290,11 +312,15 @@ export class CategoryService {
   }
 
   /**
-   * Validate that category name is unique within team
+   * Validate that category name is unique within team and matter
+   * @param {string} teamId - The team ID
+   * @param {string} categoryName - The category name to validate
+   * @param {string|null} excludeCategoryId - Category ID to exclude from uniqueness check
+   * @param {string} matterId - The matter ID (default: 'general')
    */
-  static async validateUniqueName(teamId, categoryName, excludeCategoryId = null) {
+  static async validateUniqueName(teamId, categoryName, excludeCategoryId = null, matterId = 'general') {
     try {
-      const categoriesRef = this.getCategoriesCollection(teamId);
+      const categoriesRef = this.getCategoriesCollection(teamId, matterId);
       let q, snapshot;
 
       try {

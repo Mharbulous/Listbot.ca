@@ -17,6 +17,14 @@ service cloud.firestore {
       }
     }
 
+    // System Categories collection (read-only for authenticated users)
+    match /systemCategories/{categoryId} {
+      // Any authenticated user can read system categories
+      allow read: if request.auth != null;
+      // Only admins or system processes can write (in production, this would be restricted to admin roles)
+      allow write: if false;  // Prevent client-side writes - use server-side functions for seeding
+    }
+
     // Teams collection - team-based access control
     match /teams/{teamId} {
       // Allow read if user is authenticated and is a member of the team

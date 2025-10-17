@@ -6,9 +6,9 @@
         Categories List ({{ sortedCategories.length }})
       </v-card-title>
       <v-card-text>
-        <div v-if="loading" class="text-center py-6">
+        <div v-if="loading || initializingCategories" class="text-center py-6">
           <v-progress-circular indeterminate />
-          <p class="mt-2">Loading categories...</p>
+          <p class="mt-2">{{ initializingCategories ? 'Initializing system categories...' : 'Loading categories...' }}</p>
         </div>
 
         <div v-else-if="!sortedCategories.length" class="text-center py-6">
@@ -30,7 +30,18 @@
             </template>
 
             <v-list-item-title>
-              <div class="font-weight-medium">{{ category.name }}</div>
+              <div class="d-flex align-center">
+                <span class="font-weight-medium">{{ category.name }}</span>
+                <v-chip
+                  v-if="isSystemCategory(category.id)"
+                  size="x-small"
+                  color="primary"
+                  variant="outlined"
+                  class="ml-2"
+                >
+                  System
+                </v-chip>
+              </div>
               <div
                 class="text-caption text-medium-emphasis"
                 v-html="getCategoryDisplayTextWithFormatting(category)"
@@ -72,21 +83,37 @@
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../../core/stores/auth.js';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
 import { getCurrencySymbol } from '../utils/currencyOptions.js';
+import { SystemCategoryService } from '../services/systemCategoryService.js';
+import { isSystemCategory } from '../constants/systemCategories.js';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const organizerStore = useOrganizerStore();
 const { categories, loading } = storeToRefs(organizerStore);
 
 const snackbar = ref({ show: false, message: '', color: 'success' });
+const initializingCategories = ref(false);
 
-// Computed property to sort categories alphabetically
+// Computed property to sort categories: system categories first, then custom categories alphabetically
 const sortedCategories = computed(() => {
-  return [...categories.value].sort((a, b) => {
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-  });
+  const systemCategories = categories.value.filter((cat) => isSystemCategory(cat.id));
+  const customCategories = categories.value.filter((cat) => !isSystemCategory(cat.id));
+
+  // Sort system categories by a predefined order or alphabetically
+  const sortedSystem = systemCategories.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+
+  // Sort custom categories alphabetically
+  const sortedCustom = customCategories.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+
+  return [...sortedSystem, ...sortedCustom];
 });
 
 const getCategoryIcon = (category) => {
@@ -223,11 +250,46 @@ const deleteCategory = async (category) => {
   }
 };
 
+/**
+ * Initialize system categories for the current matter
+ */
+const initializeSystemCategories = async () => {
+  try {
+    if (!authStore.isAuthenticated || !authStore.currentTeam) {
+      console.log('[CategoryManager] User not authenticated, skipping system category initialization');
+      return;
+    }
+
+    initializingCategories.value = true;
+    const teamId = authStore.currentTeam;
+    const matterId = 'general'; // Default to general matter
+
+    console.log('[CategoryManager] Initializing system categories...');
+    const result = await SystemCategoryService.initializeSystemCategories(teamId, matterId);
+
+    if (result.created > 0) {
+      showNotification(`Initialized ${result.created} system categories`, 'success');
+      // Reload categories to show the new system categories
+      await organizerStore.initialize();
+    }
+
+    console.log('[CategoryManager] System categories initialized:', result);
+  } catch (error) {
+    console.error('[CategoryManager] Failed to initialize system categories:', error);
+    showNotification('Failed to initialize system categories: ' + error.message, 'error');
+  } finally {
+    initializingCategories.value = false;
+  }
+};
+
 onMounted(async () => {
   if (!organizerStore.isInitialized || !categories.value.length) {
     console.log('[CategoryManager] Initializing organizer store for categories...');
     await organizerStore.initialize();
   }
+
+  // Initialize system categories after loading existing categories
+  await initializeSystemCategories();
 });
 </script>
 

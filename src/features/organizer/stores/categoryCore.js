@@ -51,7 +51,9 @@ export function useCategoryCore() {
       }
 
       // Create query for categories collection
-      const categoriesRef = collection(db, 'teams', teamId, 'categories');
+      // Note: Default to 'general' matter for now - matterId support can be added when needed
+      const matterId = 'general';
+      const categoriesRef = collection(db, 'teams', teamId, 'matters', matterId, 'categories');
       let categoriesQuery;
 
       try {
@@ -169,7 +171,9 @@ export function useCategoryCore() {
         updatedAt: serverTimestamp(),
       };
 
-      const categoriesRef = collection(db, 'teams', teamId, 'categories');
+      // Note: Default to 'general' matter for now - matterId support can be added when needed
+      const matterId = 'general';
+      const categoriesRef = collection(db, 'teams', teamId, 'matters', matterId, 'categories');
       const docRef = await addDoc(categoriesRef, newCategory);
 
       console.log(`[CategoryCore] Created category: ${categoryData.name}`);
@@ -205,7 +209,9 @@ export function useCategoryCore() {
         }
       }
 
-      const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
+      // Note: Default to 'general' matter for now - matterId support can be added when needed
+      const matterId = 'general';
+      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -233,7 +239,9 @@ export function useCategoryCore() {
         throw new Error('No team ID available');
       }
 
-      const categoryRef = doc(db, 'teams', teamId, 'categories', categoryId);
+      // Note: Default to 'general' matter for now - matterId support can be added when needed
+      const matterId = 'general';
+      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         isActive: false,
         updatedAt: serverTimestamp(),
