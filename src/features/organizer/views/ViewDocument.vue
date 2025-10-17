@@ -16,8 +16,62 @@
 
     <!-- Main content -->
     <div v-else-if="evidence" class="view-document-content">
-      <!-- File metadata box -->
-      <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
+      <!-- Sidebar containing pagination and metadata panels -->
+      <div class="sidebar-container">
+        <!-- Pagination control panel -->
+        <div class="pagination-panel">
+          <v-card class="pagination-card">
+            <!-- Left controls -->
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              :disabled="currentPage === 1"
+              title="First page"
+              @click="goToFirstPage"
+            >
+              <v-icon>mdi-page-first</v-icon>
+            </v-btn>
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              :disabled="currentPage === 1"
+              title="Previous page"
+              @click="goToPreviousPage"
+            >
+              <v-icon>mdi-chevron-left</v-icon>
+            </v-btn>
+
+            <!-- Center page indicator -->
+            <span class="page-indicator">{{ currentPage }} of {{ totalPages }}</span>
+
+            <!-- Right controls -->
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              :disabled="currentPage === totalPages"
+              title="Next page"
+              @click="goToNextPage"
+            >
+              <v-icon>mdi-chevron-right</v-icon>
+            </v-btn>
+            <v-btn
+              icon
+              variant="text"
+              size="small"
+              :disabled="currentPage === totalPages"
+              title="Last page"
+              @click="goToLastPage"
+            >
+              <v-icon>mdi-page-last</v-icon>
+            </v-btn>
+          </v-card>
+        </div>
+
+        <!-- File metadata box -->
+        <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
         <v-card variant="outlined" class="metadata-card">
           <!-- Card header with toggle button -->
           <div class="metadata-card-header">
@@ -215,6 +269,7 @@
           </v-card-text>
         </v-card>
       </div>
+      </div>
 
       <!-- PDF Viewer Placeholder -->
       <div class="viewer-area">
@@ -271,6 +326,10 @@ const dropdownOpen = ref(false);
 // Metadata visibility state (bound to user preferences)
 const metadataVisible = metadataBoxVisible;
 
+// Pagination state
+const currentPage = ref(1);
+const totalPages = ref(1);
+
 // Format file size helper
 const formatFileSize = (bytes) => {
   if (!bytes) return 'Unknown';
@@ -303,6 +362,27 @@ const goBack = () => {
 // Toggle metadata visibility
 const toggleMetadataVisibility = async () => {
   await preferencesStore.updateMetadataBoxVisible(!metadataVisible.value);
+};
+
+// Pagination navigation methods
+const goToFirstPage = () => {
+  currentPage.value = 1;
+};
+
+const goToPreviousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const goToLastPage = () => {
+  currentPage.value = totalPages.value;
 };
 
 // Compute earlier copy notification message
@@ -548,9 +628,57 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.metadata-box {
+.sidebar-container {
   width: 500px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.pagination-panel {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.pagination-card {
+  background-color: #475569; /* Dark slate gray */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  gap: 8px;
+  border-radius: 4px;
+}
+
+.pagination-card .v-btn {
+  color: white;
+  border-radius: 6px;
+}
+
+.pagination-card .v-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pagination-card .v-btn:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0 12px;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.metadata-box {
+  width: 100%;
+  flex-shrink: 0;
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -852,7 +980,7 @@ onBeforeUnmount(() => {
     flex-direction: column;
   }
 
-  .metadata-box {
+  .sidebar-container {
     width: 100%;
     max-width: 100%;
   }
