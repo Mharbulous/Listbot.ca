@@ -6,19 +6,36 @@
           <!-- Matter Information Section -->
           <div class="section-header">MATTER INFORMATION</div>
 
-          <!-- Matter Number -->
-          <div class="mb-4">
-            <div class="field-label">
-              Matter Number
-            </div>
-            <v-text-field
-              v-model="formData.matterNo"
-              variant="outlined"
-              density="compact"
-              placeholder="e.g., MAT-2025-001"
-              hide-details
-            />
-          </div>
+          <!-- Matter Number and Responsible Lawyer Row -->
+          <v-row class="mb-4">
+            <v-col cols="12" sm="6">
+              <div class="field-label">
+                Matter Number
+              </div>
+              <v-text-field
+                v-model="formData.matterNo"
+                variant="outlined"
+                density="compact"
+                placeholder="e.g., MAT-2025-001"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <div class="field-label">
+                Responsible Lawyer
+              </div>
+              <v-autocomplete
+                v-model="formData.responsibleLawyer"
+                :items="availableLawyers"
+                variant="outlined"
+                density="compact"
+                placeholder="Select or type lawyer name"
+                :error-messages="showLawyerError ? ['Responsible lawyer is required'] : []"
+                :hide-details="!showLawyerError"
+                auto-select-first
+              />
+            </v-col>
+          </v-row>
 
           <!-- Description -->
           <div class="mb-6">
@@ -138,6 +155,7 @@ const router = useRouter();
 // Form state
 const formData = ref({
   matterNo: '',
+  responsibleLawyer: '',
   description: '',
   clients: [''],
   adverseParties: [],
@@ -145,11 +163,26 @@ const formData = ref({
 
 const creating = ref(false);
 const showClientError = ref(false);
+const showLawyerError = ref(false);
 const snackbar = ref({ show: false, message: '', color: 'success' });
+
+// Sample lawyers list (replace with API/store data later)
+const availableLawyers = ref([
+  'John Smith',
+  'Sarah Johnson',
+  'Michael Brown',
+  'Emily Davis',
+  'David Wilson',
+  'Jennifer Taylor',
+  'Robert Anderson',
+  'Lisa Martinez',
+]);
 
 // Computed validation
 const isFormValid = computed(() => {
-  return formData.value.clients.some((client) => client.trim() !== '');
+  const hasValidClient = formData.value.clients.some((client) => client.trim() !== '');
+  const hasResponsibleLawyer = formData.value.responsibleLawyer.trim() !== '';
+  return hasValidClient && hasResponsibleLawyer;
 });
 
 // Client management
@@ -172,16 +205,27 @@ const removeAdverseParty = (index) => {
 
 // Form validation
 const validateForm = () => {
+  let isValid = true;
+
   // Check if at least one client with a non-empty value exists
   const hasValidClient = formData.value.clients.some((client) => client.trim() !== '');
 
   if (!hasValidClient) {
     showClientError.value = true;
-    return false;
+    isValid = false;
+  } else {
+    showClientError.value = false;
   }
 
-  showClientError.value = false;
-  return true;
+  // Check if responsible lawyer is selected
+  if (formData.value.responsibleLawyer.trim() === '') {
+    showLawyerError.value = true;
+    isValid = false;
+  } else {
+    showLawyerError.value = false;
+  }
+
+  return isValid;
 };
 
 // Notification helper
@@ -201,6 +245,7 @@ const handleSubmit = async () => {
     // Filter out empty clients and adverse parties
     const cleanedData = {
       matterNo: formData.value.matterNo.trim(),
+      responsibleLawyer: formData.value.responsibleLawyer.trim(),
       description: formData.value.description.trim(),
       clients: formData.value.clients.filter((c) => c.trim() !== ''),
       adverseParties: formData.value.adverseParties.filter((p) => p.trim() !== ''),
