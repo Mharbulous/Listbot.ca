@@ -168,6 +168,8 @@ export default {
           return 'Document Organizer >> Categories';
         case '/organizer/categories/new':
           return 'Document Organizer >> Categories >> New';
+        case '/matters':
+          return 'Matters';
         case '/':
         case '/home':
           return 'Home';
