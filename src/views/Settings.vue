@@ -94,24 +94,6 @@
                 </v-select>
               </div>
             </div>
-
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-medium text-slate-800">Dark Mode</h3>
-                <p class="text-sm text-slate-600">Switch to dark theme</p>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  v-model="isDarkModeEnabled"
-                  type="checkbox"
-                  class="sr-only peer"
-                  :disabled="isLoading"
-                />
-                <div
-                  class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-blue/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
-                ></div>
-              </label>
-            </div>
           </div>
         </div>
 
@@ -148,7 +130,7 @@ import {
 } from '@/features/organizer/utils/categoryFormOptions.js';
 
 const preferencesStore = useUserPreferencesStore();
-const { dateFormat, timeFormat, darkMode, isLoading } = storeToRefs(preferencesStore);
+const { dateFormat, timeFormat, isLoading } = storeToRefs(preferencesStore);
 
 // Computed properties for v-model binding
 const selectedDateFormat = computed({
@@ -169,17 +151,6 @@ const selectedTimeFormat = computed({
       await preferencesStore.updateTimeFormat(value);
     } catch (error) {
       console.error('Error updating time format:', error);
-    }
-  },
-});
-
-const isDarkModeEnabled = computed({
-  get: () => darkMode.value,
-  set: async (value) => {
-    try {
-      await preferencesStore.updateDarkMode(value);
-    } catch (error) {
-      console.error('Error updating dark mode:', error);
     }
   },
 });
