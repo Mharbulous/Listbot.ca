@@ -79,7 +79,7 @@ Keep it **dead simple**. Solo users have `teamId === userId`:
 - Can delete team data
 
 **Member Role Permissions**:
-- Full read/write access to team data (clients, matters, files)
+- Full read/write access to team data (matters, files)
 - Cannot modify team settings
 - Cannot manage team members
 - Cannot delete the team
@@ -97,7 +97,6 @@ Keep it **dead simple**. Solo users have `teamId === userId`:
 |------------|-------------------|------------|-------------|
 | `/users/{userId}` | Own document only | Own document only | Own document only |
 | `/teams/{teamId}` | Full access | Read all, Write settings | Read only |
-| `/teams/{teamId}/clients` | Full access | Full access | Full access |
 | `/teams/{teamId}/matters` | Full access | Full access | Full access |
 | File metadata collections (see [FileMetadata.md](./FileMetadata.md)) | Full access | Full access | Full access |
 
@@ -143,8 +142,8 @@ const role = token.claims.role;
 // User accessing their own document ✓
 match /users/user-123 with auth.uid === 'user-123'
 
-// Team member accessing team data ✓
-match /teams/team-abc/clients/client-1 with token.teamId === 'team-abc'
+// Team member accessing team matter ✓
+match /teams/team-abc/matters/matter-1 with token.teamId === 'team-abc'
 
 // Admin modifying team settings ✓
 match /teams/team-abc with token.teamId === 'team-abc' && token.role === 'admin'
@@ -157,7 +156,7 @@ match /teams/team-abc with token.teamId === 'team-abc' && token.role === 'admin'
 match /users/user-456 with auth.uid === 'user-123'
 
 // User accessing different team's data ✗
-match /teams/team-xyz/clients with token.teamId === 'team-abc'
+match /teams/team-xyz/matters with token.teamId === 'team-abc'
 
 // Member trying to modify team settings ✗
 match /teams/team-abc with token.teamId === 'team-abc' && token.role === 'member'
@@ -295,7 +294,7 @@ await assertFails(authedDb.doc('teams/team-xyz').get());
 db.collection('security-log').add({
   event: 'permission-denied',
   userId: auth.currentUser.uid,
-  resource: '/teams/team-xyz/clients',
+  resource: '/teams/team-xyz/matters',
   timestamp: new Date(),
   userAgent: navigator.userAgent
 });

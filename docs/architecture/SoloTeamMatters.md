@@ -97,40 +97,43 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
 
 **Purpose**: All team data lives in flat collections under the team
 
-### Clients Collection: `/teams/{teamId}/clients/{clientId}`
-
-```javascript
-{
-  name: 'ABC Corporation',
-  email: 'contact@abc.com',
-  phone: '+1-555-0123',
-  address: {
-    street: '123 Business Ave',
-    city: 'New York',
-    state: 'NY',
-    zip: '10001'
-  },
-  status: 'active'  // 'active' | 'inactive'
-}
-```
-
 ### Matters Collection: `/teams/{teamId}/matters/{matterId}`
 
 **Reserved Matter ID**: Every team has a reserved `matterId` called **"general"** where the firm stores general information about the firm, company policies, and non-client-specific documents.
 
+**Design Note**: Client information is stored directly in matters as name strings, not as references to a separate collection. This simplified approach eliminates the need for a separate Clients collection and reduces data complexity.
+
 ```javascript
 {
-  title: 'ABC Corp - Contract Review',
-  description: 'Software licensing agreement review',
-  clientId: 'client-abc-123',  // Reference to client (null for 'general' matter)
-  matterNumber: '2024-001',
+  // Matter identification
+  matterNumber: '2024-001',  // Human-readable matter number/identifier
+  description: 'Real Estate Purchase - 123 Main Street',
+
+  // Parties involved
+  clients: ['John Smith', 'Jane Doe'],  // Array of client name strings (supports multi-client matters)
+  adverseParties: ['ABC Realty Inc.', 'XYZ Legal Services'],  // Array of adverse party name strings
+
+  // Status and assignment
   status: 'active',  // 'active' | 'closed' | 'on-hold'
-  priority: 'high',  // 'high' | 'medium' | 'low'
-  assignedTo: ['user-john-123', 'user-jane-456'],
-  openedDate: Timestamp,
-  dueDate: Timestamp
+  archived: false,  // Boolean - whether matter is archived (archived matters hidden by default in UI)
+  assignedTo: ['user-john-123', 'user-jane-456'],  // Array of user IDs assigned to work on matter
+  responsibleLawyer: 'user-john-123',  // User ID of primary responsible lawyer
+
+  // Timestamps
+  lastAccessed: Timestamp,  // Last time matter was viewed or modified
+  createdAt: Timestamp,
+  createdBy: 'user-john-123',
+  updatedAt: Timestamp,
+  updatedBy: 'user-john-123'
 }
 ```
+
+**Multi-Client Matters**: The `clients` array supports multiple client names for matters involving multiple parties (e.g., husband & wife estate planning).
+
+**Archived vs Status**:
+- `archived: true` - Matter is archived and hidden from default views but can be shown via filter
+- `status: 'closed'` - Matter is formally closed but may still be visible in active views
+- A matter can be both closed and archived
 
 ## Custom Claims (Firebase Auth)
 
@@ -154,21 +157,31 @@ const team = await db.collection('teams').doc(auth.currentUser.teamId).get()
 // Get team members (already embedded)
 const members = team.data().members
 
-// Get all active clients
-const clients = await db
-  .collection('teams').doc(teamId)
-  .collection('clients')
-  .where('status', '==', 'active')
-  .orderBy('name')
-  .get()
-
-// Get matters for a client
+// Get all active (non-archived) matters
 const matters = await db
   .collection('teams').doc(teamId)
   .collection('matters')
-  .where('clientId', '==', clientId)
-  .where('status', '==', 'active')
+  .where('archived', '==', false)
+  .orderBy('lastAccessed', 'desc')
   .get()
+
+// Get matters assigned to a specific user
+const userMatters = await db
+  .collection('teams').doc(teamId)
+  .collection('matters')
+  .where('assignedTo', 'array-contains', userId)
+  .where('archived', '==', false)
+  .get()
+
+// Get matters for a specific client (requires client-side filtering)
+const allMatters = await db
+  .collection('teams').doc(teamId)
+  .collection('matters')
+  .get()
+
+const clientMatters = allMatters.docs
+  .map(doc => ({ id: doc.id, ...doc.data() }))
+  .filter(matter => matter.clients.includes('John Smith'))
 ```
 
 ## Architecture Benefits

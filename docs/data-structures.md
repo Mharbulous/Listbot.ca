@@ -24,11 +24,11 @@ This data structure documentation is organized into focused, specialized documen
 
 The Firestore collection schemas are documented in three specialized files:
 
-**[Solo Team Matters](./architecture/SoloTeamMatters.md)**  
+**[Solo Team Matters](./architecture/SoloTeamMatters.md)**
 Core architecture including:
 
 - Users and Teams collections
-- Team data collections (Clients, Matters)
+- Matters collection (client names stored directly, no separate Clients collection)
 - Custom claims and query patterns
 - Basic required Firestore indexes
 
@@ -110,8 +110,7 @@ User and team management processes:
 ```
 /users/{userId}                                    // User preferences
 /teams/{teamId}                                    // Team info with embedded members
-/teams/{teamId}/clients/{clientId}                 // Client records
-/teams/{teamId}/matters/{matterId}                 // Matter/case records
+/teams/{teamId}/matters/{matterId}                 // Matter/case records (client names stored directly)
 // File metadata collections are documented in data-structures/FileMetadata.md
 ```
 
