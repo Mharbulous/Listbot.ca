@@ -18,7 +18,7 @@
           <div class="profile-header-right">
             <span class="lawyer-label">Lawyer</span>
             <v-switch
-              v-model="formData.isLawyer"
+              v-model="isLawyerReversed"
               color="primary"
               density="compact"
               hide-details
@@ -181,6 +181,16 @@ const hasChanges = computed(() => {
     formData.value.lastName !== originalData.value.lastName ||
     formData.value.isLawyer !== originalData.value.isLawyer
   );
+});
+
+// Inverted binding for the lawyer switch (CSS flips visual, this flips the value)
+const isLawyerReversed = computed({
+  get() {
+    return !formData.value.isLawyer;
+  },
+  set(value) {
+    formData.value.isLawyer = !value;
+  },
 });
 
 // Methods
