@@ -2,7 +2,6 @@
   <div class="new-matter-wizard">
     <v-card variant="flat" class="mx-auto">
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-gavel</v-icon>
         New Matter
         <v-spacer />
         <v-btn variant="text" icon :to="{ name: 'matters' }" color="default">
@@ -14,27 +13,22 @@
         <v-form @submit.prevent="handleSubmit">
           <v-row>
             <!-- Matter Number -->
-            <v-col cols="12">
+            <v-col cols="4">
               <v-text-field
                 v-model="formData.matterNo"
                 label="Matter Number"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 placeholder="e.g., 2024-024"
+                hide-details
               />
             </v-col>
 
-            <!-- Description -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="formData.description"
-                label="Description"
-                variant="outlined"
-                density="comfortable"
-                placeholder="Brief description of the matter..."
-                auto-grow
-                rows="2"
-              />
+            <!-- Create Multiple Matters Button -->
+            <v-col cols="8" class="d-flex align-center justify-end">
+              <v-btn variant="outlined" color="orange" class="text-white">
+                Create Multiple Matters
+              </v-btn>
             </v-col>
 
             <!-- Clients (Required) -->
@@ -47,9 +41,10 @@
                   <v-text-field
                     v-model="formData.clients[index]"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                     :placeholder="`Client ${index + 1}`"
                     :error-messages="index === 0 && showClientError ? ['At least one client is required'] : []"
+                    :hide-details="!(index === 0 && showClientError)"
                     class="flex-grow-1"
                   />
                   <v-btn
@@ -76,6 +71,20 @@
               </div>
             </v-col>
 
+            <!-- Description -->
+            <v-col cols="12">
+              <v-textarea
+                v-model="formData.description"
+                label="Description"
+                variant="outlined"
+                density="compact"
+                placeholder="Brief description of the matter..."
+                auto-grow
+                rows="2"
+                hide-details
+              />
+            </v-col>
+
             <!-- Adverse Parties (Optional) -->
             <v-col cols="12">
               <div class="text-subtitle-2 mb-2">
@@ -86,9 +95,10 @@
                   <v-text-field
                     v-model="formData.adverseParties[index]"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                     :placeholder="`Adverse Party ${index + 1}`"
                     class="flex-grow-1"
+                    hide-details
                   />
                   <v-btn
                     icon
@@ -250,5 +260,10 @@ const handleSubmit = async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+}
+
+/* Align text fields with buttons by reducing height to compensate for nested containers */
+:deep(.v-input--density-compact .v-field) {
+  height: 36px;
 }
 </style>
