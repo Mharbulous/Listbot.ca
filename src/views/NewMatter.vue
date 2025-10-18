@@ -13,7 +13,7 @@
                 Matter Number
               </div>
               <v-text-field
-                v-model="formData.matterNo"
+                v-model="formData.matterNumber"
                 variant="outlined"
                 density="compact"
                 placeholder="e.g., MAT-2025-001"
@@ -158,7 +158,7 @@ const { lawyerNames, loading: loadingLawyers, fetchTeamMembers } = useTeamMember
 
 // Form state
 const formData = ref({
-  matterNo: '',
+  matterNumber: '',
   responsibleLawyer: '',
   description: '',
   clients: [''],
@@ -241,14 +241,19 @@ const handleSubmit = async () => {
   try {
     // Filter out empty clients and adverse parties
     const cleanedData = {
-      matterNo: formData.value.matterNo.trim(),
+      matterNumber: formData.value.matterNumber.trim(),
       responsibleLawyer: formData.value.responsibleLawyer.trim(),
       description: formData.value.description.trim(),
       clients: formData.value.clients.filter((c) => c.trim() !== ''),
       adverseParties: formData.value.adverseParties.filter((p) => p.trim() !== ''),
+      status: 'active',
+      archived: false,
+      assignedTo: [], // TODO: Get from current user context
+      createdAt: new Date(),
+      // Note: Firestore document ID will be auto-generated
     };
 
-    // TODO: Save to database/store
+    // TODO: Save to Firestore database
     console.log('Creating new matter:', cleanedData);
 
     showNotification('Matter created successfully', 'success');
