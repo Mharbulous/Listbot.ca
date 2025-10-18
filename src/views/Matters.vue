@@ -134,7 +134,8 @@
         </div>
 
         <!-- New Matter Button -->
-        <button
+        <router-link
+          to="/matters/new"
           class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-1.5"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +147,7 @@
             />
           </svg>
           New Matter
-        </button>
+        </router-link>
 
         <!-- Results Summary -->
         <div v-if="searchText" class="text-xs text-slate-500 whitespace-nowrap ml-2">
@@ -179,7 +180,7 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Other Parties
+                Adverse Parties
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -212,7 +213,7 @@
                 {{ matter.description }}
               </td>
               <td class="px-6 py-4 text-sm text-slate-700">
-                {{ matter.otherParties }}
+                {{ matter.adverseParties }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                 {{ matter.lastAccessed }}
@@ -253,7 +254,7 @@ const mockMatters = ref([
     matterNo: '2024-001',
     clients: 'John Smith',
     description: 'Real Estate Purchase - 123 Main Street',
-    otherParties: 'ABC Realty Inc.',
+    adverseParties: 'ABC Realty Inc.',
     lastAccessed: '2024-03-15',
   },
   {
@@ -264,7 +265,7 @@ const mockMatters = ref([
     matterNo: '2024-002',
     clients: 'Jane Doe, Robert Doe',
     description: 'Estate Planning and Will Preparation',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-03-14',
   },
   {
@@ -275,7 +276,7 @@ const mockMatters = ref([
     matterNo: '2024-003',
     clients: 'Acme Corporation',
     description: 'Contract Review and Negotiation',
-    otherParties: 'XYZ Enterprises Ltd.',
+    adverseParties: 'XYZ Enterprises Ltd.',
     lastAccessed: '2024-03-13',
   },
   {
@@ -286,7 +287,7 @@ const mockMatters = ref([
     matterNo: '2024-004',
     clients: 'Sarah Johnson',
     description: 'Divorce Settlement',
-    otherParties: 'Michael Johnson',
+    adverseParties: 'Michael Johnson',
     lastAccessed: '2024-03-12',
   },
   {
@@ -297,7 +298,7 @@ const mockMatters = ref([
     matterNo: '2024-005',
     clients: 'Tech Startup Inc.',
     description: 'Business Incorporation',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-03-10',
   },
   {
@@ -308,7 +309,7 @@ const mockMatters = ref([
     matterNo: '2024-006',
     clients: 'Emily Brown',
     description: 'Personal Injury Claim',
-    otherParties: 'Insurance Co. of America',
+    adverseParties: 'Insurance Co. of America',
     lastAccessed: '2024-03-09',
   },
   {
@@ -319,7 +320,7 @@ const mockMatters = ref([
     matterNo: '2024-007',
     clients: 'Green Energy Solutions',
     description: 'Commercial Lease Agreement',
-    otherParties: 'Downtown Properties LLC',
+    adverseParties: 'Downtown Properties LLC',
     lastAccessed: '2024-03-08',
   },
   {
@@ -330,7 +331,7 @@ const mockMatters = ref([
     matterNo: '2024-008',
     clients: 'David Wilson',
     description: 'Trademark Registration',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-03-07',
   },
   {
@@ -341,7 +342,7 @@ const mockMatters = ref([
     matterNo: '2024-009',
     clients: 'Martha Stevens',
     description: 'Employment Contract Dispute',
-    otherParties: 'Global Tech Industries',
+    adverseParties: 'Global Tech Industries',
     lastAccessed: '2024-03-06',
   },
   {
@@ -352,7 +353,7 @@ const mockMatters = ref([
     matterNo: '2024-010',
     clients: 'Richard Anderson',
     description: 'Patent Application - Medical Device',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-03-05',
   },
   {
@@ -363,7 +364,7 @@ const mockMatters = ref([
     matterNo: '2024-011',
     clients: 'Blue Ocean Investments',
     description: 'Merger and Acquisition Due Diligence',
-    otherParties: 'Coastal Ventures LLC',
+    adverseParties: 'Coastal Ventures LLC',
     lastAccessed: '2024-03-04',
   },
   {
@@ -374,7 +375,7 @@ const mockMatters = ref([
     matterNo: '2024-012',
     clients: 'Lisa Martinez',
     description: 'Residential Lease Agreement',
-    otherParties: 'Urban Properties Group',
+    adverseParties: 'Urban Properties Group',
     lastAccessed: '2024-03-03',
   },
   {
@@ -385,7 +386,7 @@ const mockMatters = ref([
     matterNo: '2024-013',
     clients: 'Thompson Family Trust',
     description: 'Trust Administration and Asset Transfer',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-03-02',
   },
   {
@@ -396,7 +397,7 @@ const mockMatters = ref([
     matterNo: '2024-014',
     clients: "Kevin O'Brien",
     description: 'Construction Contract Negotiation',
-    otherParties: 'BuildRight Contractors Inc.',
+    adverseParties: 'BuildRight Contractors Inc.',
     lastAccessed: '2024-03-01',
   },
   {
@@ -407,7 +408,7 @@ const mockMatters = ref([
     matterNo: '2024-015',
     clients: 'Sunrise Healthcare Ltd.',
     description: 'Corporate Compliance Review',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-02-28',
   },
   {
@@ -418,7 +419,7 @@ const mockMatters = ref([
     matterNo: '2024-016',
     clients: 'Patricia Wong',
     description: 'Immigration Visa Application',
-    otherParties: 'Department of Immigration',
+    adverseParties: 'Department of Immigration',
     lastAccessed: '2024-02-27',
   },
   {
@@ -429,7 +430,7 @@ const mockMatters = ref([
     matterNo: '2024-017',
     clients: 'Riverside Development Corp.',
     description: 'Zoning Variance Application',
-    otherParties: 'City Planning Commission',
+    adverseParties: 'City Planning Commission',
     lastAccessed: '2024-02-26',
   },
   {
@@ -440,7 +441,7 @@ const mockMatters = ref([
     matterNo: '2024-018',
     clients: 'James Miller, Susan Miller',
     description: 'Child Custody Agreement',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-02-25',
   },
   {
@@ -451,7 +452,7 @@ const mockMatters = ref([
     matterNo: '2024-019',
     clients: 'NextGen Software Inc.',
     description: 'Software Licensing Agreement',
-    otherParties: 'Enterprise Solutions Group',
+    adverseParties: 'Enterprise Solutions Group',
     lastAccessed: '2024-02-24',
   },
   {
@@ -462,7 +463,7 @@ const mockMatters = ref([
     matterNo: '2024-020',
     clients: 'Angela Rodriguez',
     description: 'Medical Malpractice Claim',
-    otherParties: 'Metropolitan Hospital, Dr. Harrison',
+    adverseParties: 'Metropolitan Hospital, Dr. Harrison',
     lastAccessed: '2024-02-23',
   },
   {
@@ -473,7 +474,7 @@ const mockMatters = ref([
     matterNo: '2024-021',
     clients: 'Highland Manufacturing',
     description: 'Environmental Compliance Filing',
-    otherParties: 'EPA Regional Office',
+    adverseParties: 'EPA Regional Office',
     lastAccessed: '2024-02-22',
   },
   {
@@ -484,7 +485,7 @@ const mockMatters = ref([
     matterNo: '2024-022',
     clients: 'Daniel Park',
     description: 'Bankruptcy Chapter 7 Filing',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-02-21',
   },
   {
@@ -495,7 +496,7 @@ const mockMatters = ref([
     matterNo: '2024-023',
     clients: 'Golden Years Retirement Fund',
     description: 'Securities Compliance Review',
-    otherParties: '-',
+    adverseParties: '-',
     lastAccessed: '2024-02-20',
   },
 ]);
@@ -526,7 +527,7 @@ const filteredMatters = computed(() => {
   const search = caseSensitive.value ? searchText.value : searchText.value.toLowerCase();
 
   return visibleMatters.value.filter((matter) => {
-    const fields = [matter.matterNo, matter.clients, matter.description, matter.otherParties].join(
+    const fields = [matter.matterNo, matter.clients, matter.description, matter.adverseParties].join(
       ' '
     );
 

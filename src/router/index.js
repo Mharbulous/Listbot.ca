@@ -78,6 +78,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/matters/new',
+      name: 'new-matter',
+      component: () => import('../views/NewMatter.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../components/features/auth/LoginForm.vue'),
