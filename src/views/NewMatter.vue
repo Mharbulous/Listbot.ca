@@ -1,135 +1,97 @@
 <template>
   <div class="new-matter-wizard">
     <v-card variant="flat" class="mx-auto">
-      <v-card-title class="d-flex align-center">
-        New Matter
-        <v-spacer />
-        <v-btn variant="text" icon :to="{ name: 'matters' }" color="default">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
       <v-card-text class="pt-6">
         <v-form @submit.prevent="handleSubmit">
-          <v-row>
-            <!-- Matter Number -->
-            <v-col cols="4">
+          <!-- Matter Information Section -->
+          <div class="section-header">MATTER INFORMATION</div>
+
+          <!-- Matter Number -->
+          <div class="mb-4">
+            <div class="field-label">
+              Matter Number
+            </div>
+            <v-text-field
+              v-model="formData.matterNo"
+              variant="outlined"
+              density="compact"
+              placeholder="e.g., MAT-2025-001"
+              hide-details
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="mb-6">
+            <div class="field-label">
+              Description <span class="optional-text">(optional)</span>
+            </div>
+            <v-textarea
+              v-model="formData.description"
+              variant="outlined"
+              density="compact"
+              placeholder="Briefly describe this matter..."
+              auto-grow
+              rows="4"
+              hide-details
+            />
+          </div>
+
+          <!-- Clients Section -->
+          <div class="section-header">CLIENTS</div>
+
+          <div class="mb-6">
+            <div v-for="(client, index) in formData.clients" :key="index" class="mb-2">
               <v-text-field
-                v-model="formData.matterNo"
-                label="Matter Number"
+                v-model="formData.clients[index]"
                 variant="outlined"
                 density="compact"
-                placeholder="e.g., 2024-024"
-                hide-details
+                placeholder="Client name"
+                :error-messages="index === 0 && showClientError ? ['At least one client is required'] : []"
+                :hide-details="!(index === 0 && showClientError)"
               />
-            </v-col>
+            </div>
+            <v-btn
+              variant="outlined"
+              color="primary"
+              block
+              @click="addClient"
+              class="add-button"
+            >
+              <v-icon start>mdi-plus</v-icon>
+              Add Another Client
+            </v-btn>
+          </div>
 
-            <!-- Create Multiple Matters Button -->
-            <v-col cols="8" class="d-flex align-center justify-end">
-              <v-btn variant="outlined" color="orange" class="text-white">
-                Create Multiple Matters
-              </v-btn>
-            </v-col>
+          <!-- Adverse Parties Section -->
+          <div class="section-header">ADVERSE PARTIES</div>
 
-            <!-- Clients (Required) -->
-            <v-col cols="12">
-              <div class="text-subtitle-2 mb-2">
-                Clients <span class="text-error">*</span>
-              </div>
-              <div class="client-list">
-                <div v-for="(client, index) in formData.clients" :key="index" class="d-flex mb-2">
-                  <v-text-field
-                    v-model="formData.clients[index]"
-                    variant="outlined"
-                    density="compact"
-                    :placeholder="`Client ${index + 1}`"
-                    :error-messages="index === 0 && showClientError ? ['At least one client is required'] : []"
-                    :hide-details="!(index === 0 && showClientError)"
-                    class="flex-grow-1"
-                  />
-                  <v-btn
-                    v-if="formData.clients.length > 1"
-                    icon
-                    variant="text"
-                    color="error"
-                    class="ml-2"
-                    @click="removeClient(index)"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </div>
-                <v-btn
-                  variant="outlined"
-                  color="primary"
-                  block
-                  @click="addClient"
-                  class="mt-2"
-                >
-                  <v-icon start>mdi-plus</v-icon>
-                  Add Client
-                </v-btn>
-              </div>
-            </v-col>
-
-            <!-- Description -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="formData.description"
-                label="Description"
+          <div class="mb-6">
+            <div v-for="(party, index) in formData.adverseParties" :key="index" class="mb-2">
+              <v-text-field
+                v-model="formData.adverseParties[index]"
                 variant="outlined"
                 density="compact"
-                placeholder="Brief description of the matter..."
-                auto-grow
-                rows="2"
+                placeholder="Adverse party name"
                 hide-details
               />
-            </v-col>
-
-            <!-- Adverse Parties (Optional) -->
-            <v-col cols="12">
-              <div class="text-subtitle-2 mb-2">
-                Adverse Parties <span class="text-grey text-caption">(optional)</span>
-              </div>
-              <div class="party-list">
-                <div v-for="(party, index) in formData.adverseParties" :key="index" class="d-flex mb-2">
-                  <v-text-field
-                    v-model="formData.adverseParties[index]"
-                    variant="outlined"
-                    density="compact"
-                    :placeholder="`Adverse Party ${index + 1}`"
-                    class="flex-grow-1"
-                    hide-details
-                  />
-                  <v-btn
-                    icon
-                    variant="text"
-                    color="error"
-                    class="ml-2"
-                    @click="removeAdverseParty(index)"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </div>
-                <v-btn
-                  variant="outlined"
-                  color="primary"
-                  block
-                  @click="addAdverseParty"
-                  class="mt-2"
-                >
-                  <v-icon start>mdi-plus</v-icon>
-                  Add Adverse Party
-                </v-btn>
-              </div>
-            </v-col>
-          </v-row>
+            </div>
+            <v-btn
+              variant="outlined"
+              color="primary"
+              block
+              @click="addAdverseParty"
+              class="add-button"
+            >
+              <v-icon start>mdi-plus</v-icon>
+              Add Adverse Party
+            </v-btn>
+          </div>
         </v-form>
       </v-card-text>
 
-      <v-card-actions class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'matters' }" class="mr-3">
-          <v-icon start>mdi-arrow-left</v-icon>
-          Back
+      <v-card-actions class="px-6 pb-6 d-flex">
+        <v-btn variant="outlined" :to="{ name: 'matters' }" size="large">
+          Cancel
         </v-btn>
 
         <v-spacer />
@@ -137,14 +99,20 @@
         <v-btn
           color="primary"
           variant="elevated"
+          size="large"
           :loading="creating"
           :disabled="!isFormValid"
           @click="handleSubmit"
         >
-          <v-icon start>mdi-plus</v-icon>
           Create Matter
         </v-btn>
       </v-card-actions>
+
+      <div class="text-right pb-4 px-6">
+        <span class="bulk-import-text">
+          Creating multiple matters? <a href="#" class="bulk-import-link">Use bulk import</a>
+        </span>
+      </div>
     </v-card>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000">
@@ -257,12 +225,69 @@ const handleSubmit = async () => {
 <style scoped>
 .new-matter-wizard {
   min-width: 50%;
-  max-width: 1200px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 24px;
 }
 
-/* Align text fields with buttons by reducing height to compensate for nested containers */
+/* Section Headers */
+.section-header {
+  color: #5b7ce6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  margin-top: 24px;
+}
+
+.section-header:first-child {
+  margin-top: 0;
+}
+
+/* Field Labels */
+.field-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.optional-text {
+  color: #999;
+  font-weight: 400;
+}
+
+/* Helper Text */
+.helper-text {
+  font-size: 0.75rem;
+  color: #5b7ce6;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+/* Add Buttons */
+.add-button {
+  border-style: dashed !important;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* Bulk Import Link */
+.bulk-import-text {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.bulk-import-link {
+  color: #5b7ce6;
+  text-decoration: none;
+}
+
+.bulk-import-link:hover {
+  text-decoration: underline;
+}
+
+/* Align text fields with buttons */
 :deep(.v-input--density-compact .v-field) {
   height: 36px;
 }
