@@ -172,6 +172,8 @@ export default {
           return 'Matters';
         case '/matters/new':
           return 'New Matter';
+        case '/matters/import':
+          return 'Import Matters';
         case '/':
         case '/home':
           return 'Home';
