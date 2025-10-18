@@ -5,8 +5,16 @@
         <v-icon class="mr-2">mdi-pencil</v-icon>
         Edit Category
         <v-spacer />
+        <v-chip
+          v-if="isSystemCategoryComputed"
+          size="default"
+          color="primary"
+          variant="outlined"
+        >
+          System Category
+        </v-chip>
         <HoldToConfirmButton
-          v-if="category"
+          v-else-if="category"
           :duration="2000"
           text="DELETE"
           confirming-text="Deleting..."
@@ -272,6 +280,7 @@ import {
   requiresWarning,
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
+import { isSystemCategory } from '../constants/systemCategories.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
 import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
 
@@ -399,6 +408,11 @@ const hasChanges = computed(() => {
 
     return originalValue !== editedValue;
   });
+});
+
+// Computed property to check if current category is a system category
+const isSystemCategoryComputed = computed(() => {
+  return category.value ? isSystemCategory(category.value.id) : false;
 });
 
 const showNotification = (message, color = 'success') => {
