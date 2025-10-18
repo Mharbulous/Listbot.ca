@@ -88,6 +88,7 @@ export class TeamService {
       members[userId] = {
         email: memberData.email,
         role: memberData.role || 'member',
+        isLawyer: memberData.isLawyer || false,
         joinedAt: serverTimestamp(),
       };
 

@@ -46,12 +46,19 @@ export const useAuthStore = defineStore('auth', {
         name = name.split('@')[0];
       }
 
-      // Get first two characters of the first name/word
+      // Get initials from full name (first + last)
       const words = name.trim().split(/\s+/);
-      const firstName = words[0] || name;
 
-      // Take first two characters of the first name
-      return firstName.substring(0, 2).toUpperCase();
+      if (words.length >= 2) {
+        // Use first letter of first word + first letter of last word
+        const firstInitial = words[0].charAt(0);
+        const lastInitial = words[words.length - 1].charAt(0);
+        return (firstInitial + lastInitial).toUpperCase();
+      } else {
+        // Single word - use first two characters
+        const firstName = words[0] || name;
+        return firstName.substring(0, 2).toUpperCase();
+      }
     },
   },
 
@@ -212,6 +219,7 @@ export const useAuthStore = defineStore('auth', {
             [firebaseUser.uid]: {
               email: firebaseUser.email,
               role: 'admin',
+              isLawyer: false,
               joinedAt: serverTimestamp(),
             },
           },

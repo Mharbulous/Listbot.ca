@@ -16,6 +16,11 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
 
 ```javascript
 {
+  // User identity information
+  firstName: 'John',           // Required - User's first name
+  middleNames: 'Michael',      // Optional - User's middle name(s)
+  lastName: 'Smith',           // Required - User's last name
+
   // User preferences only (identity comes from Firebase Auth)
   defaultTeamId: 'team-abc-123',  // Primary team for quick access (could be userId for solo users)
   preferences: {
@@ -49,11 +54,13 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
     'user-john-123': {
       email: 'john@acme.com',
       role: 'admin',  // 'admin' | 'member' (solo users are always admin)
+      isLawyer: true,  // boolean flag indicating if user is a lawyer (default: false)
       joinedAt: Timestamp
     },
     'user-jane-456': {
       email: 'jane@acme.com',
       role: 'member',
+      isLawyer: false,
       joinedAt: Timestamp
     }
   },

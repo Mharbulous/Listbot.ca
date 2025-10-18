@@ -26,13 +26,15 @@
               </div>
               <v-autocomplete
                 v-model="formData.responsibleLawyer"
-                :items="availableLawyers"
+                :items="lawyerNames"
+                :loading="loadingLawyers"
                 variant="outlined"
                 density="compact"
                 placeholder="Select or type lawyer name"
                 :error-messages="showLawyerError ? ['Responsible lawyer is required'] : []"
                 :hide-details="!showLawyerError"
                 auto-select-first
+                :no-data-text="loadingLawyers ? 'Loading lawyers...' : 'No lawyers found in team'"
               />
             </v-col>
           </v-row>
@@ -142,8 +144,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useTeamMembers } from '../composables/useTeamMembers';
 
 // Component configuration
 defineOptions({
@@ -151,6 +154,7 @@ defineOptions({
 });
 
 const router = useRouter();
+const { lawyerNames, loading: loadingLawyers, fetchTeamMembers } = useTeamMembers();
 
 // Form state
 const formData = ref({
@@ -166,17 +170,10 @@ const showClientError = ref(false);
 const showLawyerError = ref(false);
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
-// Sample lawyers list (replace with API/store data later)
-const availableLawyers = ref([
-  'John Smith',
-  'Sarah Johnson',
-  'Michael Brown',
-  'Emily Davis',
-  'David Wilson',
-  'Jennifer Taylor',
-  'Robert Anderson',
-  'Lisa Martinez',
-]);
+// Fetch lawyers on component mount
+onMounted(async () => {
+  await fetchTeamMembers();
+});
 
 // Computed validation
 const isFormValid = computed(() => {
