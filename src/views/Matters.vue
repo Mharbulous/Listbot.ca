@@ -17,23 +17,13 @@
             :title="showMyMattersOnly ? 'My matters' : 'All firm matters'"
           >
             <!-- Single person icon when showing only my matters -->
-            <svg
-              v-if="showMyMattersOnly"
-              class="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg v-if="showMyMattersOnly" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path
                 d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
               />
             </svg>
             <!-- Three people icon when showing all firm matters -->
-            <svg
-              v-else
-              class="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path
                 d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
               />
@@ -49,25 +39,30 @@
                 ? 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50'
                 : 'bg-slate-800 text-white',
             ]"
-            :title="showArchivedMatters ? 'Active + Archived' : 'Active only'"
+            :title="showArchivedMatters ? 'Archive files included' : 'Active files only'"
           >
-            <!-- Folder icon when showing active only (Phosphor: folder-open-light) -->
+            <!-- Folders icon when showing active only (teenyicons:folders-solid) -->
             <svg
               v-if="!showArchivedMatters"
               class="w-4 h-4"
               fill="currentColor"
-              viewBox="0 0 256 256"
+              viewBox="0 0 15 15"
             >
-              <path d="M243.36 111.81A14 14 0 0 0 232 106h-18V88a14 14 0 0 0-14-14h-70l-28.26-21.2a14.06 14.06 0 0 0-8.4-2.8H40a14 14 0 0 0-14 14v144a6 6 0 0 0 6 6h179.1a6 6 0 0 0 5.69-4.1l28.49-85.47a14 14 0 0 0-1.92-12.62M40 62h53.34a2 2 0 0 1 1.2.4l29.86 22.4A6 6 0 0 0 128 86h72a2 2 0 0 1 2 2v18H69.77a14 14 0 0 0-13.28 9.57L38 171V64a2 2 0 0 1 2-2m193.9 58.63L206.78 202H40.33l27.54-82.63a2 2 0 0 1 1.9-1.37H232a2 2 0 0 1 1.9 2.63" />
+              <path
+                d="M4.5 0A1.5 1.5 0 0 0 3 1.5v7A1.5 1.5 0 0 0 4.5 10h9A1.5 1.5 0 0 0 15 8.5v-5A1.5 1.5 0 0 0 13.5 2H9.707l-2-2z"
+              />
+              <path
+                d="M12 11H4.5A2.5 2.5 0 0 1 2 8.5V5h-.5A1.5 1.5 0 0 0 0 6.5v7A1.5 1.5 0 0 0 1.5 15h9a1.5 1.5 0 0 0 1.5-1.5z"
+              />
             </svg>
-            <!-- Archive box icon when showing active + archived (Phosphor: archive-light) -->
-            <svg
-              v-else
-              class="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 256 256"
-            >
-              <path d="M224,50H32A14,14,0,0,0,18,64V88a14,14,0,0,0,14,14h2V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V102h2a14,14,0,0,0,14-14V64A14,14,0,0,0,224,50ZM32,62H224a2,2,0,0,1,2,2V88a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V64A2,2,0,0,1,32,62ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V102H210Zm-50-92a6,6,0,0,1-6,6H102a6,6,0,0,1,0-12h52A6,6,0,0,1,160,116Z" />
+            <!-- Archive icon when showing active + archived (teenyicons:archive-solid) -->
+            <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 15 15">
+              <path d="M0 0h15v5H0z" />
+              <path
+                fill-rule="evenodd"
+                d="M1 6v7.5A1.5 1.5 0 0 0 2.5 15h10a1.5 1.5 0 0 0 1.5-1.5V6zm9 3H5V8h5z"
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
 
@@ -75,21 +70,21 @@
           <button
             @click="caseSensitive = !caseSensitive"
             :class="[
-              'px-2.5 py-1.5 rounded text-xs font-mono font-semibold transition-colors',
+              'px-2.5 py-1.5 rounded text-xs font-mono font-bold transition-colors',
               caseSensitive
                 ? 'bg-slate-800 text-white'
                 : 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50',
             ]"
             :title="caseSensitive ? 'Case sensitive' : 'Case insensitive'"
           >
-            {{ caseSensitive ? 'Ab' : 'ab' }}
+            {{ caseSensitive ? 'A ≠ a' : 'A = a' }}
           </button>
 
           <!-- Whole Word Match -->
           <button
             @click="wholeWord = !wholeWord"
             :class="[
-              'px-2.5 py-1.5 rounded text-xs font-mono font-semibold transition-colors',
+              'px-2.5 py-1.5 rounded text-xs font-mono font-bold transition-colors',
               wholeWord
                 ? 'bg-slate-800 text-white'
                 : 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50',
@@ -166,19 +161,29 @@
         <table class="w-full">
           <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Matter No.
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Client(s)
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Description
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Other Parties
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Last Accessed
               </th>
             </tr>
@@ -521,12 +526,9 @@ const filteredMatters = computed(() => {
   const search = caseSensitive.value ? searchText.value : searchText.value.toLowerCase();
 
   return visibleMatters.value.filter((matter) => {
-    const fields = [
-      matter.matterNo,
-      matter.clients,
-      matter.description,
-      matter.otherParties,
-    ].join(' ');
+    const fields = [matter.matterNo, matter.clients, matter.description, matter.otherParties].join(
+      ' '
+    );
 
     const content = caseSensitive.value ? fields : fields.toLowerCase();
 
