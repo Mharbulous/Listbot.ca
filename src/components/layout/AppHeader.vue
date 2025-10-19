@@ -18,7 +18,15 @@
     <!-- Center Section: Active Matter Display -->
     <div
       v-if="matterViewStore.hasMatter"
-      class="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl"
+      @click="isBannerClickable && navigateToMatter()"
+      @mouseenter="isHoveringBanner = true"
+      @mouseleave="isHoveringBanner = false"
+      :class="[
+        'flex items-center gap-2 px-4 py-2 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl transition-colors',
+        shouldShowBannerHover ? 'bg-amber-100' : 'bg-amber-50',
+        isBannerClickable ? 'cursor-pointer' : 'cursor-auto'
+      ]"
+      :title="isBannerClickable ? 'View matter details' : ''"
     >
       <div class="flex-1 min-w-0">
         <p class="text-sm font-medium text-slate-800 truncate text-center">
@@ -27,8 +35,10 @@
         </p>
       </div>
       <button
-        @click="clearMatter"
-        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded transition-colors"
+        @click.stop="clearMatter"
+        @mouseenter="isHoveringCloseButton = true"
+        @mouseleave="isHoveringCloseButton = false"
+        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-200 rounded transition-colors"
         title="Clear selected matter"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,6 +157,12 @@ export default {
       matterViewStore,
     };
   },
+  data() {
+    return {
+      isHoveringBanner: false,
+      isHoveringCloseButton: false,
+    };
+  },
   methods: {
     async signOut() {
       try {
@@ -161,6 +177,12 @@ export default {
       // Redirect to matters page after clearing
       this.$router.push('/matters');
     },
+    navigateToMatter() {
+      const matterId = this.matterViewStore.activeMatter?.id;
+      if (matterId) {
+        this.$router.push(`/matters/${matterId}`);
+      }
+    },
   },
   computed: {
     pageTitle() {
@@ -172,6 +194,20 @@ export default {
 
       // Return meta title or default to 'Home'
       return this.$route.meta.title || 'Home';
+    },
+    isOnMatterDetailPage() {
+      // Check if we're on the detail page for the currently active matter
+      const matterId = this.matterViewStore.activeMatter?.id;
+      if (!matterId) return false;
+      return this.$route.path === `/matters/${matterId}`;
+    },
+    isBannerClickable() {
+      // Banner is only clickable if we're not already on the detail page
+      return !this.isOnMatterDetailPage;
+    },
+    shouldShowBannerHover() {
+      // Show hover effect only when: clickable AND hovering banner AND NOT hovering close button
+      return this.isBannerClickable && this.isHoveringBanner && !this.isHoveringCloseButton;
     },
   },
 };
