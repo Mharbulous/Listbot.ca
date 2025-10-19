@@ -42,11 +42,8 @@
       </button>
     </div>
 
-    <!-- Right Section: Search + User -->
-    <div class="flex items-center gap-4 flex-shrink-0">
-      <BaseSearchBar v-model="searchQuery" @search="handleSearch" />
-    </div>
-    <div class="flex items-center ml-6">
+    <!-- Right Section: User -->
+    <div class="flex items-center">
       <div
         class="relative inline-block cursor-pointer outline-none group"
         tabindex="0"
@@ -136,13 +133,9 @@
 import { useAuthStore } from '../../core/stores/auth';
 import { useDocumentViewStore } from '../../stores/documentView';
 import { useMatterViewStore } from '../../stores/matterView';
-import BaseSearchBar from '../base/BaseSearchBar.vue';
 
 export default {
   name: 'AppHeader',
-  components: {
-    BaseSearchBar,
-  },
   setup() {
     const authStore = useAuthStore();
     const documentViewStore = useDocumentViewStore();
@@ -154,21 +147,7 @@ export default {
       matterViewStore,
     };
   },
-  data() {
-    return {
-      searchQuery: '',
-    };
-  },
   methods: {
-    handleSearch(query) {
-      if (query && query.trim()) {
-        // Navigate to organizer with search query
-        this.$router.push({
-          path: '/organizer',
-          query: { search: query.trim() },
-        });
-      }
-    },
     async signOut() {
       try {
         await this.authStore.logout();
