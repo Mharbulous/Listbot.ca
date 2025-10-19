@@ -47,32 +47,14 @@
 
     <!-- Matter Details -->
     <div v-else-if="matter" class="flex-1 overflow-auto p-6">
-      <!-- Back Button -->
-      <div class="mb-4">
-        <button
-          @click="router.push('/matters')"
-          class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-1.5"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Matters
-        </button>
-      </div>
-
       <!-- Matter Information Card -->
-      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-blue-50 border border-slate-700 rounded-lg shadow-sm overflow-hidden">
         <!-- Header -->
         <div
-          class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 px-6 py-5"
+          class="bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700 px-6 py-5 relative"
         >
           <div class="flex items-center gap-3 mb-2">
-            <h1 class="text-3xl font-bold text-slate-900">
+            <h1 class="text-3xl font-bold text-white">
               {{ matter.matterNumber }}
             </h1>
             <span
@@ -88,7 +70,23 @@
               {{ matter.status || 'Active' }}
             </span>
           </div>
-          <p class="text-base text-slate-700 leading-relaxed">{{ matter.description }}</p>
+          <p class="text-base text-slate-300 leading-relaxed">{{ matter.description }}</p>
+
+          <!-- Close Button -->
+          <button
+            @click="clearMatter"
+            class="absolute top-5 right-6 flex-shrink-0 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors"
+            title="Clear selected matter"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
 
         <!-- Two-Column Grid: Parties (2fr) and Team (1fr) -->
@@ -191,9 +189,27 @@
           </div>
         </div>
 
+        <!-- Back Button -->
+        <div class="border-t border-slate-200 px-6 py-4">
+          <button
+            @click="router.push('/matters')"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back
+          </button>
+        </div>
+
         <!-- History Footer -->
-        <div class="bg-slate-50 border-t border-slate-200 px-6 py-3">
-          <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-slate-600">
+        <div class="bg-slate-800 border-t border-slate-700 px-6 py-3">
+          <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-slate-400">
             <!-- Created -->
             <div
               class="cursor-help"
@@ -238,6 +254,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
 import { useUsers } from '../composables/useUsers.js';
+import { useMatterViewStore } from '../stores/matterView.js';
 
 // Component configuration
 defineOptions({
@@ -253,6 +270,9 @@ const { fetchMatter } = useMatters();
 
 // Use the users composable
 const { fetchUserDisplayNames } = useUsers();
+
+// Use the matter view store
+const matterViewStore = useMatterViewStore();
 
 // Local state for this view
 const matter = ref(null);
@@ -340,6 +360,12 @@ function getInitials(displayName) {
   const lastInitial = words[words.length - 1].charAt(0).toUpperCase();
 
   return firstInitial + lastInitial;
+}
+
+// Clear selected matter and redirect to matters list
+function clearMatter() {
+  matterViewStore.clearMatter();
+  router.push('/matters');
 }
 
 // Load matter on mount
