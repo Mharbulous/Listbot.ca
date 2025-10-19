@@ -9,9 +9,7 @@
           <!-- Matter Number and Responsible Lawyer Row -->
           <v-row class="mb-4">
             <v-col cols="12" sm="6">
-              <div class="field-label">
-                Matter Number
-              </div>
+              <div class="field-label">Matter Number</div>
               <v-text-field
                 v-model="formData.matterNumber"
                 variant="outlined"
@@ -21,9 +19,7 @@
               />
             </v-col>
             <v-col cols="12" sm="6">
-              <div class="field-label">
-                Responsible Lawyer
-              </div>
+              <div class="field-label">Responsible Lawyer</div>
               <v-autocomplete
                 v-model="formData.responsibleLawyer"
                 :items="lawyerNames"
@@ -34,16 +30,14 @@
                 :error-messages="showLawyerError ? ['Responsible lawyer is required'] : []"
                 :hide-details="!showLawyerError"
                 auto-select-first
-                :no-data-text="loadingLawyers ? 'Loading lawyers...' : 'No lawyers found in team'"
+                :no-data-text="loadingLawyers ? 'Loading lawyers...' : 'No matching lawyers found'"
               />
             </v-col>
           </v-row>
 
           <!-- Description -->
           <div class="mb-6">
-            <div class="field-label">
-              Description <span class="optional-text">(optional)</span>
-            </div>
+            <div class="field-label">Description <span class="optional-text">(optional)</span></div>
             <v-textarea
               v-model="formData.description"
               variant="outlined"
@@ -65,17 +59,13 @@
                 variant="outlined"
                 density="compact"
                 placeholder="Client name"
-                :error-messages="index === 0 && showClientError ? ['At least one client is required'] : []"
+                :error-messages="
+                  index === 0 && showClientError ? ['At least one client is required'] : []
+                "
                 :hide-details="!(index === 0 && showClientError)"
               />
             </div>
-            <v-btn
-              variant="outlined"
-              color="primary"
-              block
-              @click="addClient"
-              class="add-button"
-            >
+            <v-btn variant="outlined" color="primary" block @click="addClient" class="add-button">
               <v-icon start>mdi-plus</v-icon>
               Add Another Client
             </v-btn>
@@ -109,9 +99,7 @@
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6 d-flex">
-        <v-btn variant="outlined" :to="{ name: 'matters' }" size="large">
-          Cancel
-        </v-btn>
+        <v-btn variant="outlined" :to="{ name: 'matters' }" size="large"> Cancel </v-btn>
 
         <v-spacer />
 
@@ -129,7 +117,8 @@
 
       <div class="text-right pb-4 px-6">
         <span class="bulk-import-text">
-          Creating multiple matters? <router-link to="/matters/import" class="bulk-import-link">Use bulk import</router-link>
+          Creating multiple matters?
+          <router-link to="/matters/import" class="bulk-import-link">Use bulk import</router-link>
         </span>
       </div>
     </v-card>
@@ -144,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTeamMembers } from '../composables/useTeamMembers';
 
@@ -174,6 +163,21 @@ const snackbar = ref({ show: false, message: '', color: 'success' });
 onMounted(async () => {
   await fetchTeamMembers();
 });
+
+// Auto-select lawyer if there's only one in the team
+watch(
+  () => [lawyerNames.value, loadingLawyers.value],
+  ([names, isLoading]) => {
+    // Only auto-select if:
+    // 1. Not currently loading
+    // 2. Exactly one lawyer exists
+    // 3. Responsible lawyer hasn't been manually set yet
+    if (!isLoading && names.length === 1 && !formData.value.responsibleLawyer) {
+      formData.value.responsibleLawyer = names[0];
+    }
+  },
+  { immediate: true }
+);
 
 // Computed validation
 const isFormValid = computed(() => {
