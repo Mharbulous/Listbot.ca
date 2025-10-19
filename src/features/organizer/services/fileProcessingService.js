@@ -6,17 +6,17 @@ import { storage } from '../../../services/firebase.js';
  * Provides file access, content processing, and format validation
  */
 export class FileProcessingService {
-  constructor(teamId = null) {
-    this.teamId = teamId;
+  constructor(firmId = null) {
+    this.firmId = firmId;
   }
 
   /**
    * Retrieve file content from Firebase Storage for AI processing
    * @param {Object} evidence - Evidence document
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<string>} - Base64 encoded file content for AI processing
    */
-  async getFileForProcessing(evidence, teamId) {
+  async getFileForProcessing(evidence, firmId) {
     try {
       // Document ID is the fileHash
       const fileHash = evidence.id;
@@ -30,7 +30,7 @@ export class FileProcessingService {
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
       // UploadService hardcodes 'general' matter and converts extension to lowercase
-      const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       // Get file bytes directly from Firebase Storage
@@ -64,10 +64,10 @@ export class FileProcessingService {
   /**
    * Get file download URL from Firebase Storage
    * @param {Object} evidence - Evidence document
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<string>} - Download URL
    */
-  async getFileDownloadURL(evidence, teamId) {
+  async getFileDownloadURL(evidence, firmId) {
     try {
       // Document ID is the fileHash
       const fileHash = evidence.id;
@@ -79,7 +79,7 @@ export class FileProcessingService {
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       const downloadURL = await getDownloadURL(fileRef);
@@ -106,23 +106,23 @@ export class FileProcessingService {
    * Build Firebase Storage path for file
    * @param {string} fileHash - File hash
    * @param {string} extension - File extension
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {string} matterId - Matter ID (optional, defaults to 'general')
    * @returns {string} - Storage path
    */
-  buildStoragePath(fileHash, extension, teamId, matterId = 'general') {
-    return `teams/${teamId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
+  buildStoragePath(fileHash, extension, firmId, matterId = 'general') {
+    return `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
   }
 
   /**
    * Validate file exists in storage
    * @param {Object} evidence - Evidence document
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<boolean>} - True if file exists
    */
-  async validateFileExists(evidence, teamId) {
+  async validateFileExists(evidence, firmId) {
     try {
-      await this.getFileDownloadURL(evidence, teamId);
+      await this.getFileDownloadURL(evidence, firmId);
       return true;
     } catch (error) {
       console.warn(`[FileProcessingService] File does not exist: ${error.message}`);
@@ -134,10 +134,10 @@ export class FileProcessingService {
    * Get file size from Firebase Storage metadata
    * Fallback method when evidence.fileSize is 0 or missing
    * @param {Object} evidence - Evidence document
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<number>} - File size in bytes, or 0 if unable to retrieve
    */
-  async getFileSize(evidence, teamId) {
+  async getFileSize(evidence, firmId) {
     try {
       // Document ID is the fileHash
       const fileHash = evidence.id;
@@ -169,7 +169,7 @@ export class FileProcessingService {
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
         // Use the EXACT same path format as UploadService.generateStoragePath()
-        const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension}`;
+        const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
 
         console.log(

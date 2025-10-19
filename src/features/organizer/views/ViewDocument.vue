@@ -44,7 +44,9 @@
             </v-btn>
 
             <!-- Center document indicator -->
-            <span class="document-indicator">Document {{ currentDocumentIndex }} of {{ totalDocuments }}</span>
+            <span class="document-indicator"
+              >Document {{ currentDocumentIndex }} of {{ totalDocuments }}</span
+            >
 
             <!-- Right controls -->
             <v-btn
@@ -72,203 +74,215 @@
 
         <!-- File metadata box -->
         <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
-        <v-card variant="outlined" class="metadata-card">
-          <!-- Card header with toggle button -->
-          <div class="metadata-card-header">
-            <h3 class="metadata-card-title">Document Information</h3>
-            <v-btn
-              icon
-              variant="text"
-              size="small"
-              :title="metadataVisible ? 'Hide metadata' : 'Show metadata'"
-              class="toggle-btn"
-              @click="toggleMetadataVisibility"
-            >
-              <v-icon>{{ metadataVisible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
-            </v-btn>
-          </div>
+          <v-card variant="outlined" class="metadata-card">
+            <!-- Card header with toggle button -->
+            <div class="metadata-card-header">
+              <h3 class="metadata-card-title">Document Information</h3>
+              <v-btn
+                icon
+                variant="text"
+                size="small"
+                :title="metadataVisible ? 'Hide metadata' : 'Show metadata'"
+                class="toggle-btn"
+                @click="toggleMetadataVisibility"
+              >
+                <v-icon>{{ metadataVisible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
+              </v-btn>
+            </div>
 
-          <v-card-text v-if="metadataVisible">
-            <!-- Source File Section -->
-            <div class="metadata-section">
-              <h3 class="metadata-section-title">Source File</h3>
+            <v-card-text v-if="metadataVisible">
+              <!-- Source File Section -->
+              <div class="metadata-section">
+                <h3 class="metadata-section-title">Source File</h3>
 
-              <!-- File name dropdown for selecting metadata variants -->
-              <div class="metadata-item-simple dropdown-container" @click="toggleDropdown">
-                <div
-                  class="source-file-selector"
-                  :class="{ disabled: updatingMetadata || sourceMetadataVariants.length === 0 }"
-                >
-                  {{
-                    sourceMetadataVariants.find((v) => v.metadataHash === selectedMetadataHash)
-                      ?.sourceFileName || 'Unknown File'
-                  }}
-                  <span v-if="sourceMetadataVariants.length > 1" class="dropdown-arrow">▼</span>
-                </div>
-                <span v-if="updatingMetadata" class="updating-indicator">Updating...</span>
-
-                <!-- Custom dropdown menu -->
-                <div v-if="dropdownOpen" class="dropdown-menu" @click.stop>
+                <!-- File name dropdown for selecting metadata variants -->
+                <div class="metadata-item-simple dropdown-container" @click="toggleDropdown">
                   <div
-                    v-for="variant in sourceMetadataVariants"
-                    :key="variant.metadataHash"
-                    class="dropdown-item"
-                    :class="{ selected: variant.metadataHash === selectedMetadataHash }"
-                    @click="selectVariant(variant.metadataHash)"
+                    class="source-file-selector"
+                    :class="{ disabled: updatingMetadata || sourceMetadataVariants.length === 0 }"
                   >
-                    {{ variant.sourceFileName }}
+                    {{
+                      sourceMetadataVariants.find((v) => v.metadataHash === selectedMetadataHash)
+                        ?.sourceFileName || 'Unknown File'
+                    }}
+                    <span v-if="sourceMetadataVariants.length > 1" class="dropdown-arrow">▼</span>
                   </div>
-                </div>
-              </div>
+                  <span v-if="updatingMetadata" class="updating-indicator">Updating...</span>
 
-              <!-- Date modified display -->
-              <div class="metadata-item-simple date-with-notification">
-                <span class="metadata-value">{{
-                  formatDateTime(evidence.createdAt, dateFormat, timeFormat)
-                }}</span>
-                <span v-if="earlierCopyMessage" class="earlier-copy-message">{{
-                  earlierCopyMessage
-                }}</span>
-              </div>
-
-              <!-- File size -->
-              <div class="metadata-item-simple">
-                <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
-              </div>
-
-              <!-- MIME type -->
-              <div class="metadata-item-simple">
-                <span class="metadata-value">{{ mimeType }}</span>
-              </div>
-            </div>
-
-            <!-- Cloud Section -->
-            <div class="metadata-section">
-              <h3 class="metadata-section-title">Cloud</h3>
-              <div class="metadata-item">
-                <span class="metadata-label">Date Uploaded:</span>
-                <span class="metadata-value">{{
-                  storageMetadata?.timeCreated
-                    ? formatDateTime(new Date(storageMetadata.timeCreated), dateFormat, timeFormat)
-                    : storageMetadata === null
-                      ? 'Unknown'
-                      : 'Loading...'
-                }}</span>
-              </div>
-              <div class="metadata-item">
-                <span class="metadata-label">File Hash:</span>
-                <span class="metadata-value text-caption">{{ fileHash }}</span>
-              </div>
-            </div>
-
-            <!-- Embedded Metadata Section -->
-            <div class="metadata-section">
-              <h3 class="metadata-section-title">Embedded Metadata</h3>
-
-              <!-- Loading state -->
-              <div v-if="isPdfFile && metadataLoading" class="metadata-notice">
-                <p>Loading PDF metadata...</p>
-              </div>
-
-              <!-- Error state -->
-              <div v-else-if="isPdfFile && metadataError" class="metadata-error">
-                <p>Failed to load PDF metadata</p>
-                <p class="error-detail">{{ metadataError }}</p>
-              </div>
-
-              <!-- PDF Metadata Display -->
-              <div v-else-if="isPdfFile && hasMetadata" class="pdf-metadata-container">
-                <!-- Document Information Dictionary -->
-                <div v-if="pdfMetadata.info" class="metadata-field-group">
-                  <div v-if="pdfMetadata.info.title" class="metadata-item">
-                    <span class="metadata-label">Title:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.title }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.author" class="metadata-item">
-                    <span class="metadata-label">Author:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.author }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.subject" class="metadata-item">
-                    <span class="metadata-label">Subject:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.subject }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.creator" class="metadata-item">
-                    <span class="metadata-label">Creator:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.creator }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.producer" class="metadata-item">
-                    <span class="metadata-label">Producer:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.producer }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.creationDate" class="metadata-item">
-                    <span class="metadata-label">Creation Date:</span>
-                    <span class="metadata-value">
-                      {{ pdfMetadata.info.creationDate.formatted || pdfMetadata.info.creationDate }}
-                    </span>
-                    <span v-if="pdfMetadata.info.creationDate.timezone" class="metadata-timezone">
-                      ({{ pdfMetadata.info.creationDate.timezone }})
-                    </span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.modDate" class="metadata-item">
-                    <span class="metadata-label">Modified Date:</span>
-                    <span class="metadata-value">
-                      {{ pdfMetadata.info.modDate.formatted || pdfMetadata.info.modDate }}
-                    </span>
-                    <span v-if="pdfMetadata.info.modDate.timezone" class="metadata-timezone">
-                      ({{ pdfMetadata.info.modDate.timezone }})
-                    </span>
-                  </div>
-
-                  <div v-if="pdfMetadata.info.keywords" class="metadata-item">
-                    <span class="metadata-label">Keywords:</span>
-                    <span class="metadata-value">{{ pdfMetadata.info.keywords }}</span>
-                  </div>
-                </div>
-
-                <!-- XMP Metadata (forensically valuable fields) -->
-                <div v-if="pdfMetadata.xmp" class="metadata-field-group xmp-metadata">
-                  <h4 class="xmp-title">XMP Metadata</h4>
-
-                  <div v-if="pdfMetadata.xmp.documentId" class="metadata-item">
-                    <span class="metadata-label">Document ID:</span>
-                    <span class="metadata-value text-caption">{{ pdfMetadata.xmp.documentId }}</span>
-                  </div>
-
-                  <div v-if="pdfMetadata.xmp.instanceId" class="metadata-item">
-                    <span class="metadata-label">Instance ID:</span>
-                    <span class="metadata-value text-caption">{{ pdfMetadata.xmp.instanceId }}</span>
-                  </div>
-
-                  <!-- Revision History - Complete Audit Trail -->
-                  <div v-if="pdfMetadata.xmp.history" class="metadata-item revision-history">
-                    <span class="metadata-label">Revision History:</span>
-                    <div class="revision-history-content">
-                      <pre class="revision-history-data">{{ JSON.stringify(pdfMetadata.xmp.history, null, 2) }}</pre>
+                  <!-- Custom dropdown menu -->
+                  <div v-if="dropdownOpen" class="dropdown-menu" @click.stop>
+                    <div
+                      v-for="variant in sourceMetadataVariants"
+                      :key="variant.metadataHash"
+                      class="dropdown-item"
+                      :class="{ selected: variant.metadataHash === selectedMetadataHash }"
+                      @click="selectVariant(variant.metadataHash)"
+                    >
+                      {{ variant.sourceFileName }}
                     </div>
                   </div>
                 </div>
+
+                <!-- Date modified display -->
+                <div class="metadata-item-simple date-with-notification">
+                  <span class="metadata-value">{{
+                    formatDateTime(evidence.createdAt, dateFormat, timeFormat)
+                  }}</span>
+                  <span v-if="earlierCopyMessage" class="earlier-copy-message">{{
+                    earlierCopyMessage
+                  }}</span>
+                </div>
+
+                <!-- File size -->
+                <div class="metadata-item-simple">
+                  <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
+                </div>
+
+                <!-- MIME type -->
+                <div class="metadata-item-simple">
+                  <span class="metadata-value">{{ mimeType }}</span>
+                </div>
               </div>
 
-              <!-- No metadata available for PDF -->
-              <div v-else-if="isPdfFile && !metadataLoading" class="metadata-notice">
-                <p>No embedded metadata found in this PDF</p>
+              <!-- Cloud Section -->
+              <div class="metadata-section">
+                <h3 class="metadata-section-title">Cloud</h3>
+                <div class="metadata-item">
+                  <span class="metadata-label">Date Uploaded:</span>
+                  <span class="metadata-value">{{
+                    storageMetadata?.timeCreated
+                      ? formatDateTime(
+                          new Date(storageMetadata.timeCreated),
+                          dateFormat,
+                          timeFormat
+                        )
+                      : storageMetadata === null
+                        ? 'Unknown'
+                        : 'Loading...'
+                  }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="metadata-label">File Hash:</span>
+                  <span class="metadata-value text-caption">{{ fileHash }}</span>
+                </div>
               </div>
 
-              <!-- Not a PDF file -->
-              <div v-else class="metadata-notice">
-                <p>Metadata viewing has not been implemented for file type:</p>
-                <p>{{ mimeType }}</p>
+              <!-- Embedded Metadata Section -->
+              <div class="metadata-section">
+                <h3 class="metadata-section-title">Embedded Metadata</h3>
+
+                <!-- Loading state -->
+                <div v-if="isPdfFile && metadataLoading" class="metadata-notice">
+                  <p>Loading PDF metadata...</p>
+                </div>
+
+                <!-- Error state -->
+                <div v-else-if="isPdfFile && metadataError" class="metadata-error">
+                  <p>Failed to load PDF metadata</p>
+                  <p class="error-detail">{{ metadataError }}</p>
+                </div>
+
+                <!-- PDF Metadata Display -->
+                <div v-else-if="isPdfFile && hasMetadata" class="pdf-metadata-container">
+                  <!-- Document Information Dictionary -->
+                  <div v-if="pdfMetadata.info" class="metadata-field-group">
+                    <div v-if="pdfMetadata.info.title" class="metadata-item">
+                      <span class="metadata-label">Title:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.title }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.author" class="metadata-item">
+                      <span class="metadata-label">Author:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.author }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.subject" class="metadata-item">
+                      <span class="metadata-label">Subject:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.subject }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.creator" class="metadata-item">
+                      <span class="metadata-label">Creator:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.creator }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.producer" class="metadata-item">
+                      <span class="metadata-label">Producer:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.producer }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.creationDate" class="metadata-item">
+                      <span class="metadata-label">Creation Date:</span>
+                      <span class="metadata-value">
+                        {{
+                          pdfMetadata.info.creationDate.formatted || pdfMetadata.info.creationDate
+                        }}
+                      </span>
+                      <span v-if="pdfMetadata.info.creationDate.timezone" class="metadata-timezone">
+                        ({{ pdfMetadata.info.creationDate.timezone }})
+                      </span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.modDate" class="metadata-item">
+                      <span class="metadata-label">Modified Date:</span>
+                      <span class="metadata-value">
+                        {{ pdfMetadata.info.modDate.formatted || pdfMetadata.info.modDate }}
+                      </span>
+                      <span v-if="pdfMetadata.info.modDate.timezone" class="metadata-timezone">
+                        ({{ pdfMetadata.info.modDate.timezone }})
+                      </span>
+                    </div>
+
+                    <div v-if="pdfMetadata.info.keywords" class="metadata-item">
+                      <span class="metadata-label">Keywords:</span>
+                      <span class="metadata-value">{{ pdfMetadata.info.keywords }}</span>
+                    </div>
+                  </div>
+
+                  <!-- XMP Metadata (forensically valuable fields) -->
+                  <div v-if="pdfMetadata.xmp" class="metadata-field-group xmp-metadata">
+                    <h4 class="xmp-title">XMP Metadata</h4>
+
+                    <div v-if="pdfMetadata.xmp.documentId" class="metadata-item">
+                      <span class="metadata-label">Document ID:</span>
+                      <span class="metadata-value text-caption">{{
+                        pdfMetadata.xmp.documentId
+                      }}</span>
+                    </div>
+
+                    <div v-if="pdfMetadata.xmp.instanceId" class="metadata-item">
+                      <span class="metadata-label">Instance ID:</span>
+                      <span class="metadata-value text-caption">{{
+                        pdfMetadata.xmp.instanceId
+                      }}</span>
+                    </div>
+
+                    <!-- Revision History - Complete Audit Trail -->
+                    <div v-if="pdfMetadata.xmp.history" class="metadata-item revision-history">
+                      <span class="metadata-label">Revision History:</span>
+                      <div class="revision-history-content">
+                        <pre class="revision-history-data">{{
+                          JSON.stringify(pdfMetadata.xmp.history, null, 2)
+                        }}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- No metadata available for PDF -->
+                <div v-else-if="isPdfFile && !metadataLoading" class="metadata-notice">
+                  <p>No embedded metadata found in this PDF</p>
+                </div>
+
+                <!-- Not a PDF file -->
+                <div v-else class="metadata-notice">
+                  <p>Metadata viewing has not been implemented for file type:</p>
+                  <p>{{ mimeType }}</p>
+                </div>
               </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </div>
+            </v-card-text>
+          </v-card>
+        </div>
       </div>
 
       <!-- PDF Viewer Area -->
@@ -321,7 +335,8 @@ const organizerStore = useOrganizerStore();
 const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesStore);
 
 // PDF Metadata composable
-const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadata } = usePdfMetadata();
+const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadata } =
+  usePdfMetadata();
 
 // State
 const fileHash = ref(route.params.fileHash);
@@ -438,7 +453,8 @@ const earlierCopyMessage = computed(() => {
 
   // Check if any other variant has an earlier lastModified date
   const hasEarlierCopy = sourceMetadataVariants.value.some(
-    (v) => v.metadataHash !== selectedMetadataHash.value && v.lastModified < currentVariant.lastModified
+    (v) =>
+      v.metadataHash !== selectedMetadataHash.value && v.lastModified < currentVariant.lastModified
   );
 
   return hasEarlierCopy ? 'earlier copy found' : 'no earlier copies found';
@@ -446,13 +462,18 @@ const earlierCopyMessage = computed(() => {
 
 // Compute MIME type (DRY principle - single source of truth)
 const mimeType = computed(() => {
-  return storageMetadata.value?.contentType ||
-    (storageMetadata.value === null ? 'Unknown' : 'Loading...');
+  return (
+    storageMetadata.value?.contentType ||
+    (storageMetadata.value === null ? 'Unknown' : 'Loading...')
+  );
 });
 
 // Check if file is PDF
 const isPdfFile = computed(() => {
-  return mimeType.value?.toLowerCase().includes('pdf') || evidence.value?.displayName?.toLowerCase().endsWith('.pdf');
+  return (
+    mimeType.value?.toLowerCase().includes('pdf') ||
+    evidence.value?.displayName?.toLowerCase().endsWith('.pdf')
+  );
 });
 
 // Toggle dropdown menu
@@ -476,9 +497,9 @@ const handleMetadataSelection = async (newMetadataHash) => {
   try {
     updatingMetadata.value = true;
 
-    const teamId = authStore.currentTeam;
-    if (!teamId || !fileHash.value) {
-      throw new Error('Missing team ID or file hash');
+    const firmId = authStore.currentFirm;
+    if (!firmId || !fileHash.value) {
+      throw new Error('Missing firm ID or file hash');
     }
 
     // Find the selected variant
@@ -491,7 +512,7 @@ const handleMetadataSelection = async (newMetadataHash) => {
     }
 
     // Update Firestore evidence document with new displayCopy
-    const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', fileHash.value);
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', fileHash.value);
     await updateDoc(evidenceRef, {
       displayCopy: newMetadataHash,
     });
@@ -523,13 +544,13 @@ const handleMetadataSelection = async (newMetadataHash) => {
 };
 
 // Fetch Firebase Storage metadata
-const fetchStorageMetadata = async (teamId, displayName) => {
+const fetchStorageMetadata = async (firmId, displayName) => {
   try {
     // Get file extension from displayName
     const extension = displayName.split('.').pop() || 'pdf';
 
     // Build storage path (same format as used in fileProcessingService)
-    const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash.value}.${extension.toLowerCase()}`;
     const fileRef = storageRef(storage, storagePath);
 
     // Get metadata from Firebase Storage
@@ -538,7 +559,7 @@ const fetchStorageMetadata = async (teamId, displayName) => {
 
     // Extract PDF embedded metadata if this is a PDF file
     if (displayName?.toLowerCase().endsWith('.pdf')) {
-      await extractMetadata(teamId, fileHash.value, displayName);
+      await extractMetadata(firmId, fileHash.value, displayName);
     }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
@@ -561,9 +582,9 @@ const loadEvidence = async () => {
 
     error.value = null;
 
-    const teamId = authStore.currentTeam;
-    if (!teamId) {
-      throw new Error('No team ID found');
+    const firmId = authStore.currentFirm;
+    if (!firmId) {
+      throw new Error('No firm ID found');
     }
 
     if (!fileHash.value) {
@@ -571,8 +592,8 @@ const loadEvidence = async () => {
     }
 
     // Fetch single evidence document from Firestore
-    // Path: /teams/{teamId}/matters/general/evidence/{fileHash}
-    const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', fileHash.value);
+    // Path: /firms/{firmId}/matters/general/evidence/{fileHash}
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', fileHash.value);
     const evidenceSnap = await getDoc(evidenceRef);
 
     if (!evidenceSnap.exists()) {
@@ -582,7 +603,7 @@ const loadEvidence = async () => {
     const evidenceData = evidenceSnap.data();
 
     // Fetch ALL sourceMetadata variants for this file
-    const evidenceService = new EvidenceService(teamId);
+    const evidenceService = new EvidenceService(firmId);
     const variants = await evidenceService.getAllSourceMetadata(fileHash.value);
     sourceMetadataVariants.value = variants;
 
@@ -618,7 +639,7 @@ const loadEvidence = async () => {
     documentViewStore.setDocumentName(displayName);
 
     // Fetch Firebase Storage metadata
-    await fetchStorageMetadata(teamId, displayName);
+    await fetchStorageMetadata(firmId, displayName);
   } catch (err) {
     console.error('Failed to load evidence:', err);
     error.value = err.message || 'Failed to load document';
@@ -653,7 +674,10 @@ onMounted(async () => {
   if (!organizerStore.isInitialized) {
     try {
       await organizerStore.initialize();
-      console.log('[ViewDocument] Organizer store initialized, evidenceCount:', organizerStore.evidenceCount);
+      console.log(
+        '[ViewDocument] Organizer store initialized, evidenceCount:',
+        organizerStore.evidenceCount
+      );
     } catch (err) {
       console.error('[ViewDocument] Failed to initialize organizer store:', err);
       // Continue loading document even if organizer init fails
@@ -882,7 +906,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
   font-size: 0.875rem;
   color: #333;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .dropdown-item:hover {

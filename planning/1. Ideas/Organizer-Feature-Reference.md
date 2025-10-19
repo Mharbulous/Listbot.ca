@@ -160,7 +160,7 @@ The **Organizer** is an AI-powered document discovery and organization system de
 ### Data Storage
 
 - **Firebase Integration**: Leverage existing authentication and storage infrastructure
-- **Evidence Database**: New Firestore collection `/teams/{teamId}/evidence/`
+- **Evidence Database**: New Firestore collection `/firms/{firmId}/evidence/`
 - **Storage References**: Evidence documents reference files via:
   - `storageRef.storage`: Which storage folder (uploads/split/merged)
   - `storageRef.fileHash`: Unique file identifier
@@ -169,7 +169,7 @@ The **Organizer** is an AI-powered document discovery and organization system de
   - `displayCopy.folderPath`: User-chosen folder path from that record
 - **Processing Metadata**: Evidence tracks isProcessed, hasAllPages, processingStage
 - **Tag Storage**: Separated by source (tagsByAI, tagsByHuman arrays)
-- **Team Isolation**: All data scoped by team ID (solo users: teamId === userId)
+- **Firm Isolation**: All data scoped by firm ID (solo users: firmId === userId)
 
 ### Performance Considerations
 
@@ -411,7 +411,7 @@ The **Organizer** is an AI-powered document discovery and organization system de
 
 ### Scalability
 
-- Multi-user team support (extending solo team architecture)
+- Multi-user firm support (extending solo firm architecture)
 - Advanced search across tag combinations
 - Audit trails for document access and modifications
 
@@ -426,7 +426,7 @@ The **Organizer** is an AI-powered document discovery and organization system de
 
 - Builds on established upload feature and deduplication system
 - Leverages existing Vue 3/Vuetify component architecture
-- Integrates with solo team authentication model
+- Integrates with solo firm authentication model
 
 ### Development Approach
 

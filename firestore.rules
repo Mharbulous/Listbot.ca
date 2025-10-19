@@ -25,61 +25,61 @@ service cloud.firestore {
       allow write: if false;  // Prevent client-side writes - use server-side functions for seeding
     }
 
-    // Teams collection - team-based access control
-    match /teams/{teamId} {
-      // Allow read if user is authenticated and is a member of the team
+    // Firms collection - firm-based access control
+    match /firms/{firmId} {
+      // Allow read if user is authenticated and is a member of the firm
       allow read: if request.auth != null &&
         (
-          // Check custom claims for teamId (preferred for SSO)
-          request.auth.token.teamId == teamId ||
-          // Solo user fallback: allow if teamId equals userId
-          teamId == request.auth.uid ||
-          // Fallback: check if user is listed as a member in the team document
+          // Check custom claims for firmId (preferred for SSO)
+          request.auth.token.firmId == firmId ||
+          // Solo user fallback: allow if firmId equals userId
+          firmId == request.auth.uid ||
+          // Fallback: check if user is listed as a member in the firm document
           request.auth.uid in resource.data.members.keys()
         );
 
-      // Allow write if user is authenticated and is an admin of the team
+      // Allow write if user is authenticated and is an admin of the firm
       allow write: if request.auth != null &&
         (
           // Check if user has admin role in custom claims
-          (request.auth.token.teamId == teamId && request.auth.token.role == 'admin') ||
-          // Solo user fallback: allow if teamId equals userId (solo users are admins)
-          teamId == request.auth.uid ||
-          // Fallback: check if user is an admin member in the team document
+          (request.auth.token.firmId == firmId && request.auth.token.role == 'admin') ||
+          // Solo user fallback: allow if firmId equals userId (solo users are admins)
+          firmId == request.auth.uid ||
+          // Fallback: check if user is an admin member in the firm document
           (request.auth.uid in resource.data.members.keys() &&
            resource.data.members[request.auth.uid].role == 'admin')
         );
 
-      // Allow create if user is authenticated (for initial team creation)
+      // Allow create if user is authenticated (for initial firm creation)
       allow create: if request.auth != null;
     }
 
     // Evidence documents with AI tags subcollection
-    match /teams/{teamId}/evidence/{evidenceId} {
-      // Team members can read/write evidence documents
+    match /firms/{firmId}/evidence/{evidenceId} {
+      // Firm members can read/write evidence documents
       allow read, write: if request.auth != null &&
         (
-          // Check custom claims for teamId
-          request.auth.token.teamId == teamId ||
-          // Solo user fallback: allow if teamId equals userId
-          teamId == request.auth.uid ||
-          // Fallback: check team membership
-          exists(/databases/$(database)/documents/teams/$(teamId)) &&
-          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+          // Check custom claims for firmId
+          request.auth.token.firmId == firmId ||
+          // Solo user fallback: allow if firmId equals userId
+          firmId == request.auth.uid ||
+          // Fallback: check firm membership
+          exists(/databases/$(database)/documents/firms/$(firmId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys()
         );
 
       // AI tags subcollection for evidence documents
       match /Tags/{tagId} {
-        // Team members can read/write AI tags for evidence in their team
+        // Firm members can read/write AI tags for evidence in their firm
         allow read, write: if request.auth != null &&
           (
-            // Check custom claims for teamId
-            request.auth.token.teamId == teamId ||
-            // Solo user fallback: allow if teamId equals userId
-            teamId == request.auth.uid ||
-            // Fallback: check team membership
-            exists(/databases/$(database)/documents/teams/$(teamId)) &&
-            request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+            // Check custom claims for firmId
+            request.auth.token.firmId == firmId ||
+            // Solo user fallback: allow if firmId equals userId
+            firmId == request.auth.uid ||
+            // Fallback: check firm membership
+            exists(/databases/$(database)/documents/firms/$(firmId)) &&
+            request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys()
           ) &&
           // Additional validation for AI tag data structure
           (
@@ -105,17 +105,17 @@ service cloud.firestore {
     }
 
     // Tag subcollections for evidence documents (legacy support)
-    match /teams/{teamId}/evidence/{evidenceId}/tags/{tagId} {
-      // Team members can read/write tags for evidence in their team
+    match /firms/{firmId}/evidence/{evidenceId}/tags/{tagId} {
+      // Firm members can read/write tags for evidence in their firm
       allow read, write: if request.auth != null &&
         (
-          // Check custom claims for teamId
-          request.auth.token.teamId == teamId ||
-          // Solo user fallback: allow if teamId equals userId
-          teamId == request.auth.uid ||
-          // Fallback: check team membership
-          exists(/databases/$(database)/documents/teams/$(teamId)) &&
-          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+          // Check custom claims for firmId
+          request.auth.token.firmId == firmId ||
+          // Solo user fallback: allow if firmId equals userId
+          firmId == request.auth.uid ||
+          // Fallback: check firm membership
+          exists(/databases/$(database)/documents/firms/$(firmId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys()
         ) &&
         // Additional validation for tag data structure
         (
@@ -132,40 +132,40 @@ service cloud.firestore {
         );
     }
 
-    // Team-specific data collections (clients, matters, documents, etc.)
-    match /teams/{teamId}/{collection}/{document} {
-      // Users can access team data if they're team members
+    // Firm-specific data collections (clients, matters, documents, etc.)
+    match /firms/{firmId}/{collection}/{document} {
+      // Users can access firm data if they're firm members
       allow read, write: if request.auth != null &&
         (
-          // Check custom claims for teamId
-          request.auth.token.teamId == teamId ||
-          // Solo user fallback: allow if teamId equals userId
-          teamId == request.auth.uid ||
-          // Fallback: check team membership (requires additional read)
-          exists(/databases/$(database)/documents/teams/$(teamId)) &&
-          request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys()
+          // Check custom claims for firmId
+          request.auth.token.firmId == firmId ||
+          // Solo user fallback: allow if firmId equals userId
+          firmId == request.auth.uid ||
+          // Fallback: check firm membership (requires additional read)
+          exists(/databases/$(database)/documents/firms/$(firmId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys()
         );
     }
 
-    // Nested team collections (e.g., matters with subcollections)
-    match /teams/{teamId}/{collection}/{document}/{subcollection}/{subdocument} {
+    // Nested firm collections (e.g., matters with subcollections)
+    match /firms/{firmId}/{collection}/{document}/{subcollection}/{subdocument} {
       allow read, write: if request.auth != null &&
         (
-          request.auth.token.teamId == teamId ||
-          teamId == request.auth.uid ||
-          (exists(/databases/$(database)/documents/teams/$(teamId)) &&
-           request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys())
+          request.auth.token.firmId == firmId ||
+          firmId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/firms/$(firmId)) &&
+           request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys())
         );
     }
 
     // Evidence sourceMetadata subcollection (explicit rule for clarity)
-    match /teams/{teamId}/matters/{matterId}/evidence/{evidenceId}/sourceMetadata/{metadataHash} {
+    match /firms/{firmId}/matters/{matterId}/evidence/{evidenceId}/sourceMetadata/{metadataHash} {
       allow read, write: if request.auth != null &&
         (
-          request.auth.token.teamId == teamId ||
-          teamId == request.auth.uid ||
-          (exists(/databases/$(database)/documents/teams/$(teamId)) &&
-           request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.members.keys())
+          request.auth.token.firmId == firmId ||
+          firmId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/firms/$(firmId)) &&
+           request.auth.uid in get(/databases/$(database)/documents/firms/$(firmId)).data.members.keys())
         );
     }
 

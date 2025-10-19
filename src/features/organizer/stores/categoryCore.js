@@ -45,15 +45,15 @@ export function useCategoryCore() {
       loading.value = true;
       error.value = null;
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Create query for categories collection
       // Note: Default to 'general' matter for now - matterId support can be added when needed
       const matterId = 'general';
-      const categoriesRef = collection(db, 'teams', teamId, 'matters', matterId, 'categories');
+      const categoriesRef = collection(db, 'firms', firmId, 'matters', matterId, 'categories');
       let categoriesQuery;
 
       try {
@@ -107,7 +107,7 @@ export function useCategoryCore() {
             console.log(
               `[CategoryCore] Migrating ${categoriesToMigrate.length} categories to add isActive field`
             );
-            CategoryService.migrateIsActiveField(teamId, categoriesToMigrate).catch((err) => {
+            CategoryService.migrateIsActiveField(firmId, categoriesToMigrate).catch((err) => {
               console.error('[CategoryCore] Migration failed:', err);
             });
           }
@@ -142,9 +142,9 @@ export function useCategoryCore() {
         throw new Error('User not authenticated');
       }
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Validate required fields
@@ -173,7 +173,7 @@ export function useCategoryCore() {
 
       // Note: Default to 'general' matter for now - matterId support can be added when needed
       const matterId = 'general';
-      const categoriesRef = collection(db, 'teams', teamId, 'matters', matterId, 'categories');
+      const categoriesRef = collection(db, 'firms', firmId, 'matters', matterId, 'categories');
       const docRef = await addDoc(categoriesRef, newCategory);
 
       console.log(`[CategoryCore] Created category: ${categoryData.name}`);
@@ -193,9 +193,9 @@ export function useCategoryCore() {
         throw new Error('User not authenticated');
       }
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Validate name if being updated
@@ -211,7 +211,7 @@ export function useCategoryCore() {
 
       // Note: Default to 'general' matter for now - matterId support can be added when needed
       const matterId = 'general';
-      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
+      const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -234,14 +234,14 @@ export function useCategoryCore() {
         throw new Error('User not authenticated');
       }
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Note: Default to 'general' matter for now - matterId support can be added when needed
       const matterId = 'general';
-      const categoryRef = doc(db, 'teams', teamId, 'matters', matterId, 'categories', categoryId);
+      const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, {
         isActive: false,
         updatedAt: serverTimestamp(),

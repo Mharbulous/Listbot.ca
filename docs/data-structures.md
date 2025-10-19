@@ -4,11 +4,11 @@ Last Updated: 2025-08-31
 
 ## Overview
 
-This document serves as the **central hub** for our Firestore data structure documentation. Following the KISS principle, we've designed a simple, scalable data structure for our multi-tenant team-based architecture supporting Multi-App SSO.
+This document serves as the **central hub** for our Firestore data structure documentation. Following the KISS principle, we've designed a simple, scalable data structure for our multi-tenant firm-based architecture supporting Multi-App SSO.
 
 **Key Design Decisions:**
 
-- Teams typically have 3-10 members (max 100)
+- Firms typically have 3-10 members (max 100)
 - All apps share the same role-based permissions
 - No denormalization needed for queries
 - No audit trails in MVP
@@ -24,10 +24,10 @@ This data structure documentation is organized into focused, specialized documen
 
 The Firestore collection schemas are documented in three specialized files:
 
-**[Solo Team Matters](./architecture/SoloTeamMatters.md)**
+**[Solo Firm Matters](./architecture/SoloFirmMatters.md)**
 Core architecture including:
 
-- Users and Teams collections
+- Users and Firms collections
 - Matters collection (client names stored directly, no separate Clients collection)
 - Custom claims and query patterns
 - Basic required Firestore indexes
@@ -64,27 +64,27 @@ Comprehensive security implementation:
 - Access control matrix and data isolation guarantees
 - Security testing and monitoring guidelines
 
-#### [Team Workflows and User Management](./architecture/team-workflows.md)
+#### [Firm Workflows and User Management](./architecture/firm-workflows.md)
 
-User and team management processes:
+User and firm management processes:
 
-- Solo user to team workflow and new user registration
-- Team invitation process and data migration
-- Team management workflows (adding/removing members)
-- Team merger scenarios and invitation management
+- Solo user to firm workflow and new user registration
+- Firm invitation process and data migration
+- Firm management workflows (adding/removing members)
+- Firm merger scenarios and invitation management
 
 ## Architecture Summary
 
 ### Solo User Design
 
-- New users automatically get a team where `teamId === userId`
-- Creates a "team of one" eliminating special cases
-- Easy upgrade path to collaborative teams
+- New users automatically get a firm where `firmId === userId`
+- Creates a "firm of one" eliminating special cases
+- Easy upgrade path to collaborative firms
 - Perfect deduplication works consistently
 
-### Team-Based Multi-Tenancy
+### Firm-Based Multi-Tenancy
 
-- All data scoped by team ID for perfect isolation
+- All data scoped by firm ID for perfect isolation
 - Embedded members (optimal for 3-10 users)
 - Simple pending invitations system
 - Consistent security model across all apps
@@ -98,9 +98,9 @@ User and team management processes:
 
 ### Security Model
 
-- Team-based access control with custom claims
+- Firm-based access control with custom claims
 - Simple, consistent security rules
-- Solo users have `teamId === userId`
+- Solo users have `firmId === userId`
 - Role-based permissions (admin/member)
 
 ## Quick Reference
@@ -109,29 +109,29 @@ User and team management processes:
 
 ```
 /users/{userId}                                    // User preferences
-/teams/{teamId}                                    // Team info with embedded members
-/teams/{teamId}/matters/{matterId}                 // Matter/case records (client names stored directly)
+/firms/{firmId}                                    // Firm info with embedded members
+/firms/{firmId}/matters/{matterId}                 // Matter/case records (client names stored directly)
 // File metadata collections are documented in data-structures/FileMetadata.md
 ```
 
 ### Storage Paths
 
 ```
-/teams/{teamId}/matters/{matterId}/uploads/{fileHash}.{ext}  // Current uploads
-/teams/{teamId}/matters/{matterId}/OCRed/                    // Future OCR files
-/teams/{teamId}/matters/{matterId}/split/                    // Future split files
-/teams/{teamId}/matters/{matterId}/merged/                   // Future merged files
+/firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{ext}  // Current uploads
+/firms/{firmId}/matters/{matterId}/OCRed/                    // Future OCR files
+/firms/{firmId}/matters/{matterId}/split/                    // Future split files
+/firms/{firmId}/matters/{matterId}/merged/                   // Future merged files
 ```
 
 ### Security Pattern
 
 ```javascript
-// All team data follows this pattern
-match /teams/{teamId}/{collection}/{document} {
+// All firm data follows this pattern
+match /firms/{firmId}/{collection}/{document} {
   allow read: if request.auth != null &&
-                 request.auth.token.teamId == teamId;
+                 request.auth.token.firmId == firmId;
   allow write: if request.auth != null &&
-                  request.auth.token.teamId == teamId;
+                  request.auth.token.firmId == firmId;
 }
 ```
 
@@ -143,14 +143,14 @@ match /teams/{teamId}/{collection}/{document} {
 - ✅ Solo user workflow active
 - ✅ File deduplication working
 - ✅ Basic security rules deployed
-- 🔄 Team invitations (in development)
+- 🔄 Firm invitations (in development)
 - ⏳ Document processing workflows (planned)
 
 ### Future Considerations
 
 **YAGNI Principle**: Don't add complexity until needed:
 
-1. **If teams grow beyond 100 members**: Move members to subcollection
+1. **If firms grow beyond 100 members**: Move members to subcollection
 2. **If you need audit trails**: Add `history` array to documents
 3. **If you need per-app permissions**: Extend custom claims
 4. **If queries get complex**: Add specific denormalization
@@ -161,9 +161,9 @@ match /teams/{teamId}/{collection}/{document} {
 
 For detailed implementation guidance:
 
-1. **Start with** → [Solo Team Matters](./architecture/SoloTeamMatters.md) for core architecture
+1. **Start with** → [Solo Firm Matters](./architecture/SoloFirmMatters.md) for core architecture
 2. **Then review** → [Security Rules](./architecture/security-rules.md)
 3. **For file handling** → [Firebase Storage Structure](./architecture/firebase-storage.md)
-4. **For user management** → [Team Workflows](./architecture/team-workflows.md)
+4. **For user management** → [Firm Workflows](./architecture/firm-workflows.md)
 
 Each document is self-contained with complete implementation details while maintaining this hub document as the single navigation point and architectural overview.

@@ -4,7 +4,7 @@ Last Updated: 2025-09-20
 
 ## Critical Architecture Context
 
-**DO NOT** assume tags are stored in the evidence document. Tags use a subcollection architecture at `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}` for scalability.
+**DO NOT** assume tags are stored in the evidence document. Tags use a subcollection architecture at `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` for scalability.
 
 **ALWAYS** enforce one tag per category through tagCategoryId as document ID.
 
@@ -35,6 +35,7 @@ Global collection containing predefined system categories that should exist for 
 ```
 
 **Reserved System Category IDs:**
+
 - `DocumentDate` - Date type category for document dates
 - `Privilege` - Fixed List for privilege classification (Attorney-Client, Work Product, Not Privileged)
 - `Description` - Text Area for free-form document descriptions
@@ -42,7 +43,7 @@ Global collection containing predefined system categories that should exist for 
 - `Author` - Open List for document authors
 - `Custodian` - Open List for document custodians
 
-### Matter-Specific Categories Collection: `/teams/{teamId}/matters/{matterId}/categories/{categoryId}`
+### Matter-Specific Categories Collection: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
 
 Each matter has its own categories collection that includes both system categories (copied from `/systemCategories`) and custom categories:
 
@@ -69,12 +70,13 @@ Each matter has its own categories collection that includes both system categori
 ```
 
 **Important Notes:**
+
 - System categories use reserved document IDs (e.g., `DocumentDate`, `Privilege`)
 - Custom categories use auto-generated document IDs
 - System categories cannot be deleted, only edited
 - Each matter gets its own copy of system categories during initialization
 
-### Tags Subcollection: `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}`
+### Tags Subcollection: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}`
 
 ```javascript
 {
@@ -126,27 +128,31 @@ Each matter has its own categories collection that includes both system categori
 
 1. **Global Seed**: System categories are defined in `/systemCategories` collection (one-time setup)
 2. **Matter Initialization**: When a user accesses `/organizer/categories`, the app checks if the matter has all system categories
-3. **Auto-Copy**: Missing system categories are automatically copied from `/systemCategories` to `/teams/{teamId}/matters/{matterId}/categories/`
+3. **Auto-Copy**: Missing system categories are automatically copied from `/systemCategories` to `/firms/{firmId}/matters/{matterId}/categories/`
 4. **Reserved IDs**: System categories use reserved document IDs (e.g., `DocumentDate`) instead of auto-generated IDs
 
 ### System Category Behavior
 
 **Initialization:**
+
 - System categories are automatically created when first accessing the category manager
 - Each matter gets its own copy of system categories
 - Categories are copied from `/systemCategories` to matter-specific collection
 
 **Deletion Prevention:**
+
 - System categories cannot be deleted through the UI or API
 - `SystemCategoryService.validateNotSystemCategory()` throws error on deletion attempts
 - Delete button is disabled in UI for system categories
 
 **Editing:**
+
 - System categories CAN be edited (field values, tags, etc.)
 - Changes are matter-specific and don't affect other matters
 - No automatic synchronization with `/systemCategories` after initial copy
 
 **UI Indicators:**
+
 - System categories display a "System" badge in the category list
 - System categories are sorted to appear first in the list
 - Delete functionality is disabled for system categories
@@ -154,7 +160,8 @@ Each matter has its own categories collection that includes both system categori
 ### Matter-Specific Categories
 
 All categories (system and custom) are stored at the matter level:
-- Path: `/teams/{teamId}/matters/{matterId}/categories/{categoryId}`
+
+- Path: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
 - Default matter is `general` for backward compatibility
 - Each matter has independent category data
 - System categories are copied to each matter during initialization
@@ -242,6 +249,7 @@ All categories (system and custom) are stored at the matter level:
 **Testing Page**: `http://localhost:5174/#/dev/clickable-tags`
 
 **Development Collections**:
+
 - `devTesting` - Development categories collection
 - `devTesting/config/TestTags` - Test tags subcollection
 
@@ -263,7 +271,7 @@ UI display strategy:
 ```javascript
 // Categories collection
 {
-  collection: 'teams/{teamId}/categories',
+  collection: 'firms/{firmId}/categories',
   fields: [
     { field: 'isActive', order: 'ASCENDING' },
     { field: 'createdAt', order: 'ASCENDING' }
@@ -272,7 +280,7 @@ UI display strategy:
 
 // Tags subcollection
 {
-  collection: 'teams/{teamId}/evidence/{evidenceId}/tags',
+  collection: 'firms/{firmId}/evidence/{evidenceId}/tags',
   fields: [
     { field: 'reviewRequired', order: 'ASCENDING' },
     { field: 'createdAt', order: 'ASCENDING' }
@@ -288,10 +296,10 @@ UI display strategy:
 import { SystemCategoryService } from '../services/systemCategoryService.js';
 
 // Check for missing system categories
-const missingIds = await SystemCategoryService.checkMissingCategories(teamId, matterId);
+const missingIds = await SystemCategoryService.checkMissingCategories(firmId, matterId);
 
 // Initialize missing system categories
-const result = await SystemCategoryService.initializeSystemCategories(teamId, matterId);
+const result = await SystemCategoryService.initializeSystemCategories(firmId, matterId);
 console.log(`Created ${result.created} system categories`);
 ```
 
@@ -301,8 +309,8 @@ console.log(`Created ${result.created} system categories`);
 // ALWAYS try indexed query first
 try {
   const snapshot = await db
-    .collection('teams')
-    .doc(teamId)
+    .collection('firms')
+    .doc(firmId)
     .collection('matters')
     .doc(matterId) // Can be 'general' or any other matter ID
     .collection('categories')
@@ -310,7 +318,13 @@ try {
     .get();
 } catch (error) {
   // Fallback to client-side filtering if index missing
-  const snapshot = await db.collection('teams').doc(teamId).collection('matters').doc(matterId).collection('categories').get();
+  const snapshot = await db
+    .collection('firms')
+    .doc(firmId)
+    .collection('matters')
+    .doc(matterId)
+    .collection('categories')
+    .get();
   // Filter client-side for isActive !== false
 }
 ```
@@ -330,8 +344,8 @@ if (isSystemCategory(categoryId)) {
 ```javascript
 // Direct access via tagCategoryId as document ID
 const tagDoc = await db
-  .collection('teams')
-  .doc(teamId)
+  .collection('firms')
+  .doc(firmId)
   .collection('evidence')
   .doc(evidenceId)
   .collection('tags')
@@ -349,7 +363,7 @@ const tagDoc = await db
 
 ## Cross-Reference to Other Documentation
 
-For authentication and team validation rules, see Authentication documentation.
+For authentication and firm validation rules, see Authentication documentation.
 For evidence document structure and lifecycle, see Evidence Management documentation.
 For real-time synchronization patterns, see Real-Time Updates documentation.
 For AI processing pipeline and confidence scoring, see AI Integration documentation.

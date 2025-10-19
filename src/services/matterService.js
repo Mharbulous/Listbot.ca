@@ -15,28 +15,28 @@ import {
 import { db } from './firebase.js';
 
 /**
- * MatterService - Manages matter/case operations for team-based data
+ * MatterService - Manages matter/case operations for firm-based data
  *
- * All matters are scoped to a team following the path:
- * /teams/{teamId}/matters/{matterId}
+ * All matters are scoped to a firm following the path:
+ * /firms/{firmId}/matters/{matterId}
  *
- * For solo users: teamId === userId
+ * For solo users: firmId === userId
  */
 export class MatterService {
   /**
-   * Check if a matter number already exists in the team
-   * @param {string} teamId - Team identifier
+   * Check if a matter number already exists in the firm
+   * @param {string} firmId - Firm identifier
    * @param {string} matterNumber - Matter number to check
    * @param {string|null} excludeMatterId - Matter ID to exclude from check (for updates)
    * @returns {Promise<boolean>} - True if matter number exists, false otherwise
    */
-  static async checkMatterNumberExists(teamId, matterNumber, excludeMatterId = null) {
-    if (!teamId || !matterNumber) {
+  static async checkMatterNumberExists(firmId, matterNumber, excludeMatterId = null) {
+    if (!firmId || !matterNumber) {
       return false;
     }
 
     try {
-      const mattersRef = collection(db, 'teams', teamId, 'matters');
+      const mattersRef = collection(db, 'firms', firmId, 'matters');
       const q = query(mattersRef, where('matterNumber', '==', matterNumber));
       const querySnapshot = await getDocs(q);
 
@@ -55,7 +55,7 @@ export class MatterService {
 
   /**
    * Create a new matter
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {Object} matterData - Matter information
    * @param {string} matterData.matterNumber - Human-readable matter number
    * @param {string} matterData.description - Matter description
@@ -68,29 +68,27 @@ export class MatterService {
    * @param {string} createdBy - User ID of creator
    * @returns {Promise<string>} - Created matter ID
    */
-  static async createMatter(teamId, matterData, createdBy) {
-    if (!teamId || !matterData.matterNumber) {
-      throw new Error('Team ID and matter number are required');
+  static async createMatter(firmId, matterData, createdBy) {
+    if (!firmId || !matterData.matterNumber) {
+      throw new Error('Firm ID and matter number are required');
     }
 
     try {
       // Check for duplicate matter number
-      const exists = await this.checkMatterNumberExists(teamId, matterData.matterNumber);
+      const exists = await this.checkMatterNumberExists(firmId, matterData.matterNumber);
       if (exists) {
-        throw new Error(`Matter number "${matterData.matterNumber}" already exists in this team`);
+        throw new Error(`Matter number "${matterData.matterNumber}" already exists in this firm`);
       }
 
       // Create reference with auto-generated ID
-      const mattersRef = collection(db, 'teams', teamId, 'matters');
+      const mattersRef = collection(db, 'firms', firmId, 'matters');
       const newMatterRef = doc(mattersRef);
 
       const matter = {
         matterNumber: matterData.matterNumber,
         description: matterData.description || '',
         clients: Array.isArray(matterData.clients) ? matterData.clients : [],
-        adverseParties: Array.isArray(matterData.adverseParties)
-          ? matterData.adverseParties
-          : [],
+        adverseParties: Array.isArray(matterData.adverseParties) ? matterData.adverseParties : [],
         status: matterData.status || 'active',
         archived: matterData.archived || false,
         assignedTo: Array.isArray(matterData.assignedTo) ? matterData.assignedTo : [],
@@ -103,7 +101,7 @@ export class MatterService {
       };
 
       await setDoc(newMatterRef, matter);
-      console.log(`Matter created: ${newMatterRef.id} in team ${teamId}`);
+      console.log(`Matter created: ${newMatterRef.id} in firm ${firmId}`);
 
       return newMatterRef.id;
     } catch (error) {
@@ -114,17 +112,17 @@ export class MatterService {
 
   /**
    * Get a single matter by ID
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @returns {Promise<Object|null>} Matter data or null if not found
    */
-  static async getMatter(teamId, matterId) {
-    if (!teamId || !matterId) {
+  static async getMatter(firmId, matterId) {
+    if (!firmId || !matterId) {
       return null;
     }
 
     try {
-      const matterRef = doc(db, 'teams', teamId, 'matters', matterId);
+      const matterRef = doc(db, 'firms', firmId, 'matters', matterId);
       const matterDoc = await getDoc(matterRef);
 
       if (matterDoc.exists()) {
@@ -142,17 +140,17 @@ export class MatterService {
   }
 
   /**
-   * Get all matters for a team
-   * @param {string} teamId - Team identifier
+   * Get all matters for a firm
+   * @param {string} firmId - Firm identifier
    * @returns {Promise<Array>} Array of matters
    */
-  static async getAllMatters(teamId) {
-    if (!teamId) {
+  static async getAllMatters(firmId) {
+    if (!firmId) {
       return [];
     }
 
     try {
-      const mattersRef = collection(db, 'teams', teamId, 'matters');
+      const mattersRef = collection(db, 'firms', firmId, 'matters');
       const q = query(mattersRef, orderBy('lastAccessed', 'desc'));
       const querySnapshot = await getDocs(q);
 
@@ -172,22 +170,18 @@ export class MatterService {
   }
 
   /**
-   * Get active (non-archived) matters for a team
-   * @param {string} teamId - Team identifier
+   * Get active (non-archived) matters for a firm
+   * @param {string} firmId - Firm identifier
    * @returns {Promise<Array>} Array of active matters
    */
-  static async getActiveMatters(teamId) {
-    if (!teamId) {
+  static async getActiveMatters(firmId) {
+    if (!firmId) {
       return [];
     }
 
     try {
-      const mattersRef = collection(db, 'teams', teamId, 'matters');
-      const q = query(
-        mattersRef,
-        where('archived', '==', false),
-        orderBy('lastAccessed', 'desc')
-      );
+      const mattersRef = collection(db, 'firms', firmId, 'matters');
+      const q = query(mattersRef, where('archived', '==', false), orderBy('lastAccessed', 'desc'));
       const querySnapshot = await getDocs(q);
 
       const matters = [];
@@ -207,17 +201,17 @@ export class MatterService {
 
   /**
    * Get matters assigned to a specific user
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @returns {Promise<Array>} Array of matters assigned to user
    */
-  static async getUserMatters(teamId, userId) {
-    if (!teamId || !userId) {
+  static async getUserMatters(firmId, userId) {
+    if (!firmId || !userId) {
       return [];
     }
 
     try {
-      const mattersRef = collection(db, 'teams', teamId, 'matters');
+      const mattersRef = collection(db, 'firms', firmId, 'matters');
       const q = query(
         mattersRef,
         where('assignedTo', 'array-contains', userId),
@@ -242,33 +236,27 @@ export class MatterService {
 
   /**
    * Update a matter
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @param {Object} updates - Fields to update
    * @param {string} updatedBy - User ID making the update
    * @returns {Promise<void>}
    */
-  static async updateMatter(teamId, matterId, updates, updatedBy) {
-    if (!teamId || !matterId) {
-      throw new Error('Team ID and Matter ID are required');
+  static async updateMatter(firmId, matterId, updates, updatedBy) {
+    if (!firmId || !matterId) {
+      throw new Error('Firm ID and Matter ID are required');
     }
 
     try {
       // If updating matter number, check for duplicates
       if (updates.matterNumber) {
-        const exists = await this.checkMatterNumberExists(
-          teamId,
-          updates.matterNumber,
-          matterId
-        );
+        const exists = await this.checkMatterNumberExists(firmId, updates.matterNumber, matterId);
         if (exists) {
-          throw new Error(
-            `Matter number "${updates.matterNumber}" already exists in this team`
-          );
+          throw new Error(`Matter number "${updates.matterNumber}" already exists in this firm`);
         }
       }
 
-      const matterRef = doc(db, 'teams', teamId, 'matters', matterId);
+      const matterRef = doc(db, 'firms', firmId, 'matters', matterId);
 
       // Add update metadata
       const updateData = {
@@ -278,7 +266,7 @@ export class MatterService {
       };
 
       await updateDoc(matterRef, updateData);
-      console.log(`Matter updated: ${matterId} in team ${teamId}`);
+      console.log(`Matter updated: ${matterId} in firm ${firmId}`);
     } catch (error) {
       console.error('Error updating matter:', error);
       throw error;
@@ -287,14 +275,14 @@ export class MatterService {
 
   /**
    * Archive a matter
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @param {string} updatedBy - User ID making the change
    * @returns {Promise<void>}
    */
-  static async archiveMatter(teamId, matterId, updatedBy) {
+  static async archiveMatter(firmId, matterId, updatedBy) {
     return this.updateMatter(
-      teamId,
+      firmId,
       matterId,
       {
         archived: true,
@@ -305,14 +293,14 @@ export class MatterService {
 
   /**
    * Unarchive a matter
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @param {string} updatedBy - User ID making the change
    * @returns {Promise<void>}
    */
-  static async unarchiveMatter(teamId, matterId, updatedBy) {
+  static async unarchiveMatter(firmId, matterId, updatedBy) {
     return this.updateMatter(
-      teamId,
+      firmId,
       matterId,
       {
         archived: false,
@@ -323,17 +311,17 @@ export class MatterService {
 
   /**
    * Update the last accessed timestamp
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @returns {Promise<void>}
    */
-  static async updateLastAccessed(teamId, matterId) {
-    if (!teamId || !matterId) {
+  static async updateLastAccessed(firmId, matterId) {
+    if (!firmId || !matterId) {
       return;
     }
 
     try {
-      const matterRef = doc(db, 'teams', teamId, 'matters', matterId);
+      const matterRef = doc(db, 'firms', firmId, 'matters', matterId);
       await updateDoc(matterRef, {
         lastAccessed: serverTimestamp(),
       });
@@ -345,19 +333,19 @@ export class MatterService {
 
   /**
    * Delete a matter
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {string} matterId - Matter identifier
    * @returns {Promise<void>}
    */
-  static async deleteMatter(teamId, matterId) {
-    if (!teamId || !matterId) {
-      throw new Error('Team ID and Matter ID are required');
+  static async deleteMatter(firmId, matterId) {
+    if (!firmId || !matterId) {
+      throw new Error('Firm ID and Matter ID are required');
     }
 
     try {
-      const matterRef = doc(db, 'teams', teamId, 'matters', matterId);
+      const matterRef = doc(db, 'firms', firmId, 'matters', matterId);
       await deleteDoc(matterRef);
-      console.log(`Matter deleted: ${matterId} from team ${teamId}`);
+      console.log(`Matter deleted: ${matterId} from firm ${firmId}`);
     } catch (error) {
       console.error('Error deleting matter:', error);
       throw error;

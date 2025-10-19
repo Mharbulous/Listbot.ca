@@ -3,7 +3,7 @@
 ## Database Path
 
 ```
-/teams/{teamId}/matters/general/evidence/{fileHash}
+/firms/{firmId}/matters/general/evidence/{fileHash}
 ```
 
 **IMPORTANT**: Document ID is the SHA-256 hash of the file content (64 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
@@ -75,7 +75,7 @@
 ### Path Structure
 
 ```
-/teams/{teamId}/matters/general/evidence/{evidenceId}/sourceMetadata/{metadataHash}
+/firms/{firmId}/matters/general/evidence/{evidenceId}/sourceMetadata/{metadataHash}
 ```
 
 ### Purpose
@@ -111,7 +111,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ### Path Structure
 
 ```
-/teams/{teamId}/matters/general/evidence/{evidenceId}/tags/{categoryId}
+/firms/{firmId}/matters/general/evidence/{evidenceId}/tags/{categoryId}
 ```
 
 ### Tag Document Schema
@@ -156,18 +156,18 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ## Firestore Security Rules
 
 ```javascript
-match /teams/{teamId}/matters/general/evidence/{fileHash} {
+match /firms/{firmId}/matters/general/evidence/{fileHash} {
   // Evidence document access
   // Note: fileHash is the document ID (SHA-256, 64 hex chars)
   allow read: if request.auth != null &&
-                 request.auth.token.teamId == teamId;
+                 request.auth.token.firmId == firmId;
 
   allow create: if request.auth != null &&
-                   request.auth.token.teamId == teamId &&
+                   request.auth.token.firmId == firmId &&
                    validateEvidenceCreate(request.resource.data, fileHash);
 
   allow update: if request.auth != null &&
-                   request.auth.token.teamId == teamId &&
+                   request.auth.token.firmId == firmId &&
                    validateEvidenceUpdate(request.resource.data, resource.data);
 
   allow delete: if false; // NEVER allow deletion
@@ -175,10 +175,10 @@ match /teams/{teamId}/matters/general/evidence/{fileHash} {
   // Tag subcollection
   match /tags/{categoryId} {
     allow read: if request.auth != null &&
-                   request.auth.token.teamId == teamId;
+                   request.auth.token.firmId == firmId;
 
     allow write: if request.auth != null &&
-                    request.auth.token.teamId == teamId &&
+                    request.auth.token.firmId == firmId &&
                     request.resource.id == request.resource.data.categoryId &&
                     validateTagDocument(request.resource.data);
   }
@@ -208,7 +208,7 @@ function validateTagDocument(data) {
 }
 ```
 
-**Note**: For complete security rule patterns, custom claims structure, and team-based access control implementation, see [security-rules.md](security-rules.md).
+**Note**: For complete security rule patterns, custom claims structure, and firm-based access control implementation, see [security-rules.md](security-rules.md).
 
 ```javascript
 
@@ -220,8 +220,8 @@ function validateTagDocument(data) {
 
 ```javascript
 const evidenceDoc = await db
-  .collection('teams')
-  .doc(teamId)
+  .collection('firms')
+  .doc(firmId)
   .collection('matters')
   .doc('general')
   .collection('evidence')
@@ -240,7 +240,7 @@ const tagMetrics = {
 };
 ```
 
-**Note**: For team member management and data migration workflows that affect evidence document access patterns, see [team-workflows.md](team-workflows.md).
+**Note**: For firm member management and data migration workflows that affect evidence document access patterns, see [firm-workflows.md](firm-workflows.md).
 
 ```javascript
 
@@ -251,8 +251,8 @@ const tagMetrics = {
 ```javascript
 // Get all tags
 const tagsSnapshot = await db
-  .collection('teams')
-  .doc(teamId)
+  .collection('firms')
+  .doc(firmId)
   .collection('matters')
   .doc('general')
   .collection('evidence')
@@ -262,8 +262,8 @@ const tagsSnapshot = await db
 
 // Get pending review tags only
 const pendingTags = await db
-  .collection('teams')
-  .doc(teamId)
+  .collection('firms')
+  .doc(firmId)
   .collection('matters')
   .doc('general')
   .collection('evidence')
@@ -279,8 +279,8 @@ const pendingTags = await db
 // MUST use transaction to maintain counter integrity
 await db.runTransaction(async (transaction) => {
   const evidenceRef = db
-    .collection('teams')
-    .doc(teamId)
+    .collection('firms')
+    .doc(firmId)
     .collection('matters')
     .doc('general')
     .collection('evidence')
@@ -389,11 +389,11 @@ Collection: tags
 
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence
 - **NEVER** store file content in Firestore
-- **USE** fileHash (document ID) to locate files in Storage: `teams/{teamId}/matters/general/uploads/{fileHash}.{extension}`
+- **USE** fileHash (document ID) to locate files in Storage: `firms/{firmId}/matters/general/uploads/{fileHash}.{extension}`
 - **ALWAYS** verify metadata hash exists in sourceMetadata collection
 - **ACCESS** file using: `evidence.id` (which is the fileHash)
 
-**Note**: For understanding team-based data isolation including solo user patterns where teamId === userId, see [SoloTeamMatters.md](SoloTeamMatters.md).
+**Note**: For understanding firm-based data isolation including solo user patterns where firmId === userId, see [SoloFirmMatters.md](SoloFirmMatters.md).
 
 ### Processing Workflow
 

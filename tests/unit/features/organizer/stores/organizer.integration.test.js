@@ -17,7 +17,7 @@ vi.mock('../../../services/firebase.js', () => ({
 // Mock auth store
 vi.mock('../../../core/stores/auth.js', () => ({
   useAuthStore: () => ({
-    currentTeam: 'mock-team-id',
+    currentFirm: 'mock-firm-id',
     isAuthenticated: true,
   }),
 }));

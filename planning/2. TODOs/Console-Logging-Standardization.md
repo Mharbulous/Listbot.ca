@@ -131,7 +131,7 @@ Priority files based on frequency and visibility:
 
 - [ ] Test production build to ensure `console.debug()` can be filtered
 - [ ] Verify important monitoring logs still appear in production
-- [ ] Document new logging standards for team
+- [ ] Document new logging standards for firm
 
 ## File-by-File Changes Required
 
@@ -140,13 +140,13 @@ Priority files based on frequency and visibility:
 - `src/router/guards/auth.js` - 8 debug logs to convert
 - `src/views/FileUpload.vue` - 2 permanent logs to convert
 - `src/core/stores/auth.js` - 6 permanent logs to convert
-- `src/core/stores/team.js` - 8 permanent logs to convert
+- `src/core/stores/firm.js` - 8 permanent logs to convert
 
 ### Medium Priority (Developer Experience):
 
 - `src/composables/useFolderAnalysis.js` - 6 warning logs to review
 - `src/services/authService.js` - 3 error logs (already correct)
-- `src/services/teamService.js` - 8 permanent logs to convert
+- `src/services/firmService.js` - 8 permanent logs to convert
 - `src/services/userService.js` - 2 error logs (already correct)
 
 ### Low Priority (Specialized Areas):
@@ -161,7 +161,7 @@ Priority files based on frequency and visibility:
 
 - **Clear debugging**: `console.debug()` for temporary development logs
 - **Easy filtering**: Can hide debug logs in production browsers
-- **Consistent patterns**: New team members understand logging levels
+- **Consistent patterns**: New firm members understand logging levels
 
 ### For Production:
 
@@ -216,7 +216,7 @@ Priority files based on frequency and visibility:
 - Structured logging with metadata objects
 - Log aggregation for production monitoring
 
-### Team Guidelines:
+### Firm Guidelines:
 
 - Add logging standards to development documentation
 - Include in code review checklist

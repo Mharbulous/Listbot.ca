@@ -74,7 +74,7 @@ Create a simple file list view with manual tag assignment capability, providing 
 
 ```javascript
 // NEW: Evidence Database Structure (Database 2: Evidence)
-// Collection: /teams/{teamId}/evidence/{evidenceId}
+// Collection: /firms/{firmId}/evidence/{evidenceId}
 {
   evidenceId: "auto-generated", // Firestore auto-ID
 
@@ -153,7 +153,7 @@ stores/organizer.js
 
 - Existing upload system uses hash-based file identification
 - Firebase Storage already configured and working
-- Authentication system with team-based isolation (teamId === userId for solo users)
+- Authentication system with firm-based isolation (firmId === userId for solo users)
 - Vuetify components and styling system established
 
 ## Implementation Steps
@@ -168,7 +168,7 @@ stores/organizer.js
 
 **Implementation Notes**: Migration system was eliminated in favor of direct integration with upload workflow for cleaner architecture.
 
-- [x] Create new Evidence collection in Firestore at `/teams/{teamId}/evidence/`
+- [x] Create new Evidence collection in Firestore at `/firms/{firmId}/evidence/`
 - [x] Design evidence document schema with storage references (refined with displayCopy structure)
 - [x] ~~Create migration script~~ **REPLACED:** Direct upload integration eliminates migration need
 - [x] Update Firestore security rules for Evidence collection (existing rules already support new collection)
@@ -236,7 +236,7 @@ stores/organizer.js
 
 - [x] Connect to existing Firebase storage system using Firebase SDK - EvidenceService.js
 - [x] Leverage existing file upload metadata without breaking current functionality - Integration in useFileMetadata.js
-- [x] Ensure team-based data isolation maintains existing security model - Team-scoped Evidence collection
+- [x] Ensure firm-based data isolation maintains existing security model - Firm-scoped Evidence collection
 - [x] Test integration with existing authentication system - Working with existing auth store and guards
 
 ### Step 7: Testing and Polish (Medium Complexity) ✅ **COMPLETED**
@@ -392,13 +392,13 @@ src/features/organizer/
 ### Firestore Rules
 
 ```javascript
-// Ensure users can only access their own team's files
+// Ensure users can only access their own firm's files
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /fileMetadata/{fileId} {
       allow read, write: if request.auth != null
-        && resource.data.teamId == request.auth.uid;
+        && resource.data.firmId == request.auth.uid;
     }
   }
 }
@@ -408,7 +408,7 @@ service cloud.firestore {
 
 - Sanitize tag input to prevent XSS
 - Validate file access permissions
-- Ensure team isolation in all operations
+- Ensure firm isolation in all operations
 
 ## Migration Strategy
 
@@ -429,7 +429,7 @@ service cloud.firestore {
 ### Existing Systems
 
 - **Upload System**: Leverage existing file metadata and hash-based deduplication
-- **Authentication**: Use existing team-based isolation (teamId === userId for solo users)
+- **Authentication**: Use existing firm-based isolation (firmId === userId for solo users)
 - **Storage**: Connect to existing Firebase Storage for file access
 - **Routing**: Integrate with existing Vue Router and navigation
 
@@ -448,7 +448,7 @@ service cloud.firestore {
 - [ ] Users can assign text-based tags to any file
 - [ ] Users can search/filter files by tag text
 - [ ] System maintains existing upload functionality
-- [ ] All operations respect team-based data isolation
+- [ ] All operations respect firm-based data isolation
 
 ### Performance Requirements
 

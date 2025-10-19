@@ -3,7 +3,7 @@
 **Document Purpose**: Track all Vitest test suites in the Bookkeeper application, including creation, modification, and deletion history.
 
 **Last Updated**: 2025-01-20 (Memory Leak Tests - Complete Resolution)  
-**Maintained By**: Development Team
+**Maintained By**: Development Firm
 
 ---
 

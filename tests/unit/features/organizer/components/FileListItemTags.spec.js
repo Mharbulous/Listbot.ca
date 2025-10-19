@@ -12,16 +12,17 @@ vi.mock('../../../../../src/features/organizer/components/TagSelector.vue', () =
     name: 'TagSelector',
     template: '<div class="tag-selector-mock">TagSelector Mock</div>',
     props: ['evidence', 'loading'],
-    emits: ['tags-updated', 'migrate-legacy']
-  }
+    emits: ['tags-updated', 'migrate-legacy'],
+  },
 }));
 
 vi.mock('../../../../../src/features/organizer/components/AITagChip.vue', () => ({
   default: {
     name: 'AITagChip',
-    template: '<div class="ai-tag-chip-mock" :class="$attrs.class">AITagChip Mock: {{ tag.tagName }}</div>',
-    props: ['tag', 'showStatusActions']
-  }
+    template:
+      '<div class="ai-tag-chip-mock" :class="$attrs.class">AITagChip Mock: {{ tag.tagName }}</div>',
+    props: ['tag', 'showStatusActions'],
+  },
 }));
 
 vi.mock('../../../../../src/features/organizer/components/TagContextMenu.vue', () => ({
@@ -32,17 +33,17 @@ vi.mock('../../../../../src/features/organizer/components/TagContextMenu.vue', (
     emits: ['show-in-folders', 'filter-by-tag', 'tag-action'],
     methods: {
       openMenu: vi.fn(),
-      closeMenu: vi.fn()
-    }
-  }
+      closeMenu: vi.fn(),
+    },
+  },
 }));
 
 // Mock tagSubcollectionService
 const mockTagService = {
-  getTagsByStatus: vi.fn()
+  getTagsByStatus: vi.fn(),
 };
 vi.mock('../../../../../src/features/organizer/services/tagSubcollectionService.js', () => ({
-  default: mockTagService
+  default: mockTagService,
 }));
 
 describe('FileListItemTags.vue', () => {
@@ -60,7 +61,7 @@ describe('FileListItemTags.vue', () => {
     authStore = useAuthStore();
 
     // Mock auth store
-    vi.spyOn(authStore, 'currentTeam', 'get').mockReturnValue('team-123');
+    vi.spyOn(authStore, 'currentFirm', 'get').mockReturnValue('firm-123');
 
     // Set up mock evidence data
     mockEvidence = {
@@ -68,12 +69,10 @@ describe('FileListItemTags.vue', () => {
       fileName: 'test-document.pdf',
       tags: {
         'doc-type': [
-          { tagName: 'Invoice', categoryId: 'doc-type', metadata: { color: 'primary' } }
+          { tagName: 'Invoice', categoryId: 'doc-type', metadata: { color: 'primary' } },
         ],
-        'client': [
-          { tagName: 'ABC Corp', categoryId: 'client', metadata: { color: 'secondary' } }
-        ]
-      }
+        client: [{ tagName: 'ABC Corp', categoryId: 'client', metadata: { color: 'secondary' } }],
+      },
     };
 
     // Clear service mock
@@ -81,7 +80,7 @@ describe('FileListItemTags.vue', () => {
     mockTagService.getTagsByStatus.mockResolvedValue({
       pending: [],
       approved: [],
-      rejected: []
+      rejected: [],
     });
   });
 
@@ -95,15 +94,15 @@ describe('FileListItemTags.vue', () => {
   const createWrapper = (props = {}) => {
     return mount(FileListItemTags, {
       global: {
-        plugins: [vuetify, pinia]
+        plugins: [vuetify, pinia],
       },
       props: {
         evidence: mockEvidence,
         readonly: false,
         tagUpdateLoading: false,
         tagInputPlaceholder: 'Add tags...',
-        ...props
-      }
+        ...props,
+      },
     });
   };
 
@@ -118,9 +117,9 @@ describe('FileListItemTags.vue', () => {
       wrapper = createWrapper({
         readonly: true,
         tagUpdateLoading: true,
-        tagInputPlaceholder: 'Custom placeholder'
+        tagInputPlaceholder: 'Custom placeholder',
       });
-      
+
       expect(wrapper.vm.props.readonly).toBe(true);
       expect(wrapper.vm.props.tagUpdateLoading).toBe(true);
       expect(wrapper.vm.props.tagInputPlaceholder).toBe('Custom placeholder');
@@ -140,22 +139,18 @@ describe('FileListItemTags.vue', () => {
     it('should load subcollection tags on mount', async () => {
       const mockTagData = {
         pending: [
-          { id: 'ai-1', tagName: 'AI Tag 1', source: 'ai', status: 'pending', confidence: 85 }
+          { id: 'ai-1', tagName: 'AI Tag 1', source: 'ai', status: 'pending', confidence: 85 },
         ],
-        approved: [
-          { id: 'manual-1', tagName: 'Manual Tag', source: 'manual', status: 'approved' }
-        ],
-        rejected: [
-          { id: 'ai-2', tagName: 'Rejected Tag', source: 'ai', status: 'rejected' }
-        ]
+        approved: [{ id: 'manual-1', tagName: 'Manual Tag', source: 'manual', status: 'approved' }],
+        rejected: [{ id: 'ai-2', tagName: 'Rejected Tag', source: 'ai', status: 'rejected' }],
       };
 
       mockTagService.getTagsByStatus.mockResolvedValue(mockTagData);
-      
+
       wrapper = createWrapper();
       await nextTick();
 
-      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-1', 'team-123');
+      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-1', 'firm-123');
       expect(wrapper.vm.pendingTags).toEqual(mockTagData.pending);
       expect(wrapper.vm.approvedTags).toEqual(mockTagData.approved);
       expect(wrapper.vm.rejectedTags).toEqual(mockTagData.rejected);
@@ -164,19 +159,19 @@ describe('FileListItemTags.vue', () => {
     it('should reload tags when evidence changes', async () => {
       wrapper = createWrapper();
       await nextTick();
-      
+
       mockTagService.getTagsByStatus.mockClear();
-      
+
       const newEvidence = { ...mockEvidence, id: 'evidence-2' };
       await wrapper.setProps({ evidence: newEvidence });
 
-      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-2', 'team-123');
+      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-2', 'firm-123');
     });
 
     it('should handle loading errors gracefully', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockTagService.getTagsByStatus.mockRejectedValue(new Error('Service error'));
-      
+
       wrapper = createWrapper();
       await nextTick();
 
@@ -184,30 +179,30 @@ describe('FileListItemTags.vue', () => {
       expect(wrapper.vm.approvedTags).toEqual([]);
       expect(wrapper.vm.rejectedTags).toEqual([]);
       expect(wrapper.vm.loadingTags).toBe(false);
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should not load tags when no evidence ID', async () => {
       const evidenceWithoutId = { ...mockEvidence, id: null };
       wrapper = createWrapper({ evidence: evidenceWithoutId });
-      
+
       await nextTick();
 
       expect(mockTagService.getTagsByStatus).not.toHaveBeenCalled();
     });
 
-    it('should not load tags when no team ID', async () => {
-      vi.spyOn(authStore, 'currentTeam', 'get').mockReturnValue(null);
-      
+    it('should not load tags when no firm ID', async () => {
+      vi.spyOn(authStore, 'currentFirm', 'get').mockReturnValue(null);
+
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       wrapper = createWrapper();
-      
+
       await nextTick();
 
       expect(mockTagService.getTagsByStatus).not.toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('[FileListItemTags] No team ID available');
-      
+      expect(consoleSpy).toHaveBeenCalledWith('[FileListItemTags] No firm ID available');
+
       consoleSpy.mockRestore();
     });
   });
@@ -216,15 +211,21 @@ describe('FileListItemTags.vue', () => {
     beforeEach(async () => {
       const mockTagData = {
         pending: [
-          { id: 'ai-1', tagName: 'AI Pending', source: 'ai', status: 'pending', confidence: 85 }
+          { id: 'ai-1', tagName: 'AI Pending', source: 'ai', status: 'pending', confidence: 85 },
         ],
         approved: [
           { id: 'manual-1', tagName: 'Manual Tag', source: 'manual', status: 'approved' },
-          { id: 'ai-approved', tagName: 'AI Approved', source: 'ai', status: 'approved', confidence: 90 }
+          {
+            id: 'ai-approved',
+            tagName: 'AI Approved',
+            source: 'ai',
+            status: 'approved',
+            confidence: 90,
+          },
         ],
         rejected: [
-          { id: 'ai-2', tagName: 'AI Rejected', source: 'ai', status: 'rejected', confidence: 60 }
-        ]
+          { id: 'ai-2', tagName: 'AI Rejected', source: 'ai', status: 'rejected', confidence: 60 },
+        ],
       };
 
       mockTagService.getTagsByStatus.mockResolvedValue(mockTagData);
@@ -234,7 +235,7 @@ describe('FileListItemTags.vue', () => {
 
     it('should compute structuredHumanTags correctly', () => {
       const humanTags = wrapper.vm.structuredHumanTags;
-      
+
       expect(humanTags).toHaveLength(1);
       expect(humanTags[0].tagName).toBe('Manual Tag');
       expect(humanTags[0].source).toBe('manual');
@@ -242,21 +243,21 @@ describe('FileListItemTags.vue', () => {
 
     it('should compute structuredAITags correctly', () => {
       const aiTags = wrapper.vm.structuredAITags;
-      
+
       expect(aiTags).toHaveLength(3);
-      
+
       // Check pending tag
-      const pendingTag = aiTags.find(tag => tag.displayStatus === 'pending');
+      const pendingTag = aiTags.find((tag) => tag.displayStatus === 'pending');
       expect(pendingTag.tagName).toBe('AI Pending');
       expect(pendingTag.status).toBe('pending');
-      
+
       // Check approved AI tag
-      const approvedTag = aiTags.find(tag => tag.displayStatus === 'approved');
+      const approvedTag = aiTags.find((tag) => tag.displayStatus === 'approved');
       expect(approvedTag.tagName).toBe('AI Approved');
       expect(approvedTag.status).toBe('approved');
-      
+
       // Check rejected tag
-      const rejectedTag = aiTags.find(tag => tag.displayStatus === 'rejected');
+      const rejectedTag = aiTags.find((tag) => tag.displayStatus === 'rejected');
       expect(rejectedTag.tagName).toBe('AI Rejected');
       expect(rejectedTag.status).toBe('rejected');
     });
@@ -277,14 +278,14 @@ describe('FileListItemTags.vue', () => {
   describe('Rendering Modes', () => {
     it('should render TagSelector when not readonly', () => {
       wrapper = createWrapper({ readonly: false });
-      
+
       const tagSelector = wrapper.find('.tag-selector-mock');
       expect(tagSelector.exists()).toBe(true);
     });
 
     it('should not render TagSelector when readonly', () => {
       wrapper = createWrapper({ readonly: true });
-      
+
       const tagSelector = wrapper.find('.tag-selector-mock');
       expect(tagSelector.exists()).toBe(false);
     });
@@ -292,15 +293,13 @@ describe('FileListItemTags.vue', () => {
     it('should render tags in readonly mode when hasAnyTags is true', async () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [],
-        approved: [
-          { id: 'tag-1', tagName: 'Test Tag', source: 'manual', status: 'approved' }
-        ],
-        rejected: []
+        approved: [{ id: 'tag-1', tagName: 'Test Tag', source: 'manual', status: 'approved' }],
+        rejected: [],
       });
-      
+
       wrapper = createWrapper({ readonly: true });
       await nextTick();
-      
+
       const readonlyTags = wrapper.find('.tags-readonly');
       expect(readonlyTags.exists()).toBe(true);
     });
@@ -309,12 +308,12 @@ describe('FileListItemTags.vue', () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [],
         approved: [],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper({ readonly: true });
       await nextTick();
-      
+
       const noTags = wrapper.find('.no-tags');
       expect(noTags.exists()).toBe(true);
       expect(noTags.text()).toContain('No tags');
@@ -325,13 +324,19 @@ describe('FileListItemTags.vue', () => {
     beforeEach(async () => {
       const mockTagData = {
         pending: [
-          { id: 'ai-1', tagName: 'AI Pending', source: 'ai', status: 'pending', confidence: 85 }
+          { id: 'ai-1', tagName: 'AI Pending', source: 'ai', status: 'pending', confidence: 85 },
         ],
         approved: [
           { id: 'manual-1', tagName: 'Manual Tag', source: 'manual', status: 'approved' },
-          { id: 'ai-approved', tagName: 'AI Approved', source: 'ai', status: 'approved', confidence: 90 }
+          {
+            id: 'ai-approved',
+            tagName: 'AI Approved',
+            source: 'ai',
+            status: 'approved',
+            confidence: 90,
+          },
         ],
-        rejected: []
+        rejected: [],
       };
 
       mockTagService.getTagsByStatus.mockResolvedValue(mockTagData);
@@ -367,17 +372,17 @@ describe('FileListItemTags.vue', () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [],
         approved: [
-          { 
-            id: 'tag-1', 
-            tagName: 'Test Tag', 
-            source: 'manual', 
+          {
+            id: 'tag-1',
+            tagName: 'Test Tag',
+            source: 'manual',
             status: 'approved',
-            metadata: { categoryId: 'doc-type', categoryName: 'Document Type', color: 'primary' }
-          }
+            metadata: { categoryId: 'doc-type', categoryName: 'Document Type', color: 'primary' },
+          },
         ],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper({ readonly: true });
       await nextTick();
     });
@@ -386,12 +391,12 @@ describe('FileListItemTags.vue', () => {
       const mockEvent = {
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
-        currentTarget: document.createElement('div')
+        currentTarget: document.createElement('div'),
       };
 
       const tag = {
         tagName: 'Test Tag',
-        metadata: { categoryId: 'doc-type', categoryName: 'Document Type', color: 'primary' }
+        metadata: { categoryId: 'doc-type', categoryName: 'Document Type', color: 'primary' },
       };
 
       wrapper.vm.handleTagContextMenu(mockEvent, tag, 'human');
@@ -402,7 +407,7 @@ describe('FileListItemTags.vue', () => {
         tagName: 'Test Tag',
         categoryId: 'doc-type',
         categoryName: 'Document Type',
-        source: 'manual'
+        source: 'manual',
       });
     });
 
@@ -410,7 +415,7 @@ describe('FileListItemTags.vue', () => {
       const mockEvent = {
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
-        currentTarget: document.createElement('div')
+        currentTarget: document.createElement('div'),
       };
 
       const tag = { tagName: 'Test Tag' };
@@ -422,14 +427,14 @@ describe('FileListItemTags.vue', () => {
         tagInfo: expect.objectContaining({ tagName: 'Test Tag' }),
         tagType: 'human',
         event: mockEvent,
-        evidence: mockEvidence
+        evidence: mockEvidence,
       });
     });
 
     it('should render TagContextMenu when currentContextTag is set', async () => {
       wrapper.vm.currentContextTag = {
         tagName: 'Test Tag',
-        categoryId: 'doc-type'
+        categoryId: 'doc-type',
       };
 
       await nextTick();
@@ -442,7 +447,7 @@ describe('FileListItemTags.vue', () => {
   describe('Event Handlers', () => {
     it('should handle tags-updated event from TagSelector', () => {
       wrapper = createWrapper({ readonly: false });
-      
+
       const tagSelector = wrapper.findComponent({ name: 'TagSelector' });
       tagSelector.vm.$emit('tags-updated');
 
@@ -451,47 +456,47 @@ describe('FileListItemTags.vue', () => {
 
     it('should handle migrate-legacy event from TagSelector', () => {
       wrapper = createWrapper({ readonly: false });
-      
+
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+
       wrapper.vm.handleMigrateLegacy();
 
       expect(consoleSpy).toHaveBeenCalledWith('Legacy tag migration requested for:', 'evidence-1');
       expect(wrapper.emitted('migrate-legacy')).toHaveLength(1);
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should handle show-in-folders event', () => {
       wrapper = createWrapper();
-      
+
       const data = { tagName: 'Test Tag', categoryId: 'doc-type' };
       wrapper.vm.handleShowInFolders(data);
 
       expect(wrapper.emitted('show-in-folders')).toHaveLength(1);
       expect(wrapper.emitted('show-in-folders')[0][0]).toMatchObject({
         ...data,
-        evidence: mockEvidence
+        evidence: mockEvidence,
       });
     });
 
     it('should handle filter-by-tag event', () => {
       wrapper = createWrapper();
-      
+
       const data = { tagName: 'Test Tag', filterQuery: 'tag:"Test Tag"' };
       wrapper.vm.handleFilterByTag(data);
 
       expect(wrapper.emitted('filter-by-tag')).toHaveLength(1);
       expect(wrapper.emitted('filter-by-tag')[0][0]).toMatchObject({
         ...data,
-        evidence: mockEvidence
+        evidence: mockEvidence,
       });
     });
 
     it('should handle tag-action events', () => {
       wrapper = createWrapper();
       wrapper.vm.currentContextTag = { tagName: 'Test Tag' };
-      
+
       const data = { action: 'edit', tagName: 'Test Tag' };
       wrapper.vm.handleTagAction('edit', data);
 
@@ -500,13 +505,13 @@ describe('FileListItemTags.vue', () => {
         action: 'edit',
         data: data,
         evidence: mockEvidence,
-        tagInfo: wrapper.vm.currentContextTag
+        tagInfo: wrapper.vm.currentContextTag,
       });
     });
 
     it('should handle tag error events', () => {
       wrapper = createWrapper();
-      
+
       const error = new Error('Tag operation failed');
       wrapper.vm.handleTagError(error);
 
@@ -523,7 +528,7 @@ describe('FileListItemTags.vue', () => {
     it('should handle AI tag approval', async () => {
       const loadTagsSpy = vi.spyOn(wrapper.vm, 'loadSubcollectionTags').mockResolvedValue();
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+
       const tagInfo = { id: 'ai-tag-1', tagName: 'AI Tag', source: 'ai' };
       await wrapper.vm.handleApproveAI(tagInfo);
 
@@ -531,7 +536,7 @@ describe('FileListItemTags.vue', () => {
       expect(wrapper.emitted('tag-action')).toHaveLength(1);
       expect(wrapper.emitted('tag-action')[0][0].action).toBe('approve-ai');
       expect(loadTagsSpy).toHaveBeenCalled();
-      
+
       consoleSpy.mockRestore();
       loadTagsSpy.mockRestore();
     });
@@ -539,7 +544,7 @@ describe('FileListItemTags.vue', () => {
     it('should handle AI tag rejection', async () => {
       const loadTagsSpy = vi.spyOn(wrapper.vm, 'loadSubcollectionTags').mockResolvedValue();
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+
       const tagInfo = { id: 'ai-tag-1', tagName: 'AI Tag', source: 'ai' };
       await wrapper.vm.handleRejectAI(tagInfo);
 
@@ -547,7 +552,7 @@ describe('FileListItemTags.vue', () => {
       expect(wrapper.emitted('tag-action')).toHaveLength(1);
       expect(wrapper.emitted('tag-action')[0][0].action).toBe('reject-ai');
       expect(loadTagsSpy).toHaveBeenCalled();
-      
+
       consoleSpy.mockRestore();
       loadTagsSpy.mockRestore();
     });
@@ -555,13 +560,13 @@ describe('FileListItemTags.vue', () => {
     it('should handle AI action errors', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.spyOn(wrapper.vm, 'loadSubcollectionTags').mockRejectedValue(new Error('Load failed'));
-      
+
       const tagInfo = { id: 'ai-tag-1', tagName: 'AI Tag', source: 'ai' };
       await wrapper.vm.handleApproveAI(tagInfo);
 
       expect(consoleSpy).toHaveBeenCalledWith('Failed to approve AI tag:', expect.any(Error));
       expect(wrapper.emitted('tag-error')).toHaveLength(1);
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -571,16 +576,16 @@ describe('FileListItemTags.vue', () => {
       wrapper = createWrapper();
       await nextTick();
 
-      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-1', 'team-123');
+      expect(mockTagService.getTagsByStatus).toHaveBeenCalledWith('evidence-1', 'firm-123');
     });
 
     it('should handle service returning null data gracefully', async () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: null,
         approved: null,
-        rejected: null
+        rejected: null,
       });
-      
+
       wrapper = createWrapper();
       await nextTick();
 
@@ -591,9 +596,9 @@ describe('FileListItemTags.vue', () => {
 
     it('should reload tags after handleTagsUpdated', async () => {
       wrapper = createWrapper({ readonly: false });
-      
+
       mockTagService.getTagsByStatus.mockClear();
-      
+
       wrapper.vm.handleTagsUpdated();
       await nextTick();
 
@@ -606,11 +611,11 @@ describe('FileListItemTags.vue', () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [],
         approved: [
-          { id: 'tag-1', tagName: 'Tag Without Metadata', source: 'manual', status: 'approved' }
+          { id: 'tag-1', tagName: 'Tag Without Metadata', source: 'manual', status: 'approved' },
         ],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper({ readonly: true });
       await nextTick();
 
@@ -622,14 +627,16 @@ describe('FileListItemTags.vue', () => {
     it('should handle malformed AI tag data', async () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [
-          { /* missing required fields */ },
+          {
+            /* missing required fields */
+          },
           null,
-          { id: 'valid-tag', tagName: 'Valid Tag', source: 'ai', confidence: 80 }
+          { id: 'valid-tag', tagName: 'Valid Tag', source: 'ai', confidence: 80 },
         ],
         approved: [],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper();
       await nextTick();
 
@@ -640,11 +647,11 @@ describe('FileListItemTags.vue', () => {
 
     it('should handle context menu for tags with missing metadata', () => {
       wrapper = createWrapper({ readonly: true });
-      
+
       const mockEvent = {
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
-        currentTarget: document.createElement('div')
+        currentTarget: document.createElement('div'),
       };
 
       const tagWithoutMetadata = { tagName: 'Minimal Tag' };
@@ -656,13 +663,13 @@ describe('FileListItemTags.vue', () => {
       expect(wrapper.vm.currentContextTag).toMatchObject({
         tagName: 'Minimal Tag',
         categoryId: null,
-        categoryName: 'Unknown'
+        categoryName: 'Unknown',
       });
     });
 
     it('should handle empty evidence gracefully', () => {
       const emptyEvidence = { id: 'empty', fileName: 'empty.pdf' };
-      
+
       expect(() => {
         wrapper = createWrapper({ evidence: emptyEvidence });
       }).not.toThrow();
@@ -671,12 +678,12 @@ describe('FileListItemTags.vue', () => {
     it('should provide default confidence values for AI tags', () => {
       wrapper = createWrapper();
       wrapper.vm.approvedTags = [
-        { id: 'ai-no-conf', tagName: 'AI No Confidence', source: 'ai', status: 'approved' }
+        { id: 'ai-no-conf', tagName: 'AI No Confidence', source: 'ai', status: 'approved' },
       ];
 
       const aiTags = wrapper.vm.structuredAITags;
-      const tagWithoutConf = aiTags.find(tag => tag.tagName === 'AI No Confidence');
-      
+      const tagWithoutConf = aiTags.find((tag) => tag.tagName === 'AI No Confidence');
+
       expect(tagWithoutConf.confidence).toBe(80); // Default value
     });
   });
@@ -685,12 +692,12 @@ describe('FileListItemTags.vue', () => {
     it('should not reload tags unnecessarily when other props change', async () => {
       wrapper = createWrapper();
       await nextTick();
-      
+
       mockTagService.getTagsByStatus.mockClear();
-      
+
       // Change non-evidence prop
       await wrapper.setProps({ readonly: true });
-      
+
       expect(mockTagService.getTagsByStatus).not.toHaveBeenCalled();
     });
 
@@ -700,15 +707,15 @@ describe('FileListItemTags.vue', () => {
         tagName: `AI Tag ${i}`,
         source: 'ai',
         status: 'pending',
-        confidence: 70 + (i % 30)
+        confidence: 70 + (i % 30),
       }));
 
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: largePendingTags,
         approved: [],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper();
       await nextTick();
 
@@ -722,25 +729,25 @@ describe('FileListItemTags.vue', () => {
       mockTagService.getTagsByStatus.mockResolvedValue({
         pending: [],
         approved: [
-          { 
-            id: 'tag-1', 
-            tagName: 'Test Tag', 
-            source: 'manual', 
+          {
+            id: 'tag-1',
+            tagName: 'Test Tag',
+            source: 'manual',
             status: 'approved',
-            metadata: { categoryId: 'doc-type', color: 'primary' }
-          }
+            metadata: { categoryId: 'doc-type', color: 'primary' },
+          },
         ],
-        rejected: []
+        rejected: [],
       });
-      
+
       wrapper = createWrapper({ readonly: true });
       await nextTick();
     });
 
     it('should have proper context menu triggers', () => {
       const humanTags = wrapper.findAll('.human-tag');
-      
-      humanTags.forEach(tag => {
+
+      humanTags.forEach((tag) => {
         expect(tag.attributes('role')).toBeTruthy();
       });
     });
@@ -748,7 +755,7 @@ describe('FileListItemTags.vue', () => {
     it('should provide visual indicators for different tag types', () => {
       const humanTags = wrapper.findAll('.human-tag');
       expect(humanTags).toHaveLength(1);
-      
+
       // Should have distinctive styling for human vs AI tags
       expect(humanTags[0].classes()).toContain('human-tag');
     });
@@ -757,7 +764,7 @@ describe('FileListItemTags.vue', () => {
   describe('Component Cleanup', () => {
     it('should clean up properly on unmount', () => {
       wrapper = createWrapper();
-      
+
       expect(() => {
         wrapper.unmount();
       }).not.toThrow();
@@ -765,17 +772,20 @@ describe('FileListItemTags.vue', () => {
 
     it('should handle unmount during async operations', async () => {
       // Simulate slow service response
-      mockTagService.getTagsByStatus.mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve({ pending: [], approved: [], rejected: [] }), 100))
+      mockTagService.getTagsByStatus.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ pending: [], approved: [], rejected: [] }), 100)
+          )
       );
-      
+
       wrapper = createWrapper();
-      
+
       // Unmount before async operation completes
       wrapper.unmount();
-      
+
       // Should not cause errors
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
     });
   });
 });

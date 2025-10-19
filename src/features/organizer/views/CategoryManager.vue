@@ -8,7 +8,11 @@
       <v-card-text>
         <div v-if="loading || initializingCategories" class="text-center py-6">
           <v-progress-circular indeterminate />
-          <p class="mt-2">{{ initializingCategories ? 'Initializing system categories...' : 'Loading categories...' }}</p>
+          <p class="mt-2">
+            {{
+              initializingCategories ? 'Initializing system categories...' : 'Loading categories...'
+            }}
+          </p>
         </div>
 
         <div v-else-if="!sortedCategories.length" class="text-center py-6">
@@ -255,17 +259,19 @@ const deleteCategory = async (category) => {
  */
 const initializeSystemCategories = async () => {
   try {
-    if (!authStore.isAuthenticated || !authStore.currentTeam) {
-      console.log('[CategoryManager] User not authenticated, skipping system category initialization');
+    if (!authStore.isAuthenticated || !authStore.currentFirm) {
+      console.log(
+        '[CategoryManager] User not authenticated, skipping system category initialization'
+      );
       return;
     }
 
     initializingCategories.value = true;
-    const teamId = authStore.currentTeam;
+    const firmId = authStore.currentFirm;
     const matterId = 'general'; // Default to general matter
 
     console.log('[CategoryManager] Initializing system categories...');
-    const result = await SystemCategoryService.initializeSystemCategories(teamId, matterId);
+    const result = await SystemCategoryService.initializeSystemCategories(firmId, matterId);
 
     if (result.created > 0) {
       showNotification(`Initialized ${result.created} system categories`, 'success');

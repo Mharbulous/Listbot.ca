@@ -69,8 +69,8 @@ This directory contains the decomposed evidence services, split from the origina
 import { EvidenceService } from './services/evidenceService.js';
 import { EvidenceQueryService } from './services/evidenceQueryService.js';
 
-const evidenceService = new EvidenceService(teamId);
-const evidenceQuery = new EvidenceQueryService(teamId);
+const evidenceService = new EvidenceService(firmId);
+const evidenceQuery = new EvidenceQueryService(firmId);
 
 // Create evidence
 const evidenceId = await evidenceService.createEvidenceFromUpload(metadata);
@@ -84,7 +84,7 @@ const results = await evidenceQuery.findEvidenceByHash(fileHash);
 ```javascript
 import { EvidenceManager } from './services/index.js';
 
-const manager = new EvidenceManager(teamId);
+const manager = new EvidenceManager(firmId);
 
 // Create evidence (delegates to evidenceService)
 const evidenceId = await manager.createEvidenceFromUpload(metadata);

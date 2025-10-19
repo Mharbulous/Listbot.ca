@@ -1,36 +1,36 @@
 import { defineStore } from 'pinia';
-import { TeamService } from '../services/teamService';
+import { FirmService } from '../services/firmService';
 
-export const useTeamStore = defineStore('team', {
+export const useFirmStore = defineStore('firm', {
   state: () => ({
-    currentTeam: null,
-    userTeams: [],
+    currentFirm: null,
+    userFirms: [],
     loading: false,
     error: null,
   }),
 
   getters: {
-    hasTeam: (state) => !!state.currentTeam,
-    teamName: (state) => state.currentTeam?.name || null,
+    hasFirm: (state) => !!state.currentFirm,
+    firmName: (state) => state.currentFirm?.name || null,
     userRole: (state) => {
-      if (!state.currentTeam || !state.userTeams.length) return null;
-      const userTeam = state.userTeams.find((team) => team.id === state.currentTeam.id);
-      return userTeam?.userRole || null;
+      if (!state.currentFirm || !state.userFirms.length) return null;
+      const userFirm = state.userFirms.find((firm) => firm.id === state.currentFirm.id);
+      return userFirm?.userRole || null;
     },
-    isTeamAdmin: (state) => {
-      if (!state.currentTeam || !state.userTeams.length) return false;
-      const userTeam = state.userTeams.find((team) => team.id === state.currentTeam.id);
-      return userTeam?.userRole === 'admin';
+    isFirmAdmin: (state) => {
+      if (!state.currentFirm || !state.userFirms.length) return false;
+      const userFirm = state.userFirms.find((firm) => firm.id === state.currentFirm.id);
+      return userFirm?.userRole === 'admin';
     },
   },
 
   actions: {
     /**
-     * Load team data for a specific team ID
+     * Load firm data for a specific firm ID
      */
-    async loadTeam(teamId) {
-      if (!teamId) {
-        this.currentTeam = null;
+    async loadFirm(firmId) {
+      if (!firmId) {
+        this.currentFirm = null;
         return;
       }
 
@@ -38,24 +38,24 @@ export const useTeamStore = defineStore('team', {
       this.error = null;
 
       try {
-        const team = await TeamService.getTeam(teamId);
-        this.currentTeam = team;
-        console.log('Team loaded:', team?.name);
+        const firm = await FirmService.getFirm(firmId);
+        this.currentFirm = firm;
+        console.log('Firm loaded:', firm?.name);
       } catch (error) {
-        console.error('Error loading team:', error);
+        console.error('Error loading firm:', error);
         this.error = error.message;
-        this.currentTeam = null;
+        this.currentFirm = null;
       } finally {
         this.loading = false;
       }
     },
 
     /**
-     * Load all teams for current user
+     * Load all firms for current user
      */
-    async loadUserTeams(userId) {
+    async loadUserFirms(userId) {
       if (!userId) {
-        this.userTeams = [];
+        this.userFirms = [];
         return;
       }
 
@@ -63,37 +63,37 @@ export const useTeamStore = defineStore('team', {
       this.error = null;
 
       try {
-        const teams = await TeamService.getUserTeams(userId);
-        this.userTeams = teams;
-        console.log(`Loaded ${teams.length} teams for user`);
+        const firms = await FirmService.getUserFirms(userId);
+        this.userFirms = firms;
+        console.log(`Loaded ${firms.length} firms for user`);
       } catch (error) {
-        console.error('Error loading user teams:', error);
+        console.error('Error loading user firms:', error);
         this.error = error.message;
-        this.userTeams = [];
+        this.userFirms = [];
       } finally {
         this.loading = false;
       }
     },
 
     /**
-     * Create a new team
+     * Create a new firm
      */
-    async createTeam(teamId, teamData) {
+    async createFirm(firmId, firmData) {
       this.loading = true;
       this.error = null;
 
       try {
-        await TeamService.createTeam(teamId, teamData);
+        await FirmService.createFirm(firmId, firmData);
 
-        // Reload user teams to include the new team
+        // Reload user firms to include the new firm
         const authStore = await import('./auth').then((m) => m.useAuthStore());
         if (authStore.user?.uid) {
-          await this.loadUserTeams(authStore.user.uid);
+          await this.loadUserFirms(authStore.user.uid);
         }
 
-        console.log('Team created successfully');
+        console.log('Firm created successfully');
       } catch (error) {
-        console.error('Error creating team:', error);
+        console.error('Error creating firm:', error);
         this.error = error.message;
         throw error;
       } finally {
@@ -102,21 +102,21 @@ export const useTeamStore = defineStore('team', {
     },
 
     /**
-     * Add member to current team
+     * Add member to current firm
      */
     async addMember(userId, memberData) {
-      if (!this.currentTeam) {
-        throw new Error('No team selected');
+      if (!this.currentFirm) {
+        throw new Error('No firm selected');
       }
 
       this.loading = true;
       this.error = null;
 
       try {
-        await TeamService.addTeamMember(this.currentTeam.id, userId, memberData);
+        await FirmService.addFirmMember(this.currentFirm.id, userId, memberData);
 
-        // Reload team data to get updated member list
-        await this.loadTeam(this.currentTeam.id);
+        // Reload firm data to get updated member list
+        await this.loadFirm(this.currentFirm.id);
 
         console.log('Member added successfully');
       } catch (error) {
@@ -129,21 +129,21 @@ export const useTeamStore = defineStore('team', {
     },
 
     /**
-     * Remove member from current team
+     * Remove member from current firm
      */
     async removeMember(userId) {
-      if (!this.currentTeam) {
-        throw new Error('No team selected');
+      if (!this.currentFirm) {
+        throw new Error('No firm selected');
       }
 
       this.loading = true;
       this.error = null;
 
       try {
-        await TeamService.removeTeamMember(this.currentTeam.id, userId);
+        await FirmService.removeFirmMember(this.currentFirm.id, userId);
 
-        // Reload team data to get updated member list
-        await this.loadTeam(this.currentTeam.id);
+        // Reload firm data to get updated member list
+        await this.loadFirm(this.currentFirm.id);
 
         console.log('Member removed successfully');
       } catch (error) {
@@ -156,21 +156,21 @@ export const useTeamStore = defineStore('team', {
     },
 
     /**
-     * Update member role in current team
+     * Update member role in current firm
      */
     async updateMemberRole(userId, newRole) {
-      if (!this.currentTeam) {
-        throw new Error('No team selected');
+      if (!this.currentFirm) {
+        throw new Error('No firm selected');
       }
 
       this.loading = true;
       this.error = null;
 
       try {
-        await TeamService.updateMemberRole(this.currentTeam.id, userId, newRole);
+        await FirmService.updateMemberRole(this.currentFirm.id, userId, newRole);
 
-        // Reload team data to get updated roles
-        await this.loadTeam(this.currentTeam.id);
+        // Reload firm data to get updated roles
+        await this.loadFirm(this.currentFirm.id);
 
         console.log('Member role updated successfully');
       } catch (error) {
@@ -183,14 +183,14 @@ export const useTeamStore = defineStore('team', {
     },
 
     /**
-     * Clear team data (useful for logout)
+     * Clear firm data (useful for logout)
      */
-    clearTeamData() {
-      this.currentTeam = null;
-      this.userTeams = [];
+    clearFirmData() {
+      this.currentFirm = null;
+      this.userFirms = [];
       this.loading = false;
       this.error = null;
-      console.log('Team data cleared');
+      console.log('Firm data cleared');
     },
   },
 });

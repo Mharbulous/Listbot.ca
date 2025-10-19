@@ -135,7 +135,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTeamMembers } from '../composables/useTeamMembers';
+import { useFirmMembers } from '../composables/useFirmMembers';
 
 // Component configuration
 defineOptions({
@@ -143,7 +143,7 @@ defineOptions({
 });
 
 const router = useRouter();
-const { lawyerNames, loading: loadingLawyers, fetchTeamMembers } = useTeamMembers();
+const { lawyerNames, loading: loadingLawyers, fetchFirmMembers } = useFirmMembers();
 
 // Form state
 const formData = ref({
@@ -161,10 +161,10 @@ const snackbar = ref({ show: false, message: '', color: 'success' });
 
 // Fetch lawyers on component mount
 onMounted(async () => {
-  await fetchTeamMembers();
+  await fetchFirmMembers();
 });
 
-// Auto-select lawyer if there's only one in the team
+// Auto-select lawyer if there's only one in the firm
 watch(
   () => [lawyerNames.value, loadingLawyers.value],
   ([names, isLoading]) => {

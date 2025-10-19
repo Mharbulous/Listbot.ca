@@ -3,7 +3,7 @@
 **Created**: 2025-08-31  
 **Priority**: High  
 **Phase**: Phase 1 - Virtual Folder Foundation  
-**Status**: RESOLVED ✅  
+**Status**: RESOLVED ✅
 
 ## Executive Summary
 
@@ -26,6 +26,7 @@
 **Objective**: Identify the exact cause of the `subcollectionTags` undefined error and map the current tag data flow.
 
 **Tasks**:
+
 - Examine line 120 in `organizerQueryStore.js` where error occurs
 - Analyze the `getAllTags()` and `getStructuredTagsByCategory()` methods
 - Map data flow from Firestore tag collections to store
@@ -33,6 +34,7 @@
 - Identify missing property or incorrect reference causing undefined error
 
 **Success Criteria**:
+
 - Error root cause identified and documented
 - Current tag system architecture fully understood
 - Data flow gaps clearly mapped
@@ -47,6 +49,7 @@
 **Objective**: Implement targeted fix for tag data access while maintaining existing functionality.
 
 **Tasks**:
+
 - Design fix approach based on root cause analysis
 - Implement solution with minimal impact on existing tag display
 - Add proper error handling for tag loading failures
@@ -54,6 +57,7 @@
 - Maintain backward compatibility with current UI components
 
 **Success Criteria**:
+
 - `store.getAllTags()` returns proper tag data structure without errors
 - `store.getStructuredTagsByCategory()` works correctly
 - `store.hasAnyTags()` functions properly
@@ -64,11 +68,12 @@
 **Breaking Risk**: Medium  
 **Rollback Mechanism**: Git commit revert + restore previous `organizerQueryStore.js` version
 
-### Step 3: Validation and Performance Testing  
+### Step 3: Validation and Performance Testing
 
 **Objective**: Verify fix works with real tag data and meets performance requirements.
 
 **Tasks**:
+
 - Test virtual folder generation with actual tag data
 - Validate existing tag functionality remains intact
 - Performance testing with typical dataset sizes (<50ms threshold)
@@ -76,12 +81,14 @@
 - Verify graceful error handling when tags unavailable
 
 **Test Data Scenarios**:
+
 - Documents with single category tags (Document Type: "Invoice")
 - Documents with multiple category tags (Document Type + Institution)
 - Documents without tags
 - Mixed tag scenarios with various combinations
 
 **Success Criteria**:
+
 - Virtual folder generation produces expected folder structures
 - Performance meets acceptable thresholds (<50ms for typical datasets)
 - All existing tag functionality works without regression
@@ -95,6 +102,7 @@
 ## Technical Context
 
 ### Current Error Details
+
 ```
 TypeError: Cannot read properties of undefined (reading 'subcollectionTags')
     at getAllTags (organizerQueryStore.js:120:21)
@@ -102,11 +110,13 @@ TypeError: Cannot read properties of undefined (reading 'subcollectionTags')
 ```
 
 ### Tag Storage Pattern
+
 ```
-/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}
+/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}
 ```
 
 ### Evidence Data Structure
+
 Evidence documents stored without embedded tag data - tags are separate Firestore subcollections.
 
 ## Dependencies
@@ -118,7 +128,7 @@ Evidence documents stored without embedded tag data - tags are separate Firestor
 ## Validation Requirements
 
 - Virtual folder system can access and process tag data
-- No regression in existing tag display functionality  
+- No regression in existing tag display functionality
 - Performance acceptable for production use
 - Error recovery handles missing tag data gracefully
 
@@ -134,20 +144,23 @@ No external research required - this is an internal codebase debugging task invo
 **Root Cause**: Evidence documents were loaded without their tag subcollections. The `organizerQueryStore.js` expected `evidence.subcollectionTags` but this property was undefined because tags were not loaded from Firestore subcollections.
 
 **Solution Implemented**:
+
 1. **Modified `organizerCore.js`**: Added tag loading integration using `tagSubcollectionService`
 2. **Added `loadTagsForEvidence()` function**: Loads tags for each evidence document and creates dual data structures:
-   - `subcollectionTags` (flat array) for `organizerQueryStore.js` compatibility  
+   - `subcollectionTags` (flat array) for `organizerQueryStore.js` compatibility
    - `tags` (category-grouped object) for `virtualFolderStore.js` compatibility
 3. **Enhanced evidence loading**: Each evidence document now includes both tag structures automatically
 4. **Category name resolution**: Uses `categoryStore.getCategoryById()` for proper category names
 5. **Backward compatibility**: Added both `tagName` and `name` properties for existing code compatibility
 
 **Files Modified**:
+
 - `src/features/organizer/stores/organizerCore.js` - Added tag loading integration
 
 **Validation**:
+
 - ✅ Build succeeds without errors
-- ✅ No linting errors in modified code  
+- ✅ No linting errors in modified code
 - ✅ Virtual folder system can now access tag data via `evidence.subcollectionTags`
 - ✅ Existing functionality preserved through dual data structure approach
 

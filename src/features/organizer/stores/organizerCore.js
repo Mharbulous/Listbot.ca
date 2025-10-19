@@ -62,9 +62,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    * Load tags for an evidence document and structure them for both query and virtual folder stores
    * Includes category validation and orphaned tag cleanup
    */
-  const loadTagsForEvidence = async (evidenceId, teamId) => {
+  const loadTagsForEvidence = async (evidenceId, firmId) => {
     try {
-      const tags = await tagService.getTags(evidenceId, {}, teamId);
+      const tags = await tagService.getTags(evidenceId, {}, firmId);
 
       // If no tags exist, return early
       if (!tags || tags.length === 0) {
@@ -146,7 +146,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Clean up orphaned tags in background
       if (tagsToDelete.length > 0) {
-        cleanupOrphanedTags(evidenceId, teamId, tagsToDelete).catch((error) => {
+        cleanupOrphanedTags(evidenceId, firmId, tagsToDelete).catch((error) => {
           console.error(
             `[OrganizerCore] Failed to cleanup orphaned tags for evidence ${evidenceId}:`,
             error
@@ -170,14 +170,14 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   /**
    * Clean up orphaned tags (tags belonging to deleted categories)
    */
-  const cleanupOrphanedTags = async (evidenceId, teamId, categoryIdsToDelete) => {
+  const cleanupOrphanedTags = async (evidenceId, firmId, categoryIdsToDelete) => {
     try {
       console.log(
         `[OrganizerCore] Cleaning up ${categoryIdsToDelete.length} orphaned tags for evidence ${evidenceId}`
       );
 
       for (const categoryId of categoryIdsToDelete) {
-        await tagService.deleteTag(evidenceId, categoryId, teamId);
+        await tagService.deleteTag(evidenceId, categoryId, firmId);
         console.log(`[OrganizerCore] Deleted orphaned tag for category ${categoryId}`);
       }
 
@@ -191,7 +191,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   /**
    * Fetch display information from sourceMetadata subcollection
    */
-  const getDisplayInfo = async (metadataHash, teamId, fileHash) => {
+  const getDisplayInfo = async (metadataHash, firmId, fileHash) => {
     try {
       // Check cache first
       if (displayInfoCache.value.has(metadataHash)) {
@@ -201,8 +201,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Fetch from Firestore subcollection
       const metadataRef = doc(
         db,
-        'teams',
-        teamId,
+        'firms',
+        firmId,
         'matters',
         'general',
         'evidence',
@@ -270,13 +270,13 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       loading.value = true;
       error.value = null;
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Create query for evidence collection
-      const evidenceRef = collection(db, 'teams', teamId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', firmId, 'matters', 'general', 'evidence');
       const evidenceQuery = query(
         evidenceRef,
         orderBy('updatedAt', 'desc'),
@@ -297,12 +297,12 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             // Fetch display information from referenced metadata
             const displayInfo = await getDisplayInfo(
               evidenceData.displayCopy,
-              teamId,
+              firmId,
               docSnapshot.id
             );
 
             // Load tags for this evidence document
-            const tagData = await loadTagsForEvidence(docSnapshot.id, teamId);
+            const tagData = await loadTagsForEvidence(docSnapshot.id, firmId);
 
             // File size fallback and auto-migration
             let finalFileSize = evidenceData.fileSize || 0;
@@ -310,7 +310,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
               try {
                 const storageFileSize = await fileProcessingService.getFileSize(
                   evidenceData,
-                  teamId
+                  firmId
                 );
                 if (storageFileSize > 0) {
                   finalFileSize = storageFileSize;
@@ -318,8 +318,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
                   // Auto-migrate: Update Evidence document with correct file size
                   const evidenceDocRef = doc(
                     db,
-                    'teams',
-                    teamId,
+                    'firms',
+                    firmId,
                     'matters',
                     'general',
                     'evidence',
@@ -414,8 +414,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    */
   const refreshEvidence = async (evidenceId) => {
     try {
-      const teamId = authStore.currentTeam;
-      if (!teamId || !evidenceId) return;
+      const firmId = authStore.currentFirm;
+      if (!firmId || !evidenceId) return;
 
       // Find the evidence in current list
       const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
@@ -423,7 +423,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Re-fetch display info to ensure cache is fresh
       const evidence = evidenceList.value[evidenceIndex];
-      const displayInfo = await getDisplayInfo(evidence.displayCopy, teamId, evidenceId);
+      const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId, evidenceId);
 
       // Update the evidence with fresh display info
       evidenceList.value[evidenceIndex] = {
@@ -445,8 +445,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    */
   const refreshEvidenceTags = async (evidenceId) => {
     try {
-      const teamId = authStore.currentTeam;
-      if (!teamId || !evidenceId) return;
+      const firmId = authStore.currentFirm;
+      if (!firmId || !evidenceId) return;
 
       // Find the evidence in current list
       const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
@@ -456,7 +456,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       }
 
       // Re-load tags for this evidence document
-      const tagData = await loadTagsForEvidence(evidenceId, teamId);
+      const tagData = await loadTagsForEvidence(evidenceId, firmId);
 
       // Update the evidence with fresh tag data
       evidenceList.value[evidenceIndex] = {

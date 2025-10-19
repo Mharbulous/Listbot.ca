@@ -2,87 +2,87 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase.js';
 
 /**
- * TeamService - Manages team operations for Multi-App SSO
+ * FirmService - Manages firm operations for Multi-App SSO
  */
-export class TeamService {
+export class FirmService {
   /**
-   * Create a new team
-   * @param {string} teamId - Unique team identifier
-   * @param {Object} teamData - Team information
+   * Create a new firm
+   * @param {string} firmId - Unique firm identifier
+   * @param {Object} firmData - Firm information
    * @returns {Promise<void>}
    */
-  static async createTeam(teamId, teamData) {
-    if (!teamId || !teamData.name) {
-      throw new Error('Team ID and name are required');
+  static async createFirm(firmId, firmData) {
+    if (!firmId || !firmData.name) {
+      throw new Error('Firm ID and name are required');
     }
 
     try {
-      const teamDocRef = doc(db, 'teams', teamId);
+      const firmDocRef = doc(db, 'firms', firmId);
 
-      const team = {
-        name: teamData.name,
-        description: teamData.description || '',
+      const firm = {
+        name: firmData.name,
+        description: firmData.description || '',
         members: {},
-        settings: teamData.settings || {},
+        settings: firmData.settings || {},
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
-      await setDoc(teamDocRef, team);
-      console.log(`Team created: ${teamId}`);
+      await setDoc(firmDocRef, firm);
+      console.log(`Firm created: ${firmId}`);
     } catch (error) {
-      console.error('Error creating team:', error);
+      console.error('Error creating firm:', error);
       throw error;
     }
   }
 
   /**
-   * Get team information
-   * @param {string} teamId - Team identifier
-   * @returns {Promise<Object|null>} Team data or null if not found
+   * Get firm information
+   * @param {string} firmId - Firm identifier
+   * @returns {Promise<Object|null>} Firm data or null if not found
    */
-  static async getTeam(teamId) {
-    if (!teamId) {
+  static async getFirm(firmId) {
+    if (!firmId) {
       return null;
     }
 
     try {
-      const teamDocRef = doc(db, 'teams', teamId);
-      const teamDoc = await getDoc(teamDocRef);
+      const firmDocRef = doc(db, 'firms', firmId);
+      const firmDoc = await getDoc(firmDocRef);
 
-      if (teamDoc.exists()) {
-        return { id: teamDoc.id, ...teamDoc.data() };
+      if (firmDoc.exists()) {
+        return { id: firmDoc.id, ...firmDoc.data() };
       }
 
       return null;
     } catch (error) {
-      console.error('Error fetching team:', error);
+      console.error('Error fetching firm:', error);
       throw error;
     }
   }
 
   /**
-   * Add user to team
-   * @param {string} teamId - Team identifier
+   * Add user to firm
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @param {Object} memberData - Member information (email, role, etc.)
    * @returns {Promise<void>}
    */
-  static async addTeamMember(teamId, userId, memberData) {
-    if (!teamId || !userId || !memberData.email) {
-      throw new Error('Team ID, User ID, and email are required');
+  static async addFirmMember(firmId, userId, memberData) {
+    if (!firmId || !userId || !memberData.email) {
+      throw new Error('Firm ID, User ID, and email are required');
     }
 
     try {
-      const teamDocRef = doc(db, 'teams', teamId);
-      const teamDoc = await getDoc(teamDocRef);
+      const firmDocRef = doc(db, 'firms', firmId);
+      const firmDoc = await getDoc(firmDocRef);
 
-      if (!teamDoc.exists()) {
-        throw new Error('Team does not exist');
+      if (!firmDoc.exists()) {
+        throw new Error('Firm does not exist');
       }
 
-      const teamData = teamDoc.data();
-      const members = teamData.members || {};
+      const firmData = firmDoc.data();
+      const members = firmData.members || {};
 
       // Add new member
       members[userId] = {
@@ -92,161 +92,161 @@ export class TeamService {
         joinedAt: serverTimestamp(),
       };
 
-      // Update team document
-      await setDoc(teamDocRef, {
-        ...teamData,
+      // Update firm document
+      await setDoc(firmDocRef, {
+        ...firmData,
         members,
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`User ${userId} added to team ${teamId}`);
+      console.log(`User ${userId} added to firm ${firmId}`);
     } catch (error) {
-      console.error('Error adding team member:', error);
+      console.error('Error adding firm member:', error);
       throw error;
     }
   }
 
   /**
-   * Remove user from team
-   * @param {string} teamId - Team identifier
+   * Remove user from firm
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @returns {Promise<void>}
    */
-  static async removeTeamMember(teamId, userId) {
-    if (!teamId || !userId) {
-      throw new Error('Team ID and User ID are required');
+  static async removeFirmMember(firmId, userId) {
+    if (!firmId || !userId) {
+      throw new Error('Firm ID and User ID are required');
     }
 
     try {
-      const teamDocRef = doc(db, 'teams', teamId);
-      const teamDoc = await getDoc(teamDocRef);
+      const firmDocRef = doc(db, 'firms', firmId);
+      const firmDoc = await getDoc(firmDocRef);
 
-      if (!teamDoc.exists()) {
-        throw new Error('Team does not exist');
+      if (!firmDoc.exists()) {
+        throw new Error('Firm does not exist');
       }
 
-      const teamData = teamDoc.data();
-      const members = teamData.members || {};
+      const firmData = firmDoc.data();
+      const members = firmData.members || {};
 
       // Remove member
       delete members[userId];
 
-      // Update team document
-      await setDoc(teamDocRef, {
-        ...teamData,
+      // Update firm document
+      await setDoc(firmDocRef, {
+        ...firmData,
         members,
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`User ${userId} removed from team ${teamId}`);
+      console.log(`User ${userId} removed from firm ${firmId}`);
     } catch (error) {
-      console.error('Error removing team member:', error);
+      console.error('Error removing firm member:', error);
       throw error;
     }
   }
 
   /**
-   * Check if user is member of team
-   * @param {string} teamId - Team identifier
+   * Check if user is member of firm
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @returns {Promise<boolean>} True if user is member
    */
-  static async isTeamMember(teamId, userId) {
-    if (!teamId || !userId) {
+  static async isFirmMember(firmId, userId) {
+    if (!firmId || !userId) {
       return false;
     }
 
     try {
-      const team = await this.getTeam(teamId);
-      return team && team.members && team.members[userId] !== undefined;
+      const firm = await this.getFirm(firmId);
+      return firm && firm.members && firm.members[userId] !== undefined;
     } catch (error) {
-      console.error('Error checking team membership:', error);
+      console.error('Error checking firm membership:', error);
       return false;
     }
   }
 
   /**
-   * Get user's teams
+   * Get user's firms
    * @param {string} userId - User identifier
-   * @returns {Promise<Array>} Array of teams user belongs to
+   * @returns {Promise<Array>} Array of firms user belongs to
    */
-  static async getUserTeams(userId) {
+  static async getUserFirms(userId) {
     if (!userId) {
       return [];
     }
 
     try {
-      const userTeams = [];
+      const userFirms = [];
 
-      // First, try to get user's solo team (teamId === userId)
+      // First, try to get user's solo firm (firmId === userId)
       try {
-        const soloTeamRef = doc(db, 'teams', userId);
-        const soloTeamSnap = await getDoc(soloTeamRef);
+        const soloFirmRef = doc(db, 'firms', userId);
+        const soloFirmSnap = await getDoc(soloFirmRef);
 
-        if (soloTeamSnap.exists()) {
-          const teamData = soloTeamSnap.data();
-          if (teamData.members && teamData.members[userId]) {
-            userTeams.push({
-              id: soloTeamSnap.id,
-              ...teamData,
-              userRole: teamData.members[userId].role,
+        if (soloFirmSnap.exists()) {
+          const firmData = soloFirmSnap.data();
+          if (firmData.members && firmData.members[userId]) {
+            userFirms.push({
+              id: soloFirmSnap.id,
+              ...firmData,
+              userRole: firmData.members[userId].role,
             });
           }
         }
       } catch (soloError) {
-        console.log('Solo team not found or not accessible:', soloError.message);
+        console.log('Solo firm not found or not accessible:', soloError.message);
       }
 
-      // TODO: In future phases, we would query for other teams the user belongs to
-      // For now, we only support solo teams (teamId === userId)
-      // When we implement team invitations, we'll add logic here to find
-      // teams where the user is a member but teamId !== userId
+      // TODO: In future phases, we would query for other firms the user belongs to
+      // For now, we only support solo firms (firmId === userId)
+      // When we implement firm invitations, we'll add logic here to find
+      // firms where the user is a member but firmId !== userId
 
-      return userTeams;
+      return userFirms;
     } catch (error) {
-      console.error('Error fetching user teams:', error);
+      console.error('Error fetching user firms:', error);
       return [];
     }
   }
 
   /**
-   * Update team member role
-   * @param {string} teamId - Team identifier
+   * Update firm member role
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @param {string} newRole - New role for the user
    * @returns {Promise<void>}
    */
-  static async updateMemberRole(teamId, userId, newRole) {
-    if (!teamId || !userId || !newRole) {
-      throw new Error('Team ID, User ID, and new role are required');
+  static async updateMemberRole(firmId, userId, newRole) {
+    if (!firmId || !userId || !newRole) {
+      throw new Error('Firm ID, User ID, and new role are required');
     }
 
     try {
-      const teamDocRef = doc(db, 'teams', teamId);
-      const teamDoc = await getDoc(teamDocRef);
+      const firmDocRef = doc(db, 'firms', firmId);
+      const firmDoc = await getDoc(firmDocRef);
 
-      if (!teamDoc.exists()) {
-        throw new Error('Team does not exist');
+      if (!firmDoc.exists()) {
+        throw new Error('Firm does not exist');
       }
 
-      const teamData = teamDoc.data();
-      const members = teamData.members || {};
+      const firmData = firmDoc.data();
+      const members = firmData.members || {};
 
       if (!members[userId]) {
-        throw new Error('User is not a member of this team');
+        throw new Error('User is not a member of this firm');
       }
 
       // Update member role
       members[userId].role = newRole;
 
-      // Update team document
-      await setDoc(teamDocRef, {
-        ...teamData,
+      // Update firm document
+      await setDoc(firmDocRef, {
+        ...firmData,
         members,
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`User ${userId} role updated to ${newRole} in team ${teamId}`);
+      console.log(`User ${userId} role updated to ${newRole} in firm ${firmId}`);
     } catch (error) {
       console.error('Error updating member role:', error);
       throw error;
@@ -254,4 +254,4 @@ export class TeamService {
   }
 }
 
-export default TeamService;
+export default FirmService;

@@ -403,15 +403,15 @@ Each async process is documented using the following structured template:
 - **Parent Process**: Authentication Store
 - **Cleanup Verification**: ✓
 
-**ASYNC PROCESS: Team Store Service Lazy Loading**
+**ASYNC PROCESS: Firm Store Service Lazy Loading**
 
-- **Location**: `src/core/stores/team.js:89`
+- **Location**: `src/core/stores/firm.js:89`
 - **Type**: Dynamic imports
 - **Trigger**: Auth store initialization
 - **Cleanup**: Module cache persistence
 - **Dependencies**: Store interdependencies
 - **Risk Level**: Low (module system managed)
-- **Parent Process**: Team Management Store
+- **Parent Process**: Firm Management Store
 - **Cleanup Verification**: ✓
 
 ---

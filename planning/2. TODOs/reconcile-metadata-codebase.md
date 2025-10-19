@@ -38,13 +38,13 @@ displayCopy: metadataHash,
 **Current Code**:
 
 ```javascript
-const displayInfo = await getDisplayInfo(evidence.displayCopy?.metadataHash, teamId);
+const displayInfo = await getDisplayInfo(evidence.displayCopy?.metadataHash, firmId);
 ```
 
 **Change To**:
 
 ```javascript
-const displayInfo = await getDisplayInfo(evidence.displayCopy, teamId);
+const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId);
 ```
 
 ### 2. Add fileTypes Field to storageRef
@@ -205,7 +205,7 @@ const metadataHash =
   typeof evidence.displayCopy === 'string'
     ? evidence.displayCopy
     : evidence.displayCopy?.metadataHash;
-const displayInfo = await getDisplayInfo(metadataHash, teamId);
+const displayInfo = await getDisplayInfo(metadataHash, firmId);
 ```
 
 ## Notes

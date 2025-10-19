@@ -75,9 +75,9 @@
           </a>
         </div>
 
-        <!-- Team Info -->
-        <div v-if="authStore.currentTeam" class="team-info">
-          <div class="text-xs text-slate-400">Team: {{ authStore.currentTeam }}</div>
+        <!-- Firm Info -->
+        <div v-if="authStore.currentFirm" class="firm-info">
+          <div class="text-xs text-slate-400">Firm: {{ authStore.currentFirm }}</div>
         </div>
       </div>
     </Transition>
@@ -416,7 +416,7 @@ onUnmounted(() => {
   @apply text-xs text-slate-400 mt-1;
 }
 
-.team-info {
+.firm-info {
   @apply px-4 py-2 border-t border-slate-600 bg-slate-700 rounded-b-lg;
 }
 

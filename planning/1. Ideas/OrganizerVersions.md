@@ -37,7 +37,7 @@ This document outlines the incremental implementation phases for the Organizer f
 
 **Architecture Implemented**:
 
-- **Evidence Collection**: `/teams/{teamId}/evidence/` with refined structure
+- **Evidence Collection**: `/firms/{firmId}/evidence/` with refined structure
 - **Display Info Caching**: Store caches sourceMetadata lookups for performance
 - **Real-time Updates**: Firestore listeners provide instant visibility after upload
 - **Upload Integration**: Evidence documents created automatically during upload process
@@ -199,7 +199,7 @@ This document outlines the incremental implementation phases for the Organizer f
 
 **Critical Fixes Applied (August 31, 2025)**:
 
-- ✅ **Team ID Parameter Fix**: Fixed missing team ID in tagSubcollectionService calls causing "Team ID is required for tag operations" error
+- ✅ **Firm ID Parameter Fix**: Fixed missing firm ID in tagSubcollectionService calls causing "Firm ID is required for tag operations" error
 - ✅ **Confidence Score Conversion**: Fixed decimal confidence (0.9) to percentage (90) conversion for proper auto-approval
 - ✅ **Auto-Approval Working**: High-confidence suggestions (≥85%) now automatically approved and applied
 
@@ -210,7 +210,7 @@ This document outlines the incremental implementation phases for the Organizer f
 - ✅ AI processing with confidence tracking and auto-approval
 - ✅ Direct tag application to document interface
 - ✅ Subcollection-based tag storage for scalability
-- ✅ Complete error handling and team context management
+- ✅ Complete error handling and firm context management
 
 **Streamlined User Flow** (Fully Functional):
 
@@ -223,7 +223,7 @@ This document outlines the incremental implementation phases for the Organizer f
 
 **Key Achievement**: Eliminated disruptive modal interfaces in favor of immediate value delivery with automatic approval for high-confidence suggestions.
 
-**Bug Resolution Summary**: Version 1.2 is now fully production-ready with all identified issues resolved. AI processing works reliably with proper team context and confidence-based auto-approval.
+**Bug Resolution Summary**: Version 1.2 is now fully production-ready with all identified issues resolved. AI processing works reliably with proper firm context and confidence-based auto-approval.
 
 ---
 
@@ -378,7 +378,7 @@ reviewedAt: timestamp
 
 **New Features**:
 
-- BATES prefix configuration per team/matter
+- BATES prefix configuration per firm/matter
 - Sequential numbering system
 - Print-to-PDF with BATES stamps
 - Immutable number assignment after first print
@@ -494,7 +494,7 @@ reviewedAt: timestamp
 
 - Build on existing Vue 3/Vuetify architecture
 - Leverage existing Firebase infrastructure
-- Use existing authentication and team isolation
+- Use existing authentication and firm isolation
 - Follow established component patterns
 
 ### Quality Assurance

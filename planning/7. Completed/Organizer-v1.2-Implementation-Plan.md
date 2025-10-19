@@ -138,7 +138,7 @@ Single document processing eliminates need for complex queue system in v1.2. Thi
 #### Enhanced Evidence Structure
 
 ```javascript
-// /teams/{teamId}/evidence/{evidenceId}
+// /firms/{firmId}/evidence/{evidenceId}
 {
   // ... existing v1.1 fields unchanged ...
   tagsByHuman: [             // v1.1 structured tags (unchanged)
@@ -312,9 +312,9 @@ export class AITagService {
 
 #### Completed Tasks:
 
-- [x] **Fix AI processing team ID issue** ✅
-  - **Granular Success Criteria**: AI processing stores tags properly with correct team ID
-  - **Status**: Fixed missing team ID parameter in tagSubcollectionService calls
+- [x] **Fix AI processing firm ID issue** ✅
+  - **Granular Success Criteria**: AI processing stores tags properly with correct firm ID
+  - **Status**: Fixed missing firm ID parameter in tagSubcollectionService calls
   - **Priority**: High - Core functionality was failing
 - [x] **Fix AI confidence score conversion** ✅
   - **Granular Success Criteria**: Decimal confidence scores (0.9) properly convert to percentage (90)
@@ -526,7 +526,7 @@ VITE_AI_MAX_FILE_SIZE_MB=20
 
 ```javascript
 // Allow updating evidence with AI tags
-match /teams/{teamId}/evidence/{evidenceId} {
+match /firms/{firmId}/evidence/{evidenceId} {
   allow update: if request.auth.uid != null;
 }
 ```
@@ -560,7 +560,7 @@ match /teams/{teamId}/evidence/{evidenceId} {
 
 #### Issues Resolved:
 
-- ✅ **AI Processing Team ID Issue** - Fixed missing team ID parameter causing "Team ID is required for tag operations" error
+- ✅ **AI Processing Firm ID Issue** - Fixed missing firm ID parameter causing "Firm ID is required for tag operations" error
 - ✅ **Confidence Score Conversion** - Fixed decimal confidence (0.9) to percentage (90) conversion for proper auto-approval
 
 #### Key Files Created/Modified:

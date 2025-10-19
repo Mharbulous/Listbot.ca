@@ -10,10 +10,10 @@ export { EvidenceQueryService } from './evidenceQueryService.js';
 
 // For consumers who need both services together
 export class EvidenceManager {
-  constructor(teamId) {
-    this.teamId = teamId;
-    this.service = new EvidenceService(teamId);
-    this.query = new EvidenceQueryService(teamId);
+  constructor(firmId) {
+    this.firmId = firmId;
+    this.service = new EvidenceService(firmId);
+    this.query = new EvidenceQueryService(firmId);
   }
 
   // Core operations delegated to evidenceService

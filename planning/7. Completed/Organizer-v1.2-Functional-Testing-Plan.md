@@ -282,15 +282,15 @@ For each test case, mark the result:
 
 ### Issues Found and Resolved
 
-**Issue #1: AI Processing Team ID Error** ✅ **RESOLVED**
+**Issue #1: AI Processing Firm ID Error** ✅ **RESOLVED**
 
 - **Severity**: High (Critical)
-- **Description**: AI processing failed with "Team ID is required for tag operations" error
-- **Root Cause**: AITagService was not passing teamId parameter to tagSubcollectionService methods
+- **Description**: AI processing failed with "Firm ID is required for tag operations" error
+- **Root Cause**: AITagService was not passing firmId parameter to tagSubcollectionService methods
 - **Steps to Reproduce**:
   1. Navigate to a document and click "Process with AI"
-  2. Processing would fail with team ID error in console
-- **Resolution**: Updated aiTagService.js to properly get and pass teamId to all tag subcollection operations
+  2. Processing would fail with firm ID error in console
+- **Resolution**: Updated aiTagService.js to properly get and pass firmId to all tag subcollection operations
 - **Status**: ✅ Fixed - AI processing now works correctly
 
 **Issue #2: AI Confidence Score Conversion** ✅ **RESOLVED**
@@ -326,7 +326,7 @@ For each test case, mark the result:
 - ✅ CORS issues resolved
 - ✅ AI document content analysis working
 - ✅ AI tag generation and application working
-- ✅ AI processing team ID error fixed
+- ✅ AI processing firm ID error fixed
 - ✅ AI confidence score conversion fixed
 - ✅ Auto-approval working correctly
 - ✅ Error handling working properly
@@ -335,7 +335,7 @@ For each test case, mark the result:
 
 **Critical Fixes Applied**:
 
-- ✅ Team ID parameter properly passed to all tag operations
+- ✅ Firm ID parameter properly passed to all tag operations
 - ✅ Decimal confidence scores (0.9) correctly converted to percentages (90)
 - ✅ Auto-approval now works for high-confidence suggestions
 

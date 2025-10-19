@@ -6,7 +6,7 @@ import { useAuthStore } from '../core/stores/auth.js';
  * Composable for managing matter data
  *
  * Provides reactive matter list with loading states and error handling.
- * Automatically uses the current user's teamId from the auth store.
+ * Automatically uses the current user's firmId from the auth store.
  *
  * @returns {Object} Matter management utilities
  */
@@ -19,12 +19,12 @@ export function useMatters() {
   const error = ref(null);
 
   /**
-   * Fetch all matters for the current team
+   * Fetch all matters for the current firm
    * @returns {Promise<Array>} Array of matters
    */
   async function fetchMatters() {
-    if (!authStore.teamId) {
-      error.value = 'No team ID available';
+    if (!authStore.firmId) {
+      error.value = 'No firm ID available';
       return [];
     }
 
@@ -32,7 +32,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      const fetchedMatters = await MatterService.getAllMatters(authStore.teamId);
+      const fetchedMatters = await MatterService.getAllMatters(authStore.firmId);
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
@@ -49,8 +49,8 @@ export function useMatters() {
    * @returns {Promise<Array>} Array of active matters
    */
   async function fetchActiveMatters() {
-    if (!authStore.teamId) {
-      error.value = 'No team ID available';
+    if (!authStore.firmId) {
+      error.value = 'No firm ID available';
       return [];
     }
 
@@ -58,7 +58,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      const fetchedMatters = await MatterService.getActiveMatters(authStore.teamId);
+      const fetchedMatters = await MatterService.getActiveMatters(authStore.firmId);
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
@@ -75,8 +75,8 @@ export function useMatters() {
    * @returns {Promise<Array>} Array of user's matters
    */
   async function fetchMyMatters() {
-    if (!authStore.teamId || !authStore.user?.uid) {
-      error.value = 'No team ID or user ID available';
+    if (!authStore.firmId || !authStore.user?.uid) {
+      error.value = 'No firm ID or user ID available';
       return [];
     }
 
@@ -84,7 +84,10 @@ export function useMatters() {
     error.value = null;
 
     try {
-      const fetchedMatters = await MatterService.getUserMatters(authStore.teamId, authStore.user.uid);
+      const fetchedMatters = await MatterService.getUserMatters(
+        authStore.firmId,
+        authStore.user.uid
+      );
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
@@ -102,8 +105,8 @@ export function useMatters() {
    * @returns {Promise<Object|null>} Matter object or null
    */
   async function fetchMatter(matterId) {
-    if (!authStore.teamId) {
-      error.value = 'No team ID available';
+    if (!authStore.firmId) {
+      error.value = 'No firm ID available';
       return null;
     }
 
@@ -111,7 +114,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      const matter = await MatterService.getMatter(authStore.teamId, matterId);
+      const matter = await MatterService.getMatter(authStore.firmId, matterId);
       return matter;
     } catch (err) {
       console.error('Error fetching matter:', err);
@@ -128,8 +131,8 @@ export function useMatters() {
    * @returns {Promise<string|null>} Created matter ID or null on error
    */
   async function createMatter(matterData) {
-    if (!authStore.teamId || !authStore.user?.uid) {
-      error.value = 'No team ID or user ID available';
+    if (!authStore.firmId || !authStore.user?.uid) {
+      error.value = 'No firm ID or user ID available';
       return null;
     }
 
@@ -138,7 +141,7 @@ export function useMatters() {
 
     try {
       const matterId = await MatterService.createMatter(
-        authStore.teamId,
+        authStore.firmId,
         matterData,
         authStore.user.uid
       );
@@ -163,8 +166,8 @@ export function useMatters() {
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   async function updateMatter(matterId, updates) {
-    if (!authStore.teamId || !authStore.user?.uid) {
-      error.value = 'No team ID or user ID available';
+    if (!authStore.firmId || !authStore.user?.uid) {
+      error.value = 'No firm ID or user ID available';
       return false;
     }
 
@@ -172,7 +175,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      await MatterService.updateMatter(authStore.teamId, matterId, updates, authStore.user.uid);
+      await MatterService.updateMatter(authStore.firmId, matterId, updates, authStore.user.uid);
 
       // Refresh matters list after update
       await fetchMatters();
@@ -193,8 +196,8 @@ export function useMatters() {
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   async function archiveMatter(matterId) {
-    if (!authStore.teamId || !authStore.user?.uid) {
-      error.value = 'No team ID or user ID available';
+    if (!authStore.firmId || !authStore.user?.uid) {
+      error.value = 'No firm ID or user ID available';
       return false;
     }
 
@@ -202,7 +205,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      await MatterService.archiveMatter(authStore.teamId, matterId, authStore.user.uid);
+      await MatterService.archiveMatter(authStore.firmId, matterId, authStore.user.uid);
 
       // Refresh matters list after archiving
       await fetchMatters();
@@ -223,8 +226,8 @@ export function useMatters() {
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   async function unarchiveMatter(matterId) {
-    if (!authStore.teamId || !authStore.user?.uid) {
-      error.value = 'No team ID or user ID available';
+    if (!authStore.firmId || !authStore.user?.uid) {
+      error.value = 'No firm ID or user ID available';
       return false;
     }
 
@@ -232,7 +235,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      await MatterService.unarchiveMatter(authStore.teamId, matterId, authStore.user.uid);
+      await MatterService.unarchiveMatter(authStore.firmId, matterId, authStore.user.uid);
 
       // Refresh matters list after unarchiving
       await fetchMatters();
@@ -253,8 +256,8 @@ export function useMatters() {
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   async function deleteMatter(matterId) {
-    if (!authStore.teamId) {
-      error.value = 'No team ID available';
+    if (!authStore.firmId) {
+      error.value = 'No firm ID available';
       return false;
     }
 
@@ -262,7 +265,7 @@ export function useMatters() {
     error.value = null;
 
     try {
-      await MatterService.deleteMatter(authStore.teamId, matterId);
+      await MatterService.deleteMatter(authStore.firmId, matterId);
 
       // Refresh matters list after deletion
       await fetchMatters();
@@ -282,12 +285,12 @@ export function useMatters() {
    * @param {string} matterId - Matter ID
    */
   async function updateLastAccessed(matterId) {
-    if (!authStore.teamId) {
+    if (!authStore.firmId) {
       return;
     }
 
     try {
-      await MatterService.updateLastAccessed(authStore.teamId, matterId);
+      await MatterService.updateLastAccessed(authStore.firmId, matterId);
     } catch (err) {
       console.error('Error updating last accessed:', err);
       // Don't set error for this non-critical operation
@@ -305,9 +308,7 @@ export function useMatters() {
 
   const myMatters = computed(() => {
     if (!authStore.user?.uid) return [];
-    return matters.value.filter((matter) =>
-      matter.assignedTo?.includes(authStore.user.uid)
-    );
+    return matters.value.filter((matter) => matter.assignedTo?.includes(authStore.user.uid));
   });
 
   const matterCount = computed(() => matters.value.length);

@@ -9,7 +9,7 @@ import { db } from '../services/firebase.js';
  *
  * Usage:
  * import { seedMatters } from '@/utils/seedMatters';
- * await seedMatters(teamId, userId);
+ * await seedMatters(firmId, userId);
  */
 
 // Mock matter data from the original Matters.vue component
@@ -298,7 +298,7 @@ function transformMatter(mockMatter, userId) {
     adverseParties: mockMatter.adverseParties,
     status: mockMatter.status,
     archived: mockMatter.archived,
-    assignedTo: [userId], // Assign all to current user for solo team
+    assignedTo: [userId], // Assign all to current user for solo firm
     responsibleLawyer: userId, // Set current user as responsible lawyer
     mockData: true, // Flag for development test data (allows safe clearing)
     lastAccessed: dateStringToTimestamp(mockMatter.lastAccessed),
@@ -312,16 +312,16 @@ function transformMatter(mockMatter, userId) {
 /**
  * Seed the database with sample matters
  *
- * @param {string} teamId - Team ID to seed matters into
+ * @param {string} firmId - Firm ID to seed matters into
  * @param {string} userId - User ID creating the matters
  * @returns {Promise<Object>} Result with success count and any errors
  */
-export async function seedMatters(teamId, userId) {
-  if (!teamId || !userId) {
-    throw new Error('Team ID and User ID are required for seeding');
+export async function seedMatters(firmId, userId) {
+  if (!firmId || !userId) {
+    throw new Error('Firm ID and User ID are required for seeding');
   }
 
-  console.log(`Starting matter seeding for team: ${teamId}...`);
+  console.log(`Starting matter seeding for firm: ${firmId}...`);
 
   const results = {
     success: 0,
@@ -333,7 +333,7 @@ export async function seedMatters(teamId, userId) {
     // Firestore has a limit of 500 operations per batch
     // For 23 matters, we can use a single batch
     const batch = writeBatch(db);
-    const mattersRef = collection(db, 'teams', teamId, 'matters');
+    const mattersRef = collection(db, 'firms', firmId, 'matters');
 
     MOCK_MATTERS.forEach((mockMatter) => {
       try {
@@ -369,23 +369,23 @@ export async function seedMatters(teamId, userId) {
 }
 
 /**
- * Clear mock data matters from a team (useful for re-seeding)
+ * Clear mock data matters from a firm (useful for re-seeding)
  * Only deletes matters where mockData === true, protecting manually created matters
  *
- * @param {string} teamId - Team ID to clear mock matters from
+ * @param {string} firmId - Firm ID to clear mock matters from
  * @returns {Promise<number>} Number of mock matters deleted
  */
-export async function clearMatters(teamId) {
-  if (!teamId) {
-    throw new Error('Team ID is required');
+export async function clearMatters(firmId) {
+  if (!firmId) {
+    throw new Error('Firm ID is required');
   }
 
-  console.warn(`WARNING: Clearing mock data matters for team: ${teamId}`);
+  console.warn(`WARNING: Clearing mock data matters for firm: ${firmId}`);
 
   try {
     const { collection, getDocs } = await import('firebase/firestore');
 
-    const mattersRef = collection(db, 'teams', teamId, 'matters');
+    const mattersRef = collection(db, 'firms', firmId, 'matters');
     // Only query matters that have mockData === true
     const mockDataQuery = query(mattersRef, where('mockData', '==', true));
     const snapshot = await getDocs(mockDataQuery);
@@ -400,7 +400,7 @@ export async function clearMatters(teamId) {
 
     await batch.commit();
 
-    console.log(`Cleared ${count} mock data matters from team ${teamId}`);
+    console.log(`Cleared ${count} mock data matters from firm ${firmId}`);
     return count;
   } catch (error) {
     console.error('Error clearing mock matters:', error);

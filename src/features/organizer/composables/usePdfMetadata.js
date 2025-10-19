@@ -89,10 +89,12 @@ export function usePdfMetadata() {
       // Extract common XMP fields
       if (metadataMap.has('dc:title')) xmpData.title = metadataMap.get('dc:title');
       if (metadataMap.has('dc:creator')) xmpData.creator = metadataMap.get('dc:creator');
-      if (metadataMap.has('dc:description')) xmpData.description = metadataMap.get('dc:description');
+      if (metadataMap.has('dc:description'))
+        xmpData.description = metadataMap.get('dc:description');
       if (metadataMap.has('xmp:CreateDate')) xmpData.createDate = metadataMap.get('xmp:CreateDate');
       if (metadataMap.has('xmp:ModifyDate')) xmpData.modifyDate = metadataMap.get('xmp:ModifyDate');
-      if (metadataMap.has('xmp:CreatorTool')) xmpData.creatorTool = metadataMap.get('xmp:CreatorTool');
+      if (metadataMap.has('xmp:CreatorTool'))
+        xmpData.creatorTool = metadataMap.get('xmp:CreatorTool');
       if (metadataMap.has('pdf:Producer')) xmpData.producer = metadataMap.get('pdf:Producer');
 
       // Forensically valuable fields
@@ -120,11 +122,11 @@ export function usePdfMetadata() {
   /**
    * Extract metadata from PDF file
    *
-   * @param {string} teamId - Team ID for Firebase Storage path
+   * @param {string} firmId - Firm ID for Firebase Storage path
    * @param {string} fileHash - File hash (document ID)
    * @param {string} displayName - File display name to get extension
    */
-  const extractMetadata = async (teamId, fileHash, displayName) => {
+  const extractMetadata = async (firmId, fileHash, displayName) => {
     // Only process PDF files
     if (!displayName?.toLowerCase().endsWith('.pdf')) {
       return;
@@ -139,7 +141,7 @@ export function usePdfMetadata() {
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Build storage path
-      const storagePath = `teams/${teamId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
 
       // Get download URL

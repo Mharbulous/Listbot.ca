@@ -13,7 +13,7 @@ The Bookkeeper application features a sophisticated file upload system designed 
 - **Progress Tracking**: Hardware-calibrated time estimation with 3-phase prediction
 - **Event Logging**: Individual file upload events with interruption detection
 - **Metadata Recording**: Constraint-based deduplication using metadata hashes
-- **Storage Management**: Team-scoped Firebase Storage with automatic deduplication
+- **Storage Management**: Firm-scoped Firebase Storage with automatic deduplication
 
 ## File Storage and Data Paths
 
@@ -378,7 +378,7 @@ while (retryCount < maxRetries) {
 
 ### Access Control
 
-- **Team-Based Isolation**: Files scoped to team ID for multi-tenancy
+- **Firm-Based Isolation**: Files scoped to firm ID for multi-tenancy
 - **Matter-Level Organization**: Files organized by legal matters
 - **Firebase Security Rules**: Server-side access control enforcement
 

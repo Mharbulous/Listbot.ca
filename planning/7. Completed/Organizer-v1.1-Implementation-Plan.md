@@ -139,7 +139,7 @@ Version 1.1 transforms the free-form tag system from v1.0 into a structured cate
 #### New Collections
 
 ```javascript
-// /teams/{teamId}/categories/
+// /firms/{firmId}/categories/
 {
   id: "category-uuid",
   name: "Document Type",
@@ -165,7 +165,7 @@ Version 1.1 transforms the free-form tag system from v1.0 into a structured cate
 #### Updated Evidence Structure
 
 ```javascript
-// /teams/{teamId}/evidence/{evidenceId}
+// /firms/{firmId}/evidence/{evidenceId}
 {
   // ... existing fields ...
   tagsByHuman: [             // Updated structure
@@ -510,8 +510,8 @@ PUT / api / evidence / { evidenceId } / tags;
 
 ### Query Optimization
 
-- Index categories by teamId and isActive
-- Index evidence by teamId and tag categoryIds
+- Index categories by firmId and isActive
+- Index evidence by firmId and tag categoryIds
 - Denormalize category/tag names for faster search
 - Cache frequently accessed categories
 

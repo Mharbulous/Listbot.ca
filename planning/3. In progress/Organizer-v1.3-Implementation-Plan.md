@@ -47,9 +47,9 @@
 
 ### Data Structure (No Changes Required)
 
-- **Evidence Collection**: `/teams/{teamId}/evidence/{evidenceId}` - Document metadata and references
-- **Tag Subcollections**: `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
-- **Categories**: `/teams/{teamId}/categories/{categoryId}` - User-defined category structures with colors
+- **Evidence Collection**: `/firms/{firmId}/evidence/{evidenceId}` - Document metadata and references
+- **Tag Subcollections**: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
+- **Categories**: `/firms/{firmId}/categories/{categoryId}` - User-defined category structures with colors
 - **Display References**: Evidence documents point to sourceMetadata via `displayCopy.metadataHash`
 
 ## Core Goal
@@ -62,9 +62,9 @@
 
 **Data Structure** (No Changes Required):
 
-- **Evidence Collection**: `/teams/{teamId}/evidence/{evidenceId}` - Document metadata and references
-- **Tag Subcollections**: `/teams/{teamId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
-- **Categories**: `/teams/{teamId}/categories/{categoryId}` - User-defined category structures with colors
+- **Evidence Collection**: `/firms/{firmId}/evidence/{evidenceId}` - Document metadata and references
+- **Tag Subcollections**: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
+- **Categories**: `/firms/{firmId}/categories/{categoryId}` - User-defined category structures with colors
 - **Display References**: Evidence documents point to sourceMetadata via `displayCopy.metadataHash`
 
 ## Research Documentation

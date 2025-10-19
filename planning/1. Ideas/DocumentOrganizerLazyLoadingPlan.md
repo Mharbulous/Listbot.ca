@@ -213,7 +213,7 @@ const getPlaceholderClasses = () => ({
 2. **File Browser**: Directory contents with many files
 3. **Tag Lists**: Large tag collections
 4. **Categories**: Bulk category displays
-5. **User Lists**: Team member directories
+5. **User Lists**: Firm member directories
 6. **Report Lists**: Historical report archives
 
 ### Configuration Options

@@ -15,8 +15,8 @@ import {
  * Handles creation, updating, deletion, and basic retrieval of evidence entries
  */
 export class EvidenceService {
-  constructor(teamId) {
-    this.teamId = teamId;
+  constructor(firmId) {
+    this.firmId = firmId;
   }
 
   /**
@@ -58,7 +58,7 @@ export class EvidenceService {
       };
 
       // Use setDoc with fileHash as document ID (automatic deduplication)
-      const docRef = doc(db, 'teams', this.teamId, 'matters', 'general', 'evidence', fileHash);
+      const docRef = doc(db, 'firms', this.firmId, 'matters', 'general', 'evidence', fileHash);
       await setDoc(docRef, evidenceData);
 
       console.log(`[EvidenceService] Created evidence document: ${fileHash.substring(0, 8)}...`, {
@@ -92,8 +92,8 @@ export class EvidenceService {
         const fileHash = uploadMetadata.hash;
         const evidenceRef = doc(
           db,
-          'teams',
-          this.teamId,
+          'firms',
+          this.firmId,
           'matters',
           'general',
           'evidence',
@@ -146,8 +146,8 @@ export class EvidenceService {
 
       const evidenceRef = doc(
         db,
-        'teams',
-        this.teamId,
+        'firms',
+        this.firmId,
         'matters',
         'general',
         'evidence',
@@ -187,8 +187,8 @@ export class EvidenceService {
 
       const evidenceRef = doc(
         db,
-        'teams',
-        this.teamId,
+        'firms',
+        this.firmId,
         'matters',
         'general',
         'evidence',
@@ -212,8 +212,8 @@ export class EvidenceService {
     try {
       const evidenceRef = doc(
         db,
-        'teams',
-        this.teamId,
+        'firms',
+        this.firmId,
         'matters',
         'general',
         'evidence',
@@ -237,8 +237,8 @@ export class EvidenceService {
     try {
       const evidenceRef = doc(
         db,
-        'teams',
-        this.teamId,
+        'firms',
+        this.firmId,
         'matters',
         'general',
         'evidence',
@@ -271,8 +271,8 @@ export class EvidenceService {
 
       const metadataRef = collection(
         db,
-        'teams',
-        this.teamId,
+        'firms',
+        this.firmId,
         'matters',
         'general',
         'evidence',

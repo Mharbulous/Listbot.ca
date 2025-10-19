@@ -8,20 +8,20 @@ import tagSubcollectionService from './tagSubcollectionService.js';
  * Provides document access, Categories, and AI suggestion storage with subcollection support
  */
 export class EvidenceDocumentService {
-  constructor(teamId = null) {
-    this.teamId = teamId;
+  constructor(firmId = null) {
+    this.firmId = firmId;
     this.tagService = tagSubcollectionService;
   }
 
   /**
    * Get evidence document from Firestore
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<Object|null>} - Evidence document or null
    */
-  async getEvidenceDocument(evidenceId, teamId) {
+  async getEvidenceDocument(evidenceId, firmId) {
     try {
-      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
       const evidenceSnap = await getDoc(evidenceRef);
 
       if (evidenceSnap.exists()) {
@@ -40,10 +40,10 @@ export class EvidenceDocumentService {
 
   /**
    * Get user's categories to provide context for AI suggestions
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<Array>} - Array of category objects
    */
-  async getUserCategories(teamId) {
+  async getUserCategories(firmId) {
     try {
       const categoryStore = useCategoryStore();
 
@@ -67,11 +67,11 @@ export class EvidenceDocumentService {
   /**
    * Store AI suggestions as subcollection tags with confidence-based auto-approval
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {Array} suggestions - AI tag suggestions
    * @returns {Promise<void>}
    */
-  async storeaiAlternatives(evidenceId, teamId, suggestions) {
+  async storeaiAlternatives(evidenceId, firmId, suggestions) {
     try {
       // Convert AI suggestions to new subcollection tag format
       const aiTagsData = suggestions.map((suggestion) => ({
@@ -101,7 +101,7 @@ export class EvidenceDocumentService {
       }
 
       // Update evidence document with AI processing metadata
-      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
       await updateDoc(evidenceRef, {
         lastAIProcessed: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -115,13 +115,13 @@ export class EvidenceDocumentService {
   /**
    * Update evidence document with tag changes
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {Object} updates - Updates to apply to the document
    * @returns {Promise<void>}
    */
-  async updateEvidenceDocument(evidenceId, teamId, updates) {
+  async updateEvidenceDocument(evidenceId, firmId, updates) {
     try {
-      const evidenceRef = doc(db, 'teams', teamId, 'matters', 'general', 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
 
       const updateData = {
         ...updates,
@@ -140,12 +140,12 @@ export class EvidenceDocumentService {
   /**
    * Get evidence document with validation
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<Object>} - Evidence document data
    * @throws {Error} - If document not found
    */
-  async getEvidenceDocumentWithValidation(evidenceId, teamId) {
-    const evidence = await this.getEvidenceDocument(evidenceId, teamId);
+  async getEvidenceDocumentWithValidation(evidenceId, firmId) {
+    const evidence = await this.getEvidenceDocument(evidenceId, firmId);
     if (!evidence) {
       throw new Error(`Evidence document not found: ${evidenceId}`);
     }
@@ -154,12 +154,12 @@ export class EvidenceDocumentService {
 
   /**
    * Validate categories exist for AI processing
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @returns {Promise<Array>} - Array of categories
    * @throws {Error} - If no categories found
    */
-  async validateAndGetCategories(teamId) {
-    const categories = await this.getUserCategories(teamId);
+  async validateAndGetCategories(firmId) {
+    const categories = await this.getUserCategories(firmId);
     if (categories.length === 0) {
       throw new Error('No categories found. Please create categories before using AI tagging.');
     }
@@ -225,10 +225,10 @@ export class EvidenceDocumentService {
   /**
    * Legacy compatibility: Get AI suggestions (now returns pending tags)
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID (unused but kept for compatibility)
+   * @param {string} firmId - Firm ID (unused but kept for compatibility)
    * @returns {Promise<Array>} - Array of pending AI tag suggestions
    */
-  async getaiAlternatives(evidenceId, teamId) {
+  async getaiAlternatives(evidenceId, firmId) {
     try {
       return await this.tagService.getPendingTags(evidenceId);
     } catch (error) {
@@ -240,10 +240,10 @@ export class EvidenceDocumentService {
   /**
    * Legacy compatibility: Get human tags (now returns approved manual tags)
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID (unused but kept for compatibility)
+   * @param {string} firmId - Firm ID (unused but kept for compatibility)
    * @returns {Promise<Array>} - Array of approved manual tags
    */
-  async getHumanTags(evidenceId, teamId) {
+  async getHumanTags(evidenceId, firmId) {
     try {
       const approvedTags = await this.tagService.getApprovedTags(evidenceId);
       return approvedTags.filter((tag) => tag.source === 'manual');

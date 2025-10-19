@@ -11,7 +11,7 @@ Firebase Storage structure for file storage with automatic deduplication based o
 **Purpose**: Store actual file content with automatic deduplication based on file hash
 
 ```
-/teams/{teamId}/matters/{matterId}/uploads/{fileHash}.{extension}
+/firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{extension}
 ```
 
 **Key Features**:
@@ -24,9 +24,9 @@ Firebase Storage structure for file storage with automatic deduplication based o
 **Examples**:
 
 ```
-/teams/team-abc-123/matters/general/uploads/abc123def456789abcdef012345.pdf
-/teams/team-abc-123/matters/matter-001/uploads/xyz789ghi012345fedcba678901.docx
-/teams/solo-user-789/matters/general/uploads/def456abc123789012345abcdef.jpg
+/firms/firm-abc-123/matters/general/uploads/abc123def456789abcdef012345.pdf
+/firms/firm-abc-123/matters/matter-001/uploads/xyz789ghi012345fedcba678901.docx
+/firms/solo-user-789/matters/general/uploads/def456abc123789012345abcdef.jpg
 ```
 
 **Storage Efficiency**:
@@ -41,7 +41,7 @@ Firebase Storage structure for file storage with automatic deduplication based o
 
 The following folders are reserved for future file processing workflows:
 
-### OCRed Files: `/teams/{teamId}/matters/{matterId}/OCRed/`
+### OCRed Files: `/firms/{firmId}/matters/{matterId}/OCRed/`
 
 **Purpose**: Store files that have been processed through Optical Character Recognition
 
@@ -49,7 +49,7 @@ The following folders are reserved for future file processing workflows:
 - Maintains original file hash for deduplication
 - Enables full-text search capabilities
 
-### Split Files: `/teams/{teamId}/matters/{matterId}/split/`
+### Split Files: `/firms/{firmId}/matters/{matterId}/split/`
 
 **Purpose**: Store files that have been split from larger documents
 
@@ -57,7 +57,7 @@ The following folders are reserved for future file processing workflows:
 - Each split file gets its own hash and metadata record
 - Maintains reference to original source file
 
-### Merged Files: `/teams/{teamId}/matters/{matterId}/merged/`
+### Merged Files: `/firms/{firmId}/matters/{matterId}/merged/`
 
 **Purpose**: Store files that have been merged from multiple source files
 
@@ -81,11 +81,12 @@ File Merging → /merged/
 
 ## Storage Path Examples
 
-### Team-Based Organization
+### Firm-Based Organization
 
-**Corporate Team Example**:
+**Corporate Firm Example**:
+
 ```
-/teams/team-acme-law-123/
+/firms/firm-acme-law-123/
   ├── matters/
   │   ├── general/
   │   │   └── uploads/
@@ -101,8 +102,9 @@ File Merging → /merged/
 ```
 
 **Solo User Example**:
+
 ```
-/teams/user-john-456/  (teamId === userId for solo users)
+/firms/user-john-456/  (firmId === userId for solo users)
   └── matters/
       └── general/
           └── uploads/
@@ -118,8 +120,9 @@ File Merging → /merged/
 **Scenario**: Same contract uploaded to multiple matters
 
 **Storage**: Single file at one location
+
 ```
-/teams/team-abc-123/matters/matter-001/uploads/abc123def456.pdf
+/firms/firm-abc-123/matters/matter-001/uploads/abc123def456.pdf
 ```
 
 **File Metadata**: Multiple metadata records preserve different contexts as documented in **[FileMetadata.md](./FileMetadata.md)**
@@ -129,8 +132,9 @@ File Merging → /merged/
 **Scenario**: File with different original names (renamed on filesystem)
 
 **Storage**: Single file (same content hash)
+
 ```
-/teams/team-abc-123/matters/general/uploads/abc123def456.pdf
+/firms/firm-abc-123/matters/general/uploads/abc123def456.pdf
 ```
 
 **File Metadata**: Different metadata records for each name variation as documented in **[FileMetadata.md](./FileMetadata.md)**
@@ -146,10 +150,10 @@ Storage paths align with Firestore security model:
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Team members can access their team's files
-    match /teams/{teamId}/{allPaths=**} {
+    // Firm members can access their firm's files
+    match /firms/{firmId}/{allPaths=**} {
       allow read, write: if request.auth != null &&
-                            request.auth.token.teamId == teamId;
+                            request.auth.token.firmId == firmId;
     }
   }
 }
@@ -157,9 +161,9 @@ service firebase.storage {
 
 ### Path-Based Access Control
 
-- **Team Isolation**: Each team's files stored under `/teams/{teamId}/`
+- **Firm Isolation**: Each firm's files stored under `/firms/{firmId}/`
 - **Matter-Scoped**: Files organized by matter for granular access
-- **Solo User Support**: Solo users (`teamId === userId`) get private storage
+- **Solo User Support**: Solo users (`firmId === userId`) get private storage
 - **Consistent Patterns**: Storage paths mirror Firestore document paths
 
 ## Storage Optimization Features
@@ -173,7 +177,7 @@ service firebase.storage {
 
 ### Path Normalization
 
-- **Consistent Structure**: All paths follow `/teams/{teamId}/matters/{matterId}/` pattern
+- **Consistent Structure**: All paths follow `/firms/{firmId}/matters/{matterId}/` pattern
 - **Extension Preservation**: Original file extensions maintained for proper handling
 - **Hash-Based Names**: File names use content hash to ensure uniqueness
 - **Cross-Platform**: Forward slashes used regardless of client OS
@@ -196,6 +200,7 @@ File processing status is tracked in collections documented in **[FileMetadata.m
 ### Workflow Integration
 
 Processing folders enable:
+
 - **Audit Trails**: Track document transformations
 - **Version Control**: Maintain original and processed versions
 - **Quality Assurance**: Verify processing completeness

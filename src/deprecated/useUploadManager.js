@@ -94,11 +94,11 @@ export function useUploadManager() {
    * Initialize upload service for current user
    */
   const initializeService = () => {
-    if (!authStore.isAuthenticated || !authStore.currentTeam) {
+    if (!authStore.isAuthenticated || !authStore.currentFirm) {
       throw new Error('User must be authenticated to upload files');
     }
 
-    uploadService.value = new UploadService(authStore.currentTeam, authStore.user.uid);
+    uploadService.value = new UploadService(authStore.currentFirm, authStore.user.uid);
     uploadSession.value = uploadService.value.session;
   };
 

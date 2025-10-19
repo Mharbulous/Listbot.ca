@@ -80,7 +80,7 @@ export class UserService {
         // Application-specific fields only
         role: additionalData.role || 'user',
         department: additionalData.department || null,
-        teamId: additionalData.teamId || null,
+        firmId: additionalData.firmId || null,
         preferences: additionalData.preferences || {},
 
         // Activity timestamps

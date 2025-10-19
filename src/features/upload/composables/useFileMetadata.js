@@ -46,7 +46,8 @@ export function useFileMetadata() {
    */
   const createMetadataRecord = async (fileData) => {
     try {
-      const { sourceFileName, lastModified, fileHash, size, originalPath, sourceFileType } = fileData;
+      const { sourceFileName, lastModified, fileHash, size, originalPath, sourceFileType } =
+        fileData;
 
       if (!sourceFileName || !lastModified || !fileHash) {
         throw new Error(
@@ -54,9 +55,9 @@ export function useFileMetadata() {
         );
       }
 
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available for metadata record');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available for metadata record');
       }
 
       // Generate metadata hash for document ID
@@ -76,8 +77,8 @@ export function useFileMetadata() {
       try {
         const docRef = doc(
           db,
-          'teams',
-          teamId,
+          'firms',
+          firmId,
           'matters',
           'general',
           'evidence',
@@ -100,7 +101,7 @@ export function useFileMetadata() {
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
 
       // STEP 1: Create Evidence document FIRST (parent document must exist before subcollections)
-      const evidenceService = new EvidenceService(teamId);
+      const evidenceService = new EvidenceService(firmId);
 
       const uploadMetadata = {
         hash: fileHash,
@@ -127,11 +128,11 @@ export function useFileMetadata() {
         sourceFileType: sourceFileType || '',
       };
 
-      // Save to Firestore: /teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
+      // Save to Firestore: /firms/{firmId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
       const docRef = doc(
         db,
-        'teams',
-        teamId,
+        'firms',
+        firmId,
         'matters',
         'general',
         'evidence',
@@ -189,17 +190,17 @@ export function useFileMetadata() {
   const metadataRecordExists = async (sourceFileName, lastModified, fileHash) => {
     try {
       const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
-      const teamId = authStore.currentTeam;
+      const firmId = authStore.currentFirm;
 
-      if (!teamId) {
-        throw new Error('No team ID available');
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
       // Try to get the document from subcollection
       const docRef = doc(
         db,
-        'teams',
-        teamId,
+        'firms',
+        firmId,
         'matters',
         'general',
         'evidence',

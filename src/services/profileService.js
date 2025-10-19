@@ -45,9 +45,9 @@ export class ProfileService {
 
   /**
    * Update user profile
-   * Updates Firestore user document, Firebase Auth displayName, and team member data
+   * Updates Firestore user document, Firebase Auth displayName, and firm member data
    * @param {string} userId - User identifier
-   * @param {string} teamId - Team identifier
+   * @param {string} firmId - Firm identifier
    * @param {Object} profileData - Profile data to update
    * @param {string} profileData.firstName - User's first name
    * @param {string} profileData.middleNames - User's middle name(s)
@@ -55,13 +55,13 @@ export class ProfileService {
    * @param {boolean} profileData.isLawyer - Whether user is a lawyer
    * @returns {Promise<void>}
    */
-  static async updateProfile(userId, teamId, profileData) {
+  static async updateProfile(userId, firmId, profileData) {
     if (!userId) {
       throw new Error('User ID is required');
     }
 
-    if (!teamId) {
-      throw new Error('Team ID is required');
+    if (!firmId) {
+      throw new Error('Firm ID is required');
     }
 
     const { firstName, middleNames, lastName, isLawyer } = profileData;
@@ -95,9 +95,9 @@ export class ProfileService {
         });
       }
 
-      // 3. Update team member isLawyer status if provided
+      // 3. Update firm member isLawyer status if provided
       if (typeof isLawyer === 'boolean') {
-        await this.updateTeamMemberIsLawyer(teamId, userId, isLawyer);
+        await this.updateFirmMemberIsLawyer(firmId, userId, isLawyer);
       }
 
       console.log('Profile updated successfully');
@@ -108,69 +108,69 @@ export class ProfileService {
   }
 
   /**
-   * Update isLawyer status in team member data
-   * @param {string} teamId - Team identifier
+   * Update isLawyer status in firm member data
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @param {boolean} isLawyer - Whether user is a lawyer
    * @returns {Promise<void>}
    */
-  static async updateTeamMemberIsLawyer(teamId, userId, isLawyer) {
-    if (!teamId || !userId) {
-      throw new Error('Team ID and User ID are required');
+  static async updateFirmMemberIsLawyer(firmId, userId, isLawyer) {
+    if (!firmId || !userId) {
+      throw new Error('Firm ID and User ID are required');
     }
 
     try {
-      const teamRef = doc(db, 'teams', teamId);
-      const teamSnap = await getDoc(teamRef);
+      const firmRef = doc(db, 'firms', firmId);
+      const firmSnap = await getDoc(firmRef);
 
-      if (!teamSnap.exists()) {
-        throw new Error('Team document not found');
+      if (!firmSnap.exists()) {
+        throw new Error('Firm document not found');
       }
 
-      const teamData = teamSnap.data();
-      const members = teamData.members || {};
+      const firmData = firmSnap.data();
+      const members = firmData.members || {};
 
       if (!members[userId]) {
-        throw new Error('User is not a member of this team');
+        throw new Error('User is not a member of this firm');
       }
 
       // Update isLawyer field for this user
       members[userId].isLawyer = isLawyer;
 
-      // Update team document
-      await updateDoc(teamRef, {
+      // Update firm document
+      await updateDoc(firmRef, {
         members: members,
         updatedAt: serverTimestamp(),
       });
 
       console.log(`isLawyer status updated to ${isLawyer} for user ${userId}`);
     } catch (error) {
-      console.error('Error updating team member isLawyer status:', error);
+      console.error('Error updating firm member isLawyer status:', error);
       throw error;
     }
   }
 
   /**
-   * Get user's isLawyer status from team
-   * @param {string} teamId - Team identifier
+   * Get user's isLawyer status from firm
+   * @param {string} firmId - Firm identifier
    * @param {string} userId - User identifier
    * @returns {Promise<boolean>} isLawyer status
    */
-  static async getIsLawyerStatus(teamId, userId) {
-    if (!teamId || !userId) {
+  static async getIsLawyerStatus(firmId, userId) {
+    if (!firmId || !userId) {
       return false;
     }
 
     try {
-      const teamRef = doc(db, 'teams', teamId);
-      const teamSnap = await getDoc(teamRef);
+      const firmRef = doc(db, 'firms', firmId);
+      const firmSnap = await getDoc(firmRef);
 
-      if (!teamSnap.exists()) {
+      if (!firmSnap.exists()) {
         return false;
       }
 
-      const teamData = teamSnap.data();
-      const members = teamData.members || {};
+      const firmData = firmSnap.data();
+      const members = firmData.members || {};
 
       return members[userId]?.isLawyer || false;
     } catch (error) {

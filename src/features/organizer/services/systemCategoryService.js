@@ -49,29 +49,21 @@ export class SystemCategoryService {
 
   /**
    * Check which system categories are missing from a matter
-   * @param {string} teamId - The team ID
+   * @param {string} firmId - The firm ID
    * @param {string} matterId - The matter ID (default: 'general')
    * @returns {Promise<Array>} Array of missing system category IDs
    */
-  static async checkMissingCategories(teamId, matterId = 'general') {
+  static async checkMissingCategories(firmId, matterId = 'general') {
     try {
-      if (!teamId || typeof teamId !== 'string') {
-        throw new Error('Valid team ID is required');
+      if (!firmId || typeof firmId !== 'string') {
+        throw new Error('Valid firm ID is required');
       }
 
       const missingIds = [];
 
       // Check each system category
       for (const categoryId of SYSTEM_CATEGORY_IDS) {
-        const categoryRef = doc(
-          db,
-          'teams',
-          teamId,
-          'matters',
-          matterId,
-          'categories',
-          categoryId
-        );
+        const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
         const categoryDoc = await getDoc(categoryRef);
 
         if (!categoryDoc.exists()) {
@@ -96,22 +88,22 @@ export class SystemCategoryService {
   /**
    * Initialize system categories for a matter
    * Creates any missing system categories using reserved document IDs
-   * @param {string} teamId - The team ID
+   * @param {string} firmId - The firm ID
    * @param {string} matterId - The matter ID (default: 'general')
    * @returns {Promise<Object>} Result with counts of created and skipped categories
    */
-  static async initializeSystemCategories(teamId, matterId = 'general') {
+  static async initializeSystemCategories(firmId, matterId = 'general') {
     try {
-      if (!teamId || typeof teamId !== 'string') {
-        throw new Error('Valid team ID is required');
+      if (!firmId || typeof firmId !== 'string') {
+        throw new Error('Valid firm ID is required');
       }
 
       console.log(
-        `[SystemCategoryService] Initializing system categories for team ${teamId}, matter ${matterId}`
+        `[SystemCategoryService] Initializing system categories for firm ${firmId}, matter ${matterId}`
       );
 
       // Check which categories are missing
-      const missingIds = await this.checkMissingCategories(teamId, matterId);
+      const missingIds = await this.checkMissingCategories(firmId, matterId);
 
       if (missingIds.length === 0) {
         console.log('[SystemCategoryService] All system categories already exist');
@@ -129,19 +121,13 @@ export class SystemCategoryService {
       for (const categoryId of missingIds) {
         const categoryDef = getSystemCategory(categoryId);
         if (!categoryDef) {
-          console.warn(`[SystemCategoryService] No definition found for category ID: ${categoryId}`);
+          console.warn(
+            `[SystemCategoryService] No definition found for category ID: ${categoryId}`
+          );
           continue;
         }
 
-        const categoryRef = doc(
-          db,
-          'teams',
-          teamId,
-          'matters',
-          matterId,
-          'categories',
-          categoryId
-        );
+        const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
 
         // Prepare category document
         const categoryDoc = {

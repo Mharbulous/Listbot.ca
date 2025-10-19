@@ -56,7 +56,7 @@ The app uses a sophisticated Firebase Auth system with explicit state machine pa
 - `router/guards/auth.js` - Route protection
 - `components/features/auth/LoginForm.vue` - Login interface
 
-**Solo Team Architecture**: Every user automatically gets a "solo team" where `teamId === userId`, providing consistent data patterns and easy upgrade path to multi-user teams.
+**Solo Firm Architecture**: Every user automatically gets a "solo firm" where `firmId === userId`, providing consistent data patterns and easy upgrade path to multi-user firms.
 
 ### File Upload & Processing System
 
@@ -262,9 +262,9 @@ Hash-based deduplication eliminates redundant storage and processing of identica
 
 ### Firestore Security Rules
 
-- Users can only access their own data (`teamId === userId` for solo users)
+- Users can only access their own data (`firmId === userId` for solo users)
 - Files use hash-based document IDs for immutable storage
-- Team-based access control ready for future multi-user features
+- Firm-based access control ready for future multi-user features
 
 ### Authentication Security
 
@@ -330,7 +330,7 @@ The system uses real-time hardware calibration for accurate predictions:
 
 - **File Processing**: Large operations run in Web Workers to maintain UI responsiveness
 - **State Machine**: Always check `authStore.isInitialized` before rendering auth-dependent content
-- **Team Context**: All data access is scoped by team ID (currently userId for solo users)
+- **Firm Context**: All data access is scoped by firm ID (currently userId for solo users)
 - **Cross-App Testing**: Use dedicated dev commands for SSO testing across multiple apps
 - **Firebase Consistency**: All apps in SSO architecture must use identical Firebase configuration
 - IMPORTANT: Always use the plan-reviewer agent on EVERY written implementation plan.

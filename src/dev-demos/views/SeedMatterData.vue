@@ -12,10 +12,10 @@
         <h3 class="font-semibold text-blue-900 mb-2">Current User Information</h3>
         <div class="text-sm text-blue-800 space-y-1">
           <p><strong>User ID:</strong> {{ authStore.user?.uid || 'Not logged in' }}</p>
-          <p><strong>Team ID:</strong> {{ authStore.teamId || 'No team' }}</p>
+          <p><strong>Firm ID:</strong> {{ authStore.firmId || 'No firm' }}</p>
           <p><strong>Email:</strong> {{ authStore.user?.email || 'N/A' }}</p>
           <p class="mt-3 text-blue-700">
-            All matters will be created in your team ({{ authStore.teamId }}) and assigned to you.
+            All matters will be created in your firm ({{ authStore.firmId }}) and assigned to you.
           </p>
         </div>
       </div>
@@ -26,7 +26,7 @@
         <div class="flex items-start gap-4">
           <button
             @click="handleSeed"
-            :disabled="seeding || !authStore.teamId"
+            :disabled="seeding || !authStore.firmId"
             class="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
           >
             <svg
@@ -69,7 +69,7 @@
         <div class="flex items-start gap-4">
           <button
             @click="handleClear"
-            :disabled="clearing || !authStore.teamId"
+            :disabled="clearing || !authStore.firmId"
             class="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
           >
             <svg
@@ -104,7 +104,7 @@
           </button>
           <div class="flex-1 text-sm text-red-600 pt-3">
             <strong>⚠️ Warning:</strong> This will permanently delete ALL MOCK DATA matters from
-            your team. Manually created matters are safe and will not be deleted.
+            your firm. Manually created matters are safe and will not be deleted.
           </div>
         </div>
       </div>
@@ -188,7 +188,7 @@ const errorMessage = ref('');
  * Handle seeding the database
  */
 async function handleSeed() {
-  if (!authStore.teamId || !authStore.user?.uid) {
+  if (!authStore.firmId || !authStore.user?.uid) {
     errorMessage.value = 'You must be logged in to seed the database';
     return;
   }
@@ -198,7 +198,7 @@ async function handleSeed() {
   errorMessage.value = '';
 
   try {
-    const result = await seedMatters(authStore.teamId, authStore.user.uid);
+    const result = await seedMatters(authStore.firmId, authStore.user.uid);
 
     if (result.success > 0) {
       successMessage.value = `Successfully seeded ${result.success} matters into your database!`;
@@ -221,14 +221,14 @@ async function handleSeed() {
  * Handle clearing all matters
  */
 async function handleClear() {
-  if (!authStore.teamId) {
+  if (!authStore.firmId) {
     errorMessage.value = 'You must be logged in to clear matters';
     return;
   }
 
   // Confirm before clearing
   const confirmed = confirm(
-    'Are you sure you want to delete ALL MOCK DATA matters from your team? Manually created matters will be safe. This action cannot be undone!'
+    'Are you sure you want to delete ALL MOCK DATA matters from your firm? Manually created matters will be safe. This action cannot be undone!'
   );
 
   if (!confirmed) {
@@ -240,8 +240,8 @@ async function handleClear() {
   errorMessage.value = '';
 
   try {
-    const count = await clearMatters(authStore.teamId);
-    successMessage.value = `Successfully cleared ${count} mock data matters from your team`;
+    const count = await clearMatters(authStore.firmId);
+    successMessage.value = `Successfully cleared ${count} mock data matters from your firm`;
   } catch (error) {
     console.error('Clearing error:', error);
     errorMessage.value = error.message || 'An error occurred while clearing mock matters';

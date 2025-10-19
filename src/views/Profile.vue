@@ -70,7 +70,6 @@
               />
             </v-col>
           </v-row>
-
         </v-form>
       </v-card-text>
 
@@ -204,17 +203,17 @@ const loadProfile = async () => {
 
   try {
     const userId = authStore.user?.uid;
-    const teamId = authStore.currentTeam;
+    const firmId = authStore.currentFirm;
 
-    if (!userId || !teamId) {
-      throw new Error('User not authenticated or no team found');
+    if (!userId || !firmId) {
+      throw new Error('User not authenticated or no firm found');
     }
 
     // Fetch user profile data
     const profile = await ProfileService.getProfile(userId);
 
-    // Fetch isLawyer status from team
-    const isLawyer = await ProfileService.getIsLawyerStatus(teamId, userId);
+    // Fetch isLawyer status from firm
+    const isLawyer = await ProfileService.getIsLawyerStatus(firmId, userId);
 
     if (profile) {
       formData.value = {
@@ -261,14 +260,14 @@ const handleSubmit = async () => {
 
   try {
     const userId = authStore.user?.uid;
-    const teamId = authStore.currentTeam;
+    const firmId = authStore.currentFirm;
 
-    if (!userId || !teamId) {
-      throw new Error('User not authenticated or no team found');
+    if (!userId || !firmId) {
+      throw new Error('User not authenticated or no firm found');
     }
 
     // Update profile
-    await ProfileService.updateProfile(userId, teamId, {
+    await ProfileService.updateProfile(userId, firmId, {
       firstName: formData.value.firstName,
       middleNames: formData.value.middleNames,
       lastName: formData.value.lastName,

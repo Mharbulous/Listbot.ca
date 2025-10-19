@@ -6,7 +6,7 @@
         <h1 class="text-4xl font-bold text-slate-800 mb-4">Multi-App SSO Template</h1>
         <p class="text-xl text-slate-600 max-w-2xl mx-auto">
           A Vue 3 template with Multi-App Single Sign-On (SSO) capabilities. Create multiple
-          independent applications that share seamless authentication and team contexts.
+          independent applications that share seamless authentication and firm contexts.
         </p>
       </div>
 
@@ -232,7 +232,7 @@
                       >
                     </p>
                     <p class="text-xs text-slate-500">
-                      The template includes team-based security rules in
+                      The template includes firm-based security rules in
                       <code>firestore.rules</code>
                     </p>
                   </div>
@@ -820,7 +820,7 @@
                       <div class="bg-green-50 p-3 rounded">
                         <p class="font-medium text-green-800 mb-2">🔄 Shared State</p>
                         <p class="text-green-700 text-xs">
-                          Authentication and team context are shared. Login changes reflect across
+                          Authentication and firm context are shared. Login changes reflect across
                           all running apps.
                         </p>
                       </div>

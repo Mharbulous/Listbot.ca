@@ -41,17 +41,20 @@ The application presents metadata to users in three distinct categories, reflect
 When the same file (identified by fileHash) has been uploaded with different metadata combinations, users can select which variant to display:
 
 **UI Implementation**:
+
 - **Dropdown Menu**: Appears when multiple sourceMetadata records exist for a single evidence document
 - **Variant Identification**: Shows original filename with duplicate indicators (e.g., "Report.PDF", "report.pdf (2)")
 - **Earlier Copy Notification**: Displays a notification message when a file with an earlier modification date already exists in storage
 - **Persistence**: Selected variant is stored in `evidence.displayCopy` field
 
 **Data Structure**:
+
 - Multiple sourceMetadata documents share the same parent evidence document (identified by fileHash)
 - Each sourceMetadata document has a unique metadataHash (generated from `sourceFileName|lastModified|fileHash`)
 - The `displayCopy` field in the evidence document points to the currently selected metadataHash
 
 **Use Case Example**:
+
 1. User uploads `Contract.PDF` modified Jan 1, 2025
 2. Later, uploads identical file as `contract.pdf` modified Feb 1, 2025
 3. System creates ONE evidence document (same fileHash)
@@ -68,6 +71,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 #### PDF Embedded Metadata (Implemented)
 
 **Extraction Architecture**:
+
 - **Library**: pdfjs-dist v5.4.296 with Vite-configured Web Worker
 - **Trigger**: Automatic extraction when viewing PDF files in ViewDocument.vue
 - **Performance**: ~100-300ms (metadata only, no page rendering)
@@ -77,6 +81,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **Extracted Fields**:
 
 ##### Document Information Dictionary (PDF Standard - 8 fields):
+
 - **Title**: Document title from PDF metadata
 - **Author**: Document author
 - **Subject**: Document subject/description
@@ -87,6 +92,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **ModDate**: Last modification timestamp with timezone
 
 ##### XMP Metadata (Forensically Valuable - 11 fields):
+
 - **dc:title**: Dublin Core title metadata
 - **dc:creator**: Dublin Core creator information
 - **dc:description**: Document description from XMP
@@ -99,6 +105,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **xmpMM:History**: **Complete audit trail** - array of all editing operations, timestamps, and software used
 
 **Forensic Significance** (per MetadataSpecs.md):
+
 - **Time zone offsets** reveal editing location (e.g., -07:00 = Pacific Daylight Time)
 - **DocumentID/InstanceID** track version lineage across document edits
 - **xmpMM:History** provides complete audit trail of all modifications
@@ -106,6 +113,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **Date discrepancies** between CreationDate and ModDate indicate post-creation editing
 
 **Date Format Handling**:
+
 - **PDF Format**: `D:YYYYMMDDHHmmSSOHH'mm'` (e.g., `D:20250407163514-07'00'`)
 - **Parsed to**: ISO 8601 with timezone preservation
 - **Displayed**: Localized format with timezone indicator
@@ -114,11 +122,13 @@ When the same file (identified by fileHash) has been uploaded with different met
 #### Other File Formats (Future Implementation)
 
 **Planned Expansion**:
+
 - **Images** (JPG/PNG/TIFF): EXIF data, GPS coordinates, camera information, device serial numbers
 - **Office Docs** (DOC/DOCX/XLS/XLSX): Author, Company, Revision history, Track Changes, edit times
 - **Media Files** (MP3/MP4/WAV): Recording timestamps, device information, GPS tracks, codec details
 
 **Data Sources**:
+
 - **PDF (Current)**: Client-side extraction via pdfjs-dist (not persisted)
 - **Future**: May be stored in `evidence` collection fields or dedicated subcollections
 
@@ -175,6 +185,7 @@ Cloud:
 **Status**: Fully implemented and deployed for PDF files.
 
 **Extraction Composable**: `src/features/organizer/composables/usePdfMetadata.js`
+
 - Extracts Document Information Dictionary (8 fields: Title, Author, Subject, Keywords, Creator, Producer, CreationDate, ModDate)
 - Extracts XMP metadata (11 fields including xmpMM:DocumentID, xmpMM:InstanceID, xmpMM:History)
 - Formats PDF dates with timezone preservation (converts `D:YYYYMMDDHHmmSSOHH'mm'` to ISO 8601)
@@ -182,6 +193,7 @@ Cloud:
 - Returns structured metadata object with `info` and `xmp` properties
 
 **Display Component**: `src/features/organizer/views/ViewDocument.vue`
+
 - **Location**: "Embedded Metadata" section (template lines 95-191)
 - **Conditional Rendering**: Only displays for PDF files (checks MIME type and file extension)
 - **Loading States**: Shows "Loading PDF metadata..." during extraction
@@ -192,11 +204,13 @@ Cloud:
 - **Revision History Display**: Shows xmpMM:History as formatted JSON in scrollable container when available
 
 **Worker Configuration**: `src/config/pdfWorker.js`
+
 - Configures pdfjs-dist Web Worker using Vite's `new URL()` with `import.meta.url`
 - Enables non-blocking PDF processing (prevents UI freezing during extraction)
 - Worker path resolves automatically from node_modules (no CDN dependency)
 
 **Extraction Workflow**:
+
 1. User navigates to ViewDocument.vue with PDF file
 2. Component loads evidence and sourceMetadata from Firestore
 3. `fetchStorageMetadata()` detects PDF file by extension
@@ -207,6 +221,7 @@ Cloud:
 8. Template displays extracted metadata in "Embedded Metadata" section
 
 **Key Characteristics**:
+
 - **Client-side only**: Metadata is NOT persisted to Firestore (extracted on-demand each view)
 - **Real-time extraction**: Runs automatically when viewing PDF files
 - **Performance optimized**: Only reads PDF header (typically <100KB), not entire file
@@ -215,6 +230,7 @@ Cloud:
 - **No server costs**: All processing happens in user's browser
 
 **Dependencies**:
+
 - `pdfjs-dist`: v5.4.296 (Mozilla PDF.js library)
 - Firebase Storage: For file retrieval
 - Vite: For Web Worker configuration and URL resolution
@@ -229,8 +245,8 @@ Cloud:
 
 ### 1. sourceMetadata Subcollection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
-**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Current**: `/firms/{firmId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 
 **Purpose**: Preserves metadata about original desktop files as a subcollection under evidence documents
 
@@ -254,8 +270,8 @@ Cloud:
 
 ### 2. evidence Collection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/evidence/{fileHash}`
-**Current**: `/teams/{teamId}/matters/general/evidence/{fileHash}`
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}`
+**Current**: `/firms/{firmId}/matters/general/evidence/{fileHash}`
 
 **Purpose**: Links deduplicated storage files to their display metadata
 
@@ -297,8 +313,8 @@ Cloud:
 
 ### 3. uploadEvents Collection
 
-**Path**: `/teams/{teamId}/matters/{matterId}/uploadEvents/{eventId}`  
-**Current**: `/teams/{teamId}/matters/general/uploadEvents/{eventId}`
+**Path**: `/firms/{firmId}/matters/{matterId}/uploadEvents/{eventId}`  
+**Current**: `/firms/{firmId}/matters/general/uploadEvents/{eventId}`
 
 **Purpose**: Audit trail of every upload attempt (successful or duplicate)
 
@@ -313,7 +329,7 @@ Cloud:
   fileName: string,          // Original filename from upload attempt
   fileHash: string,          // SHA-256 of file content
   metadataHash: string,      // SHA-256 of metadata
-  teamId: string,            // Team context
+  firmId: string,            // Firm context
   userId: string,            // User who uploaded
   errorMessage: string       // Optional - only for upload_error events
 }

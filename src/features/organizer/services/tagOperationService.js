@@ -8,27 +8,27 @@ import tagSubcollectionService from './tagSubcollectionService.js';
  * Provides operations for managing AI suggested tags and their lifecycle
  */
 export class TagOperationService {
-  constructor(teamId = null) {
-    this.teamId = teamId;
-    this.evidenceService = new EvidenceDocumentService(teamId);
+  constructor(firmId = null) {
+    this.firmId = firmId;
+    this.evidenceService = new EvidenceDocumentService(firmId);
     this.tagService = tagSubcollectionService;
   }
 
   /**
    * Approve an AI suggested tag - converts AI tag to human tag in subcollection
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {Object} aiTag - AI tag to approve (must have id from subcollection)
    * @returns {Promise<Object>} - Operation result
    */
-  async approveAITag(evidenceId, teamId, aiTag) {
+  async approveAITag(evidenceId, firmId, aiTag) {
     try {
       if (!aiTag.id) {
         throw new Error('AI tag must have subcollection ID for approval');
       }
 
       // Get current AI tag from subcollection
-      const aiTags = await this.tagService.getPendingTags(evidenceId, this.teamId);
+      const aiTags = await this.tagService.getPendingTags(evidenceId, this.firmId);
       const currentAITag = aiTags.find((tag) => tag.id === aiTag.id);
 
       if (!currentAITag) {
@@ -36,7 +36,7 @@ export class TagOperationService {
       }
 
       // Use the subcollection service's approve method instead of updating directly
-      const updatedTag = await this.tagService.approveAITag(evidenceId, aiTag.id, teamId);
+      const updatedTag = await this.tagService.approveAITag(evidenceId, aiTag.id, firmId);
 
       console.log(`[TagOperationService] Approved AI tag: ${aiTag.tagName} for ${evidenceId}`);
 
@@ -54,18 +54,18 @@ export class TagOperationService {
   /**
    * Reject an AI suggested tag - updates its status to rejected in subcollection
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {Object} aiTag - AI tag to reject (must have id from subcollection)
    * @returns {Promise<Object>} - Operation result
    */
-  async rejectAITag(evidenceId, teamId, aiTag) {
+  async rejectAITag(evidenceId, firmId, aiTag) {
     try {
       if (!aiTag.id) {
         throw new Error('AI tag must have subcollection ID for rejection');
       }
 
       // Use the subcollection service's reject method instead of updating directly
-      const updatedTag = await this.tagService.rejectAITag(evidenceId, aiTag.id, teamId);
+      const updatedTag = await this.tagService.rejectAITag(evidenceId, aiTag.id, firmId);
 
       console.log(`[TagOperationService] Rejected AI tag: ${aiTag.tagName} for ${evidenceId}`);
 
@@ -83,11 +83,11 @@ export class TagOperationService {
   /**
    * Process review changes from the AI review modal
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {Object} changes - Changes object with approved and rejected arrays
    * @returns {Promise<Object>} - Operation result
    */
-  async processReviewChanges(evidenceId, teamId, changes) {
+  async processReviewChanges(evidenceId, firmId, changes) {
     try {
       const { approved = [], rejected = [] } = changes;
       const results = {
@@ -99,7 +99,7 @@ export class TagOperationService {
       // Process approvals and rejections sequentially to avoid conflicts
       for (const aiTag of approved) {
         try {
-          await this.approveAITag(evidenceId, teamId, aiTag);
+          await this.approveAITag(evidenceId, firmId, aiTag);
           results.approvedCount++;
         } catch (error) {
           console.error(`Failed to approve tag ${aiTag.tagName}:`, error);
@@ -109,7 +109,7 @@ export class TagOperationService {
 
       for (const aiTag of rejected) {
         try {
-          await this.rejectAITag(evidenceId, teamId, aiTag);
+          await this.rejectAITag(evidenceId, firmId, aiTag);
           results.rejectedCount++;
         } catch (error) {
           console.error(`Failed to reject tag ${aiTag.tagName}:`, error);
@@ -135,14 +135,14 @@ export class TagOperationService {
   /**
    * Get AI tags with specific status from subcollection
    * @param {string} evidenceId - Evidence document ID
-   * @param {string} teamId - Team ID
+   * @param {string} firmId - Firm ID
    * @param {string} status - Tag status to filter by (optional)
    * @returns {Promise<Array>} - Array of AI tags
    */
-  async getAITagsByStatus(evidenceId, teamId, status = null) {
+  async getAITagsByStatus(evidenceId, firmId, status = null) {
     try {
       // Get all tags and filter for AI source
-      const allTags = await this.tagService.getTags(evidenceId, {}, teamId);
+      const allTags = await this.tagService.getTags(evidenceId, {}, firmId);
       const aiTags = allTags.filter((tag) => tag.source === 'ai');
 
       if (status === 'pending') {

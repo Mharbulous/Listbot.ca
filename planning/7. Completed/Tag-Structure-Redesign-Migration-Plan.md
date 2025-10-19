@@ -24,7 +24,7 @@ Implement a subcollection-based tag system with built-in confidence-based auto-a
 
 ```javascript
 // Evidence document (matches docs/architecture.md format)
-teams/{teamId}/evidence/{docId}
+firms/{firmId}/evidence/{docId}
 ├── storageRef: {
 │   storage: 'uploads',
 │   fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
@@ -41,7 +41,7 @@ teams/{teamId}/evidence/{docId}
 └── updatedAt: timestamp
 
 // Tag documents with built-in confidence workflow (categoryId as document ID)
-teams/{teamId}/evidence/{docId}/tags/{categoryId}
+firms/{firmId}/evidence/{docId}/tags/{categoryId}
 ├── categoryId: "cat-legal-123"          // Redundant but useful for queries
 ├── categoryName: "Legal Documents"
 ├── tagName: "Contract"                 // The selected tag within this category
@@ -97,7 +97,7 @@ teams/{teamId}/evidence/{docId}/tags/{categoryId}
   - ✅ Built batch operations for approval/rejection workflows
   - ✅ Added comprehensive error handling and logging
 - **Integration Issues Resolved**:
-  - ✅ Fixed Firestore path construction for team-scoped access
+  - ✅ Fixed Firestore path construction for firm-scoped access
   - ✅ Updated Firestore security rules for AI tags subcollection
   - ✅ Resolved import path issues for component integration
 
@@ -146,7 +146,7 @@ teams/{teamId}/evidence/{docId}/tags/{categoryId}
   - ✅ Enhanced state management for `pendingTags`, `approvedTags`, `rejectedTags`
   - ✅ Integrated with tagSubcollectionService for real-time tag status management
 - **Integration Status**:
-  - ✅ Successfully integrated with auth store for team context
+  - ✅ Successfully integrated with auth store for firm context
   - ✅ Real-time tag loading and status management operational
 
 #### **Step 2.3: Update File List Tag Display** ✅ **COMPLETED**
@@ -161,7 +161,7 @@ teams/{teamId}/evidence/{docId}/tags/{categoryId}
   - ✅ Added CSS classes for high/medium/low confidence styling
   - ✅ Updated `loadSubcollectionTags()` to load tags by status
 - **Integration Status**:
-  - ✅ Successfully integrated with auth store for team context
+  - ✅ Successfully integrated with auth store for firm context
   - ✅ Real-time tag status updates operational
 
 ### **Phase 3: Evidence Document Updates** ✅ **COMPLETED**
@@ -183,22 +183,22 @@ teams/{teamId}/evidence/{docId}/tags/{categoryId}
 ### **Security & Access Issues** ✅ **RESOLVED**
 
 - **Issue**: Firestore permission errors when accessing AI tags subcollection
-- **Root Cause**: Missing security rules for `/teams/{teamId}/evidence/{docId}/Tags/{tagId}` paths
-- **Resolution**: ✅ Updated Firestore security rules with proper team-scoped access control
+- **Root Cause**: Missing security rules for `/firms/{firmId}/evidence/{docId}/Tags/{tagId}` paths
+- **Resolution**: ✅ Updated Firestore security rules with proper firm-scoped access control
 - **Status**: ✅ Permission errors eliminated, subcollection access working
 
 ### **Service Integration Issues** ✅ **RESOLVED**
 
 - **Issue**: Incorrect Firestore path construction in tagSubcollectionService
-- **Root Cause**: Service used `/evidence/{docId}/Tags/` instead of team-scoped paths
-- **Resolution**: ✅ Updated all service methods to use `/teams/{teamId}/evidence/{docId}/Tags/`
-- **Status**: ✅ All CRUD operations working with proper team context
+- **Root Cause**: Service used `/evidence/{docId}/Tags/` instead of firm-scoped paths
+- **Resolution**: ✅ Updated all service methods to use `/firms/{firmId}/evidence/{docId}/Tags/`
+- **Status**: ✅ All CRUD operations working with proper firm context
 
 ### **Component Integration Issues** ✅ **RESOLVED**
 
-- **Issue**: Components not passing teamId parameter to service methods
+- **Issue**: Components not passing firmId parameter to service methods
 - **Root Cause**: Service method signatures updated but component calls not updated
-- **Resolution**: ✅ Updated TagSelector and FileListItemTags to get teamId from auth store
+- **Resolution**: ✅ Updated TagSelector and FileListItemTags to get firmId from auth store
 - **Status**: ✅ All components successfully integrated and operational
 
 ## Current System Status
@@ -259,7 +259,7 @@ With all data deleted, we can implement the optimal structure directly:
 **Evidence Document with Tag Subcollections:**
 
 ```javascript
-// teams/team-abc-123/evidence/evidence-doc-789
+// firms/firm-abc-123/evidence/evidence-doc-789
 {
   // File reference (matches docs/architecture.md)
   storageRef: {
@@ -299,7 +299,7 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // HIGH CONFIDENCE - Auto-approved AI tag (categoryId as document ID)
-// teams/team-abc-123/evidence/evidence-doc-789/tags/cat-financial-789
+// firms/firm-abc-123/evidence/evidence-doc-789/tags/cat-financial-789
 {
   categoryId: "cat-financial-789",
   categoryName: "Financial Documents",
@@ -321,7 +321,7 @@ With all data deleted, we can implement the optimal structure directly:
 }
 
 // MEDIUM CONFIDENCE - Needs human review (categoryId as document ID)
-// teams/team-abc-123/evidence/evidence-doc-789/tags/cat-legal-123
+// firms/firm-abc-123/evidence/evidence-doc-789/tags/cat-legal-123
 {
   categoryId: "cat-legal-123",
   categoryName: "Legal Documents",
@@ -343,7 +343,7 @@ With all data deleted, we can implement the optimal structure directly:
 }
 
 // HUMAN APPLIED - Manual tag (categoryId as document ID)
-// teams/team-abc-123/evidence/evidence-doc-789/tags/cat-clients-456
+// firms/firm-abc-123/evidence/evidence-doc-789/tags/cat-clients-456
 {
   categoryId: "cat-clients-456",
   categoryName: "Client Tags",
@@ -363,7 +363,7 @@ With all data deleted, we can implement the optimal structure directly:
 }
 
 // HUMAN REVIEWED - AI tag that was reviewed and approved (categoryId as document ID)
-// teams/team-abc-123/evidence/evidence-doc-789/tags/cat-legal-alt-123
+// firms/firm-abc-123/evidence/evidence-doc-789/tags/cat-legal-alt-123
 {
   categoryId: "cat-legal-alt-123",  // Different legal subcategory
   categoryName: "Legal Document Types",
@@ -394,7 +394,7 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // Original Metadata Record
-// teams/team-abc-123/matters/general/sourceMetadata/meta456def789abc123456789abc123456789abc123456789abc
+// firms/firm-abc-123/matters/general/sourceMetadata/meta456def789abc123456789abc123456789abc123456789abc
 {
   originalName: 'Service_Agreement_ClientABC_2025.pdf',
   lastModified: 1704067200000,  // 2025-01-01 00:00:00
@@ -404,14 +404,14 @@ With all data deleted, we can implement the optimal structure directly:
 }
 
 // Upload Event Record
-// teams/team-abc-123/matters/general/uploadEvents/evidence-doc-789
+// firms/firm-abc-123/matters/general/uploadEvents/evidence-doc-789
 {
   eventType: 'upload_success',
   timestamp: Timestamp('2025-08-31T10:00:00Z'),
   fileName: 'Service_Agreement_ClientABC_2025.pdf',
   fileHash: 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890',
   metadataHash: 'meta456def789abc123456789abc123456789abc123456789abc',
-  teamId: 'team-abc-123',
+  firmId: 'firm-abc-123',
   userId: 'user-john-456'
 }
 ```
@@ -420,9 +420,9 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // Actual file storage paths using content-based addressing
-'/teams/team-abc-123/matters/general/uploads/a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890.pdf';
-'/teams/team-abc-123/matters/matter-client-001/uploads/b2c3d4e5f67890a1bcdef234567890a1bcdef234567890a1bcdef234567890a1.docx';
-'/teams/solo-user-789/matters/general/uploads/c3d4e5f67890a1b2cdef345678901a2bcdef345678901a2bcdef345678901a2b.jpg';
+'/firms/firm-abc-123/matters/general/uploads/a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890.pdf';
+'/firms/firm-abc-123/matters/matter-client-001/uploads/b2c3d4e5f67890a1bcdef234567890a1bcdef234567890a1bcdef234567890a1.docx';
+'/firms/solo-user-789/matters/general/uploads/c3d4e5f67890a1b2cdef345678901a2bcdef345678901a2bcdef345678901a2b.jpg';
 ```
 
 **Confidence-Based Distribution Examples:**

@@ -129,7 +129,9 @@ export function useCategoryValidation(categories) {
 
     // Business rule: System categories cannot be deleted
     if (isSystemCategory(categoryId)) {
-      errors.push('System categories cannot be deleted. They can be edited but must remain in the system.');
+      errors.push(
+        'System categories cannot be deleted. They can be edited but must remain in the system.'
+      );
       return { canDelete: false, errors };
     }
 
@@ -153,7 +155,7 @@ export function useCategoryValidation(categories) {
   };
 
   /**
-   * Validate category limit for team
+   * Validate category limit for firm
    */
   const validateCategoryLimit = (currentCount, limit = 50) => {
     const errors = [];

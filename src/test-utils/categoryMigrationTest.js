@@ -9,13 +9,13 @@ export class CategoryMigrationTest {
   /**
    * Test the migration fallback for categories missing isActive field
    */
-  static async testMigrationFallback(teamId) {
+  static async testMigrationFallback(firmId) {
     console.group('[CategoryMigrationTest] Testing isActive field migration');
 
     try {
       // Test 1: Normal query with isActive field
       console.log('Test 1: Fetching categories with isActive field...');
-      const activeCategories = await CategoryService.getActiveCategories(teamId);
+      const activeCategories = await CategoryService.getActiveCategories(firmId);
       console.log(`Found ${activeCategories.length} active categories`);
 
       // Verify all returned categories have isActive field
@@ -30,7 +30,7 @@ export class CategoryMigrationTest {
       console.log('Test 2: Testing unique name validation...');
       try {
         // This should work without errors even if some categories lack isActive
-        await CategoryService.validateUniqueName(teamId, 'Test Category');
+        await CategoryService.validateUniqueName(firmId, 'Test Category');
         console.log('✅ Unique name validation passed');
       } catch (error) {
         if (error.message.includes('already exists')) {
@@ -42,7 +42,7 @@ export class CategoryMigrationTest {
 
       // Test 3: Verify migration happens automatically
       console.log('Test 3: Verifying automatic migration...');
-      const categoriesAfterMigration = await CategoryService.getActiveCategories(teamId);
+      const categoriesAfterMigration = await CategoryService.getActiveCategories(firmId);
       const stillMissing = categoriesAfterMigration.filter((cat) => cat.isActive === undefined);
 
       if (stillMissing.length === 0) {

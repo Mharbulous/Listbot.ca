@@ -7,22 +7,26 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ## User Stories Addressed
 
 ### Progress & Feedback
+
 1. **Upload Progress Visibility** - Immediate visual feedback on "Start Upload" click
 2. **Real-Time Upload Progress** - Progress bar showing completed/total files with percentage
 3. **Individual File Upload Status** - Status of each file (uploading, completed, failed)
 4. **Upload Speed Information** - Current upload speed display (MB/s or files/min)
 
 ### Control & Management
+
 5. **Pause and Resume Capability** - Ability to pause/resume uploads gracefully
 6. **Batch Upload Cancellation** - Cancel entire upload process when paused
 7. **Cleanup and Reset** - Clear queue and reset for new upload session
 
 ### Error Handling & Recovery
+
 8. **Error Handling and Recovery** - Clear error messages with retry options
 9. **Interruption Recovery** - Resume uploads after browser/network interruption
 10. **Thorough and Reliable Bulk Uploading** - Database tracking of upload completion
 
 ### Duplicate & Metadata Handling
+
 11. **Duplicate File Handling** - Preserve metadata for files with identical hashes
 12. **Upload Completion Notification** - Success message with comprehensive summary
 13. **Failed Upload Summary** - Categorized failure report with actionable solutions
@@ -33,18 +37,21 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ### Core Components
 
 #### Upload Service Layer
+
 - **`uploadService.js`** - Firebase Storage operations with atomic metadata writes
 - **Firebase Integration** - Storage uploads with progress callbacks
 - **Atomic Operations** - Ensure file + metadata succeed together or fail together
 - **Error Classification** - Network, permission, size, and other error types
 
 #### State Management
+
 - **`useUploadManager.js`** - Centralized upload state and progress tracking
 - **Upload State Machine** - queued → uploading → completed/failed/paused
 - **Progress Tracking** - Real-time file and overall progress
 - **Retry Logic** - Two-pass strategy for failed uploads
 
 #### UI Components
+
 - **`UploadProgressModal.vue`** - Full-screen upload progress display
 - **`UploadProgressBar.vue`** - Linear progress with metrics
 - **`FileUploadStatus.vue`** - Individual file status indicators
@@ -55,6 +62,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ### Phase 1: Core Infrastructure
 
 #### 1.1 Upload Service (`src/services/uploadService.js`)
+
 ```javascript
 // Key responsibilities:
 - Firebase Storage upload operations
@@ -66,6 +74,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ```
 
 **Features:**
+
 - Chunked uploads for large files
 - Connection retry logic
 - Upload speed metrics with rolling averages
@@ -73,6 +82,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 - Comprehensive error categorization
 
 #### 1.2 Upload Manager (`src/composables/useUploadManager.js`)
+
 ```javascript
 // Key responsibilities:
 - Upload queue state management
@@ -83,6 +93,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ```
 
 **State Structure:**
+
 ```javascript
 {
   uploadState: 'idle' | 'uploading' | 'paused' | 'completed' | 'error',
@@ -97,6 +108,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ### Phase 2: User Interface Components
 
 #### 2.1 Upload Progress Modal (`src/components/features/upload/UploadProgressModal.vue`)
+
 - Full-screen overlay during upload process
 - Real-time progress visualization
 - Upload speed and time remaining estimates
@@ -104,12 +116,14 @@ This document outlines the detailed implementation plan for the 14 user stories 
 - Individual file status list
 
 #### 2.2 File Status Integration
+
 - Extend existing `LazyFileItem.vue` with upload status badges
 - Real-time progress indicators per file
 - Error state visualization with retry buttons
 - Upload completion checkmarks
 
 #### 2.3 Upload Controls Enhancement
+
 - Modify `FileUploadQueue.vue` "Start Upload" button behavior
 - Add pause/resume toggle controls
 - Conditional "Clear All" button (visible only when paused)
@@ -118,12 +132,15 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ### Phase 3: Advanced Features
 
 #### 3.1 Error Handling System
+
 **Two-Pass Upload Strategy:**
+
 1. **Primary Pass:** Attempt all files once
 2. **Retry Pass:** Cycle through failed uploads until no progress made
 3. **Final Report:** Categorize remaining failures
 
 **Error Categories:**
+
 - Network errors (timeout, connection lost)
 - Permission errors (storage access, authentication)
 - File size errors (exceeds limits)
@@ -131,6 +148,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 - Client errors (file not found, corrupted)
 
 #### 3.2 Duplicate Handling & Metadata Preservation
+
 ```javascript
 // For duplicate files (same SHA256 hash):
 - Store file content once in Firebase Storage
@@ -140,6 +158,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ```
 
 #### 3.3 Interruption Recovery System
+
 ```javascript
 // localStorage persistence:
 {
@@ -155,6 +174,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ```
 
 **Recovery Process:**
+
 1. Detect interruption via `beforeunload` event
 2. Save current state to localStorage
 3. On page load, check for incomplete sessions
@@ -163,7 +183,9 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ### Phase 4: Completion & Results
 
 #### 4.1 Upload Completion Flow
+
 1. **Success Modal:** Detailed completion summary
+
    - Total files processed
    - Data uploaded (size)
    - Time elapsed
@@ -175,7 +197,9 @@ This document outlines the detailed implementation plan for the 14 user stories 
    - Retry options for recoverable errors
 
 #### 4.2 Post-Upload Review System
+
 **Upload Results Table:**
+
 - Searchable and sortable file list
 - Filter by status (success/failed/skipped)
 - Export results to CSV
@@ -184,12 +208,14 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ## Integration Points
 
 ### Existing System Integration
+
 - **File Queue System:** Leverage existing `useFileQueue.js` and `useFileQueueCore.js`
-- **Authentication:** Use existing auth context and team-based storage
+- **Authentication:** Use existing auth context and firm-based storage
 - **Firebase Config:** Utilize existing Firebase service configuration
 - **Deduplication:** Build on existing hash calculation and worker infrastructure
 
 ### State Synchronization
+
 - Upload progress updates reactive state in queue components
 - Real-time UI updates without blocking user interaction
 - Consistent state between modal and queue views
@@ -197,6 +223,7 @@ This document outlines the detailed implementation plan for the 14 user stories 
 ## Technical Implementation Details
 
 ### Upload Flow Sequence
+
 1. **Initialization:** User clicks "Start Upload" → immediate UI feedback
 2. **Queue Processing:** Convert queue items to upload tasks
 3. **Upload Execution:** Process files with progress callbacks
@@ -205,12 +232,14 @@ This document outlines the detailed implementation plan for the 14 user stories 
 6. **Completion:** Show results summary and cleanup options
 
 ### Performance Considerations
+
 - **Concurrent Uploads:** Configurable parallel upload limit (default: 3)
 - **Progress Throttling:** Limit progress update frequency to prevent UI blocking
 - **Memory Management:** Stream large files, avoid loading entire file into memory
 - **Network Optimization:** Adaptive retry delays, connection pooling
 
 ### Error Recovery Strategies
+
 - **Network Errors:** Exponential backoff retry with jitter
 - **Authentication:** Token refresh and retry
 - **Storage Limits:** Clear error messaging with upgrade options
@@ -242,18 +271,21 @@ src/
 ## Testing Strategy
 
 ### Unit Testing
+
 - Upload service operations
 - State management logic
 - Error classification accuracy
 - Progress calculation correctness
 
 ### Integration Testing
+
 - Complete upload flow
 - Pause/resume functionality
 - Error handling and recovery
 - Interruption recovery scenarios
 
 ### E2E Testing
+
 - Large file upload scenarios
 - Network interruption simulation
 - Browser refresh during upload
@@ -262,12 +294,14 @@ src/
 ## Success Metrics
 
 ### Performance Targets
+
 - Upload progress visible within 100ms of "Start Upload" click
 - Progress updates smooth at 60fps
 - Memory usage stable during large uploads
 - Upload speed accurately calculated and displayed
 
 ### Functionality Validation
+
 - All 14 user stories fully implemented
 - Pause/resume without data corruption
 - Complete interruption recovery
@@ -276,6 +310,7 @@ src/
 - Actionable error reporting
 
 ### User Experience Goals
+
 - Intuitive progress visualization
 - Clear control mechanisms
 - Helpful error messages
@@ -285,6 +320,7 @@ src/
 ## Future Enhancements
 
 ### Advanced Features
+
 - Upload scheduling and queuing
 - Bandwidth throttling controls
 - Upload history and analytics
@@ -292,6 +328,7 @@ src/
 - Integration with cloud storage providers
 
 ### Performance Optimizations
+
 - Delta upload for modified files
 - Compression before upload
 - CDN integration for global uploads

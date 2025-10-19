@@ -257,13 +257,21 @@ const calculateFileHash = async (file) => {
 // Simple upload helper functions
 const generateStoragePath = (fileHash, originalFileName) => {
   const extension = originalFileName.split('.').pop().toLowerCase();
-  return `teams/${authStore.currentTeam}/matters/general/uploads/${fileHash}.${extension}`;
+  return `firms/${authStore.currentFirm}/matters/general/uploads/${fileHash}.${extension}`;
 };
 
 const checkFileExists = async (fileHash) => {
   try {
     // Direct document lookup using fileHash as document ID
-    const evidenceRef = doc(db, 'teams', authStore.currentTeam, 'matters', 'general', 'evidence', fileHash);
+    const evidenceRef = doc(
+      db,
+      'firms',
+      authStore.currentFirm,
+      'matters',
+      'general',
+      'evidence',
+      fileHash
+    );
     const docSnap = await getDoc(evidenceRef);
     return docSnap.exists();
   } catch (error) {
@@ -278,7 +286,7 @@ const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = 
 
   const uploadTask = uploadBytesResumable(storageReference, file, {
     customMetadata: {
-      teamId: authStore.currentTeam,
+      firmId: authStore.currentFirm,
       userId: authStore.user.uid,
       originalName: originalFileName,
       hash: fileHash,
@@ -695,7 +703,9 @@ const processNewFileUpload = async (queueFile, fileHash) => {
       });
     }
   } else {
-    console.warn(`[WARNING] No upload event ID captured for ${queueFile.name} - cannot update event`);
+    console.warn(
+      `[WARNING] No upload event ID captured for ${queueFile.name} - cannot update event`
+    );
   }
 
   await safeMetadata(

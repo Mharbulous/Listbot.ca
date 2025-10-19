@@ -5,21 +5,21 @@ import { db, auth } from '../services/firebase';
 import { ProfileService } from '../services/profileService';
 
 /**
- * Composable for fetching and filtering team members
- * Provides reactive access to team members with various filters
+ * Composable for fetching and filtering firm members
+ * Provides reactive access to firm members with various filters
  */
-export function useTeamMembers() {
+export function useFirmMembers() {
   const authStore = useAuthStore();
-  const teamMembers = ref([]);
+  const firmMembers = ref([]);
   const loading = ref(false);
   const error = ref(null);
 
   /**
-   * Get lawyers from the current team
+   * Get lawyers from the current firm
    * Filters members where isLawyer === true
    */
   const lawyers = computed(() => {
-    return teamMembers.value.filter((member) => member.isLawyer === true);
+    return firmMembers.value.filter((member) => member.isLawyer === true);
   });
 
   /**
@@ -31,32 +31,32 @@ export function useTeamMembers() {
   });
 
   /**
-   * Fetch team members from Firestore
-   * Loads the team document and processes member data
+   * Fetch firm members from Firestore
+   * Loads the firm document and processes member data
    */
-  const fetchTeamMembers = async () => {
+  const fetchFirmMembers = async () => {
     loading.value = true;
     error.value = null;
-    teamMembers.value = [];
+    firmMembers.value = [];
 
     try {
-      // Get current team ID from auth store
-      const teamId = authStore.currentTeam;
+      // Get current firm ID from auth store
+      const firmId = authStore.currentFirm;
 
-      if (!teamId) {
-        throw new Error('No team ID available');
+      if (!firmId) {
+        throw new Error('No firm ID available');
       }
 
-      // Fetch team document
-      const teamRef = doc(db, 'teams', teamId);
-      const teamSnap = await getDoc(teamRef);
+      // Fetch firm document
+      const firmRef = doc(db, 'firms', firmId);
+      const firmSnap = await getDoc(firmRef);
 
-      if (!teamSnap.exists()) {
-        throw new Error('Team document not found');
+      if (!firmSnap.exists()) {
+        throw new Error('Firm document not found');
       }
 
-      const teamData = teamSnap.data();
-      const members = teamData.members || {};
+      const firmData = firmSnap.data();
+      const members = firmData.members || {};
 
       // Process members and get display names
       const processedMembers = await Promise.all(
@@ -103,11 +103,11 @@ export function useTeamMembers() {
         })
       );
 
-      teamMembers.value = processedMembers;
+      firmMembers.value = processedMembers;
     } catch (err) {
-      console.error('Error fetching team members:', err);
+      console.error('Error fetching firm members:', err);
       error.value = err.message;
-      teamMembers.value = [];
+      firmMembers.value = [];
     } finally {
       loading.value = false;
     }
@@ -115,7 +115,7 @@ export function useTeamMembers() {
 
   return {
     // State
-    teamMembers,
+    firmMembers,
     loading,
     error,
 
@@ -124,6 +124,6 @@ export function useTeamMembers() {
     lawyerNames,
 
     // Methods
-    fetchTeamMembers,
+    fetchFirmMembers,
   };
 }

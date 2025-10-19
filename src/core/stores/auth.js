@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', {
     authState: 'uninitialized', // uninitialized -> initializing -> authenticated | unauthenticated | error
     user: null,
     userRole: null,
-    teamId: null,
+    firmId: null,
     error: null,
 
     // Internal tracking
@@ -33,8 +33,8 @@ export const useAuthStore = defineStore('auth', {
       return state.user.displayName || state.user.email?.split('@')[0] || 'User';
     },
 
-    // Team getters
-    currentTeam: (state) => state.teamId,
+    // Firm getters
+    currentFirm: (state) => state.firmId,
 
     userInitials: (state) => {
       if (!state.user) return 'loading';
@@ -111,17 +111,17 @@ export const useAuthStore = defineStore('auth', {
           photoURL: firebaseUser.photoURL,
         };
 
-        // 2. Check for existing team (one simple check)
-        const teamId = await this._getUserTeamId(firebaseUser.uid);
+        // 2. Check for existing firm (one simple check)
+        const firmId = await this._getUserFirmId(firebaseUser.uid);
 
-        if (teamId) {
-          // Existing user with team
-          this.teamId = teamId;
-          this.userRole = await this._getUserRole(teamId, firebaseUser.uid);
+        if (firmId) {
+          // Existing user with firm
+          this.firmId = firmId;
+          this.userRole = await this._getUserRole(firmId, firebaseUser.uid);
         } else {
-          // New user - create solo team ONCE
-          await this._createSoloTeam(firebaseUser);
-          this.teamId = firebaseUser.uid;
+          // New user - create solo firm ONCE
+          await this._createSoloFirm(firebaseUser);
+          this.firmId = firebaseUser.uid;
           this.userRole = 'admin';
         }
 
@@ -133,9 +133,9 @@ export const useAuthStore = defineStore('auth', {
         this.error = null;
       } catch (error) {
         console.error('Error handling authenticated user:', error);
-        // Still authenticate even if team setup fails
+        // Still authenticate even if firm setup fails
         this.authState = 'authenticated';
-        this.teamId = firebaseUser.uid; // Fallback to userId
+        this.firmId = firebaseUser.uid; // Fallback to userId
         this.userRole = 'admin'; // Fallback to admin
       }
     },
@@ -144,7 +144,7 @@ export const useAuthStore = defineStore('auth', {
     async _handleUserUnauthenticated() {
       this.user = null;
       this.userRole = null;
-      this.teamId = null;
+      this.firmId = null;
       this.authState = 'unauthenticated';
       this.error = null;
 
@@ -170,30 +170,30 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Simple check for existing team
-    async _getUserTeamId(userId) {
+    // Simple check for existing firm
+    async _getUserFirmId(userId) {
       try {
-        // Check if user has a solo team
-        const teamDoc = await getDoc(doc(db, 'teams', userId));
-        if (teamDoc.exists()) {
-          return userId; // Solo team exists
+        // Check if user has a solo firm
+        const firmDoc = await getDoc(doc(db, 'firms', userId));
+        if (firmDoc.exists()) {
+          return userId; // Solo firm exists
         }
 
-        // In the future, check for team memberships here
-        // For now, return null if no solo team
+        // In the future, check for firm memberships here
+        // For now, return null if no solo firm
         return null;
       } catch (error) {
-        console.error('Error checking team:', error);
+        console.error('Error checking firm:', error);
         return null;
       }
     },
 
-    // Get user's role in team
-    async _getUserRole(teamId, userId) {
+    // Get user's role in firm
+    async _getUserRole(firmId, userId) {
       try {
-        const teamDoc = await getDoc(doc(db, 'teams', teamId));
-        if (teamDoc.exists()) {
-          const members = teamDoc.data().members || {};
+        const firmDoc = await getDoc(doc(db, 'firms', firmId));
+        if (firmDoc.exists()) {
+          const members = firmDoc.data().members || {};
           return members[userId]?.role || 'member';
         }
         return 'member';
@@ -203,16 +203,16 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Create solo team - ONE TIME ONLY
-    async _createSoloTeam(firebaseUser) {
+    // Create solo firm - ONE TIME ONLY
+    async _createSoloFirm(firebaseUser) {
       const { db } = await import('../../services/firebase');
       const { writeBatch, doc } = await import('firebase/firestore');
       const batch = writeBatch(db);
 
       try {
-        // 1. Create team document
-        const teamRef = doc(db, 'teams', firebaseUser.uid);
-        batch.set(teamRef, {
+        // 1. Create firm document
+        const firmRef = doc(db, 'firms', firebaseUser.uid);
+        batch.set(firmRef, {
           name: `${firebaseUser.displayName || 'User'}'s Workspace`,
           description: 'Personal workspace',
           members: {
@@ -228,7 +228,7 @@ export const useAuthStore = defineStore('auth', {
         });
 
         // 2. Create default matter
-        const matterRef = doc(db, 'teams', firebaseUser.uid, 'matters', 'matter-general');
+        const matterRef = doc(db, 'firms', firebaseUser.uid, 'matters', 'matter-general');
         batch.set(matterRef, {
           title: 'General Documents',
           description: 'Non-client documents and resources',
@@ -257,7 +257,7 @@ export const useAuthStore = defineStore('auth', {
 
         await batch.commit();
       } catch (error) {
-        console.error('Error creating solo team:', error);
+        console.error('Error creating solo firm:', error);
         throw error;
       }
     },
@@ -266,7 +266,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchUserData(userId) {
       if (!userId) {
         this.userRole = null;
-        this.teamId = null;
+        this.firmId = null;
         return;
       }
 
@@ -277,7 +277,7 @@ export const useAuthStore = defineStore('auth', {
         // Preferences are optional, don't fail if missing
         if (userDoc.exists()) {
           // Store any user preferences in the store if needed
-          // But DON'T store teamId or role here - those come from team check
+          // But DON'T store firmId or role here - those come from firm check
         }
       } catch (error) {
         console.error('Error fetching user data:', error);

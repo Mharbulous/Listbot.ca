@@ -15,9 +15,9 @@ export function useUploadLogger() {
    */
   const logUploadEvent = async (event) => {
     try {
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available for logging');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available for logging');
       }
 
       // Create minimal upload event with only essential fields
@@ -27,14 +27,14 @@ export function useUploadLogger() {
         fileName: event.fileName,
         fileHash: event.fileHash,
         metadataHash: event.metadataHash,
-        teamId: teamId,
+        firmId: firmId,
         userId: authStore.user.uid,
       };
 
       const eventsCollection = collection(
         db,
-        'teams',
-        teamId,
+        'firms',
+        firmId,
         'matters',
         'general',
         'uploadEvents'
@@ -60,24 +60,16 @@ export function useUploadLogger() {
    */
   const updateUploadEvent = async (eventId, updates) => {
     try {
-      const teamId = authStore.currentTeam;
-      if (!teamId) {
-        throw new Error('No team ID available for updating event');
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available for updating event');
       }
 
       if (!eventId) {
         throw new Error('Event ID is required for updating upload event');
       }
 
-      const eventDocRef = doc(
-        db,
-        'teams',
-        teamId,
-        'matters',
-        'general',
-        'uploadEvents',
-        eventId
-      );
+      const eventDocRef = doc(db, 'firms', firmId, 'matters', 'general', 'uploadEvents', eventId);
 
       await updateDoc(eventDocRef, updates);
 

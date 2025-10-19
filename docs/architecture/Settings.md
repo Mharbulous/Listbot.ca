@@ -77,32 +77,32 @@ The Settings system manages user-specific display and behavior preferences that 
 
 Defined in `src/features/organizer/utils/categoryFormOptions.js`:
 
-| Format String | Example Output | Description |
-|--------------|----------------|-------------|
-| `YYYY-MM-DD` | 2024-01-23 | ISO 8601 format (default) |
-| `DD/MM/YYYY` | 23/01/2024 | European format |
-| `MM/DD/YYYY` | 01/23/2024 | US format |
-| `DD-MM-YYYY` | 23-01-2024 | European with dashes |
-| `MM-DD-YYYY` | 01-23-2024 | US with dashes |
-| `DD.MM.YYYY` | 23.01.2024 | European with dots |
-| `MM.DD.YYYY` | 01.23.2024 | US with dots |
-| `YYYY/MM/DD` | 2024/01/23 | ISO with slashes |
-| `DD MMM YYYY` | 23 Jan 2024 | Short month name |
-| `MMM DD, YYYY` | Jan 23, 2024 | US short month |
-| `DD MMMM YYYY` | 23 January 2024 | Full month name |
-| `MMMM DD, YYYY` | January 23, 2024 | US full month |
+| Format String   | Example Output   | Description               |
+| --------------- | ---------------- | ------------------------- |
+| `YYYY-MM-DD`    | 2024-01-23       | ISO 8601 format (default) |
+| `DD/MM/YYYY`    | 23/01/2024       | European format           |
+| `MM/DD/YYYY`    | 01/23/2024       | US format                 |
+| `DD-MM-YYYY`    | 23-01-2024       | European with dashes      |
+| `MM-DD-YYYY`    | 01-23-2024       | US with dashes            |
+| `DD.MM.YYYY`    | 23.01.2024       | European with dots        |
+| `MM.DD.YYYY`    | 01.23.2024       | US with dots              |
+| `YYYY/MM/DD`    | 2024/01/23       | ISO with slashes          |
+| `DD MMM YYYY`   | 23 Jan 2024      | Short month name          |
+| `MMM DD, YYYY`  | Jan 23, 2024     | US short month            |
+| `DD MMMM YYYY`  | 23 January 2024  | Full month name           |
+| `MMMM DD, YYYY` | January 23, 2024 | US full month             |
 
 ### Available Time Formats (5 options)
 
 Defined in `src/features/organizer/utils/categoryFormOptions.js`:
 
-| Format String | Example Output | Description |
-|--------------|----------------|-------------|
-| `HH:mm` | 23:01 | 24-hour format (default) |
-| `HH:mm:ss` | 23:01:45 | 24-hour with seconds |
-| `h:mm a` | 11:01 PM | 12-hour with AM/PM |
-| `h:mm:ss a` | 11:01:45 PM | 12-hour with seconds |
-| `HH:mm:ss.SSS` | 23:01:45.123 | 24-hour with milliseconds |
+| Format String  | Example Output | Description               |
+| -------------- | -------------- | ------------------------- |
+| `HH:mm`        | 23:01          | 24-hour format (default)  |
+| `HH:mm:ss`     | 23:01:45       | 24-hour with seconds      |
+| `h:mm a`       | 11:01 PM       | 12-hour with AM/PM        |
+| `h:mm:ss a`    | 11:01:45 PM    | 12-hour with seconds      |
+| `HH:mm:ss.SSS` | 23:01:45.123   | 24-hour with milliseconds |
 
 ## Store Architecture
 
@@ -111,6 +111,7 @@ Defined in `src/features/organizer/utils/categoryFormOptions.js`:
 **Location**: `src/core/stores/userPreferences.js`
 
 **State**:
+
 ```javascript
 {
   // User preferences
@@ -129,14 +130,16 @@ Defined in `src/features/organizer/utils/categoryFormOptions.js`:
 ```
 
 **Getters**:
+
 ```javascript
-currentDateFormat: (state) => state.dateFormat
-currentTimeFormat: (state) => state.timeFormat
-isDarkMode: (state) => state.darkMode
-isReady: (state) => state.isInitialized && !state.isLoading
+currentDateFormat: (state) => state.dateFormat;
+currentTimeFormat: (state) => state.timeFormat;
+isDarkMode: (state) => state.darkMode;
+isReady: (state) => state.isInitialized && !state.isLoading;
 ```
 
 **Actions**:
+
 - `initialize(userId)` - Load preferences from Firestore
 - `updateDateFormat(format)` - Update and persist date format
 - `updateTimeFormat(format)` - Update and persist time format
@@ -158,8 +161,8 @@ async _handleUserAuthenticated(firebaseUser) {
   // 1. Set user identity
   this.user = { uid, email, displayName, photoURL };
 
-  // 2. Setup team (solo team for new users)
-  this.teamId = await this._getUserTeamId(uid);
+  // 2. Setup firm (solo firm for new users)
+  this.firmId = await this._getUserFirmId(uid);
 
   // 3. Initialize user preferences (AUTOMATIC)
   await this._initializeUserPreferences(firebaseUser.uid);
@@ -173,7 +176,7 @@ async _handleUserAuthenticated(firebaseUser) {
 
 When a new user creates an account:
 
-1. **Solo Team Creation**: Auth store creates team document
+1. **Solo Firm Creation**: Auth store creates firm document
 2. **User Document Creation**: Creates `/users/{userId}` document with default preferences:
    ```javascript
    {
@@ -204,6 +207,7 @@ When a new user creates an account:
 **Route**: `/#/settings`
 
 **Layout**:
+
 ```
 Settings Page
 ├── Preferences Section
@@ -224,11 +228,12 @@ const selectedDateFormat = computed({
   get: () => dateFormat.value,
   set: async (value) => {
     await preferencesStore.updateDateFormat(value);
-  }
+  },
 });
 ```
 
 **User Experience**:
+
 - Selections update immediately (optimistic updates)
 - Loading states during save operations
 - Automatic error reversion if save fails
@@ -237,12 +242,14 @@ const selectedDateFormat = computed({
 ### Format Selection UI
 
 **Date Format Selector**:
+
 - **Icon**: Orange calendar icon (`mdi-calendar`)
 - **Display**: Format name + example (e.g., "YYYY-MM-DD (2024-01-23)")
 - **Dropdown**: All 12 formats with examples
 - **Auto-saves**: On selection change
 
 **Time Format Selector**:
+
 - **Icon**: Purple clock icon (`mdi-clock-outline`)
 - **Display**: Format name + example (e.g., "HH:mm (23:01)")
 - **Dropdown**: All 5 formats with examples
@@ -285,6 +292,7 @@ async updateDateFormat(format) {
 ```
 
 **Benefits**:
+
 - Instant UI feedback
 - Automatic error handling
 - No manual rollback code in components
@@ -305,10 +313,10 @@ await setDoc(
       // Legacy fields preserved
       theme: 'light',
       notifications: true,
-      language: 'en'
-    }
+      language: 'en',
+    },
   },
-  { merge: true }  // CRITICAL: Preserves other user document fields
+  { merge: true } // CRITICAL: Preserves other user document fields
 );
 ```
 
@@ -347,6 +355,7 @@ const formattedDate = computed(() => {
 ```
 
 **Reactive Behavior**:
+
 - User changes format in Settings
 - Store updates automatically
 - All FileListItemContent components re-render
@@ -389,8 +398,8 @@ await setDoc(
       // Legacy fields
       theme: 'light',
       notifications: true,
-      language: 'en'
-    }
+      language: 'en',
+    },
   },
   { merge: true }
 );
@@ -409,8 +418,8 @@ await setDoc(
       darkMode: false,
       theme: 'light',
       notifications: true,
-      language: 'en'
-    }
+      language: 'en',
+    },
   },
   { merge: true }
 );
@@ -452,7 +461,7 @@ function validateUserPreferences(data) {
 }
 ```
 
-**Note**: For complete authentication flow and team-based access control, see [security-rules.md](security-rules.md).
+**Note**: For complete authentication flow and firm-based access control, see [security-rules.md](security-rules.md).
 
 ## Performance Considerations
 
@@ -516,7 +525,7 @@ function validateUserPreferences(data) {
 - For authentication initialization flow, see Authentication documentation
 - For date formatting implementation, see `src/utils/dateFormatter.js`
 - For Organizer page date display, see [Evidence.md](Evidence.md)
-- For solo team patterns, see [SoloTeamMatters.md](SoloTeamMatters.md)
+- For solo firm patterns, see [SoloFirmMatters.md](SoloFirmMatters.md)
 - For Firestore security rules, see [security-rules.md](security-rules.md)
 
 ## Common Pitfalls

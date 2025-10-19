@@ -20,10 +20,10 @@ git commit -m "Initial commit - Vue 3 Multi-App SSO Template
 
 🔐 Features implemented:
 - Firebase Authentication with cross-domain SSO
-- Team-based multi-tenant architecture  
+- Firm-based multi-tenant architecture  
 - Pinia stores for state management
 - App switcher component for navigation
-- Firestore security rules for team isolation
+- Firestore security rules for firm isolation
 - Complete development and deployment setup
 
 Ready for Multi-App SSO deployment! 🎉"

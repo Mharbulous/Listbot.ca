@@ -11,7 +11,7 @@ export class TagValidationTest {
   /**
    * Test tag validation and cleanup for an evidence document
    */
-  static async testTagValidation(evidenceId, teamId) {
+  static async testTagValidation(evidenceId, firmId) {
     console.group('[TagValidationTest] Testing tag validation and cleanup');
 
     try {
@@ -28,7 +28,7 @@ export class TagValidationTest {
 
       // Test 2: Get raw tags from subcollection
       console.log('Test 2: Fetching raw tags from subcollection...');
-      const rawTags = await tagSubcollectionService.getTags(evidenceId, {}, teamId);
+      const rawTags = await tagSubcollectionService.getTags(evidenceId, {}, firmId);
       console.log(`Found ${rawTags.length} raw tags`);
 
       // Test 3: Check category validation for each tag
@@ -55,7 +55,7 @@ export class TagValidationTest {
 
       // Test 4: Load tags through the validation system
       console.log('Test 4: Loading tags through validation system...');
-      const tagData = await coreStore.loadTagsForEvidence(evidenceId, teamId);
+      const tagData = await coreStore.loadTagsForEvidence(evidenceId, firmId);
       console.log(`Validation system returned ${tagData.subcollectionTags.length} valid tags`);
 
       // Test 5: Verify filtering worked correctly
@@ -82,7 +82,7 @@ export class TagValidationTest {
 
         // Check if tags were actually deleted
         console.log('Verifying cleanup by re-fetching raw tags...');
-        const rawTagsAfterCleanup = await tagSubcollectionService.getTags(evidenceId, {}, teamId);
+        const rawTagsAfterCleanup = await tagSubcollectionService.getTags(evidenceId, {}, firmId);
         const cleanupCount = rawTags.length - rawTagsAfterCleanup.length;
 
         if (cleanupCount > 0) {
@@ -166,7 +166,7 @@ export class TagValidationTest {
    * Simulate creating orphaned tags for testing
    * WARNING: This is for testing only - creates invalid data
    */
-  static async simulateOrphanedTag(evidenceId, teamId, fakeTagData) {
+  static async simulateOrphanedTag(evidenceId, firmId, fakeTagData) {
     console.warn('[TagValidationTest] Creating orphaned tag for testing purposes');
 
     try {
@@ -176,7 +176,7 @@ export class TagValidationTest {
         categoryId: 'deleted-category-' + Date.now(),
       };
 
-      await tagSubcollectionService.addTag(evidenceId, orphanedTag, teamId);
+      await tagSubcollectionService.addTag(evidenceId, orphanedTag, firmId);
       console.log('Orphaned tag created for testing');
 
       return orphanedTag.categoryId;
@@ -189,7 +189,7 @@ export class TagValidationTest {
   /**
    * Run comprehensive test suite
    */
-  static async runFullTestSuite(evidenceId, teamId) {
+  static async runFullTestSuite(evidenceId, firmId) {
     console.group('[TagValidationTest] Running full test suite');
 
     try {
@@ -199,7 +199,7 @@ export class TagValidationTest {
 
       // Test 2: Live tag validation
       console.log('Running live tag validation tests...');
-      const results = await this.testTagValidation(evidenceId, teamId);
+      const results = await this.testTagValidation(evidenceId, firmId);
 
       console.log('Test suite completed:');
       console.log('Results:', results);

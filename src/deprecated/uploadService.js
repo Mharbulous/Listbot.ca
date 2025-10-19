@@ -266,8 +266,8 @@ class UploadSpeedCalculator {
  * Main upload service class
  */
 export class UploadService {
-  constructor(teamId, userId) {
-    this.teamId = teamId;
+  constructor(firmId, userId) {
+    this.firmId = firmId;
     this.userId = userId;
     this.activeUploads = new Map(); // fileId -> upload task
     this.uploadTasks = new Map(); // fileId -> Firebase upload task
@@ -285,18 +285,18 @@ export class UploadService {
   }
 
   /**
-   * Generates storage path for a file based on team, matter, and hash
+   * Generates storage path for a file based on firm, matter, and hash
    */
   generateStoragePath(fileHash, originalFileName) {
     const extension = originalFileName.split('.').pop().toLowerCase();
-    return `teams/${this.teamId}/matters/general/uploads/${fileHash}.${extension}`;
+    return `firms/${this.firmId}/matters/general/uploads/${fileHash}.${extension}`;
   }
 
   /**
    * Generates Firestore document path for file metadata
    */
   generateMetadataPath(fileHash) {
-    return `teams/${this.teamId}/files/${fileHash}`;
+    return `firms/${this.firmId}/files/${fileHash}`;
   }
 
   /**
@@ -392,7 +392,7 @@ export class UploadService {
           ...metadata,
           hash: hash,
           downloadURL: downloadURL,
-          teamId: this.teamId,
+          firmId: this.firmId,
           userId: this.userId,
           uploadedAt: serverTimestamp(),
           fileExists: false, // File already exists, we didn't upload it
@@ -435,7 +435,7 @@ export class UploadService {
 
         uploadTask = uploadBytesResumable(storageRef, file, {
           customMetadata: {
-            teamId: this.teamId,
+            firmId: this.firmId,
             userId: this.userId,
             originalName: file.name,
             hash: hash,
@@ -526,7 +526,7 @@ export class UploadService {
         ...metadata,
         hash: hash,
         downloadURL: downloadURL,
-        teamId: this.teamId,
+        firmId: this.firmId,
         userId: this.userId,
         uploadedAt: serverTimestamp(),
         fileExists: !fileExists, // true if file was uploaded, false if it already existed
