@@ -123,6 +123,14 @@ const availableDemos = computed(() => [
     tags: ['UX Improvement', 'Inline Editing', 'Autocomplete', 'Performance', 'Vue 3'],
     status: 'Active',
   },
+  {
+    title: 'Matter Database Seeding Utility',
+    description:
+      'Populate Firestore with 23 sample matters for testing and development. Includes one-click seeding and database clearing functionality.',
+    route: '/dev/seed-matters',
+    tags: ['Firestore', 'Database', 'Testing', 'Development'],
+    status: 'Active',
+  },
   // Future demos will be added here
 ]);
 </script>

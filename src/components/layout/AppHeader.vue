@@ -2,17 +2,47 @@
   <header
     class="bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 w-full box-border"
   >
-    <button
-      class="md:hidden bg-transparent border-none text-2xl cursor-pointer text-slate-600 mr-4"
-      id="mobileMenuBtn"
+    <!-- Left Section: Menu + Page Title -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button
+        class="md:hidden bg-transparent border-none text-2xl cursor-pointer text-slate-600"
+        id="mobileMenuBtn"
+      >
+        ☰
+      </button>
+      <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
+        {{ pageTitle }}
+      </h1>
+    </div>
+
+    <!-- Center Section: Active Matter Display -->
+    <div
+      v-if="matterViewStore.hasMatter"
+      class="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg mx-4 flex-1 max-w-2xl"
     >
-      ☰
-    </button>
-    <h1
-      class="page-title text-2xl md:text-xl font-semibold text-slate-800 transition-transform duration-300 ease-in-out mr-5 md:mr-2 flex-grow"
-    >
-      {{ pageTitle }}
-    </h1>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-blue-900 truncate">
+          Matter #{{ matterViewStore.activeMatter.matterNumber }}:
+          {{ matterViewStore.activeMatter.description }}
+        </p>
+      </div>
+      <button
+        @click="clearMatter"
+        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+        title="Clear selected matter"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Right Section: Search + User -->
     <div class="flex items-center gap-4 flex-shrink-0">
       <BaseSearchBar v-model="searchQuery" @search="handleSearch" />
     </div>
@@ -105,6 +135,7 @@
 <script>
 import { useAuthStore } from '../../core/stores/auth';
 import { useDocumentViewStore } from '../../stores/documentView';
+import { useMatterViewStore } from '../../stores/matterView';
 import BaseSearchBar from '../base/BaseSearchBar.vue';
 
 export default {
@@ -115,10 +146,12 @@ export default {
   setup() {
     const authStore = useAuthStore();
     const documentViewStore = useDocumentViewStore();
+    const matterViewStore = useMatterViewStore();
 
     return {
       authStore,
       documentViewStore,
+      matterViewStore,
     };
   },
   data() {
@@ -143,6 +176,11 @@ export default {
       } catch (error) {
         console.error('Sign out failed:', error);
       }
+    },
+    clearMatter() {
+      this.matterViewStore.clearMatter();
+      // Redirect to matters page after clearing
+      this.$router.push('/matters');
     },
   },
   computed: {

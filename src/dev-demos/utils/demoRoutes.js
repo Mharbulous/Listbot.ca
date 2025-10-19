@@ -25,6 +25,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/seed-matters',
+    name: 'SeedMatterData',
+    component: () => import('../views/SeedMatterData.vue'),
+    meta: {
+      requiresAuth: true,
+      devOnly: true,
+      title: 'Matter Database Seeding Utility',
+      description: 'Populate Firestore with 23 sample matters for testing and development',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),

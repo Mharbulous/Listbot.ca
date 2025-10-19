@@ -6,6 +6,7 @@ import App from './App.vue';
 import router from './router';
 import vuetify from './plugins/vuetify';
 import { useAuthStore } from './core/stores/auth';
+import { useMatterViewStore } from './stores/matterView';
 import { useGlobalAsyncRegistry } from './composables/useAsyncRegistry';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
@@ -26,6 +27,10 @@ app.use(ElementPlus);
 // Initialize auth store after Pinia is set up
 const authStore = useAuthStore();
 authStore.initialize();
+
+// Initialize matter view store and load persisted matter from localStorage
+const matterViewStore = useMatterViewStore();
+matterViewStore.loadMatterFromStorage();
 
 // Setup global async process cleanup handlers
 const { cleanupAll } = useGlobalAsyncRegistry();
