@@ -91,107 +91,140 @@
           <p class="text-base text-slate-700 leading-relaxed">{{ matter.description }}</p>
         </div>
 
-        <!-- Primary Information: Parties -->
+        <!-- Two-Column Grid: Parties (2fr) and Team (1fr) -->
         <div class="p-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Clients -->
-            <div class="bg-blue-50 rounded-lg p-5 border border-blue-100">
-              <h2
-                class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-3 flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 512 512">
-                  <path
-                    fill="currentColor"
-                    fill-rule="evenodd"
-                    d="M309.334 117.333c0-41.237-33.43-74.666-74.667-74.666l-4.097.11C191.238 44.904 160 77.471 160 117.333C160 158.571 193.43 192 234.667 192l4.097-.111c39.332-2.126 70.57-34.693 70.57-74.556M256 362.667c0 23.314 6.233 45.173 17.124 64H85.334v-76.8c0-62.033 47.668-112.614 107.383-115.104l4.616-.096H272c19.434 0 37.712 5.091 53.642 14.047C284.293 269.933 256 312.996 256 362.667m65.303 86.295L384 410.667l62.697 38.295l-17.046-71.463l55.795-47.794l-73.232-5.871L384 256l-28.214 67.834l-73.232 5.871l55.795 47.794z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Client(s)
-              </h2>
-              <div
-                v-if="Array.isArray(matter.clients) && matter.clients.length > 0"
-                class="space-y-2"
-              >
-                <div
-                  v-for="(client, index) in matter.clients"
-                  :key="index"
-                  class="flex items-center gap-2 text-slate-900 font-medium"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  {{ client }}
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Parties (2fr) -->
+            <div class="lg:col-span-2">
+              <div class="bg-slate-50 rounded-lg p-5 border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Parties</h2>
+
+                <!-- Clients -->
+                <div class="mb-4">
+                  <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    Client(s)
+                  </h3>
+                  <div
+                    v-if="Array.isArray(matter.clients) && matter.clients.length > 0"
+                    class="space-y-1.5"
+                  >
+                    <div
+                      v-for="(client, index) in matter.clients"
+                      :key="index"
+                      class="flex items-center gap-2 text-slate-900"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                      {{ client }}
+                    </div>
+                  </div>
+                  <p v-else class="text-slate-500 italic text-sm">No clients listed</p>
+                </div>
+
+                <!-- Adverse Parties -->
+                <div>
+                  <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    Adverse Parties
+                  </h3>
+                  <div
+                    v-if="Array.isArray(matter.adverseParties) && matter.adverseParties.length > 0"
+                    class="space-y-1.5"
+                  >
+                    <div
+                      v-for="(party, index) in matter.adverseParties"
+                      :key="index"
+                      class="flex items-center gap-2 text-slate-900"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      {{ party }}
+                    </div>
+                  </div>
+                  <p v-else class="text-slate-500 italic text-sm">No adverse parties listed</p>
                 </div>
               </div>
-              <p v-else class="text-slate-500 italic text-sm">No clients listed</p>
             </div>
 
-            <!-- Adverse Parties -->
-            <div class="bg-amber-50 rounded-lg p-5 border border-amber-100">
-              <h2
-                class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-3 flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="m18.839 20.696l-3.06-3.054l-1.923 1.924q-.102.101-.277.101t-.277-.102q-.46-.46-.46-1.136q0-.677.46-1.137l4.09-4.09q.46-.46 1.137-.46t1.137.46q.101.102.101.277t-.101.277l-1.924 1.923l3.054 3.06q.243.242.243.565t-.243.565l-.827.827q-.242.242-.565.242t-.565-.242M20.758 5.72l-10.8 10.82l.74.734q.46.46.46 1.137t-.46 1.136q-.102.102-.277.102t-.277-.102l-1.923-1.923l-3.06 3.054q-.242.242-.565.242t-.565-.242l-.827-.827q-.242-.242-.242-.565t.242-.566l3.054-3.06l-1.923-1.922q-.102-.102-.102-.277t.102-.277q.46-.46 1.136-.46q.677 0 1.137.46l.754.76L17.944 3.378q.218-.217.522-.348t.628-.131h1.098q.348 0 .578.23t.23.578v1.44q0 .162-.056.301t-.186.27M7.09 9.586l-3.63-3.63q-.218-.218-.339-.522T3 4.806V3.708q0-.349.23-.578t.578-.23h1.098q.323 0 .628.13q.305.131.522.349l3.611 3.63q.224.224.224.53t-.224.53L8.19 9.586q-.223.224-.55.224t-.548-.223"
-                  />
-                </svg>
-                Adverse Parties
-              </h2>
-              <div
-                v-if="Array.isArray(matter.adverseParties) && matter.adverseParties.length > 0"
-                class="space-y-2"
-              >
-                <div
-                  v-for="(party, index) in matter.adverseParties"
-                  :key="index"
-                  class="flex items-center gap-2 text-slate-900 font-medium"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  {{ party }}
+            <!-- Right Column: Team (1fr) -->
+            <div class="lg:col-span-1">
+              <div class="bg-slate-50 rounded-lg p-5 border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Team</h2>
+
+                <!-- Responsible Lawyer -->
+                <div class="mb-4">
+                  <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    Responsible Lawyer
+                  </h3>
+                  <div
+                    v-if="matter.responsibleLawyer"
+                    class="flex items-center gap-2 text-slate-900"
+                  >
+                    <span
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold"
+                    >
+                      {{ getInitials(userDisplayNames.get(matter.responsibleLawyer)) }}
+                    </span>
+                    {{ userDisplayNames.get(matter.responsibleLawyer) || 'Unknown User' }}
+                  </div>
+                  <p v-else class="text-slate-500 italic text-sm">Not assigned</p>
+                </div>
+
+                <!-- Team Members -->
+                <div>
+                  <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    Team Members
+                  </h3>
+                  <div
+                    v-if="Array.isArray(matter.assignedTo) && matter.assignedTo.length > 0"
+                    class="space-y-1.5"
+                  >
+                    <div
+                      v-for="userId in matter.assignedTo"
+                      :key="userId"
+                      class="text-slate-900"
+                    >
+                      {{ userDisplayNames.get(userId) || 'Unknown User' }}
+                    </div>
+                  </div>
+                  <p v-else class="text-slate-500 italic text-sm">No team members assigned</p>
                 </div>
               </div>
-              <p v-else class="text-slate-500 italic text-sm">No adverse parties listed</p>
             </div>
           </div>
         </div>
 
-        <!-- Metadata Footer -->
+        <!-- History Footer -->
         <div class="bg-slate-50 border-t border-slate-200 px-6 py-3">
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600">
-            <div class="flex items-center gap-1.5">
-              <svg
-                class="w-3.5 h-3.5 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+          <div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-xs text-slate-600">
+            <!-- Created -->
+            <div
+              class="cursor-help"
+              :title="
+                matter.createdBy
+                  ? `Created by ${userDisplayNames.get(matter.createdBy) || 'Unknown User'}`
+                  : undefined
+              "
+            >
               <span class="font-medium">Created:</span>
-              <span>{{ formatDate(matter.createdAt) }}</span>
+              <span class="ml-1.5">{{ formatDate(matter.createdAt) }}</span>
             </div>
-            <div class="flex items-center gap-1.5">
-              <svg
-                class="w-3.5 h-3.5 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+
+            <!-- Last Updated -->
+            <div
+              v-if="matter.updatedAt"
+              class="cursor-help"
+              :title="
+                matter.updatedBy
+                  ? `Updated by ${userDisplayNames.get(matter.updatedBy) || 'Unknown User'}`
+                  : undefined
+              "
+            >
+              <span class="font-medium">Last Updated:</span>
+              <span class="ml-1.5">{{ formatDate(matter.updatedAt) }}</span>
+            </div>
+
+            <!-- Last Accessed -->
+            <div>
               <span class="font-medium">Last Accessed:</span>
-              <span>{{ formatDate(matter.lastAccessed) }}</span>
+              <span class="ml-1.5">{{ formatDate(matter.lastAccessed) }}</span>
             </div>
           </div>
         </div>
@@ -204,6 +237,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
+import { useUsers } from '../composables/useUsers.js';
 
 // Component configuration
 defineOptions({
@@ -217,12 +251,16 @@ const router = useRouter();
 // Use the matters composable
 const { fetchMatter } = useMatters();
 
+// Use the users composable
+const { fetchUserDisplayNames } = useUsers();
+
 // Local state for this view
 const matter = ref(null);
 const loading = ref(true);
 const error = ref(null);
+const userDisplayNames = ref(new Map());
 
-// Load matter data
+// Load matter data and associated user information
 const loadMatter = async () => {
   loading.value = true;
   error.value = null;
@@ -233,6 +271,21 @@ const loadMatter = async () => {
 
     if (result) {
       matter.value = result;
+
+      // Collect all user IDs that need display names
+      const userIds = new Set();
+      if (result.responsibleLawyer) userIds.add(result.responsibleLawyer);
+      if (result.createdBy) userIds.add(result.createdBy);
+      if (result.updatedBy) userIds.add(result.updatedBy);
+      if (Array.isArray(result.assignedTo)) {
+        result.assignedTo.forEach((id) => userIds.add(id));
+      }
+
+      // Fetch all user display names at once
+      if (userIds.size > 0) {
+        const names = await fetchUserDisplayNames([...userIds]);
+        userDisplayNames.value = names;
+      }
     } else {
       error.value = 'Matter not found';
     }
@@ -268,6 +321,25 @@ function formatDate(timestamp) {
 
   // Handle date string
   return timestamp;
+}
+
+// Helper function to get initials from a user's display name
+function getInitials(displayName) {
+  if (!displayName) return '?';
+
+  // Split by space and get first letter of each word
+  const words = displayName.trim().split(/\s+/);
+  if (words.length === 0) return '?';
+
+  // Get first letter of first word and first letter of last word (or second word if only 2)
+  if (words.length === 1) {
+    return words[0].charAt(0).toUpperCase();
+  }
+
+  const firstInitial = words[0].charAt(0).toUpperCase();
+  const lastInitial = words[words.length - 1].charAt(0).toUpperCase();
+
+  return firstInitial + lastInitial;
 }
 
 // Load matter on mount
