@@ -33,7 +33,7 @@ export const useMatterViewStore = defineStore('matterView', {
      */
     matterDisplay: (state) => {
       if (!state.currentMatter) return null;
-      return `Matter #${state.currentMatter.matterNumber}: ${state.currentMatter.description}`;
+      return `${state.currentMatter.matterNumber}: ${state.currentMatter.description}`;
     },
   },
 

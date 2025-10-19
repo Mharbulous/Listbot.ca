@@ -22,7 +22,7 @@
     >
       <div class="flex-1 min-w-0">
         <p class="text-sm font-medium text-blue-900 truncate">
-          Matter #{{ matterViewStore.activeMatter.matterNumber }}:
+          {{ matterViewStore.activeMatter.matterNumber }}:
           {{ matterViewStore.activeMatter.description }}
         </p>
       </div>
@@ -164,39 +164,14 @@ export default {
   },
   computed: {
     pageTitle() {
-      // Handle view document route with breadcrumb
-      if (this.$route.path.startsWith('/organizer/view/')) {
+      // Handle dynamic document viewer title
+      if (this.$route.meta.titleFn && this.$route.path.startsWith('/organizer/view/')) {
         const documentName = this.documentViewStore.documentName || 'Loading...';
         return `Document Organizer >> View >> ${documentName}`;
       }
 
-      switch (this.$route.path) {
-        case '/about':
-          return 'About';
-        case '/settings':
-          return 'Settings';
-        case '/profile':
-          return 'Profile';
-        case '/upload':
-          return 'File Upload Center';
-        case '/organizer':
-          return 'Document Organizer';
-        case '/organizer/categories':
-          return 'Document Organizer >> Categories';
-        case '/organizer/categories/new':
-          return 'Document Organizer >> Categories >> New';
-        case '/matters':
-          return 'Matters';
-        case '/matters/new':
-          return 'New Matter';
-        case '/matters/import':
-          return 'Import Matters';
-        case '/':
-        case '/home':
-          return 'Home';
-        default:
-          return 'Home';
-      }
+      // Return meta title or default to 'Home'
+      return this.$route.meta.title || 'Home';
     },
   },
 };
