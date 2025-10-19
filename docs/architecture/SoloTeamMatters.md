@@ -114,10 +114,13 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
   adverseParties: ['ABC Realty Inc.', 'XYZ Legal Services'],  // Array of adverse party name strings
 
   // Status and assignment
-  status: 'active',  // 'active' | 'closed' | 'on-hold'
+  status: 'active',  // 'active' | 'archived'
   archived: false,  // Boolean - whether matter is archived (archived matters hidden by default in UI)
   assignedTo: ['user-john-123', 'user-jane-456'],  // Array of user IDs assigned to work on matter
   responsibleLawyer: 'user-john-123',  // User ID of primary responsible lawyer
+
+  // Development/Testing flags (optional)
+  mockData: true,  // Boolean - marks development test data (allows safe clearing without deleting real matters)
 
   // Timestamps
   lastAccessed: Timestamp,  // Last time matter was viewed or modified
@@ -130,10 +133,17 @@ The Solo Team Architecture is a design pattern that treats solo users as single-
 
 **Multi-Client Matters**: The `clients` array supports multiple client names for matters involving multiple parties (e.g., husband & wife estate planning).
 
-**Archived vs Status**:
-- `archived: true` - Matter is archived and hidden from default views but can be shown via filter
-- `status: 'closed'` - Matter is formally closed but may still be visible in active views
-- A matter can be both closed and archived
+**Status and Archived Fields**:
+- `status: 'active'` - Matter is currently being worked on
+- `status: 'archived'` - Matter is completed/closed and no longer active
+- `archived: true` - Matter is archived and hidden from default views (can be shown via filter)
+- Typically when `status` is 'archived', the `archived` field should also be `true` for consistency
+
+**Mock Data Field** (Optional):
+- `mockData: true` - Marks matters as development test data (only present on seeded matters)
+- Manually created matters do not have this field
+- The `clearMatters()` function only deletes matters where `mockData === true`, protecting real user data
+- This safety feature prevents accidental deletion of production data during development
 
 ## Custom Claims (Firebase Auth)
 

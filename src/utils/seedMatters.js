@@ -1,4 +1,4 @@
-import { writeBatch, doc, collection, Timestamp } from 'firebase/firestore';
+import { writeBatch, doc, collection, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../services/firebase.js';
 
 /**
@@ -38,7 +38,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 3,
-    status: 'on-hold',
+    status: 'active',
     archived: false,
     assignedTo: ['user-3'],
     matterNumber: '2024-003',
@@ -60,7 +60,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 5,
-    status: 'closed',
+    status: 'archived',
     archived: true,
     assignedTo: ['user-2'],
     matterNumber: '2024-005',
@@ -82,7 +82,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 7,
-    status: 'on-hold',
+    status: 'active',
     archived: false,
     assignedTo: ['user-2'],
     matterNumber: '2024-007',
@@ -115,7 +115,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 10,
-    status: 'on-hold',
+    status: 'active',
     archived: false,
     assignedTo: ['user-2', 'user-3'],
     matterNumber: '2024-010',
@@ -137,7 +137,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 12,
-    status: 'closed',
+    status: 'archived',
     archived: true,
     assignedTo: ['user-3'],
     matterNumber: '2024-012',
@@ -159,7 +159,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 14,
-    status: 'on-hold',
+    status: 'active',
     archived: false,
     assignedTo: ['user-2'],
     matterNumber: '2024-014',
@@ -192,7 +192,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 17,
-    status: 'closed',
+    status: 'archived',
     archived: true,
     assignedTo: ['user-2', 'user-3'],
     matterNumber: '2024-017',
@@ -214,7 +214,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 19,
-    status: 'on-hold',
+    status: 'active',
     archived: false,
     assignedTo: ['user-3'],
     matterNumber: '2024-019',
@@ -247,7 +247,7 @@ const MOCK_MATTERS = [
   },
   {
     id: 22,
-    status: 'closed',
+    status: 'archived',
     archived: true,
     assignedTo: ['user-1', 'user-2'],
     matterNumber: '2024-022',
@@ -291,12 +291,6 @@ function dateStringToTimestamp(dateString) {
  * @returns {Object} Transformed matter for Firestore
  */
 function transformMatter(mockMatter, userId) {
-  // Replace hardcoded user IDs with actual user ID
-  const assignedTo = mockMatter.assignedTo.map((id) => (id === 'user-1' ? userId : userId));
-
-  // Pick the first assigned user as responsible lawyer (or userId as default)
-  const responsibleLawyer = assignedTo[0] || userId;
-
   return {
     matterNumber: mockMatter.matterNumber,
     description: mockMatter.description,
@@ -306,6 +300,7 @@ function transformMatter(mockMatter, userId) {
     archived: mockMatter.archived,
     assignedTo: [userId], // Assign all to current user for solo team
     responsibleLawyer: userId, // Set current user as responsible lawyer
+    mockData: true, // Flag for development test data (allows safe clearing)
     lastAccessed: dateStringToTimestamp(mockMatter.lastAccessed),
     createdAt: Timestamp.now(),
     createdBy: userId,
@@ -374,24 +369,26 @@ export async function seedMatters(teamId, userId) {
 }
 
 /**
- * Clear all matters from a team (useful for re-seeding)
- * WARNING: This will delete all matters! Use with caution.
+ * Clear mock data matters from a team (useful for re-seeding)
+ * Only deletes matters where mockData === true, protecting manually created matters
  *
- * @param {string} teamId - Team ID to clear matters from
- * @returns {Promise<number>} Number of matters deleted
+ * @param {string} teamId - Team ID to clear mock matters from
+ * @returns {Promise<number>} Number of mock matters deleted
  */
 export async function clearMatters(teamId) {
   if (!teamId) {
     throw new Error('Team ID is required');
   }
 
-  console.warn(`WARNING: Clearing all matters for team: ${teamId}`);
+  console.warn(`WARNING: Clearing mock data matters for team: ${teamId}`);
 
   try {
-    const { collection, getDocs, deleteDoc } = await import('firebase/firestore');
+    const { collection, getDocs } = await import('firebase/firestore');
 
     const mattersRef = collection(db, 'teams', teamId, 'matters');
-    const snapshot = await getDocs(mattersRef);
+    // Only query matters that have mockData === true
+    const mockDataQuery = query(mattersRef, where('mockData', '==', true));
+    const snapshot = await getDocs(mockDataQuery);
 
     const batch = writeBatch(db);
     let count = 0;
@@ -403,10 +400,10 @@ export async function clearMatters(teamId) {
 
     await batch.commit();
 
-    console.log(`Cleared ${count} matters from team ${teamId}`);
+    console.log(`Cleared ${count} mock data matters from team ${teamId}`);
     return count;
   } catch (error) {
-    console.error('Error clearing matters:', error);
+    console.error('Error clearing mock matters:', error);
     throw error;
   }
 }

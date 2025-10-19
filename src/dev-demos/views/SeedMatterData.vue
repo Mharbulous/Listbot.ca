@@ -100,11 +100,11 @@
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            {{ clearing ? 'Clearing...' : 'Clear All Matters' }}
+            {{ clearing ? 'Clearing...' : 'Clear All Mock Data Matters' }}
           </button>
           <div class="flex-1 text-sm text-red-600 pt-3">
-            <strong>⚠️ Warning:</strong> This will permanently delete ALL matters from your team.
-            Use only for re-seeding during development.
+            <strong>⚠️ Warning:</strong> This will permanently delete ALL MOCK DATA matters from
+            your team. Manually created matters are safe and will not be deleted.
           </div>
         </div>
       </div>
@@ -151,7 +151,9 @@
           <li>Make sure you're logged in with a valid user account</li>
           <li>Click "Seed Database" to populate Firestore with 23 sample matters</li>
           <li>Navigate to the Matters page to view the seeded data</li>
-          <li>If you need to re-seed, first click "Clear All Matters" then "Seed Database" again</li>
+          <li>
+            If you need to re-seed, first click "Clear All Matters" then "Seed Database" again
+          </li>
         </ol>
 
         <div class="mt-4 text-sm text-slate-600">
@@ -226,7 +228,7 @@ async function handleClear() {
 
   // Confirm before clearing
   const confirmed = confirm(
-    'Are you sure you want to delete ALL matters from your team? This action cannot be undone!'
+    'Are you sure you want to delete ALL MOCK DATA matters from your team? Manually created matters will be safe. This action cannot be undone!'
   );
 
   if (!confirmed) {
@@ -239,10 +241,10 @@ async function handleClear() {
 
   try {
     const count = await clearMatters(authStore.teamId);
-    successMessage.value = `Successfully cleared ${count} matters from your team`;
+    successMessage.value = `Successfully cleared ${count} mock data matters from your team`;
   } catch (error) {
     console.error('Clearing error:', error);
-    errorMessage.value = error.message || 'An error occurred while clearing matters';
+    errorMessage.value = error.message || 'An error occurred while clearing mock matters';
   } finally {
     clearing.value = false;
   }

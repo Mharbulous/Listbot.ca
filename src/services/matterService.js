@@ -61,7 +61,7 @@ export class MatterService {
    * @param {string} matterData.description - Matter description
    * @param {Array<string>} matterData.clients - Array of client name strings
    * @param {Array<string>} matterData.adverseParties - Array of adverse party names
-   * @param {string} matterData.status - Status: 'active' | 'closed' | 'on-hold'
+   * @param {string} matterData.status - Status: 'active' | 'archived'
    * @param {boolean} matterData.archived - Whether matter is archived
    * @param {Array<string>} matterData.assignedTo - Array of user IDs
    * @param {string} matterData.responsibleLawyer - User ID of responsible lawyer
