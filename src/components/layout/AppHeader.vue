@@ -24,7 +24,7 @@
       :class="[
         'flex items-center gap-2 px-4 py-2 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl transition-colors',
         shouldShowBannerHover ? 'bg-amber-100' : 'bg-amber-50',
-        isBannerClickable ? 'cursor-pointer' : 'cursor-auto'
+        isBannerClickable ? 'cursor-pointer' : 'cursor-default'
       ]"
       :title="isBannerClickable ? 'View matter details' : ''"
     >
