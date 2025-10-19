@@ -19,7 +19,7 @@ export const useMatterViewStore = defineStore('matterView', {
      * Get the current active matter
      * @returns {Object|null} The active matter object or null if no matter is selected
      */
-    activeMatter: (state) => state.currentMatter,
+    selectedMatter: (state) => state.currentMatter,
 
     /**
      * Check if a matter is currently selected

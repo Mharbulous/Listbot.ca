@@ -29,8 +29,8 @@
       :title="isBannerClickable ? 'View Matter Details' : ''"
     >
       <p class="flex-1 min-w-0 text-sm font-medium text-slate-800 truncate text-center">
-        {{ matterViewStore.activeMatter.matterNumber }}:
-        {{ matterViewStore.activeMatter.description }}
+        {{ matterViewStore.selectedMatter.matterNumber }}:
+        {{ matterViewStore.selectedMatter.description }}
       </p>
       <button
         @click.stop="clearMatter"
@@ -154,7 +154,7 @@ const pageTitle = computed(() => {
 });
 
 const isOnMatterDetailPage = computed(() => {
-  const matterId = matterViewStore.activeMatter?.id;
+  const matterId = matterViewStore.selectedMatter?.id;
   return matterId ? route.path === `/matters/${matterId}` : false;
 });
 
@@ -179,7 +179,7 @@ function clearMatter() {
 }
 
 function navigateToMatter() {
-  const matterId = matterViewStore.activeMatter?.id;
+  const matterId = matterViewStore.selectedMatter?.id;
   if (matterId) {
     router.push(`/matters/${matterId}`);
   }

@@ -402,7 +402,7 @@ const filteredMatters = computed(() => {
 
 // Check if a matter is currently selected
 const isSelected = (matter) => {
-  return matterViewStore.activeMatter?.id === matter.id;
+  return matterViewStore.selectedMatter?.id === matter.id;
 };
 
 // Handle matter selection
