@@ -188,7 +188,7 @@ Components wait for authentication determination before rendering:
 2. **First login detected** → No firm document exists
 3. **Solo firm created** → Firm document with `firmId === userId`
 4. **User document created** → Preferences and settings initialized during firm creation
-5. **Default matters created** → System matters like 'matter-general'
+5. **Default matters created** → System matters like 'general'
 6. **Auth state updated** → User fully authenticated with firm context
 
 ### Page Refresh/Initialization Process
@@ -321,7 +321,7 @@ async _createSoloFirm(firebaseUser) {
   })
 
   // Create default matter
-  const matterRef = doc(db, 'firms', firebaseUser.uid, 'matters', 'matter-general')
+  const matterRef = doc(db, 'firms', firebaseUser.uid, 'matters', 'general')
   batch.set(matterRef, {
     title: 'General Documents',
     description: 'Non-client documents and resources',

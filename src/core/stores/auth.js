@@ -228,7 +228,7 @@ export const useAuthStore = defineStore('auth', {
         });
 
         // 2. Create default matter
-        const matterRef = doc(db, 'firms', firebaseUser.uid, 'matters', 'matter-general');
+        const matterRef = doc(db, 'firms', firebaseUser.uid, 'matters', 'general');
         batch.set(matterRef, {
           title: 'General Documents',
           description: 'Non-client documents and resources',
