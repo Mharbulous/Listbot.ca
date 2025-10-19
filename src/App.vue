@@ -12,17 +12,16 @@
     <template v-else>
       <template v-if="$route.path !== '/login'">
         <AppSidebar />
+        <AppHeader />
       </template>
       <div
         class="flex-grow flex flex-col"
         :class="{
           'justify-center items-center': $route.path === '/login',
           'ml-[60px]': $route.path !== '/login',
+          'pt-20': $route.path !== '/login',
         }"
       >
-        <template v-if="$route.path !== '/login'">
-          <AppHeader />
-        </template>
         <router-view />
       </div>
       <template v-if="$route.path !== '/login'">

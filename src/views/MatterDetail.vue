@@ -9,7 +9,7 @@
         <div
           class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"
         ></div>
-        <p class="text-slate-600">Loading matter details...</p>
+        <p class="text-slate-600">Loading Matter Details...</p>
       </div>
     </div>
 
@@ -539,7 +539,7 @@ const loadMatter = async () => {
     }
   } catch (err) {
     console.error('Error loading matter:', err);
-    error.value = err.message || 'Failed to load matter details';
+    error.value = err.message || 'Failed to load Matter Details';
   } finally {
     loading.value = false;
   }
@@ -663,7 +663,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Matter detail component styles */
+/* Matter Details component styles */
 
 @keyframes slide-up {
   from {

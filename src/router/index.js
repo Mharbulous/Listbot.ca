@@ -93,7 +93,7 @@ const router = createRouter({
       path: '/matters/:id',
       name: 'matter-detail',
       component: () => import('../views/MatterDetail.vue'),
-      meta: { requiresAuth: true, title: 'Matter Detail' },
+      meta: { requiresAuth: true, title: 'Matter Details' },
     },
     {
       path: '/login',

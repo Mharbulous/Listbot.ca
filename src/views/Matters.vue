@@ -164,16 +164,15 @@
         class="flex items-center justify-center h-64 bg-white border border-slate-200 m-6 rounded-lg shadow-sm"
       >
         <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"
+          ></div>
           <p class="text-slate-600">Loading matters...</p>
         </div>
       </div>
 
       <!-- Error State -->
-      <div
-        v-else-if="error"
-        class="bg-red-50 border border-red-200 m-6 rounded-lg shadow-sm p-6"
-      >
+      <div v-else-if="error" class="bg-red-50 border border-red-200 m-6 rounded-lg shadow-sm p-6">
         <div class="flex items-center gap-3">
           <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -203,7 +202,12 @@
           v-if="filteredMatters.length === 0"
           class="flex flex-col items-center justify-center h-64 text-slate-500"
         >
-          <svg class="w-16 h-16 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            class="w-16 h-16 mb-4 text-slate-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -212,7 +216,11 @@
             />
           </svg>
           <p class="text-lg font-medium mb-2">No matters found</p>
-          <p class="text-sm">{{ searchText ? 'Try adjusting your search' : 'Create your first matter to get started' }}</p>
+          <p class="text-sm">
+            {{
+              searchText ? 'Try adjusting your search' : 'Create your first matter to get started'
+            }}
+          </p>
         </div>
 
         <!-- Table with Data -->
@@ -274,7 +282,11 @@
                 {{ matter.description }}
               </td>
               <td class="px-6 py-4 text-sm text-slate-700">
-                {{ Array.isArray(matter.adverseParties) ? matter.adverseParties.join(', ') : matter.adverseParties }}
+                {{
+                  Array.isArray(matter.adverseParties)
+                    ? matter.adverseParties.join(', ')
+                    : matter.adverseParties
+                }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                 {{ formatDate(matter.lastAccessed) }}
@@ -401,7 +413,7 @@ const selectMatter = async (matter) => {
   // Update last accessed timestamp
   await updateLastAccessed(matter.id);
 
-  // Navigate to matter detail view
+  // Navigate to Matter Details view
   router.push(`/matters/${matter.id}`);
 };
 </script>

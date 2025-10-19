@@ -1,6 +1,6 @@
 <template>
   <header
-    class="bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 w-full box-border"
+    class="fixed top-0 left-[60px] right-0 z-[50] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
   >
     <!-- Left Section: Menu + Page Title -->
     <div class="flex items-center gap-2 flex-shrink-0">
@@ -24,16 +24,14 @@
       :class="[
         'flex items-center gap-2 px-4 py-2 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl transition-colors',
         shouldShowBannerHover ? 'bg-amber-100' : 'bg-amber-50',
-        isBannerClickable ? 'cursor-pointer' : 'cursor-default'
+        isBannerClickable ? 'cursor-pointer' : 'cursor-default',
       ]"
-      :title="isBannerClickable ? 'View matter details' : ''"
+      :title="isBannerClickable ? 'View Matter Details' : ''"
     >
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium text-slate-800 truncate text-center">
-          {{ matterViewStore.activeMatter.matterNumber }}:
-          {{ matterViewStore.activeMatter.description }}
-        </p>
-      </div>
+      <p class="flex-1 min-w-0 text-sm font-medium text-slate-800 truncate text-center">
+        {{ matterViewStore.activeMatter.matterNumber }}:
+        {{ matterViewStore.activeMatter.description }}
+      </p>
       <button
         @click.stop="clearMatter"
         @mouseenter="isHoveringCloseButton = true"
@@ -70,38 +68,17 @@
         >
           <div class="py-1">
             <router-link
-              to="/settings"
+              v-for="link in menuLinks"
+              :key="link.to"
+              :to="link.to"
               class="flex items-center gap-3 w-full px-4 py-3 text-left bg-transparent border-none text-gray-700 text-sm font-medium cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-brand-blue group/item no-underline"
             >
               <div
                 class="w-4 h-4 flex items-center justify-center text-gray-400 group-hover/item:text-brand-blue transition-colors"
               >
-                <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                  <path
-                    fill-rule="evenodd"
-                    d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.205 1.251l-1.18 2.044a1 1 0 01-1.186.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.205-1.251l1.18-2.044a1 1 0 011.186-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" v-html="link.icon" />
               </div>
-              <span>Settings</span>
-            </router-link>
-            <router-link
-              to="/profile"
-              class="flex items-center gap-3 w-full px-4 py-3 text-left bg-transparent border-none text-gray-700 text-sm font-medium cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-brand-blue group/item no-underline"
-            >
-              <div
-                class="w-4 h-4 flex items-center justify-center text-gray-400 group-hover/item:text-brand-blue transition-colors"
-              >
-                <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span>Profile</span>
+              <span>{{ link.label }}</span>
             </router-link>
           </div>
           <div class="border-t border-gray-100 py-2">
@@ -139,78 +116,74 @@
   </header>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../core/stores/auth';
 import { useDocumentViewStore } from '../../stores/documentView';
 import { useMatterViewStore } from '../../stores/matterView';
 
-export default {
-  name: 'AppHeader',
-  setup() {
-    const authStore = useAuthStore();
-    const documentViewStore = useDocumentViewStore();
-    const matterViewStore = useMatterViewStore();
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
+const documentViewStore = useDocumentViewStore();
+const matterViewStore = useMatterViewStore();
 
-    return {
-      authStore,
-      documentViewStore,
-      matterViewStore,
-    };
-  },
-  data() {
-    return {
-      isHoveringBanner: false,
-      isHoveringCloseButton: false,
-    };
-  },
-  methods: {
-    async signOut() {
-      try {
-        await this.authStore.logout();
-        this.$router.push('/login');
-      } catch (error) {
-        console.error('Sign out failed:', error);
-      }
-    },
-    clearMatter() {
-      this.matterViewStore.clearMatter();
-      // Redirect to matters page after clearing
-      this.$router.push('/matters');
-    },
-    navigateToMatter() {
-      const matterId = this.matterViewStore.activeMatter?.id;
-      if (matterId) {
-        this.$router.push(`/matters/${matterId}`);
-      }
-    },
-  },
-  computed: {
-    pageTitle() {
-      // Handle dynamic document viewer title
-      if (this.$route.meta.titleFn && this.$route.path.startsWith('/organizer/view/')) {
-        const documentName = this.documentViewStore.documentName || 'Loading...';
-        return `Document Organizer >> View >> ${documentName}`;
-      }
+const isHoveringBanner = ref(false);
+const isHoveringCloseButton = ref(false);
 
-      // Return meta title or default to 'Home'
-      return this.$route.meta.title || 'Home';
-    },
-    isOnMatterDetailPage() {
-      // Check if we're on the detail page for the currently active matter
-      const matterId = this.matterViewStore.activeMatter?.id;
-      if (!matterId) return false;
-      return this.$route.path === `/matters/${matterId}`;
-    },
-    isBannerClickable() {
-      // Banner is only clickable if we're not already on the detail page
-      return !this.isOnMatterDetailPage;
-    },
-    shouldShowBannerHover() {
-      // Show hover effect only when: clickable AND hovering banner AND NOT hovering close button
-      return this.isBannerClickable && this.isHoveringBanner && !this.isHoveringCloseButton;
-    },
+const menuLinks = [
+  {
+    to: '/settings',
+    label: 'Settings',
+    icon: '<path fill-rule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.205 1.251l-1.18 2.044a1 1 0 01-1.186.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.205-1.251l1.18-2.044a1 1 0 011.186-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />',
   },
-};
+  {
+    to: '/profile',
+    label: 'Profile',
+    icon: '<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />',
+  },
+];
+
+const pageTitle = computed(() => {
+  if (route.meta.titleFn && route.path.startsWith('/organizer/view/')) {
+    const documentName = documentViewStore.documentName || 'Loading...';
+    return `Document Organizer >> View >> ${documentName}`;
+  }
+  return route.meta.title || 'Home';
+});
+
+const isOnMatterDetailPage = computed(() => {
+  const matterId = matterViewStore.activeMatter?.id;
+  return matterId ? route.path === `/matters/${matterId}` : false;
+});
+
+const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
+
+const shouldShowBannerHover = computed(
+  () => isBannerClickable.value && isHoveringBanner.value && !isHoveringCloseButton.value
+);
+
+async function signOut() {
+  try {
+    await authStore.logout();
+    router.push('/login');
+  } catch (error) {
+    console.error('Sign out failed:', error);
+  }
+}
+
+function clearMatter() {
+  matterViewStore.clearMatter();
+  router.push('/matters');
+}
+
+function navigateToMatter() {
+  const matterId = matterViewStore.activeMatter?.id;
+  if (matterId) {
+    router.push(`/matters/${matterId}`);
+  }
+}
 </script>
 
 <style scoped>
