@@ -2,21 +2,7 @@
   <v-container fluid class="pa-6">
     <div class="max-w-7xl mx-auto">
       <v-card>
-        <v-card-title class="d-flex align-center">
-          <v-icon icon="mdi-folder-multiple" class="me-2" />
-          Category Viewer (Dev Tool)
-        </v-card-title>
-        <v-card-subtitle>
-          View all categories across System, Firm, and Matter collections
-        </v-card-subtitle>
-
         <v-card-text>
-          <v-alert color="info" class="mb-4" variant="tonal">
-            <v-icon icon="mdi-information" class="me-2" />
-            <strong>Development Tool:</strong> This page displays categories from all three
-            Firestore collections for debugging and inspection purposes.
-          </v-alert>
-
           <!-- Loading State -->
           <div v-if="loading" class="text-center py-12">
             <v-progress-circular indeterminate color="primary" size="64" />
@@ -45,6 +31,18 @@
                   matterCategories.length
                 }}</v-chip>
               </v-tab>
+
+              <v-spacer />
+
+              <v-btn
+                color="primary"
+                variant="elevated"
+                class="align-self-center"
+                :to="{ name: 'NewSystemCategory' }"
+              >
+                <v-icon start>mdi-plus</v-icon>
+                System Category
+              </v-btn>
             </v-tabs>
 
             <!-- Tab Windows -->

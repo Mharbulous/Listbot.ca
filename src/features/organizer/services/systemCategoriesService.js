@@ -188,21 +188,21 @@ export class systemcategoriesService {
       }
 
       // Prepare update document
-      const updateDoc = {
+      const updateData = {
         ...updates,
         updatedAt: serverTimestamp(),
       };
 
       // Clean up undefined values
-      Object.keys(updateDoc).forEach((key) => {
-        if (updateDoc[key] === undefined) {
-          delete updateDoc[key];
+      Object.keys(updateData).forEach((key) => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
         }
       });
 
       // Update in Firestore
       const categoryRef = doc(db, 'systemcategories', categoryId);
-      await updateDoc(categoryRef, updateDoc);
+      await updateDoc(categoryRef, updateData);
 
       console.log(`[systemcategoriesService] Updated system category: ${categoryId}`);
       return true;

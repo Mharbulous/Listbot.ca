@@ -42,7 +42,7 @@ export const demoRoutes = [
     meta: {
       requiresAuth: true,
       devOnly: true,
-      title: 'Category Migration Tool',
+      title: 'Category Viewer (Dev Tool)',
       description: 'Move categories between System, Firm, and Matter collections using drag-and-drop',
     },
   },
@@ -53,8 +53,19 @@ export const demoRoutes = [
     meta: {
       requiresAuth: true,
       devOnly: true,
-      title: 'Category Viewer (Dev)',
-      description: 'View detailed category information for debugging and inspection',
+      title: 'Edit System Categories',
+      description: 'Edit system, firm, and matter categories with full validation and type conversion',
+    },
+  },
+  {
+    path: '/dev/categories/newSystemCategory',
+    name: 'NewSystemCategory',
+    component: () => import('../views/NewSystemCategory.vue'),
+    meta: {
+      requiresAuth: true,
+      devOnly: true,
+      title: 'New System Category',
+      description: 'Create a new system-level category for development and testing',
     },
   },
   {
