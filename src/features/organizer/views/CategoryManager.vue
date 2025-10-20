@@ -60,7 +60,7 @@
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'organizer' }">
+        <v-btn variant="outlined" :to="{ name: 'documents' }">
           <v-icon start>mdi-arrow-left</v-icon>
           Back
         </v-btn>

@@ -40,7 +40,7 @@ const router = createRouter({
       path: '/upload',
       name: 'upload',
       component: () => import('../features/upload/FileUpload.vue'),
-      meta: { requiresAuth: true, requiresActiveMatter: true, title: 'File Upload Center' },
+      meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
       path: '/analyze',

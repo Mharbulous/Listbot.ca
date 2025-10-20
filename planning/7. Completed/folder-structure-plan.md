@@ -1,4 +1,4 @@
-# New Feature-Based Folder Structure - File Upload Center
+# New Feature-Based Folder Structure - Upload
 
 ```
 📁 src/
