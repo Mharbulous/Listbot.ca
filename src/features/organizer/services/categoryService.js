@@ -44,6 +44,11 @@ export class CategoryService {
       errors.push('Category name must be 50 characters or less');
     }
 
+    // Type validation
+    if (!categoryData.type || typeof categoryData.type !== 'string') {
+      errors.push('Category type is required and must be a string');
+    }
+
     // Color validation removed - colors are now automatically assigned by UI
 
     // Tags validation
@@ -102,13 +107,14 @@ export class CategoryService {
       // Check for duplicate category name
       await this.validateUniqueName(firmId, categoryData.name.trim(), null, matterId);
 
-      // Prepare category document
+      // Prepare category document - include all fields from categoryData
       const categoryDoc = {
-        name: categoryData.name.trim(),
-        tags: categoryData.tags || [],
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        ...categoryData, // Spread all fields from categoryData
+        name: categoryData.name.trim(), // Ensure name is trimmed
+        tags: categoryData.tags || [], // Ensure tags is an array
+        isActive: true, // Always set isActive to true for new categories
+        createdAt: serverTimestamp(), // Set creation timestamp
+        updatedAt: serverTimestamp(), // Set update timestamp
       };
 
       // Add to Firestore

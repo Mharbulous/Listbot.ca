@@ -416,7 +416,7 @@ const createCategory = async () => {
       name,
       type,
       color: previewColor.value,
-      tags: [],
+      tags: newCategory.value.tags || [],
     };
 
     // Add currency-specific data if Currency type is selected

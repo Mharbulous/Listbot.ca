@@ -24,7 +24,7 @@
           :maxlength="maxLength"
           @keydown.enter.prevent="addTag"
           @keydown.escape="clearInput"
-          @input="inputError = ''"
+          @input="handleInput"
         />
       </v-col>
     </v-row>
@@ -53,6 +53,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { capitalizeFirstLetter } from '../utils/categoryFormHelpers.js';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
@@ -80,7 +81,7 @@ const canAddTag = computed(() => {
 });
 
 const addTag = () => {
-  const name = newTagInput.value.trim();
+  const name = capitalizeFirstLetter(newTagInput.value.trim());
 
   if (!name) {
     inputError.value = 'Tag option cannot be empty';
@@ -105,6 +106,14 @@ const addTag = () => {
 const removeTag = (tagId) => {
   localTags.value = localTags.value.filter((tag) => tag.id !== tagId);
   emit('update:modelValue', localTags.value);
+};
+
+const handleInput = () => {
+  const capitalized = capitalizeFirstLetter(newTagInput.value);
+  if (capitalized !== newTagInput.value) {
+    newTagInput.value = capitalized;
+  }
+  inputError.value = '';
 };
 
 const clearInput = () => {
