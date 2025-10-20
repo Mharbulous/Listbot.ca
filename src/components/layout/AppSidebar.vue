@@ -34,13 +34,14 @@
       <AppSwitcher :is-hovered="isHovered" />
     </div>
 
-    <div class="py-0">
+    <div class="py-0 relative">
       <div
-        class="py-5 px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-opacity duration-300 ease-in-out"
+        class="absolute top-5 left-2 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-opacity duration-300 ease-in-out pointer-events-none"
         :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
       >
         Main Menu
       </div>
+      <div class="h-14"></div>
       <router-link
         to="/matters"
         class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
@@ -51,6 +52,18 @@
           class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
           :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
           >Matters</span
+        >
+      </router-link>
+      <router-link
+        to="/documents"
+        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
+        :class="{ 'bg-brand-blue text-white': $route.path === '/documents' }"
+      >
+        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">💼</div>
+        <span
+          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
+          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
+          >Documents</span
         >
       </router-link>
       <router-link
@@ -66,15 +79,15 @@
         >
       </router-link>
       <router-link
-        to="/documents"
+        to="/analyze"
         class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/documents' }"
+        :class="{ 'bg-brand-blue text-white': $route.path === '/analyze' }"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">💼</div>
+        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🕵️</div>
         <span
           class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
           :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Documents</span
+          >Analyze</span
         >
       </router-link>
       <router-link
