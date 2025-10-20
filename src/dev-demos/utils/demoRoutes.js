@@ -36,6 +36,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/categories',
+    name: 'CategoryMigrationTool',
+    component: () => import('../views/CategoryMigrationTool.vue'),
+    meta: {
+      requiresAuth: true,
+      devOnly: true,
+      title: 'Category Migration Tool',
+      description: 'Move categories between System, Firm, and Matter collections using drag-and-drop',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),

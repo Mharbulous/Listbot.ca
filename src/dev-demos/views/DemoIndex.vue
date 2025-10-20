@@ -131,6 +131,14 @@ const availableDemos = computed(() => [
     tags: ['Firestore', 'Database', 'Testing', 'Development'],
     status: 'Active',
   },
+  {
+    title: 'Category Migration Tool',
+    description:
+      'Move categories between System, Firm, and Matter collections using an intuitive drag-and-drop interface. Perfect for organizing and restructuring category data.',
+    route: '/dev/categories',
+    tags: ['Firestore', 'Database', 'Categories', 'Migration', 'Drag & Drop'],
+    status: 'Active',
+  },
   // Future demos will be added here
 ]);
 </script>
