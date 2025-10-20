@@ -15,8 +15,13 @@ import {
  * Handles creation, updating, deletion, and basic retrieval of evidence entries
  */
 export class EvidenceService {
-  constructor(firmId) {
+  constructor(firmId, matterId) {
     this.firmId = firmId;
+    this.matterId = matterId;
+
+    if (!this.matterId) {
+      throw new Error('EvidenceService requires a matterId. Please select a matter first.');
+    }
   }
 
   /**
@@ -58,7 +63,7 @@ export class EvidenceService {
       };
 
       // Use setDoc with fileHash as document ID (automatic deduplication)
-      const docRef = doc(db, 'firms', this.firmId, 'matters', 'general', 'evidence', fileHash);
+      const docRef = doc(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence', fileHash);
       await setDoc(docRef, evidenceData);
 
       console.log(`[EvidenceService] Created evidence document: ${fileHash.substring(0, 8)}...`, {
@@ -95,7 +100,7 @@ export class EvidenceService {
           'firms',
           this.firmId,
           'matters',
-          'general',
+          this.matterId,
           'evidence',
           fileHash
         );
@@ -149,7 +154,7 @@ export class EvidenceService {
         'firms',
         this.firmId,
         'matters',
-        'general',
+        this.matterId,
         'evidence',
         evidenceId
       );
@@ -190,7 +195,7 @@ export class EvidenceService {
         'firms',
         this.firmId,
         'matters',
-        'general',
+        this.matterId,
         'evidence',
         evidenceId
       );

@@ -7,9 +7,15 @@ import { EvidenceService } from './evidenceService.js';
  * Focuses on read operations, finding evidence, and data migration tasks
  */
 export class EvidenceQueryService {
-  constructor(firmId) {
+  constructor(firmId, matterId) {
     this.firmId = firmId;
-    this.evidenceService = new EvidenceService(firmId);
+    this.matterId = matterId;
+
+    if (!this.matterId) {
+      throw new Error('EvidenceQueryService requires a matterId. Please select a matter first.');
+    }
+
+    this.evidenceService = new EvidenceService(firmId, matterId);
   }
 
   /**
@@ -19,7 +25,7 @@ export class EvidenceQueryService {
    */
   async findEvidenceByHash(fileHash) {
     try {
-      const evidenceRef = doc(db, 'firms', this.firmId, 'matters', 'general', 'evidence', fileHash);
+      const evidenceRef = doc(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence', fileHash);
       const docSnap = await getDoc(evidenceRef);
 
       if (docSnap.exists()) {
@@ -48,7 +54,7 @@ export class EvidenceQueryService {
 
       // Note: With subcollection tags, we need to query each evidence document's tags subcollection
       // This is a more complex query that may need optimization for large datasets
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const evidenceSnapshot = await getDocs(evidenceRef);
       const matchingEvidence = [];
 
@@ -61,7 +67,7 @@ export class EvidenceQueryService {
           'firms',
           this.firmId,
           'matters',
-          'general',
+          this.matterId,
           'evidence',
           evidenceDoc.id,
           'tags'
@@ -111,7 +117,7 @@ export class EvidenceQueryService {
       const validStages = ['uploaded', 'splitting', 'merging', 'complete'];
       if (!validStages.includes(stage)) throw new Error(`Invalid processing stage: ${stage}`);
 
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const q = query(
         evidenceRef,
         where('processingStage', '==', stage),
@@ -137,7 +143,7 @@ export class EvidenceQueryService {
    */
   async findUnprocessedEvidence() {
     try {
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const q = query(evidenceRef, where('isProcessed', '==', false), orderBy('updatedAt', 'asc'));
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
@@ -156,10 +162,9 @@ export class EvidenceQueryService {
   /**
    * Get available original names for a file hash (for displayName dropdown)
    * @param {string} fileHash - File hash from upload system (evidence document ID)
-   * @param {string} matterId - Matter ID (defaults to 'general')
    * @returns {Promise<Array<string>>} - Array of original filenames
    */
-  async getAvailableOriginalNames(fileHash, matterId = 'general') {
+  async getAvailableOriginalNames(fileHash) {
     try {
       // Query the sourceMetadata subcollection under the specific evidence document
       const sourceMetadataRef = collection(
@@ -167,7 +172,7 @@ export class EvidenceQueryService {
         'firms',
         this.firmId,
         'matters',
-        matterId,
+        this.matterId,
         'evidence',
         fileHash,
         'sourceMetadata'
@@ -196,7 +201,7 @@ export class EvidenceQueryService {
    */
   async getEvidenceStatistics() {
     try {
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const querySnapshot = await getDocs(evidenceRef);
 
       const stats = {
@@ -228,7 +233,7 @@ export class EvidenceQueryService {
           'firms',
           this.firmId,
           'matters',
-          'general',
+          this.matterId,
           'evidence',
           doc.id,
           'tags'
@@ -267,7 +272,7 @@ export class EvidenceQueryService {
     try {
       if (!searchTerm?.trim()) return [];
 
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const querySnapshot = await getDocs(evidenceRef);
       const results = [];
       const searchTermLower = searchTerm.toLowerCase().trim();
@@ -288,7 +293,7 @@ export class EvidenceQueryService {
             'firms',
             this.firmId,
             'matters',
-            'general',
+            this.matterId,
             'evidence',
             doc.id,
             'tags'
@@ -377,7 +382,7 @@ export class EvidenceQueryService {
    */
   async getAllEvidence(documentLimit = 50) {
     try {
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
       const q = query(evidenceRef, orderBy('updatedAt', 'desc'), limit(documentLimit));
       const querySnapshot = await getDocs(q);
       const evidenceList = [];

@@ -136,6 +136,8 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useFirmMembers } from '../composables/useFirmMembers';
+import { useMatters } from '../composables/useMatters';
+import { useAuthStore } from '../core/stores/auth';
 
 // Component configuration
 defineOptions({
@@ -143,7 +145,9 @@ defineOptions({
 });
 
 const router = useRouter();
+const authStore = useAuthStore();
 const { lawyerNames, loading: loadingLawyers, fetchFirmMembers } = useFirmMembers();
+const { createMatter } = useMatters();
 
 // Form state
 const formData = ref({
@@ -252,22 +256,26 @@ const handleSubmit = async () => {
       adverseParties: formData.value.adverseParties.filter((p) => p.trim() !== ''),
       status: 'active',
       archived: false,
-      assignedTo: [], // TODO: Get from current user context
-      createdAt: new Date(),
-      // Note: Firestore document ID will be auto-generated
+      assignedTo: [authStore.user?.uid], // Assign to current user
+      mockData: false, // Real matter data (not test/seed data)
     };
 
-    // TODO: Save to Firestore database
-    console.log('Creating new matter:', cleanedData);
+    // Create matter in Firestore using the composable
+    const matterId = await createMatter(cleanedData);
 
-    showNotification('Matter created successfully', 'success');
+    if (matterId) {
+      showNotification('Matter created successfully', 'success');
 
-    // Navigate back to matters list after a brief delay
-    setTimeout(() => {
-      router.push({ name: 'matters' });
-    }, 1500);
+      // Navigate to the newly created matter after a brief delay
+      setTimeout(() => {
+        router.push({ name: 'matter-detail', params: { id: matterId } });
+      }, 1000);
+    } else {
+      throw new Error('Failed to create matter - no ID returned');
+    }
   } catch (error) {
     showNotification('Failed to create matter: ' + error.message, 'error');
+  } finally {
     creating.value = false;
   }
 };

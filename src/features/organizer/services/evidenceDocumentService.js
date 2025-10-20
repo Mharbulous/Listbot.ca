@@ -17,11 +17,16 @@ export class EvidenceDocumentService {
    * Get evidence document from Firestore
    * @param {string} evidenceId - Evidence document ID
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @returns {Promise<Object|null>} - Evidence document or null
    */
-  async getEvidenceDocument(evidenceId, firmId) {
+  async getEvidenceDocument(evidenceId, firmId, matterId) {
     try {
-      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
+      if (!matterId) {
+        throw new Error('Matter ID is required to get evidence document');
+      }
+
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', evidenceId);
       const evidenceSnap = await getDoc(evidenceRef);
 
       if (evidenceSnap.exists()) {
@@ -68,11 +73,16 @@ export class EvidenceDocumentService {
    * Store AI suggestions as subcollection tags with confidence-based auto-approval
    * @param {string} evidenceId - Evidence document ID
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @param {Array} suggestions - AI tag suggestions
    * @returns {Promise<void>}
    */
-  async storeaiAlternatives(evidenceId, firmId, suggestions) {
+  async storeaiAlternatives(evidenceId, firmId, matterId, suggestions) {
     try {
+      if (!matterId) {
+        throw new Error('Matter ID is required to store AI suggestions');
+      }
+
       // Convert AI suggestions to new subcollection tag format
       const aiTagsData = suggestions.map((suggestion) => ({
         tagName: suggestion.tagName || suggestion.name,
@@ -101,7 +111,7 @@ export class EvidenceDocumentService {
       }
 
       // Update evidence document with AI processing metadata
-      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', evidenceId);
       await updateDoc(evidenceRef, {
         lastAIProcessed: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -116,12 +126,17 @@ export class EvidenceDocumentService {
    * Update evidence document with tag changes
    * @param {string} evidenceId - Evidence document ID
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @param {Object} updates - Updates to apply to the document
    * @returns {Promise<void>}
    */
-  async updateEvidenceDocument(evidenceId, firmId, updates) {
+  async updateEvidenceDocument(evidenceId, firmId, matterId, updates) {
     try {
-      const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', evidenceId);
+      if (!matterId) {
+        throw new Error('Matter ID is required to update evidence document');
+      }
+
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', evidenceId);
 
       const updateData = {
         ...updates,
@@ -141,11 +156,12 @@ export class EvidenceDocumentService {
    * Get evidence document with validation
    * @param {string} evidenceId - Evidence document ID
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @returns {Promise<Object>} - Evidence document data
    * @throws {Error} - If document not found
    */
-  async getEvidenceDocumentWithValidation(evidenceId, firmId) {
-    const evidence = await this.getEvidenceDocument(evidenceId, firmId);
+  async getEvidenceDocumentWithValidation(evidenceId, firmId, matterId) {
+    const evidence = await this.getEvidenceDocument(evidenceId, firmId, matterId);
     if (!evidence) {
       throw new Error(`Evidence document not found: ${evidenceId}`);
     }

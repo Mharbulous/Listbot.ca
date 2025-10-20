@@ -1,11 +1,13 @@
 import { db } from '../../../services/firebase.js';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
+import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
 import { EvidenceService } from '../../organizer/services/evidenceService.js';
 
 export function useFileMetadata() {
   const authStore = useAuthStore();
+  const matterStore = useMatterViewStore();
 
   /**
    * Generate metadata hash from file metadata
@@ -60,6 +62,12 @@ export function useFileMetadata() {
         throw new Error('No firm ID available for metadata record');
       }
 
+      // Validate matter is selected
+      const matterId = matterStore.currentMatterId;
+      if (!matterId) {
+        throw new Error('No matter selected. Please select a matter before uploading files.');
+      }
+
       // Generate metadata hash for document ID
       const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
 
@@ -80,7 +88,7 @@ export function useFileMetadata() {
           'firms',
           firmId,
           'matters',
-          'general',
+          matterId,
           'evidence',
           fileHash,
           'sourceMetadata',
@@ -101,7 +109,7 @@ export function useFileMetadata() {
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
 
       // STEP 1: Create Evidence document FIRST (parent document must exist before subcollections)
-      const evidenceService = new EvidenceService(firmId);
+      const evidenceService = new EvidenceService(firmId, matterId);
 
       const uploadMetadata = {
         hash: fileHash,
@@ -128,13 +136,13 @@ export function useFileMetadata() {
         sourceFileType: sourceFileType || '',
       };
 
-      // Save to Firestore: /firms/{firmId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}
+      // Save to Firestore: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}
       const docRef = doc(
         db,
         'firms',
         firmId,
         'matters',
-        'general',
+        matterId,
         'evidence',
         fileHash,
         'sourceMetadata',
@@ -196,13 +204,19 @@ export function useFileMetadata() {
         throw new Error('No firm ID available');
       }
 
+      // Validate matter is selected
+      const matterId = matterStore.currentMatterId;
+      if (!matterId) {
+        throw new Error('No matter selected. Please select a matter before checking metadata.');
+      }
+
       // Try to get the document from subcollection
       const docRef = doc(
         db,
         'firms',
         firmId,
         'matters',
-        'general',
+        matterId,
         'evidence',
         fileHash,
         'sourceMetadata',

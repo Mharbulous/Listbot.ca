@@ -14,10 +14,15 @@ export class FileProcessingService {
    * Retrieve file content from Firebase Storage for AI processing
    * @param {Object} evidence - Evidence document
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @returns {Promise<string>} - Base64 encoded file content for AI processing
    */
-  async getFileForProcessing(evidence, firmId) {
+  async getFileForProcessing(evidence, firmId, matterId) {
     try {
+      if (!matterId) {
+        throw new Error('Matter ID is required to get file for processing');
+      }
+
       // Document ID is the fileHash
       const fileHash = evidence.id;
       if (!fileHash) {
@@ -29,8 +34,7 @@ export class FileProcessingService {
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      // UploadService hardcodes 'general' matter and converts extension to lowercase
-      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       // Get file bytes directly from Firebase Storage
@@ -65,10 +69,15 @@ export class FileProcessingService {
    * Get file download URL from Firebase Storage
    * @param {Object} evidence - Evidence document
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @returns {Promise<string>} - Download URL
    */
-  async getFileDownloadURL(evidence, firmId) {
+  async getFileDownloadURL(evidence, firmId, matterId) {
     try {
+      if (!matterId) {
+        throw new Error('Matter ID is required to get download URL');
+      }
+
       // Document ID is the fileHash
       const fileHash = evidence.id;
       if (!fileHash) {
@@ -79,7 +88,7 @@ export class FileProcessingService {
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       const downloadURL = await getDownloadURL(fileRef);
@@ -107,10 +116,13 @@ export class FileProcessingService {
    * @param {string} fileHash - File hash
    * @param {string} extension - File extension
    * @param {string} firmId - Firm ID
-   * @param {string} matterId - Matter ID (optional, defaults to 'general')
+   * @param {string} matterId - Matter ID (required)
    * @returns {string} - Storage path
    */
-  buildStoragePath(fileHash, extension, firmId, matterId = 'general') {
+  buildStoragePath(fileHash, extension, firmId, matterId) {
+    if (!matterId) {
+      throw new Error('Matter ID is required to build storage path');
+    }
     return `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
   }
 
@@ -135,10 +147,15 @@ export class FileProcessingService {
    * Fallback method when evidence.fileSize is 0 or missing
    * @param {Object} evidence - Evidence document
    * @param {string} firmId - Firm ID
+   * @param {string} matterId - Matter ID
    * @returns {Promise<number>} - File size in bytes, or 0 if unable to retrieve
    */
-  async getFileSize(evidence, firmId) {
+  async getFileSize(evidence, firmId, matterId) {
     try {
+      if (!matterId) {
+        throw new Error('Matter ID is required to get file size');
+      }
+
       // Document ID is the fileHash
       const fileHash = evidence.id;
       if (!fileHash) {
@@ -169,7 +186,7 @@ export class FileProcessingService {
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
         // Use the EXACT same path format as UploadService.generateStoragePath()
-        const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension}`;
+        const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
 
         console.log(

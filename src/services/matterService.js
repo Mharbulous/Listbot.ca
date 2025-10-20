@@ -65,6 +65,7 @@ export class MatterService {
    * @param {boolean} matterData.archived - Whether matter is archived
    * @param {Array<string>} matterData.assignedTo - Array of user IDs
    * @param {string} matterData.responsibleLawyer - User ID of responsible lawyer
+   * @param {boolean} matterData.mockData - Flag for test data (default: false)
    * @param {string} createdBy - User ID of creator
    * @returns {Promise<string>} - Created matter ID
    */
@@ -93,6 +94,7 @@ export class MatterService {
         archived: matterData.archived || false,
         assignedTo: Array.isArray(matterData.assignedTo) ? matterData.assignedTo : [],
         responsibleLawyer: matterData.responsibleLawyer || null,
+        mockData: matterData.mockData === true ? true : false, // Default to false for real data
         lastAccessed: serverTimestamp(),
         createdAt: serverTimestamp(),
         createdBy: createdBy,

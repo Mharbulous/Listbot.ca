@@ -1,23 +1,24 @@
 import { defineStore } from 'pinia';
 
-const STORAGE_KEY = 'bookkeeper_active_matter';
+const STORAGE_KEY = 'bookkeeper_selected_matter';
+const LEGACY_STORAGE_KEY = 'bookkeeper_active_matter'; // For migration
 
 /**
  * Matter View Store
  *
- * Manages the state for the currently selected/active matter.
+ * Manages the state for the currently selected matter.
  * Used to provide reactive matter information to the header display.
  * Persists selection to localStorage to survive page refreshes.
  */
 export const useMatterViewStore = defineStore('matterView', {
   state: () => ({
-    currentMatter: null, // { id, matterNumber, description }
+    currentMatter: null, // { id, matterNumber, description, archived }
   }),
 
   getters: {
     /**
-     * Get the current active matter
-     * @returns {Object|null} The active matter object or null if no matter is selected
+     * Get the currently selected matter
+     * @returns {Object|null} The selected matter object or null if no matter is selected
      */
     selectedMatter: (state) => state.currentMatter,
 
@@ -35,18 +36,41 @@ export const useMatterViewStore = defineStore('matterView', {
       if (!state.currentMatter) return null;
       return `${state.currentMatter.matterNumber}: ${state.currentMatter.description}`;
     },
+
+    /**
+     * Get the ID of the currently selected matter
+     * @returns {string|null} Matter ID or null if no matter is selected
+     */
+    currentMatterId: (state) => state.currentMatter?.id ?? null,
+
+    /**
+     * Check if the selected matter is archived
+     * @returns {boolean} True if selected matter is archived
+     */
+    isArchivedMatter: (state) => state.currentMatter?.archived ?? false,
+
+    /**
+     * Check if the selected matter allows uploads
+     * Must have a matter selected AND it must not be archived
+     * @returns {boolean} True if uploads are allowed
+     */
+    canUploadToMatter: (state) => {
+      if (!state.currentMatter) return false;
+      return state.currentMatter.archived === false;
+    },
   },
 
   actions: {
     /**
-     * Set the current active matter and persist to localStorage
-     * @param {Object} matter - The matter object with id, matterNumber, and description
+     * Set the currently selected matter and persist to localStorage
+     * @param {Object} matter - The matter object with id, matterNumber, description, and archived
      */
     setMatter(matter) {
       const matterData = {
         id: matter.id,
         matterNumber: matter.matterNumber,
         description: matter.description,
+        archived: matter.archived || false,
       };
 
       this.currentMatter = matterData;
@@ -60,7 +84,7 @@ export const useMatterViewStore = defineStore('matterView', {
     },
 
     /**
-     * Clear the current active matter and remove from localStorage
+     * Clear the currently selected matter and remove from localStorage
      */
     clearMatter() {
       this.currentMatter = null;
@@ -78,14 +102,34 @@ export const useMatterViewStore = defineStore('matterView', {
      */
     loadMatterFromStorage() {
       try {
-        const storedMatter = localStorage.getItem(STORAGE_KEY);
+        // Try new key first
+        let storedMatter = localStorage.getItem(STORAGE_KEY);
+
+        // Migration: Check legacy key if new key doesn't exist
+        if (!storedMatter) {
+          storedMatter = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (storedMatter) {
+            // Migrate to new key
+            localStorage.setItem(STORAGE_KEY, storedMatter);
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
+          }
+        }
+
         if (storedMatter) {
-          this.currentMatter = JSON.parse(storedMatter);
+          const matterData = JSON.parse(storedMatter);
+
+          // Handle legacy data without archived field
+          if (matterData.archived === undefined) {
+            matterData.archived = false; // Default to false for legacy data
+          }
+
+          this.currentMatter = matterData;
         }
       } catch (error) {
         console.error('Failed to load matter from localStorage:', error);
-        // Clear corrupted data
+        // Clear corrupted data from both keys
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
       }
     },
   },

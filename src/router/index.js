@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import { createAuthGuard } from './guards/auth'; // Import the auth guard
+import { createMatterGuard } from './guards/matter'; // Import the matter guard
 import { registerDemoRoutes } from '../dev-demos/utils/demoRoutes'; // Import demo routes
 
 const router = createRouter({
@@ -39,37 +40,37 @@ const router = createRouter({
       path: '/upload',
       name: 'upload',
       component: () => import('../features/upload/FileUpload.vue'),
-      meta: { requiresAuth: true, title: 'File Upload Center' },
+      meta: { requiresAuth: true, requiresActiveMatter: true, title: 'File Upload Center' },
     },
     {
       path: '/organizer',
       name: 'organizer',
       component: () => import('../features/organizer/views/Organizer.vue'),
-      meta: { requiresAuth: true, title: 'Document Organizer' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Document Organizer' },
     },
     {
       path: '/organizer/view/:fileHash',
       name: 'view-document',
       component: () => import('../features/organizer/views/ViewDocument.vue'),
-      meta: { requiresAuth: true, titleFn: true },
+      meta: { requiresAuth: true, requiresMatter: true, titleFn: true },
     },
     {
       path: '/organizer/categories',
       name: 'category-manager',
       component: () => import('../features/organizer/views/CategoryManager.vue'),
-      meta: { requiresAuth: true, title: 'Document Organizer >> Categories' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Document Organizer >> Categories' },
     },
     {
       path: '/organizer/categories/new',
       name: 'category-creation-wizard',
       component: () => import('../features/organizer/views/CategoryCreationWizard.vue'),
-      meta: { requiresAuth: true, title: 'Document Organizer >> Categories >> New' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Document Organizer >> Categories >> New' },
     },
     {
       path: '/organizer/categories/edit/:id',
       name: 'category-edit',
       component: () => import('../features/organizer/views/CategoryEditWizard.vue'),
-      meta: { requiresAuth: true, title: 'Document Organizer >> Categories >> Edit' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Document Organizer >> Categories >> Edit' },
     },
     {
       path: '/matters',
@@ -124,7 +125,8 @@ const router = createRouter({
 // Register demo routes (development only)
 registerDemoRoutes(router);
 
-// Apply the global beforeEach guard
+// Apply the global beforeEach guards
 router.beforeEach(createAuthGuard());
+router.beforeEach(createMatterGuard());
 
 export default router;

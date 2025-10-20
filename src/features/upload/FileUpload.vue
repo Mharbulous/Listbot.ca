@@ -96,6 +96,7 @@ import {
 } from 'firebase/storage';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { useAuthStore } from '../../core/stores/auth.js';
+import { useMatterViewStore } from '../../stores/matterView.js';
 import { useLazyHashTooltip } from './composables/useLazyHashTooltip.js';
 import { useUploadLogger } from './composables/useUploadLogger.js';
 import { useFileMetadata } from './composables/useFileMetadata.js';
@@ -110,6 +111,7 @@ const dropzoneRef = ref(null);
 
 // Auth store
 const authStore = useAuthStore();
+const matterStore = useMatterViewStore();
 
 // Hash tooltip system for cache management
 const { populateExistingHash } = useLazyHashTooltip();
@@ -257,18 +259,27 @@ const calculateFileHash = async (file) => {
 // Simple upload helper functions
 const generateStoragePath = (fileHash, originalFileName) => {
   const extension = originalFileName.split('.').pop().toLowerCase();
-  return `firms/${authStore.currentFirm}/matters/general/uploads/${fileHash}.${extension}`;
+  const matterId = matterStore.currentMatterId;
+  if (!matterId) {
+    throw new Error('No matter selected. Please select a matter before uploading files.');
+  }
+  return `firms/${authStore.currentFirm}/matters/${matterId}/uploads/${fileHash}.${extension}`;
 };
 
 const checkFileExists = async (fileHash) => {
   try {
+    const matterId = matterStore.currentMatterId;
+    if (!matterId) {
+      throw new Error('No matter selected. Please select a matter before checking files.');
+    }
+
     // Direct document lookup using fileHash as document ID
     const evidenceRef = doc(
       db,
       'firms',
       authStore.currentFirm,
       'matters',
-      'general',
+      matterId,
       'evidence',
       fileHash
     );

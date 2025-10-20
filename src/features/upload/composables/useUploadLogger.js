@@ -1,9 +1,11 @@
 import { db } from '../../../services/firebase.js';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
+import { useMatterViewStore } from '../../../stores/matterView.js';
 
 export function useUploadLogger() {
   const authStore = useAuthStore();
+  const matterStore = useMatterViewStore();
 
   /**
    * Log a simple upload event with minimal essential information
@@ -18,6 +20,12 @@ export function useUploadLogger() {
       const firmId = authStore.currentFirm;
       if (!firmId) {
         throw new Error('No firm ID available for logging');
+      }
+
+      // Validate matter is selected
+      const matterId = matterStore.currentMatterId;
+      if (!matterId) {
+        throw new Error('No matter selected. Please select a matter before uploading files.');
       }
 
       // Create minimal upload event with only essential fields
@@ -36,7 +44,7 @@ export function useUploadLogger() {
         'firms',
         firmId,
         'matters',
-        'general',
+        matterId,
         'uploadEvents'
       );
       const docRef = await addDoc(eventsCollection, eventData);
@@ -69,7 +77,13 @@ export function useUploadLogger() {
         throw new Error('Event ID is required for updating upload event');
       }
 
-      const eventDocRef = doc(db, 'firms', firmId, 'matters', 'general', 'uploadEvents', eventId);
+      // Validate matter is selected
+      const matterId = matterStore.currentMatterId;
+      if (!matterId) {
+        throw new Error('No matter selected. Please select a matter before updating events.');
+      }
+
+      const eventDocRef = doc(db, 'firms', firmId, 'matters', matterId, 'uploadEvents', eventId);
 
       await updateDoc(eventDocRef, updates);
 
