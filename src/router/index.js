@@ -109,6 +109,18 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Matter Details' },
     },
     {
+      path: '/categories',
+      name: 'categories',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Categories' },
+    },
+    {
+      path: '/cloud',
+      name: 'cloud',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Cloud' },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../components/features/auth/LoginForm.vue'),
