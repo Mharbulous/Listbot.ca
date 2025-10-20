@@ -1,72 +1,22 @@
 <template>
   <div class="category-manager">
     <v-card variant="flat">
-      <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-folder-multiple</v-icon>
-        Categories List
-      </v-card-title>
-
       <v-tabs v-model="activeTab" class="px-4">
-        <v-tab value="system">System Categories</v-tab>
-        <v-tab value="firm">Custom Firm Categories</v-tab>
-        <v-tab value="matter">Custom Matter Categories</v-tab>
-      </v-tabs>
-
-      <v-card-text>
-        <div v-if="loading" class="text-center py-6">
-          <v-progress-circular indeterminate />
-          <p class="mt-2">Loading categories...</p>
-        </div>
-
-        <div v-else-if="!sortedCategories.length" class="text-center py-6">
-          <v-icon size="64" color="grey">mdi-folder-outline</v-icon>
-          <p class="text-h6 mt-2">No categories in this section yet</p>
-        </div>
-
-        <v-list v-else>
-          <v-list-item
-            v-for="category in sortedCategories"
-            :key="category.id"
-            class="category-item"
-            @click="editCategory(category)"
-          >
-            <template #prepend>
-              <v-icon :color="getCategoryIconColor(category)" class="mr-3">
-                {{ getCategoryIcon(category) }}
-              </v-icon>
-            </template>
-
-            <v-list-item-title>
-              <div class="d-flex align-center">
-                <span class="font-weight-medium">{{ category.name }}</span>
-                <v-chip
-                  v-if="category.source === 'system'"
-                  size="x-small"
-                  color="primary"
-                  variant="outlined"
-                  class="ml-2"
-                >
-                  System
-                </v-chip>
-              </div>
-              <div
-                class="text-caption text-medium-emphasis"
-                v-html="getCategoryDisplayTextWithFormatting(category)"
-              ></div>
-            </v-list-item-title>
-
-            <template #append>
-              <v-icon class="edit-icon" color="primary">mdi-pencil</v-icon>
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-card-text>
-
-      <v-card-actions class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'documents' }">
-          <v-icon start>mdi-arrow-left</v-icon>
-          Back
-        </v-btn>
+        <v-tab value="system">
+          <v-icon start>mdi-shield-star</v-icon>
+          System
+          <v-chip size="small" color="blue" class="ml-2">{{ systemcategories.length }}</v-chip>
+        </v-tab>
+        <v-tab value="firm">
+          <v-icon start>mdi-office-building</v-icon>
+          Firm
+          <v-chip size="small" color="green" class="ml-2">{{ firmCategories.length }}</v-chip>
+        </v-tab>
+        <v-tab value="matter">
+          <v-icon start>mdi-folder</v-icon>
+          Matter
+          <v-chip size="small" color="orange" class="ml-2">{{ matterCategories.length }}</v-chip>
+        </v-tab>
 
         <v-spacer />
 
@@ -75,9 +25,145 @@
           :disabled="!canCreateCategory"
           :to="{ name: 'category-creation-wizard', query: { scope: activeTab } }"
           variant="elevated"
+          class="align-self-center"
         >
           <v-icon start>mdi-plus</v-icon>
           New Category
+        </v-btn>
+      </v-tabs>
+
+      <v-card-text>
+        <div v-if="loading" class="text-center py-12">
+          <v-progress-circular indeterminate color="primary" size="64" />
+          <p class="mt-4 text-h6">Loading categories...</p>
+        </div>
+
+        <div v-else>
+          <v-window v-model="activeTab">
+            <!-- System Categories -->
+            <v-window-item value="system">
+              <div v-if="sortedSystemCategories.length === 0" class="text-center py-8 text-grey">
+                <v-icon icon="mdi-package-variant" size="64" />
+                <p class="mt-2 text-h6">No system categories</p>
+              </div>
+              <v-list v-else>
+                <v-list-item
+                  v-for="category in sortedSystemCategories"
+                  :key="category.id"
+                  class="category-item"
+                  @click="editCategory(category)"
+                >
+                  <template #prepend>
+                    <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                      {{ getCategoryIcon(category) }}
+                    </v-icon>
+                  </template>
+
+                  <v-list-item-title>
+                    <div class="d-flex align-center">
+                      <span class="font-weight-medium">{{ category.name }}</span>
+                      <v-chip size="x-small" color="blue" variant="outlined" class="ml-2">
+                        System
+                      </v-chip>
+                    </div>
+                    <div
+                      class="text-caption text-medium-emphasis"
+                      v-html="getCategoryDisplayTextWithFormatting(category)"
+                    ></div>
+                  </v-list-item-title>
+
+                  <template #append>
+                    <v-icon class="edit-icon" color="primary">mdi-pencil</v-icon>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-window-item>
+
+            <!-- Firm Categories -->
+            <v-window-item value="firm">
+              <div v-if="sortedFirmCategories.length === 0" class="text-center py-8 text-grey">
+                <v-icon icon="mdi-package-variant" size="64" />
+                <p class="mt-2 text-h6">No firm categories</p>
+              </div>
+              <v-list v-else>
+                <v-list-item
+                  v-for="category in sortedFirmCategories"
+                  :key="category.id"
+                  class="category-item"
+                  @click="editCategory(category)"
+                >
+                  <template #prepend>
+                    <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                      {{ getCategoryIcon(category) }}
+                    </v-icon>
+                  </template>
+
+                  <v-list-item-title>
+                    <div class="d-flex align-center">
+                      <span class="font-weight-medium">{{ category.name }}</span>
+                      <v-chip size="x-small" color="green" variant="outlined" class="ml-2">
+                        Firm
+                      </v-chip>
+                    </div>
+                    <div
+                      class="text-caption text-medium-emphasis"
+                      v-html="getCategoryDisplayTextWithFormatting(category)"
+                    ></div>
+                  </v-list-item-title>
+
+                  <template #append>
+                    <v-icon class="edit-icon" color="primary">mdi-pencil</v-icon>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-window-item>
+
+            <!-- Matter Categories -->
+            <v-window-item value="matter">
+              <div v-if="sortedMatterCategories.length === 0" class="text-center py-8 text-grey">
+                <v-icon icon="mdi-package-variant" size="64" />
+                <p class="mt-2 text-h6">No matter categories</p>
+              </div>
+              <v-list v-else>
+                <v-list-item
+                  v-for="category in sortedMatterCategories"
+                  :key="category.id"
+                  class="category-item"
+                  @click="editCategory(category)"
+                >
+                  <template #prepend>
+                    <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                      {{ getCategoryIcon(category) }}
+                    </v-icon>
+                  </template>
+
+                  <v-list-item-title>
+                    <div class="d-flex align-center">
+                      <span class="font-weight-medium">{{ category.name }}</span>
+                      <v-chip size="x-small" color="orange" variant="outlined" class="ml-2">
+                        Matter
+                      </v-chip>
+                    </div>
+                    <div
+                      class="text-caption text-medium-emphasis"
+                      v-html="getCategoryDisplayTextWithFormatting(category)"
+                    ></div>
+                  </v-list-item-title>
+
+                  <template #append>
+                    <v-icon class="edit-icon" color="primary">mdi-pencil</v-icon>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-window-item>
+          </v-window>
+        </div>
+      </v-card-text>
+
+      <v-card-actions class="px-6 pb-6">
+        <v-btn variant="outlined" :to="{ name: 'documents' }">
+          <v-icon start>mdi-arrow-left</v-icon>
+          Back
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -105,6 +191,9 @@ const snackbar = ref({ show: false, message: '', color: 'success' });
 
 // Use composable state
 const {
+  systemcategories,
+  firmCategories,
+  matterCategories,
   currentCategories,
   loading,
   activeTab,
@@ -113,9 +202,21 @@ const {
   loadAllCategories,
 } = categoryManager;
 
-// Computed property to sort categories alphabetically
-const sortedCategories = computed(() => {
-  return [...currentCategories.value].sort((a, b) =>
+// Computed properties to sort categories alphabetically for each tab
+const sortedSystemCategories = computed(() => {
+  return [...systemcategories.value].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+});
+
+const sortedFirmCategories = computed(() => {
+  return [...firmCategories.value].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+});
+
+const sortedMatterCategories = computed(() => {
+  return [...matterCategories.value].sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
   );
 });

@@ -167,12 +167,7 @@
         <v-card-actions>
           <v-btn variant="outlined" :to="{ name: 'DevDemoIndex' }">
             <v-icon start>mdi-arrow-left</v-icon>
-            Back to Demos
-          </v-btn>
-          <v-spacer />
-          <v-btn color="primary" variant="elevated" @click="loadAllCategories">
-            <v-icon start>mdi-refresh</v-icon>
-            Refresh
+            Back to Developer Menu
           </v-btn>
         </v-card-actions>
       </v-card>
