@@ -49,6 +49,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Analyze' },
     },
     {
+      path: '/list',
+      name: 'list',
+      component: () => import('../views/ListDocuments.vue'),
+      meta: { requiresAuth: true, title: 'List' },
+    },
+    {
       path: '/documents',
       name: 'documents',
       component: () => import('../features/organizer/views/Organizer.vue'),
