@@ -123,10 +123,11 @@ export function usePdfMetadata() {
    * Extract metadata from PDF file
    *
    * @param {string} firmId - Firm ID for Firebase Storage path
+   * @param {string} matterId - Matter ID for Firebase Storage path
    * @param {string} fileHash - File hash (document ID)
    * @param {string} displayName - File display name to get extension
    */
-  const extractMetadata = async (firmId, fileHash, displayName) => {
+  const extractMetadata = async (firmId, matterId, fileHash, displayName) => {
     // Only process PDF files
     if (!displayName?.toLowerCase().endsWith('.pdf')) {
       return;
@@ -141,7 +142,7 @@ export function usePdfMetadata() {
       const extension = displayName.split('.').pop() || 'pdf';
 
       // Build storage path
-      const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
 
       // Get download URL

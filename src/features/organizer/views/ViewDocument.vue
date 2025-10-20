@@ -319,6 +319,7 @@ import { ref as storageRef, getMetadata } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
 import { useDocumentViewStore } from '@/stores/documentView.js';
+import { useMatterViewStore } from '@/stores/matterView.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { useOrganizerStore } from '@/features/organizer/stores/organizer.js';
 import { storeToRefs } from 'pinia';
@@ -330,6 +331,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
+const matterStore = useMatterViewStore();
 const preferencesStore = useUserPreferencesStore();
 const organizerStore = useOrganizerStore();
 const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesStore);
@@ -498,8 +500,9 @@ const handleMetadataSelection = async (newMetadataHash) => {
     updatingMetadata.value = true;
 
     const firmId = authStore.currentFirm;
-    if (!firmId || !fileHash.value) {
-      throw new Error('Missing firm ID or file hash');
+    const matterId = matterStore.currentMatterId;
+    if (!firmId || !fileHash.value || !matterId) {
+      throw new Error('Missing firm ID, matter ID, or file hash');
     }
 
     // Find the selected variant
@@ -512,7 +515,7 @@ const handleMetadataSelection = async (newMetadataHash) => {
     }
 
     // Update Firestore evidence document with new displayCopy
-    const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', fileHash.value);
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
     await updateDoc(evidenceRef, {
       displayCopy: newMetadataHash,
     });
@@ -546,11 +549,16 @@ const handleMetadataSelection = async (newMetadataHash) => {
 // Fetch Firebase Storage metadata
 const fetchStorageMetadata = async (firmId, displayName) => {
   try {
+    const matterId = matterStore.currentMatterId;
+    if (!matterId) {
+      throw new Error('No matter selected');
+    }
+
     // Get file extension from displayName
     const extension = displayName.split('.').pop() || 'pdf';
 
     // Build storage path (same format as used in fileProcessingService)
-    const storagePath = `firms/${firmId}/matters/general/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
     const fileRef = storageRef(storage, storagePath);
 
     // Get metadata from Firebase Storage
@@ -559,7 +567,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
 
     // Extract PDF embedded metadata if this is a PDF file
     if (displayName?.toLowerCase().endsWith('.pdf')) {
-      await extractMetadata(firmId, fileHash.value, displayName);
+      await extractMetadata(firmId, matterId, fileHash.value, displayName);
     }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
@@ -587,13 +595,19 @@ const loadEvidence = async () => {
       throw new Error('No firm ID found');
     }
 
+    // Get the selected matter ID
+    const matterId = matterStore.currentMatterId;
+    if (!matterId) {
+      throw new Error('No matter selected. Please select a matter to view documents.');
+    }
+
     if (!fileHash.value) {
       throw new Error('No file hash provided');
     }
 
     // Fetch single evidence document from Firestore
-    // Path: /firms/{firmId}/matters/general/evidence/{fileHash}
-    const evidenceRef = doc(db, 'firms', firmId, 'matters', 'general', 'evidence', fileHash.value);
+    // Path: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
     const evidenceSnap = await getDoc(evidenceRef);
 
     if (!evidenceSnap.exists()) {
@@ -603,7 +617,7 @@ const loadEvidence = async () => {
     const evidenceData = evidenceSnap.data();
 
     // Fetch ALL sourceMetadata variants for this file
-    const evidenceService = new EvidenceService(firmId);
+    const evidenceService = new EvidenceService(firmId, matterId);
     const variants = await evidenceService.getAllSourceMetadata(fileHash.value);
     sourceMetadataVariants.value = variants;
 

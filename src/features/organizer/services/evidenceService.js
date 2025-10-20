@@ -220,7 +220,7 @@ export class EvidenceService {
         'firms',
         this.firmId,
         'matters',
-        'general',
+        this.matterId,
         'evidence',
         evidenceId
       );
@@ -245,7 +245,7 @@ export class EvidenceService {
         'firms',
         this.firmId,
         'matters',
-        'general',
+        this.matterId,
         'evidence',
         evidenceId
       );
@@ -279,7 +279,7 @@ export class EvidenceService {
         'firms',
         this.firmId,
         'matters',
-        'general',
+        this.matterId,
         'evidence',
         fileHash,
         'sourceMetadata'
