@@ -299,7 +299,7 @@ import { SystemCategoryService } from '../services/systemCategoryService.js';
 const missingIds = await SystemCategoryService.checkMissingCategories(firmId, matterId);
 
 // Initialize missing system categories
-const result = await SystemCategoryService.initializeSystemCategories(firmId, matterId);
+const result = await SystemCategoryService.initializesystemCategories(firmId, matterId);
 console.log(`Created ${result.created} system categories`);
 ```
 

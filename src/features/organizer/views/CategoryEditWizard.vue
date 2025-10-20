@@ -5,12 +5,7 @@
         <v-icon class="mr-2">mdi-pencil</v-icon>
         Edit Category
         <v-spacer />
-        <v-chip
-          v-if="isSystemCategoryComputed"
-          size="default"
-          color="primary"
-          variant="outlined"
-        >
+        <v-chip v-if="isSystemCategoryComputed" size="default" color="primary" variant="outlined">
           System Category
         </v-chip>
         <HoldToConfirmButton
@@ -268,9 +263,7 @@ import { useOrganizerStore } from '../stores/organizer.js';
 import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
-import {
-  sequenceFormatOptions,
-} from '../utils/categoryFormOptions.js';
+import { sequenceFormatOptions } from '../utils/categoryFormOptions.js';
 import {
   generateRegexExamples,
   capitalizeFirstLetter,

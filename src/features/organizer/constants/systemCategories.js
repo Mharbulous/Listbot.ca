@@ -142,6 +142,6 @@ export function getSystemCategory(categoryId) {
  * Get all system category definitions
  * @returns {Array} Array of all system category definitions
  */
-export function getAllSystemCategories() {
+export function getAllsystemCategories() {
   return [...SYSTEM_CATEGORIES];
 }

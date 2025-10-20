@@ -26,7 +26,7 @@ export class SystemCategoryService {
    * Get all system categories from the global /systemCategories collection
    * @returns {Promise<Array>} Array of system category documents
    */
-  static async getSystemCategories() {
+  static async getsystemCategories() {
     try {
       const systemCategoriesRef = collection(db, 'systemCategories');
       const snapshot = await getDocs(systemCategoriesRef);
@@ -92,7 +92,7 @@ export class SystemCategoryService {
    * @param {string} matterId - The matter ID (default: 'general')
    * @returns {Promise<Object>} Result with counts of created and skipped categories
    */
-  static async initializeSystemCategories(firmId, matterId = 'general') {
+  static async initializesystemCategories(firmId, matterId = 'general') {
     try {
       if (!firmId || typeof firmId !== 'string') {
         throw new Error('Valid firm ID is required');
@@ -179,7 +179,7 @@ export class SystemCategoryService {
    * This should be run once by an admin to populate the system categories
    * @returns {Promise<Object>} Result with count of created categories
    */
-  static async seedGlobalSystemCategories() {
+  static async seedGlobalsystemCategories() {
     try {
       console.log('[SystemCategoryService] Seeding global system categories collection');
 

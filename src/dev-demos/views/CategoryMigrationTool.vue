@@ -50,7 +50,7 @@
                       <v-chip
                         v-for="category in systemCategories"
                         :key="category.id"
-                        draggable="true"
+                        :draggable="true"
                         class="category-chip"
                         color="blue"
                         variant="outlined"
@@ -90,7 +90,7 @@
                       <v-chip
                         v-for="category in firmCategories"
                         :key="category.id"
-                        draggable="true"
+                        :draggable="true"
                         class="category-chip"
                         color="green"
                         variant="outlined"
@@ -130,7 +130,7 @@
                       <v-chip
                         v-for="category in matterCategories"
                         :key="category.id"
-                        draggable="true"
+                        :draggable="true"
                         class="category-chip"
                         color="orange"
                         variant="outlined"
@@ -180,11 +180,11 @@
         <v-card-text>
           <p class="mb-4">
             Are you sure you want to move <strong>{{ draggedCategory?.name }}</strong> from
-            <strong>{{ sourceLabel }}</strong> to <strong>{{ targetLabel }}</strong>?
+            <strong>{{ sourceLabel }}</strong> to <strong>{{ targetLabel }}</strong
+            >?
           </p>
           <v-alert color="warning" variant="tonal" density="compact">
-            This will delete the category from {{ sourceLabel }} and create it in
-            {{ targetLabel }}.
+            This will delete the category from {{ sourceLabel }} and create it in {{ targetLabel }}.
           </v-alert>
         </v-card-text>
         <v-card-actions>
@@ -368,15 +368,47 @@ const cancelMove = () => {
  */
 const confirmMove = async () => {
   moving.value = true;
+
+  // Store original category ID to preserve it in target collection
+  const originalId = draggedCategory.value.id;
+  const categoryName = draggedCategory.value.name;
+
   try {
-    // Step 1: Create category in target collection
-    await categoryManager.createCategory(draggedCategory.value);
+    // Ensure all required fields exist with defensive copying
+    const categoryData = {
+      ...draggedCategory.value,
+      type: draggedCategory.value.type || 'Open List', // Default to 'Open List' if type is missing
+      color: draggedCategory.value.color || '#9E9E9E', // Default color if missing
+      tags: draggedCategory.value.tags || [], // Default to empty array if missing
+    };
+
+    console.log(
+      `[CategoryMigration] Step 1: Creating "${categoryName}" in ${targetZone.value} collection with ID: ${originalId}`
+    );
+
+    // Step 1: Create category in target collection with same ID
+    if (targetZone.value === 'system') {
+      // Use createSystemCategoryWithId for system collection
+      await categoryManager.createSystemCategoryWithId(categoryData, originalId);
+    } else {
+      // Set the active tab to the target zone so createCategoryWithId knows where to create
+      categoryManager.setActiveTab(targetZone.value);
+      await categoryManager.createCategoryWithId(categoryData, originalId);
+    }
+
+    console.log(
+      `[CategoryMigration] Step 2: Deleting "${categoryName}" from ${draggedSource.value} collection`
+    );
 
     // Step 2: Delete category from source collection
-    await categoryManager.deleteCategory(draggedCategory.value.id, draggedSource.value);
+    // ONLY execute if Step 1 succeeded (we're past the await)
+    // Skip system validation since migration tool needs to move categories with reserved IDs
+    await categoryManager.deleteCategory(originalId, draggedSource.value, true);
+
+    console.log(`[CategoryMigration] Step 3: Migration complete for "${categoryName}"`);
 
     showNotification(
-      `Category "${draggedCategory.value.name}" moved from ${sourceLabel.value} to ${targetLabel.value}`,
+      `Category "${categoryName}" moved successfully from ${sourceLabel.value} to ${targetLabel.value} (ID: ${originalId})`,
       'success'
     );
 
@@ -389,8 +421,16 @@ const confirmMove = async () => {
     draggedSource.value = null;
     targetZone.value = null;
   } catch (error) {
-    console.error('[CategoryMigration] Failed to move category:', error);
-    showNotification('Failed to move category: ' + error.message, 'error');
+    console.error(`[CategoryMigration] Migration failed for "${categoryName}":`, error);
+
+    // Provide detailed error message to user
+    const errorDetails = error.message || 'Unknown error occurred';
+    showNotification(
+      `Failed to move "${categoryName}": ${errorDetails}. Check console for details.`,
+      'error'
+    );
+
+    // Don't close dialog so user can see what happened and try again
   } finally {
     moving.value = false;
   }

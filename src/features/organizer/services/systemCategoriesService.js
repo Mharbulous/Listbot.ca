@@ -1,6 +1,8 @@
 import {
   collection,
   doc,
+  addDoc,
+  setDoc,
   getDocs,
   updateDoc,
   query,
@@ -13,25 +15,25 @@ import { db } from '../../../services/firebase.js';
 /**
  * System Categories Service
  *
- * Handles operations for the global /system/categories collection.
+ * Handles operations for the global /systemCategories collection.
  * System categories can be edited but cannot be deleted.
  */
-export class SystemCategoriesService {
+export class systemCategoriesService {
   /**
    * Get the system categories collection reference
    * @returns {CollectionReference} Firestore collection reference
    */
-  static getSystemCategoriesCollection() {
-    return collection(db, 'system', 'categories');
+  static getsystemCategoriesCollection() {
+    return collection(db, 'systemCategories');
   }
 
   /**
    * Get all system categories
    * @returns {Promise<Array>} Array of system category documents
    */
-  static async getSystemCategories() {
+  static async getsystemCategories() {
     try {
-      const systemCategoriesRef = this.getSystemCategoriesCollection();
+      const systemCategoriesRef = this.getsystemCategoriesCollection();
       let q, snapshot;
 
       try {
@@ -40,7 +42,7 @@ export class SystemCategoriesService {
         snapshot = await getDocs(q);
       } catch (queryError) {
         console.log(
-          '[SystemCategoriesService] isActive query failed, trying fallback query:',
+          '[systemCategoriesService] isActive query failed, trying fallback query:',
           queryError.message
         );
 
@@ -65,10 +67,180 @@ export class SystemCategoriesService {
         }
       });
 
-      console.log(`[SystemCategoriesService] Fetched ${categories.length} system categories`);
+      console.log(`[systemCategoriesService] Fetched ${categories.length} system categories`);
       return categories;
     } catch (error) {
-      console.error('[SystemCategoriesService] Failed to get system categories:', error);
+      console.error('[systemCategoriesService] Failed to get system categories:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new system category (for dev tools only)
+   * @param {Object} categoryData - The category data
+   * @returns {Promise<Object>} The created category with ID
+   */
+  static async createSystemCategory(categoryData) {
+    try {
+      // Validate category data
+      if (!categoryData.name || typeof categoryData.name !== 'string' || !categoryData.name.trim()) {
+        throw new Error('Category name is required and must be a non-empty string');
+      }
+
+      if (categoryData.name.trim().length > 50) {
+        throw new Error('Category name must be 50 characters or less');
+      }
+
+      if (!categoryData.type || typeof categoryData.type !== 'string') {
+        throw new Error('Category type is required');
+      }
+
+      // Check for duplicate names in system collection
+      const systemCategoriesRef = this.getsystemCategoriesCollection();
+      const existingQuery = query(
+        systemCategoriesRef,
+        where('name', '==', categoryData.name.trim())
+      );
+      const existingSnapshot = await getDocs(existingQuery);
+
+      if (!existingSnapshot.empty) {
+        throw new Error(`A system category named "${categoryData.name.trim()}" already exists`);
+      }
+
+      // Prepare category document
+      const categoryDoc = {
+        name: categoryData.name.trim(),
+        type: categoryData.type,
+        color: categoryData.color || '#9E9E9E',
+        tags: categoryData.tags || [],
+        isActive: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      // Add type-specific fields
+      if (categoryData.type === 'Currency' && categoryData.defaultCurrency) {
+        categoryDoc.defaultCurrency = categoryData.defaultCurrency;
+      }
+
+      if (categoryData.type === 'Sequence') {
+        if (categoryData.defaultSequenceFormat) {
+          categoryDoc.defaultSequenceFormat = categoryData.defaultSequenceFormat;
+        }
+        if (typeof categoryData.allowGaps === 'boolean') {
+          categoryDoc.allowGaps = categoryData.allowGaps;
+        }
+      }
+
+      if (categoryData.type === 'Regex') {
+        if (categoryData.regexDefinition) {
+          categoryDoc.regexDefinition = categoryData.regexDefinition;
+        }
+        if (categoryData.regexExamples) {
+          categoryDoc.regexExamples = categoryData.regexExamples;
+        }
+      }
+
+      if (['Text Area', 'Sequence', 'Regex'].includes(categoryData.type)) {
+        if (typeof categoryData.allowDuplicateValues === 'boolean') {
+          categoryDoc.allowDuplicateValues = categoryData.allowDuplicateValues;
+        }
+      }
+
+      // Create in Firestore (reuse systemCategoriesRef from duplicate check above)
+      const docRef = await addDoc(systemCategoriesRef, categoryDoc);
+
+      console.log(`[systemCategoriesService] Created system category: ${categoryData.name} (${docRef.id})`);
+
+      return {
+        id: docRef.id,
+        ...categoryDoc,
+        isSystemCategory: true,
+      };
+    } catch (error) {
+      console.error('[systemCategoriesService] Failed to create system category:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a system category with a specific ID (for migration tool)
+   * @param {Object} categoryData - The category data
+   * @param {string} categoryId - The specific document ID to use
+   * @returns {Promise<Object>} The created category with ID
+   */
+  static async createSystemCategoryWithId(categoryData, categoryId) {
+    try {
+      // Validate category data
+      if (!categoryData.name || typeof categoryData.name !== 'string' || !categoryData.name.trim()) {
+        throw new Error('Category name is required and must be a non-empty string');
+      }
+
+      if (categoryData.name.trim().length > 50) {
+        throw new Error('Category name must be 50 characters or less');
+      }
+
+      if (!categoryData.type || typeof categoryData.type !== 'string') {
+        throw new Error('Category type is required');
+      }
+
+      if (!categoryId || typeof categoryId !== 'string') {
+        throw new Error('Category ID is required');
+      }
+
+      // Prepare category document
+      const categoryDoc = {
+        name: categoryData.name.trim(),
+        type: categoryData.type,
+        color: categoryData.color || '#9E9E9E',
+        tags: categoryData.tags || [],
+        isActive: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      // Add type-specific fields
+      if (categoryData.type === 'Currency' && categoryData.defaultCurrency) {
+        categoryDoc.defaultCurrency = categoryData.defaultCurrency;
+      }
+
+      if (categoryData.type === 'Sequence') {
+        if (categoryData.defaultSequenceFormat) {
+          categoryDoc.defaultSequenceFormat = categoryData.defaultSequenceFormat;
+        }
+        if (typeof categoryData.allowGaps === 'boolean') {
+          categoryDoc.allowGaps = categoryData.allowGaps;
+        }
+      }
+
+      if (categoryData.type === 'Regex') {
+        if (categoryData.regexDefinition) {
+          categoryDoc.regexDefinition = categoryData.regexDefinition;
+        }
+        if (categoryData.regexExamples) {
+          categoryDoc.regexExamples = categoryData.regexExamples;
+        }
+      }
+
+      if (['Text Area', 'Sequence', 'Regex'].includes(categoryData.type)) {
+        if (typeof categoryData.allowDuplicateValues === 'boolean') {
+          categoryDoc.allowDuplicateValues = categoryData.allowDuplicateValues;
+        }
+      }
+
+      // Create in Firestore with specific ID using setDoc
+      const categoryRef = doc(db, 'systemcategories', categoryId);
+      await setDoc(categoryRef, categoryDoc);
+
+      console.log(`[systemCategoriesService] Created system category with ID: ${categoryData.name} (${categoryId})`);
+
+      return {
+        id: categoryId,
+        ...categoryDoc,
+        isSystemCategory: true,
+      };
+    } catch (error) {
+      console.error('[systemCategoriesService] Failed to create system category with ID:', error);
       throw error;
     }
   }
@@ -105,13 +277,13 @@ export class SystemCategoriesService {
       });
 
       // Update in Firestore
-      const categoryRef = doc(db, 'system', 'categories', categoryId);
+      const categoryRef = doc(db, 'systemCategories', categoryId);
       await updateDoc(categoryRef, updateDoc);
 
-      console.log(`[SystemCategoriesService] Updated system category: ${categoryId}`);
+      console.log(`[systemCategoriesService] Updated system category: ${categoryId}`);
       return true;
     } catch (error) {
-      console.error('[SystemCategoriesService] Failed to update system category:', error);
+      console.error('[systemCategoriesService] Failed to update system category:', error);
       throw error;
     }
   }

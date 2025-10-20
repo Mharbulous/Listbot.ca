@@ -1,14 +1,14 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
-import { SystemCategoriesService } from '../services/systemCategoriesService.js';
+import { systemCategoriesService } from '../services/systemCategoriesService.js';
 import { CategoryService } from '../services/categoryService.js';
 
 /**
  * Category Manager Composable
  *
  * Handles loading and managing categories from three different sources:
- * - System categories (/system/categories)
+ * - System categories (/systemCategories)
  * - Firm categories (/firms/{firmId}/matters/general/categories)
  * - Matter categories (/firms/{firmId}/matters/{matterId}/categories)
  */
@@ -67,7 +67,7 @@ export function useCategoryManager() {
 
       // Load all three types in parallel
       const [systemCats, firmCats, matterCats] = await Promise.all([
-        loadSystemCategories(),
+        loadsystemCategories(),
         loadFirmCategories(firmId),
         loadMatterCategories(firmId, matterStore.currentMatterId || 'general'),
       ]);
@@ -96,11 +96,11 @@ export function useCategoryManager() {
   };
 
   /**
-   * Load system categories from /system/categories
+   * Load system categories from /systemCategories
    */
-  const loadSystemCategories = async () => {
+  const loadsystemCategories = async () => {
     try {
-      const categories = await SystemCategoriesService.getSystemCategories();
+      const categories = await systemCategoriesService.getsystemCategories();
       return categories;
     } catch (err) {
       console.error('[CategoryManager] Failed to load system categories:', err);
@@ -171,13 +171,63 @@ export function useCategoryManager() {
   };
 
   /**
+   * Create a system category with specific ID (for dev tools only)
+   * This bypasses the normal restriction on creating system categories
+   * @param {Object} categoryData - The category data
+   * @param {string} categoryId - The specific document ID to use
+   */
+  const createSystemCategoryWithId = async (categoryData, categoryId) => {
+    try {
+      const result = await systemCategoriesService.createSystemCategoryWithId(categoryData, categoryId);
+
+      // Reload categories
+      await loadAllCategories();
+
+      return result;
+    } catch (err) {
+      console.error('[CategoryManager] Failed to create system category with ID:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Create a category with specific ID (for dev tools only)
+   * @param {Object} categoryData - The category data
+   * @param {string} categoryId - The specific document ID to use
+   */
+  const createCategoryWithId = async (categoryData, categoryId) => {
+    try {
+      if (!canCreateCategory.value) {
+        throw new Error('Cannot create system categories');
+      }
+
+      const firmId = authStore.currentFirm;
+      if (!firmId) {
+        throw new Error('No firm ID available');
+      }
+
+      let matterId = 'general';
+      if (activeTab.value === 'matter') {
+        matterId = matterStore.currentMatterId || 'general';
+      }
+
+      const result = await CategoryService.createCategoryWithId(firmId, categoryData, categoryId, matterId);
+      await loadAllCategories();
+      return result;
+    } catch (err) {
+      console.error('[CategoryManager] Failed to create category with ID:', err);
+      throw err;
+    }
+  };
+
+  /**
    * Update a category
    */
   const updateCategory = async (categoryId, updates, categorySource) => {
     try {
       if (categorySource === 'system') {
         // Update system category
-        await SystemCategoriesService.updateSystemCategory(categoryId, updates);
+        await systemCategoriesService.updateSystemCategory(categoryId, updates);
       } else {
         // Update firm or matter category
         const firmId = authStore.currentFirm;
@@ -185,9 +235,8 @@ export function useCategoryManager() {
           throw new Error('No firm ID available');
         }
 
-        const matterId = categorySource === 'matter'
-          ? (matterStore.currentMatterId || 'general')
-          : 'general';
+        const matterId =
+          categorySource === 'matter' ? matterStore.currentMatterId || 'general' : 'general';
 
         await CategoryService.updateCategory(firmId, categoryId, updates, matterId);
       }
@@ -203,9 +252,30 @@ export function useCategoryManager() {
   };
 
   /**
-   * Delete a category (not allowed for system categories)
+   * Create a system category (for dev tools only)
+   * This bypasses the normal restriction on creating system categories
    */
-  const deleteCategory = async (categoryId, categorySource) => {
+  const createSystemCategory = async (categoryData) => {
+    try {
+      const result = await systemCategoriesService.createSystemCategory(categoryData);
+
+      // Reload categories
+      await loadAllCategories();
+
+      return result;
+    } catch (err) {
+      console.error('[CategoryManager] Failed to create system category:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Delete a category (not allowed for system categories)
+   * @param {string} categoryId - The category ID
+   * @param {string} categorySource - The category source ('system', 'firm', 'matter')
+   * @param {boolean} skipSystemValidation - Skip system category validation (for dev tools)
+   */
+  const deleteCategory = async (categoryId, categorySource, skipSystemValidation = false) => {
     try {
       if (categorySource === 'system') {
         throw new Error('System categories cannot be deleted');
@@ -216,11 +286,10 @@ export function useCategoryManager() {
         throw new Error('No firm ID available');
       }
 
-      const matterId = categorySource === 'matter'
-        ? (matterStore.currentMatterId || 'general')
-        : 'general';
+      const matterId =
+        categorySource === 'matter' ? matterStore.currentMatterId || 'general' : 'general';
 
-      await CategoryService.deleteCategory(firmId, categoryId, matterId);
+      await CategoryService.deleteCategory(firmId, categoryId, matterId, skipSystemValidation);
 
       // Reload categories
       await loadAllCategories();
@@ -257,10 +326,13 @@ export function useCategoryManager() {
 
     // Actions
     loadAllCategories,
-    loadSystemCategories,
+    loadsystemCategories,
     loadFirmCategories,
     loadMatterCategories,
     createCategory,
+    createSystemCategory,
+    createSystemCategoryWithId,
+    createCategoryWithId,
     updateCategory,
     deleteCategory,
     setActiveTab,
