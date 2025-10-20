@@ -224,8 +224,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
+import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
@@ -240,8 +241,20 @@ import {
 import TagOptionsManager from '../components/TagOptionsManager.vue';
 
 const router = useRouter();
+const route = useRoute();
 const organizerStore = useOrganizerStore();
 const { categories } = storeToRefs(organizerStore);
+
+// Get the category manager composable and extract scope from route query
+const categoryManager = useCategoryManager();
+const scope = ref(route.query.scope || 'firm'); // Default to 'firm' if no scope provided
+
+// Set the active tab in the category manager to match the scope
+onMounted(() => {
+  if (['system', 'firm', 'matter'].includes(scope.value)) {
+    categoryManager.setActiveTab(scope.value);
+  }
+});
 
 const creating = ref(false);
 const newCategory = ref({
@@ -429,7 +442,8 @@ const createCategory = async () => {
       categoryData.allowDuplicateValues = newCategory.value.allowDuplicateValues;
     }
 
-    await organizerStore.createCategory(categoryData);
+    // Use category manager composable which will save to the correct collection based on scope
+    await categoryManager.createCategory(categoryData);
 
     showNotification(`Category "${name}" created successfully`, 'success');
 

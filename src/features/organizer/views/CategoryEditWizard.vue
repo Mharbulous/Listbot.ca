@@ -265,6 +265,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
+import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
 import {
@@ -288,6 +289,10 @@ const router = useRouter();
 const route = useRoute();
 const organizerStore = useOrganizerStore();
 const { categories } = storeToRefs(organizerStore);
+
+// Get the category manager composable and extract source from route query
+const categoryManager = useCategoryManager();
+const categorySource = ref(route.query.source || 'firm'); // Default to 'firm' if no source provided
 
 const loading = ref(true);
 const saving = ref(false);
@@ -412,7 +417,7 @@ const hasChanges = computed(() => {
 
 // Computed property to check if current category is a system category
 const isSystemCategoryComputed = computed(() => {
-  return category.value ? isSystemCategory(category.value.id) : false;
+  return categorySource.value === 'system';
 });
 
 const showNotification = (message, color = 'success') => {
@@ -421,8 +426,14 @@ const showNotification = (message, color = 'success') => {
 
 const deleteCategory = async () => {
   try {
+    // Prevent deletion of system categories
+    if (categorySource.value === 'system') {
+      showNotification('System categories cannot be deleted', 'error');
+      return;
+    }
+
     const categoryName = category.value.name;
-    await organizerStore.deleteCategory(category.value.id);
+    await categoryManager.deleteCategory(category.value.id, categorySource.value);
     showNotification(`Category "${categoryName}" deleted successfully`, 'success');
     setTimeout(() => {
       router.push({ name: 'category-manager' });
@@ -608,7 +619,8 @@ const saveCategory = async () => {
       updates.allowDuplicateValues = editedCategory.value.allowDuplicateValues;
     }
 
-    await organizerStore.updateCategory(category.value.id, updates);
+    // Use category manager composable which will update the correct collection based on source
+    await categoryManager.updateCategory(category.value.id, updates, categorySource.value);
 
     showNotification(`Category "${updates.name}" updated successfully`, 'success');
 
@@ -627,13 +639,18 @@ const loadCategory = async () => {
   try {
     const categoryId = route.params.id;
 
-    // Ensure categories are loaded
-    if (!organizerStore.isInitialized || !categories.value.length) {
-      await organizerStore.initialize();
-    }
+    // Load all categories from all three sources
+    await categoryManager.loadAllCategories();
 
-    // Find the category
-    const foundCategory = organizerStore.getCategoryById(categoryId);
+    // Find the category from the appropriate source
+    let foundCategory = null;
+    if (categorySource.value === 'system') {
+      foundCategory = categoryManager.systemCategories.value.find((cat) => cat.id === categoryId);
+    } else if (categorySource.value === 'firm') {
+      foundCategory = categoryManager.firmCategories.value.find((cat) => cat.id === categoryId);
+    } else if (categorySource.value === 'matter') {
+      foundCategory = categoryManager.matterCategories.value.find((cat) => cat.id === categoryId);
+    }
 
     if (!foundCategory) {
       category.value = null;

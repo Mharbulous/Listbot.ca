@@ -3,21 +3,24 @@
     <v-card variant="flat">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-folder-multiple</v-icon>
-        Categories List ({{ sortedCategories.length }})
+        Categories List
       </v-card-title>
+
+      <v-tabs v-model="activeTab" class="px-4">
+        <v-tab value="system">System Categories</v-tab>
+        <v-tab value="firm">Custom Firm Categories</v-tab>
+        <v-tab value="matter">Custom Matter Categories</v-tab>
+      </v-tabs>
+
       <v-card-text>
-        <div v-if="loading || initializingCategories" class="text-center py-6">
+        <div v-if="loading" class="text-center py-6">
           <v-progress-circular indeterminate />
-          <p class="mt-2">
-            {{
-              initializingCategories ? 'Initializing system categories...' : 'Loading categories...'
-            }}
-          </p>
+          <p class="mt-2">Loading categories...</p>
         </div>
 
         <div v-else-if="!sortedCategories.length" class="text-center py-6">
           <v-icon size="64" color="grey">mdi-folder-outline</v-icon>
-          <p class="text-h6 mt-2">No categories yet</p>
+          <p class="text-h6 mt-2">No categories in this section yet</p>
         </div>
 
         <v-list v-else>
@@ -37,7 +40,7 @@
               <div class="d-flex align-center">
                 <span class="font-weight-medium">{{ category.name }}</span>
                 <v-chip
-                  v-if="isSystemCategory(category.id)"
+                  v-if="category.source === 'system'"
                   size="x-small"
                   color="primary"
                   variant="outlined"
@@ -67,7 +70,12 @@
 
         <v-spacer />
 
-        <v-btn color="primary" :to="{ name: 'category-creation-wizard' }" variant="elevated">
+        <v-btn
+          color="primary"
+          :disabled="!canCreateCategory"
+          :to="{ name: 'category-creation-wizard', query: { scope: activeTab } }"
+          variant="elevated"
+        >
           <v-icon start>mdi-plus</v-icon>
           New Category
         </v-btn>
@@ -84,40 +92,37 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../../../core/stores/auth.js';
-import { useOrganizerStore } from '../stores/organizer.js';
+import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
 import { getCurrencySymbol } from '../utils/currencyOptions.js';
-import { SystemCategoryService } from '../services/systemCategoryService.js';
-import { isSystemCategory } from '../constants/systemCategories.js';
 
 const router = useRouter();
-const authStore = useAuthStore();
-const organizerStore = useOrganizerStore();
-const { categories, loading } = storeToRefs(organizerStore);
+const categoryManager = useCategoryManager();
 
 const snackbar = ref({ show: false, message: '', color: 'success' });
-const initializingCategories = ref(false);
 
-// Computed property to sort categories: system categories first, then custom categories alphabetically
+// Use composable state
+const {
+  currentCategories,
+  loading,
+  activeTab,
+  canCreateCategory,
+  setActiveTab,
+  loadAllCategories,
+} = categoryManager;
+
+// Computed property to sort categories alphabetically
 const sortedCategories = computed(() => {
-  const systemCategories = categories.value.filter((cat) => isSystemCategory(cat.id));
-  const customCategories = categories.value.filter((cat) => !isSystemCategory(cat.id));
-
-  // Sort system categories by a predefined order or alphabetically
-  const sortedSystem = systemCategories.sort((a, b) =>
+  return [...currentCategories.value].sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
   );
+});
 
-  // Sort custom categories alphabetically
-  const sortedCustom = customCategories.sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-  );
-
-  return [...sortedSystem, ...sortedCustom];
+// Watch tab changes to log for debugging
+watch(activeTab, (newTab) => {
+  console.log(`[CategoryManager] Active tab changed to: ${newTab}`);
 });
 
 const getCategoryIcon = (category) => {
@@ -240,62 +245,22 @@ const showNotification = (message, color = 'success') => {
 };
 
 const editCategory = (category) => {
-  router.push({ name: 'category-edit', params: { id: category.id } });
-};
-
-const deleteCategory = async (category) => {
-  if (!confirm(`Are you sure you want to delete the "${category.name}" category?`)) return;
-
-  try {
-    await organizerStore.deleteCategory(category.id);
-    showNotification(`Category "${category.name}" deleted successfully`, 'success');
-  } catch (error) {
-    showNotification('Failed to delete category: ' + error.message, 'error');
-  }
-};
-
-/**
- * Initialize system categories for the current matter
- */
-const initializeSystemCategories = async () => {
-  try {
-    if (!authStore.isAuthenticated || !authStore.currentFirm) {
-      console.log(
-        '[CategoryManager] User not authenticated, skipping system category initialization'
-      );
-      return;
-    }
-
-    initializingCategories.value = true;
-    const firmId = authStore.currentFirm;
-    const matterId = 'general'; // Default to general matter
-
-    console.log('[CategoryManager] Initializing system categories...');
-    const result = await SystemCategoryService.initializeSystemCategories(firmId, matterId);
-
-    if (result.created > 0) {
-      showNotification(`Initialized ${result.created} system categories`, 'success');
-      // Reload categories to show the new system categories
-      await organizerStore.initialize();
-    }
-
-    console.log('[CategoryManager] System categories initialized:', result);
-  } catch (error) {
-    console.error('[CategoryManager] Failed to initialize system categories:', error);
-    showNotification('Failed to initialize system categories: ' + error.message, 'error');
-  } finally {
-    initializingCategories.value = false;
-  }
+  router.push({
+    name: 'category-edit',
+    params: { id: category.id },
+    query: { source: category.source },
+  });
 };
 
 onMounted(async () => {
-  if (!organizerStore.isInitialized || !categories.value.length) {
-    console.log('[CategoryManager] Initializing organizer store for categories...');
-    await organizerStore.initialize();
+  try {
+    console.log('[CategoryManager] Loading all categories...');
+    await loadAllCategories();
+    console.log('[CategoryManager] Categories loaded successfully');
+  } catch (error) {
+    console.error('[CategoryManager] Failed to load categories:', error);
+    showNotification('Failed to load categories: ' + error.message, 'error');
   }
-
-  // Initialize system categories after loading existing categories
-  await initializeSystemCategories();
 });
 </script>
 
