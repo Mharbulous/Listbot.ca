@@ -36,10 +36,10 @@
     <div v-if="localTags.length" class="d-flex flex-wrap ga-2">
       <v-chip
         v-for="tag in localTags"
-        :key="tag.id"
+        :key="tag.name"
         closable
         :disabled="disabled"
-        @click:close="removeTag(tag.id)"
+        @click:close="removeTag(tag.name)"
       >
         {{ tag.name }}
       </v-chip>
@@ -98,13 +98,13 @@ const addTag = () => {
     return;
   }
 
-  localTags.value.push({ id: crypto.randomUUID(), name });
+  localTags.value.push({ name });
   emit('update:modelValue', localTags.value);
   clearInput();
 };
 
-const removeTag = (tagId) => {
-  localTags.value = localTags.value.filter((tag) => tag.id !== tagId);
+const removeTag = (tagName) => {
+  localTags.value = localTags.value.filter((tag) => tag.name !== tagName);
   emit('update:modelValue', localTags.value);
 };
 

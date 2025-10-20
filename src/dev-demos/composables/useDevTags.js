@@ -230,9 +230,7 @@ export function useDevTags() {
 
     // Convert to format expected by EditableTag
     return category.tags.map((tag) => ({
-      id: tag.id,
       tagName: tag.name,
-      color: tag.color,
     }));
   };
 

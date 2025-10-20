@@ -476,9 +476,7 @@ export class DevTagService {
       const updatedTags = [
         ...category.tags,
         {
-          id: newOption.id || crypto.randomUUID(),
           name: newOption.name,
-          color: category.color, // Inherit category color
         },
       ];
 

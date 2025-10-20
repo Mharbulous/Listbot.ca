@@ -451,16 +451,6 @@ export class CategoryService {
   }
 
   /**
-   * Generate tag IDs for category tags
-   */
-  static generateTagIds(tags) {
-    return tags.map((tag) => ({
-      ...tag,
-      id: tag.id || crypto.randomUUID(),
-    }));
-  }
-
-  /**
    * Count categories for a firm
    */
   static async getCategoryCount(firmId) {

@@ -194,19 +194,18 @@ export function useCategoryComposables(categoryStore) {
 
     const addTag = (tagData) => {
       const newTag = {
-        id: crypto.randomUUID(),
         name: tagData.name?.trim() || '',
         ...tagData,
       };
       formData.value.tags.push(newTag);
     };
 
-    const removeTag = (tagId) => {
-      formData.value.tags = formData.value.tags.filter((tag) => tag.id !== tagId);
+    const removeTag = (tagName) => {
+      formData.value.tags = formData.value.tags.filter((tag) => tag.name !== tagName);
     };
 
-    const updateTag = (tagId, updates) => {
-      const tagIndex = formData.value.tags.findIndex((tag) => tag.id === tagId);
+    const updateTag = (tagName, updates) => {
+      const tagIndex = formData.value.tags.findIndex((tag) => tag.name === tagName);
       if (tagIndex >= 0) {
         formData.value.tags[tagIndex] = { ...formData.value.tags[tagIndex], ...updates };
       }

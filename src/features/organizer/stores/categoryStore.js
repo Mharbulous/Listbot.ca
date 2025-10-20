@@ -36,7 +36,6 @@ export const useCategoryStore = defineStore('category', () => {
         tags: (categoryData.tags || []).map((tag) => ({
           ...tag,
           name: validation.sanitizeTagName(tag.name),
-          id: tag.id || crypto.randomUUID(),
         })),
       };
 
@@ -76,7 +75,6 @@ export const useCategoryStore = defineStore('category', () => {
         sanitizedUpdates.tags = updates.tags.map((tag) => ({
           ...tag,
           name: validation.sanitizeTagName(tag.name),
-          id: tag.id || crypto.randomUUID(),
         }));
       }
 
