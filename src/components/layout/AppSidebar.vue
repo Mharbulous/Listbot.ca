@@ -67,6 +67,18 @@
         >
       </router-link>
       <router-link
+        to="/cloud"
+        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
+        :class="{ 'bg-brand-blue text-white': $route.path === '/cloud' }"
+      >
+        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">☁️</div>
+        <span
+          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
+          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
+          >Cloud</span
+        >
+      </router-link>
+      <router-link
         to="/documents"
         class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
         :class="{ 'bg-brand-blue text-white': $route.path === '/documents' }"
@@ -83,7 +95,7 @@
         class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
         :class="{ 'bg-brand-blue text-white': $route.path === '/upload' }"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">☁️</div>
+        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📤</div>
         <span
           class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
           :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
