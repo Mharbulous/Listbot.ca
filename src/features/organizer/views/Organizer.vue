@@ -5,7 +5,7 @@
       :evidence-count="evidenceCount"
       :filtered-count="filteredCount"
       @search="organizerStore.setFilter($event || '')"
-      @manage-categories="router.push('/documents/categories')"
+      @manage-categories="router.push('/categories')"
       @view-mode-changed="viewMode = $event.mode"
     />
 
@@ -28,7 +28,7 @@
       :getTagUpdateLoading="(id) => tagUpdateLoading.has(id)"
       :getAIProcessing="(id) => aiProcessing.has(id)"
       @process-with-ai="processWithAI"
-      @manage-categories="router.push('/documents/categories')"
+      @manage-categories="router.push('/categories')"
     />
 
     <v-overlay v-model="showUpdateOverlay" class="d-flex align-center justify-center" contained>

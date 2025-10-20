@@ -67,22 +67,22 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },
     },
     {
-      path: '/documents/categories',
+      path: '/categories',
       name: 'category-manager',
       component: () => import('../features/organizer/views/CategoryManager.vue'),
-      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents >> Categories' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Categories' },
     },
     {
-      path: '/documents/categories/new',
+      path: '/categories/new',
       name: 'category-creation-wizard',
       component: () => import('../features/organizer/views/CategoryCreationWizard.vue'),
-      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents >> Categories >> New' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> New' },
     },
     {
-      path: '/documents/categories/edit/:id',
+      path: '/categories/edit/:id',
       name: 'category-edit',
       component: () => import('../features/organizer/views/CategoryEditWizard.vue'),
-      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents >> Categories >> Edit' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> Edit' },
     },
     {
       path: '/matters',
@@ -107,12 +107,6 @@ const router = createRouter({
       name: 'matter-detail',
       component: () => import('../views/MatterDetail.vue'),
       meta: { requiresAuth: true, title: 'Matter Details' },
-    },
-    {
-      path: '/categories',
-      name: 'categories',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Categories' },
     },
     {
       path: '/cloud',
