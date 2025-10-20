@@ -47,6 +47,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/categories/edit/:id',
+    name: 'CategoryEditViewer',
+    component: () => import('../views/CategoryEditViewer.vue'),
+    meta: {
+      requiresAuth: true,
+      devOnly: true,
+      title: 'Category Viewer (Dev)',
+      description: 'View detailed category information for debugging and inspection',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),

@@ -274,7 +274,7 @@ import {
   requiresWarning,
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
-import { isSystemCategory } from '../constants/systemCategories.js';
+import { isSystemCategory } from '../constants/systemcategories.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
 import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
 
@@ -638,7 +638,7 @@ const loadCategory = async () => {
     // Find the category from the appropriate source
     let foundCategory = null;
     if (categorySource.value === 'system') {
-      foundCategory = categoryManager.systemCategories.value.find((cat) => cat.id === categoryId);
+      foundCategory = categoryManager.systemcategories.value.find((cat) => cat.id === categoryId);
     } else if (categorySource.value === 'firm') {
       foundCategory = categoryManager.firmCategories.value.find((cat) => cat.id === categoryId);
     } else if (categorySource.value === 'matter') {

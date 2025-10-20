@@ -12,7 +12,7 @@ Last Updated: 2025-09-20
 
 ## Data Structures - Single Source of Truth
 
-### System Categories Collection: `/systemCategories/{categoryId}`
+### System Categories Collection: `/systemcategories/{categoryId}`
 
 Global collection containing predefined system categories that should exist for all matters:
 
@@ -45,7 +45,7 @@ Global collection containing predefined system categories that should exist for 
 
 ### Matter-Specific Categories Collection: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
 
-Each matter has its own categories collection that includes both system categories (copied from `/systemCategories`) and custom categories:
+Each matter has its own categories collection that includes both system categories (copied from `/systemcategories`) and custom categories:
 
 ```javascript
 {
@@ -126,9 +126,9 @@ Each matter has its own categories collection that includes both system categori
 
 ### Initialization Process
 
-1. **Global Seed**: System categories are defined in `/systemCategories` collection (one-time setup)
+1. **Global Seed**: System categories are defined in `/systemcategories` collection (one-time setup)
 2. **Matter Initialization**: When a user accesses `/organizer/categories`, the app checks if the matter has all system categories
-3. **Auto-Copy**: Missing system categories are automatically copied from `/systemCategories` to `/firms/{firmId}/matters/{matterId}/categories/`
+3. **Auto-Copy**: Missing system categories are automatically copied from `/systemcategories` to `/firms/{firmId}/matters/{matterId}/categories/`
 4. **Reserved IDs**: System categories use reserved document IDs (e.g., `DocumentDate`) instead of auto-generated IDs
 
 ### System Category Behavior
@@ -137,7 +137,7 @@ Each matter has its own categories collection that includes both system categori
 
 - System categories are automatically created when first accessing the category manager
 - Each matter gets its own copy of system categories
-- Categories are copied from `/systemCategories` to matter-specific collection
+- Categories are copied from `/systemcategories` to matter-specific collection
 
 **Deletion Prevention:**
 
@@ -149,7 +149,7 @@ Each matter has its own categories collection that includes both system categori
 
 - System categories CAN be edited (field values, tags, etc.)
 - Changes are matter-specific and don't affect other matters
-- No automatic synchronization with `/systemCategories` after initial copy
+- No automatic synchronization with `/systemcategories` after initial copy
 
 **UI Indicators:**
 
@@ -299,7 +299,7 @@ import { SystemCategoryService } from '../services/systemCategoryService.js';
 const missingIds = await SystemCategoryService.checkMissingCategories(firmId, matterId);
 
 // Initialize missing system categories
-const result = await SystemCategoryService.initializesystemCategories(firmId, matterId);
+const result = await SystemCategoryService.initializesystemcategories(firmId, matterId);
 console.log(`Created ${result.created} system categories`);
 ```
 
@@ -332,7 +332,7 @@ try {
 ### Check if Category is System Category
 
 ```javascript
-import { isSystemCategory } from '../constants/systemCategories.js';
+import { isSystemCategory } from '../constants/systemcategories.js';
 
 if (isSystemCategory(categoryId)) {
   console.log('This is a system category - cannot be deleted');

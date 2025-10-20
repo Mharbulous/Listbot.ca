@@ -15,39 +15,39 @@ import { db } from '../../../services/firebase.js';
 /**
  * System Categories Service
  *
- * Handles operations for the global /systemCategories collection.
+ * Handles operations for the global /systemcategories collection.
  * System categories can be edited but cannot be deleted.
  */
-export class systemCategoriesService {
+export class systemcategoriesService {
   /**
    * Get the system categories collection reference
    * @returns {CollectionReference} Firestore collection reference
    */
-  static getsystemCategoriesCollection() {
-    return collection(db, 'systemCategories');
+  static getsystemcategoriesCollection() {
+    return collection(db, 'systemcategories');
   }
 
   /**
    * Get all system categories
    * @returns {Promise<Array>} Array of system category documents
    */
-  static async getsystemCategories() {
+  static async getsystemcategories() {
     try {
-      const systemCategoriesRef = this.getsystemCategoriesCollection();
+      const systemcategoriesRef = this.getsystemcategoriesCollection();
       let q, snapshot;
 
       try {
         // Try querying with isActive filter first
-        q = query(systemCategoriesRef, where('isActive', '==', true), orderBy('createdAt', 'asc'));
+        q = query(systemcategoriesRef, where('isActive', '==', true), orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
       } catch (queryError) {
         console.log(
-          '[systemCategoriesService] isActive query failed, trying fallback query:',
+          '[systemcategoriesService] isActive query failed, trying fallback query:',
           queryError.message
         );
 
         // Fallback: Get all categories without isActive filter
-        q = query(systemCategoriesRef, orderBy('createdAt', 'asc'));
+        q = query(systemcategoriesRef, orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
       }
 
@@ -67,10 +67,10 @@ export class systemCategoriesService {
         }
       });
 
-      console.log(`[systemCategoriesService] Fetched ${categories.length} system categories`);
+      console.log(`[systemcategoriesService] Fetched ${categories.length} system categories`);
       return categories;
     } catch (error) {
-      console.error('[systemCategoriesService] Failed to get system categories:', error);
+      console.error('[systemcategoriesService] Failed to get system categories:', error);
       throw error;
     }
   }
@@ -83,7 +83,11 @@ export class systemCategoriesService {
   static async createSystemCategory(categoryData) {
     try {
       // Validate category data
-      if (!categoryData.name || typeof categoryData.name !== 'string' || !categoryData.name.trim()) {
+      if (
+        !categoryData.name ||
+        typeof categoryData.name !== 'string' ||
+        !categoryData.name.trim()
+      ) {
         throw new Error('Category name is required and must be a non-empty string');
       }
 
@@ -96,9 +100,9 @@ export class systemCategoriesService {
       }
 
       // Check for duplicate names in system collection
-      const systemCategoriesRef = this.getsystemCategoriesCollection();
+      const systemcategoriesRef = this.getsystemcategoriesCollection();
       const existingQuery = query(
-        systemCategoriesRef,
+        systemcategoriesRef,
         where('name', '==', categoryData.name.trim())
       );
       const existingSnapshot = await getDocs(existingQuery);
@@ -147,10 +151,12 @@ export class systemCategoriesService {
         }
       }
 
-      // Create in Firestore (reuse systemCategoriesRef from duplicate check above)
-      const docRef = await addDoc(systemCategoriesRef, categoryDoc);
+      // Create in Firestore (reuse systemcategoriesRef from duplicate check above)
+      const docRef = await addDoc(systemcategoriesRef, categoryDoc);
 
-      console.log(`[systemCategoriesService] Created system category: ${categoryData.name} (${docRef.id})`);
+      console.log(
+        `[systemcategoriesService] Created system category: ${categoryData.name} (${docRef.id})`
+      );
 
       return {
         id: docRef.id,
@@ -158,7 +164,7 @@ export class systemCategoriesService {
         isSystemCategory: true,
       };
     } catch (error) {
-      console.error('[systemCategoriesService] Failed to create system category:', error);
+      console.error('[systemcategoriesService] Failed to create system category:', error);
       throw error;
     }
   }
@@ -195,13 +201,13 @@ export class systemCategoriesService {
       });
 
       // Update in Firestore
-      const categoryRef = doc(db, 'systemCategories', categoryId);
+      const categoryRef = doc(db, 'systemcategories', categoryId);
       await updateDoc(categoryRef, updateDoc);
 
-      console.log(`[systemCategoriesService] Updated system category: ${categoryId}`);
+      console.log(`[systemcategoriesService] Updated system category: ${categoryId}`);
       return true;
     } catch (error) {
-      console.error('[systemCategoriesService] Failed to update system category:', error);
+      console.error('[systemcategoriesService] Failed to update system category:', error);
       throw error;
     }
   }

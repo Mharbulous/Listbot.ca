@@ -21,7 +21,7 @@ export const SYSTEM_CATEGORY_IDS = [
 /**
  * Complete system category definitions with all required fields
  * These definitions are used to:
- * 1. Seed the global /systemCategories collection
+ * 1. Seed the global /systemcategories collection
  * 2. Initialize matter-specific categories
  */
 export const SYSTEM_CATEGORIES = [
@@ -142,6 +142,6 @@ export function getSystemCategory(categoryId) {
  * Get all system category definitions
  * @returns {Array} Array of all system category definitions
  */
-export function getAllsystemCategories() {
+export function getAllsystemcategories() {
   return [...SYSTEM_CATEGORIES];
 }

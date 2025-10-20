@@ -30,15 +30,13 @@
                 <v-icon start>mdi-shield-star</v-icon>
                 System
                 <v-chip size="small" color="blue" class="ml-2">{{
-                  systemCategories.length
+                  systemcategories.length
                 }}</v-chip>
               </v-tab>
               <v-tab value="firm">
                 <v-icon start>mdi-office-building</v-icon>
                 Firm
-                <v-chip size="small" color="green" class="ml-2">{{
-                  firmCategories.length
-                }}</v-chip>
+                <v-chip size="small" color="green" class="ml-2">{{ firmCategories.length }}</v-chip>
               </v-tab>
               <v-tab value="matter">
                 <v-icon start>mdi-folder</v-icon>
@@ -53,15 +51,16 @@
             <v-window v-model="activeTab">
               <!-- System Categories -->
               <v-window-item value="system">
-                <div v-if="systemCategories.length === 0" class="text-center py-8 text-grey">
+                <div v-if="systemcategories.length === 0" class="text-center py-8 text-grey">
                   <v-icon icon="mdi-package-variant" size="64" />
                   <p class="mt-2 text-h6">No system categories</p>
                 </div>
                 <v-list v-else>
                   <v-list-item
-                    v-for="category in sortedSystemCategories"
+                    v-for="category in sortedsystemcategories"
                     :key="category.id"
                     class="category-item"
+                    @click="editCategory(category, 'system')"
                   >
                     <template #prepend>
                       <v-icon :color="getCategoryIconColor(category)" class="mr-3">
@@ -82,9 +81,7 @@
                     </v-list-item-title>
 
                     <template #append>
-                      <v-chip size="small" variant="text">
-                        ID: {{ category.id }}
-                      </v-chip>
+                      <v-chip size="small" variant="text"> ID: {{ category.id }} </v-chip>
                     </template>
                   </v-list-item>
                 </v-list>
@@ -101,6 +98,7 @@
                     v-for="category in sortedFirmCategories"
                     :key="category.id"
                     class="category-item"
+                    @click="editCategory(category, 'firm')"
                   >
                     <template #prepend>
                       <v-icon :color="getCategoryIconColor(category)" class="mr-3">
@@ -121,9 +119,7 @@
                     </v-list-item-title>
 
                     <template #append>
-                      <v-chip size="small" variant="text">
-                        ID: {{ category.id }}
-                      </v-chip>
+                      <v-chip size="small" variant="text"> ID: {{ category.id }} </v-chip>
                     </template>
                   </v-list-item>
                 </v-list>
@@ -140,6 +136,7 @@
                     v-for="category in sortedMatterCategories"
                     :key="category.id"
                     class="category-item"
+                    @click="editCategory(category, 'matter')"
                   >
                     <template #prepend>
                       <v-icon :color="getCategoryIconColor(category)" class="mr-3">
@@ -160,9 +157,7 @@
                     </v-list-item-title>
 
                     <template #append>
-                      <v-chip size="small" variant="text">
-                        ID: {{ category.id }}
-                      </v-chip>
+                      <v-chip size="small" variant="text"> ID: {{ category.id }} </v-chip>
                     </template>
                   </v-list-item>
                 </v-list>
@@ -197,10 +192,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useCategoryManager } from '../../features/organizer/composables/useCategoryManager.js';
-import { getCategoryTypeInfo, getCategoryTypeLabel } from '../../features/organizer/utils/categoryTypes.js';
+import {
+  getCategoryTypeInfo,
+  getCategoryTypeLabel,
+} from '../../features/organizer/utils/categoryTypes.js';
 import { getCurrencySymbol } from '../../features/organizer/utils/currencyOptions.js';
 
+const router = useRouter();
 const categoryManager = useCategoryManager();
 
 const loading = ref(false);
@@ -208,13 +208,13 @@ const activeTab = ref('system');
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
 // Category lists
-const systemCategories = ref([]);
+const systemcategories = ref([]);
 const firmCategories = ref([]);
 const matterCategories = ref([]);
 
 // Sorted categories for each tab
-const sortedSystemCategories = computed(() => {
-  return [...systemCategories.value].sort((a, b) =>
+const sortedsystemcategories = computed(() => {
+  return [...systemcategories.value].sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
   );
 });
@@ -332,12 +332,12 @@ const loadAllCategories = async () => {
   loading.value = true;
   try {
     const result = await categoryManager.loadAllCategories();
-    systemCategories.value = result.systemCategories;
+    systemcategories.value = result.systemcategories;
     firmCategories.value = result.firmCategories;
     matterCategories.value = result.matterCategories;
 
     console.log('[CategoryViewer] Loaded categories:', {
-      system: systemCategories.value.length,
+      system: systemcategories.value.length,
       firm: firmCategories.value.length,
       matter: matterCategories.value.length,
     });
@@ -356,6 +356,17 @@ const showNotification = (message, color = 'success') => {
   snackbar.value = { show: true, message, color };
 };
 
+/**
+ * Navigate to category editor
+ */
+const editCategory = (category, source) => {
+  router.push({
+    name: 'CategoryEditViewer',
+    params: { id: category.id },
+    query: { source },
+  });
+};
+
 onMounted(() => {
   loadAllCategories();
 });
@@ -364,6 +375,7 @@ onMounted(() => {
 <style scoped>
 .category-item {
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .category-item:hover {

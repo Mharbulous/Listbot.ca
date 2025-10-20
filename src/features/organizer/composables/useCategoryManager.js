@@ -1,14 +1,14 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
-import { systemCategoriesService } from '../services/systemCategoriesService.js';
+import { systemcategoriesService } from '../services/systemcategoriesService.js';
 import { CategoryService } from '../services/categoryService.js';
 
 /**
  * Category Manager Composable
  *
  * Handles loading and managing categories from three different sources:
- * - System categories (/systemCategories)
+ * - System categories (/systemcategories)
  * - Firm categories (/firms/{firmId}/matters/general/categories)
  * - Matter categories (/firms/{firmId}/matters/{matterId}/categories)
  */
@@ -17,7 +17,7 @@ export function useCategoryManager() {
   const matterStore = useMatterViewStore();
 
   // State for each category type
-  const systemCategories = ref([]);
+  const systemcategories = ref([]);
   const firmCategories = ref([]);
   const matterCategories = ref([]);
 
@@ -28,7 +28,7 @@ export function useCategoryManager() {
   // Computed properties
   const allCategories = computed(() => {
     return [
-      ...systemCategories.value.map((cat) => ({ ...cat, source: 'system' })),
+      ...systemcategories.value.map((cat) => ({ ...cat, source: 'system' })),
       ...firmCategories.value.map((cat) => ({ ...cat, source: 'firm' })),
       ...matterCategories.value.map((cat) => ({ ...cat, source: 'matter' })),
     ];
@@ -37,7 +37,7 @@ export function useCategoryManager() {
   const currentCategories = computed(() => {
     switch (activeTab.value) {
       case 'system':
-        return systemCategories.value.map((cat) => ({ ...cat, source: 'system' }));
+        return systemcategories.value.map((cat) => ({ ...cat, source: 'system' }));
       case 'firm':
         return firmCategories.value.map((cat) => ({ ...cat, source: 'firm' }));
       case 'matter':
@@ -67,12 +67,12 @@ export function useCategoryManager() {
 
       // Load all three types in parallel
       const [systemCats, firmCats, matterCats] = await Promise.all([
-        loadsystemCategories(),
+        loadsystemcategories(),
         loadFirmCategories(firmId),
         loadMatterCategories(firmId, matterStore.currentMatterId || 'general'),
       ]);
 
-      systemCategories.value = systemCats;
+      systemcategories.value = systemCats;
       firmCategories.value = firmCats;
       matterCategories.value = matterCats;
 
@@ -83,7 +83,7 @@ export function useCategoryManager() {
       );
 
       return {
-        systemCategories: systemCats,
+        systemcategories: systemCats,
         firmCategories: firmCats,
         matterCategories: matterCats,
       };
@@ -96,11 +96,11 @@ export function useCategoryManager() {
   };
 
   /**
-   * Load system categories from /systemCategories
+   * Load system categories from /systemcategories
    */
-  const loadsystemCategories = async () => {
+  const loadsystemcategories = async () => {
     try {
-      const categories = await systemCategoriesService.getsystemCategories();
+      const categories = await systemcategoriesService.getsystemcategories();
       return categories;
     } catch (err) {
       console.error('[CategoryManager] Failed to load system categories:', err);
@@ -177,7 +177,7 @@ export function useCategoryManager() {
     try {
       if (categorySource === 'system') {
         // Update system category
-        await systemCategoriesService.updateSystemCategory(categoryId, updates);
+        await systemcategoriesService.updateSystemCategory(categoryId, updates);
       } else {
         // Update firm or matter category
         const firmId = authStore.currentFirm;
@@ -207,7 +207,7 @@ export function useCategoryManager() {
    */
   const createSystemCategory = async (categoryData) => {
     try {
-      const result = await systemCategoriesService.createSystemCategory(categoryData);
+      const result = await systemcategoriesService.createSystemCategory(categoryData);
 
       // Reload categories
       await loadAllCategories();
@@ -261,7 +261,7 @@ export function useCategoryManager() {
 
   return {
     // State
-    systemCategories,
+    systemcategories,
     firmCategories,
     matterCategories,
     loading,
@@ -275,7 +275,7 @@ export function useCategoryManager() {
 
     // Actions
     loadAllCategories,
-    loadsystemCategories,
+    loadsystemcategories,
     loadFirmCategories,
     loadMatterCategories,
     createCategory,

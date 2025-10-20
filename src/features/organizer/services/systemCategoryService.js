@@ -13,7 +13,7 @@ import {
   SYSTEM_CATEGORIES,
   isSystemCategory,
   getSystemCategory,
-} from '../constants/systemCategories.js';
+} from '../constants/systemcategories.js';
 
 /**
  * System Category Service
@@ -23,13 +23,13 @@ import {
  */
 export class SystemCategoryService {
   /**
-   * Get all system categories from the global /systemCategories collection
+   * Get all system categories from the global /systemcategories collection
    * @returns {Promise<Array>} Array of system category documents
    */
-  static async getsystemCategories() {
+  static async getsystemcategories() {
     try {
-      const systemCategoriesRef = collection(db, 'systemCategories');
-      const snapshot = await getDocs(systemCategoriesRef);
+      const systemcategoriesRef = collection(db, 'systemcategories');
+      const snapshot = await getDocs(systemcategoriesRef);
 
       const categories = [];
       snapshot.forEach((doc) => {
@@ -92,7 +92,7 @@ export class SystemCategoryService {
    * @param {string} matterId - The matter ID (default: 'general')
    * @returns {Promise<Object>} Result with counts of created and skipped categories
    */
-  static async initializesystemCategories(firmId, matterId = 'general') {
+  static async initializesystemcategories(firmId, matterId = 'general') {
     try {
       if (!firmId || typeof firmId !== 'string') {
         throw new Error('Valid firm ID is required');
@@ -175,11 +175,11 @@ export class SystemCategoryService {
   }
 
   /**
-   * Seed the global /systemCategories collection
+   * Seed the global /systemcategories collection
    * This should be run once by an admin to populate the system categories
    * @returns {Promise<Object>} Result with count of created categories
    */
-  static async seedGlobalsystemCategories() {
+  static async seedGlobalsystemcategories() {
     try {
       console.log('[SystemCategoryService] Seeding global system categories collection');
 
@@ -187,7 +187,7 @@ export class SystemCategoryService {
       let createdCount = 0;
 
       for (const categoryDef of SYSTEM_CATEGORIES) {
-        const categoryRef = doc(db, 'systemCategories', categoryDef.id);
+        const categoryRef = doc(db, 'systemcategories', categoryDef.id);
 
         // Check if already exists
         const existingDoc = await getDoc(categoryRef);
