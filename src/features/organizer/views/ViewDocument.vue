@@ -394,9 +394,9 @@ const formatDate = (timestamp) => {
   }
 };
 
-// Navigate back to organizer
+// Navigate back to documents
 const goBack = () => {
-  router.push('/organizer');
+  router.push('/documents');
 };
 
 // Toggle metadata visibility
@@ -408,7 +408,7 @@ const toggleMetadataVisibility = async () => {
 const goToFirstDocument = () => {
   if (sortedEvidence.value.length === 0) return;
   const firstDoc = sortedEvidence.value[0];
-  router.push(`/organizer/view/${firstDoc.id}`);
+  router.push(`/documents/view/${firstDoc.id}`);
 };
 
 const goToPreviousDocument = () => {
@@ -417,7 +417,7 @@ const goToPreviousDocument = () => {
   const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
   if (currentIndex > 0) {
     const prevDoc = sortedEvidence.value[currentIndex - 1];
-    router.push(`/organizer/view/${prevDoc.id}`);
+    router.push(`/documents/view/${prevDoc.id}`);
   }
 };
 
@@ -427,14 +427,14 @@ const goToNextDocument = () => {
   const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
   if (currentIndex < sortedEvidence.value.length - 1) {
     const nextDoc = sortedEvidence.value[currentIndex + 1];
-    router.push(`/organizer/view/${nextDoc.id}`);
+    router.push(`/documents/view/${nextDoc.id}`);
   }
 };
 
 const goToLastDocument = () => {
   if (sortedEvidence.value.length === 0) return;
   const lastDoc = sortedEvidence.value[sortedEvidence.value.length - 1];
-  router.push(`/organizer/view/${lastDoc.id}`);
+  router.push(`/documents/view/${lastDoc.id}`);
 };
 
 // Compute earlier copy notification message

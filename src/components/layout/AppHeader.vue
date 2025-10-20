@@ -146,9 +146,9 @@ const menuLinks = [
 ];
 
 const pageTitle = computed(() => {
-  if (route.meta.titleFn && route.path.startsWith('/organizer/view/')) {
+  if (route.meta.titleFn && route.path.startsWith('/documents/view/')) {
     const documentName = documentViewStore.documentName || 'Loading...';
-    return `Document Organizer >> View >> ${documentName}`;
+    return `Documents >> View >> ${documentName}`;
   }
   return route.meta.title || 'Home';
 });

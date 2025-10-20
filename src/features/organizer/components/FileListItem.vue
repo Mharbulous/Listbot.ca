@@ -206,7 +206,7 @@ const autoLoadAll = () => {
 // Event handlers
 const handleClick = () => {
   // Navigate to the document view page
-  router.push(`/organizer/view/${props.evidence.id}`);
+  router.push(`/documents/view/${props.evidence.id}`);
   emit('click', props.evidence);
 };
 
