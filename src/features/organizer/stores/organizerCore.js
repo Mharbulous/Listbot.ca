@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
+import { useMatterViewStore } from '../../../stores/matterView.js';
 import tagSubcollectionService from '../services/tagSubcollectionService.js';
 import { useCategoryStore } from './categoryStore.js';
 import { FileProcessingService } from '../services/fileProcessingService.js';
@@ -36,6 +37,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
   // Store references
   const authStore = useAuthStore();
+  const matterStore = useMatterViewStore();
   const categoryStore = useCategoryStore();
 
   // Tag service instance (use imported singleton)
@@ -191,7 +193,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   /**
    * Fetch display information from sourceMetadata subcollection
    */
-  const getDisplayInfo = async (metadataHash, firmId, fileHash) => {
+  const getDisplayInfo = async (metadataHash, firmId, fileHash, matterId) => {
     try {
       // Check cache first
       if (displayInfoCache.value.has(metadataHash)) {
@@ -204,7 +206,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         'firms',
         firmId,
         'matters',
-        'general',
+        matterId,
         'evidence',
         fileHash,
         'sourceMetadata',
@@ -275,8 +277,14 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         throw new Error('No firm ID available');
       }
 
+      // Get the selected matter ID
+      const matterId = matterStore.currentMatterId;
+      if (!matterId) {
+        throw new Error('No matter selected. Please select a matter to view evidence.');
+      }
+
       // Create query for evidence collection
-      const evidenceRef = collection(db, 'firms', firmId, 'matters', 'general', 'evidence');
+      const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
       const evidenceQuery = query(
         evidenceRef,
         orderBy('updatedAt', 'desc'),
@@ -298,7 +306,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             const displayInfo = await getDisplayInfo(
               evidenceData.displayCopy,
               firmId,
-              docSnapshot.id
+              docSnapshot.id,
+              matterId
             );
 
             // Load tags for this evidence document
@@ -321,7 +330,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
                     'firms',
                     firmId,
                     'matters',
-                    'general',
+                    matterId,
                     'evidence',
                     docSnapshot.id
                   );
@@ -415,7 +424,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const refreshEvidence = async (evidenceId) => {
     try {
       const firmId = authStore.currentFirm;
-      if (!firmId || !evidenceId) return;
+      const matterId = matterStore.currentMatterId;
+      if (!firmId || !evidenceId || !matterId) return;
 
       // Find the evidence in current list
       const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
@@ -423,7 +433,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Re-fetch display info to ensure cache is fresh
       const evidence = evidenceList.value[evidenceIndex];
-      const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId, evidenceId);
+      const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId, evidenceId, matterId);
 
       // Update the evidence with fresh display info
       evidenceList.value[evidenceIndex] = {
