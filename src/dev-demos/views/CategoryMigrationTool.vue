@@ -3,18 +3,18 @@
     <div class="max-w-7xl mx-auto">
       <v-card>
         <v-card-title class="d-flex align-center">
-          <v-icon icon="mdi-swap-horizontal" class="me-2" />
-          Category Migration Tool
+          <v-icon icon="mdi-folder-multiple" class="me-2" />
+          Category Viewer (Dev Tool)
         </v-card-title>
         <v-card-subtitle>
-          Move categories between System, Firm, and Matter collections using drag-and-drop
+          View all categories across System, Firm, and Matter collections
         </v-card-subtitle>
 
         <v-card-text>
-          <v-alert color="warning" class="mb-4" variant="tonal">
-            <v-icon icon="mdi-alert" class="me-2" />
-            <strong>Development Tool:</strong> This page moves categories between Firestore
-            collections. Changes are permanent and affect the database immediately.
+          <v-alert color="info" class="mb-4" variant="tonal">
+            <v-icon icon="mdi-information" class="me-2" />
+            <strong>Development Tool:</strong> This page displays categories from all three
+            Firestore collections for debugging and inspection purposes.
           </v-alert>
 
           <!-- Loading State -->
@@ -23,136 +23,151 @@
             <p class="mt-4 text-h6">Loading categories...</p>
           </div>
 
-          <!-- Category Columns -->
+          <!-- Tabbed Category View -->
           <div v-else>
-            <v-row>
-              <!-- System Categories Column -->
-              <v-col cols="12" md="4">
-                <v-card variant="outlined" class="h-100">
-                  <v-card-title class="bg-blue-lighten-5 d-flex align-center">
-                    <v-icon icon="mdi-shield-star" class="me-2" color="blue" />
-                    System Categories
-                    <v-spacer />
-                    <v-chip size="small" color="blue">{{ systemCategories.length }}</v-chip>
-                  </v-card-title>
-                  <v-card-text
-                    class="drop-zone"
-                    :class="{ 'drop-zone-active': dragOverZone === 'system' }"
-                    @dragover.prevent="handleDragOver('system')"
-                    @dragleave="handleDragLeave"
-                    @drop="handleDrop('system')"
-                  >
-                    <div v-if="systemCategories.length === 0" class="text-center py-8 text-grey">
-                      <v-icon icon="mdi-package-variant" size="48" />
-                      <p class="mt-2">No system categories</p>
-                    </div>
-                    <div v-else class="d-flex flex-column gap-2">
-                      <v-chip
-                        v-for="category in systemCategories"
-                        :key="category.id"
-                        :draggable="true"
-                        class="category-chip"
-                        color="blue"
-                        variant="outlined"
-                        @dragstart="handleDragStart(category, 'system')"
-                        @dragend="handleDragEnd"
-                      >
-                        <v-icon start>{{ getCategoryIcon(category) }}</v-icon>
-                        {{ category.name }}
-                        <v-icon end>mdi-drag</v-icon>
-                      </v-chip>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
+            <v-tabs v-model="activeTab" class="mb-4">
+              <v-tab value="system">
+                <v-icon start>mdi-shield-star</v-icon>
+                System
+                <v-chip size="small" color="blue" class="ml-2">{{
+                  systemCategories.length
+                }}</v-chip>
+              </v-tab>
+              <v-tab value="firm">
+                <v-icon start>mdi-office-building</v-icon>
+                Firm
+                <v-chip size="small" color="green" class="ml-2">{{
+                  firmCategories.length
+                }}</v-chip>
+              </v-tab>
+              <v-tab value="matter">
+                <v-icon start>mdi-folder</v-icon>
+                Matter
+                <v-chip size="small" color="orange" class="ml-2">{{
+                  matterCategories.length
+                }}</v-chip>
+              </v-tab>
+            </v-tabs>
 
-              <!-- Firm Categories Column -->
-              <v-col cols="12" md="4">
-                <v-card variant="outlined" class="h-100">
-                  <v-card-title class="bg-green-lighten-5 d-flex align-center">
-                    <v-icon icon="mdi-office-building" class="me-2" color="green" />
-                    Firm Categories
-                    <v-spacer />
-                    <v-chip size="small" color="green">{{ firmCategories.length }}</v-chip>
-                  </v-card-title>
-                  <v-card-text
-                    class="drop-zone"
-                    :class="{ 'drop-zone-active': dragOverZone === 'firm' }"
-                    @dragover.prevent="handleDragOver('firm')"
-                    @dragleave="handleDragLeave"
-                    @drop="handleDrop('firm')"
+            <!-- Tab Windows -->
+            <v-window v-model="activeTab">
+              <!-- System Categories -->
+              <v-window-item value="system">
+                <div v-if="systemCategories.length === 0" class="text-center py-8 text-grey">
+                  <v-icon icon="mdi-package-variant" size="64" />
+                  <p class="mt-2 text-h6">No system categories</p>
+                </div>
+                <v-list v-else>
+                  <v-list-item
+                    v-for="category in sortedSystemCategories"
+                    :key="category.id"
+                    class="category-item"
                   >
-                    <div v-if="firmCategories.length === 0" class="text-center py-8 text-grey">
-                      <v-icon icon="mdi-package-variant" size="48" />
-                      <p class="mt-2">No firm categories</p>
-                    </div>
-                    <div v-else class="d-flex flex-column gap-2">
-                      <v-chip
-                        v-for="category in firmCategories"
-                        :key="category.id"
-                        :draggable="true"
-                        class="category-chip"
-                        color="green"
-                        variant="outlined"
-                        @dragstart="handleDragStart(category, 'firm')"
-                        @dragend="handleDragEnd"
-                      >
-                        <v-icon start>{{ getCategoryIcon(category) }}</v-icon>
-                        {{ category.name }}
-                        <v-icon end>mdi-drag</v-icon>
-                      </v-chip>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
+                    <template #prepend>
+                      <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                        {{ getCategoryIcon(category) }}
+                      </v-icon>
+                    </template>
 
-              <!-- Matter Categories Column -->
-              <v-col cols="12" md="4">
-                <v-card variant="outlined" class="h-100">
-                  <v-card-title class="bg-orange-lighten-5 d-flex align-center">
-                    <v-icon icon="mdi-folder" class="me-2" color="orange" />
-                    Matter Categories
-                    <v-spacer />
-                    <v-chip size="small" color="orange">{{ matterCategories.length }}</v-chip>
-                  </v-card-title>
-                  <v-card-text
-                    class="drop-zone"
-                    :class="{ 'drop-zone-active': dragOverZone === 'matter' }"
-                    @dragover.prevent="handleDragOver('matter')"
-                    @dragleave="handleDragLeave"
-                    @drop="handleDrop('matter')"
+                    <v-list-item-title>
+                      <div class="d-flex align-center">
+                        <span class="font-weight-medium">{{ category.name }}</span>
+                        <v-chip size="x-small" color="blue" variant="outlined" class="ml-2">
+                          System
+                        </v-chip>
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ getCategoryDisplayText(category) }}
+                      </div>
+                    </v-list-item-title>
+
+                    <template #append>
+                      <v-chip size="small" variant="text">
+                        ID: {{ category.id }}
+                      </v-chip>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </v-window-item>
+
+              <!-- Firm Categories -->
+              <v-window-item value="firm">
+                <div v-if="firmCategories.length === 0" class="text-center py-8 text-grey">
+                  <v-icon icon="mdi-package-variant" size="64" />
+                  <p class="mt-2 text-h6">No firm categories</p>
+                </div>
+                <v-list v-else>
+                  <v-list-item
+                    v-for="category in sortedFirmCategories"
+                    :key="category.id"
+                    class="category-item"
                   >
-                    <div v-if="matterCategories.length === 0" class="text-center py-8 text-grey">
-                      <v-icon icon="mdi-package-variant" size="48" />
-                      <p class="mt-2">No matter categories</p>
-                    </div>
-                    <div v-else class="d-flex flex-column gap-2">
-                      <v-chip
-                        v-for="category in matterCategories"
-                        :key="category.id"
-                        :draggable="true"
-                        class="category-chip"
-                        color="orange"
-                        variant="outlined"
-                        @dragstart="handleDragStart(category, 'matter')"
-                        @dragend="handleDragEnd"
-                      >
-                        <v-icon start>{{ getCategoryIcon(category) }}</v-icon>
-                        {{ category.name }}
-                        <v-icon end>mdi-drag</v-icon>
-                      </v-chip>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
+                    <template #prepend>
+                      <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                        {{ getCategoryIcon(category) }}
+                      </v-icon>
+                    </template>
 
-            <!-- Instructions -->
-            <v-alert color="info" class="mt-4" variant="tonal">
-              <v-icon icon="mdi-information" class="me-2" />
-              <strong>How to use:</strong> Drag a category badge from one column and drop it on
-              another column to move it. A confirmation dialog will appear before the move.
-            </v-alert>
+                    <v-list-item-title>
+                      <div class="d-flex align-center">
+                        <span class="font-weight-medium">{{ category.name }}</span>
+                        <v-chip size="x-small" color="green" variant="outlined" class="ml-2">
+                          Firm
+                        </v-chip>
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ getCategoryDisplayText(category) }}
+                      </div>
+                    </v-list-item-title>
+
+                    <template #append>
+                      <v-chip size="small" variant="text">
+                        ID: {{ category.id }}
+                      </v-chip>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </v-window-item>
+
+              <!-- Matter Categories -->
+              <v-window-item value="matter">
+                <div v-if="matterCategories.length === 0" class="text-center py-8 text-grey">
+                  <v-icon icon="mdi-package-variant" size="64" />
+                  <p class="mt-2 text-h6">No matter categories</p>
+                </div>
+                <v-list v-else>
+                  <v-list-item
+                    v-for="category in sortedMatterCategories"
+                    :key="category.id"
+                    class="category-item"
+                  >
+                    <template #prepend>
+                      <v-icon :color="getCategoryIconColor(category)" class="mr-3">
+                        {{ getCategoryIcon(category) }}
+                      </v-icon>
+                    </template>
+
+                    <v-list-item-title>
+                      <div class="d-flex align-center">
+                        <span class="font-weight-medium">{{ category.name }}</span>
+                        <v-chip size="x-small" color="orange" variant="outlined" class="ml-2">
+                          Matter
+                        </v-chip>
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ getCategoryDisplayText(category) }}
+                      </div>
+                    </v-list-item-title>
+
+                    <template #append>
+                      <v-chip size="small" variant="text">
+                        ID: {{ category.id }}
+                      </v-chip>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </v-window-item>
+            </v-window>
           </div>
         </v-card-text>
 
@@ -170,33 +185,6 @@
       </v-card>
     </div>
 
-    <!-- Confirmation Dialog -->
-    <v-dialog v-model="showConfirmDialog" max-width="500">
-      <v-card>
-        <v-card-title class="d-flex align-center">
-          <v-icon color="warning" class="me-2">mdi-alert</v-icon>
-          Confirm Category Move
-        </v-card-title>
-        <v-card-text>
-          <p class="mb-4">
-            Are you sure you want to move <strong>{{ draggedCategory?.name }}</strong> from
-            <strong>{{ sourceLabel }}</strong> to <strong>{{ targetLabel }}</strong
-            >?
-          </p>
-          <v-alert color="warning" variant="tonal" density="compact">
-            This will delete the category from {{ sourceLabel }} and create it in {{ targetLabel }}.
-          </v-alert>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="outlined" @click="cancelMove">Cancel</v-btn>
-          <v-btn color="warning" variant="elevated" :loading="moving" @click="confirmMove">
-            Move Category
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- Snackbar for notifications -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000">
       {{ snackbar.message }}
@@ -209,23 +197,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '../../core/stores/auth.js';
-import { useMatterViewStore } from '../../stores/matterView.js';
 import { useCategoryManager } from '../../features/organizer/composables/useCategoryManager.js';
-import { getCategoryTypeInfo } from '../../features/organizer/utils/categoryTypes.js';
+import { getCategoryTypeInfo, getCategoryTypeLabel } from '../../features/organizer/utils/categoryTypes.js';
+import { getCurrencySymbol } from '../../features/organizer/utils/currencyOptions.js';
 
-const authStore = useAuthStore();
-const matterStore = useMatterViewStore();
 const categoryManager = useCategoryManager();
 
 const loading = ref(false);
-const moving = ref(false);
-const showConfirmDialog = ref(false);
-const dragOverZone = ref(null);
-const draggedCategory = ref(null);
-const draggedSource = ref(null);
-const targetZone = ref(null);
-
+const activeTab = ref('system');
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
 // Category lists
@@ -233,15 +212,23 @@ const systemCategories = ref([]);
 const firmCategories = ref([]);
 const matterCategories = ref([]);
 
-// Computed labels for dialog
-const sourceLabel = computed(() => {
-  const labels = { system: 'System', firm: 'Firm', matter: 'Matter' };
-  return labels[draggedSource.value] || '';
+// Sorted categories for each tab
+const sortedSystemCategories = computed(() => {
+  return [...systemCategories.value].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
 });
 
-const targetLabel = computed(() => {
-  const labels = { system: 'System', firm: 'Firm', matter: 'Matter' };
-  return labels[targetZone.value] || '';
+const sortedFirmCategories = computed(() => {
+  return [...firmCategories.value].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+});
+
+const sortedMatterCategories = computed(() => {
+  return [...matterCategories.value].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
 });
 
 /**
@@ -250,6 +237,92 @@ const targetLabel = computed(() => {
 const getCategoryIcon = (category) => {
   const typeInfo = getCategoryTypeInfo(category.type);
   return typeInfo ? typeInfo.icon : 'mdi-folder';
+};
+
+/**
+ * Get category icon color
+ */
+const getCategoryIconColor = (category) => {
+  const typeInfo = getCategoryTypeInfo(category.type);
+  return typeInfo ? typeInfo.color : 'grey';
+};
+
+/**
+ * Get category display text with configuration details
+ */
+const getCategoryDisplayText = (category) => {
+  const baseType = getCategoryTypeLabel(category.type);
+
+  switch (category.type) {
+    case 'Currency':
+      if (category.defaultCurrency) {
+        const symbol = getCurrencySymbol(category.defaultCurrency);
+        const code = category.defaultCurrency;
+        return `${baseType}, ${symbol} ${code}`;
+      }
+      break;
+
+    case 'Regex': {
+      const parts = [];
+      if (category.allowDuplicateValues !== undefined) {
+        const duplicateStatus = category.allowDuplicateValues
+          ? 'duplicates allowed'
+          : 'unique values';
+        parts.push(duplicateStatus);
+      }
+      if (category.regexDefinition) {
+        parts.push(`pattern: ${category.regexDefinition}`);
+      }
+      if (parts.length > 0) {
+        return `${baseType}, ${parts.join(', ')}`;
+      }
+      break;
+    }
+
+    case 'Fixed List':
+    case 'Open List': {
+      const tagCount = category.tags?.length || 0;
+      const tagWord = tagCount === 1 ? 'tag option' : 'tag options';
+      return `${baseType}, ${tagCount} ${tagWord}`;
+    }
+
+    case 'Date':
+      if (category.defaultDateFormat) {
+        return `${baseType}, ${category.defaultDateFormat}`;
+      }
+      break;
+
+    case 'Timestamp': {
+      const parts = [];
+      if (category.defaultDateFormat) {
+        parts.push(category.defaultDateFormat);
+      }
+      if (category.defaultTimeFormat) {
+        parts.push(category.defaultTimeFormat);
+      }
+      if (parts.length > 0) {
+        return `${baseType}, ${parts.join(' ')}`;
+      }
+      break;
+    }
+
+    case 'Sequence': {
+      const parts = [];
+      if (category.allowGaps !== undefined) {
+        const gapsStatus = category.allowGaps ? 'gaps allowed' : 'no gaps';
+        parts.push(gapsStatus);
+      }
+      if (category.defaultSequenceFormat) {
+        parts.push(category.defaultSequenceFormat);
+      }
+      if (parts.length > 0) {
+        return `${baseType}, ${parts.join(', ')}`;
+      }
+      break;
+    }
+  }
+
+  return baseType;
 };
 
 /**
@@ -263,176 +336,16 @@ const loadAllCategories = async () => {
     firmCategories.value = result.firmCategories;
     matterCategories.value = result.matterCategories;
 
-    console.log('[CategoryMigration] Loaded categories:', {
+    console.log('[CategoryViewer] Loaded categories:', {
       system: systemCategories.value.length,
       firm: firmCategories.value.length,
       matter: matterCategories.value.length,
     });
   } catch (error) {
-    console.error('[CategoryMigration] Failed to load categories:', error);
+    console.error('[CategoryViewer] Failed to load categories:', error);
     showNotification('Failed to load categories: ' + error.message, 'error');
   } finally {
     loading.value = false;
-  }
-};
-
-/**
- * Handle drag start
- */
-const handleDragStart = (category, source) => {
-  draggedCategory.value = category;
-  draggedSource.value = source;
-  console.log('[CategoryMigration] Drag started:', category.name, 'from', source);
-};
-
-/**
- * Handle drag end
- */
-const handleDragEnd = () => {
-  dragOverZone.value = null;
-};
-
-/**
- * Handle drag over (allow drop)
- */
-const handleDragOver = (zone) => {
-  dragOverZone.value = zone;
-};
-
-/**
- * Handle drag leave
- */
-const handleDragLeave = () => {
-  dragOverZone.value = null;
-};
-
-/**
- * Handle drop
- */
-const handleDrop = (target) => {
-  dragOverZone.value = null;
-
-  // Don't allow dropping on the same zone
-  if (target === draggedSource.value) {
-    showNotification('Category is already in this collection', 'info');
-    return;
-  }
-
-  // Check for duplicate name in target
-  const targetCategories = getTargetCategories(target);
-  const duplicate = targetCategories.find(
-    (cat) => cat.name.toLowerCase() === draggedCategory.value.name.toLowerCase()
-  );
-
-  if (duplicate) {
-    showNotification(
-      `A category named "${draggedCategory.value.name}" already exists in ${targetLabel.value} collection`,
-      'error'
-    );
-    return;
-  }
-
-  // Show confirmation dialog
-  targetZone.value = target;
-  showConfirmDialog.value = true;
-};
-
-/**
- * Get target categories array by zone
- */
-const getTargetCategories = (zone) => {
-  switch (zone) {
-    case 'system':
-      return systemCategories.value;
-    case 'firm':
-      return firmCategories.value;
-    case 'matter':
-      return matterCategories.value;
-    default:
-      return [];
-  }
-};
-
-/**
- * Cancel the move operation
- */
-const cancelMove = () => {
-  showConfirmDialog.value = false;
-  draggedCategory.value = null;
-  draggedSource.value = null;
-  targetZone.value = null;
-};
-
-/**
- * Confirm and execute the move operation
- */
-const confirmMove = async () => {
-  moving.value = true;
-
-  // Store original category ID to preserve it in target collection
-  const originalId = draggedCategory.value.id;
-  const categoryName = draggedCategory.value.name;
-
-  try {
-    // Ensure all required fields exist with defensive copying
-    const categoryData = {
-      ...draggedCategory.value,
-      type: draggedCategory.value.type || 'Open List', // Default to 'Open List' if type is missing
-      color: draggedCategory.value.color || '#9E9E9E', // Default color if missing
-      tags: draggedCategory.value.tags || [], // Default to empty array if missing
-    };
-
-    console.log(
-      `[CategoryMigration] Step 1: Creating "${categoryName}" in ${targetZone.value} collection with ID: ${originalId}`
-    );
-
-    // Step 1: Create category in target collection with same ID
-    if (targetZone.value === 'system') {
-      // Use createSystemCategoryWithId for system collection
-      await categoryManager.createSystemCategoryWithId(categoryData, originalId);
-    } else {
-      // Set the active tab to the target zone so createCategoryWithId knows where to create
-      categoryManager.setActiveTab(targetZone.value);
-      await categoryManager.createCategoryWithId(categoryData, originalId);
-    }
-
-    console.log(
-      `[CategoryMigration] Step 2: Deleting "${categoryName}" from ${draggedSource.value} collection`
-    );
-
-    // Step 2: Delete category from source collection
-    // ONLY execute if Step 1 succeeded (we're past the await)
-    // Skip system validation since migration tool needs to move categories with reserved IDs
-    await categoryManager.deleteCategory(originalId, draggedSource.value, true);
-
-    console.log(`[CategoryMigration] Step 3: Migration complete for "${categoryName}"`);
-
-    showNotification(
-      `Category "${categoryName}" moved successfully from ${sourceLabel.value} to ${targetLabel.value} (ID: ${originalId})`,
-      'success'
-    );
-
-    // Step 3: Reload all categories
-    await loadAllCategories();
-
-    // Close dialog and reset state
-    showConfirmDialog.value = false;
-    draggedCategory.value = null;
-    draggedSource.value = null;
-    targetZone.value = null;
-  } catch (error) {
-    console.error(`[CategoryMigration] Migration failed for "${categoryName}":`, error);
-
-    // Provide detailed error message to user
-    const errorDetails = error.message || 'Unknown error occurred';
-    showNotification(
-      `Failed to move "${categoryName}": ${errorDetails}. Check console for details.`,
-      'error'
-    );
-
-    // Don't close dialog so user can see what happened and try again
-  } finally {
-    moving.value = false;
   }
 };
 
@@ -449,29 +362,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.drop-zone {
-  min-height: 300px;
-  transition: all 0.2s ease;
+.category-item {
+  transition: background-color 0.2s ease;
 }
 
-.drop-zone-active {
-  background-color: rgba(var(--v-theme-primary), 0.05);
-  border: 2px dashed rgba(var(--v-theme-primary), 0.5) !important;
-}
-
-.category-chip {
-  cursor: move;
-  user-select: none;
-  transition: all 0.2s ease;
-}
-
-.category-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.category-chip:active {
-  cursor: grabbing;
-  opacity: 0.5;
+.category-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 </style>

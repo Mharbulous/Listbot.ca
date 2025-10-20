@@ -171,56 +171,6 @@ export function useCategoryManager() {
   };
 
   /**
-   * Create a system category with specific ID (for dev tools only)
-   * This bypasses the normal restriction on creating system categories
-   * @param {Object} categoryData - The category data
-   * @param {string} categoryId - The specific document ID to use
-   */
-  const createSystemCategoryWithId = async (categoryData, categoryId) => {
-    try {
-      const result = await systemCategoriesService.createSystemCategoryWithId(categoryData, categoryId);
-
-      // Reload categories
-      await loadAllCategories();
-
-      return result;
-    } catch (err) {
-      console.error('[CategoryManager] Failed to create system category with ID:', err);
-      throw err;
-    }
-  };
-
-  /**
-   * Create a category with specific ID (for dev tools only)
-   * @param {Object} categoryData - The category data
-   * @param {string} categoryId - The specific document ID to use
-   */
-  const createCategoryWithId = async (categoryData, categoryId) => {
-    try {
-      if (!canCreateCategory.value) {
-        throw new Error('Cannot create system categories');
-      }
-
-      const firmId = authStore.currentFirm;
-      if (!firmId) {
-        throw new Error('No firm ID available');
-      }
-
-      let matterId = 'general';
-      if (activeTab.value === 'matter') {
-        matterId = matterStore.currentMatterId || 'general';
-      }
-
-      const result = await CategoryService.createCategoryWithId(firmId, categoryData, categoryId, matterId);
-      await loadAllCategories();
-      return result;
-    } catch (err) {
-      console.error('[CategoryManager] Failed to create category with ID:', err);
-      throw err;
-    }
-  };
-
-  /**
    * Update a category
    */
   const updateCategory = async (categoryId, updates, categorySource) => {
@@ -273,9 +223,8 @@ export function useCategoryManager() {
    * Delete a category (not allowed for system categories)
    * @param {string} categoryId - The category ID
    * @param {string} categorySource - The category source ('system', 'firm', 'matter')
-   * @param {boolean} skipSystemValidation - Skip system category validation (for dev tools)
    */
-  const deleteCategory = async (categoryId, categorySource, skipSystemValidation = false) => {
+  const deleteCategory = async (categoryId, categorySource) => {
     try {
       if (categorySource === 'system') {
         throw new Error('System categories cannot be deleted');
@@ -289,7 +238,7 @@ export function useCategoryManager() {
       const matterId =
         categorySource === 'matter' ? matterStore.currentMatterId || 'general' : 'general';
 
-      await CategoryService.deleteCategory(firmId, categoryId, matterId, skipSystemValidation);
+      await CategoryService.deleteCategory(firmId, categoryId, matterId);
 
       // Reload categories
       await loadAllCategories();
@@ -331,8 +280,6 @@ export function useCategoryManager() {
     loadMatterCategories,
     createCategory,
     createSystemCategory,
-    createSystemCategoryWithId,
-    createCategoryWithId,
     updateCategory,
     deleteCategory,
     setActiveTab,

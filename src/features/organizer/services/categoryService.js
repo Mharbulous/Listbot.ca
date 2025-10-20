@@ -127,50 +127,6 @@ export class CategoryService {
   }
 
   /**
-   * Create a new category with a specific ID (for migration tool)
-   * @param {string} firmId - The firm ID
-   * @param {Object} categoryData - The category data
-   * @param {string} categoryId - The specific document ID to use
-   * @param {string} matterId - The matter ID (default: 'general')
-   */
-  static async createCategoryWithId(firmId, categoryData, categoryId, matterId = 'general') {
-    try {
-      // Validate input
-      if (!firmId || typeof firmId !== 'string') {
-        throw new Error('Valid firm ID is required');
-      }
-
-      if (!categoryId || typeof categoryId !== 'string') {
-        throw new Error('Valid category ID is required');
-      }
-
-      this.validateCategoryData(categoryData);
-
-      // Prepare category document
-      const categoryDoc = {
-        name: categoryData.name.trim(),
-        tags: categoryData.tags || [],
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      // Create in Firestore with specific ID using setDoc
-      const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
-      await setDoc(categoryRef, categoryDoc);
-
-      console.log(`[CategoryService] Created category with ID: ${categoryData.name} (${categoryId})`);
-      return {
-        id: categoryId,
-        ...categoryDoc,
-      };
-    } catch (error) {
-      console.error('[CategoryService] Failed to create category with ID:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Update an existing category
    * @param {string} firmId - The firm ID
    * @param {string} categoryId - The category ID
@@ -230,9 +186,8 @@ export class CategoryService {
    * @param {string} firmId - The firm ID
    * @param {string} categoryId - The category ID
    * @param {string} matterId - The matter ID (default: 'general')
-   * @param {boolean} skipSystemValidation - Skip system category validation (for dev tools)
    */
-  static async deleteCategory(firmId, categoryId, matterId = 'general', skipSystemValidation = false) {
+  static async deleteCategory(firmId, categoryId, matterId = 'general') {
     try {
       // Validate input
       if (!firmId || typeof firmId !== 'string') {
@@ -242,10 +197,8 @@ export class CategoryService {
         throw new Error('Valid category ID is required');
       }
 
-      // Prevent deletion of system categories (unless explicitly skipped)
-      if (!skipSystemValidation) {
-        SystemCategoryService.validateNotSystemCategory(categoryId);
-      }
+      // Prevent deletion of system categories
+      SystemCategoryService.validateNotSystemCategory(categoryId);
 
       // Soft delete by setting isActive to false
       const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
