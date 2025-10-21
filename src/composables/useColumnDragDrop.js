@@ -4,20 +4,20 @@ import { COLUMNS, getDefaultColumnOrder, getColumnByKey } from '@/utils/columnCo
 const STORAGE_KEY = 'analyze-column-order';
 
 /**
- * Composable for managing column drag-and-drop reordering
- * Handles column order state, drag operations, and persistence
+ * Composable for managing column drag-and-drop reordering with live reshuffling
+ * Uses edge-crossing logic to determine insertion point
  */
 export function useColumnDragDrop() {
   // Column order state (array of column keys)
   const columnOrder = ref(getDefaultColumnOrder());
 
-  // Drag state
+  // Drag state with swap threshold tracking
   const dragState = ref({
     isDragging: false,
     draggedColumnKey: null,
-    hoverColumnKey: null,
-    hoverDropZone: false, // True when hovering over far-right drop zone
-    insertionIndex: null
+    draggedColumnWidth: 0,
+    draggedStartIndex: null, // Original index when drag started
+    currentInsertionIndex: null // Current position in the reordered array
   });
 
   /**
@@ -58,37 +58,56 @@ export function useColumnDragDrop() {
   });
 
   /**
-   * Show insertion indicator line
+   * Calculate insertion index using swap threshold algorithm (50% overlap)
+   * Prevents oscillation by requiring dragged center to be significantly
+   * overlapping the target before swapping
+   *
+   * @param {number} mouseX - Current mouse X position (center of dragged column)
+   * @param {DOMRect[]} columnRects - Array of column bounding rectangles
+   * @returns {number} - New insertion index
    */
-  const showInsertionIndicator = computed(() => {
-    return dragState.value.isDragging &&
-           (dragState.value.hoverColumnKey !== null || dragState.value.hoverDropZone);
-  });
+  const calculateInsertionIndex = (mouseX, columnRects) => {
+    const draggedKey = dragState.value.draggedColumnKey;
+    const SWAP_THRESHOLD = 0.5; // 50% - SortableJS default
 
-  /**
-   * Get insertion indicator position index
-   */
-  const insertionIndicatorIndex = computed(() => {
-    if (dragState.value.hoverDropZone) {
-      return columnOrder.value.length; // After last column
+    // Find which column's swap zone contains the dragged center
+    for (let i = 0; i < columnRects.length; i++) {
+      const rect = columnRects[i];
+      const columnKey = columnOrder.value[i];
+
+      // Skip the dragged column itself
+      if (columnKey === draggedKey) continue;
+
+      // Calculate swap zone (center 50% of the column)
+      const columnWidth = rect.width;
+      const swapZoneWidth = columnWidth * SWAP_THRESHOLD;
+      const swapZoneStart = rect.left + (columnWidth - swapZoneWidth) / 2;
+      const swapZoneEnd = swapZoneStart + swapZoneWidth;
+
+      // Check if dragged center is inside this column's swap zone
+      if (mouseX >= swapZoneStart && mouseX <= swapZoneEnd) {
+        // Found the target - return this index
+        return i;
+      }
     }
-    if (dragState.value.hoverColumnKey) {
-      // Insert to the LEFT of the hovered column
-      return columnOrder.value.indexOf(dragState.value.hoverColumnKey);
-    }
-    return null;
-  });
+
+    // No swap zone overlaps - stay at current position
+    return columnOrder.value.indexOf(draggedKey);
+  };
 
   /**
    * Handle drag start
    */
   const onDragStart = (columnKey, event) => {
+    const headerCell = event.target.closest('.header-cell');
+    const startIndex = columnOrder.value.indexOf(columnKey);
+
     dragState.value = {
       isDragging: true,
       draggedColumnKey: columnKey,
-      hoverColumnKey: null,
-      hoverDropZone: false,
-      insertionIndex: null
+      draggedColumnWidth: headerCell ? headerCell.offsetWidth : 0,
+      draggedStartIndex: startIndex,
+      currentInsertionIndex: startIndex
     };
 
     // Set drag data
@@ -96,90 +115,61 @@ export function useColumnDragDrop() {
     event.dataTransfer.setData('text/plain', columnKey);
 
     // Create ghost image (browser will use this semi-transparently)
-    const headerCell = event.target.closest('.header-cell');
     if (headerCell) {
-      // Clone the header cell for the drag image
       const ghost = headerCell.cloneNode(true);
       ghost.style.opacity = '0.8';
       ghost.style.position = 'absolute';
       ghost.style.top = '-1000px';
       document.body.appendChild(ghost);
       event.dataTransfer.setDragImage(ghost, event.offsetX, event.offsetY);
-      // Remove ghost after drag starts
       setTimeout(() => document.body.removeChild(ghost), 0);
     }
   };
 
   /**
-   * Handle drag over column header
+   * Handle drag over - uses swap threshold to reorder in real-time
+   * Prevents oscillation by requiring 50% overlap before swapping
    */
-  const onDragOver = (columnKey, event) => {
-    if (!dragState.value.isDragging) return;
-    if (columnKey === dragState.value.draggedColumnKey) return;
-
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-
-    dragState.value.hoverColumnKey = columnKey;
-    dragState.value.hoverDropZone = false;
-  };
-
-  /**
-   * Handle drag over the far-right drop zone
-   */
-  const onDragOverDropZone = (event) => {
+  const onDragOver = (event) => {
     if (!dragState.value.isDragging) return;
 
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
 
-    dragState.value.hoverColumnKey = null;
-    dragState.value.hoverDropZone = true;
+    const mouseX = event.clientX;
+
+    // Get all column header elements and their positions
+    const headers = document.querySelectorAll('.header-cell[data-column-key]');
+    const columnRects = Array.from(headers).map(header => header.getBoundingClientRect());
+
+    // Calculate new insertion index using swap threshold
+    const newIndex = calculateInsertionIndex(mouseX, columnRects);
+
+    // Only reorder if the index actually changed
+    if (newIndex !== dragState.value.currentInsertionIndex) {
+      dragState.value.currentInsertionIndex = newIndex;
+
+      // Reorder the array immediately for live preview
+      const draggedKey = dragState.value.draggedColumnKey;
+      const currentIndex = columnOrder.value.indexOf(draggedKey);
+
+      if (currentIndex !== -1 && newIndex !== currentIndex) {
+        const newOrder = [...columnOrder.value];
+        newOrder.splice(currentIndex, 1); // Remove from current position
+        newOrder.splice(newIndex, 0, draggedKey); // Insert at new position
+        columnOrder.value = newOrder;
+      }
+    }
   };
 
   /**
-   * Handle drag leave
-   */
-  const onDragLeave = () => {
-    // Clear hover state when leaving a column
-    dragState.value.hoverColumnKey = null;
-    dragState.value.hoverDropZone = false;
-  };
-
-  /**
-   * Handle drop
+   * Handle drop - save the already-reordered state
    */
   const onDrop = (event) => {
     event.preventDefault();
 
-    const draggedKey = dragState.value.draggedColumnKey;
-    if (!draggedKey) return;
-
-    const currentIndex = columnOrder.value.indexOf(draggedKey);
-    let newIndex;
-
-    if (dragState.value.hoverDropZone) {
-      // Drop at far right (last position)
-      newIndex = columnOrder.value.length - 1;
-    } else if (dragState.value.hoverColumnKey) {
-      // Insert to the LEFT of hovered column
-      newIndex = columnOrder.value.indexOf(dragState.value.hoverColumnKey);
-      // Adjust index if dragging from left to right
-      if (currentIndex < newIndex) {
-        newIndex--;
-      }
-    } else {
-      // No valid drop target
-      resetDragState();
-      return;
-    }
-
-    // Reorder the array
-    const newOrder = [...columnOrder.value];
-    newOrder.splice(currentIndex, 1); // Remove from current position
-    newOrder.splice(newIndex, 0, draggedKey); // Insert at new position
-
-    columnOrder.value = newOrder;
+    // Column order was already updated during drag in onDragOver
+    // Just save to localStorage and clean up
     saveColumnOrder();
     resetDragState();
   };
@@ -188,6 +178,10 @@ export function useColumnDragDrop() {
    * Handle drag end (cleanup)
    */
   const onDragEnd = () => {
+    // If drag was cancelled or ended outside a valid drop zone
+    // The column order is already in the final state from onDragOver
+    // Just save and clean up
+    saveColumnOrder();
     resetDragState();
   };
 
@@ -198,9 +192,9 @@ export function useColumnDragDrop() {
     dragState.value = {
       isDragging: false,
       draggedColumnKey: null,
-      hoverColumnKey: null,
-      hoverDropZone: false,
-      insertionIndex: null
+      draggedColumnWidth: 0,
+      draggedStartIndex: null,
+      currentInsertionIndex: null
     };
   };
 
@@ -209,6 +203,14 @@ export function useColumnDragDrop() {
    */
   const isColumnDragging = (columnKey) => {
     return dragState.value.isDragging && dragState.value.draggedColumnKey === columnKey;
+  };
+
+  /**
+   * Check if this position should show as a gap (dragged column's current position)
+   */
+  const isDragGap = (columnKey) => {
+    if (!dragState.value.isDragging) return false;
+    return columnKey === dragState.value.draggedColumnKey;
   };
 
   // Load saved column order on mount
@@ -220,14 +222,11 @@ export function useColumnDragDrop() {
     columnOrder,
     orderedColumns,
     dragState,
-    showInsertionIndicator,
-    insertionIndicatorIndex,
     onDragStart,
     onDragOver,
-    onDragOverDropZone,
-    onDragLeave,
     onDrop,
     onDragEnd,
-    isColumnDragging
+    isColumnDragging,
+    isDragGap
   };
 }

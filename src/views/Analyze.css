@@ -39,7 +39,7 @@
   position: relative;
   flex-shrink: 0;
   cursor: grab;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.2s ease-in-out;
 }
 
 .header-cell:active {
@@ -354,51 +354,29 @@
   background: #f9fafb;
 }
 
-/* Drag Over State - Column being hovered during drag */
-.header-cell.drag-over {
-  background: #ede9fe;
-  border-color: #667eea;
-}
-
-/* Insertion Indicator - Vertical line showing drop position */
-.insertion-indicator {
-  position: absolute;
-  left: -2px;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #667eea;
-  z-index: 200;
-  box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
-  animation: pulse-indicator 1s ease-in-out infinite;
-}
-
-@keyframes pulse-indicator {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-/* Drop Zone - Far right area before Cols button */
-.drop-zone {
-  min-width: 40px;
-  background: transparent;
-  border: 2px dashed transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Drag Gap - Shows where the dragged column is currently positioned */
+.header-cell.drag-gap,
+.row-cell.drag-gap {
+  opacity: 0.3;
+  background: #f3f4f6;
+  border: 2px dashed #9ca3af;
   position: relative;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
 }
 
-.drop-zone.drop-zone-active {
-  background: #fef3c7;
-  border-color: #f59e0b;
-  min-width: 60px;
+.header-cell.drag-gap::after,
+.row-cell.drag-gap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    #e5e7eb,
+    #e5e7eb 10px,
+    #f3f4f6 10px,
+    #f3f4f6 20px
+  );
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 /* Column selector cell should not be draggable */
@@ -410,10 +388,9 @@
   display: none;
 }
 
-/* Smooth transitions for column reordering */
-.header-cell,
+/* Smooth transitions for row cells during column reordering */
 .row-cell {
-  transition: all 0.3s ease-in-out;
+  transition: all 0.2s ease-in-out;
 }
 
 /* Prevent text selection during drag */

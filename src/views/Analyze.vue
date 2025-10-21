@@ -11,14 +11,13 @@
           class="header-cell"
           :class="{
             'dragging': isColumnDragging(column.key),
-            'drag-over': dragState.hoverColumnKey === column.key
+            'drag-gap': isDragGap(column.key)
           }"
           :style="{ width: columnWidths[column.key] + 'px' }"
           :data-column-key="column.key"
           draggable="true"
           @dragstart="onDragStart(column.key, $event)"
-          @dragover="onDragOver(column.key, $event)"
-          @dragleave="onDragLeave"
+          @dragover="onDragOver"
           @drop="onDrop"
           @dragend="onDragEnd"
         >
@@ -42,28 +41,6 @@
 
           <!-- Resize Handle -->
           <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
-
-          <!-- Insertion Indicator (shown to the LEFT of this column when dragging over it) -->
-          <div
-            v-if="showInsertionIndicator && insertionIndicatorIndex === index"
-            class="insertion-indicator"
-          ></div>
-        </div>
-
-        <!-- Far-Right Drop Zone (before Cols button) -->
-        <div
-          v-if="dragState.isDragging"
-          class="drop-zone"
-          :class="{ 'drop-zone-active': dragState.hoverDropZone }"
-          @dragover="onDragOverDropZone"
-          @dragleave="onDragLeave"
-          @drop="onDrop"
-        >
-          <!-- Insertion Indicator at far right -->
-          <div
-            v-if="showInsertionIndicator && insertionIndicatorIndex === orderedColumns.length"
-            class="insertion-indicator"
-          ></div>
         </div>
 
         <!-- Column Selector Button (always at far right) -->
@@ -125,6 +102,7 @@
             v-for="column in orderedColumns"
             :key="column.key"
             class="row-cell"
+            :class="{ 'drag-gap': isDragGap(column.key) }"
             :style="{ width: columnWidths[column.key] + 'px' }"
             :data-column-key="column.key"
           >
@@ -194,15 +172,12 @@ const { columnWidths, totalTableWidth, startResize } = useColumnResize();
 const {
   orderedColumns,
   dragState,
-  showInsertionIndicator,
-  insertionIndicatorIndex,
   onDragStart,
   onDragOver,
-  onDragOverDropZone,
-  onDragLeave,
   onDrop,
   onDragEnd,
-  isColumnDragging
+  isColumnDragging,
+  isDragGap
 } = useColumnDragDrop();
 
 // Compute dynamic table width including ordered columns
