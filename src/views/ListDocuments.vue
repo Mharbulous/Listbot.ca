@@ -1,13 +1,7 @@
 <template>
   <div class="list-documents-page pa-6">
     <div class="page-header mb-6">
-      <div class="d-flex align-center justify-space-between">
-        <div>
-          <h1 class="text-h4 font-weight-bold">Evidence Files</h1>
-          <p class="text-subtitle-1 text-grey-darken-1 mt-2">
-            High-performance virtual scrolling with dynamic columns
-          </p>
-        </div>
+      <div class="d-flex align-center justify-end">
         <ColumnSelector
           :all-columns="allColumns"
           :visible-column-keys="visibleColumnKeys"
@@ -18,40 +12,6 @@
         />
       </div>
     </div>
-
-    <!-- Testing Instructions -->
-    <v-card class="mb-6" variant="outlined">
-      <v-card-title class="text-subtitle-1">Testing Instructions</v-card-title>
-      <v-card-text>
-        <ul class="pl-4">
-          <li>
-            <strong>Performance Testing:</strong> Click the buttons below to load different dataset
-            sizes
-          </li>
-          <li>
-            <strong>Column Management:</strong> Click the "Columns" button to show/hide columns
-            dynamically
-          </li>
-          <li>Watch the console for detailed performance metrics</li>
-          <li>
-            <strong>Expected Performance:</strong>
-            <ul class="pl-4 mt-2">
-              <li>100 files: &lt;20ms render time</li>
-              <li>1,000 files: &lt;50ms render time</li>
-              <li>10,000 files: &lt;100ms render time</li>
-              <li>DOM nodes should stay &lt;100 regardless of file count</li>
-              <li>Scrolling should maintain 60fps</li>
-              <li>Column changes should not impact performance</li>
-            </ul>
-          </li>
-          <li class="mt-2">Open the browser console (F12) to see detailed performance logs</li>
-          <li class="mt-2">
-            <strong>Dynamic Columns:</strong> Column preferences are saved to localStorage and
-            persist across sessions
-          </li>
-        </ul>
-      </v-card-text>
-    </v-card>
 
     <!-- Performance Testing Controls -->
     <v-card class="mb-6">
@@ -109,25 +69,6 @@
         </div>
       </v-card-text>
     </v-card>
-
-    <!-- Performance Indicators -->
-    <v-alert
-      v-if="lastRenderTime > 0"
-      :type="getPerformanceAlertType()"
-      variant="tonal"
-      class="mb-4"
-    >
-      <div class="d-flex align-center">
-        <div>
-          <strong>{{ getPerformanceMessage() }}</strong>
-          <div class="text-caption mt-1">
-            Rendered {{ files.length.toLocaleString() }} files in {{ lastRenderTime.toFixed(2) }}ms
-            with {{ domNodeCount.toLocaleString() }} DOM nodes ({{ visibleColumns.length }} columns
-            visible)
-          </div>
-        </div>
-      </div>
-    </v-alert>
 
     <!-- Virtual File List -->
     <v-card class="file-list-container">

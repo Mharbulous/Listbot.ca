@@ -52,7 +52,7 @@ const router = createRouter({
       path: '/list',
       name: 'list',
       component: () => import('../views/ListDocuments.vue'),
-      meta: { requiresAuth: true, title: 'List' },
+      meta: { requiresAuth: true, title: 'Evidence List' },
     },
     {
       path: '/documents',
