@@ -5,19 +5,22 @@ const STORAGE_KEY = 'analyze-column-order';
 
 /**
  * Composable for managing column drag-and-drop reordering with live reshuffling
- * Uses edge-crossing logic to determine insertion point
+ * Uses static drop zones frozen at drag start to prevent oscillation with variable-width columns
+ * Implements directional insertion logic for intuitive left/right drag behavior
  */
 export function useColumnDragDrop() {
   // Column order state (array of column keys)
   const columnOrder = ref(getDefaultColumnOrder());
 
-  // Drag state with swap threshold tracking
+  // Drag state with static drop zones
   const dragState = ref({
     isDragging: false,
     draggedColumnKey: null,
     draggedColumnWidth: 0,
     draggedStartIndex: null, // Original index when drag started
-    currentInsertionIndex: null // Current position in the reordered array
+    currentInsertionIndex: null, // Current position in the reordered array
+    staticZones: [], // Frozen drop zones captured at drag start: [{key, rect, originalIndex}]
+    dragStartX: null // Initial mouse X position to determine drag direction
   });
 
   /**
@@ -58,56 +61,74 @@ export function useColumnDragDrop() {
   });
 
   /**
-   * Calculate insertion index using swap threshold algorithm (50% overlap)
-   * Prevents oscillation by requiring dragged center to be significantly
-   * overlapping the target before swapping
+   * Calculate insertion index using static drop zones with directional insertion
+   * Zones are frozen at drag start and never move, preventing all flickering
    *
-   * @param {number} mouseX - Current mouse X position (center of dragged column)
-   * @param {DOMRect[]} columnRects - Array of column bounding rectangles
-   * @returns {number} - New insertion index
+   * @param {number} mouseX - Current mouse X position
+   * @param {Array} staticZones - Frozen zones captured at drag start: [{key, rect, originalIndex}]
+   * @param {number} dragStartX - Initial mouse X position
+   * @returns {number} - New insertion index in the current column order
    */
-  const calculateInsertionIndex = (mouseX, columnRects) => {
+  const calculateInsertionIndex = (mouseX, staticZones, dragStartX) => {
     const draggedKey = dragState.value.draggedColumnKey;
-    const SWAP_THRESHOLD = 0.5; // 50% - SortableJS default
+    const draggedStartIndex = dragState.value.draggedStartIndex;
 
-    // Find which column's swap zone contains the dragged center
-    for (let i = 0; i < columnRects.length; i++) {
-      const rect = columnRects[i];
-      const columnKey = columnOrder.value[i];
+    // Determine drag direction
+    const dragDirection = mouseX < dragStartX ? 'left' : 'right';
 
-      // Skip the dragged column itself
-      if (columnKey === draggedKey) continue;
+    // Find which static zone contains the mouse
+    const hoveredZone = staticZones.find(zone =>
+      mouseX >= zone.rect.left && mouseX <= zone.rect.right
+    );
 
-      // Calculate swap zone (center 50% of the column)
-      const columnWidth = rect.width;
-      const swapZoneWidth = columnWidth * SWAP_THRESHOLD;
-      const swapZoneStart = rect.left + (columnWidth - swapZoneWidth) / 2;
-      const swapZoneEnd = swapZoneStart + swapZoneWidth;
-
-      // Check if dragged center is inside this column's swap zone
-      if (mouseX >= swapZoneStart && mouseX <= swapZoneEnd) {
-        // Found the target - return this index
-        return i;
-      }
+    if (!hoveredZone) {
+      // Mouse outside all zones - stay at current position
+      return columnOrder.value.indexOf(draggedKey);
     }
 
-    // No swap zone overlaps - stay at current position
-    return columnOrder.value.indexOf(draggedKey);
+    // Special case: hovering over the dragged column's original position
+    if (hoveredZone.key === draggedKey) {
+      // Restore to initial state
+      return draggedStartIndex;
+    }
+
+    // Find where the hovered zone's column currently is in the reordered array
+    const hoveredCurrentIndex = columnOrder.value.indexOf(hoveredZone.key);
+
+    // Directional insertion logic
+    if (dragDirection === 'left') {
+      // Insert BEFORE the hovered column
+      return hoveredCurrentIndex;
+    } else {
+      // Insert AFTER the hovered column
+      return hoveredCurrentIndex + 1;
+    }
   };
 
   /**
-   * Handle drag start
+   * Handle drag start - captures static drop zones that remain fixed during drag
    */
   const onDragStart = (columnKey, event) => {
     const headerCell = event.target.closest('.header-cell');
     const startIndex = columnOrder.value.indexOf(columnKey);
+
+    // Capture all column positions BEFORE any reordering
+    // These zones will remain static throughout the drag operation
+    const headers = document.querySelectorAll('.header-cell[data-column-key]');
+    const staticZones = Array.from(headers).map((header, index) => ({
+      key: header.getAttribute('data-column-key'),
+      rect: header.getBoundingClientRect(),
+      originalIndex: index
+    }));
 
     dragState.value = {
       isDragging: true,
       draggedColumnKey: columnKey,
       draggedColumnWidth: headerCell ? headerCell.offsetWidth : 0,
       draggedStartIndex: startIndex,
-      currentInsertionIndex: startIndex
+      currentInsertionIndex: startIndex,
+      staticZones: staticZones,
+      dragStartX: event.clientX
     };
 
     // Set drag data
@@ -127,8 +148,7 @@ export function useColumnDragDrop() {
   };
 
   /**
-   * Handle drag over - uses swap threshold to reorder in real-time
-   * Prevents oscillation by requiring 50% overlap before swapping
+   * Handle drag over - uses static zones for stable, flicker-free reordering
    */
   const onDragOver = (event) => {
     if (!dragState.value.isDragging) return;
@@ -138,12 +158,12 @@ export function useColumnDragDrop() {
 
     const mouseX = event.clientX;
 
-    // Get all column header elements and their positions
-    const headers = document.querySelectorAll('.header-cell[data-column-key]');
-    const columnRects = Array.from(headers).map(header => header.getBoundingClientRect());
-
-    // Calculate new insertion index using swap threshold
-    const newIndex = calculateInsertionIndex(mouseX, columnRects);
+    // Calculate new insertion index using static zones
+    const newIndex = calculateInsertionIndex(
+      mouseX,
+      dragState.value.staticZones,
+      dragState.value.dragStartX
+    );
 
     // Only reorder if the index actually changed
     if (newIndex !== dragState.value.currentInsertionIndex) {
@@ -194,7 +214,9 @@ export function useColumnDragDrop() {
       draggedColumnKey: null,
       draggedColumnWidth: 0,
       draggedStartIndex: null,
-      currentInsertionIndex: null
+      currentInsertionIndex: null,
+      staticZones: [],
+      dragStartX: null
     };
   };
 

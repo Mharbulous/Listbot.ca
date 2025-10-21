@@ -1,0 +1,39 @@
+#Desired Column Drag-and-Drop Behavior
+
+##  On Drag Start
+
+  1. User clicks and holds on a column header (e.g., Column B)
+  2. All column positions are captured and frozen as static drop zones
+  3. Visual feedback: Column B shows it's being dragged (opacity, shadow)
+  4. The dragged column leaves a "gap" in its original position
+
+## During Drag - Moving the Column
+
+ When mouse enters a new zone:
+  - The columns instantly rearrange to show where the dragged column would land
+  - The dragged column "gap" moves to the new position
+  - All other columns shift to accommodate the new position
+  - Crucially: The drop zones themselves never move - they stay frozen at their original positions
+
+
+## Insertion logic
+
+  - If hovered zone is LEFT of dragged column's original position → insert BEFORE hovered zone (to the left)
+  - If hovered zone is RIGHT of dragged column's original position → insert AFTER hovered zone (to the right)
+
+Example Scenarios:
+
+  Starting order: [A | B | C | D | E] (C is being dragged)
+
+  Mouse hovers over zone B (B's original position):
+  - Should show: [A | C | B | D | E]
+
+  Mouse hovers over zone E (E's original position):
+  - Should show: [A | B | D | E | C ]
+
+  Mouse returns to hover over zone C (C's original position):
+  - Should restore: [A | B | C | D | E] (back to starting state)
+
+
+
+
