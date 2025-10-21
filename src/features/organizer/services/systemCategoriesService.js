@@ -20,6 +20,20 @@ import { db } from '../../../services/firebase.js';
  */
 export class systemcategoriesService {
   /**
+   * Generate a document ID for a system category based on its name
+   * Removes all spaces from the category name
+   * @param {string} categoryName - The category name
+   * @returns {string} Document ID (e.g., "Control Number" -> "ControlNumber")
+   */
+  static generateSystemCategoryId(categoryName) {
+    if (!categoryName || typeof categoryName !== 'string') {
+      throw new Error('Category name is required to generate document ID');
+    }
+    // Remove all spaces from the category name
+    return categoryName.trim().replace(/\s+/g, '');
+  }
+
+  /**
    * Get the system categories collection reference
    * @returns {CollectionReference} Firestore collection reference
    */
@@ -151,15 +165,21 @@ export class systemcategoriesService {
         }
       }
 
-      // Create in Firestore (reuse systemcategoriesRef from duplicate check above)
-      const docRef = await addDoc(systemcategoriesRef, categoryDoc);
+      // Generate human-readable document ID from category name
+      const categoryId = this.generateSystemCategoryId(categoryData.name);
+
+      // Create document reference with custom ID
+      const docRef = doc(db, 'systemcategories', categoryId);
+
+      // Use setDoc to create document with custom ID
+      await setDoc(docRef, categoryDoc);
 
       console.log(
-        `[systemcategoriesService] Created system category: ${categoryData.name} (${docRef.id})`
+        `[systemcategoriesService] Created system category: ${categoryData.name} (${categoryId})`
       );
 
       return {
-        id: docRef.id,
+        id: categoryId,
         ...categoryDoc,
         isSystemCategory: true,
       };

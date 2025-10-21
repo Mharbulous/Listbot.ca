@@ -132,11 +132,11 @@ const availableDemos = computed(() => [
     status: 'Active',
   },
   {
-    title: 'Category Migration Tool',
+    title: 'System Category Manager',
     description:
-      'Move categories between System, Firm, and Matter collections using an intuitive drag-and-drop interface. Perfect for organizing and restructuring category data.',
+      'Create and manage system categories with support for multiple data types (Currency, Sequence, Regex, Fixed/Open Lists). View and edit system, firm, and matter categories across collections.',
     route: '/dev/categories',
-    tags: ['Firestore', 'Database', 'Categories', 'Migration', 'Drag & Drop'],
+    tags: ['Firestore', 'Database', 'System Categories', 'CRUD Operations'],
     status: 'Active',
   },
   // Future demos will be added here
