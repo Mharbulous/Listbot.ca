@@ -23,16 +23,22 @@
         >
           <!-- Drag Handle Icon (shown on hover) -->
           <div class="drag-handle" title="Drag to reorder">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <circle cx="3" cy="3" r="1" />
-              <circle cx="6" cy="3" r="1" />
-              <circle cx="9" cy="3" r="1" />
-              <circle cx="3" cy="6" r="1" />
-              <circle cx="6" cy="6" r="1" />
-              <circle cx="9" cy="6" r="1" />
-              <circle cx="3" cy="9" r="1" />
-              <circle cx="6" cy="9" r="1" />
-              <circle cx="9" cy="9" r="1" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
+              <!-- Top row - 6 dots -->
+              <circle cx="3" cy="4" r="1" />
+              <circle cx="9" cy="4" r="1" />
+              <circle cx="15" cy="4" r="1" />
+              <circle cx="21" cy="4" r="1" />
+              <circle cx="27" cy="4" r="1" />
+              <circle cx="33" cy="4" r="1" />
+
+              <!-- Bottom row - 6 dots -->
+              <circle cx="3" cy="8" r="1" />
+              <circle cx="9" cy="8" r="1" />
+              <circle cx="15" cy="8" r="1" />
+              <circle cx="21" cy="8" r="1" />
+              <circle cx="27" cy="8" r="1" />
+              <circle cx="33" cy="8" r="1" />
             </svg>
           </div>
 
