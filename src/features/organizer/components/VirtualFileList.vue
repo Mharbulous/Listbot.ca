@@ -1,16 +1,15 @@
 <template>
   <div class="virtual-file-list">
     <!-- Table Header (Sticky) -->
-    <div class="file-list-header">
-      <div class="file-list-header-cell file-list-header-cell--file-type">File Type</div>
-      <div class="file-list-header-cell file-list-header-cell--file-name">File Name</div>
-      <div class="file-list-header-cell file-list-header-cell--file-size">File Size</div>
-      <div class="file-list-header-cell file-list-header-cell--date">Document Date</div>
-      <div class="file-list-header-cell file-list-header-cell--privilege">Privilege</div>
-      <div class="file-list-header-cell file-list-header-cell--description">Description</div>
-      <div class="file-list-header-cell file-list-header-cell--tags">Document Type</div>
-      <div class="file-list-header-cell file-list-header-cell--tags">Author</div>
-      <div class="file-list-header-cell file-list-header-cell--tags">Custodian</div>
+    <div class="file-list-header" :style="{ gridTemplateColumns: gridTemplateColumns }">
+      <div
+        v-for="column in columns"
+        :key="column.key"
+        class="file-list-header-cell"
+        :class="`file-list-header-cell--${column.key}`"
+      >
+        {{ column.title }}
+      </div>
     </div>
 
     <!-- Virtual Scrolling Container -->
@@ -38,18 +37,20 @@
         class="file-scroller"
         v-slot="{ item, index }"
       >
-        <FileListRow :file="item" :index="index" @click="handleRowClick" />
+        <FileListRow :file="item" :index="index" :columns="columns" @click="handleRowClick" />
       </RecycleScroller>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { RecycleScroller } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import FileListRow from './FileListRow.vue';
+import { generateGridTemplate } from '@/features/organizer/config/fileListColumns';
 
-defineProps({
+const props = defineProps({
   files: {
     type: Array,
     default: () => [],
@@ -58,9 +59,20 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  columns: {
+    type: Array,
+    required: true,
+  },
 });
 
 const emit = defineEmits(['row-click']);
+
+/**
+ * Generate CSS grid template from column widths
+ */
+const gridTemplateColumns = computed(() => {
+  return generateGridTemplate(props.columns);
+});
 
 function handleRowClick(file) {
   emit('row-click', file);
@@ -81,16 +93,6 @@ function handleRowClick(file) {
 /* Header Styles */
 .file-list-header {
   display: grid;
-  grid-template-columns:
-    80px /* File Type */
-    minmax(200px, 2fr) /* File Name */
-    100px /* File Size */
-    120px /* Document Date */
-    140px /* Privilege */
-    minmax(150px, 2fr) /* Description */
-    minmax(120px, 1.5fr) /* Document Type */
-    minmax(120px, 1.5fr) /* Author */
-    minmax(120px, 1.5fr); /* Custodian */
   gap: 8px;
   padding: 12px 16px;
   background-color: #f9fafb;

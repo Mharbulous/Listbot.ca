@@ -1,11 +1,57 @@
 <template>
   <div class="list-documents-page pa-6">
     <div class="page-header mb-6">
-      <h1 class="text-h4 font-weight-bold">Evidence Files</h1>
-      <p class="text-subtitle-1 text-grey-darken-1 mt-2">
-        High-performance virtual scrolling implementation for 10,000+ files
-      </p>
+      <div class="d-flex align-center justify-space-between">
+        <div>
+          <h1 class="text-h4 font-weight-bold">Evidence Files</h1>
+          <p class="text-subtitle-1 text-grey-darken-1 mt-2">
+            High-performance virtual scrolling with dynamic columns
+          </p>
+        </div>
+        <ColumnSelector
+          :all-columns="allColumns"
+          :visible-column-keys="visibleColumnKeys"
+          :is-column-visible="isColumnVisible"
+          :is-column-required="isColumnRequired"
+          :toggle-column="toggleColumn"
+          :reset-to-defaults="resetToDefaults"
+        />
+      </div>
     </div>
+
+    <!-- Testing Instructions -->
+    <v-card class="mb-6" variant="outlined">
+      <v-card-title class="text-subtitle-1">Testing Instructions</v-card-title>
+      <v-card-text>
+        <ul class="pl-4">
+          <li>
+            <strong>Performance Testing:</strong> Click the buttons below to load different dataset
+            sizes
+          </li>
+          <li>
+            <strong>Column Management:</strong> Click the "Columns" button to show/hide columns
+            dynamically
+          </li>
+          <li>Watch the console for detailed performance metrics</li>
+          <li>
+            <strong>Expected Performance:</strong>
+            <ul class="pl-4 mt-2">
+              <li>100 files: &lt;20ms render time</li>
+              <li>1,000 files: &lt;50ms render time</li>
+              <li>10,000 files: &lt;100ms render time</li>
+              <li>DOM nodes should stay &lt;100 regardless of file count</li>
+              <li>Scrolling should maintain 60fps</li>
+              <li>Column changes should not impact performance</li>
+            </ul>
+          </li>
+          <li class="mt-2">Open the browser console (F12) to see detailed performance logs</li>
+          <li class="mt-2">
+            <strong>Dynamic Columns:</strong> Column preferences are saved to localStorage and
+            persist across sessions
+          </li>
+        </ul>
+      </v-card-text>
+    </v-card>
 
     <!-- Performance Testing Controls -->
     <v-card class="mb-6">
@@ -76,7 +122,8 @@
           <strong>{{ getPerformanceMessage() }}</strong>
           <div class="text-caption mt-1">
             Rendered {{ files.length.toLocaleString() }} files in {{ lastRenderTime.toFixed(2) }}ms
-            with {{ domNodeCount.toLocaleString() }} DOM nodes
+            with {{ domNodeCount.toLocaleString() }} DOM nodes ({{ visibleColumns.length }} columns
+            visible)
           </div>
         </div>
       </div>
@@ -84,29 +131,12 @@
 
     <!-- Virtual File List -->
     <v-card class="file-list-container">
-      <VirtualFileList :files="files" :loading="isGenerating" @row-click="handleRowClick" />
-    </v-card>
-
-    <!-- Instructions -->
-    <v-card class="mt-6" variant="outlined">
-      <v-card-title class="text-subtitle-1">Testing Instructions</v-card-title>
-      <v-card-text>
-        <ul class="pl-4">
-          <li>Click the buttons above to load different dataset sizes</li>
-          <li>Watch the console for detailed performance metrics</li>
-          <li>
-            <strong>Expected Performance:</strong>
-            <ul class="pl-4 mt-2">
-              <li>100 files: &lt;20ms render time</li>
-              <li>1,000 files: &lt;50ms render time</li>
-              <li>10,000 files: &lt;100ms render time</li>
-              <li>DOM nodes should stay &lt;100 regardless of file count</li>
-              <li>Scrolling should maintain 60fps</li>
-            </ul>
-          </li>
-          <li class="mt-2">Open the browser console (F12) to see detailed performance logs</li>
-        </ul>
-      </v-card-text>
+      <VirtualFileList
+        :files="files"
+        :loading="isGenerating"
+        :columns="visibleColumns"
+        @row-click="handleRowClick"
+      />
     </v-card>
   </div>
 </template>
@@ -114,11 +144,24 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue';
 import VirtualFileList from '@/features/organizer/components/VirtualFileList.vue';
+import ColumnSelector from '@/features/organizer/components/ColumnSelector.vue';
 import { useMockFileData } from '@/composables/useMockFileData.js';
 import { usePerformanceMonitor } from '@/composables/usePerformanceMonitor.js';
+import { useFileListColumns } from '@/composables/useFileListColumns.js';
 
 // Mock data composable
 const { files, isGenerating, generateWithLogging, clearFiles: clearMockFiles } = useMockFileData();
+
+// Column management
+const {
+  allColumns,
+  visibleColumns,
+  visibleColumnKeys,
+  isColumnVisible,
+  isColumnRequired,
+  toggleColumn,
+  resetToDefaults,
+} = useFileListColumns();
 
 // Performance monitoring
 const performanceMonitor = usePerformanceMonitor('VirtualFileList');
@@ -132,6 +175,7 @@ async function loadFiles(count) {
   console.clear();
   console.log(`\n${'='.repeat(60)}`);
   console.log(`🚀 Loading ${count.toLocaleString()} files...`);
+  console.log(`📊 Visible Columns: ${visibleColumns.value.length}/${allColumns.value.length}`);
   console.log(`${'='.repeat(60)}\n`);
 
   // Start performance monitoring
@@ -228,7 +272,9 @@ function getPerformanceMessage() {
 // Load 100 files by default on mount
 onMounted(() => {
   console.log('📊 Virtual File List - Performance Testing Page');
-  console.log('Click the buttons above to test different dataset sizes\n');
+  console.log('💡 Features: Virtual Scrolling + Dynamic Columns');
+  console.log('Click the buttons above to test different dataset sizes');
+  console.log('Click the "Columns" button to show/hide columns\n');
   loadFiles(100);
 });
 </script>
