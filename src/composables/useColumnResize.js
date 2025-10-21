@@ -1,25 +1,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { getDefaultColumnWidths } from '@/utils/columnConfig';
 
 // Column resize constants
 const MIN_COLUMN_WIDTH = 50;
 const MAX_COLUMN_WIDTH = 500;
 const STORAGE_KEY = 'analyze-column-widths';
 
-// Default column widths
-const defaultColumnWidths = {
-  fileType: 80,
-  fileName: 300,
-  size: 100,
-  date: 120,
-  privilege: 140,
-  description: 250,
-  documentType: 200,
-  author: 180,
-  custodian: 180,
-  createdDate: 150,
-  modifiedDate: 150,
-  status: 120
-};
+// Get default column widths from centralized config
+const defaultColumnWidths = getDefaultColumnWidths();
 
 /**
  * Composable for managing column resizing functionality

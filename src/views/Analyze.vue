@@ -4,54 +4,69 @@
     <div ref="scrollContainer" class="scroll-container">
       <!-- Sticky Table Header -->
       <div class="table-mockup-header">
-        <div class="header-cell" :style="{ width: columnWidths.fileType + 'px' }">
-          <span class="header-label">File Type</span>
-          <div class="resize-handle" @mousedown="startResize('fileType', $event)"></div>
+        <!-- Dynamic Column Headers with Drag-and-Drop -->
+        <div
+          v-for="(column, index) in orderedColumns"
+          :key="column.key"
+          class="header-cell"
+          :class="{
+            'dragging': isColumnDragging(column.key),
+            'drag-over': dragState.hoverColumnKey === column.key
+          }"
+          :style="{ width: columnWidths[column.key] + 'px' }"
+          :data-column-key="column.key"
+          draggable="true"
+          @dragstart="onDragStart(column.key, $event)"
+          @dragover="onDragOver(column.key, $event)"
+          @dragleave="onDragLeave"
+          @drop="onDrop"
+          @dragend="onDragEnd"
+        >
+          <!-- Drag Handle Icon (shown on hover) -->
+          <div class="drag-handle" title="Drag to reorder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <circle cx="3" cy="3" r="1" />
+              <circle cx="6" cy="3" r="1" />
+              <circle cx="9" cy="3" r="1" />
+              <circle cx="3" cy="6" r="1" />
+              <circle cx="6" cy="6" r="1" />
+              <circle cx="9" cy="6" r="1" />
+              <circle cx="3" cy="9" r="1" />
+              <circle cx="6" cy="9" r="1" />
+              <circle cx="9" cy="9" r="1" />
+            </svg>
+          </div>
+
+          <!-- Column Label -->
+          <span class="header-label">{{ column.label }}</span>
+
+          <!-- Resize Handle -->
+          <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
+
+          <!-- Insertion Indicator (shown to the LEFT of this column when dragging over it) -->
+          <div
+            v-if="showInsertionIndicator && insertionIndicatorIndex === index"
+            class="insertion-indicator"
+          ></div>
         </div>
-        <div class="header-cell" :style="{ width: columnWidths.fileName + 'px' }">
-          <span class="header-label">File Name</span>
-          <div class="resize-handle" @mousedown="startResize('fileName', $event)"></div>
+
+        <!-- Far-Right Drop Zone (before Cols button) -->
+        <div
+          v-if="dragState.isDragging"
+          class="drop-zone"
+          :class="{ 'drop-zone-active': dragState.hoverDropZone }"
+          @dragover="onDragOverDropZone"
+          @dragleave="onDragLeave"
+          @drop="onDrop"
+        >
+          <!-- Insertion Indicator at far right -->
+          <div
+            v-if="showInsertionIndicator && insertionIndicatorIndex === orderedColumns.length"
+            class="insertion-indicator"
+          ></div>
         </div>
-        <div class="header-cell" :style="{ width: columnWidths.size + 'px' }">
-          <span class="header-label">Size</span>
-          <div class="resize-handle" @mousedown="startResize('size', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.date + 'px' }">
-          <span class="header-label">Date</span>
-          <div class="resize-handle" @mousedown="startResize('date', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.privilege + 'px' }">
-          <span class="header-label">Privilege</span>
-          <div class="resize-handle" @mousedown="startResize('privilege', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.description + 'px' }">
-          <span class="header-label">Description</span>
-          <div class="resize-handle" @mousedown="startResize('description', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.documentType + 'px' }">
-          <span class="header-label">Document Type</span>
-          <div class="resize-handle" @mousedown="startResize('documentType', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.author + 'px' }">
-          <span class="header-label">Author</span>
-          <div class="resize-handle" @mousedown="startResize('author', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.custodian + 'px' }">
-          <span class="header-label">Custodian</span>
-          <div class="resize-handle" @mousedown="startResize('custodian', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.createdDate + 'px' }">
-          <span class="header-label">Created Date</span>
-          <div class="resize-handle" @mousedown="startResize('createdDate', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.modifiedDate + 'px' }">
-          <span class="header-label">Modified Date</span>
-          <div class="resize-handle" @mousedown="startResize('modifiedDate', $event)"></div>
-        </div>
-        <div class="header-cell" :style="{ width: columnWidths.status + 'px' }">
-          <span class="header-label">Status</span>
-          <div class="resize-handle" @mousedown="startResize('status', $event)"></div>
-        </div>
+
+        <!-- Column Selector Button (always at far right) -->
         <div class="header-cell column-selector-cell">
           <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
             <span>Cols</span>
@@ -105,25 +120,49 @@
       <div class="table-mockup-body">
         <!-- Sample Rows (50+ to ensure vertical scrolling) -->
         <div v-for="i in 50" :key="i" class="table-mockup-row" :class="{ even: i % 2 === 0 }">
-          <div class="row-cell" :style="{ width: columnWidths.fileType + 'px' }">
-            <span class="badge badge-pdf">PDF</span>
-          </div>
-          <div class="row-cell" :style="{ width: columnWidths.fileName + 'px' }">contract_{{ i }}_2024.pdf</div>
-          <div class="row-cell" :style="{ width: columnWidths.size + 'px' }">{{ (Math.random() * 5).toFixed(1) }}MB</div>
-          <div class="row-cell" :style="{ width: columnWidths.date + 'px' }">2024-10-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" :style="{ width: columnWidths.privilege + 'px' }">
-            <span class="badge badge-privilege">Privileged</span>
-          </div>
-          <div class="row-cell" :style="{ width: columnWidths.description + 'px' }">{{ getDescription(i) }}</div>
-          <div class="row-cell" :style="{ width: columnWidths.documentType + 'px' }">
-            <span class="badge badge-doctype">Contract</span>
-          </div>
-          <div class="row-cell" :style="{ width: columnWidths.author + 'px' }">John Smith</div>
-          <div class="row-cell" :style="{ width: columnWidths.custodian + 'px' }">Legal Dept.</div>
-          <div class="row-cell" :style="{ width: columnWidths.createdDate + 'px' }">2024-09-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" :style="{ width: columnWidths.modifiedDate + 'px' }">2024-10-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" :style="{ width: columnWidths.status + 'px' }">
-            <span class="badge badge-status">Active</span>
+          <!-- Dynamic cells matching column order -->
+          <div
+            v-for="column in orderedColumns"
+            :key="column.key"
+            class="row-cell"
+            :style="{ width: columnWidths[column.key] + 'px' }"
+            :data-column-key="column.key"
+          >
+            <!-- File Type -->
+            <span v-if="column.key === 'fileType'" class="badge badge-pdf">PDF</span>
+
+            <!-- File Name -->
+            <template v-else-if="column.key === 'fileName'">contract_{{ i }}_2024.pdf</template>
+
+            <!-- Size -->
+            <template v-else-if="column.key === 'size'">{{ (Math.random() * 5).toFixed(1) }}MB</template>
+
+            <!-- Date -->
+            <template v-else-if="column.key === 'date'">2024-10-{{ String(i).padStart(2, '0') }}</template>
+
+            <!-- Privilege -->
+            <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">Privileged</span>
+
+            <!-- Description -->
+            <template v-else-if="column.key === 'description'">{{ getDescription(i) }}</template>
+
+            <!-- Document Type -->
+            <span v-else-if="column.key === 'documentType'" class="badge badge-doctype">Contract</span>
+
+            <!-- Author -->
+            <template v-else-if="column.key === 'author'">John Smith</template>
+
+            <!-- Custodian -->
+            <template v-else-if="column.key === 'custodian'">Legal Dept.</template>
+
+            <!-- Created Date -->
+            <template v-else-if="column.key === 'createdDate'">2024-09-{{ String(i).padStart(2, '0') }}</template>
+
+            <!-- Modified Date -->
+            <template v-else-if="column.key === 'modifiedDate'">2024-10-{{ String(i).padStart(2, '0') }}</template>
+
+            <!-- Status -->
+            <span v-else-if="column.key === 'status'" class="badge badge-status">Active</span>
           </div>
         </div>
       </div>
@@ -138,8 +177,9 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue';
+import { ref, nextTick, watch, computed } from 'vue';
 import { useColumnResize } from '@/composables/useColumnResize';
+import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { getDescription } from '@/utils/analyzeMockData';
 
 // Column selector and refs
@@ -149,6 +189,26 @@ const columnSelectorPopover = ref(null);
 
 // Use column resize composable
 const { columnWidths, totalTableWidth, startResize } = useColumnResize();
+
+// Use column drag-drop composable
+const {
+  orderedColumns,
+  dragState,
+  showInsertionIndicator,
+  insertionIndicatorIndex,
+  onDragStart,
+  onDragOver,
+  onDragOverDropZone,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  isColumnDragging
+} = useColumnDragDrop();
+
+// Compute dynamic table width including ordered columns
+const dynamicTableWidth = computed(() => {
+  return orderedColumns.value.reduce((sum, col) => sum + (columnWidths.value[col.key] || 0), 0);
+});
 
 // Auto-focus popover when it opens
 watch(showColumnSelector, async (isOpen) => {

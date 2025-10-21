@@ -38,6 +38,12 @@
   align-items: flex-start;
   position: relative;
   flex-shrink: 0;
+  cursor: grab;
+  transition: all 0.3s ease-in-out;
+}
+
+.header-cell:active {
+  cursor: grabbing;
 }
 
 .header-label {
@@ -300,4 +306,121 @@
 .resize-handle:active {
   background: #667eea;
   opacity: 0.5;
+}
+
+/* ===================================
+   Drag-and-Drop Column Reordering Styles
+   =================================== */
+
+/* Drag Handle Icon (Six Dots) */
+.drag-handle {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.drag-handle svg {
+  fill: #9ca3af;
+}
+
+/* Show drag handle on header hover */
+.header-cell:hover .drag-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drag-handle:hover svg {
+  fill: #667eea;
+}
+
+/* Adjust header label to make room for drag handle */
+.header-cell:hover .header-label {
+  margin-left: 20px;
+  transition: margin-left 0.2s ease;
+}
+
+/* Dragging State - Column being dragged */
+.header-cell.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  z-index: 100;
+  background: #f9fafb;
+}
+
+/* Drag Over State - Column being hovered during drag */
+.header-cell.drag-over {
+  background: #ede9fe;
+  border-color: #667eea;
+}
+
+/* Insertion Indicator - Vertical line showing drop position */
+.insertion-indicator {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #667eea;
+  z-index: 200;
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.5);
+  animation: pulse-indicator 1s ease-in-out infinite;
+}
+
+@keyframes pulse-indicator {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Drop Zone - Far right area before Cols button */
+.drop-zone {
+  min-width: 40px;
+  background: transparent;
+  border: 2px dashed transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.drop-zone.drop-zone-active {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  min-width: 60px;
+}
+
+/* Column selector cell should not be draggable */
+.column-selector-cell {
+  cursor: default !important;
+}
+
+.column-selector-cell .drag-handle {
+  display: none;
+}
+
+/* Smooth transitions for column reordering */
+.header-cell,
+.row-cell {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Prevent text selection during drag */
+.header-cell.dragging,
+.header-cell.dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
