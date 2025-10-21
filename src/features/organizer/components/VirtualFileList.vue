@@ -1,0 +1,204 @@
+<template>
+  <div class="virtual-file-list">
+    <!-- Table Header (Sticky) -->
+    <div class="file-list-header">
+      <div class="file-list-header-cell file-list-header-cell--file-type">File Type</div>
+      <div class="file-list-header-cell file-list-header-cell--file-name">File Name</div>
+      <div class="file-list-header-cell file-list-header-cell--file-size">File Size</div>
+      <div class="file-list-header-cell file-list-header-cell--date">Document Date</div>
+      <div class="file-list-header-cell file-list-header-cell--privilege">Privilege</div>
+      <div class="file-list-header-cell file-list-header-cell--description">Description</div>
+      <div class="file-list-header-cell file-list-header-cell--tags">Document Type</div>
+      <div class="file-list-header-cell file-list-header-cell--tags">Author</div>
+      <div class="file-list-header-cell file-list-header-cell--tags">Custodian</div>
+    </div>
+
+    <!-- Virtual Scrolling Container -->
+    <div class="file-list-body">
+      <!-- Loading State -->
+      <div v-if="loading" class="file-list-loading">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading files...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="!files || files.length === 0" class="file-list-empty">
+        <div class="empty-icon">📁</div>
+        <p class="empty-text">No files to display</p>
+        <p class="empty-subtext">Upload files or adjust your filters</p>
+      </div>
+
+      <!-- Virtual Scroller -->
+      <RecycleScroller
+        v-else
+        :items="files"
+        :item-size="48"
+        :buffer="200"
+        key-field="id"
+        class="file-scroller"
+        v-slot="{ item, index }"
+      >
+        <FileListRow :file="item" :index="index" @click="handleRowClick" />
+      </RecycleScroller>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { RecycleScroller } from 'vue-virtual-scroller';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
+import FileListRow from './FileListRow.vue';
+
+defineProps({
+  files: {
+    type: Array,
+    default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const emit = defineEmits(['row-click']);
+
+function handleRowClick(file) {
+  emit('row-click', file);
+}
+</script>
+
+<style scoped>
+.virtual-file-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header Styles */
+.file-list-header {
+  display: grid;
+  grid-template-columns:
+    80px /* File Type */
+    minmax(200px, 2fr) /* File Name */
+    100px /* File Size */
+    120px /* Document Date */
+    140px /* Privilege */
+    minmax(150px, 2fr) /* Description */
+    minmax(120px, 1.5fr) /* Document Type */
+    minmax(120px, 1.5fr) /* Author */
+    minmax(120px, 1.5fr); /* Custodian */
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-list-header-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Body Container */
+.file-list-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Virtual Scroller */
+.file-scroller {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar styling */
+.file-scroller::-webkit-scrollbar {
+  width: 8px;
+}
+
+.file-scroller::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.file-scroller::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.file-scroller::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Loading State */
+.file-list-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Empty State */
+.file-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #6b7280;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.empty-subtext {
+  font-size: 14px;
+  color: #9ca3af;
+}
+</style>
