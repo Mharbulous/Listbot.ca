@@ -4,41 +4,53 @@
     <div ref="scrollContainer" class="scroll-container">
       <!-- Sticky Table Header -->
       <div class="table-mockup-header">
-        <div class="header-cell" style="width: 80px">
+        <div class="header-cell" :style="{ width: columnWidths.fileType + 'px' }">
           <span class="header-label">File Type</span>
+          <div class="resize-handle" @mousedown="startResize('fileType', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 300px">
+        <div class="header-cell" :style="{ width: columnWidths.fileName + 'px' }">
           <span class="header-label">File Name</span>
+          <div class="resize-handle" @mousedown="startResize('fileName', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 100px">
+        <div class="header-cell" :style="{ width: columnWidths.size + 'px' }">
           <span class="header-label">Size</span>
+          <div class="resize-handle" @mousedown="startResize('size', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 120px">
+        <div class="header-cell" :style="{ width: columnWidths.date + 'px' }">
           <span class="header-label">Date</span>
+          <div class="resize-handle" @mousedown="startResize('date', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 140px">
+        <div class="header-cell" :style="{ width: columnWidths.privilege + 'px' }">
           <span class="header-label">Privilege</span>
+          <div class="resize-handle" @mousedown="startResize('privilege', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 250px">
+        <div class="header-cell" :style="{ width: columnWidths.description + 'px' }">
           <span class="header-label">Description</span>
+          <div class="resize-handle" @mousedown="startResize('description', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 200px">
+        <div class="header-cell" :style="{ width: columnWidths.documentType + 'px' }">
           <span class="header-label">Document Type</span>
+          <div class="resize-handle" @mousedown="startResize('documentType', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 180px">
+        <div class="header-cell" :style="{ width: columnWidths.author + 'px' }">
           <span class="header-label">Author</span>
+          <div class="resize-handle" @mousedown="startResize('author', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 180px">
+        <div class="header-cell" :style="{ width: columnWidths.custodian + 'px' }">
           <span class="header-label">Custodian</span>
+          <div class="resize-handle" @mousedown="startResize('custodian', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 150px">
+        <div class="header-cell" :style="{ width: columnWidths.createdDate + 'px' }">
           <span class="header-label">Created Date</span>
+          <div class="resize-handle" @mousedown="startResize('createdDate', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 150px">
+        <div class="header-cell" :style="{ width: columnWidths.modifiedDate + 'px' }">
           <span class="header-label">Modified Date</span>
+          <div class="resize-handle" @mousedown="startResize('modifiedDate', $event)"></div>
         </div>
-        <div class="header-cell" style="width: 120px">
+        <div class="header-cell" :style="{ width: columnWidths.status + 'px' }">
           <span class="header-label">Status</span>
+          <div class="resize-handle" @mousedown="startResize('status', $event)"></div>
         </div>
         <div class="header-cell column-selector-cell">
           <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
@@ -87,24 +99,24 @@
       <div class="table-mockup-body">
         <!-- Sample Rows (50+ to ensure vertical scrolling) -->
         <div v-for="i in 50" :key="i" class="table-mockup-row" :class="{ even: i % 2 === 0 }">
-          <div class="row-cell" style="width: 80px">
+          <div class="row-cell" :style="{ width: columnWidths.fileType + 'px' }">
             <span class="badge badge-pdf">PDF</span>
           </div>
-          <div class="row-cell" style="width: 300px">contract_{{ i }}_2024.pdf</div>
-          <div class="row-cell" style="width: 100px">{{ (Math.random() * 5).toFixed(1) }}MB</div>
-          <div class="row-cell" style="width: 120px">2024-10-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" style="width: 140px">
+          <div class="row-cell" :style="{ width: columnWidths.fileName + 'px' }">contract_{{ i }}_2024.pdf</div>
+          <div class="row-cell" :style="{ width: columnWidths.size + 'px' }">{{ (Math.random() * 5).toFixed(1) }}MB</div>
+          <div class="row-cell" :style="{ width: columnWidths.date + 'px' }">2024-10-{{ String(i).padStart(2, '0') }}</div>
+          <div class="row-cell" :style="{ width: columnWidths.privilege + 'px' }">
             <span class="badge badge-privilege">Privileged</span>
           </div>
-          <div class="row-cell" style="width: 250px">Sample document description text...</div>
-          <div class="row-cell" style="width: 200px">
+          <div class="row-cell" :style="{ width: columnWidths.description + 'px' }">Sample document description text...</div>
+          <div class="row-cell" :style="{ width: columnWidths.documentType + 'px' }">
             <span class="badge badge-doctype">Contract</span>
           </div>
-          <div class="row-cell" style="width: 180px">John Smith</div>
-          <div class="row-cell" style="width: 180px">Legal Dept.</div>
-          <div class="row-cell" style="width: 150px">2024-09-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" style="width: 150px">2024-10-{{ String(i).padStart(2, '0') }}</div>
-          <div class="row-cell" style="width: 120px">
+          <div class="row-cell" :style="{ width: columnWidths.author + 'px' }">John Smith</div>
+          <div class="row-cell" :style="{ width: columnWidths.custodian + 'px' }">Legal Dept.</div>
+          <div class="row-cell" :style="{ width: columnWidths.createdDate + 'px' }">2024-09-{{ String(i).padStart(2, '0') }}</div>
+          <div class="row-cell" :style="{ width: columnWidths.modifiedDate + 'px' }">2024-10-{{ String(i).padStart(2, '0') }}</div>
+          <div class="row-cell" :style="{ width: columnWidths.status + 'px' }">
             <span class="badge badge-status">Active</span>
           </div>
         </div>
@@ -124,6 +136,119 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
+
+// Column resize constants
+const MIN_COLUMN_WIDTH = 50;
+const MAX_COLUMN_WIDTH = 500;
+const STORAGE_KEY = 'analyze-column-widths';
+
+// Default column widths
+const defaultColumnWidths = {
+  fileType: 80,
+  fileName: 300,
+  size: 100,
+  date: 120,
+  privilege: 140,
+  description: 250,
+  documentType: 200,
+  author: 180,
+  custodian: 180,
+  createdDate: 150,
+  modifiedDate: 150,
+  status: 120
+};
+
+// Reactive column widths
+const columnWidths = ref({ ...defaultColumnWidths });
+
+// Resize state
+const resizeState = ref({
+  isResizing: false,
+  columnKey: null,
+  startX: 0,
+  startWidth: 0
+});
+
+// Load column widths from localStorage
+const loadColumnWidths = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      columnWidths.value = { ...defaultColumnWidths, ...parsed };
+    }
+  } catch (error) {
+    console.error('Error loading column widths:', error);
+  }
+};
+
+// Save column widths to localStorage
+const saveColumnWidths = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(columnWidths.value));
+  } catch (error) {
+    console.error('Error saving column widths:', error);
+  }
+};
+
+// Start column resize
+const startResize = (columnKey, event) => {
+  resizeState.value = {
+    isResizing: true,
+    columnKey,
+    startX: event.pageX,
+    startWidth: columnWidths.value[columnKey]
+  };
+
+  // Prevent text selection during drag
+  event.preventDefault();
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'col-resize';
+};
+
+// Handle column resize
+const handleResize = (event) => {
+  if (!resizeState.value.isResizing) return;
+
+  const delta = event.pageX - resizeState.value.startX;
+  const newWidth = resizeState.value.startWidth + delta;
+
+  // Apply min/max constraints
+  const constrainedWidth = Math.max(
+    MIN_COLUMN_WIDTH,
+    Math.min(MAX_COLUMN_WIDTH, newWidth)
+  );
+
+  columnWidths.value[resizeState.value.columnKey] = constrainedWidth;
+};
+
+// End column resize
+const endResize = () => {
+  if (resizeState.value.isResizing) {
+    saveColumnWidths();
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  }
+
+  resizeState.value = {
+    isResizing: false,
+    columnKey: null,
+    startX: 0,
+    startWidth: 0
+  };
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  loadColumnWidths();
+  document.addEventListener('mousemove', handleResize);
+  document.addEventListener('mouseup', endResize);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleResize);
+  document.removeEventListener('mouseup', endResize);
+});
 </script>
 
 <style scoped>
@@ -402,5 +527,27 @@ const scrollContainer = ref(null);
 
 .scroll-container::-webkit-scrollbar-corner {
   background: #f3f4f6;
+}
+
+/* Column Resize Handle */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 1;
+}
+
+.resize-handle:hover {
+  background: #667eea;
+  opacity: 0.3;
+}
+
+.resize-handle:active {
+  background: #667eea;
+  opacity: 0.5;
 }
 </style>
