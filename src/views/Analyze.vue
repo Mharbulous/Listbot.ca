@@ -6,69 +6,55 @@
       <div class="table-mockup-header">
         <div class="header-cell" style="width: 80px">
           <span class="header-label">File Type</span>
-          <div class="dimension-label">80px</div>
         </div>
         <div class="header-cell" style="width: 300px">
           <span class="header-label">File Name</span>
-          <div class="dimension-label">minmax(200px, 2fr)</div>
         </div>
         <div class="header-cell" style="width: 100px">
           <span class="header-label">Size</span>
-          <div class="dimension-label">100px</div>
         </div>
         <div class="header-cell" style="width: 120px">
           <span class="header-label">Date</span>
-          <div class="dimension-label">120px</div>
         </div>
         <div class="header-cell" style="width: 140px">
           <span class="header-label">Privilege</span>
-          <div class="dimension-label">140px</div>
         </div>
         <div class="header-cell" style="width: 250px">
           <span class="header-label">Description</span>
-          <div class="dimension-label">minmax(150px, 2fr)</div>
         </div>
         <div class="header-cell" style="width: 200px">
           <span class="header-label">Document Type</span>
-          <div class="dimension-label">minmax(120px, 1.5fr)</div>
         </div>
         <div class="header-cell" style="width: 180px">
           <span class="header-label">Author</span>
-          <div class="dimension-label">minmax(120px, 1.5fr)</div>
         </div>
         <div class="header-cell" style="width: 180px">
           <span class="header-label">Custodian</span>
-          <div class="dimension-label">minmax(120px, 1.5fr)</div>
         </div>
         <div class="header-cell" style="width: 150px">
           <span class="header-label">Created Date</span>
-          <div class="dimension-label">120px</div>
         </div>
         <div class="header-cell" style="width: 150px">
           <span class="header-label">Modified Date</span>
-          <div class="dimension-label">120px</div>
         </div>
         <div class="header-cell" style="width: 120px">
           <span class="header-label">Status</span>
-          <div class="dimension-label">120px</div>
         </div>
         <div class="header-cell column-selector-cell">
           <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
             <span>Cols</span>
             <span class="dropdown-icon">▼</span>
           </button>
-          <div class="annotation">Column Selector</div>
         </div>
 
         <!-- Column Selector Popover (Mockup) -->
         <div v-if="showColumnSelector" class="column-selector-popover">
-          <div class="popover-header">Column Visibility</div>
+          <div class="popover-header">Show/Hide Columns</div>
           <label class="column-option">
             <input type="checkbox" checked /> File Type
           </label>
-          <label class="column-option required">
-            <input type="checkbox" checked disabled /> File Name
-            <span class="required-badge">required</span>
+          <label class="column-option">
+            <input type="checkbox" checked /> File Name
           </label>
           <label class="column-option">
             <input type="checkbox" checked /> File Size
@@ -122,16 +108,11 @@
             <span class="badge badge-status">Active</span>
           </div>
         </div>
+      </div>
 
-        <!-- Virtualization Note -->
-        <div class="virtualization-note">
-          <div class="note-icon">⚡</div>
-          <div class="note-content">
-            <strong>Virtual Scrolling Active</strong>
-            <p>Only ~20 rows rendered at once (10,000+ row support)</p>
-            <p>Columns can also be virtualized if needed</p>
-          </div>
-        </div>
+      <!-- Footer with document count -->
+      <div class="table-footer">
+        <span>Total Documents: 50</span>
       </div>
 
     </div>
@@ -194,13 +175,6 @@ const scrollContainer = ref(null);
   color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.dimension-label {
-  font-size: 10px;
-  color: #9ca3af;
-  margin-top: 4px;
-  font-family: monospace;
 }
 
 .column-selector-cell {
@@ -396,38 +370,15 @@ const scrollContainer = ref(null);
   color: #065f46;
 }
 
-/* Virtualization Note */
-.virtualization-note {
-  margin: 40px 20px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-  border: 2px dashed #667eea;
-  border-radius: 8px;
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  max-width: 800px;
-}
-
-.note-icon {
-  font-size: 32px;
-}
-
-.note-content {
-  flex: 1;
-}
-
-.note-content strong {
-  display: block;
-  color: #667eea;
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-
-.note-content p {
-  margin: 4px 0;
-  font-size: 13px;
-  color: #6b7280;
+/* Table Footer */
+.table-footer {
+  background: #1e293b; /* Dark blue slate */
+  color: white;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-top: 2px solid #0f172a;
+  min-width: 2070px; /* Match total width of all table columns */
 }
 
 /* Custom scrollbar styling for scroll container */
