@@ -60,7 +60,13 @@
         </div>
 
         <!-- Column Selector Popover (Mockup) -->
-        <div v-if="showColumnSelector" class="column-selector-popover">
+        <div
+          v-if="showColumnSelector"
+          ref="columnSelectorPopover"
+          class="column-selector-popover"
+          tabindex="0"
+          @focusout="handleFocusOut"
+        >
           <div class="popover-header">Show/Hide Columns</div>
           <label class="column-option">
             <input type="checkbox" checked /> File Type
@@ -132,10 +138,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
+const columnSelectorPopover = ref(null);
 
 // Column resize constants
 const MIN_COLUMN_WIDTH = 50;
@@ -260,6 +267,22 @@ const totalTableWidth = computed(() => {
   return Object.values(columnWidths.value).reduce((sum, width) => sum + width, 0);
 });
 
+// Auto-focus popover when it opens
+watch(showColumnSelector, async (isOpen) => {
+  if (isOpen) {
+    await nextTick();
+    columnSelectorPopover.value?.focus();
+  }
+});
+
+// Handle focus leaving the popover
+const handleFocusOut = (event) => {
+  // Only close if focus is leaving the popover entirely (not moving to a child element)
+  if (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget)) {
+    showColumnSelector.value = false;
+  }
+};
+
 // Lifecycle hooks
 onMounted(() => {
   loadColumnWidths();
@@ -379,6 +402,11 @@ onUnmounted(() => {
   min-width: 220px;
   z-index: 1000;
   margin-top: 8px;
+  outline: none; /* Remove default focus outline since we have custom border */
+}
+
+.column-selector-popover:focus {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
 
 .popover-header {
