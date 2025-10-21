@@ -158,3 +158,44 @@ export function generateGridTemplate(columns) {
 
   return columns.map((col) => col.width).join(' ');
 }
+
+/**
+ * Calculate minimum table width from column configurations
+ * Extracts minimum values from minmax() and sums fixed widths
+ */
+export function calculateMinimumTableWidth(columns) {
+  if (!columns || columns.length === 0) {
+    return 0;
+  }
+
+  // Extract minimum width from each column
+  const columnWidths = columns.map((col) => {
+    const width = col.width;
+
+    // Handle minmax() syntax: extract the first value
+    const minmaxMatch = width.match(/minmax\(([^,]+),/);
+    if (minmaxMatch) {
+      return parseInt(minmaxMatch[1], 10);
+    }
+
+    // Handle fixed pixel values
+    const pxMatch = width.match(/(\d+)px/);
+    if (pxMatch) {
+      return parseInt(pxMatch[1], 10);
+    }
+
+    // Default fallback for other values
+    return 150;
+  });
+
+  // Sum all column widths
+  const totalColumnWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+
+  // Add gaps between columns (8px each)
+  const gapWidth = (columns.length - 1) * 8;
+
+  // Add padding (16px on each side)
+  const paddingWidth = 32;
+
+  return totalColumnWidth + gapWidth + paddingWidth;
+}

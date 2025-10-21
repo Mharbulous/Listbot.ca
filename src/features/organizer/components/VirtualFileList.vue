@@ -1,7 +1,7 @@
 <template>
-  <div class="virtual-file-list">
+  <div class="virtual-file-list" :style="{ minWidth: minimumTableWidth }">
     <!-- Table Header (Sticky) -->
-    <div class="file-list-header" :style="{ gridTemplateColumns: gridTemplateColumns }">
+    <div class="file-list-header" :style="{ gridTemplateColumns: gridTemplateColumns, minWidth: minimumTableWidth }">
       <div
         v-for="column in columns"
         :key="column.key"
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Virtual Scrolling Container -->
-    <div class="file-list-body">
+    <div class="file-list-body" :style="{ minWidth: minimumTableWidth }">
       <!-- Loading State -->
       <div v-if="loading" class="file-list-loading">
         <div class="loading-spinner"></div>
@@ -35,9 +35,10 @@
         :buffer="200"
         key-field="id"
         class="file-scroller"
+        :style="{ minWidth: minimumTableWidth }"
         v-slot="{ item, index }"
       >
-        <FileListRow :file="item" :index="index" :columns="columns" @click="handleRowClick" />
+        <FileListRow :file="item" :index="index" :columns="columns" :min-width="minimumTableWidth" @click="handleRowClick" />
       </RecycleScroller>
     </div>
   </div>
@@ -48,7 +49,7 @@ import { computed } from 'vue';
 import { RecycleScroller } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import FileListRow from './FileListRow.vue';
-import { generateGridTemplate } from '@/features/organizer/config/fileListColumns';
+import { generateGridTemplate, calculateMinimumTableWidth } from '@/features/organizer/config/fileListColumns';
 
 const props = defineProps({
   files: {
@@ -74,6 +75,13 @@ const gridTemplateColumns = computed(() => {
   return generateGridTemplate(props.columns);
 });
 
+/**
+ * Calculate minimum table width to ensure horizontal scrolling
+ */
+const minimumTableWidth = computed(() => {
+  return `${calculateMinimumTableWidth(props.columns)}px`;
+});
+
 function handleRowClick(file) {
   emit('row-click', file);
 }
@@ -87,7 +95,6 @@ function handleRowClick(file) {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden;
 }
 
 /* Header Styles */
@@ -117,19 +124,29 @@ function handleRowClick(file) {
 .file-list-body {
   flex: 1;
   position: relative;
-  overflow: hidden;
 }
 
 /* Virtual Scroller */
 .file-scroller {
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
+}
+
+/* Override vue-virtual-scroller width constraints for horizontal scrolling */
+.file-scroller :deep(.vue-recycle-scroller__item-wrapper) {
+  width: auto !important;
+  min-width: 100%;
+}
+
+.file-scroller :deep(.vue-recycle-scroller__item-view) {
+  width: auto !important;
 }
 
 /* Custom scrollbar styling */
 .file-scroller::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .file-scroller::-webkit-scrollbar-track {

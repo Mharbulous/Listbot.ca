@@ -2,7 +2,7 @@
   <div
     class="file-list-row"
     :class="{ 'file-list-row--hover': isHovered, 'file-list-row--even': isEven }"
-    :style="{ gridTemplateColumns: gridTemplateColumns }"
+    :style="{ gridTemplateColumns: gridTemplateColumns, minWidth: minWidth }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @click="handleClick"
@@ -47,6 +47,10 @@ const props = defineProps({
   columns: {
     type: Array,
     required: true,
+  },
+  minWidth: {
+    type: String,
+    default: 'auto',
   },
 });
 
