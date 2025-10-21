@@ -1,5 +1,5 @@
 <template>
-  <v-menu offset-y>
+  <v-menu offset-y :close-on-content-click="false">
     <template v-slot:activator="{ props: menuProps }">
       <v-btn v-bind="menuProps" variant="outlined" size="small" prepend-icon="mdi-view-column">
         Columns
@@ -13,7 +13,7 @@
       <v-card-title class="text-subtitle-2 d-flex align-center justify-space-between">
         <span>Show/Hide Columns</span>
         <v-btn size="x-small" variant="text" color="primary" @click="handleResetToDefaults">
-          Reset
+          Show All
         </v-btn>
       </v-card-title>
 
@@ -34,36 +34,10 @@
 
             <v-list-item-title class="text-body-2">
               {{ column.title }}
-              <v-chip
-                v-if="isColumnRequired(column.key)"
-                size="x-small"
-                color="grey"
-                variant="text"
-                class="ml-1"
-              >
-                Required
-              </v-chip>
             </v-list-item-title>
-
-            <template v-slot:append>
-              <v-tooltip location="left">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <v-icon v-bind="tooltipProps" size="small" color="grey-lighten-1">
-                    mdi-information-outline
-                  </v-icon>
-                </template>
-                <span>{{ column.description }}</span>
-              </v-tooltip>
-            </template>
           </v-list-item>
         </v-list>
       </v-card-text>
-
-      <v-divider></v-divider>
-
-      <v-card-actions class="text-caption text-grey-darken-1 px-4 py-2">
-        <span>{{ visibleCount }} of {{ totalCount }} columns visible</span>
-      </v-card-actions>
     </v-card>
   </v-menu>
 </template>

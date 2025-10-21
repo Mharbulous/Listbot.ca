@@ -25,7 +25,7 @@ export const FILE_LIST_COLUMNS = [
     renderer: 'text',
     sortable: true,
     visible: true,
-    required: true, // File name is always required
+    required: false,
     align: 'left',
     description: 'Name of the file',
     rendererProps: {
