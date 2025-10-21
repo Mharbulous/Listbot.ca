@@ -108,7 +108,7 @@
           <div class="row-cell" :style="{ width: columnWidths.privilege + 'px' }">
             <span class="badge badge-privilege">Privileged</span>
           </div>
-          <div class="row-cell" :style="{ width: columnWidths.description + 'px' }">Sample document description text...</div>
+          <div class="row-cell" :style="{ width: columnWidths.description + 'px' }">{{ getDescription(i) }}</div>
           <div class="row-cell" :style="{ width: columnWidths.documentType + 'px' }">
             <span class="badge badge-doctype">Contract</span>
           </div>
@@ -123,7 +123,7 @@
       </div>
 
       <!-- Footer with document count -->
-      <div class="table-footer">
+      <div class="table-footer" :style="{ minWidth: totalTableWidth + 'px' }">
         <span>Total Documents: 50</span>
       </div>
 
@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
@@ -237,6 +237,28 @@ const endResize = () => {
     startWidth: 0
   };
 };
+
+// Generate varied descriptions for testing
+const getDescription = (index) => {
+  const descriptions = [
+    'Initial consultation agreement outlining scope of legal services and fee structure for corporate merger transaction',
+    'Amendment to service agreement modifying payment terms and deliverable schedules',
+    'Comprehensive quarterly financial report including income statements, balance sheets, and cash flow analysis',
+    'Internal memorandum regarding compliance requirements for upcoming regulatory audit',
+    'Client correspondence discussing strategy for pending litigation matter with multiple defendants',
+    'Draft settlement agreement for intellectual property dispute involving patent infringement claims',
+    'Meeting minutes from board of directors quarterly review session covering strategic initiatives',
+    'Due diligence report analyzing potential risks and liabilities for proposed acquisition target',
+    'Employment contract with non-compete and confidentiality provisions for senior executive position',
+    'Research memorandum analyzing recent case law developments affecting securities regulations'
+  ];
+  return descriptions[index % descriptions.length];
+};
+
+// Calculate total table width dynamically
+const totalTableWidth = computed(() => {
+  return Object.values(columnWidths.value).reduce((sum, width) => sum + width, 0);
+});
 
 // Lifecycle hooks
 onMounted(() => {
@@ -503,7 +525,7 @@ onUnmounted(() => {
   font-size: 14px;
   font-weight: 500;
   border-top: 2px solid #0f172a;
-  min-width: 2070px; /* Match total width of all table columns */
+  /* min-width is set dynamically via inline style */
 }
 
 /* Custom scrollbar styling for scroll container */
