@@ -143,7 +143,7 @@
       </div>
 
       <!-- Footer with document count -->
-      <div class="table-footer" :style="{ minWidth: totalTableWidth + 'px' }">
+      <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
         <span>Total Documents: 50</span>
       </div>
 
@@ -188,6 +188,14 @@ const {
 // Compute visible columns by filtering ordered columns
 const visibleColumns = computed(() => {
   return orderedColumns.value.filter(col => isColumnVisible(col.key));
+});
+
+// Column selector cell width constant
+const COLUMN_SELECTOR_WIDTH = 100;
+
+// Compute total footer width (includes column selector width)
+const totalFooterWidth = computed(() => {
+  return totalTableWidth.value + COLUMN_SELECTOR_WIDTH;
 });
 
 // Compute dynamic table width including ordered columns
