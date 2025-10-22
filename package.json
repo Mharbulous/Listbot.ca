@@ -20,6 +20,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "@mdi/font": "^7.4.47",
+    "@tanstack/vue-virtual": "^3.13.12",
     "@vueuse/core": "^13.7.0",
     "element-plus": "^2.11.1",
     "firebase": "^12.2.1",

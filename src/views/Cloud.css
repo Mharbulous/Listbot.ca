@@ -1,0 +1,395 @@
+/* Page Container - Full viewport height minus header */
+.analyze-mockup-page {
+  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  width: 100%; /* Full width of parent */
+  background: white;
+  overflow: hidden; /* Prevent page-level scrolling */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scroll Container - Fills available space, provides scrolling */
+.scroll-container {
+  flex: 1; /* Fill available vertical space */
+  overflow: auto; /* Browser's native scrollbars for both directions */
+  position: relative;
+  /* Remove width constraint to allow horizontal scrolling */
+  min-width: 0; /* Allow flex child to shrink below content size */
+}
+
+/* Sticky Header - Sticks within scroll container */
+.table-mockup-header {
+  position: sticky;
+  top: 0; /* Stick to top of scroll container */
+  z-index: 10;
+  display: flex;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  width: max-content; /* Expand to table width */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-cell {
+  padding: 18px 16px 12px 16px;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.column-selector-cell {
+  width: 100px;
+  background: #fef3c7;
+  border: 2px dashed #f59e0b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.column-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.column-selector-btn:hover {
+  background: #f9fafb;
+  border-color: #667eea;
+}
+
+.dropdown-icon {
+  font-size: 10px;
+}
+
+.annotation {
+  position: absolute;
+  bottom: 2px;
+  font-size: 9px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* Column Selector Popover */
+.column-selector-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  min-width: 220px;
+  z-index: 1000;
+  margin-top: 8px;
+  outline: none; /* Remove default focus outline since we have custom border */
+}
+
+.column-selector-popover:focus {
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+.popover-header {
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.column-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.column-option:hover {
+  background: #f3f4f6;
+}
+
+.column-option.required {
+  background: #fef3c7;
+}
+
+.required-badge {
+  margin-left: auto;
+  font-size: 10px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.popover-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Scroll Annotations */
+.scroll-annotation {
+  position: fixed;
+  background: #667eea;
+  color: white;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-annotation {
+  top: 90px;
+  right: 80px;
+}
+
+/* Table Body - Expands to content width */
+.table-mockup-body {
+  background: white;
+  width: max-content; /* Match header width exactly */
+}
+
+.table-mockup-row {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 48px;
+  align-items: center;
+  width: max-content; /* Ensure rows expand to full width */
+}
+
+.table-mockup-row.even {
+  background: #f9fafb;
+}
+
+.table-mockup-row:hover {
+  background: #f3f4f6;
+}
+
+.row-cell {
+  padding: 12px 16px;
+  border-right: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #374151;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-pdf {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-privilege {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-doctype {
+  background: #ddd6fe;
+  color: #5b21b6;
+}
+
+.badge-status {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Table Footer */
+.table-footer {
+  background: #1e293b; /* Dark blue slate */
+  color: white;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-top: 2px solid #0f172a;
+  /* min-width is set dynamically via inline style */
+}
+
+/* Custom scrollbar styling for scroll container */
+.scroll-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.scroll-container::-webkit-scrollbar-corner {
+  background: #f3f4f6;
+}
+
+/* Column Resize Handle */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 1;
+}
+
+.resize-handle:hover {
+  background: #667eea;
+  opacity: 0.3;
+}
+
+.resize-handle:active {
+  background: #667eea;
+  opacity: 0.5;
+}
+
+/* ===================================
+   Drag-and-Drop Column Reordering Styles
+   =================================== */
+
+/* Drag Handle Icon (Six Dots) - Positioned at top center */
+.drag-handle {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  fill: #9ca3af;
+}
+
+/* Show drag handle on header hover */
+.header-cell:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover svg {
+  fill: #667eea;
+}
+
+/* Dragging State - Column being dragged */
+.header-cell.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  z-index: 100;
+  background: #f9fafb;
+}
+
+/* Drag Gap - Shows where the dragged column is currently positioned */
+.header-cell.drag-gap,
+.row-cell.drag-gap {
+  opacity: 0.3;
+  background: #f3f4f6;
+  border: 2px dashed #9ca3af;
+  position: relative;
+}
+
+.header-cell.drag-gap::after,
+.row-cell.drag-gap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    #e5e7eb,
+    #e5e7eb 10px,
+    #f3f4f6 10px,
+    #f3f4f6 20px
+  );
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Column selector cell should not be draggable */
+.column-selector-cell {
+  cursor: default !important;
+}
+
+.column-selector-cell .drag-handle {
+  display: none;
+}
+
+/* Smooth transitions for row cells during column reordering */
+.row-cell {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Prevent text selection during drag */
+.header-cell.dragging,
+.header-cell.dragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

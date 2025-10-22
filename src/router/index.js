@@ -111,7 +111,7 @@ const router = createRouter({
     {
       path: '/cloud',
       name: 'cloud',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Cloud.vue'),
       meta: { requiresAuth: true, title: 'Cloud' },
     },
     {
