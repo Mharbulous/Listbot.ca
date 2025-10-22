@@ -6,7 +6,7 @@
       <div class="table-mockup-header">
         <!-- Dynamic Column Headers with Drag-and-Drop -->
         <div
-          v-for="(column, index) in orderedColumns"
+          v-for="(column, index) in visibleColumns"
           :key="column.key"
           class="header-cell"
           :class="{
@@ -69,35 +69,20 @@
           @focusout="handleFocusOut"
         >
           <div class="popover-header">Show/Hide Columns</div>
-          <label class="column-option">
-            <input type="checkbox" checked /> File Type
-          </label>
-          <label class="column-option">
-            <input type="checkbox" checked /> File Name
-          </label>
-          <label class="column-option">
-            <input type="checkbox" checked /> File Size
-          </label>
-          <label class="column-option">
-            <input type="checkbox" checked /> Document Date
-          </label>
-          <label class="column-option">
-            <input type="checkbox" checked /> Privilege
-          </label>
-          <label class="column-option">
-            <input type="checkbox" checked /> Description
-          </label>
-          <label class="column-option">
-            <input type="checkbox" /> Document Type
-          </label>
-          <label class="column-option">
-            <input type="checkbox" /> Author
-          </label>
-          <label class="column-option">
-            <input type="checkbox" /> Custodian
+          <label
+            v-for="column in orderedColumns"
+            :key="column.key"
+            class="column-option"
+          >
+            <input
+              type="checkbox"
+              :checked="isColumnVisible(column.key)"
+              @change="toggleColumnVisibility(column.key)"
+            />
+            {{ column.label }}
           </label>
           <div class="popover-footer">
-            <button class="reset-btn">Reset to Defaults</button>
+            <button class="reset-btn" @click="resetToDefaults">Reset to Defaults</button>
           </div>
         </div>
       </div>
@@ -108,7 +93,7 @@
         <div v-for="i in 50" :key="i" class="table-mockup-row" :class="{ even: i % 2 === 0 }">
           <!-- Dynamic cells matching column order -->
           <div
-            v-for="column in orderedColumns"
+            v-for="column in visibleColumns"
             :key="column.key"
             class="row-cell"
             :class="{ 'drag-gap': isDragGap(column.key) }"
@@ -167,6 +152,7 @@
 import { ref, nextTick, watch, computed } from 'vue';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
+import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { getDescription } from '@/utils/analyzeMockData';
 
 // Column selector and refs
@@ -188,6 +174,18 @@ const {
   isColumnDragging,
   isDragGap
 } = useColumnDragDrop();
+
+// Use column visibility composable
+const {
+  isColumnVisible,
+  toggleColumnVisibility,
+  resetToDefaults
+} = useColumnVisibility();
+
+// Compute visible columns by filtering ordered columns
+const visibleColumns = computed(() => {
+  return orderedColumns.value.filter(col => isColumnVisible(col.key));
+});
 
 // Compute dynamic table width including ordered columns
 const dynamicTableWidth = computed(() => {
