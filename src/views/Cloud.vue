@@ -87,70 +87,87 @@
         </div>
       </div>
 
-      <!-- Scrollable Table Body -->
+      <!-- Scrollable Table Body with Virtual Scrolling -->
       <div class="table-mockup-body">
-        <!-- Static rows (no virtualization yet) -->
+        <!-- Virtual container with dynamic height -->
         <div
-          v-for="(row, rowIndex) in mockData"
-          :key="row.id"
-          class="table-mockup-row"
-          :class="{ even: rowIndex % 2 === 0 }"
+          class="virtual-container"
+          :style="{
+            height: virtualTotalSize + 'px',
+            position: 'relative'
+          }"
         >
-          <!-- Spacer cell to align with Cols button header -->
-          <div class="row-cell column-selector-spacer" style="width: 100px"></div>
-
-          <!-- Dynamic cells matching column order -->
+          <!-- Virtual rows (only visible + overscan rendered) -->
           <div
-            v-for="column in visibleColumns"
-            :key="column.key"
-            class="row-cell"
-            :class="{ 'drag-gap': isDragGap(column.key) }"
-            :style="{ width: columnWidths[column.key] + 'px' }"
-            :data-column-key="column.key"
+            v-for="virtualItem in virtualItems"
+            :key="virtualItem.key"
+            class="table-mockup-row"
+            :class="{ even: virtualItem.index % 2 === 0 }"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: virtualItem.size + 'px',
+              transform: `translateY(${virtualItem.start}px)`
+            }"
           >
-            <!-- File Type -->
-            <span v-if="column.key === 'fileType'" class="badge" :class="getBadgeClass(row.fileType)">
-              {{ row.fileType }}
-            </span>
+            <!-- Spacer cell to align with Cols button header -->
+            <div class="row-cell column-selector-spacer" style="width: 100px"></div>
 
-            <!-- File Name -->
-            <template v-else-if="column.key === 'fileName'">{{ row.fileName }}</template>
+            <!-- Dynamic cells matching column order -->
+            <div
+              v-for="column in visibleColumns"
+              :key="column.key"
+              class="row-cell"
+              :class="{ 'drag-gap': isDragGap(column.key) }"
+              :style="{ width: columnWidths[column.key] + 'px' }"
+              :data-column-key="column.key"
+            >
+              <!-- File Type -->
+              <span v-if="column.key === 'fileType'" class="badge" :class="getBadgeClass(mockData[virtualItem.index].fileType)">
+                {{ mockData[virtualItem.index].fileType }}
+              </span>
 
-            <!-- Size -->
-            <template v-else-if="column.key === 'size'">{{ row.size }}</template>
+              <!-- File Name -->
+              <template v-else-if="column.key === 'fileName'">{{ mockData[virtualItem.index].fileName }}</template>
 
-            <!-- Date -->
-            <template v-else-if="column.key === 'date'">{{ row.date }}</template>
+              <!-- Size -->
+              <template v-else-if="column.key === 'size'">{{ mockData[virtualItem.index].size }}</template>
 
-            <!-- Privilege -->
-            <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">
-              {{ row.privilege }}
-            </span>
+              <!-- Date -->
+              <template v-else-if="column.key === 'date'">{{ mockData[virtualItem.index].date }}</template>
 
-            <!-- Description -->
-            <template v-else-if="column.key === 'description'">{{ row.description }}</template>
+              <!-- Privilege -->
+              <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">
+                {{ mockData[virtualItem.index].privilege }}
+              </span>
 
-            <!-- Document Type -->
-            <span v-else-if="column.key === 'documentType'" class="badge badge-doctype">
-              {{ row.documentType }}
-            </span>
+              <!-- Description -->
+              <template v-else-if="column.key === 'description'">{{ mockData[virtualItem.index].description }}</template>
 
-            <!-- Author -->
-            <template v-else-if="column.key === 'author'">{{ row.author }}</template>
+              <!-- Document Type -->
+              <span v-else-if="column.key === 'documentType'" class="badge badge-doctype">
+                {{ mockData[virtualItem.index].documentType }}
+              </span>
 
-            <!-- Custodian -->
-            <template v-else-if="column.key === 'custodian'">{{ row.custodian }}</template>
+              <!-- Author -->
+              <template v-else-if="column.key === 'author'">{{ mockData[virtualItem.index].author }}</template>
 
-            <!-- Created Date -->
-            <template v-else-if="column.key === 'createdDate'">{{ row.createdDate }}</template>
+              <!-- Custodian -->
+              <template v-else-if="column.key === 'custodian'">{{ mockData[virtualItem.index].custodian }}</template>
 
-            <!-- Modified Date -->
-            <template v-else-if="column.key === 'modifiedDate'">{{ row.modifiedDate }}</template>
+              <!-- Created Date -->
+              <template v-else-if="column.key === 'createdDate'">{{ mockData[virtualItem.index].createdDate }}</template>
 
-            <!-- Status -->
-            <span v-else-if="column.key === 'status'" class="badge badge-status">
-              {{ row.status }}
-            </span>
+              <!-- Modified Date -->
+              <template v-else-if="column.key === 'modifiedDate'">{{ mockData[virtualItem.index].modifiedDate }}</template>
+
+              <!-- Status -->
+              <span v-else-if="column.key === 'status'" class="badge badge-status">
+                {{ mockData[virtualItem.index].status }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -165,10 +182,11 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, computed, onMounted } from 'vue';
+import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
+import { useVirtualTable } from '@/composables/useVirtualTable';
 import { generateCloudMockData } from '@/utils/cloudMockData';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 
@@ -204,6 +222,23 @@ const {
   toggleColumnVisibility,
   resetToDefaults
 } = useColumnVisibility();
+
+// Initialize virtual table (MUST be called during setup, not in onMounted)
+// scrollContainer.value is null initially - that's OK, virtualizer handles it
+const {
+  rowVirtualizer,
+  virtualItems,
+  virtualTotalSize,
+  scrollOffset,
+  virtualRange,
+  scrollMetrics
+} = useVirtualTable({
+  data: mockData,
+  scrollContainer,
+  estimateSize: 48,
+  overscan: 5,
+  enableSmoothScroll: true
+});
 
 // Compute visible columns by filtering ordered columns
 const visibleColumns = computed(() => {
@@ -245,6 +280,39 @@ const handleFocusOut = (event) => {
   }
 };
 
+// FPS monitoring
+let fpsFrameCount = 0;
+let fpsLastTime = performance.now();
+let fpsAnimationId = null;
+
+const measureFPS = () => {
+  fpsFrameCount++;
+  const currentTime = performance.now();
+  const elapsed = currentTime - fpsLastTime;
+
+  if (elapsed >= 1000) {
+    const fps = Math.round((fpsFrameCount / elapsed) * 1000);
+    console.log('[Cloud Table] Scroll FPS:', fps);
+    fpsFrameCount = 0;
+    fpsLastTime = currentTime;
+  }
+
+  fpsAnimationId = requestAnimationFrame(measureFPS);
+};
+
+// Start FPS monitoring on scroll
+const handleScroll = () => {
+  if (!fpsAnimationId) {
+    measureFPS();
+  }
+
+  // Log virtual range during scroll (throttled)
+  if (virtualItems.value.length > 0) {
+    console.log('[Cloud Table] Virtual range:', virtualRange.value);
+    console.log('[Cloud Table] Scroll metrics:', scrollMetrics.value);
+  }
+};
+
 // Component lifecycle
 onMounted(async () => {
   // Log initialization messages
@@ -264,14 +332,23 @@ onMounted(async () => {
   console.time('[Cloud Table] Data Generation');
 
   perfMonitor.start('Data Generation');
-  mockData.value = generateCloudMockData(100);
+  mockData.value = generateCloudMockData(); // Now generates 1,000 rows by default
   const dataGenMetrics = perfMonitor.end('Data Generation');
 
   console.log(`[Cloud Table] Generated ${mockData.value.length} rows`);
   console.timeEnd('[Cloud Table] Data Generation');
 
+  // Wait for DOM to be ready
+  await nextTick();
+
+  // Log virtualizer initialization info
+  console.log('[Cloud Table] Initializing row virtualizer...');
+  console.log('[Cloud Table] Total rows:', mockData.value.length);
+  console.log('[Cloud Table] Estimated row height:', 48);
+  console.log('[Cloud Table] Overscan:', 5);
+
   // Track initial render
-  console.log('[Cloud Table] Rendering static table...');
+  console.log('[Cloud Table] Rendering virtual table...');
   console.time('[Cloud Table] Initial Render');
 
   perfMonitor.start('Initial Render');
@@ -282,13 +359,70 @@ onMounted(async () => {
   const renderMetrics = perfMonitor.end('Initial Render');
   console.timeEnd('[Cloud Table] Initial Render');
 
-  // Count DOM nodes
+  // Debug: Check scroll container dimensions and virtual range
+  if (scrollContainer.value) {
+    const rect = scrollContainer.value.getBoundingClientRect();
+    console.log('[Cloud Table] Scroll container dimensions:', {
+      width: rect.width,
+      height: rect.height,
+      scrollHeight: scrollContainer.value.scrollHeight
+    });
+
+    // Log virtualizer state
+    console.log('[Cloud Table] Virtualizer state:', {
+      virtualTotalSize: virtualTotalSize.value,
+      virtualItemsCount: virtualItems.value.length,
+      virtualRange: virtualRange.value,
+      dataLength: mockData.value.length
+    });
+
+    // Wait for virtualizer to measure
+    await nextTick();
+    await nextTick(); // Extra tick to ensure virtualizer has measured
+
+    // Log virtual range after DOM updates
+    console.log('[Cloud Table] After DOM update:', {
+      virtualTotalSize: virtualTotalSize.value,
+      virtualItemsCount: virtualItems.value.length,
+      virtualRange: virtualRange.value
+    });
+  }
+
+  // Count DOM nodes AFTER measure (should be much less than total rows)
   const domNodeCount = document.querySelectorAll('.table-mockup-row').length;
-  console.log('[Cloud Table] DOM nodes created:', domNodeCount);
+  console.log('[Cloud Table] DOM nodes created after measure:', domNodeCount);
+  if (domNodeCount > 0) {
+    console.log('[Cloud Table] Virtual efficiency:', Math.round(mockData.value.length / domNodeCount) + 'x reduction');
+  } else {
+    console.warn('[Cloud Table] No DOM nodes rendered! Check virtualizer configuration.');
+  }
+
+  // Add scroll event listener for FPS monitoring
+  if (scrollContainer.value) {
+    let scrollTimeout;
+    scrollContainer.value.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScroll, 100); // Throttle logging
+    });
+  }
 
   // Log component mount time
   const mountTime = performance.now();
   console.log('[Cloud Table] Component mounted at:', mountTime.toFixed(2) + 'ms');
+
+  // Performance comparison
+  console.group('[Cloud Table] Performance Comparison');
+  console.log('Phase 1 (static 100 rows): ~20ms render, 100 DOM nodes');
+  console.log('Phase 2 (virtual 1,000 rows):', renderMetrics.duration.toFixed(2) + 'ms render,', domNodeCount, 'DOM nodes');
+  console.log('Improvement factor:', Math.round(mockData.value.length / domNodeCount) + 'x DOM node reduction');
+  console.groupEnd();
+});
+
+// Cleanup
+onUnmounted(() => {
+  if (fpsAnimationId) {
+    cancelAnimationFrame(fpsAnimationId);
+  }
 });
 </script>
 
