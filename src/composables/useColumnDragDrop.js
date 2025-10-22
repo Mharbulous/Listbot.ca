@@ -19,8 +19,7 @@ export function useColumnDragDrop() {
     draggedColumnWidth: 0,
     draggedStartIndex: null, // Original index when drag started
     currentInsertionIndex: null, // Current position in the reordered array
-    staticZones: [], // Frozen drop zones captured at drag start: [{key, rect, originalIndex}]
-    dragStartX: null // Initial mouse X position to determine drag direction
+    staticZones: [] // Frozen drop zones captured at drag start: [{key, rect, originalIndex}]
   });
 
   /**
@@ -61,20 +60,19 @@ export function useColumnDragDrop() {
   });
 
   /**
-   * Calculate insertion index using static drop zones with directional insertion
+   * Calculate insertion index using static drop zones ONLY
    * Zones are frozen at drag start and never move, preventing all flickering
+   *
+   * Key insight: We calculate the target index by counting how many zones should
+   * appear to the LEFT of the dragged column, based purely on ORIGINAL positions.
+   * This count never changes while hovering over the same zone, ensuring stability.
    *
    * @param {number} mouseX - Current mouse X position
    * @param {Array} staticZones - Frozen zones captured at drag start: [{key, rect, originalIndex}]
-   * @param {number} dragStartX - Initial mouse X position
-   * @returns {number} - New insertion index in the current column order
+   * @returns {number} - Target insertion index (stable, won't oscillate)
    */
-  const calculateInsertionIndex = (mouseX, staticZones, dragStartX) => {
-    const draggedKey = dragState.value.draggedColumnKey;
+  const calculateInsertionIndex = (mouseX, staticZones) => {
     const draggedStartIndex = dragState.value.draggedStartIndex;
-
-    // Determine drag direction
-    const dragDirection = mouseX < dragStartX ? 'left' : 'right';
 
     // Find which static zone contains the mouse
     const hoveredZone = staticZones.find(zone =>
@@ -83,26 +81,36 @@ export function useColumnDragDrop() {
 
     if (!hoveredZone) {
       // Mouse outside all zones - stay at current position
-      return columnOrder.value.indexOf(draggedKey);
+      return dragState.value.currentInsertionIndex ?? draggedStartIndex;
     }
 
     // Special case: hovering over the dragged column's original position
-    if (hoveredZone.key === draggedKey) {
-      // Restore to initial state
+    if (hoveredZone.originalIndex === draggedStartIndex) {
+      // Restore to initial position
       return draggedStartIndex;
     }
 
-    // Find where the hovered zone's column currently is in the reordered array
-    const hoveredCurrentIndex = columnOrder.value.indexOf(hoveredZone.key);
+    const hoveredOriginalIndex = hoveredZone.originalIndex;
 
-    // Directional insertion logic
-    if (dragDirection === 'left') {
-      // Insert BEFORE the hovered column
-      return hoveredCurrentIndex;
+    // Calculate target index by counting zones based on ORIGINAL positions only
+    // This count is STATIC and won't change when columns reorder
+    let targetIndex;
+
+    if (hoveredOriginalIndex < draggedStartIndex) {
+      // Dragging LEFT: Insert BEFORE hovered zone
+      // Count zones with originalIndex < hoveredOriginalIndex (excluding dragged column)
+      targetIndex = staticZones.filter(zone =>
+        zone.originalIndex < hoveredOriginalIndex
+      ).length;
     } else {
-      // Insert AFTER the hovered column
-      return hoveredCurrentIndex + 1;
+      // Dragging RIGHT: Insert AFTER hovered zone
+      // Count zones with originalIndex <= hoveredOriginalIndex (excluding dragged column)
+      targetIndex = staticZones.filter(zone =>
+        zone.originalIndex <= hoveredOriginalIndex && zone.originalIndex !== draggedStartIndex
+      ).length;
     }
+
+    return targetIndex;
   };
 
   /**
@@ -127,8 +135,7 @@ export function useColumnDragDrop() {
       draggedColumnWidth: headerCell ? headerCell.offsetWidth : 0,
       draggedStartIndex: startIndex,
       currentInsertionIndex: startIndex,
-      staticZones: staticZones,
-      dragStartX: event.clientX
+      staticZones: staticZones
     };
 
     // Set drag data
@@ -161,8 +168,7 @@ export function useColumnDragDrop() {
     // Calculate new insertion index using static zones
     const newIndex = calculateInsertionIndex(
       mouseX,
-      dragState.value.staticZones,
-      dragState.value.dragStartX
+      dragState.value.staticZones
     );
 
     // Only reorder if the index actually changed
@@ -215,8 +221,7 @@ export function useColumnDragDrop() {
       draggedColumnWidth: 0,
       draggedStartIndex: null,
       currentInsertionIndex: null,
-      staticZones: [],
-      dragStartX: null
+      staticZones: []
     };
   };
 
