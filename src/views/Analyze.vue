@@ -15,14 +15,17 @@
           }"
           :style="{ width: columnWidths[column.key] + 'px' }"
           :data-column-key="column.key"
-          draggable="true"
-          @dragstart="onDragStart(column.key, $event)"
           @dragover="onDragOver"
           @drop="onDrop"
-          @dragend="onDragEnd"
         >
           <!-- Drag Handle Icon (shown on hover) -->
-          <div class="drag-handle" title="Drag to reorder">
+          <div
+            class="drag-handle"
+            title="Drag to reorder"
+            draggable="true"
+            @dragstart="onDragStart(column.key, $event)"
+            @dragend="onDragEnd"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
               <!-- Top row - 6 dots -->
               <circle cx="3" cy="4" r="1" />

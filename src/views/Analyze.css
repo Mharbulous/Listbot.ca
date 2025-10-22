@@ -38,12 +38,7 @@
   align-items: flex-start;
   position: relative;
   flex-shrink: 0;
-  cursor: grab;
   transition: all 0.2s ease-in-out;
-}
-
-.header-cell:active {
-  cursor: grabbing;
 }
 
 .header-label {
@@ -321,8 +316,12 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   cursor: grab;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 2;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .drag-handle svg {
@@ -332,7 +331,6 @@
 /* Show drag handle on header hover */
 .header-cell:hover .drag-handle {
   opacity: 1;
-  pointer-events: auto;
 }
 
 .drag-handle:hover svg {
