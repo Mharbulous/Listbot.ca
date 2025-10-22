@@ -4,6 +4,14 @@
     <div ref="scrollContainer" class="scroll-container">
       <!-- Sticky Table Header -->
       <div class="table-mockup-header">
+        <!-- Column Selector Button (always at far left) -->
+        <div class="header-cell column-selector-cell">
+          <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
+            <span>Cols</span>
+            <span class="dropdown-icon">▼</span>
+          </button>
+        </div>
+
         <!-- Dynamic Column Headers with Drag-and-Drop -->
         <div
           v-for="(column, index) in visibleColumns"
@@ -52,14 +60,6 @@
           <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
         </div>
 
-        <!-- Column Selector Button (always at far right) -->
-        <div class="header-cell column-selector-cell">
-          <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
-            <span>Cols</span>
-            <span class="dropdown-icon">▼</span>
-          </button>
-        </div>
-
         <!-- Column Selector Popover (Mockup) -->
         <div
           v-if="showColumnSelector"
@@ -91,6 +91,9 @@
       <div class="table-mockup-body">
         <!-- Sample Rows (50+ to ensure vertical scrolling) -->
         <div v-for="i in 50" :key="i" class="table-mockup-row" :class="{ even: i % 2 === 0 }">
+          <!-- Spacer cell to align with Cols button header -->
+          <div class="row-cell column-selector-spacer" style="width: 100px"></div>
+
           <!-- Dynamic cells matching column order -->
           <div
             v-for="column in visibleColumns"
