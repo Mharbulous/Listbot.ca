@@ -201,7 +201,7 @@
   display: flex;
   border-bottom: 1px solid #e5e7eb;
   min-height: 48px;
-  align-items: center;
+  align-items: stretch; /* Changed from center to stretch - makes cells fill full row height */
   width: max-content; /* Ensure rows expand to full width */
   background: white; /* Explicit background for odd rows (needed for absolute positioning) */
 }
@@ -223,6 +223,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center; /* Center content vertically within the cell */
 }
 
 /* Badges */
