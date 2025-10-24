@@ -1,7 +1,7 @@
 <template>
   <div class="analyze-mockup-page" style="min-width: 0">
     <!-- Scrollable container fills viewport -->
-    <div ref="scrollContainer" class="scroll-container">
+    <div ref="scrollContainer" class="scroll-container" @dragover="onDragOver" @drop="onDrop">
       <!-- Sticky Table Header -->
       <div class="table-mockup-header">
         <!-- Column Selector Button (always at far left) -->
@@ -23,8 +23,6 @@
           }"
           :style="{ width: columnWidths[column.key] + 'px' }"
           :data-column-key="column.key"
-          @dragover="onDragOver"
-          @drop="onDrop"
         >
           <!-- Drag Handle Icon (shown on hover) -->
           <div
