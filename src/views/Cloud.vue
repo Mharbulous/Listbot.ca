@@ -311,7 +311,7 @@ const measureFPS = () => {
 
   if (elapsed >= 1000) {
     const fps = Math.round((fpsFrameCount / elapsed) * 1000);
-    console.log('[Cloud Table] Scroll FPS:', fps);
+    // FPS logging removed for production
     fpsFrameCount = 0;
     fpsLastTime = currentTime;
   }
@@ -325,11 +325,7 @@ const handleScroll = () => {
     measureFPS();
   }
 
-  // Log virtual range during scroll (throttled)
-  if (virtualItems.value.length > 0) {
-    console.log('[Cloud Table] Virtual range:', virtualRange.value);
-    console.log('[Cloud Table] Scroll metrics:', scrollMetrics.value);
-  }
+  // Virtual range logging removed for production
 };
 
 // Component lifecycle
@@ -369,7 +365,6 @@ onMounted(async () => {
       return;
     }
 
-    console.time('[Cloud Table] Data Fetch');
     const fetchStartTime = performance.now();
 
     perfMonitor.start('Data Fetch');
@@ -378,9 +373,6 @@ onMounted(async () => {
 
     const fetchEndTime = performance.now();
     fetchDuration = fetchEndTime - fetchStartTime;
-
-    console.log(`[Cloud Table] Fetched ${mockData.value.length} files from matter: ${matterId}`);
-    console.timeEnd('[Cloud Table] Data Fetch');
 
     isLoading.value = false;
 
@@ -395,7 +387,6 @@ onMounted(async () => {
   await nextTick();
 
   // Track initial render
-  console.time('[Cloud Table] Initial Render');
   const renderStartTime = performance.now();
 
   perfMonitor.start('Initial Render');
@@ -406,8 +397,6 @@ onMounted(async () => {
   perfMonitor.end('Initial Render');
   const renderEndTime = performance.now();
   renderDuration = renderEndTime - renderStartTime;
-
-  console.timeEnd('[Cloud Table] Initial Render');
 
   // Wait for virtualizer to measure
   if (scrollContainer.value) {

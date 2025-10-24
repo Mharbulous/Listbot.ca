@@ -14,9 +14,6 @@ import { db } from './firebase';
  * @returns {Promise<Array>} Array of file records formatted for Cloud table
  */
 export async function fetchFiles(firmId, matterId = 'general', maxResults = 10000) {
-  console.log('[Cloud Table] Fetching file data from Firestore...');
-  console.time('[Cloud Table] Firestore Query');
-
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
@@ -28,18 +25,6 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
     // Execute the query
     const querySnapshot = await getDocs(q);
-
-    console.timeEnd('[Cloud Table] Firestore Query');
-
-    // Log query statistics
-    const queryStats = {
-      documentsRead: querySnapshot.size,
-      fromCache: querySnapshot.metadata.fromCache,
-      hasPendingWrites: querySnapshot.metadata.hasPendingWrites
-    };
-
-    console.log('[Cloud Table] Files fetched:', querySnapshot.size);
-    console.log('[Cloud Table] Query stats:', queryStats);
 
     // Map Firestore documents to table format
     const files = [];
@@ -74,8 +59,6 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
         modifiedDate: formatDate(data.updatedAt)
       });
     });
-
-    console.log('[Cloud Table] Mapped', files.length, 'evidence documents to table format');
 
     return files;
 
