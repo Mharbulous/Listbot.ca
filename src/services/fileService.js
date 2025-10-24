@@ -49,7 +49,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
         // Placeholder fields (to be enhanced later with sourceMetadata)
         fileType: 'Unknown', // Will need sourceMetadata lookup
-        fileName: `File ${doc.id.substring(0, 8)}...`, // Will need sourceMetadata lookup
+        fileName: doc.id, // Full file hash (SHA-256)
         privilege: 'Unclassified',
         description: `${data.tagCount || 0} tags`,
         documentType: getDocumentTypeFromStage(data.processingStage),
