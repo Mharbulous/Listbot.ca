@@ -191,16 +191,23 @@
   width: max-content; /* Match header width exactly */
 }
 
+/* Virtual Container - Required for absolutely positioned rows */
+.virtual-container {
+  position: relative; /* Establishes positioning context for absolute children */
+  width: max-content; /* Match body width */
+}
+
 .table-mockup-row {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
   min-height: 48px;
   align-items: center;
   width: max-content; /* Ensure rows expand to full width */
+  background: white; /* Explicit background for odd rows (needed for absolute positioning) */
 }
 
 .table-mockup-row.even {
-  background: #f9fafb;
+  background: #f3f4f6; /* More visible gray for even rows (zebra pattern) - changed from #f9fafb for better visibility */
 }
 
 .table-mockup-row:hover {

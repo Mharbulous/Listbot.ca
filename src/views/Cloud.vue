@@ -118,9 +118,9 @@
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
               height: virtualItem.size + 'px',
-              transform: `translateY(${virtualItem.start}px)`
+              transform: `translateY(${virtualItem.start}px)`,
+              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white'
             }"
           >
             <!-- Spacer cell to align with Cols button header -->
