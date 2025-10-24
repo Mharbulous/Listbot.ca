@@ -203,14 +203,18 @@ function updateMousePosition(event) {
   }
 }
 
-// Add global mousemove listener on mount
+// Add global mousemove and drag listeners on mount
 onMounted(() => {
   window.addEventListener('mousemove', updateMousePosition);
+  window.addEventListener('drag', updateMousePosition);
+  window.addEventListener('dragover', updateMousePosition);
 });
 
-// Clean up listener on unmount
+// Clean up listeners on unmount
 onUnmounted(() => {
   window.removeEventListener('mousemove', updateMousePosition);
+  window.removeEventListener('drag', updateMousePosition);
+  window.removeEventListener('dragover', updateMousePosition);
 });
 </script>
 
