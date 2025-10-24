@@ -140,10 +140,10 @@ function generateFileRecord(index) {
 
 /**
  * Generate an array of mock file records
- * @param {number} count - Number of records to generate (default: 1000)
+ * @param {number} count - Number of records to generate (default: 10000)
  * @returns {Array} Array of mock file records
  */
-export function generateCloudMockData(count = 1000) {
+export function generateCloudMockData(count = 10000) {
   const records = [];
   for (let i = 0; i < count; i++) {
     records.push(generateFileRecord(i + 1));
