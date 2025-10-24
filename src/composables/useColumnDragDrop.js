@@ -105,10 +105,9 @@ export function useColumnDragDrop() {
     } else {
       // Dragging RIGHT: Insert AFTER hovered zone
       // Count zones with originalIndex <= hoveredOriginalIndex (excluding dragged column)
-      // Add 1 to shift insertion point to the right of the hovered column
       targetIndex = staticZones.filter(zone =>
         zone.originalIndex <= hoveredOriginalIndex && zone.originalIndex !== draggedStartIndex
-      ).length + 1;
+      ).length;
     }
 
     return targetIndex;
