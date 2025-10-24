@@ -138,6 +138,21 @@ export function useColumnDragDrop() {
       staticZones: staticZones
     };
 
+    // === DEBUGGING: Log column positions and drop zones ===
+    console.log('=== DRAG START DEBUG ===');
+    console.log('\nVisible Column Borders:');
+    headers.forEach((header, index) => {
+      const rect = header.getBoundingClientRect();
+      const key = header.getAttribute('data-column-key');
+      console.log(`  [${index}] ${key}: left=${rect.left.toFixed(1)}px, right=${rect.right.toFixed(1)}px`);
+    });
+
+    console.log('\nStatic Drop Zones (frozen at drag start):');
+    staticZones.forEach((zone, index) => {
+      console.log(`  [${index}] ${zone.key}: left=${zone.rect.left.toFixed(1)}px, right=${zone.rect.right.toFixed(1)}px (originalIndex: ${zone.originalIndex})`);
+    });
+    console.log('========================\n');
+
     // Set drag data
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', columnKey);
