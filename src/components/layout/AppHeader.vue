@@ -51,7 +51,14 @@
     </div>
 
     <!-- Right Section: User -->
-    <div class="flex items-center">
+    <div class="flex items-center gap-3">
+      <!-- Mouse X Position Debug Display -->
+      <div
+        class="px-3 py-1 bg-slate-100 border border-slate-300 rounded text-xs font-mono text-slate-700"
+      >
+        X: {{ mouseX }}px
+      </div>
+
       <div
         class="relative inline-block cursor-pointer outline-none group"
         tabindex="0"
@@ -117,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../core/stores/auth';
 import { useDocumentViewStore } from '../../stores/documentView';
@@ -131,6 +138,8 @@ const matterViewStore = useMatterViewStore();
 
 const isHoveringBanner = ref(false);
 const isHoveringCloseButton = ref(false);
+const mouseX = ref(0);
+let lastUpdateTime = 0;
 
 const menuLinks = [
   {
@@ -184,6 +193,25 @@ function navigateToMatter() {
     router.push(`/matters/${matterId}`);
   }
 }
+
+function updateMousePosition(event) {
+  const currentTime = Date.now();
+  // Throttle to 100ms
+  if (currentTime - lastUpdateTime >= 100) {
+    mouseX.value = event.clientX;
+    lastUpdateTime = currentTime;
+  }
+}
+
+// Add global mousemove listener on mount
+onMounted(() => {
+  window.addEventListener('mousemove', updateMousePosition);
+});
+
+// Clean up listener on unmount
+onUnmounted(() => {
+  window.removeEventListener('mousemove', updateMousePosition);
+});
 </script>
 
 <style scoped>
