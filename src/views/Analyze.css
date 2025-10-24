@@ -193,14 +193,13 @@
 
 .table-mockup-row {
   display: flex;
-  border-bottom: 1px solid #e5e7eb;
   min-height: 48px;
-  align-items: center;
+  align-items: stretch; /* Changed from center to stretch - makes cells fill full row height */
   width: max-content; /* Ensure rows expand to full width */
 }
 
 .table-mockup-row.even {
-  background: #f9fafb;
+  background: #f3f4f6; /* More visible gray for even rows (zebra pattern) - changed from #f9fafb for better visibility */
 }
 
 .table-mockup-row:hover {
@@ -210,12 +209,20 @@
 .row-cell {
   padding: 12px 16px;
   border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   font-size: 13px;
   color: #374151;
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center; /* Center content vertically within the cell */
+}
+
+.column-selector-spacer {
+  background: white !important; /* Override zebra pattern from parent row */
+  border-bottom: none; /* Remove bottom border from spacer column */
 }
 
 /* Badges */
