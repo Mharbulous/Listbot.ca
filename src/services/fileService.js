@@ -76,11 +76,11 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           fileHash: fileHash,
 
           // File properties that exist in evidence documents
-          size: formatFileSize(data.fileSize || 0),
+          size: data.fileSize ? formatFileSize(data.fileSize) : 'ERROR: Missing file size',
           date: formatDate(data.updatedAt),
 
           // Processing status
-          status: getStatusLabel(data.processingStage || 'uploaded'),
+          status: getStatusLabel(data.processingStage),
 
           // Tag information
           tagCount: data.tagCount || 0,
@@ -89,12 +89,12 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           fileName: sourceFileName,
 
           // Placeholder fields (to be enhanced later)
-          fileType: 'Unknown', // Will need sourceMetadata lookup
-          privilege: 'Unclassified',
-          description: `${data.tagCount || 0} tags`,
+          fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
+          privilege: 'ERROR: Privilege not available',
+          description: data.tagCount !== undefined ? `${data.tagCount} tags` : 'ERROR: Tag count not available',
           documentType: getDocumentTypeFromStage(data.processingStage),
-          author: 'Unknown',
-          custodian: 'System',
+          author: 'ERROR: Author not available',
+          custodian: 'ERROR: Custodian not available',
           createdDate: formatDate(data.updatedAt),
           modifiedDate: formatDate(data.updatedAt)
         };
@@ -129,10 +129,10 @@ function formatFileSize(bytes) {
 /**
  * Format Firestore timestamp to date string
  * @param {Object} timestamp - Firestore timestamp
- * @returns {string} Formatted date (YYYY-MM-DD)
+ * @returns {string} Formatted date (YYYY-MM-DD) or error message
  */
 function formatDate(timestamp) {
-  if (!timestamp) return 'Unknown';
+  if (!timestamp) return 'ERROR: Date not available';
 
   // Handle Firestore Timestamp object
   if (timestamp.toDate) {
@@ -149,31 +149,35 @@ function formatDate(timestamp) {
     return new Date(timestamp).toISOString().split('T')[0];
   }
 
-  return 'Unknown';
+  return 'ERROR: Invalid date format';
 }
 
 /**
  * Get user-friendly status label from processing stage
  * @param {string} stage - Processing stage enum value
- * @returns {string} Display label
+ * @returns {string} Display label or error message
  */
 function getStatusLabel(stage) {
+  if (!stage) return 'ERROR: Status not available';
+
   const stageMap = {
     'uploaded': 'Active',
     'splitting': 'Processing',
     'merging': 'Processing',
     'complete': 'Final'
   };
-  return stageMap[stage] || 'Active';
+  return stageMap[stage] || 'ERROR: Unknown status';
 }
 
 /**
  * Get document type from processing stage
  * @param {string} stage - Processing stage
- * @returns {string} Document type label
+ * @returns {string} Document type label or error message
  */
 function getDocumentTypeFromStage(stage) {
+  if (!stage) return 'ERROR: Document type not available';
   if (stage === 'complete') return 'Document';
   if (stage === 'splitting' || stage === 'merging') return 'Processing';
-  return 'Evidence';
+  if (stage === 'uploaded') return 'Evidence';
+  return 'ERROR: Unknown document type';
 }

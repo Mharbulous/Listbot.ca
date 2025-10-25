@@ -149,7 +149,10 @@
               :data-column-key="column.key"
             >
               <!-- File Type -->
-              <span v-if="column.key === 'fileType'" class="badge" :class="getBadgeClass(sortedData[virtualItem.index].fileType)">
+              <span v-if="column.key === 'fileType'"
+                    :class="sortedData[virtualItem.index].fileType.startsWith('ERROR:')
+                      ? 'error-text'
+                      : ['badge', getBadgeClass(sortedData[virtualItem.index].fileType)]">
                 {{ sortedData[virtualItem.index].fileType }}
               </span>
 
@@ -159,38 +162,61 @@
               </span>
 
               <!-- Size -->
-              <template v-else-if="column.key === 'size'">{{ sortedData[virtualItem.index].size }}</template>
+              <span v-else-if="column.key === 'size'" :class="{ 'error-text': sortedData[virtualItem.index].size.startsWith('ERROR:') }">
+                {{ sortedData[virtualItem.index].size }}
+              </span>
 
               <!-- Date -->
-              <template v-else-if="column.key === 'date'">{{ formatDate(sortedData[virtualItem.index].date) }}</template>
+              <span v-else-if="column.key === 'date'" :class="{ 'error-text': sortedData[virtualItem.index].date.startsWith('ERROR:') }">
+                {{ formatDate(sortedData[virtualItem.index].date) }}
+              </span>
 
               <!-- Privilege -->
-              <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">
+              <span v-else-if="column.key === 'privilege'"
+                    :class="sortedData[virtualItem.index].privilege.startsWith('ERROR:')
+                      ? 'error-text'
+                      : 'badge badge-privilege'">
                 {{ sortedData[virtualItem.index].privilege }}
               </span>
 
               <!-- Description -->
-              <template v-else-if="column.key === 'description'">{{ sortedData[virtualItem.index].description }}</template>
+              <span v-else-if="column.key === 'description'" :class="{ 'error-text': sortedData[virtualItem.index].description.startsWith('ERROR:') }">
+                {{ sortedData[virtualItem.index].description }}
+              </span>
 
               <!-- Document Type -->
-              <span v-else-if="column.key === 'documentType'" class="badge badge-doctype">
+              <span v-else-if="column.key === 'documentType'"
+                    :class="sortedData[virtualItem.index].documentType.startsWith('ERROR:')
+                      ? 'error-text'
+                      : 'badge badge-doctype'">
                 {{ sortedData[virtualItem.index].documentType }}
               </span>
 
               <!-- Author -->
-              <template v-else-if="column.key === 'author'">{{ sortedData[virtualItem.index].author }}</template>
+              <span v-else-if="column.key === 'author'" :class="{ 'error-text': sortedData[virtualItem.index].author.startsWith('ERROR:') }">
+                {{ sortedData[virtualItem.index].author }}
+              </span>
 
               <!-- Custodian -->
-              <template v-else-if="column.key === 'custodian'">{{ sortedData[virtualItem.index].custodian }}</template>
+              <span v-else-if="column.key === 'custodian'" :class="{ 'error-text': sortedData[virtualItem.index].custodian.startsWith('ERROR:') }">
+                {{ sortedData[virtualItem.index].custodian }}
+              </span>
 
               <!-- Created Date -->
-              <template v-else-if="column.key === 'createdDate'">{{ formatDate(sortedData[virtualItem.index].createdDate) }}</template>
+              <span v-else-if="column.key === 'createdDate'" :class="{ 'error-text': sortedData[virtualItem.index].createdDate.startsWith('ERROR:') }">
+                {{ formatDate(sortedData[virtualItem.index].createdDate) }}
+              </span>
 
               <!-- Modified Date -->
-              <template v-else-if="column.key === 'modifiedDate'">{{ formatDate(sortedData[virtualItem.index].modifiedDate) }}</template>
+              <span v-else-if="column.key === 'modifiedDate'" :class="{ 'error-text': sortedData[virtualItem.index].modifiedDate.startsWith('ERROR:') }">
+                {{ formatDate(sortedData[virtualItem.index].modifiedDate) }}
+              </span>
 
               <!-- Status -->
-              <span v-else-if="column.key === 'status'" class="badge badge-status">
+              <span v-else-if="column.key === 'status'"
+                    :class="sortedData[virtualItem.index].status.startsWith('ERROR:')
+                      ? 'error-text'
+                      : 'badge badge-status'">
                 {{ sortedData[virtualItem.index].status }}
               </span>
             </div>

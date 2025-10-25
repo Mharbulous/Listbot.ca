@@ -114,6 +114,79 @@ Core feature for uploading and processing files with sophisticated time estimati
    - Progress tracking with phase-based updates
 5. **Upload Coordination**: Processed files uploaded to Firebase Storage
 
+## Data Model & Naming Conventions
+
+### File Lifecycle Terminology
+
+The application distinguishes between three related but distinct concepts in the file handling lifecycle. **Consistent use of this terminology is critical** throughout code, comments, UI text, and documentation.
+
+#### Three-Tier File Lifecycle
+
+1. **Document** - The original real-world artifact containing business information
+   - May be physical (paper receipt, printed invoice) or digital (email attachment, downloaded file)
+   - Has a **document date** reflecting when the underlying business transaction occurred
+   - Examples: Paper parking receipt dated Jan 15, invoice PDF received via email
+   - Represents the business event being recorded
+
+2. **Source** - The digital file created or obtained by the user for upload to the application
+   - Always digital: scanned PDF, smartphone photo, screenshot, downloaded file
+   - Has a **source date** (file modified/created timestamp) reflecting when it was created or last modified
+   - This is what exists on the user's device/filesystem before upload
+   - Examples: PDF scan created Jan 20, JPEG photo taken with phone camera
+
+3. **File** - The digital file stored in Firebase Storage after upload through the application
+   - Stored with hash-based deduplication (BLAKE3)
+   - Has **upload metadata**: upload timestamp, storage path, hash, size
+   - Managed by the application's storage and database systems
+   - One **file** may be linked to multiple business records (via hash-based deduplication)
+
+#### Example Flow
+
+```
+Paper parking receipt (document, transaction date: Jan 15, 2025)
+  ↓ User scans with phone
+Scanned PDF on phone (source, file created: Jan 20, 2025)
+  ↓ User uploads via app
+PDF in Firebase Storage (file, uploaded: Jan 20, 2025, hash: abc123...)
+```
+
+#### Usage Guidelines
+
+**Variable Naming:**
+```javascript
+// Good - Clear and specific
+const documentDate = receipt.transactionDate;
+const sourceModifiedDate = fileObj.lastModified;
+const fileUploadDate = metadata.uploadTimestamp;
+
+// Avoid - Ambiguous
+const date = ???; // Which date?
+const fileDate = ???; // Source or upload date?
+```
+
+**UI/UX Text:**
+- "Document date" or "Transaction date" for the business event date
+- "Scanned on" or "Created on" for source file creation
+- "Uploaded on" for when file entered system
+
+**Database Fields:**
+```javascript
+{
+  documentDate: '2025-01-15',      // Business transaction date
+  sourceCreatedDate: '2025-01-20', // Source file timestamp
+  uploadedAt: '2025-01-20T14:30:00Z' // Firebase upload time
+}
+```
+
+**Code Comments:**
+```javascript
+// Extract document date from OCR text (not source file metadata)
+const documentDate = extractDateFromContent(ocrText);
+
+// Use source file's modified date as fallback
+const fallbackDate = sourceFile.lastModifiedDate;
+```
+
 ## Demo Organization System
 
 The codebase includes a structured development demonstration system in `src/dev-demos/` for testing and showcasing features:
