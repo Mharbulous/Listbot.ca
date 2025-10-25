@@ -1,8 +1,8 @@
 import { ref } from 'vue';
 
 /**
- * Mock file data generator for testing virtual scrolling performance
- * Generates realistic file metadata for performance testing
+ * Mock evidence/document data generator for testing virtual scrolling performance
+ * Generates realistic document metadata and source file properties for performance testing
  */
 
 const FILE_TYPES = ['PDF', 'DOC', 'DOCX', 'XLS', 'XLSX', 'JPG', 'PNG', 'TXT', 'MSG', 'EML'];
@@ -49,18 +49,18 @@ function generateRandomDate() {
 }
 
 /**
- * Generate a random file size between 1KB and 100MB
+ * Generate a random source file size between 1KB and 100MB
  */
-function generateRandomFileSize() {
+function generateRandomSourceFileSize() {
   const minSize = 1024; // 1KB
   const maxSize = 100 * 1024 * 1024; // 100MB
   return Math.floor(Math.random() * (maxSize - minSize) + minSize);
 }
 
 /**
- * Generate a random file name
+ * Generate a random source file name
  */
-function generateFileName(index, fileType) {
+function generateSourceFileName(index, fileType) {
   const prefixes = [
     'Document',
     'Report',
@@ -108,17 +108,17 @@ function getRandomItems(array, minCount = 1, maxCount = 3) {
 }
 
 /**
- * Generate a single mock file record
+ * Generate a single mock evidence/document record
  */
 function generateMockFile(index) {
   const fileType = FILE_TYPES[Math.floor(Math.random() * FILE_TYPES.length)];
 
   return {
     id: `file_${index}`,
-    fileType,
-    fileName: generateFileName(index, fileType),
-    fileSize: generateRandomFileSize(),
-    documentDate: generateRandomDate(),
+    fileType, // Source file type (MIME type/extension)
+    sourceFileName: generateSourceFileName(index, fileType),
+    sourceFileSize: generateRandomSourceFileSize(),
+    documentDate: generateRandomDate(), // Date of the underlying business document
     privilege: PRIVILEGES[Math.floor(Math.random() * PRIVILEGES.length)],
     description: generateDescription(),
     documentType: getRandomItems(DOCUMENT_TYPES, 1, 2),

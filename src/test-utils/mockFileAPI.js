@@ -1,16 +1,16 @@
 import { vi } from 'vitest';
 
 /**
- * Mock File API utilities for testing cloud folder timeout scenarios
+ * Mock File API utilities for testing source file handling and cloud folder timeout scenarios
  */
 
 /**
- * Creates a mock file entry for testing
- * @param {string} name - File name
- * @param {string} fullPath - Full file path
- * @param {number} size - File size in bytes (optional)
- * @param {string} type - MIME type (optional)
- * @returns {Object} Mock file entry
+ * Creates a mock source file entry for testing
+ * @param {string} name - Source file name
+ * @param {string} fullPath - Full source file path
+ * @param {number} size - Source file size in bytes (optional)
+ * @param {string} type - Source file MIME type (optional)
+ * @returns {Object} Mock file entry (File API object)
  */
 export const createMockFile = (name, fullPath, size = 1000, type = 'text/plain') => ({
   name,

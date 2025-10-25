@@ -122,7 +122,7 @@ export function useFileMetadata() {
 
       const uploadMetadata = {
         hash: fileHash,
-        originalName: sourceFileName,
+        sourceFileName: sourceFileName,
         size: size || 0,
         folderPath: currentFolderPath || '/',
         metadataHash: metadataHash,

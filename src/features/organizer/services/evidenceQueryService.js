@@ -179,18 +179,18 @@ export class EvidenceQueryService {
       );
 
       const querySnapshot = await getDocs(sourceMetadataRef);
-      const originalNames = [];
+      const sourceFileNames = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.sourceFileName && !originalNames.includes(data.sourceFileName)) {
-          originalNames.push(data.sourceFileName);
+        if (data.sourceFileName && !sourceFileNames.includes(data.sourceFileName)) {
+          sourceFileNames.push(data.sourceFileName);
         }
       });
 
-      return originalNames;
+      return sourceFileNames;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to get available original names:', error);
+      console.error('[EvidenceQueryService] Failed to get available source file names:', error);
       return [];
     }
   }
@@ -352,16 +352,16 @@ export class EvidenceQueryService {
           results.successful.push({
             evidenceId,
             hash: uploadMeta.hash,
-            originalName: uploadMeta.originalName,
+            sourceFileName: uploadMeta.sourceFileName,
           });
         } catch (error) {
           console.error(
-            `[EvidenceQueryService] Failed to migrate ${uploadMeta.originalName}:`,
+            `[EvidenceQueryService] Failed to migrate ${uploadMeta.sourceFileName}:`,
             error
           );
           results.failed.push({
             hash: uploadMeta.hash,
-            originalName: uploadMeta.originalName,
+            sourceFileName: uploadMeta.sourceFileName,
             error: error.message,
           });
         }

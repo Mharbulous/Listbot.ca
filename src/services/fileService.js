@@ -1,5 +1,5 @@
 /**
- * File Service - Firestore integration for file/evidence data
+ * File Service - Firestore integration for evidence data with source file metadata
  * Queries the evidence collection and maps to Cloud table format
  */
 
@@ -7,11 +7,11 @@ import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebas
 import { db } from './firebase';
 
 /**
- * Fetch files (evidence documents) from Firestore
+ * Fetch evidence documents from Firestore with source file metadata
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
  * @param {number} maxResults - Maximum number of results to fetch (default: 10000)
- * @returns {Promise<Array>} Array of file records formatted for Cloud table
+ * @returns {Promise<Array>} Array of evidence records formatted for Cloud table
  */
 export async function fetchFiles(firmId, matterId = 'general', maxResults = 10000) {
   try {
@@ -38,7 +38,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
       const filePromise = (async () => {
         let sourceFileName = 'ERROR: Missing metadata';
 
-        // Try to fetch the original filename from sourceMetadata
+        // Try to fetch the source filename from sourceMetadata subcollection
         if (displayCopyId) {
           try {
             const sourceMetadataRef = doc(
@@ -85,7 +85,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Tag information
           tagCount: data.tagCount || 0,
 
-          // Original filename from sourceMetadata
+          // Source filename from sourceMetadata subcollection
           fileName: sourceFileName,
 
           // Placeholder fields (to be enhanced later)
@@ -115,8 +115,8 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 }
 
 /**
- * Format file size in bytes to human-readable format
- * @param {number} bytes - File size in bytes
+ * Format size in bytes to human-readable format
+ * @param {number} bytes - Size in bytes
  * @returns {string} Formatted size (e.g., "1.5MB")
  */
 function formatFileSize(bytes) {

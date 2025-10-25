@@ -25,14 +25,14 @@ export class EvidenceService {
   }
 
   /**
-   * Create a new evidence document from uploaded file metadata
-   * @param {Object} uploadMetadata - Metadata from the upload system
+   * Create a new evidence document from uploaded source file metadata
+   * @param {Object} uploadMetadata - Source file metadata from the upload system
    * @param {Object} options - Additional options
    * @returns {Promise<string>} - Evidence document ID (fileHash)
    */
   async createEvidenceFromUpload(uploadMetadata, options = {}) {
     try {
-      if (!uploadMetadata.hash || !uploadMetadata.originalName) {
+      if (!uploadMetadata.hash || !uploadMetadata.sourceFileName) {
         throw new Error('Missing required upload metadata: hash and sourceFileName');
       }
 
@@ -45,7 +45,7 @@ export class EvidenceService {
         // Display configuration (simplified to just metadataHash string)
         displayCopy: metadataHash,
 
-        // File properties (for quick access)
+        // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
 
         // Processing status (for future Document Processing Workflow)
@@ -80,8 +80,8 @@ export class EvidenceService {
   }
 
   /**
-   * Batch create evidence documents from multiple uploaded files
-   * @param {Array} uploadMetadataList - Array of upload metadata objects
+   * Batch create evidence documents from multiple uploaded source files
+   * @param {Array} uploadMetadataList - Array of source file upload metadata objects
    * @returns {Promise<Array>} - Array of evidence document IDs (fileHashes)
    */
   async createEvidenceFromUploads(uploadMetadataList) {

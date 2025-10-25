@@ -36,19 +36,19 @@ async function generateFileHash(file) {
     // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
     const hash = await blake3(uint8Array, 128);
 
-    // Return BLAKE3 hash of file content (32 hex characters)
+    // Return BLAKE3 hash of source file content (32 hex characters)
     return hash;
   } catch (error) {
     throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);
   }
 }
 
-// Helper function to get file path consistently
+// Helper function to get source file path consistently
 function getFilePath(file) {
   return file.path || file.webkitRelativePath || file.name;
 }
 
-// Main file processing logic
+// Main source file processing logic
 async function processFiles(files, batchId) {
   const totalFiles = files.length;
   let processedCount = 0;
@@ -78,7 +78,7 @@ async function processFiles(files, batchId) {
       processingStartTime = Date.now();
     }
 
-    // Step 1: Group files by size to identify unique-sized files
+    // Step 1: Group source files by size to identify unique-sized files
     const fileSizeGroups = new Map(); // file_size -> [file_references]
 
     files.forEach((fileData) => {
@@ -90,9 +90,9 @@ async function processFiles(files, batchId) {
         originalIndex,
         path: customPath || getFilePath(file), // Use customPath first, fallback to getFilePath
         metadata: {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
+          sourceFileName: file.name,
+          sourceFileSize: file.size,
+          sourceFileType: file.type,
           lastModified: file.lastModified,
         },
       };
@@ -139,7 +139,7 @@ async function processFiles(files, batchId) {
     const finalFiles = [];
     const duplicateFiles = [];
 
-    // Step 4: Process hash groups to identify true duplicates vs identical files selected twice
+    // Step 4: Process hash groups to identify true duplicates vs identical source files selected twice
     for (const [, fileRefs] of hashGroups) {
       if (fileRefs.length === 1) {
         // Unique hash - not a duplicate
@@ -150,7 +150,7 @@ async function processFiles(files, batchId) {
 
         fileRefs.forEach((fileRef) => {
           // Create metadata signature for one-and-the-same file detection
-          const metadataKey = `${fileRef.metadata.fileName}_${fileRef.metadata.fileSize}_${fileRef.metadata.lastModified}`;
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
           if (!oneAndTheSameGroups.has(metadataKey)) {
             oneAndTheSameGroups.set(metadataKey, []);
@@ -172,7 +172,7 @@ async function processFiles(files, batchId) {
           }
         }
 
-        // If we have multiple distinct files with same hash (duplicate files), choose the best one
+        // If we have multiple distinct source files with same hash (duplicate files), choose the best one
         if (oneAndTheSameGroups.size > 1) {
           const allUniqueFiles = Array.from(oneAndTheSameGroups.values()).map((group) => group[0]);
           if (allUniqueFiles.length > 1) {
@@ -246,7 +246,7 @@ async function processFiles(files, batchId) {
   }
 }
 
-// Helper function to choose the best file based on priority rules
+// Helper function to choose the best source file based on priority rules
 function chooseBestFile(fileRefs) {
   return fileRefs.sort((a, b) => {
     // Priority 1: Earliest modification date
@@ -262,13 +262,13 @@ function chooseBestFile(fileRefs) {
     }
 
     // Priority 3: Shortest filename
-    if (a.metadata.fileName.length !== b.metadata.fileName.length) {
-      return a.metadata.fileName.length - b.metadata.fileName.length;
+    if (a.metadata.sourceFileName.length !== b.metadata.sourceFileName.length) {
+      return a.metadata.sourceFileName.length - b.metadata.sourceFileName.length;
     }
 
     // Priority 4: Alphanumeric filename sort
-    if (a.metadata.fileName !== b.metadata.fileName) {
-      return a.metadata.fileName.localeCompare(b.metadata.fileName);
+    if (a.metadata.sourceFileName !== b.metadata.sourceFileName) {
+      return a.metadata.sourceFileName.localeCompare(b.metadata.sourceFileName);
     }
 
     // Priority 5: Original selection order (stable sort)
