@@ -752,8 +752,8 @@ onMounted(() => {
 
 <style scoped>
 .category-edit-wizard {
-  min-width: 50%;
-  max-width: 1200px;
+  width: 800px;
+  max-width: 95vw;
   margin: 0 auto;
   padding: 24px;
 }
