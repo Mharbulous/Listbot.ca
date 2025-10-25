@@ -29,12 +29,12 @@ This eliminates confusion about where files belong and simplifies security rules
 - **Processing**: All file extension handling in code uses lowercase
 - **Comparisons**: File type checks and mappings use lowercase extensions
 
-### Original Case Preservation Exception
+### Source File Name Case Preservation
 
 **File extension case preservation is documented in [data-structures/FileMetadata.md](./architecture/FileMetadata.md).**
 
-- This preserves the historical record of how files were originally named
-- Example: If user uploads `Report.PDF`, the originalName field stores `Report.PDF` exactly
+- This preserves the source file's name exactly as it existed on the user's device
+- Example: If user uploads `Report.PDF`, the originalName field stores `Report.PDF` exactly as the source file was named
 
 ### Implementation Examples
 
@@ -47,9 +47,9 @@ return `${fileSize} • ${fileExtension} • ${date}`;
 const extension = file.name.split('.').pop().toLowerCase();
 const storagePath = `firms/${firmId}/uploads/${fileHash}.${extension}`;
 
-// ✅ Correct - Original metadata preserves case
+// ✅ Correct - Source file metadata preserves case
 const metadataRecord = {
-  originalName: file.name, // Preserves original case: "Report.PDF"
+  originalName: file.name, // Preserves source file name case: "Report.PDF"
   // ... other fields
 };
 
@@ -61,8 +61,8 @@ return `${fileSize} • ${fileExtension.toUpperCase()} • ${date}`;
 
 - **Consistency**: Lowercase provides uniform display and prevents case-sensitivity issues
 - **Compatibility**: Most file systems and web standards expect lowercase extensions
-- **Historical Accuracy**: Original filenames preserved for audit and compliance purposes
-- **User Experience**: Consistent lowercase display regardless of how files were originally named
+- **Historical Accuracy**: Source filenames preserved for audit and compliance purposes
+- **User Experience**: Consistent lowercase display regardless of how source files were named
 
 ## Naming Conventions
 
@@ -174,7 +174,7 @@ class StorageService {
 
 ### 2. Data Storage Implementation
 
-**Important**: All file metadata data structures are definitively documented in **[data-structures/FileMetadata.md](./architecture/FileMetadata.md)**, which provides comprehensive coverage of file metadata collections, deduplication architecture, and the critical distinction between original desktop file metadata versus Firebase storage file metadata.
+**Important**: All file metadata data structures are definitively documented in **[data-structures/FileMetadata.md](./architecture/FileMetadata.md)**, which provides comprehensive coverage of file metadata collections, deduplication architecture, and the critical distinction between source file metadata versus Firebase storage file metadata.
 
 ## Security Rules
 
@@ -185,7 +185,7 @@ Key security principles:
 - Firm members can only access their own firm's files
 - Matter-based file organization provides natural access boundaries
 - Evidence records and upload events are immutable once created
-- Original metadata records use hash-based deduplication
+- Source metadata records use hash-based deduplication
 
 ## Matter-Based File Organization
 

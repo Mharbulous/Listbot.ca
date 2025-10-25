@@ -2,7 +2,7 @@
 
 **Created**: 2025-10-25
 **Status**: In Progress - Phase 1 Documentation Updates
-**Progress**: Priority 1 ✅ (5/5 files) | Priority 2 ✅ (6/6 files) | Priority 3 ⏳ (0/3 files)
+**Progress**: Priority 1 ✅ (5/5 files) | Priority 2 ✅ (6/6 files) | Priority 3 ✅ (3/3 files) | Priority 4 ⏳ (0/4 files)
 **Last Updated**: 2025-10-25
 **Reference**: See `CLAUDE.md` - "Data Model & Naming Conventions" section
 
@@ -81,17 +81,17 @@ When reviewing files, update:
 
 ### Priority 3: Process Documentation
 
-- [ ] `docs/firebase-storage-plan.md`
+- [x] `docs/firebase-storage-plan.md` ✅ **COMPLETED**
   - **Focus**: Storage architecture and planning
-  - **Search for**: File upload and storage terminology
+  - **Changes made**: Updated 6 instances of "original" terminology to "source" terminology (section heading, comments, descriptions)
 
-- [ ] `docs/AsyncProcessesTable.md`
+- [x] `docs/AsyncProcessesTable.md` ✅ **COMPLETED**
   - **Focus**: Async processes related to file handling
-  - **Search for**: Process descriptions involving files
+  - **Changes made**: No changes needed - no file-related terminology
 
-- [ ] `docs/authentication.md`
+- [x] `docs/authentication.md` ✅ **COMPLETED**
   - **Focus**: User context for file uploads
-  - **Search for**: File-related user actions (if any)
+  - **Changes made**: No changes needed - no file-related terminology
 
 ### Priority 4: Development Documentation
 
@@ -445,12 +445,15 @@ Use checkboxes above to track completion. Update this document as you work throu
 
 **Phase 1: Documentation Files** (In Progress)
 - ✅ Priority 1: Core File System Documentation (5/5 files - 100% complete)
-  - Updated 6 files with terminology changes
+  - Updated 4 files with terminology changes (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
+  - Verified 1 file as compliant (data-structures.md)
   - All core file system documentation now uses consistent Source/File terminology
 - ✅ Priority 2: Architecture Documentation (6/6 files - 100% complete)
   - Updated 1 file with terminology changes (Evidence.md - 7 changes)
   - Verified 5 files require no changes (already compliant or not applicable)
-- ⏳ Priority 3: Process Documentation (0/3 files - 0% complete)
+- ✅ Priority 3: Process Documentation (3/3 files - 100% complete)
+  - Updated 1 file with terminology changes (firebase-storage-plan.md - 6 changes)
+  - Verified 2 files require no changes (AsyncProcessesTable.md, authentication.md)
 - ⏳ Priority 4: Development Documentation (0/4 files - 0% complete)
 - ⏳ Priority 5: Agent Instructions (0/1 files - 0% complete)
 
@@ -458,10 +461,16 @@ Use checkboxes above to track completion. Update this document as you work throu
 
 **Phase 3: Verification and Testing** (Not Started)
 
-**Overall Progress**: 11/95 files reviewed (11.6%)
-- Documentation changes: 7 files updated with terminology changes
-- Files verified as compliant: 9 files
-- Remaining documentation: 5 files (Phase 1 Priority 3-5)
+**Overall Progress**: 14/95 files reviewed (14.7%)
+- Documentation changes: 6 files updated with terminology changes
+  - Priority 1: 4 files (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
+  - Priority 2: 1 file (Evidence.md)
+  - Priority 3: 1 file (firebase-storage-plan.md)
+- Files verified as compliant: 8 files
+  - Priority 1: 1 file (data-structures.md)
+  - Priority 2: 5 files (MetadataSpecs.md, Settings.md, SoloFirmMatters.md, CategoryTags.md, security-rules.md)
+  - Priority 3: 2 files (AsyncProcessesTable.md, authentication.md)
+- Remaining documentation: 5 files (Phase 1 Priority 4-5)
 - Code files: 84 files (Phase 2)
 
 **Estimated effort**: 2-4 days of focused work, depending on thoroughness
@@ -488,3 +497,17 @@ Use checkboxes above to track completion. Update this document as you work throu
   - `SoloFirmMatters.md` - Firm architecture (no file terminology)
   - `CategoryTags.md` - Tagging system (no file terminology)
   - `security-rules.md` - Access control (no file terminology)
+
+### Session 3 - 2025-10-25
+**Completed**: Phase 1, Priority 3 (Process Documentation)
+- Updated `docs/firebase-storage-plan.md` - Updated 6 instances of "original" terminology to "source" terminology
+  - Changed "Original Case Preservation Exception" → "Source File Name Case Preservation"
+  - Updated section description to reference "source file's name as it existed on user's device"
+  - Updated example text to clarify "source file was named"
+  - Updated comment: "Preserves source file name case"
+  - Updated rationale bullet points to reference "source filenames" and "source files"
+  - Changed "original desktop file metadata" → "source file metadata"
+  - Changed "Original metadata records" → "Source metadata records"
+- Verified 2 files require no changes:
+  - `AsyncProcessesTable.md` - Async processes tracking (no file terminology)
+  - `authentication.md` - Authentication system (no file terminology)
