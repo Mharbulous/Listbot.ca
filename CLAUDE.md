@@ -6,6 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Bookkeeper** - A Vue 3 bookkeeping/accounting application with file upload and processing capabilities, built with Firebase Authentication and Vuetify components. This is part of a multi-app SSO architecture with shared authentication across related applications.
 
+## Development Stage
+
+**IMPORTANT**: Development is at a very early stage. We can easily delete the entire Firestore database and delete all files in Firebase Storage to create a clean slate.
+
+**Planning Implications**:
+- **No migration scripts required** - Data schema changes can be implemented directly
+- **No backward compatibility needed** - Feel free to redesign data structures
+- **Simplified planning** - Focus on optimal architecture without legacy constraints
+- **Fresh starts allowed** - Can rebuild database/storage from scratch as needed
+
+This significantly simplifies architectural decisions and refactoring work. When proposing changes to data structures, Firestore collections, or Firebase Storage organization, there is no need to account for existing data migration or version compatibility.
+
 ## Essential Commands
 
 ### Development Commands
