@@ -1,7 +1,9 @@
 # Terminology Standardization Plan
 
 **Created**: 2025-10-25
-**Status**: Planning
+**Status**: In Progress - Phase 1 Documentation Updates
+**Progress**: Priority 1 ✅ (5/5 files) | Priority 2 ✅ (6/6 files) | Priority 3 ⏳ (0/3 files)
+**Last Updated**: 2025-10-25
 **Reference**: See `CLAUDE.md` - "Data Model & Naming Conventions" section
 
 ## Overview
@@ -53,29 +55,29 @@ When reviewing files, update:
 
 ### Priority 2: Architecture Documentation
 
-- [ ] `docs/architecture/Evidence.md`
+- [x] `docs/architecture/Evidence.md` ✅ **COMPLETED**
   - **Focus**: Evidence collection field definitions
-  - **Search for**: File reference terminology, date fields
+  - **Changes made**: Updated 7 instances of "original" terminology to "source" terminology (section headings, field comments, and descriptions)
 
-- [ ] `docs/architecture/MetadataSpecs.md`
-  - **Focus**: Embedded metadata specifications
-  - **Search for**: References to "file" dates vs "document" dates
+- [x] `docs/architecture/MetadataSpecs.md` ✅ **COMPLETED**
+  - **Focus**: Embedded metadata specifications (forensic metadata like EXIF, XMP)
+  - **Changes made**: No changes needed - document describes forensic metadata standards, not our application terminology
 
-- [ ] `docs/architecture/Settings.md`
-  - **Focus**: Any file-related settings or preferences
-  - **Search for**: Date format settings, file handling preferences
+- [x] `docs/architecture/Settings.md` ✅ **COMPLETED**
+  - **Focus**: User preferences system
+  - **Changes made**: No changes needed - no file-related terminology
 
-- [ ] `docs/architecture/SoloFirmMatters.md`
-  - **Focus**: File organization and matter structure
-  - **Search for**: File storage and organization terminology
+- [x] `docs/architecture/SoloFirmMatters.md` ✅ **COMPLETED**
+  - **Focus**: Firm and matter architecture
+  - **Changes made**: No changes needed - no file-related terminology
 
-- [ ] `docs/architecture/CategoryTags.md`
-  - **Focus**: Tag application to files/documents
-  - **Search for**: What tags are applied to (documents vs files)
+- [x] `docs/architecture/CategoryTags.md` ✅ **COMPLETED**
+  - **Focus**: Tagging system
+  - **Changes made**: No changes needed - no file-related terminology
 
-- [ ] `docs/architecture/security-rules.md`
-  - **Focus**: Access control for files
-  - **Search for**: File access terminology
+- [x] `docs/architecture/security-rules.md` ✅ **COMPLETED**
+  - **Focus**: Access control rules
+  - **Changes made**: No changes needed - no file-related terminology
 
 ### Priority 3: Process Documentation
 
@@ -439,4 +441,50 @@ After each file update:
 
 Use checkboxes above to track completion. Update this document as you work through each file.
 
+### Progress Summary
+
+**Phase 1: Documentation Files** (In Progress)
+- ✅ Priority 1: Core File System Documentation (5/5 files - 100% complete)
+  - Updated 6 files with terminology changes
+  - All core file system documentation now uses consistent Source/File terminology
+- ✅ Priority 2: Architecture Documentation (6/6 files - 100% complete)
+  - Updated 1 file with terminology changes (Evidence.md - 7 changes)
+  - Verified 5 files require no changes (already compliant or not applicable)
+- ⏳ Priority 3: Process Documentation (0/3 files - 0% complete)
+- ⏳ Priority 4: Development Documentation (0/4 files - 0% complete)
+- ⏳ Priority 5: Agent Instructions (0/1 files - 0% complete)
+
+**Phase 2: Code Files** (Not Started)
+
+**Phase 3: Verification and Testing** (Not Started)
+
+**Overall Progress**: 11/95 files reviewed (11.6%)
+- Documentation changes: 7 files updated with terminology changes
+- Files verified as compliant: 9 files
+- Remaining documentation: 5 files (Phase 1 Priority 3-5)
+- Code files: 84 files (Phase 2)
+
 **Estimated effort**: 2-4 days of focused work, depending on thoroughness
+
+## Change Log
+
+### Session 1 - 2025-10-25
+**Completed**: Phase 1, Priority 1 (Core File System Documentation)
+- Updated `docs/architecture/FileMetadata.md` - Changed "Original Files vs Storage Files" section heading, updated ~8 instances
+- Updated `docs/architecture/firebase-storage.md` - Changed "Original file extensions" to "source file extensions" (2 locations)
+- Updated `docs/uploading.md` - Updated metadata hash field and API examples (3 changes)
+- Updated `docs/Document-Processing-Workflow.md` - Added comprehensive three-tier file lifecycle section
+- Verified `docs/data-structures.md` - No changes needed (hub document with cross-references)
+
+### Session 2 - 2025-10-25
+**Completed**: Phase 1, Priority 2 (Architecture Documentation)
+- Updated `docs/architecture/Evidence.md` - Updated 7 instances (section headings, field comments, descriptions)
+  - Changed "Original Metadata Subcollection" → "Source Metadata Subcollection"
+  - Updated field comments to use "source file" terminology
+  - Updated description text to reference "source file contexts"
+- Verified 5 files require no changes:
+  - `MetadataSpecs.md` - Forensic metadata standards (not our terminology)
+  - `Settings.md` - User preferences (no file terminology)
+  - `SoloFirmMatters.md` - Firm architecture (no file terminology)
+  - `CategoryTags.md` - Tagging system (no file terminology)
+  - `security-rules.md` - Access control (no file terminology)

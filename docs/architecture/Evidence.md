@@ -54,7 +54,7 @@
 - **MUST** be a valid metadataHash (xxHash, 16 characters)
 - **USE** hash-based lookup for metadata retrieval
 
-**Note**: For understanding the critical distinction between original file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
+**Note**: For understanding the critical distinction between source file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
 
 **processingStage:**
 
@@ -70,7 +70,7 @@
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 
-## Original Metadata Subcollection
+## Source Metadata Subcollection
 
 ### Path Structure
 
@@ -80,15 +80,15 @@
 
 ### Purpose
 
-The sourceMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all original file contexts while maintaining efficient storage deduplication.
+The sourceMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all source file contexts while maintaining efficient storage deduplication.
 
-### Original Metadata Document Schema
+### Source Metadata Document Schema
 
 ```javascript
 {
   // Core file metadata
-  sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED
-  lastModified: Timestamp,      // Original file's timestamp (Firestore Timestamp)
+  sourceFileName: string,      // Exact filename with SOURCE FILE CASE PRESERVED
+  lastModified: Timestamp,      // Source file's timestamp (Firestore Timestamp)
   fileHash: string,            // BLAKE3 of file content (32 hex chars)
 
   // File path information
@@ -104,7 +104,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 - **Multiple variants per evidence**: One evidence document can have multiple sourceMetadata subcollection documents
 - **Automatic deduplication**: Identical metadata (same metadataHash) stored only once per evidence document
 - **Preserves original context**: Each document represents a unique upload context with different name, timestamp, or path
-- **Case preservation**: The ONLY place where original file extension case is preserved
+- **Case preservation**: The ONLY place where source file extension case is preserved
 
 ## Tag Subcollection
 
