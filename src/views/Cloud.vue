@@ -147,7 +147,7 @@
               <template v-else-if="column.key === 'size'">{{ mockData[virtualItem.index].size }}</template>
 
               <!-- Date -->
-              <template v-else-if="column.key === 'date'">{{ mockData[virtualItem.index].date }}</template>
+              <template v-else-if="column.key === 'date'">{{ formatDate(mockData[virtualItem.index].date) }}</template>
 
               <!-- Privilege -->
               <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">
@@ -169,10 +169,10 @@
               <template v-else-if="column.key === 'custodian'">{{ mockData[virtualItem.index].custodian }}</template>
 
               <!-- Created Date -->
-              <template v-else-if="column.key === 'createdDate'">{{ mockData[virtualItem.index].createdDate }}</template>
+              <template v-else-if="column.key === 'createdDate'">{{ formatDate(mockData[virtualItem.index].createdDate) }}</template>
 
               <!-- Modified Date -->
-              <template v-else-if="column.key === 'modifiedDate'">{{ mockData[virtualItem.index].modifiedDate }}</template>
+              <template v-else-if="column.key === 'modifiedDate'">{{ formatDate(mockData[virtualItem.index].modifiedDate) }}</template>
 
               <!-- Status -->
               <span v-else-if="column.key === 'status'" class="badge badge-status">
@@ -194,6 +194,7 @@
 
 <script setup>
 import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
@@ -201,6 +202,8 @@ import { useVirtualTable } from '@/composables/useVirtualTable';
 import { fetchFiles } from '@/services/fileService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences';
+import { formatDate as formatDateUtil } from '@/utils/dateFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 
 // Initialize performance monitor
@@ -209,6 +212,10 @@ const perfMonitor = new PerformanceMonitor('Cloud Table');
 // Auth and Matter stores
 const authStore = useAuthStore();
 const matterViewStore = useMatterViewStore();
+
+// User preferences store for date formatting
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat } = storeToRefs(preferencesStore);
 
 // Column selector and refs
 const showColumnSelector = ref(false);
@@ -281,6 +288,30 @@ const getBadgeClass = (fileType) => {
   if (type === 'DOC' || type === 'DOCX') return 'badge-doctype';
   if (type === 'XLS' || type === 'XLSX') return 'badge-status';
   return 'badge-privilege';
+};
+
+/**
+ * Format a date string using user preferences
+ * Handles dates that are already formatted as strings from the service layer
+ */
+const formatDate = (dateString) => {
+  if (!dateString || dateString === 'Unknown') return dateString;
+
+  try {
+    // Parse the date string (format: YYYY-MM-DD from fileService)
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return dateString; // Return original if invalid
+    }
+
+    // Format using user's preference
+    return formatDateUtil(date, dateFormat.value);
+  } catch (error) {
+    console.error('[Cloud] Error formatting date:', error);
+    return dateString; // Return original on error
+  }
 };
 
 // Auto-focus popover when it opens
