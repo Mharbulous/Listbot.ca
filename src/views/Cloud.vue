@@ -64,8 +64,18 @@
             </svg>
           </div>
 
-          <!-- Column Label -->
-          <span class="header-label">{{ column.label }}</span>
+          <!-- Sortable Column Label (Clickable Button) -->
+          <button
+            class="header-label-button"
+            :class="getSortClass(column.key)"
+            @click="toggleSort(column.key)"
+            :title="`Click to sort by ${column.label}`"
+          >
+            <span class="header-label">{{ column.label }}</span>
+            <span class="sort-indicator" v-if="isSorted(column.key)">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </span>
+          </button>
 
           <!-- Resize Handle -->
           <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
@@ -136,49 +146,49 @@
               :data-column-key="column.key"
             >
               <!-- File Type -->
-              <span v-if="column.key === 'fileType'" class="badge" :class="getBadgeClass(mockData[virtualItem.index].fileType)">
-                {{ mockData[virtualItem.index].fileType }}
+              <span v-if="column.key === 'fileType'" class="badge" :class="getBadgeClass(sortedData[virtualItem.index].fileType)">
+                {{ sortedData[virtualItem.index].fileType }}
               </span>
 
               <!-- File Name -->
-              <span v-else-if="column.key === 'fileName'" :class="{ 'error-text': mockData[virtualItem.index].fileName.startsWith('ERROR:') }">
-                {{ mockData[virtualItem.index].fileName }}
+              <span v-else-if="column.key === 'fileName'" :class="{ 'error-text': sortedData[virtualItem.index].fileName.startsWith('ERROR:') }">
+                {{ sortedData[virtualItem.index].fileName }}
               </span>
 
               <!-- Size -->
-              <template v-else-if="column.key === 'size'">{{ mockData[virtualItem.index].size }}</template>
+              <template v-else-if="column.key === 'size'">{{ sortedData[virtualItem.index].size }}</template>
 
               <!-- Date -->
-              <template v-else-if="column.key === 'date'">{{ formatDate(mockData[virtualItem.index].date) }}</template>
+              <template v-else-if="column.key === 'date'">{{ formatDate(sortedData[virtualItem.index].date) }}</template>
 
               <!-- Privilege -->
               <span v-else-if="column.key === 'privilege'" class="badge badge-privilege">
-                {{ mockData[virtualItem.index].privilege }}
+                {{ sortedData[virtualItem.index].privilege }}
               </span>
 
               <!-- Description -->
-              <template v-else-if="column.key === 'description'">{{ mockData[virtualItem.index].description }}</template>
+              <template v-else-if="column.key === 'description'">{{ sortedData[virtualItem.index].description }}</template>
 
               <!-- Document Type -->
               <span v-else-if="column.key === 'documentType'" class="badge badge-doctype">
-                {{ mockData[virtualItem.index].documentType }}
+                {{ sortedData[virtualItem.index].documentType }}
               </span>
 
               <!-- Author -->
-              <template v-else-if="column.key === 'author'">{{ mockData[virtualItem.index].author }}</template>
+              <template v-else-if="column.key === 'author'">{{ sortedData[virtualItem.index].author }}</template>
 
               <!-- Custodian -->
-              <template v-else-if="column.key === 'custodian'">{{ mockData[virtualItem.index].custodian }}</template>
+              <template v-else-if="column.key === 'custodian'">{{ sortedData[virtualItem.index].custodian }}</template>
 
               <!-- Created Date -->
-              <template v-else-if="column.key === 'createdDate'">{{ formatDate(mockData[virtualItem.index].createdDate) }}</template>
+              <template v-else-if="column.key === 'createdDate'">{{ formatDate(sortedData[virtualItem.index].createdDate) }}</template>
 
               <!-- Modified Date -->
-              <template v-else-if="column.key === 'modifiedDate'">{{ formatDate(mockData[virtualItem.index].modifiedDate) }}</template>
+              <template v-else-if="column.key === 'modifiedDate'">{{ formatDate(sortedData[virtualItem.index].modifiedDate) }}</template>
 
               <!-- Status -->
               <span v-else-if="column.key === 'status'" class="badge badge-status">
-                {{ mockData[virtualItem.index].status }}
+                {{ sortedData[virtualItem.index].status }}
               </span>
             </div>
           </div>
@@ -187,7 +197,7 @@
 
       <!-- Footer with document count -->
       <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
-        <span>Total Documents: {{ mockData.length }}</span>
+        <span>Total Documents: {{ sortedData.length }}</span>
       </div>
 
     </div>
@@ -201,6 +211,7 @@ import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { useVirtualTable } from '@/composables/useVirtualTable';
+import { useColumnSort } from '@/composables/useColumnSort';
 import { fetchFiles } from '@/services/fileService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
@@ -251,8 +262,19 @@ const {
   resetToDefaults
 } = useColumnVisibility();
 
+// Use column sort composable
+const {
+  sortColumn,
+  sortDirection,
+  sortedData,
+  toggleSort,
+  getSortClass,
+  isSorted
+} = useColumnSort(mockData);
+
 // Initialize virtual table (MUST be called during setup, not in onMounted)
 // scrollContainer.value is null initially - that's OK, virtualizer handles it
+// Use sortedData instead of mockData to show sorted results
 const {
   rowVirtualizer,
   virtualItems,
@@ -261,7 +283,7 @@ const {
   virtualRange,
   scrollMetrics
 } = useVirtualTable({
-  data: mockData,
+  data: sortedData,
   scrollContainer,
   estimateSize: 48,
   overscan: 5,
@@ -459,7 +481,7 @@ onMounted(async () => {
   const ttfr = fetchDuration + renderDuration;
 
   // Performance Report for Phase 7
-  console.group('[Cloud Table] Performance Report - ' + mockData.value.length.toLocaleString() + ' Rows (Real Data)');
+  console.group('[Cloud Table] Performance Report - ' + sortedData.value.length.toLocaleString() + ' Rows (Real Data)');
   console.log('Data fetch (Firestore):', fetchDuration.toFixed(2) + 'ms');
   console.log('Initial render:', renderDuration.toFixed(2) + 'ms');
   console.log('Time to First Render (TTFR):', ttfr.toFixed(2) + 'ms');
@@ -467,8 +489,8 @@ onMounted(async () => {
   console.log('DOM nodes rendered:', domNodeCount);
 
   // Only calculate efficiency if we have DOM nodes
-  if (domNodeCount > 0 && mockData.value.length > 0) {
-    console.log('Virtual efficiency:', Math.round(mockData.value.length / domNodeCount) + 'x reduction');
+  if (domNodeCount > 0 && sortedData.value.length > 0) {
+    console.log('Virtual efficiency:', Math.round(sortedData.value.length / domNodeCount) + 'x reduction');
   } else {
     console.log('Virtual efficiency:', 'N/A (no data)');
   }
@@ -501,7 +523,7 @@ onMounted(async () => {
       phase: 'Phase 5 (10K Mock)'
     },
     {
-      rows: mockData.value.length,
+      rows: sortedData.value.length,
       renderTime: renderDuration.toFixed(2) + 'ms',
       memory: memoryUsage + ' MB',
       domNodes: domNodeCount,

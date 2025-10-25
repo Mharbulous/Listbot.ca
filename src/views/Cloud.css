@@ -479,3 +479,116 @@
 .retry-button:hover {
   background: #2563eb;
 }
+
+/* ===================================
+   Sortable Column Header Styles
+   =================================== */
+
+/* Clickable Header Label Button */
+.header-label-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: -4px -8px; /* Compensate for padding to maintain header spacing */
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* Hover state - show faint sort indicator */
+.header-label-button:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.header-label-button:hover::after {
+  content: '⇅';
+  position: absolute;
+  right: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+  opacity: 0.5;
+}
+
+/* Hide hover indicator when column is actively sorted */
+.header-label-button.sorted-asc:hover::after,
+.header-label-button.sorted-desc:hover::after {
+  content: none;
+}
+
+/* Active/Focus state */
+.header-label-button:active {
+  transform: scale(0.98);
+}
+
+.header-label-button:focus {
+  outline: none;
+}
+
+/* Sort Indicator (Arrow) */
+.sort-indicator {
+  position: absolute;
+  right: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+/* Sorted Ascending - Convex Appearance */
+.header-label-button.sorted-asc {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),  /* Top highlight */
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),       /* Bottom shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-label-button.sorted-asc .header-label {
+  color: #667eea;
+}
+
+.header-label-button.sorted-asc .sort-indicator {
+  color: #667eea;
+}
+
+/* Sorted Descending - Concave Appearance */
+.header-label-button.sorted-desc {
+  background: linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%);
+  font-weight: 700;
+  box-shadow:
+    inset 0 -1px 2px rgba(255, 255, 255, 0.8), /* Bottom highlight */
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),        /* Top shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-label-button.sorted-desc .header-label {
+  color: #667eea;
+}
+
+.header-label-button.sorted-desc .sort-indicator {
+  color: #667eea;
+}
+
+/* Ensure header label text maintains proper styling */
+.header-label-button .header-label {
+  font-weight: inherit;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+/* Prevent text selection on header labels during rapid clicking */
+.header-label-button {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
