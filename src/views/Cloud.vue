@@ -141,7 +141,9 @@
               </span>
 
               <!-- File Name -->
-              <template v-else-if="column.key === 'fileName'">{{ mockData[virtualItem.index].fileName }}</template>
+              <span v-else-if="column.key === 'fileName'" :class="{ 'error-text': mockData[virtualItem.index].fileName.startsWith('ERROR:') }">
+                {{ mockData[virtualItem.index].fileName }}
+              </span>
 
               <!-- Size -->
               <template v-else-if="column.key === 'size'">{{ mockData[virtualItem.index].size }}</template>

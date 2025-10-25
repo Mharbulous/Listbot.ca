@@ -3,7 +3,7 @@
  * Queries the evidence collection and maps to Cloud table format
  */
 
-import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
@@ -26,39 +26,85 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
     // Execute the query
     const querySnapshot = await getDocs(q);
 
-    // Map Firestore documents to table format
-    const files = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
+    // Collect all documents and their metadata promises
+    const filePromises = [];
 
-      // Map evidence document to table row format
-      // Note: Some fields may not exist in evidence documents - we'll use placeholders
-      files.push({
-        id: doc.id, // fileHash (SHA-256)
-        fileHash: doc.id,
+    querySnapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      const fileHash = docSnapshot.id;
+      const displayCopyId = data.displayCopy;
 
-        // File properties that exist in evidence documents
-        size: formatFileSize(data.fileSize || 0),
-        date: formatDate(data.updatedAt),
+      // Create a promise to fetch the sourceMetadata
+      const filePromise = (async () => {
+        let sourceFileName = 'ERROR: Missing metadata';
 
-        // Processing status
-        status: getStatusLabel(data.processingStage || 'uploaded'),
+        // Try to fetch the original filename from sourceMetadata
+        if (displayCopyId) {
+          try {
+            const sourceMetadataRef = doc(
+              db,
+              'firms',
+              firmId,
+              'matters',
+              matterId,
+              'evidence',
+              fileHash,
+              'sourceMetadata',
+              displayCopyId
+            );
+            const sourceMetadataDoc = await getDoc(sourceMetadataRef);
 
-        // Tag information
-        tagCount: data.tagCount || 0,
+            if (sourceMetadataDoc.exists()) {
+              const sourceMetadata = sourceMetadataDoc.data();
+              sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
+            } else {
+              console.error(`[Cloud Table] sourceMetadata not found for ${fileHash}, displayCopy: ${displayCopyId}`);
+              sourceFileName = 'ERROR: Metadata not found';
+            }
+          } catch (error) {
+            console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
+            sourceFileName = 'ERROR: Fetch failed';
+          }
+        } else {
+          console.error(`[Cloud Table] No displayCopy ID for evidence document: ${fileHash}`);
+          sourceFileName = 'ERROR: No displayCopy ID';
+        }
 
-        // Placeholder fields (to be enhanced later with sourceMetadata)
-        fileType: 'Unknown', // Will need sourceMetadata lookup
-        fileName: doc.id, // Full file hash (SHA-256)
-        privilege: 'Unclassified',
-        description: `${data.tagCount || 0} tags`,
-        documentType: getDocumentTypeFromStage(data.processingStage),
-        author: 'Unknown',
-        custodian: 'System',
-        createdDate: formatDate(data.updatedAt),
-        modifiedDate: formatDate(data.updatedAt)
-      });
+        // Map evidence document to table row format
+        return {
+          id: fileHash, // fileHash (SHA-256)
+          fileHash: fileHash,
+
+          // File properties that exist in evidence documents
+          size: formatFileSize(data.fileSize || 0),
+          date: formatDate(data.updatedAt),
+
+          // Processing status
+          status: getStatusLabel(data.processingStage || 'uploaded'),
+
+          // Tag information
+          tagCount: data.tagCount || 0,
+
+          // Original filename from sourceMetadata
+          fileName: sourceFileName,
+
+          // Placeholder fields (to be enhanced later)
+          fileType: 'Unknown', // Will need sourceMetadata lookup
+          privilege: 'Unclassified',
+          description: `${data.tagCount || 0} tags`,
+          documentType: getDocumentTypeFromStage(data.processingStage),
+          author: 'Unknown',
+          custodian: 'System',
+          createdDate: formatDate(data.updatedAt),
+          modifiedDate: formatDate(data.updatedAt)
+        };
+      })();
+
+      filePromises.push(filePromise);
     });
+
+    // Wait for all sourceMetadata queries to complete in parallel
+    const files = await Promise.all(filePromises);
 
     return files;
 

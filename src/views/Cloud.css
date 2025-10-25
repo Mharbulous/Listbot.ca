@@ -231,6 +231,12 @@
   border-bottom: none; /* Remove bottom border from spacer column */
 }
 
+/* Error Text Styling */
+.error-text {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 /* Badges */
 .badge {
   display: inline-block;
