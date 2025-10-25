@@ -4,6 +4,16 @@
 
 A visual file organization system for managing uploaded files in Firebase Storage, designed to help users categorize and process documents that require different types of handling.
 
+## Three-Tier File Lifecycle
+
+This workflow operates on files that have progressed through the application's three-tier file lifecycle:
+
+1. **Document** - Original real-world artifact (e.g., paper receipt, dated when business transaction occurred)
+2. **Source** - Digital file created by user for upload (e.g., scanned PDF, photo taken with phone)
+3. **File** - Digital file stored in Firebase Storage (deduplicated, hash-named)
+
+The workflow below processes **files** (tier 3) that have already been uploaded to Firebase Storage, applying various transformations (split, merge, OCR) to create new derivative files.
+
 ## Core Concept
 
 A multi-column interface that allows users to visually organize uploaded files into different processing categories through an automated analysis and processing workflow.

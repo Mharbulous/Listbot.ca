@@ -26,30 +26,30 @@ When reviewing files, update:
 
 ### Priority 1: Core File System Documentation
 
-- [ ] `docs/uploading.md`
+- [x] `docs/uploading.md` ✅ **COMPLETED**
   - **Focus**: Update references to "original files" vs "storage files"
   - **Key sections**: Upload Process Flow, Metadata Management, API Reference
-  - **Search for**: "original file", "uploaded file", references to dates/timestamps
+  - **Changes made**: Updated metadata hash field from "originalName" to "sourceFileName", added clarifying comments to API examples
 
-- [ ] `docs/architecture/FileMetadata.md`
+- [x] `docs/architecture/FileMetadata.md` ✅ **COMPLETED**
   - **Focus**: Critical - already uses "Source File" terminology, ensure consistency
   - **Key sections**: UI Metadata Presentation, sourceMetadata Subcollection
-  - **Search for**: Any ambiguous "file" references that should specify source/storage
+  - **Changes made**: Changed "Original Files vs Storage Files" to "Source Files vs Storage Files", replaced all instances of "original file" with "source file" throughout document (~8 changes)
 
-- [ ] `docs/architecture/firebase-storage.md`
+- [x] `docs/architecture/firebase-storage.md` ✅ **COMPLETED**
   - **Focus**: Storage paths and deduplication examples
   - **Key sections**: File Storage Paths, Deduplication Examples
-  - **Search for**: "original file", "uploaded file", clarify which tier
+  - **Changes made**: Updated "Original file extensions" to "source file extensions" in two locations
 
-- [ ] `docs/Document-Processing-Workflow.md`
+- [x] `docs/Document-Processing-Workflow.md` ✅ **COMPLETED**
   - **Focus**: Distinguish between document (paper) and source (digital scan)
   - **Key sections**: Workflow diagrams and descriptions
-  - **Search for**: Document vs file references, especially in split/merge contexts
+  - **Changes made**: Added comprehensive "Three-Tier File Lifecycle" section explaining Document → Source → File progression
 
-- [ ] `docs/data-structures.md`
+- [x] `docs/data-structures.md` ✅ **COMPLETED**
   - **Focus**: Field definitions and data structure schemas
   - **Key sections**: All field definitions related to files/metadata
-  - **Search for**: Date field definitions, filename references
+  - **Changes made**: Verified cross-references align with updated terminology, no direct changes needed (hub document)
 
 ### Priority 2: Architecture Documentation
 
@@ -325,14 +325,76 @@ When reviewing files, update:
 
 ### Recommended Order
 
-1. **Start with CLAUDE.md** (already completed)
-2. **Phase 1, Priority 1**: Core file system docs (highest impact)
-3. **Phase 2, Services**: Update backend field names first
-4. **Phase 2, Stores**: Update state management
-5. **Phase 2, Composables**: Update business logic
-6. **Phase 2, Components**: Update UI and user-facing text
-7. **Phase 1, Remaining**: Complete other documentation
-8. **Testing**: Verify all changes work together
+**PRINCIPLE**: Complete all documentation FIRST (non-breaking changes), then update code in REVERSE DEPENDENCY ORDER (leaf nodes → root nodes) to minimize breaking changes.
+
+#### Phase 1: Complete ALL Documentation (Non-Breaking Changes)
+
+Documentation updates are pure text changes with zero breaking changes. Completing all docs first creates a complete reference for code updates.
+
+1. **CLAUDE.md** ✅ (already completed)
+2. **Phase 1, Priority 1** ✅ (already completed)
+   - Core file system docs (uploading.md, FileMetadata.md, firebase-storage.md, Document-Processing-Workflow.md, data-structures.md)
+3. **Phase 1, Priority 2**: Architecture Documentation
+   - Evidence.md, MetadataSpecs.md, Settings.md, SoloFirmMatters.md, CategoryTags.md, security-rules.md
+4. **Phase 1, Priority 3**: Process Documentation
+   - firebase-storage-plan.md, AsyncProcessesTable.md, authentication.md
+5. **Phase 1, Priority 4**: Development Documentation
+   - design-guidelines.md, vitest-test-suites.md, TanStackAndVue3.md, FAQ.md
+6. **Phase 1, Priority 5**: Agent Instructions
+   - file-relocator.md
+
+#### Phase 2: Code Updates (Reverse Dependency Order)
+
+Update files in reverse dependency order - files with NO dependencies first, files that DEPEND on others last. This ensures dependencies are already updated before dependents.
+
+**Layer 1: Workers** (Isolated, No Dependencies)
+- workers/fileHashWorker.js
+
+**Layer 2: Test Utilities** (Low-level, Used by Tests)
+- test-utils/mockFileAPI.js, virtualFolderTestUtils.js
+- composables/useMockFileData.js
+
+**Layer 3: Services** (Core Business Logic)
+- services/fileService.js
+- features/organizer/services/ (evidenceService, evidenceQueryService, aiProcessingService)
+
+**Layer 4: Upload Composables** (Depend on Services)
+- features/upload/composables/ (useFileMetadata, useQueueDeduplication, useFolderOptions, etc.)
+
+**Layer 5: Organizer Composables** (Depend on Services)
+- features/organizer/composables/ (useFilePreview, useFileViewer, useEvidenceDeduplication)
+
+**Layer 6: Stores** (Depend on Services/Composables)
+- features/organizer/stores/ (organizerCore, organizer, virtualFolderStore)
+- stores/documentView.js
+
+**Layer 7: Utility Files** (Used by Components)
+- features/organizer/utils/fileUtils.js
+- features/upload/utils/fileAnalysis.js
+
+**Layer 8: Configuration Files** (Used by Components)
+- features/organizer/config/fileListColumns.js (CRITICAL - column labels)
+
+**Layer 9: Upload Components** (Depend on Composables/Stores)
+- features/upload/ (FileUpload.vue and all upload components)
+
+**Layer 10: Organizer Components** (Depend on Everything)
+- features/organizer/views/ViewDocument.vue (CRITICAL - metadata display)
+- features/organizer/components/ (all organizer components)
+
+**Layer 11: Demo Files** (Isolated, Low Priority)
+- dev-demos/
+
+**Layer 12: Deprecated Files** (Reference Only, Optional)
+- deprecated/
+
+#### Phase 3: Verification and Testing
+
+After completing all updates:
+1. **Linting**: Run beautifier agent on all modified code files
+2. **Type Checking**: Verify no broken references
+3. **Testing**: Run test suite to ensure no regressions
+4. **Manual Testing**: Verify UI text consistency across the application
 
 ### Verification Steps
 
