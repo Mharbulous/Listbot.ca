@@ -32,7 +32,9 @@
           class="header-cell"
           :class="{
             'dragging': isColumnDragging(column.key),
-            'drag-gap': isDragGap(column.key)
+            'drag-gap': isDragGap(column.key),
+            'sorted-asc': isSorted(column.key) && sortDirection === 'asc',
+            'sorted-desc': isSorted(column.key) && sortDirection === 'desc'
           }"
           :style="{ width: columnWidths[column.key] + 'px' }"
           :data-column-key="column.key"
@@ -67,14 +69,13 @@
           <!-- Sortable Column Label (Clickable Button) -->
           <button
             class="header-label-button"
-            :class="getSortClass(column.key)"
             @click="toggleSort(column.key)"
             :title="`Click to sort by ${column.label}`"
           >
-            <span class="header-label">{{ column.label }}</span>
             <span class="sort-indicator" v-if="isSorted(column.key)">
               {{ sortDirection === 'asc' ? '↑' : '↓' }}
             </span>
+            <span class="header-label">{{ column.label }}</span>
           </button>
 
           <!-- Resize Handle -->
