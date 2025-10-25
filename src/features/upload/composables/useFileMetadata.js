@@ -1,5 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
@@ -126,7 +126,7 @@ export function useFileMetadata() {
       const metadataRecord = {
         // Core file metadata (only what varies between identical files)
         sourceFileName: sourceFileName,
-        lastModified: lastModified,
+        lastModified: Timestamp.fromMillis(lastModified),
         fileHash: fileHash,
 
         // File path information

@@ -257,7 +257,7 @@ Cloud:
 ```javascript
 {
   sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
-  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
+  lastModified: Timestamp,      // Original file's timestamp (Firestore Timestamp)
   fileHash: string,            // SHA-256 of file content (64 hex chars)
   sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
   sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")

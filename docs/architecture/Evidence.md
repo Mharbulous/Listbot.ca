@@ -88,7 +88,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 {
   // Core file metadata
   sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED
-  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
+  lastModified: Timestamp,      // Original file's timestamp (Firestore Timestamp)
   fileHash: string,            // SHA-256 of file content (64 hex chars)
 
   // File path information
