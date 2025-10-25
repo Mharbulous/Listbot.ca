@@ -300,7 +300,7 @@ For complete documentation of metadata hash generation, constraint-based dedupli
 ### Key Concepts
 
 - **File Content Hash**: SHA-256 of actual file content for storage deduplication
-- **Metadata Hash**: SHA-256 of `originalName|lastModified|fileHash` for metadata deduplication
+- **Metadata Hash**: xxHash3-64bit (16 hex characters) of `originalName|lastModified|fileHash` for metadata deduplication
 - **Automatic Constraints**: Firestore document IDs prevent duplicate metadata records
 - **Multi-Level Deduplication**: Storage level (content) + metadata level (combinations)
 

@@ -250,7 +250,7 @@ Cloud:
 
 **Purpose**: Preserves metadata about original desktop files as a subcollection under evidence documents
 
-**Document ID**: `metadataHash` - SHA-256 hash of `originalName|lastModified|fileHash`
+**Document ID**: `metadataHash` - xxHash3-64bit hash of `originalName|lastModified|fileHash` (16 hex characters)
 
 **Fields**:
 
@@ -391,7 +391,7 @@ Create sourceMetadata record as subcollection under evidence document →
 - Multiple sourceMetadata documents can exist under one evidence document
 - Each represents a different upload context (different name, timestamp, or path)
 - Path: `/evidence/{fileHash}/sourceMetadata/{metadataHash}`
-- Note: The `metadataHash` is generated from `sourceFileName|lastModified|fileHash`
+- Note: The `metadataHash` is a xxHash3-64bit hash generated from `sourceFileName|lastModified|fileHash` (16 hex characters)
 
 **Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
@@ -439,6 +439,6 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one sourceMetadata subcollection document under evidence (identified by metadataHash from `sourceFileName|lastModified|fileHash`)
+- Same metadata = one sourceMetadata subcollection document under evidence (identified by xxHash3-64bit metadataHash from `sourceFileName|lastModified|fileHash`)
 - Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

@@ -4,6 +4,16 @@ import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
 import { EvidenceService } from '../../organizer/services/evidenceService.js';
+import xxhash from 'xxhash-wasm';
+
+// Initialize xxHash hasher (singleton pattern for performance)
+let xxhashInstance = null;
+const getXxHash = async () => {
+  if (!xxhashInstance) {
+    xxhashInstance = await xxhash();
+  }
+  return xxhashInstance;
+};
 
 export function useFileMetadata() {
   const authStore = useAuthStore();
@@ -15,18 +25,17 @@ export function useFileMetadata() {
    * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
-   * @returns {Promise<string>} - SHA-256 hash of metadata string
+   * @returns {Promise<string>} - xxHash 64-bit hash of metadata string (16 hex chars)
    */
   const generateMetadataHash = async (sourceFileName, lastModified, fileHash) => {
     try {
       // Create deterministic concatenated string with pipe delimiters
       const metadataString = `${sourceFileName}|${lastModified}|${fileHash}`;
 
-      // Generate SHA-256 hash of the metadata string
-      const buffer = new TextEncoder().encode(metadataString);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const metadataHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+      // Generate xxHash 64-bit hash of the metadata string
+      const hasher = await getXxHash();
+      const hashValue = hasher.h64(metadataString); // Returns BigInt (64-bit hash)
+      const metadataHash = hashValue.toString(16).padStart(16, '0'); // Convert to 16-char hex string
 
       return metadataHash;
     } catch (error) {
