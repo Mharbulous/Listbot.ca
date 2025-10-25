@@ -66,16 +66,18 @@
             </svg>
           </div>
 
+          <!-- Sort Indicator - positioned relative to header cell for proper centering -->
+          <span class="sort-indicator" v-if="isSorted(column.key)">
+            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+          </span>
+
           <!-- Sortable Column Label (Clickable Button) -->
           <button
             class="header-label-button"
             @click="toggleSort(column.key)"
             :title="`Click to sort by ${column.label}`"
           >
-            <span class="sort-indicator" v-if="isSorted(column.key)">
-              {{ sortDirection === 'asc' ? '↑' : '↓' }}
-            </span>
-            <span class="header-label">{{ column.label }}</span>
+            {{ column.label }}
           </button>
 
           <!-- Resize Handle -->
