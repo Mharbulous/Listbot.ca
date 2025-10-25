@@ -1,7 +1,9 @@
 /**
  * Web Worker for file hash processing
- * Handles SHA-256 hash generation for file deduplication without blocking the main thread
+ * Handles BLAKE3 hash generation for file deduplication without blocking the main thread
  */
+
+import { blake3 } from 'hash-wasm';
 
 // Worker-specific timing utility
 let processingStartTime = null;
@@ -25,15 +27,16 @@ const MESSAGE_TYPES = {
   HEALTH_CHECK_RESPONSE: 'HEALTH_CHECK_RESPONSE',
 };
 
-// Helper function to generate standard SHA-256 hash
+// Helper function to generate BLAKE3 hash (128-bit / 32 hex characters)
 async function generateFileHash(file) {
   try {
     const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    const uint8Array = new Uint8Array(buffer);
 
-    // Return standard SHA-256 hash of file content
+    // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
+    const hash = await blake3(uint8Array, 128);
+
+    // Return BLAKE3 hash of file content (32 hex characters)
     return hash;
   } catch (error) {
     throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);

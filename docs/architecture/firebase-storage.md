@@ -170,7 +170,7 @@ service firebase.storage {
 
 ### Automatic Deduplication
 
-1. **Content-Based**: Files with identical SHA-256 hashes stored once
+1. **Content-Based**: Files with identical BLAKE3 hashes stored once
 2. **Metadata Preservation**: Multiple metadata records for different contexts
 3. **Reference Counting**: Multiple evidence documents can reference same file
 4. **Storage Efficiency**: Significant space savings for duplicate files

@@ -28,7 +28,7 @@
 
 **Metadata preservation requires forensic-grade tools.** Standard file operations often alter or destroy critical timestamps and embedded metadata. Email attachments typically reset creation timestamps, social media platforms strip 80-95% of metadata for privacy and storage optimization, and basic copy utilities lose precision in timestamp fields.
 
-**Chain of custody documentation should include** the specific tools and versions used for collection (FTK Imager, WinZip with settings documented), original file hashes (MD5/SHA-256) calculated before analysis, and complete transfer method details. Converting MSG files to EML or transcoding videos creates new metadata that overwrites forensically valuable original data.
+**Chain of custody documentation should include** the specific tools and versions used for collection (FTK Imager, WinZip with settings documented), original file hashes (MD5/BLAKE3) calculated before analysis, and complete transfer method details. Converting MSG files to EML or transcoding videos creates new metadata that overwrites forensically valuable original data.
 
 **Authentication verification compares** internal embedded metadata against file system timestamps to detect inconsistencies indicating tampering. For images, thumbnail mismatches with main image reveal editing. For documents, revision counts and edit times validate claimed document age. For emails, Date header discrepancies with Received timestamps suggest manipulation.
 

@@ -104,7 +104,7 @@ Matters can have multiple clients - client names are stored as a string array di
 class StorageService {
   async uploadFile(file, firmId, matterId, metadata = {}) {
     // 1. Calculate hash
-    const fileHash = await this.calculateSHA256(file);
+    const fileHash = await this.calculateBLAKE3(file);
     const extension = file.name.split('.').pop().toLowerCase(); // Standardize to lowercase
     const fileName = `${fileHash}.${extension}`;
     const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileName}`;
@@ -162,11 +162,12 @@ class StorageService {
     };
   }
 
-  async calculateSHA256(file) {
+  async calculateBLAKE3(file) {
     const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    const uint8Array = new Uint8Array(buffer);
+    // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
+    const hash = await blake3(uint8Array, 128);
+    return hash;
   }
 }
 ```
@@ -282,7 +283,7 @@ uploadFile(file, firmId, matterId);
 
 ### Phase 1: Core Upload (Week 1)
 
-- [ ] SHA-256 calculation
+- [ ] BLAKE3 calculation
 - [ ] Basic upload to matter folders
 - [ ] Document reference creation
 - [ ] Upload logging
@@ -363,7 +364,7 @@ await uploadFile(jointAssets, firmId, matterId);
 2. **Consistent Security**: Same rules apply to all files
 3. **Simple Data Model**: No separate Clients collection to manage
 4. **Complete Audit Trail**: Every upload attempt is logged
-5. **Efficient Storage**: SHA-256 deduplication still works perfectly
+5. **Efficient Storage**: BLAKE3 deduplication still works perfectly
 6. **Auto-Generated IDs**: No manual ID management required
 7. **Future-Proof**: Can add features without changing core structure
 

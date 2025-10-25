@@ -72,7 +72,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
         // Map evidence document to table row format
         return {
-          id: fileHash, // fileHash (SHA-256)
+          id: fileHash, // fileHash (BLAKE3)
           fileHash: fileHash,
 
           // File properties that exist in evidence documents

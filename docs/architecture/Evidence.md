@@ -6,7 +6,7 @@
 /firms/{firmId}/matters/general/evidence/{fileHash}
 ```
 
-**IMPORTANT**: Document ID is the SHA-256 hash of the file content (64 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
+**IMPORTANT**: Document ID is the BLAKE3 hash of the file content (32 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
 
 **Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
@@ -16,7 +16,7 @@
 
 ```javascript
 {
-  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
+  // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   // Display Configuration - REQUIRED
   displayCopy: string,           // Metadata hash - references sourceMetadata collection
@@ -43,7 +43,7 @@
 
 **Document ID (fileHash):**
 
-- **MUST** be a valid SHA-256 hash (64 hexadecimal characters)
+- **MUST** be a valid BLAKE3 hash (32 hexadecimal characters)
 - **AUTOMATIC DEDUPLICATION**: Using fileHash as document ID prevents duplicate evidence records
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence document
 - **NEVER** manually set document ID - use the fileHash from upload process
@@ -51,7 +51,7 @@
 **displayCopy:**
 
 - **ALWAYS** verify hash exists in sourceMetadata collection
-- **MUST** be a valid metadataHash (SHA-256, 64 characters)
+- **MUST** be a valid metadataHash (xxHash, 16 characters)
 - **USE** hash-based lookup for metadata retrieval
 
 **Note**: For understanding the critical distinction between original file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
@@ -89,7 +89,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
   // Core file metadata
   sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED
   lastModified: Timestamp,      // Original file's timestamp (Firestore Timestamp)
-  fileHash: string,            // SHA-256 of file content (64 hex chars)
+  fileHash: string,            // BLAKE3 of file content (32 hex chars)
 
   // File path information
   sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
@@ -158,7 +158,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ```javascript
 match /firms/{firmId}/matters/general/evidence/{fileHash} {
   // Evidence document access
-  // Note: fileHash is the document ID (SHA-256, 64 hex chars)
+  // Note: fileHash is the document ID (BLAKE3, 32 hex chars)
   allow read: if request.auth != null &&
                  request.auth.token.firmId == firmId;
 
@@ -189,8 +189,8 @@ function validateEvidenceCreate(data, fileHash) {
   return data.keys().hasAll(['displayCopy', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
                               'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
-         fileHash.size() == 64 &&  // Document ID must be valid SHA-256 hash
-         data.displayCopy.size() == 64 &&  // Must be valid metadata hash
+         fileHash.size() == 32 &&  // Document ID must be valid BLAKE3 hash
+         data.displayCopy.size() == 16 &&  // Must be valid xxHash metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&

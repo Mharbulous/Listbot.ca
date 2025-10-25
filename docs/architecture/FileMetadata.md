@@ -7,7 +7,7 @@ Last Updated: 2025-10-17
 This application preserves complete legal metadata about **original files** while implementing storage deduplication. Understanding this distinction is essential:
 
 - **Original Files**: Multiple files on users' computers - may be identical content with different names, locations, timestamps
-- **Storage Files**: Single deduplicated copy in Firebase Storage, named by SHA-256 hash
+- **Storage Files**: Single deduplicated copy in Firebase Storage, named by BLAKE3 hash
 
 **Example**: Three clients upload the same PDF contract:
 
@@ -143,7 +143,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **Displayed Fields**:
 
 - **Date Uploaded**: Firebase Storage upload timestamp from storage metadata `timeCreated`
-- **File Hash**: SHA-256 hash of file content, used as both `evidence` document ID and storage filename
+- **File Hash**: BLAKE3 hash of file content, used as both `evidence` document ID and storage filename
 
 **Data Sources**: Firebase Storage metadata API and `evidence` document ID.
 
@@ -258,7 +258,7 @@ Cloud:
 {
   sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
   lastModified: Timestamp,      // Original file's timestamp (Firestore Timestamp)
-  fileHash: string,            // SHA-256 of file content (64 hex chars)
+  fileHash: string,            // BLAKE3 of file content (32 hex chars)
   sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
   sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
 }
@@ -275,13 +275,13 @@ Cloud:
 
 **Purpose**: Links deduplicated storage files to their display metadata
 
-**Document ID**: `fileHash` - SHA-256 hash of file content (provides automatic deduplication)
+**Document ID**: `fileHash` - BLAKE3 hash of file content (provides automatic deduplication)
 
 **Fields**:
 
 ```javascript
 {
-  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
+  // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   displayCopy: string,       // metadataHash pointing to sourceMetadata record
   fileSize: number,          // File size in bytes
@@ -327,8 +327,8 @@ Cloud:
   eventType: string,         // 'upload_success' | 'upload_duplicate' | 'upload_error' | 'upload_interrupted'
   timestamp: timestamp,       // When upload was attempted
   fileName: string,          // Original filename from upload attempt
-  fileHash: string,          // SHA-256 of file content
-  metadataHash: string,      // SHA-256 of metadata
+  fileHash: string,          // BLAKE3 of file content
+  metadataHash: string,      // xxHash of metadata
   firmId: string,            // Firm context
   userId: string,            // User who uploaded
   errorMessage: string       // Optional - only for upload_error events

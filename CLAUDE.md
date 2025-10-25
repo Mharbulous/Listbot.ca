@@ -75,7 +75,7 @@ Core feature for uploading and processing files with sophisticated time estimati
   - `useQueueDeduplication.js` - Duplicate detection and hash processing
   - `useFolderOptions.js` - Folder analysis and path parsing optimization
   - `useWebWorker.js` & `useWorkerManager.js` - Worker management
-- `workers/fileHashWorker.js` - Background SHA-256 hash calculation
+- `workers/fileHashWorker.js` - Background BLAKE3 hash calculation
 - `utils/fileAnalysis.js` - 3-phase time estimation and file metrics
 
 **Processing Pipeline**:
@@ -157,7 +157,7 @@ The system uses hardware-specific calibration to provide accurate time predictio
 
 2. **Phase 2: Hash Processing** (Hardware-Calibrated)
 
-   - SHA-256 calculation for duplicate detection
+   - BLAKE3 calculation for duplicate detection
    - Formula: `35 + (6.5 × candidates) + (0.8 × sizeMB)` × hardware calibration factor
    - Uses stored hardware performance factor (H-factor) from actual measurements
    - Accounts for both computational and I/O overhead
@@ -176,7 +176,7 @@ The system uses hardware-specific calibration to provide accurate time predictio
 **File Deduplication Strategy:**
 
 - **Size-based pre-filtering**: Files with unique sizes skip hash calculation entirely
-- **Hash-based verification**: Only files with identical sizes undergo SHA-256 hashing
+- **Hash-based verification**: Only files with identical sizes undergo BLAKE3 hashing
 - **Firestore integration**: Hashes serve as document IDs for automatic database-level deduplication
 - **Efficient processing**: Typically 60-80% of files skip expensive hash calculation
 
