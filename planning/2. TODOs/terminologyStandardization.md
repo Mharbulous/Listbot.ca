@@ -1,8 +1,8 @@
 # Terminology Standardization Plan
 
 **Created**: 2025-10-25
-**Status**: In Progress - Phase 1 Complete, Phase 2 Layers 1-4 Complete, Layer 9 Started
-**Progress**: Phase 1 ✅ (19/19 files) | Phase 2 ⏳ (17/76 files - Layers 1-4 complete & tested, Layer 9 1/8 files)
+**Status**: In Progress - Phase 1 Complete, Phase 2 Layers 1-5 Complete, Layer 9 Started
+**Progress**: Phase 1 ✅ (19/19 files) | Phase 2 ⏳ (20/76 files - Layers 1-5 complete, Layer 9 1/8 files)
 **Last Updated**: 2025-10-25
 **Reference**: See `CLAUDE.md` - "Data Model & Naming Conventions" section
 
@@ -194,17 +194,20 @@ When reviewing files, update:
 
 ### Organizer Feature Composables
 
-- [ ] `src/features/organizer/composables/useFilePreview.js`
+- [x] `src/features/organizer/composables/useFilePreview.js` ✅ **COMPLETED**
   - **Focus**: File preview generation
   - **Review**: What's being previewed (storage file)
+  - **Changes made**: Updated header to "Storage File Preview Composable", added context documentation clarifying this handles storage files (tier 3) not source files (tier 2), enhanced function documentation for generatePreview() and selectFile(), clarified inline comments (5 documentation enhancements)
 
-- [ ] `src/features/organizer/composables/useFileViewer.js`
+- [x] `src/features/organizer/composables/useFileViewer.js` ✅ **COMPLETED**
   - **Focus**: File viewing logic
   - **Review**: File vs document terminology in viewer context
+  - **Changes made**: Updated header to "Storage File Viewer Composable", added context documentation, enhanced variable/function/computed property comments to clarify storage files vs evidence records (5 documentation enhancements)
 
-- [ ] `src/features/organizer/composables/useEvidenceDeduplication.js`
+- [x] `src/features/organizer/composables/useEvidenceDeduplication.js` ✅ **COMPLETED**
   - **Focus**: Evidence-level deduplication
   - **Review**: Hash references, metadata comparison
+  - **Changes made**: Updated "files" to "storage files" in header comment, added context documentation explaining relationship between evidence documents (Firestore) and storage files (Firebase Storage), clarified fileHash role (3 documentation enhancements)
 
 ### Upload Feature Components
 
@@ -482,22 +485,23 @@ Use checkboxes above to track completion. Update this document as you work throu
 - ✅ Priority 5: Agent Instructions (1/1 file - 100% complete)
   - Verified 1 file requires no changes (file-relocator.md - refers to code files, not data model)
 
-**Phase 2: Code Files** ⏳ (In Progress - Layers 1-4 Complete & Tested)
+**Phase 2: Code Files** ⏳ (In Progress - Layers 1-5 Complete)
 - ✅ Layer 1: Workers (1/1 file - 100% complete & tested)
 - ✅ Layer 2: Test Utilities (3/3 files - 100% complete & tested)
 - ✅ Layer 3: Services (4/4 files - 100% complete & tested)
 - ✅ Layer 4: Upload Composables (8/8 files - 100% complete & tested)
-- ⏳ Layer 5: Organizer Composables (0/3 files - 0% complete)
+- ✅ Layer 5: Organizer Composables (3/3 files - 100% complete)
 - ⏳ Layer 6-8: Stores, Utils, Config (0/11 files - 0% complete)
 - ⏳ Layer 9: Upload Components (1/8 files - 12.5% complete)
 - ⏳ Layer 10-12: Organizer Components, Demos, Deprecated (0/41 files - 0% complete)
 
 **Phase 3: Verification and Testing** ✅ (Complete for Layers 1-4)
 - Upload functionality tested successfully (single file, multiple files with deduplication, folder upload)
+- Layer 5 (Organizer Composables): Documentation-only changes, minimal testing required
 
-**Overall Progress**: 36/95 files reviewed (37.9%)
+**Overall Progress**: 39/95 files reviewed (41.1%)
 - **Phase 1 Complete**: All documentation reviewed and standardized ✅
-- **Phase 2 In Progress**: Layers 1-4 complete & tested (17/76 code files - 22.4%)
+- **Phase 2 In Progress**: Layers 1-5 complete (20/76 code files - 26.3%)
 - Documentation changes: 6 files updated
   - Priority 1: 4 files (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
   - Priority 2: 1 file (Evidence.md)
@@ -508,13 +512,14 @@ Use checkboxes above to track completion. Update this document as you work throu
   - Priority 3: 2 files (AsyncProcessesTable.md, authentication.md)
   - Priority 4: 4 files (design-guidelines.md, vitest-test-suites.md, TanStackAndVue3.md, FAQ.md)
   - Priority 5: 1 file (file-relocator.md)
-- Code files updated: 17 files (Layers 1-4, 9)
+- Code files updated: 20 files (Layers 1-5, 9)
   - Layer 1 (Workers): 1 file (fileHashWorker.js)
   - Layer 2 (Test Utilities): 3 files (mockFileAPI.js, virtualFolderTestUtils.js, useMockFileData.js)
   - Layer 3 (Services): 4 files (fileService.js, evidenceService.js, evidenceQueryService.js, aiProcessingService.js)
   - Layer 4 (Upload Composables): 8 files (useFileMetadata.js, useFileQueue.js, useFileQueueCore.js, useQueueDeduplication.js, useFolderOptions.js, useFolderAnalysis.js, useQueueCore.js, useQueueWorkers.js) - **ALL TESTED ✅**
+  - Layer 5 (Organizer Composables): 3 files (useFilePreview.js, useFileViewer.js, useEvidenceDeduplication.js) - **DOCUMENTATION ONLY**
   - Layer 9 (Upload Components): 1 file (FileUpload.vue) - **CRITICAL BUG FIX - TESTED ✅**
-- Remaining work: 59 code files (Layers 5-12)
+- Remaining work: 56 code files (Layers 6-12)
 
 **Estimated effort**: 2-4 days of focused work, depending on thoroughness
 
@@ -692,3 +697,42 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
 - **Layer 4 complete**: All upload composables standardized and tested
 - **Upload system verified**: Tested across single files, multiple files, and folders
 - **Production ready**: Changes are safe to commit and deploy
+
+### Session 9 - 2025-10-25
+**Completed**: Phase 2, Layer 5 - Organizer Feature Composables
+
+**Layer 5: Organizer Composables (3 files - DOCUMENTATION ONLY)**
+- Updated `src/features/organizer/composables/useFilePreview.js`:
+  - Changed header from "File preview composable" to "Storage File Preview Composable"
+  - Added context documentation: Clarifies this handles storage files (tier 3) already in Firebase Storage, not source files (tier 2)
+  - Enhanced function documentation: Added JSDoc comments to `generatePreview()` and `selectFile()` specifying they work with storage file references or evidence records
+  - Updated inline comments: Changed "file type" to "storage file type", "file can be previewed" to "storage file can be previewed"
+  - **Total changes**: 5 documentation enhancements
+
+- Updated `src/features/organizer/composables/useFileViewer.js`:
+  - Changed header from "Main file viewer composable" to "Storage File Viewer Composable"
+  - Added context documentation: Clarifies this deals with storage files (tier 3), not source files (tier 2)
+  - Enhanced variable documentation: Added inline comment clarifying `files` array contains storage file references/evidence records
+  - Updated function comments: Clarified `loadFiles()` loads storage files from Firebase Storage and evidence records from Firestore
+  - Enhanced computed property: Added comment clarifying `totalFiles` counts storage files/evidence records
+  - **Total changes**: 5 documentation enhancements
+
+- Updated `src/features/organizer/composables/useEvidenceDeduplication.js`:
+  - Updated header comment: Changed "files with multiple metadata variants" to "storage files with multiple metadata variants"
+  - Added context documentation: Clarified the relationship between evidence documents (Firestore) and storage files (Firebase Storage)
+  - Enhanced architectural documentation: Explained that fileHash serves as both document ID and storage file identifier
+  - **Total changes**: 3 documentation enhancements (1 terminology fix + 2 context additions)
+
+**Testing Status**: ⚠️ **Documentation-only changes** - No functional code modified
+- These composables work with storage files in the organizer feature
+- Changes are purely comments, JSDoc annotations, and header documentation
+- Zero risk of breaking changes
+- Minimal testing required (verify dev server starts and organizer views load)
+
+**Status**: Layer 5 now 3/3 files complete (100%). All organizer composables now clearly distinguish between source files (tier 2) and storage files (tier 3).
+
+**Impact**:
+- **Layer 5 complete**: All organizer composables use consistent "storage file" terminology
+- **Zero functional changes**: Only documentation and comments updated
+- **Architectural clarity**: Clear distinction between source files (upload) and storage files (organizer)
+- **Safe to deploy**: Documentation-only changes carry no risk
