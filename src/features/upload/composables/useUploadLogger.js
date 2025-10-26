@@ -49,14 +49,8 @@ export function useUploadLogger() {
       );
       const docRef = await addDoc(eventsCollection, eventData);
 
-      console.log(`Upload event logged: ${event.eventType} - ${event.fileName}`, {
-        eventId: docRef.id,
-        fileHash: event.fileHash,
-      });
-
       return docRef.id;
     } catch (error) {
-      console.error('Failed to log upload event:', error);
       throw error;
     }
   };
@@ -87,10 +81,8 @@ export function useUploadLogger() {
 
       await updateDoc(eventDocRef, updates);
 
-      console.log(`Upload event updated: ${eventId}`, updates);
       return eventId;
     } catch (error) {
-      console.error('Failed to update upload event:', error);
       throw error;
     }
   };

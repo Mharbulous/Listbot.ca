@@ -39,7 +39,6 @@ export function useFileMetadata() {
 
       return metadataHash;
     } catch (error) {
-      console.error('Failed to generate metadata hash:', error);
       throw new Error(`Failed to generate metadata hash: ${error.message}`);
     }
   };
@@ -108,10 +107,7 @@ export function useFileMetadata() {
           existingFolderPaths = existingDoc.data().sourceFolderPath || '';
         }
       } catch (error) {
-        console.warn(
-          'Could not retrieve existing sourceFolderPath, proceeding with new path only:',
-          error
-        );
+        // Silently catch errors when retrieving existing folder paths
       }
 
       // Update folder paths using pattern recognition
@@ -129,7 +125,6 @@ export function useFileMetadata() {
       };
 
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
-      console.log(`[DEBUG] Evidence document created: ${evidenceId} for metadata: ${metadataHash}`);
 
       // STEP 2: Create sourceMetadata subcollection document (now that parent exists)
       const metadataRecord = {
@@ -159,18 +154,8 @@ export function useFileMetadata() {
       );
       await setDoc(docRef, metadataRecord);
 
-      console.log(`[DEBUG] Metadata record created: ${metadataHash}`, {
-        sourceFileName,
-        sourceFolderPath: pathUpdate.folderPaths || '(root level)',
-        sourceFileType: sourceFileType || '(unknown)',
-        pathPattern: pathUpdate.pattern.type,
-        pathChanged: pathUpdate.hasChanged,
-        fileHash: fileHash.substring(0, 8) + '...',
-      });
-
       return metadataHash;
     } catch (error) {
-      console.error('Failed to create metadata record:', error);
       throw error;
     }
   };
@@ -189,10 +174,8 @@ export function useFileMetadata() {
         results.push(metadataHash);
       }
 
-      console.log(`Created ${results.length} metadata records`);
       return results;
     } catch (error) {
-      console.error('Failed to create multiple metadata records:', error);
       throw error;
     }
   };
@@ -235,7 +218,6 @@ export function useFileMetadata() {
 
       return docSnapshot.exists();
     } catch (error) {
-      console.error('Failed to check metadata record existence:', error);
       return false;
     }
   };

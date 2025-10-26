@@ -292,7 +292,6 @@ const checkFileExists = async (fileHash) => {
     const docSnap = await getDoc(evidenceRef);
     return docSnap.exists();
   } catch (error) {
-    console.warn('Error checking file existence via Firestore, falling back to false:', error);
     return false;
   }
 };
@@ -348,7 +347,7 @@ const safeLog = async (logFn, context) => {
   try {
     await logFn();
   } catch (error) {
-    console.error(`Failed to log ${context}:`, error);
+    // Silently catch logging errors
   }
 };
 
@@ -357,12 +356,6 @@ const safeMetadata = async (metadataFn, context) => {
   try {
     await metadataFn();
   } catch (error) {
-    console.error(`Failed to create metadata ${context}:`, error);
-    console.error('Full error details:', {
-      message: error.message,
-      stack: error.stack,
-      context,
-    });
     // Rethrow in development to surface issues
     if (import.meta.env.DEV) {
       throw error;
@@ -404,17 +397,14 @@ queueDeduplication.setTimeMonitoringCallback({
   onProcessingError: (error) => {
     timeWarning.resetMonitoring();
     queueDeduplication.terminateWorker();
-    console.log('File processing error - time monitoring reset and workers terminated:', error);
   },
   onProcessingAborted: () => {
     queueDeduplication.terminateWorker();
-    console.log('File processing aborted - workers terminated');
   },
 });
 
 // Enhanced clearQueue that uses page refresh for simplicity
 const clearQueue = () => {
-  console.log('🔄 Clear All: Refreshing page to reset all state');
   window.location.reload();
 };
 
@@ -454,7 +444,6 @@ const processFilesWithQueue = async (files) => {
   const processId = Math.random().toString(36).substr(2, 9);
 
   if (isAborted() || !files || files.length === 0) {
-    console.log('Skipping file processing - analysis was aborted or no files');
     return;
   }
 
@@ -471,13 +460,10 @@ const processFilesWithQueue = async (files) => {
 
     if (estimatedTime > 0) {
       timeWarning.startMonitoring(estimatedTime);
-    } else {
-      console.warn('Time monitoring not started: Unable to generate hardware-calibrated estimate');
     }
   }
 
   if (isAborted()) {
-    console.log('Aborting file processing - analysis was cancelled after time monitoring setup');
     return;
   }
 
@@ -494,27 +480,18 @@ const processFilesWithQueue = async (files) => {
       });
 
       if (isInSkippedFolder) {
-        console.log(`Upload safety filter: excluding ${filePath} from skipped folder`);
         return false;
       }
       return true;
     });
-
-    if (filesToProcess.length !== originalCount) {
-      console.log(
-        `Upload safety filter: excluded ${originalCount - filesToProcess.length} files from ${skippedFolders.value.length} skipped folders`
-      );
-    }
   }
 
   if (isAborted()) {
-    console.log(`❌ [${processId}] EXIT EARLY: aborted during file preparation`);
     return;
   }
 
   try {
     if (isAborted()) {
-      console.log(`❌ [${processId}] EXIT EARLY: aborted right before processFiles call`);
       return;
     }
 
@@ -524,9 +501,6 @@ const processFilesWithQueue = async (files) => {
     await processFiles(filesToProcess, updateUploadQueue);
 
     if (isAborted()) {
-      console.log(
-        `❌ [${processId}] EXIT ABORT: processing aborted after completion - skipping cleanup`
-      );
       return;
     }
 
@@ -535,10 +509,7 @@ const processFilesWithQueue = async (files) => {
     queueDeduplication.clearTimeMonitoringCallback();
     resetProcessingTimer();
   } catch (error) {
-    console.error('Error during file processing:', error);
-
     if (isAborted()) {
-      console.log(`❌ [${processId}] EXIT ERROR ABORT: processing aborted during error handling`);
       return;
     }
 
@@ -546,12 +517,6 @@ const processFilesWithQueue = async (files) => {
     queueDeduplication.clearTimeMonitoringCallback();
     resetProcessingTimer();
     throw error;
-  }
-
-  // Debug: Log AsyncTracker state at successful exit
-  if (window.__asyncTracker) {
-    const exitStats = window.__asyncTracker.stats();
-    console.log(`📊 [${processId}] AsyncTracker at EXIT:`, exitStats);
   }
 };
 
@@ -588,12 +553,10 @@ const handleDrop = async (event) => {
     processFolderEntry: (folder) =>
       processFolderEntry(folder, async (files) => {
         if (isAborted()) {
-          console.log('Aborting folder processing - analysis was cancelled');
           return;
         }
         await initializeQueueInstantly(files);
         if (isAborted()) {
-          console.log('Aborting file queue processing - analysis was cancelled');
           return;
         }
         addFilesToQueue(files, processFilesWithQueue);
@@ -636,13 +599,11 @@ const handleCloseWarning = () => timeWarning.dismissWarning();
 
 // Pause/Resume upload handlers
 const handlePauseUpload = () => {
-  console.log('Pause upload requested');
   pauseRequested.value = true;
   updateUploadStatus('requestPause');
 };
 
 const handleResumeUpload = () => {
-  console.log('Resume upload requested');
   isPaused.value = false;
   updateUploadStatus('resume');
   continueUpload();
@@ -650,7 +611,6 @@ const handleResumeUpload = () => {
 
 // Process duplicate file (consolidated logic)
 const processDuplicateFile = async (queueFile) => {
-  console.log(`Processing duplicate file: ${queueFile.sourceName}`);
   updateUploadStatus('currentFile', queueFile.sourceName, 'processing_duplicate');
   updateFileStatus(queueFile, 'skipped');
 
@@ -665,12 +625,10 @@ const processDuplicateFile = async (queueFile) => {
   );
 
   updateUploadStatus('skipped');
-  console.log(`Duplicate file processed: ${queueFile.sourceName}`);
 };
 
 // Process existing file (consolidated logic)
 const processExistingFile = async (queueFile, fileHash) => {
-  console.log(`File skipped (already exists): ${queueFile.sourceName}`);
   updateUploadStatus('skipped');
   updateFileStatus(queueFile, 'skipped');
 
@@ -688,46 +646,29 @@ const processExistingFile = async (queueFile, fileHash) => {
 // Process new file upload (consolidated logic)
 const processNewFileUpload = async (queueFile, fileHash) => {
   updateUploadStatus('currentFile', queueFile.sourceName, 'uploading');
-  console.log(`Uploading file: ${queueFile.sourceName}`);
 
   // Log upload_interrupted preemptively and capture event ID
   let uploadEventId = null;
   try {
     uploadEventId = await logFileEvent('upload_interrupted', queueFile, fileHash);
-    console.log(`[DEBUG] Preemptive event logged with ID: ${uploadEventId} for ${queueFile.sourceName}`);
   } catch (error) {
-    console.error(`Failed to log preemptive event for ${queueFile.sourceName}:`, error);
+    // Silently catch logging errors
   }
 
   const uploadStartTime = Date.now();
   await uploadSingleFile(queueFile.sourceFile, fileHash, queueFile.sourceName, uploadAbortController.signal);
   const uploadDurationMs = Date.now() - uploadStartTime;
 
-  console.log(`Upload duration for ${queueFile.sourceName}: ${uploadDurationMs}ms`);
   updateUploadStatus('successful');
   updateFileStatus(queueFile, 'completed');
-  console.log(`Successfully uploaded: ${queueFile.sourceName}`);
 
   // Update the preemptive log to upload_success
   if (uploadEventId) {
-    console.log(`[DEBUG] Attempting to update event ${uploadEventId} to upload_success`);
     try {
       await updateUploadEvent(uploadEventId, { eventType: 'upload_success' });
-      console.log(`[DEBUG] Successfully updated event ${uploadEventId} to upload_success`);
     } catch (error) {
-      console.error(`Failed to update upload event ${uploadEventId}:`, error);
-      console.error('Update error details:', {
-        eventId: uploadEventId,
-        fileName: queueFile.sourceName,
-        fileHash: fileHash,
-        errorMessage: error.message,
-        errorStack: error.stack,
-      });
+      // Silently catch update errors
     }
-  } else {
-    console.warn(
-      `[WARNING] No upload event ID captured for ${queueFile.sourceName} - cannot update event`
-    );
   }
 
   await safeMetadata(
@@ -739,8 +680,6 @@ const processNewFileUpload = async (queueFile, fileHash) => {
 // Resumable upload loop function
 const continueUpload = async () => {
   try {
-    console.log('Continuing upload process...');
-
     const filesToProcess = uploadQueue.value;
     if (filesToProcess.length === 0) {
       showNotification('No files to process', 'info');
@@ -749,12 +688,10 @@ const continueUpload = async () => {
     }
 
     const startIndex = uploadStatus.value.currentUploadIndex || 0;
-    console.log(`Continuing from file ${startIndex + 1} of ${filesToProcess.length}`);
 
     for (let i = startIndex; i < filesToProcess.length; i++) {
       // Check for pause request
       if (pauseRequested.value) {
-        console.log(`Pause requested at file ${i + 1}. Pausing...`);
         updateUploadStatus('setUploadIndex', i);
         updateUploadStatus('pause');
         isPaused.value = true;
@@ -770,7 +707,6 @@ const continueUpload = async () => {
         try {
           await processDuplicateFile(queueFile);
         } catch (error) {
-          console.error(`Failed to process duplicate file ${queueFile.sourceName}:`, error);
           updateFileStatus(queueFile, 'failed');
           updateUploadStatus('failed');
         }
@@ -783,21 +719,17 @@ const continueUpload = async () => {
         // Calculate or reuse hash
         updateUploadStatus('currentFile', queueFile.sourceName, 'calculating_hash');
         updateFileStatus(queueFile, 'uploading');
-        console.log(`Calculating hash for: ${queueFile.sourceName}`);
 
         let fileHash;
         if (queueFile.hash) {
           fileHash = queueFile.hash;
-          console.log(`Using existing hash for: ${queueFile.sourceName}`);
         } else {
           fileHash = await calculateFileHash(queueFile.sourceFile);
           queueFile.hash = fileHash;
           populateExistingHash(queueFile.id || queueFile.sourceName, fileHash);
-          console.log(`Calculated new hash for: ${queueFile.sourceName}`);
         }
 
         if (uploadAbortController.signal.aborted) {
-          console.log(`Upload aborted during hash calculation for: ${queueFile.sourceName}`);
           break;
         }
 
@@ -809,17 +741,14 @@ const continueUpload = async () => {
           await processExistingFile(queueFile, fileHash);
         } else {
           if (uploadAbortController.signal.aborted) {
-            console.log(`Upload aborted before uploading: ${queueFile.sourceName}`);
             break;
           }
           await processNewFileUpload(queueFile, fileHash);
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          console.log(`Upload aborted for: ${queueFile.sourceName}`);
           break;
         }
-        console.error(`Failed to upload ${queueFile.sourceName}:`, error);
         updateUploadStatus('failed');
         updateFileStatus(queueFile, 'error');
 
@@ -830,10 +759,7 @@ const continueUpload = async () => {
             try {
               currentFileHash = await calculateFileHash(queueFile.sourceFile);
             } catch (hashError) {
-              console.warn(
-                `Could not calculate hash for failed upload: ${queueFile.sourceName}`,
-                hashError
-              );
+              // Silently catch hash calculation errors
             }
           }
           await logFileEvent('upload_failed', queueFile, currentFileHash);
@@ -846,11 +772,6 @@ const continueUpload = async () => {
     // Handle completion or pause
     if (!isPaused.value) {
       updateUploadStatus('complete');
-      console.log('Upload process completed:', {
-        successful: uploadStatus.value.successful,
-        failed: uploadStatus.value.failed,
-        skipped: uploadStatus.value.skipped,
-      });
 
       const totalProcessed = uploadStatus.value.successful + uploadStatus.value.skipped;
       if (uploadStatus.value.failed === 0) {
@@ -866,7 +787,6 @@ const continueUpload = async () => {
       isStartingUpload.value = false;
     }
   } catch (error) {
-    console.error('Upload process failed:', error);
     showNotification('Upload failed: ' + (error.message || 'Unknown error'), 'error');
     updateUploadStatus('complete');
     isPaused.value = false;
@@ -889,10 +809,8 @@ const handleStartUpload = async () => {
     }
 
     updateUploadStatus('start');
-    console.log('Starting upload process...');
     await continueUpload();
   } catch (error) {
-    console.error('Upload process failed:', error);
     showNotification('Upload failed: ' + (error.message || 'Unknown error'), 'error');
     updateUploadStatus('complete');
     isPaused.value = false;
