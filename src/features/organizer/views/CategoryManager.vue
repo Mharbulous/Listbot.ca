@@ -223,7 +223,7 @@ const sortedMatterCategories = computed(() => {
 
 // Watch tab changes to log for debugging
 watch(activeTab, (newTab) => {
-  console.log(`[CategoryManager] Active tab changed to: ${newTab}`);
+  // Tab change tracking
 });
 
 const getCategoryIcon = (category) => {
@@ -355,9 +355,7 @@ const editCategory = (category) => {
 
 onMounted(async () => {
   try {
-    console.log('[CategoryManager] Loading all categories...');
     await loadAllCategories();
-    console.log('[CategoryManager] Categories loaded successfully');
   } catch (error) {
     console.error('[CategoryManager] Failed to load categories:', error);
     showNotification('Failed to load categories: ' + error.message, 'error');

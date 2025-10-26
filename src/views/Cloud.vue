@@ -508,69 +508,6 @@ onMounted(async () => {
 
   // Calculate Time to First Render (TTFR) = fetch time + render time
   const ttfr = fetchDuration + renderDuration;
-
-  // Performance Report for Phase 7
-  console.group('[Cloud Table] Performance Report - ' + sortedData.value.length.toLocaleString() + ' Rows (Real Data)');
-  console.log('Data fetch (Firestore):', fetchDuration.toFixed(2) + 'ms');
-  console.log('Initial render:', renderDuration.toFixed(2) + 'ms');
-  console.log('Time to First Render (TTFR):', ttfr.toFixed(2) + 'ms');
-  console.log('Memory usage:', memoryUsage + ' MB');
-  console.log('DOM nodes rendered:', domNodeCount);
-
-  // Only calculate efficiency if we have DOM nodes
-  if (domNodeCount > 0 && sortedData.value.length > 0) {
-    console.log('Virtual efficiency:', Math.round(sortedData.value.length / domNodeCount) + 'x reduction');
-  } else {
-    console.log('Virtual efficiency:', 'N/A (no data)');
-  }
-  console.groupEnd();
-
-  // Performance comparison table across dataset sizes
-  console.table([
-    {
-      rows: 100,
-      renderTime: '~20ms',
-      memory: '~8 MB',
-      domNodes: 100,
-      fps: 60,
-      phase: 'Phase 1 (Static Mock)'
-    },
-    {
-      rows: 1000,
-      renderTime: '~78ms',
-      memory: '~42 MB',
-      domNodes: 35,
-      fps: 60,
-      phase: 'Phase 2 (Virtual Mock)'
-    },
-    {
-      rows: 10000,
-      renderTime: '0.00ms',
-      memory: '61.27 MB',
-      domNodes: 23,
-      fps: 60,
-      phase: 'Phase 5 (10K Mock)'
-    },
-    {
-      rows: sortedData.value.length,
-      renderTime: renderDuration.toFixed(2) + 'ms',
-      memory: memoryUsage + ' MB',
-      domNodes: domNodeCount,
-      fps: 60,
-      phase: 'Phase 7 (Real Data)'
-    }
-  ]);
-
-  // Performance targets verification for Phase 7
-  console.group('[Cloud Table] Phase 7 Performance Targets');
-  console.log('✓ Firestore query time:', fetchDuration.toFixed(2) + 'ms');
-  console.log('✓ Initial render < 200ms:', renderDuration < 200 ? 'PASS' : 'FAIL', `(${renderDuration.toFixed(2)}ms)`);
-  console.log('✓ Time to First Render (TTFR):', ttfr.toFixed(2) + 'ms');
-  console.log('✓ Memory usage < 200 MB:', memoryUsage < 200 ? 'PASS' : 'FAIL', `(${memoryUsage}MB)`);
-  console.log('✓ DOM nodes < 50:', domNodeCount < 50 ? 'PASS' : 'FAIL', `(${domNodeCount} nodes)`);
-  console.log('✓ Scroll FPS target: 60 FPS (monitor during scroll)');
-  console.log('✓ Virtual scrolling performance: Same as Phase 5');
-  console.groupEnd();
 });
 
 // Cleanup

@@ -55,11 +55,6 @@ export class systemcategoriesService {
         q = query(systemcategoriesRef, where('isActive', '==', true), orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
       } catch (queryError) {
-        console.log(
-          '[systemcategoriesService] isActive query failed, trying fallback query:',
-          queryError.message
-        );
-
         // Fallback: Get all categories without isActive filter
         q = query(systemcategoriesRef, orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
@@ -81,7 +76,6 @@ export class systemcategoriesService {
         }
       });
 
-      console.log(`[systemcategoriesService] Fetched ${categories.length} system categories`);
       return categories;
     } catch (error) {
       console.error('[systemcategoriesService] Failed to get system categories:', error);
@@ -174,10 +168,6 @@ export class systemcategoriesService {
       // Use setDoc to create document with custom ID
       await setDoc(docRef, categoryDoc);
 
-      console.log(
-        `[systemcategoriesService] Created system category: ${categoryData.name} (${categoryId})`
-      );
-
       return {
         id: categoryId,
         ...categoryDoc,
@@ -224,7 +214,6 @@ export class systemcategoriesService {
       const categoryRef = doc(db, 'systemcategories', categoryId);
       await updateDoc(categoryRef, updateData);
 
-      console.log(`[systemcategoriesService] Updated system category: ${categoryId}`);
       return true;
     } catch (error) {
       console.error('[systemcategoriesService] Failed to update system category:', error);

@@ -23,12 +23,6 @@ export class PerformanceMonitor {
     const duration = performance.now() - metric.startTime;
     const memoryDelta = (performance.memory?.usedJSHeapSize || 0) - metric.startMemory;
 
-    console.log(`[${this.name}] ${operation}:`, {
-      duration: duration.toFixed(2) + 'ms',
-      memory: (memoryDelta / 1024 / 1024).toFixed(2) + ' MB',
-      ...meta
-    });
-
     return { duration, memoryDelta };
   }
 
