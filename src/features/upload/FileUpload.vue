@@ -88,6 +88,7 @@ import {
   calculateCalibratedProcessingTime,
   getStoredHardwarePerformanceFactor,
 } from './utils/hardwareCalibration.js';
+import { startProcessingTimer, resetProcessingTimer } from './utils/processingTimer.js';
 import { storage, db } from '../../services/firebase.js';
 import {
   ref as storageRef,
@@ -372,22 +373,22 @@ const safeMetadata = async (metadataFn, context) => {
 // Helper function for creating file metadata
 const createFileMetadataRecord = async (queueFile, fileHash) => {
   await createMetadataRecord({
-    sourceFileName: queueFile.name,
-    lastModified: queueFile.lastModified,
+    sourceFileName: queueFile.sourceName,
+    lastModified: queueFile.sourceModifiedDate,
     fileHash: fileHash,
-    size: queueFile.size,
+    size: queueFile.sourceSize,
     sessionId: getCurrentSessionId(),
-    originalPath: queueFile.path,
-    sourceFileType: queueFile.file?.type || '',
+    originalPath: queueFile.sourcePath,
+    sourceFileType: queueFile.sourceFile?.type || '',
   });
 };
 
 // Helper function for logging upload events
 const logFileEvent = async (eventType, queueFile, fileHash) => {
-  const metadataHash = await generateMetadataHash(queueFile.name, queueFile.lastModified, fileHash);
+  const metadataHash = await generateMetadataHash(queueFile.sourceName, queueFile.sourceModifiedDate, fileHash);
   return await logUploadEvent({
     eventType,
-    fileName: queueFile.name,
+    fileName: queueFile.sourceName,
     fileHash,
     metadataHash,
   });
@@ -517,6 +518,9 @@ const processFilesWithQueue = async (files) => {
       return;
     }
 
+    // Start processing timer for performance tracking
+    startProcessingTimer();
+
     await processFiles(filesToProcess, updateUploadQueue);
 
     if (isAborted()) {
@@ -529,6 +533,7 @@ const processFilesWithQueue = async (files) => {
     updateAllFilesToReady();
     timeWarning.resetMonitoring();
     queueDeduplication.clearTimeMonitoringCallback();
+    resetProcessingTimer();
   } catch (error) {
     console.error('Error during file processing:', error);
 
@@ -539,6 +544,7 @@ const processFilesWithQueue = async (files) => {
 
     timeWarning.resetMonitoring();
     queueDeduplication.clearTimeMonitoringCallback();
+    resetProcessingTimer();
     throw error;
   }
 
@@ -644,63 +650,63 @@ const handleResumeUpload = () => {
 
 // Process duplicate file (consolidated logic)
 const processDuplicateFile = async (queueFile) => {
-  console.log(`Processing duplicate file: ${queueFile.name}`);
-  updateUploadStatus('currentFile', queueFile.name, 'processing_duplicate');
+  console.log(`Processing duplicate file: ${queueFile.sourceName}`);
+  updateUploadStatus('currentFile', queueFile.sourceName, 'processing_duplicate');
   updateFileStatus(queueFile, 'skipped');
 
   await safeLog(
     async () => await logFileEvent('upload_skipped_metadata_recorded', queueFile, queueFile.hash),
-    `duplicate file ${queueFile.name}`
+    `duplicate file ${queueFile.sourceName}`
   );
 
   await safeMetadata(
     async () => await createFileMetadataRecord(queueFile, queueFile.hash),
-    `for duplicate ${queueFile.name}`
+    `for duplicate ${queueFile.sourceName}`
   );
 
   updateUploadStatus('skipped');
-  console.log(`Duplicate file processed: ${queueFile.name}`);
+  console.log(`Duplicate file processed: ${queueFile.sourceName}`);
 };
 
 // Process existing file (consolidated logic)
 const processExistingFile = async (queueFile, fileHash) => {
-  console.log(`File skipped (already exists): ${queueFile.name}`);
+  console.log(`File skipped (already exists): ${queueFile.sourceName}`);
   updateUploadStatus('skipped');
   updateFileStatus(queueFile, 'skipped');
 
   await safeLog(
     async () => await logFileEvent('upload_skipped_metadata_recorded', queueFile, fileHash),
-    `existing file ${queueFile.name}`
+    `existing file ${queueFile.sourceName}`
   );
 
   await safeMetadata(
     async () => await createFileMetadataRecord(queueFile, fileHash),
-    `for existing file ${queueFile.name}`
+    `for existing file ${queueFile.sourceName}`
   );
 };
 
 // Process new file upload (consolidated logic)
 const processNewFileUpload = async (queueFile, fileHash) => {
-  updateUploadStatus('currentFile', queueFile.name, 'uploading');
-  console.log(`Uploading file: ${queueFile.name}`);
+  updateUploadStatus('currentFile', queueFile.sourceName, 'uploading');
+  console.log(`Uploading file: ${queueFile.sourceName}`);
 
   // Log upload_interrupted preemptively and capture event ID
   let uploadEventId = null;
   try {
     uploadEventId = await logFileEvent('upload_interrupted', queueFile, fileHash);
-    console.log(`[DEBUG] Preemptive event logged with ID: ${uploadEventId} for ${queueFile.name}`);
+    console.log(`[DEBUG] Preemptive event logged with ID: ${uploadEventId} for ${queueFile.sourceName}`);
   } catch (error) {
-    console.error(`Failed to log preemptive event for ${queueFile.name}:`, error);
+    console.error(`Failed to log preemptive event for ${queueFile.sourceName}:`, error);
   }
 
   const uploadStartTime = Date.now();
-  await uploadSingleFile(queueFile.file, fileHash, queueFile.name, uploadAbortController.signal);
+  await uploadSingleFile(queueFile.sourceFile, fileHash, queueFile.sourceName, uploadAbortController.signal);
   const uploadDurationMs = Date.now() - uploadStartTime;
 
-  console.log(`Upload duration for ${queueFile.name}: ${uploadDurationMs}ms`);
+  console.log(`Upload duration for ${queueFile.sourceName}: ${uploadDurationMs}ms`);
   updateUploadStatus('successful');
   updateFileStatus(queueFile, 'completed');
-  console.log(`Successfully uploaded: ${queueFile.name}`);
+  console.log(`Successfully uploaded: ${queueFile.sourceName}`);
 
   // Update the preemptive log to upload_success
   if (uploadEventId) {
@@ -712,7 +718,7 @@ const processNewFileUpload = async (queueFile, fileHash) => {
       console.error(`Failed to update upload event ${uploadEventId}:`, error);
       console.error('Update error details:', {
         eventId: uploadEventId,
-        fileName: queueFile.name,
+        fileName: queueFile.sourceName,
         fileHash: fileHash,
         errorMessage: error.message,
         errorStack: error.stack,
@@ -720,13 +726,13 @@ const processNewFileUpload = async (queueFile, fileHash) => {
     }
   } else {
     console.warn(
-      `[WARNING] No upload event ID captured for ${queueFile.name} - cannot update event`
+      `[WARNING] No upload event ID captured for ${queueFile.sourceName} - cannot update event`
     );
   }
 
   await safeMetadata(
     async () => await createFileMetadataRecord(queueFile, fileHash),
-    `for uploaded file ${queueFile.name}`
+    `for uploaded file ${queueFile.sourceName}`
   );
 };
 
@@ -764,7 +770,7 @@ const continueUpload = async () => {
         try {
           await processDuplicateFile(queueFile);
         } catch (error) {
-          console.error(`Failed to process duplicate file ${queueFile.name}:`, error);
+          console.error(`Failed to process duplicate file ${queueFile.sourceName}:`, error);
           updateFileStatus(queueFile, 'failed');
           updateUploadStatus('failed');
         }
@@ -775,45 +781,45 @@ const continueUpload = async () => {
         uploadAbortController = new AbortController();
 
         // Calculate or reuse hash
-        updateUploadStatus('currentFile', queueFile.name, 'calculating_hash');
+        updateUploadStatus('currentFile', queueFile.sourceName, 'calculating_hash');
         updateFileStatus(queueFile, 'uploading');
-        console.log(`Calculating hash for: ${queueFile.name}`);
+        console.log(`Calculating hash for: ${queueFile.sourceName}`);
 
         let fileHash;
         if (queueFile.hash) {
           fileHash = queueFile.hash;
-          console.log(`Using existing hash for: ${queueFile.name}`);
+          console.log(`Using existing hash for: ${queueFile.sourceName}`);
         } else {
-          fileHash = await calculateFileHash(queueFile.file);
+          fileHash = await calculateFileHash(queueFile.sourceFile);
           queueFile.hash = fileHash;
-          populateExistingHash(queueFile.id || queueFile.name, fileHash);
-          console.log(`Calculated new hash for: ${queueFile.name}`);
+          populateExistingHash(queueFile.id || queueFile.sourceName, fileHash);
+          console.log(`Calculated new hash for: ${queueFile.sourceName}`);
         }
 
         if (uploadAbortController.signal.aborted) {
-          console.log(`Upload aborted during hash calculation for: ${queueFile.name}`);
+          console.log(`Upload aborted during hash calculation for: ${queueFile.sourceName}`);
           break;
         }
 
         // Check if file exists
-        updateUploadStatus('currentFile', queueFile.name, 'checking_existing');
+        updateUploadStatus('currentFile', queueFile.sourceName, 'checking_existing');
         const fileExists = await checkFileExists(fileHash);
 
         if (fileExists) {
           await processExistingFile(queueFile, fileHash);
         } else {
           if (uploadAbortController.signal.aborted) {
-            console.log(`Upload aborted before uploading: ${queueFile.name}`);
+            console.log(`Upload aborted before uploading: ${queueFile.sourceName}`);
             break;
           }
           await processNewFileUpload(queueFile, fileHash);
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          console.log(`Upload aborted for: ${queueFile.name}`);
+          console.log(`Upload aborted for: ${queueFile.sourceName}`);
           break;
         }
-        console.error(`Failed to upload ${queueFile.name}:`, error);
+        console.error(`Failed to upload ${queueFile.sourceName}:`, error);
         updateUploadStatus('failed');
         updateFileStatus(queueFile, 'error');
 
@@ -822,16 +828,16 @@ const continueUpload = async () => {
           let currentFileHash = queueFile.hash || 'unknown_hash';
           if (currentFileHash === 'unknown_hash') {
             try {
-              currentFileHash = await calculateFileHash(queueFile.file);
+              currentFileHash = await calculateFileHash(queueFile.sourceFile);
             } catch (hashError) {
               console.warn(
-                `Could not calculate hash for failed upload: ${queueFile.name}`,
+                `Could not calculate hash for failed upload: ${queueFile.sourceName}`,
                 hashError
               );
             }
           }
           await logFileEvent('upload_failed', queueFile, currentFileHash);
-        }, `failure for ${queueFile.name}`);
+        }, `failure for ${queueFile.sourceName}`);
       } finally {
         uploadAbortController = null;
       }

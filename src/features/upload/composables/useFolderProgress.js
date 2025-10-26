@@ -88,12 +88,12 @@ export function useFolderProgress() {
 
   // Main analysis coordination function
   const performDualAnalysis = async (
-    pendingFolderFiles,
+    pendingSourceFiles,
     mainFolderAnalysis,
     allFilesAnalysis,
     analysisTimedOut
   ) => {
-    if (pendingFolderFiles.length === 0) return;
+    if (pendingSourceFiles.length === 0) return;
 
     // Reset completion states
     mainFolderComplete.value = false;
@@ -107,7 +107,7 @@ export function useFolderProgress() {
     try {
       // Single preprocessing pass - parse all paths once and extract everything
       const { preprocessedFiles, directoryStats: allFilesDirectoryStats } =
-        preprocessFileData(pendingFolderFiles);
+        preprocessFileData(pendingSourceFiles);
 
       // Separate files based on preprocessed data (no more path parsing!)
       const allFiles = [];
@@ -127,8 +127,8 @@ export function useFolderProgress() {
       const mainFolderDirectoryStats = preprocessFileData(mainFolderFileData).directoryStats;
 
       // Calculate other metrics for logging
-      const allFilesMetrics = calculateFileSizeMetrics(pendingFolderFiles);
-      const filenameStats = calculateFilenameStats(pendingFolderFiles);
+      const allFilesMetrics = calculateFileSizeMetrics(pendingSourceFiles);
+      const filenameStats = calculateFilenameStats(pendingSourceFiles);
 
       // Start main folder analysis first (faster, enables Continue button sooner)
       const mainFolderPromise = analyzeFilesChunked(
@@ -189,7 +189,7 @@ export function useFolderProgress() {
         console.log(`T = ${elapsedTime}`);
 
         // Store hardware performance factor for calibration
-        const totalFiles = allFilesAnalysis.value?.totalFiles || pendingFolderFiles.length;
+        const totalFiles = allFilesAnalysis.value?.totalFiles || pendingSourceFiles.length;
         if (totalFiles > 0 && elapsedTime > 0) {
           storeHardwarePerformanceFactor(totalFiles, elapsedTime, {
             totalSizeMB: allFilesAnalysis.value?.totalSizeMB || 0,
@@ -201,7 +201,7 @@ export function useFolderProgress() {
         }
       }
     } catch (error) {
-      console.error('Error analyzing files for folder options:', error);
+      console.error('Error analyzing source files for folder options:', error);
       // Set fallback analysis
       allFilesAnalysis.value = performFileAnalysis([], {
         totalDirectoryCount: 0,

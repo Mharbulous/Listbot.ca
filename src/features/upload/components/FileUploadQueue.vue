@@ -360,13 +360,13 @@ const groupedFiles = computed(() => {
 
   // Group files by hash (for duplicates) or by unique ID (for singles)
   props.files.forEach((file) => {
-    const groupKey = file.hash || `unique_${file.name}_${file.size}_${file.lastModified}`;
+    const groupKey = file.hash || `unique_${file.sourceName}_${file.sourceSize}_${file.sourceModifiedDate}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
         files: [],
         isDuplicateGroup: false,
-        groupName: file.name,
+        groupName: file.sourceName,
       });
     }
 
@@ -394,7 +394,7 @@ const groupedFiles = computed(() => {
 watch(() => props.files, populateExistingHashes, { deep: true });
 
 const totalSize = computed(() => {
-  return uploadableFiles.value.reduce((total, file) => total + file.size, 0);
+  return uploadableFiles.value.reduce((total, file) => total + file.sourceSize, 0);
 });
 
 const hasErrors = computed(() => {

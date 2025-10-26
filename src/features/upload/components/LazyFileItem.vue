@@ -5,21 +5,21 @@
         <template #activator="{ props: tooltipProps }">
           <v-avatar
             v-bind="tooltipProps"
-            @mouseenter="onTooltipHover(file.id || file.name, file.file || file)"
-            @mouseleave="onTooltipLeave(file.id || file.name)"
+            @mouseenter="onTooltipHover(file.id || file.sourceName, file.sourceFile || file)"
+            @mouseleave="onTooltipLeave(file.id || file.sourceName)"
             color="grey-lighten-3"
             size="48"
             class="cursor-help"
           >
-            <v-icon :icon="getFileIcon(file.type)" size="24" />
+            <v-icon :icon="getFileIcon(file.sourceType)" size="24" />
           </v-avatar>
         </template>
-        {{ getHashDisplay(file.id || file.name) }}
+        {{ getHashDisplay(file.id || file.sourceName) }}
       </v-tooltip>
     </template>
 
     <v-list-item-title class="d-flex align-center">
-      <span class="text-truncate me-2">{{ file.name }}</span>
+      <span class="text-truncate me-2">{{ file.sourceName }}</span>
       <!-- Duplicate indicator next to filename (only for files being skipped) -->
       <v-chip
         v-if="group.isDuplicateGroup && file.isDuplicate"
@@ -34,9 +34,9 @@
 
     <v-list-item-subtitle>
       <div class="d-flex align-center text-caption text-grey-darken-1">
-        <span>{{ formatFileSize(file.size) }}</span>
+        <span>{{ formatFileSize(file.sourceSize) }}</span>
         <v-divider vertical class="mx-2" />
-        <span>{{ formatDate(file.lastModified) }}</span>
+        <span>{{ formatDate(file.sourceModifiedDate) }}</span>
         <v-divider vertical class="mx-2" />
         <span>{{ getRelativePath(file) }}</span>
       </div>
@@ -263,12 +263,12 @@ const getDuplicateIcon = (file) => {
 
 // Relative path extraction
 const getRelativePath = (file) => {
-  if (!file.path || file.path === file.name) {
+  if (!file.sourcePath || file.sourcePath === file.sourceName) {
     return '\\';
   }
 
   // Normalize path separators to forward slashes for consistent processing
-  const normalizedPath = file.path.replace(/\\/g, '/');
+  const normalizedPath = file.sourcePath.replace(/\\/g, '/');
 
   // Extract the folder path by removing the filename
   const pathParts = normalizedPath.split('/').filter((part) => part !== '');

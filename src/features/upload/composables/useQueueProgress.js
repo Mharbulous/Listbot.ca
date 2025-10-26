@@ -6,7 +6,7 @@ import {
 } from '../../../utils/errorMessages';
 
 export function useQueueProgress() {
-  // Main thread processing with progress tracking
+  // Main thread processing with progress tracking for source files
   const processFilesMainThread = async (
     files,
     updateUploadQueue,
@@ -55,7 +55,7 @@ export function useQueueProgress() {
     return { readyFiles, duplicatesForQueue, skippedFileCount: skippedFiles?.length || 0 };
   };
 
-  // Main processing controller that handles worker vs main thread
+  // Main processing controller that handles worker vs main thread for source file deduplication
   const processFiles = async (
     files,
     updateUploadQueue,

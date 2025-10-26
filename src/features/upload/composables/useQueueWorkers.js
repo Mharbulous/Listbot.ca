@@ -2,6 +2,16 @@ import { useWebWorker } from './useWebWorker';
 import { useWorkerManager } from './useWorkerManager';
 import { createApplicationError, isRecoverableError } from '../../../utils/errorMessages';
 
+/**
+ * Queue Workers Composable
+ *
+ * TERMINOLOGY - Source Files:
+ * ============================
+ * This composable coordinates Web Worker processing of SOURCE FILES during deduplication.
+ * Source files are Browser File objects from the user's device BEFORE upload to Firebase Storage.
+ *
+ * It manages the mapping between File objects and worker-processed results.
+ */
 export function useQueueWorkers() {
   // Initialize Worker Manager
   const workerManager = useWorkerManager();
@@ -85,10 +95,10 @@ export function useQueueWorkers() {
     }
 
     try {
-      // Create mapping structure that preserves original File objects
+      // Create mapping structure that preserves source File objects (from user's device)
       const fileMapping = new Map();
       const filesToProcess = files.map((file, index) => {
-        // Validate individual file
+        // Validate individual source file
         if (!(file instanceof File)) {
           const error = createApplicationError(
             `Invalid file at index ${index}: expected File object`,
@@ -103,7 +113,7 @@ export function useQueueWorkers() {
 
         const fileId = `file_${index}_${Date.now()}`;
 
-        // Store original File object in mapping
+        // Store source File object (from user's device) in mapping
         fileMapping.set(fileId, file);
 
         // Send file data to worker (File objects are cloned via structured clone)
@@ -139,17 +149,17 @@ export function useQueueWorkers() {
           }
         );
 
-        // Map worker results back to original File objects
+        // Map worker results back to source File objects (from user's device)
         const readyFiles = workerResult.readyFiles.map((fileRef) => ({
           ...fileRef,
-          file: fileMapping.get(fileRef.id), // Restore original File object
+          file: fileMapping.get(fileRef.id), // Restore source File object
           path: fileRef.path, // Preserve path from worker result
           status: 'ready',
         }));
 
         const duplicateFiles = workerResult.duplicateFiles.map((fileRef) => ({
           ...fileRef,
-          file: fileMapping.get(fileRef.id), // Restore original File object
+          file: fileMapping.get(fileRef.id), // Restore source File object
           path: fileRef.path, // Preserve path from worker result
           status: 'uploadMetadataOnly',
         }));

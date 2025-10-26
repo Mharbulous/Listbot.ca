@@ -1,8 +1,8 @@
 # Terminology Standardization Plan
 
 **Created**: 2025-10-25
-**Status**: In Progress - Phase 1 Complete, Phase 2 Layers 1-3 Complete, Layer 4 Started
-**Progress**: Phase 1 ✅ (19/19 files) | Phase 2 ⏳ (9/76 files - Layers 1-3 complete, Layer 4 started)
+**Status**: In Progress - Phase 1 Complete, Phase 2 Layers 1-4 Complete, Layer 9 Started
+**Progress**: Phase 1 ✅ (19/19 files) | Phase 2 ⏳ (17/76 files - Layers 1-4 complete & tested, Layer 9 1/8 files)
 **Last Updated**: 2025-10-25
 **Reference**: See `CLAUDE.md` - "Data Model & Naming Conventions" section
 
@@ -150,40 +150,47 @@ When reviewing files, update:
 
 ### Upload Feature Composables
 
-- [ ] `src/features/upload/composables/useFileQueue.js`
+- [x] `src/features/upload/composables/useFileQueue.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Queue management and file processing
   - **Review**: Variable names for file objects, dates, metadata
   - **Key areas**: Queue items should clearly indicate "source" stage
+  - **Changes made**: Updated to use standardized source terminology
 
-- [ ] `src/features/upload/composables/useFileQueueCore.js`
+- [x] `src/features/upload/composables/useFileQueueCore.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Core queue functionality
   - **Review**: File state management, status tracking
+  - **Changes made**: Updated to use standardized source terminology
 
-- [x] `src/features/upload/composables/useFileMetadata.js` ✅ **COMPLETED**
+- [x] `src/features/upload/composables/useFileMetadata.js` ✅ **COMPLETED & TESTED**
   - **Focus**: CRITICAL - metadata generation and hashing
   - **Review**: Field names like `sourceFileName`, `lastModified`
   - **Key areas**: Metadata hash generation, field mapping
   - **Changes made**: Fixed critical field name mismatch - changed `uploadMetadata.originalName` → `uploadMetadata.sourceFileName` (line 125). This fixed upload flow bug where evidenceService expected `sourceFileName` but received `originalName`
 
-- [ ] `src/features/upload/composables/useQueueDeduplication.js`
+- [x] `src/features/upload/composables/useQueueDeduplication.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Duplicate detection logic
   - **Review**: Hash comparison, metadata comparison terminology
+  - **Changes made**: Updated to use standardized source terminology
 
-- [ ] `src/features/upload/composables/useFolderOptions.js`
+- [x] `src/features/upload/composables/useFolderOptions.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Folder analysis and path handling
   - **Review**: Source folder path extraction and parsing
+  - **Changes made**: Updated to use standardized source terminology
 
-- [ ] `src/features/upload/composables/useFolderAnalysis.js`
+- [x] `src/features/upload/composables/useFolderAnalysis.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Folder structure analysis
   - **Review**: Path parsing, file metadata extraction
+  - **Changes made**: Added header documentation and clarifying comments about source files from user's device
 
-- [ ] `src/features/upload/composables/useQueueCore.js`
+- [x] `src/features/upload/composables/useQueueCore.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Queue state management
   - **Review**: File state transitions, metadata handling
+  - **Changes made**: Added header documentation clarifying source file terminology
 
-- [ ] `src/features/upload/composables/useQueueWorkers.js`
+- [x] `src/features/upload/composables/useQueueWorkers.js` ✅ **COMPLETED & TESTED**
   - **Focus**: Worker coordination
   - **Review**: Worker message passing, file references
+  - **Changes made**: Updated "original" → "source" in comments (3 instances), added header documentation
 
 ### Organizer Feature Composables
 
@@ -201,10 +208,11 @@ When reviewing files, update:
 
 ### Upload Feature Components
 
-- [ ] `src/features/upload/FileUpload.vue`
+- [x] `src/features/upload/FileUpload.vue` ✅ **COMPLETED & TESTED**
   - **Focus**: Main upload interface
   - **Review**: UI labels, error messages, progress text
-  - **Key areas**: "Drop files here" vs "Upload documents"
+  - **Key areas**: Queue file field references
+  - **Changes made**: CRITICAL BUG FIX - Updated all queue field references to match new structure (queueFile.file→sourceFile, queueFile.name→sourceName, queueFile.size→sourceSize, queueFile.path→sourcePath, queueFile.lastModified→sourceModifiedDate) - 35+ changes across helper functions and upload loop
 
 - [ ] `src/features/upload/components/FileUploadQueue.vue`
   - **Focus**: Queue display
@@ -474,18 +482,22 @@ Use checkboxes above to track completion. Update this document as you work throu
 - ✅ Priority 5: Agent Instructions (1/1 file - 100% complete)
   - Verified 1 file requires no changes (file-relocator.md - refers to code files, not data model)
 
-**Phase 2: Code Files** ⏳ (In Progress - Layers 1-3 Complete, Layer 4 Started)
-- ✅ Layer 1: Workers (1/1 file - 100% complete)
-- ✅ Layer 2: Test Utilities (3/3 files - 100% complete)
-- ✅ Layer 3: Services (4/4 files - 100% complete)
-- ⏳ Layer 4: Upload Composables (1/8 files - 12.5% complete)
-- ⏳ Layer 5+: Remaining code files (0/60 files - 0% complete)
+**Phase 2: Code Files** ⏳ (In Progress - Layers 1-4 Complete & Tested)
+- ✅ Layer 1: Workers (1/1 file - 100% complete & tested)
+- ✅ Layer 2: Test Utilities (3/3 files - 100% complete & tested)
+- ✅ Layer 3: Services (4/4 files - 100% complete & tested)
+- ✅ Layer 4: Upload Composables (8/8 files - 100% complete & tested)
+- ⏳ Layer 5: Organizer Composables (0/3 files - 0% complete)
+- ⏳ Layer 6-8: Stores, Utils, Config (0/11 files - 0% complete)
+- ⏳ Layer 9: Upload Components (1/8 files - 12.5% complete)
+- ⏳ Layer 10-12: Organizer Components, Demos, Deprecated (0/41 files - 0% complete)
 
-**Phase 3: Verification and Testing** (Not Started)
+**Phase 3: Verification and Testing** ✅ (Complete for Layers 1-4)
+- Upload functionality tested successfully (single file, multiple files with deduplication, folder upload)
 
-**Overall Progress**: 28/95 files reviewed (29.5%)
+**Overall Progress**: 36/95 files reviewed (37.9%)
 - **Phase 1 Complete**: All documentation reviewed and standardized ✅
-- **Phase 2 In Progress**: Layers 1-3 complete, Layer 4 started (9/76 code files - 11.8%)
+- **Phase 2 In Progress**: Layers 1-4 complete & tested (17/76 code files - 22.4%)
 - Documentation changes: 6 files updated
   - Priority 1: 4 files (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
   - Priority 2: 1 file (Evidence.md)
@@ -496,12 +508,13 @@ Use checkboxes above to track completion. Update this document as you work throu
   - Priority 3: 2 files (AsyncProcessesTable.md, authentication.md)
   - Priority 4: 4 files (design-guidelines.md, vitest-test-suites.md, TanStackAndVue3.md, FAQ.md)
   - Priority 5: 1 file (file-relocator.md)
-- Code files updated: 9 files (Layers 1-4)
+- Code files updated: 17 files (Layers 1-4, 9)
   - Layer 1 (Workers): 1 file (fileHashWorker.js)
   - Layer 2 (Test Utilities): 3 files (mockFileAPI.js, virtualFolderTestUtils.js, useMockFileData.js)
   - Layer 3 (Services): 4 files (fileService.js, evidenceService.js, evidenceQueryService.js, aiProcessingService.js)
-  - Layer 4 (Upload Composables): 1 file (useFileMetadata.js) - **CRITICAL** field name mismatch fixed
-- Remaining work: 67 code files (Layers 4-12)
+  - Layer 4 (Upload Composables): 8 files (useFileMetadata.js, useFileQueue.js, useFileQueueCore.js, useQueueDeduplication.js, useFolderOptions.js, useFolderAnalysis.js, useQueueCore.js, useQueueWorkers.js) - **ALL TESTED ✅**
+  - Layer 9 (Upload Components): 1 file (FileUpload.vue) - **CRITICAL BUG FIX - TESTED ✅**
+- Remaining work: 59 code files (Layers 5-12)
 
 **Estimated effort**: 2-4 days of focused work, depending on thoroughness
 
@@ -605,3 +618,77 @@ Use checkboxes above to track completion. Update this document as you work throu
 - ✅ No console errors during upload process
 
 **Impact**: Fixed critical bug that prevented evidence record creation during file upload. Upload flow now works end-to-end with standardized terminology.
+
+### Session 7 - 2025-10-25
+**Completed**: Phase 2, Layer 4 - Additional Upload Composables (NOT TESTED)
+
+**Layer 4: Upload Composables (4 files)**
+- Updated `src/features/upload/composables/useFileQueue.js` ⚠️ **NOT TESTED**
+  - Queue management and file processing
+  - Variable names for file objects, dates, metadata
+  - Queue items now clearly indicate "source" stage
+- Updated `src/features/upload/composables/useFileQueueCore.js` ⚠️ **NOT TESTED**
+  - Core queue functionality
+  - File state management, status tracking
+- Updated `src/features/upload/composables/useQueueDeduplication.js` ⚠️ **NOT TESTED**
+  - Duplicate detection logic
+  - Hash comparison, metadata comparison terminology
+- Updated `src/features/upload/composables/useFolderOptions.js` ⚠️ **NOT TESTED**
+  - Folder analysis and path handling
+  - Source folder path extraction and parsing
+
+**Status**: Layer 4 now 5/8 files complete (62.5%). These files require testing before proceeding to ensure no breaking changes were introduced.
+
+**Impact**: Core upload queue management composables now use standardized terminology. Testing required to verify upload flow still functions correctly with the updated field names and variable references.
+
+### Session 8 - 2025-10-25
+**Completed**: CRITICAL BUG FIX - Layer 4 Completion & Layer 9 FileUpload.vue + Full Testing ✅
+
+**Root Cause Analysis**:
+Testing Session 7 changes revealed critical bug - queue structure mismatch between Layer 4 (composables) and Layer 9 (FileUpload.vue). The queue item structure was updated in `useFileQueueCore.js` but `FileUpload.vue` was still using old field names, causing `undefined` errors during upload.
+
+**Layer 4: Upload Composables - Final 3 Files (NOW TESTED)**
+- Updated `src/features/upload/composables/useFolderAnalysis.js` ✅ **TESTED**
+  - Added header documentation clarifying source file terminology
+  - Updated comments in `calculateFileSizeMetrics` to reference "source files from user's device"
+  - Updated error handling comments to reference "source file read errors"
+- Updated `src/features/upload/composables/useQueueCore.js` ✅ **TESTED**
+  - Added comprehensive header documentation about source files
+  - Clarifies this composable provides deduplication logic for source files from user's device
+- Updated `src/features/upload/composables/useQueueWorkers.js` ✅ **TESTED**
+  - Added header documentation about source file processing in web workers
+  - Updated 3 instances: "original File object" → "source File object"
+  - Clarified worker mapping preserves source files from user's device
+
+**Layer 9: Upload Components - CRITICAL BUG FIX**
+- Updated `src/features/upload/FileUpload.vue` ✅ **TESTED**
+  - **CRITICAL**: Fixed queue field name mismatch (35+ changes)
+  - Updated helper functions:
+    - `createFileMetadataRecord`: queueFile.name→sourceName, queueFile.lastModified→sourceModifiedDate, queueFile.size→sourceSize, queueFile.path→sourcePath, queueFile.file→sourceFile
+    - `logFileEvent`: Updated field references to use sourceName and sourceModifiedDate
+  - Updated processing functions:
+    - `processDuplicateFile`: All queueFile.name→sourceName references
+    - `processExistingFile`: All queueFile.name→sourceName references
+    - `processNewFileUpload`: Updated queueFile.file→sourceFile, queueFile.name→sourceName
+  - Updated upload loop in `continueUpload`:
+    - All console.log references updated
+    - Hash calculation: queueFile.file→sourceFile
+    - Error handling: Updated all field references
+    - populateExistingHash: queueFile.name→sourceName
+
+**Testing Results** ✅ **ALL TESTS PASSED**:
+- ✅ Single file upload: Working correctly
+- ✅ Multiple file upload with deduplication: Working correctly
+- ✅ Folder upload: Working correctly
+- ✅ No console errors
+- ✅ Files upload to Firebase Storage successfully
+- ✅ Evidence documents created correctly
+- ✅ Source metadata subcollections created correctly
+
+**Status**: Layer 4 now 8/8 files complete (100% - ALL TESTED). Layer 9 now 1/8 files complete (12.5% - TESTED). Upload functionality fully working with standardized terminology.
+
+**Impact**:
+- **Critical bug fixed**: Upload flow now works end-to-end with new queue structure
+- **Layer 4 complete**: All upload composables standardized and tested
+- **Upload system verified**: Tested across single files, multiple files, and folders
+- **Production ready**: Changes are safe to commit and deploy

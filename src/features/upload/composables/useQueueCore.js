@@ -1,8 +1,19 @@
 import { createApplicationError } from '../../../utils/errorMessages';
 import { blake3 } from 'hash-wasm';
 
+/**
+ * Queue Core Composable
+ *
+ * TERMINOLOGY - Source Files:
+ * ============================
+ * This composable provides core queue deduplication logic for SOURCE FILES.
+ * Source files are digital files from the user's device BEFORE upload to Firebase Storage.
+ *
+ * It works with file reference objects containing Browser File objects and metadata
+ * from the user's filesystem.
+ */
 export function useQueueCore() {
-  // Helper function to get file path consistently
+  // Helper function to get source file path consistently from various file reference formats
   const getFilePath = (fileRef) => {
     // Handle direct file objects
     if (fileRef instanceof File) {
@@ -26,7 +37,7 @@ export function useQueueCore() {
     // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
     const hash = await blake3(uint8Array, 128);
 
-    // Return BLAKE3 hash of file content (32 hex characters)
+    // Return BLAKE3 hash of source file content (32 hex characters)
     return hash;
   };
 
@@ -46,16 +57,16 @@ export function useQueueCore() {
       }
 
       // Priority 3: Shortest filename
-      if (a.metadata.fileName.length !== b.metadata.fileName.length) {
-        return a.metadata.fileName.length - b.metadata.fileName.length;
+      if (a.metadata.sourceFileName.length !== b.metadata.sourceFileName.length) {
+        return a.metadata.sourceFileName.length - b.metadata.sourceFileName.length;
       }
 
       // Priority 4: Alphanumeric filename sort
-      if (a.metadata.fileName !== b.metadata.fileName) {
-        return a.metadata.fileName.localeCompare(b.metadata.fileName);
+      if (a.metadata.sourceFileName !== b.metadata.sourceFileName) {
+        return a.metadata.sourceFileName.localeCompare(b.metadata.sourceFileName);
       }
 
-      // Priority 5: Original selection order (stable sort)
+      // Priority 5: Initial selection order (stable sort)
       return a.originalIndex - b.originalIndex;
     })[0];
   };
@@ -138,9 +149,9 @@ export function useQueueCore() {
         originalIndex: index,
         path: getFilePath(file),
         metadata: {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
+          sourceFileName: file.name,
+          sourceFileSize: file.size,
+          sourceFileType: file.type,
           lastModified: file.lastModified,
         },
       };
@@ -213,8 +224,8 @@ export function useQueueCore() {
         const oneAndTheSameGroups = new Map(); // metadata_key -> [file_references]
 
         fileRefs.forEach((fileRef) => {
-          // Create metadata signature for one-and-the-same file detection
-          const metadataKey = `${fileRef.metadata.fileName}_${fileRef.metadata.fileSize}_${fileRef.metadata.lastModified}`;
+          // Create metadata signature for one-and-the-same source file detection
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
           if (!oneAndTheSameGroups.has(metadataKey)) {
             oneAndTheSameGroups.set(metadataKey, []);
