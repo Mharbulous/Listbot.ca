@@ -182,6 +182,11 @@
 </template>
 
 <script setup>
+/**
+ * File Upload Queue Component
+ * Displays source files (tier 2) selected by user from their device for upload
+ * After upload, these become storage files (tier 3) in Firebase Storage
+ */
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { useLazyHashTooltip } from '../composables/useLazyHashTooltip.js';
 import { useLazyFileList } from '../composables/useLazyFileList.js';
@@ -280,7 +285,7 @@ const { populateExistingHash, clearCache } = useLazyHashTooltip();
 const populateExistingHashes = () => {
   props.files.forEach((file) => {
     if (file.hash) {
-      populateExistingHash(file.id || file.name, file.hash);
+      populateExistingHash(file.id || file.sourceName, file.hash);
     }
   });
 };

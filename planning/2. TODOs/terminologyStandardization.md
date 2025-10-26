@@ -217,57 +217,67 @@ When reviewing files, update:
   - **Key areas**: Queue file field references
   - **Changes made**: CRITICAL BUG FIX - Updated all queue field references to match new structure (queueFile.file→sourceFile, queueFile.name→sourceName, queueFile.size→sourceSize, queueFile.path→sourcePath, queueFile.lastModified→sourceModifiedDate) - 35+ changes across helper functions and upload loop
 
-- [ ] `src/features/upload/components/FileUploadQueue.vue`
-  - **Focus**: Queue display
-  - **Review**: Column headers, status messages
-  - **Key areas**: File name display, date display
+- [x] `src/features/upload/components/FileUploadQueue.vue` ✅ **COMPLETED**
+  - **Focus**: Queue display for source files from user's device
+  - **Review**: Component header documentation, hash population logic
+  - **Changes made**: Added header comment clarifying tier 2 (source files) that become tier 3 (storage files) after upload, fixed hash population to use file.sourceName instead of file.name
 
-- [ ] `src/features/upload/components/FolderOptionsDialog.vue`
+- [x] `src/features/upload/components/FolderOptionsDialog.vue` ✅ **COMPLETED**
   - **Focus**: Folder upload options
-  - **Review**: Dialog text explaining what's being uploaded
+  - **Review**: Dialog text, user-facing prompts
+  - **Changes made**: No changes needed - uses appropriate generic terminology for end users ("files", "folders")
 
-- [ ] `src/features/upload/components/ProcessingProgressModal.vue`
+- [x] `src/features/upload/components/ProcessingProgressModal.vue` ✅ **COMPLETED**
   - **Focus**: Progress display during processing
   - **Review**: Progress message terminology
+  - **Changes made**: No changes needed - generic processing UI with no file lifecycle-specific terminology
 
-- [ ] `src/features/upload/components/LazyFileItem.vue`
+- [x] `src/features/upload/components/LazyFileItem.vue` ✅ **COMPLETED**
   - **Focus**: Individual file item display
   - **Review**: File metadata display, tooltip text
+  - **Changes made**: No changes needed - already uses source terminology (sourceFile, sourceName, sourceType, sourceSize, sourceModifiedDate, sourcePath) throughout
 
-- [ ] `src/features/upload/components/UploadDropzone.vue`
+- [x] `src/features/upload/components/UploadDropzone.vue` ✅ **COMPLETED**
   - **Focus**: Drag-and-drop interface
   - **Review**: Instructions and prompts to user
+  - **Changes made**: No changes needed - generic user-facing UI with appropriate terminology
 
-- [ ] `src/features/upload/components/QueueTimeProgress.vue`
+- [x] `src/features/upload/components/QueueTimeProgress.vue` ✅ **COMPLETED**
   - **Focus**: Time estimation display
   - **Review**: Progress labels and descriptions
+  - **Changes made**: No changes needed - time/progress display only, no file lifecycle terminology
 
-- [ ] `src/features/upload/components/CloudFileWarningModal.vue`
+- [x] `src/features/upload/components/CloudFileWarningModal.vue` ✅ **COMPLETED**
   - **Focus**: Cloud file detection warning
   - **Review**: Warning message terminology
+  - **Changes made**: No changes needed - user-facing warning with appropriate generic terminology ("files")
 
 ### Organizer Feature Components
 
-- [ ] `src/features/organizer/views/ViewDocument.vue`
+- [x] `src/features/organizer/views/ViewDocument.vue` ✅ **COMPLETED**
   - **Focus**: CRITICAL - document metadata display
   - **Review**: "Source File" section labels, embedded metadata labels
-  - **Key areas**: Clearly distinguish document date from source date from upload date
+  - **Changes made**: No changes needed - already has excellent "Source File" section heading (line 96), uses sourceFileName throughout, clearly distinguishes document metadata from source file metadata
 
-- [ ] `src/features/organizer/components/FileListDisplay.vue`
+- [x] `src/features/organizer/components/FileListDisplay.vue` ✅ **COMPLETED**
   - **Focus**: File list rendering
   - **Review**: Column headers, cell content
+  - **Changes made**: No changes needed - component handles rendering only, no file lifecycle terminology
 
-- [ ] `src/features/organizer/components/FileItem.vue`
+- [x] `src/features/organizer/components/FileItem.vue` ✅ **COMPLETED**
   - **Focus**: Individual file display
   - **Review**: File metadata display
+  - **Changes made**: No changes needed - uses displayName appropriately from evidence records, no lifecycle-specific terminology
 
-- [ ] `src/features/organizer/components/FileDetails.vue`
+- [x] `src/features/organizer/components/FileDetails.vue` ✅ **COMPLETED**
   - **Focus**: File detail panel
   - **Review**: Detail labels and values
+  - **Changes made**: No changes needed - empty stub file (TODO implementation)
 
-- [ ] `src/features/organizer/components/FilePreview.vue`
+- [x] `src/features/organizer/components/FilePreview.vue` ✅ **COMPLETED**
   - **Focus**: File preview component
   - **Review**: Preview title/caption text
+  - **Changes made**: No changes needed - empty stub file (TODO implementation)
 
 ### Configuration Files
 
@@ -360,23 +370,27 @@ When reviewing files, update:
 
 ### Demo Files
 
-- [ ] `src/dev-demos/views/LazyLoadingDemo.vue`
-  - **Focus**: Demo file display
-  - **Review**: Demo labels and descriptions
+- [x] `src/dev-demos/views/LazyLoadingDemo.vue` ✅ **COMPLETED**
+  - **Focus**: Demo file display and mock data generation
+  - **Review**: Mock file object properties
+  - **Changes made**: Updated mock file objects to use source terminology (name→sourceName, size→sourceSize, type→sourceType, lastModified→sourceModifiedDate, path→sourcePath, file→sourceFile) - 3 objects updated (mockFile, mockDuplicateFile, and generated test files)
 
-- [ ] `src/dev-demos/utils/mockDataFactories.js`
-  - **Focus**: Mock data factories
-  - **Review**: Factory function parameter names
+- [x] `src/dev-demos/utils/mockDataFactories.js` ✅ **COMPLETED**
+  - **Focus**: Mock data factories for test data generation
+  - **Review**: Factory function parameter names and generated objects
+  - **Changes made**: Updated header to clarify "Source Files (Tier 2)", updated createMockFile() to generate source file objects with source terminology (name→sourceName, size→sourceSize, type→sourceType, lastModified→sourceModifiedDate, path→sourcePath, file→sourceFile), updated generateFolderStructureData() to reference sourcePath
 
 ### Deprecated Files (Low Priority)
 
-- [ ] `src/deprecated/uploadService.js`
+- [x] `src/deprecated/uploadService.js` ✅ **COMPLETED**
   - **Focus**: Legacy upload service (reference only)
-  - **Note**: May not need updating if truly deprecated
+  - **Review**: Comments and parameter names using "original" terminology
+  - **Changes made**: Added DEPRECATED header warning with terminology note, updated parameter names (originalFileName→sourceFileName), added clarifying comments indicating legacy field names (originalName/originalPath should be sourceFileName/sourcePath in newer code), updated JSDoc comments
 
-- [ ] `src/deprecated/useUploadManager.js`
+- [x] `src/deprecated/useUploadManager.js` ✅ **COMPLETED**
   - **Focus**: Legacy upload manager (reference only)
-  - **Note**: May not need updating if truly deprecated
+  - **Review**: Comments and field mappings using "original" terminology
+  - **Changes made**: Added DEPRECATED header warning with terminology note, added clarifying comments to prepareFiles() indicating legacy field names (originalName/originalPath should be sourceFileName/sourcePath in newer code)
 
 ## Implementation Strategy
 
