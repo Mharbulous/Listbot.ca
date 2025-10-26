@@ -40,7 +40,7 @@ export function useUploadManager() {
 
   // Progress tracking
   const overallProgress = reactive({
-    totalFiles: 0,
+    totalUploads: 0,
     completedFiles: 0,
     failedFiles: 0,
     skippedFiles: 0,
@@ -509,7 +509,7 @@ export function useUploadManager() {
 
     // Reset progress
     Object.assign(overallProgress, {
-      totalFiles: 0,
+      totalUploads: 0,
       completedFiles: 0,
       failedFiles: 0,
       skippedFiles: 0,

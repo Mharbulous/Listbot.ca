@@ -11,8 +11,8 @@ export function useFolderProgress() {
   } = useFolderAnalysis();
 
   // Progress tracking for chunked processing
-  const mainFolderProgress = ref({ filesProcessed: 0, totalFiles: 0 });
-  const allFilesProgress = ref({ filesProcessed: 0, totalFiles: 0 });
+  const mainFolderProgress = ref({ filesProcessed: 0, totalUploads: 0 });
+  const allFilesProgress = ref({ filesProcessed: 0, totalUploads: 0 });
   const mainFolderComplete = ref(false);
   const allFilesComplete = ref(false);
   const isAnalyzingMainFolder = ref(false);
@@ -44,13 +44,13 @@ export function useFolderProgress() {
     }
 
     isAnalyzingRef.value = true;
-    progressRef.value = { filesProcessed: 0, totalFiles: files.length };
+    progressRef.value = { filesProcessed: 0, totalUploads: files.length };
 
     try {
       // For small sets, process all at once
       if (files.length <= chunkSize) {
         resultRef.value = performFileAnalysis(files, directoryStats);
-        progressRef.value = { filesProcessed: files.length, totalFiles: files.length };
+        progressRef.value = { filesProcessed: files.length, totalUploads: files.length };
         return;
       }
 
@@ -66,7 +66,7 @@ export function useFolderProgress() {
         processedFiles.push(...chunk);
 
         // Update progress
-        progressRef.value = { filesProcessed: processedFiles.length, totalFiles: files.length };
+        progressRef.value = { filesProcessed: processedFiles.length, totalUploads: files.length };
 
         // Calculate analysis on processed files so far
         resultRef.value = performFileAnalysis(processedFiles, directoryStats);
@@ -160,7 +160,7 @@ export function useFolderProgress() {
         // Log analysis data when all files analysis is complete
         const analysisData = {
           timestamp: Date.now(),
-          totalFiles: allFilesAnalysis.value.totalFiles,
+          totalUploads: allFilesAnalysis.value.totalFiles,
           duplicateCandidateCount: allFilesAnalysis.value.duplicateCandidates,
           duplicateCandidatePercent: allFilesAnalysis.value.estimatedDuplicationPercent,
           uniqueFilesSizeMB: allFilesAnalysis.value.uniqueFilesSizeMB,
@@ -189,9 +189,9 @@ export function useFolderProgress() {
         console.log(`T = ${elapsedTime}`);
 
         // Store hardware performance factor for calibration
-        const totalFiles = allFilesAnalysis.value?.totalFiles || pendingSourceFiles.length;
-        if (totalFiles > 0 && elapsedTime > 0) {
-          storeHardwarePerformanceFactor(totalFiles, elapsedTime, {
+        const totalUploads = allFilesAnalysis.value?.totalFiles || pendingSourceFiles.length;
+        if (totalUploads > 0 && elapsedTime > 0) {
+          storeHardwarePerformanceFactor(totalUploads, elapsedTime, {
             totalSizeMB: allFilesAnalysis.value?.totalSizeMB || 0,
             duplicateCandidates: allFilesAnalysis.value?.duplicateCandidates || 0,
             avgDirectoryDepth: allFilesAnalysis.value?.breakdown?.avgDirectoryDepth || 0,
@@ -220,8 +220,8 @@ export function useFolderProgress() {
 
   // Reset progress tracking
   const resetProgress = () => {
-    mainFolderProgress.value = { filesProcessed: 0, totalFiles: 0 };
-    allFilesProgress.value = { filesProcessed: 0, totalFiles: 0 };
+    mainFolderProgress.value = { filesProcessed: 0, totalUploads: 0 };
+    allFilesProgress.value = { filesProcessed: 0, totalUploads: 0 };
     mainFolderComplete.value = false;
     allFilesComplete.value = false;
     isAnalyzingMainFolder.value = false;

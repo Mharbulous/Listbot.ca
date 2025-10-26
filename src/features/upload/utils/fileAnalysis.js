@@ -31,7 +31,7 @@ export function analyzeFiles(
 ) {
   if (!files || !Array.isArray(files) || files.length === 0) {
     return {
-      totalFiles: 0,
+      totalUploads: 0,
       totalSizeMB: 0,
       uniqueFiles: 0,
       duplicateCandidates: 0,
@@ -71,7 +71,7 @@ export function analyzeFiles(
   // Calculate total size for source files requiring hash calculation
   const totalSizeForHashing = duplicateCandidates.reduce((sum, file) => sum + file.size, 0);
   const totalSizeMB = totalSizeForHashing / (1024 * 1024);
-  const totalFilesSizeMB = files.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024);
+  const totalUploadsSizeMB = files.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024);
 
   // Estimate duplication percentage based on source files needing hash verification
   // Use +1 buffer to avoid "less than 0%" scenarios and provide conservative estimate
@@ -93,7 +93,7 @@ export function analyzeFiles(
   }
 
   const folderData = {
-    totalFiles: files.length,
+    totalUploads: files.length,
     duplicateCandidates: duplicateCandidates.length,
     duplicateCandidatesSizeMB: Math.round(totalSizeMB * 10) / 10,
     avgDirectoryDepth,
@@ -110,7 +110,7 @@ export function analyzeFiles(
   const uniqueFilesSizeMB = uniqueFiles.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024);
 
   return {
-    totalFiles: files.length,
+    totalUploads: files.length,
     totalSizeMB: Math.round(totalFilesSizeMB * 10) / 10, // Round to 1 decimal
     uniqueFiles: uniqueFiles.length,
     uniqueFilesSizeMB: Math.round(uniqueFilesSizeMB * 10) / 10,
@@ -135,7 +135,7 @@ export function analyzeFiles(
  * @param {number} bytes - Size in bytes
  * @returns {string} Formatted size string
  */
-export function formatFileSize(bytes) {
+export function formatUploadSize(bytes) {
   if (bytes === 0) return '0 B';
 
   const k = 1024;

@@ -85,7 +85,7 @@ Create a simple file list view with manual tag assignment capability, providing 
   },
 
   // Display configuration (references specific metadata record and folder path)
-  displayCopy: {
+  sourceID: {
     metadataHash: "xyz789abc123def456...", // Points to chosen sourceMetadata record
     folderPath: "/2025/Statements" // User's chosen folder path from that metadata record
   },
@@ -107,8 +107,8 @@ Create a simple file list view with manual tag assignment capability, providing 
 }
 
 // Derived information (not stored, computed from references):
-// displayName: Retrieved from sourceMetadata[displayCopy.metadataHash].originalName
-// createdDate: Retrieved from sourceMetadata[displayCopy.metadataHash].lastModified
+// displayName: Retrieved from sourceMetadata[sourceID.metadataHash].originalName
+// createdDate: Retrieved from sourceMetadata[sourceID.metadataHash].lastModified
 // fileExtension: Derived from displayName
 ```
 
@@ -145,7 +145,7 @@ stores/organizer.js
 - `useFileSearch.js`: 44 lines (partial implementation with basic search logic)
 - Additional skeleton files: `FileGrid.vue`, `FilePreview.vue`, `FileDetails.vue`, `ViewModeToggle.vue`, `FileTypeFilters.vue` (all basic skeletons)
 - Composables: `useFileViewer.js`, `useFilePreview.js`, `useViewerNavigation.js` (skeleton files)
-- Utils: `fileViewerUtils.js`, `previewGenerators.js` (skeleton files)
+- Utils: `uploadViewerUtils.js`, `previewGenerators.js` (skeleton files)
 
 **Total Existing**: ~15 skeleton files with approximately 200 lines of placeholder code
 
@@ -169,7 +169,7 @@ stores/organizer.js
 **Implementation Notes**: Migration system was eliminated in favor of direct integration with upload workflow for cleaner architecture.
 
 - [x] Create new Evidence collection in Firestore at `/firms/{firmId}/evidence/`
-- [x] Design evidence document schema with storage references (refined with displayCopy structure)
+- [x] Design evidence document schema with storage references (refined with sourceID structure)
 - [x] ~~Create migration script~~ **REPLACED:** Direct upload integration eliminates migration need
 - [x] Update Firestore security rules for Evidence collection (existing rules already support new collection)
 - [x] Create Pinia store for evidence management (separate from upload store) - `src/features/organizer/stores/organizer.js`
@@ -200,7 +200,7 @@ stores/organizer.js
 - [x] Create tag display distinguishing AI vs human tags using Vuetify chips - TagInput.vue with separate arrays
 - [x] Add tag persistence to Firestore (updates tagsByHuman array) - Store updateEvidenceTags method
 - [x] Implement optimistic UI updates for tag changes - Store includes rollback on errors
-- [x] ~~Add display name selection dropdown~~ **NOT NEEDED:** Single displayCopy reference sufficient for v1.0
+- [x] ~~Add display name selection dropdown~~ **NOT NEEDED:** Single sourceID reference sufficient for v1.0
 
 ### Step 4: Search and Filter (Low Complexity) ✅ **COMPLETED**
 
@@ -418,7 +418,7 @@ service cloud.firestore {
 // On first Organizer access:
 // 1. Query sourceMetadata collection for uploaded files
 // 2. For each unique fileHash, create Evidence document if not exists
-// 3. Set displayCopy to first found metadata record for each fileHash
+// 3. Set sourceID to first found metadata record for each fileHash
 // 4. Initialize tagsByAI: [] and tagsByHuman: [] arrays
 // 5. Show one-time "Indexing files..." progress modal
 // 6. Cache indexing completion in localStorage to avoid re-runs

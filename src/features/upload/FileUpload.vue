@@ -330,7 +330,9 @@ const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = 
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve({ success: true, downloadURL });
+          const metadata = await getMetadata(uploadTask.snapshot.ref);
+          const storageCreatedTimestamp = metadata.timeCreated;
+          resolve({ success: true, downloadURL, storageCreatedTimestamp });
         } catch (error) {
           reject(error);
         }
@@ -364,7 +366,7 @@ const safeMetadata = async (metadataFn, context) => {
 };
 
 // Helper function for creating file metadata
-const createFileMetadataRecord = async (queueFile, fileHash) => {
+const createFileMetadataRecord = async (queueFile, fileHash, storageCreatedTimestamp = null) => {
   await createMetadataRecord({
     sourceFileName: queueFile.sourceName,
     lastModified: queueFile.sourceModifiedDate,
@@ -373,12 +375,17 @@ const createFileMetadataRecord = async (queueFile, fileHash) => {
     sessionId: getCurrentSessionId(),
     originalPath: queueFile.sourcePath,
     sourceFileType: queueFile.sourceFile?.type || '',
+    storageCreatedTimestamp: storageCreatedTimestamp,
   });
 };
 
 // Helper function for logging upload events
 const logFileEvent = async (eventType, queueFile, fileHash) => {
-  const metadataHash = await generateMetadataHash(queueFile.sourceName, queueFile.sourceModifiedDate, fileHash);
+  const metadataHash = await generateMetadataHash(
+    queueFile.sourceName,
+    queueFile.sourceModifiedDate,
+    fileHash
+  );
   return await logUploadEvent({
     eventType,
     fileName: queueFile.sourceName,
@@ -425,7 +432,7 @@ const generateHardwareCalibratedEstimate = (files) => {
     duplicateCandidates.reduce((sum, file) => sum + (file.size || 0), 0) / (1024 * 1024);
 
   const folderData = {
-    totalFiles: files.length,
+    totalUploads: files.length,
     duplicateCandidates: duplicateCandidates.length,
     duplicateCandidatesSizeMB: Math.round(duplicateCandidatesSizeMB * 10) / 10,
     avgDirectoryDepth: 2.5,
@@ -656,7 +663,12 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   }
 
   const uploadStartTime = Date.now();
-  await uploadSingleFile(queueFile.sourceFile, fileHash, queueFile.sourceName, uploadAbortController.signal);
+  const uploadResult = await uploadSingleFile(
+    queueFile.sourceFile,
+    fileHash,
+    queueFile.sourceName,
+    uploadAbortController.signal
+  );
   const uploadDurationMs = Date.now() - uploadStartTime;
 
   updateUploadStatus('successful');
@@ -672,7 +684,8 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   }
 
   await safeMetadata(
-    async () => await createFileMetadataRecord(queueFile, fileHash),
+    async () =>
+      await createFileMetadataRecord(queueFile, fileHash, uploadResult.storageCreatedTimestamp),
     `for uploaded file ${queueFile.sourceName}`
   );
 };

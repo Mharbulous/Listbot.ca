@@ -26,7 +26,6 @@
           class="metadata-name-selector text-subtitle-1 font-weight-medium"
           @update:model-value="handleNameChange"
         />
-
       </div>
 
       <!-- File metadata line with date dropdown if multiple options -->
@@ -194,7 +193,7 @@ const hasMultipleMetadata = computed(() => {
  * Currently selected metadata hash
  */
 const selectedMetadataHash = computed(() => {
-  return props.evidence?.selectedMetadataHash || props.evidence?.displayCopy;
+  return props.evidence?.selectedMetadataHash || props.evidence?.sourceID;
 });
 
 /**
@@ -205,7 +204,7 @@ const metadataNameOptions = computed(() => {
 
   return props.evidence.metadataOptions.map((opt) => ({
     displayName: opt.displayName,
-    metadataHash: opt.displayCopy,
+    metadataHash: opt.sourceID,
   }));
 });
 
@@ -219,7 +218,7 @@ const metadataDateOptions = computed(() => {
     // Use user's selected date format from preferences
     return {
       dateLabel: formatDateUtil(opt.createdAt, dateFormat.value),
-      metadataHash: opt.displayCopy,
+      metadataHash: opt.sourceID,
     };
   });
 });

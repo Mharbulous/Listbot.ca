@@ -31,17 +31,17 @@
         </div>
       </div>
 
-      <div v-if="selectedFile" class="file-preview-section">
+      <div v-if="selectedUpload" class="file-preview-section">
         <!-- File preview -->
         <FilePreview
-          :file="selectedFile"
+          :file="selectedUpload"
           :preview-data="previewData"
           :loading="previewLoading"
           :error="previewError"
         />
 
         <!-- File details sidebar -->
-        <FileDetails :file="selectedFile" />
+        <FileDetails :file="selectedUpload" />
       </div>
     </div>
   </div>
@@ -62,25 +62,26 @@ import { useFilePreview } from '../composables/useFilePreview.js';
 import { useViewerNavigation } from '../composables/useViewerNavigation.js';
 
 // Main file viewer functionality
-const { files, loading, error, loadFiles } = useFileViewer();
+const { files, loading, error, loadUploads } = useFileViewer();
 
 // Search and filtering
 const { filteredFiles } = useFileSearch(files);
 
 // File preview
-const { selectedFile, previewData, previewLoading, previewError, selectFile } = useFilePreview();
+const { selectedUpload, previewData, previewLoading, previewError, selectUpload } =
+  useFilePreview();
 
 // Navigation and view modes
 const { viewMode } = useViewerNavigation(filteredFiles);
 
 // Event handlers
 const handleFileSelect = async (file) => {
-  await selectFile(file);
+  await selectUpload(file);
 };
 
 // Initialize on mount
 onMounted(async () => {
-  await loadFiles();
+  await loadUploads();
 });
 </script>
 

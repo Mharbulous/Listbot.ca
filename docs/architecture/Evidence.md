@@ -19,7 +19,7 @@
   // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   // Display Configuration - REQUIRED
-  displayCopy: string,           // Metadata hash - references sourceMetadata collection
+  sourceID: string,           // Metadata hash - references sourceMetadata collection
 
   // File Properties - REQUIRED
   fileSize: number,              // Bytes, must be > 0
@@ -35,7 +35,7 @@
   reviewRequiredCount: number,   // Default: 0, tags with confidence < 85%
 
   // Timestamps - REQUIRED
-  updatedAt: timestamp           // Server timestamp, update on any change
+  fileCreated: timestamp         // Firebase Storage creation timestamp (from timeCreated metadata)
 }
 ```
 
@@ -48,7 +48,7 @@
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence document
 - **NEVER** manually set document ID - use the fileHash from upload process
 
-**displayCopy:**
+**sourceID:**
 
 - **ALWAYS** verify hash exists in sourceMetadata collection
 - **MUST** be a valid metadataHash (xxHash, 16 characters)
@@ -66,7 +66,16 @@
 
 - **INCREMENT** counters atomically using FieldValue.increment()
 - **NEVER** manually calculate from subcollection
-- **UPDATE** updatedAt whenever counters change
+- **UPDATE** fileCreated whenever counters change
+
+**fileCreated Timestamp:**
+
+- **PRIMARY SOURCE**: Retrieved from Firebase Storage metadata's `timeCreated` field after upload completes
+- **CONVERSION**: Storage timestamp (ISO 8601 string) is converted to Firestore Timestamp object
+- **FALLBACK**: Uses Firestore `serverTimestamp()` if Storage metadata unavailable
+- **PURPOSE**: Ensures exact timestamp match between Storage file and Firestore evidence document
+- **ACCURACY**: Eliminates 1-second discrepancies between Storage and Firestore operations
+- **IMMUTABILITY**: Represents when file was created in Storage (not when document was modified)
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 
@@ -186,11 +195,11 @@ match /firms/{firmId}/matters/general/evidence/{fileHash} {
 
 // Validation Functions
 function validateEvidenceCreate(data, fileHash) {
-  return data.keys().hasAll(['displayCopy', 'fileSize',
+  return data.keys().hasAll(['sourceID', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
                               'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
          fileHash.size() == 32 &&  // Document ID must be valid BLAKE3 hash
-         data.displayCopy.size() == 16 &&  // Must be valid xxHash metadata hash
+         data.sourceID.size() == 16 &&  // Must be valid xxHash metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&

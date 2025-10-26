@@ -79,7 +79,9 @@ export function createMockFile(index, options = {}) {
     sourceName: `${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
     sourceSize: Math.floor(Math.random() * (maxSize - minSize)) + minSize,
     sourceType: fileType.type,
-    sourceModifiedDate: new Date(Date.now() - Math.random() * dateRangeMonths * 30 * 24 * 60 * 60 * 1000),
+    sourceModifiedDate: new Date(
+      Date.now() - Math.random() * dateRangeMonths * 30 * 24 * 60 * 60 * 1000
+    ),
     sourcePath: `${folder}/${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
     status: selectedStatus,
     isDuplicate,
@@ -199,7 +201,7 @@ export function generateFolderStructureData(fileCount) {
 
   return {
     files,
-    totalFiles: fileCount,
+    totalUploads: fileCount,
     avgDirectoryDepth: totalDepth / fileCount,
     maxDirectoryDepth: maxDepth,
     totalDirectoryCount: Object.keys(folderCounts).length,

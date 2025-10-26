@@ -102,7 +102,7 @@ export async function generateVideoThumbnail(file) {
  * @param {string} fileType - File type
  * @returns {Promise<Object>} Preview data
  */
-export async function generatePreview(file, fileType) {
+export async function generateUploadPreview(file, fileType) {
   try {
     switch (fileType) {
       case 'image':

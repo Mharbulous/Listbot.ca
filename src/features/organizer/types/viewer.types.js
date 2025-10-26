@@ -32,7 +32,7 @@
 /**
  * @typedef {Object} ViewerState
  * @property {FileItem[]} files - Array of files
- * @property {FileItem|null} selectedFile - Currently selected file
+ * @property {FileItem|null} selectedUpload - Currently selected file
  * @property {PreviewData|null} previewData - Preview data for selected file
  * @property {boolean} loading - Loading state
  * @property {boolean} previewLoading - Preview loading state
@@ -77,8 +77,8 @@
  * @property {import('vue').Ref<FileItem[]>} files - Reactive files array
  * @property {import('vue').Ref<boolean>} loading - Reactive loading state
  * @property {import('vue').Ref<string|null>} error - Reactive error state
- * @property {import('vue').ComputedRef<number>} totalFiles - Computed total files count
- * @property {Function} loadFiles - Function to load files
+ * @property {import('vue').ComputedRef<number>} totalUploads - Computed total files count
+ * @property {Function} loadUploads - Function to load files
  */
 
 /**
@@ -93,13 +93,13 @@
 /**
  * File preview composable return type
  * @typedef {Object} UseFilePreviewReturn
- * @property {import('vue').Ref<FileItem|null>} selectedFile - Reactive selected file
+ * @property {import('vue').Ref<FileItem|null>} selectedUpload - Reactive selected file
  * @property {import('vue').Ref<PreviewData|null>} previewData - Reactive preview data
  * @property {import('vue').Ref<boolean>} previewLoading - Reactive preview loading state
  * @property {import('vue').Ref<string|null>} previewError - Reactive preview error
  * @property {import('vue').ComputedRef<boolean>} canPreview - Computed preview capability
- * @property {Function} selectFile - Function to select a file
- * @property {Function} generatePreview - Function to generate preview
+ * @property {Function} selectUpload - Function to select a file
+ * @property {Function} generateUploadPreview - Function to generate preview
  * @property {Function} clearPreview - Function to clear preview
  */
 

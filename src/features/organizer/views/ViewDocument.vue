@@ -135,7 +135,7 @@
 
                 <!-- File size -->
                 <div class="metadata-item-simple">
-                  <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
+                  <span class="metadata-value">{{ formatUploadSize(evidence.fileSize) }}</span>
                 </div>
 
                 <!-- MIME type -->
@@ -371,7 +371,7 @@ const currentDocumentIndex = computed(() => {
 });
 
 // Format file size helper
-const formatFileSize = (bytes) => {
+const formatUploadSize = (bytes) => {
   if (!bytes) return 'Unknown';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -514,16 +514,16 @@ const handleMetadataSelection = async (newMetadataHash) => {
       throw new Error('Selected metadata variant not found');
     }
 
-    // Update Firestore evidence document with new displayCopy
+    // Update Firestore evidence document with new sourceID
     const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
     await updateDoc(evidenceRef, {
-      displayCopy: newMetadataHash,
+      sourceID: newMetadataHash,
     });
 
     // Update local state with new display information
     evidence.value = {
       ...evidence.value,
-      displayCopy: newMetadataHash,
+      sourceID: newMetadataHash,
       displayName: selectedVariant.sourceFileName || 'Unknown File',
       createdAt: selectedVariant.lastModified,
     };
@@ -535,12 +535,12 @@ const handleMetadataSelection = async (newMetadataHash) => {
     documentViewStore.setDocumentName(selectedVariant.sourceFileName || 'Unknown File');
 
     console.log(
-      `[ViewDocument] Updated displayCopy to: ${selectedVariant.sourceFileName} (${newMetadataHash.substring(0, 8)}...)`
+      `[ViewDocument] Updated sourceID to: ${selectedVariant.sourceFileName} (${newMetadataHash.substring(0, 8)}...)`
     );
   } catch (err) {
     console.error('[ViewDocument] Failed to update metadata selection:', err);
     // Revert selection on error
-    selectedMetadataHash.value = evidence.value.displayCopy;
+    selectedMetadataHash.value = evidence.value.sourceID;
   } finally {
     updatingMetadata.value = false;
   }
@@ -621,8 +621,8 @@ const loadEvidence = async () => {
     const variants = await evidenceService.getAllSourceMetadata(fileHash.value);
     sourceMetadataVariants.value = variants;
 
-    // Get currently selected metadata (from displayCopy field)
-    const currentMetadataHash = evidenceData.displayCopy;
+    // Get currently selected metadata (from sourceID field)
+    const currentMetadataHash = evidenceData.sourceID;
     selectedMetadataHash.value = currentMetadataHash;
 
     // Find the currently selected variant
@@ -635,7 +635,7 @@ const loadEvidence = async () => {
       displayName = currentVariant.sourceFileName || 'Unknown File';
       createdAt = currentVariant.lastModified;
     } else if (variants.length > 0) {
-      // Fallback to first variant if displayCopy doesn't match any
+      // Fallback to first variant if sourceID doesn't match any
       displayName = variants[0].sourceFileName || 'Unknown File';
       createdAt = variants[0].lastModified;
       selectedMetadataHash.value = variants[0].metadataHash;

@@ -139,7 +139,9 @@ export function useFileQueue() {
     let queueItem;
     if (typeof sourceFileReference === 'string') {
       // Source filename-based lookup
-      queueItem = queueCore.uploadQueue.value.find((item) => item.sourceName === sourceFileReference);
+      queueItem = queueCore.uploadQueue.value.find(
+        (item) => item.sourceName === sourceFileReference
+      );
     } else if (sourceFileReference && typeof sourceFileReference === 'object') {
       // Direct queue item object reference (preferred approach)
       queueItem = sourceFileReference;
@@ -208,13 +210,13 @@ export function useFileQueue() {
 
   // Instant Upload Queue initialization - show immediately with first 100 source files
   const initializeQueueInstantly = async (sourceFiles) => {
-    const totalFiles = sourceFiles.length;
+    const totalUploads = sourceFiles.length;
 
     // Show Upload Queue immediately
     isProcessingUIUpdate.value = true;
     uiUpdateProgress.value = {
       current: 0,
-      total: totalFiles,
+      total: totalUploads,
       percentage: 0,
       phase: 'loading',
     };
@@ -238,10 +240,10 @@ export function useFileQueue() {
 
     queueCore.uploadQueue.value = initialQueueItems;
 
-    if (totalFiles <= 100) {
+    if (totalUploads <= 100) {
       uiUpdateProgress.value = {
-        current: totalFiles,
-        total: totalFiles,
+        current: totalUploads,
+        total: totalUploads,
         percentage: 100,
         phase: 'awaiting-upload',
       };
@@ -249,8 +251,8 @@ export function useFileQueue() {
     } else {
       uiUpdateProgress.value = {
         current: 100,
-        total: totalFiles,
-        percentage: Math.round((100 / totalFiles) * 100),
+        total: totalUploads,
+        percentage: Math.round((100 / totalUploads) * 100),
         phase: 'loading',
       };
     }
@@ -260,26 +262,26 @@ export function useFileQueue() {
   // Receives processed source file results from worker (ready and duplicate source files)
   const updateFromWorkerResults = async (readySourceFiles, duplicateSourceFiles) => {
     const allSourceFiles = [...readySourceFiles, ...duplicateSourceFiles];
-    const totalFiles = allSourceFiles.length;
+    const totalUploads = allSourceFiles.length;
 
     // Start UI update process (if not already started by initializeQueueInstantly)
     if (!isProcessingUIUpdate.value) {
       isProcessingUIUpdate.value = true;
       uiUpdateProgress.value = {
         current: 0,
-        total: totalFiles,
+        total: totalUploads,
         percentage: 0,
         phase: 'loading',
       };
     }
 
-    if (totalFiles <= 100) {
+    if (totalUploads <= 100) {
       // For small file sets, just load everything at once
       queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
       uiUpdateProgress.value = {
-        current: totalFiles,
-        total: totalFiles,
+        current: totalUploads,
+        total: totalUploads,
         percentage: 100,
         phase: 'awaiting-upload',
       };
@@ -306,8 +308,8 @@ export function useFileQueue() {
         queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
         uiUpdateProgress.value = {
-          current: totalFiles,
-          total: totalFiles,
+          current: totalUploads,
+          total: totalUploads,
           percentage: 100,
           phase: 'awaiting-upload',
         };
@@ -323,8 +325,8 @@ export function useFileQueue() {
 
         uiUpdateProgress.value = {
           current: chunk1Size,
-          total: totalFiles,
-          percentage: Math.round((chunk1Size / totalFiles) * 100),
+          total: totalUploads,
+          percentage: Math.round((chunk1Size / totalUploads) * 100),
           phase: 'loading',
         };
 
@@ -335,8 +337,8 @@ export function useFileQueue() {
         queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
         uiUpdateProgress.value = {
-          current: totalFiles,
-          total: totalFiles,
+          current: totalUploads,
+          total: totalUploads,
           percentage: 100,
           phase: 'awaiting-upload',
         };

@@ -1,5 +1,5 @@
 /**
- * File Service - Firestore integration for evidence data with source file metadata
+ * Upload Service - Firestore integration for evidence data with source file metadata
  * Queries the evidence collection and maps to Cloud table format
  */
 

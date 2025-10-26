@@ -45,13 +45,13 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **Dropdown Menu**: Appears when multiple sourceMetadata records exist for a single evidence document
 - **Variant Identification**: Shows source filename with duplicate indicators (e.g., "Report.PDF", "report.pdf (2)")
 - **Earlier Copy Notification**: Displays a notification message when a file with an earlier modification date already exists in storage
-- **Persistence**: Selected variant is stored in `evidence.displayCopy` field
+- **Persistence**: Selected variant is stored in `evidence.sourceID` field
 
 **Data Structure**:
 
 - Multiple sourceMetadata documents share the same parent evidence document (identified by fileHash)
 - Each sourceMetadata document has a unique metadataHash (generated from `sourceFileName|lastModified|fileHash`)
-- The `displayCopy` field in the evidence document points to the currently selected metadataHash
+- The `sourceID` field in the evidence document points to the currently selected metadataHash
 
 **Use Case Example**:
 
@@ -283,7 +283,7 @@ Cloud:
 {
   // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
-  displayCopy: string,       // metadataHash pointing to sourceMetadata record
+  sourceID: string,       // metadataHash pointing to sourceMetadata record
   fileSize: number,          // File size in bytes
   processingStage: string,   // Upload/processing status
   isProcessed: boolean,      // Whether file has been processed
@@ -299,7 +299,7 @@ Cloud:
 **Key Differences from Old Schema**:
 
 - **No `storageRef` field**: File hash is now the document ID itself
-- **Simplified `displayCopy`**: Changed from object to simple string (metadataHash)
+- **Simplified `sourceID`**: Changed from object to simple string (metadataHash)
 - **Automatic Deduplication**: Using fileHash as document ID prevents duplicate evidence records
 - **Tag Counters**: Added for performance optimization
 - **Access file hash**: Use `evidence.id` (document ID) instead of `evidence.storageRef.fileHash`

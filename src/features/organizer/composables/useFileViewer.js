@@ -17,7 +17,7 @@ export function useFileViewer() {
   /**
    * Load storage files from Firebase Storage / evidence records from Firestore
    */
-  const loadFiles = async () => {
+  const loadUploads = async () => {
     loading.value = true;
     try {
       // Load storage files and evidence records from Firestore
@@ -29,13 +29,13 @@ export function useFileViewer() {
   };
 
   // Total count of storage files / evidence records
-  const totalFiles = computed(() => files.value.length);
+  const totalUploads = computed(() => files.value.length);
 
   return {
     files,
     loading,
     error,
-    totalFiles,
-    loadFiles,
+    totalUploads,
+    loadUploads,
   };
 }

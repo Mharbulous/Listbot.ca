@@ -10,7 +10,7 @@ import { ref, computed } from 'vue';
  * not source files from the user's device (tier 2).
  */
 export function useFilePreview() {
-  const selectedFile = ref(null); // Storage file reference or evidence record
+  const selectedUpload = ref(null); // Storage file reference or evidence record
   const previewData = ref(null);
   const previewLoading = ref(false);
   const previewError = ref(null);
@@ -19,7 +19,7 @@ export function useFilePreview() {
    * Generate preview for a storage file
    * @param {Object} file - Storage file reference or evidence record
    */
-  const generatePreview = async (file) => {
+  const generateUploadPreview = async (file) => {
     if (!file) return;
 
     previewLoading.value = true;
@@ -52,31 +52,31 @@ export function useFilePreview() {
    * Select a storage file for preview
    * @param {Object} file - Storage file reference or evidence record to preview
    */
-  const selectFile = async (file) => {
-    selectedFile.value = file;
-    await generatePreview(file);
+  const selectUpload = async (file) => {
+    selectedUpload.value = file;
+    await generateUploadPreview(file);
   };
 
   const canPreview = computed(() => {
-    if (!selectedFile.value) return false;
+    if (!selectedUpload.value) return false;
     // TODO: Determine if storage file can be previewed based on type
     return true;
   });
 
   const clearPreview = () => {
-    selectedFile.value = null;
+    selectedUpload.value = null;
     previewData.value = null;
     previewError.value = null;
   };
 
   return {
-    selectedFile,
+    selectedUpload,
     previewData,
     previewLoading,
     previewError,
     canPreview,
-    selectFile,
-    generatePreview,
+    selectUpload,
+    generateUploadPreview,
     clearPreview,
   };
 }

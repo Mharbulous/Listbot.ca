@@ -241,7 +241,7 @@ import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { useVirtualTable } from '@/composables/useVirtualTable';
 import { useColumnSort } from '@/composables/useColumnSort';
-import { fetchFiles } from '@/services/fileService';
+import { fetchFiles } from '@/services/uploadService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences';

@@ -29,21 +29,25 @@ When reviewing files, update:
 ### Priority 1: Core File System Documentation
 
 - [x] `docs/uploading.md` ✅ **COMPLETED**
+
   - **Focus**: Update references to "original files" vs "storage files"
   - **Key sections**: Upload Process Flow, Metadata Management, API Reference
   - **Changes made**: Updated metadata hash field from "originalName" to "sourceFileName", added clarifying comments to API examples
 
 - [x] `docs/architecture/FileMetadata.md` ✅ **COMPLETED**
+
   - **Focus**: Critical - already uses "Source File" terminology, ensure consistency
   - **Key sections**: UI Metadata Presentation, sourceMetadata Subcollection
   - **Changes made**: Changed "Original Files vs Storage Files" to "Source Files vs Storage Files", replaced all instances of "original file" with "source file" throughout document (~8 changes)
 
 - [x] `docs/architecture/firebase-storage.md` ✅ **COMPLETED**
+
   - **Focus**: Storage paths and deduplication examples
   - **Key sections**: File Storage Paths, Deduplication Examples
   - **Changes made**: Updated "Original file extensions" to "source file extensions" in two locations
 
 - [x] `docs/Document-Processing-Workflow.md` ✅ **COMPLETED**
+
   - **Focus**: Distinguish between document (paper) and source (digital scan)
   - **Key sections**: Workflow diagrams and descriptions
   - **Changes made**: Added comprehensive "Three-Tier File Lifecycle" section explaining Document → Source → File progression
@@ -56,22 +60,27 @@ When reviewing files, update:
 ### Priority 2: Architecture Documentation
 
 - [x] `docs/architecture/Evidence.md` ✅ **COMPLETED**
+
   - **Focus**: Evidence collection field definitions
   - **Changes made**: Updated 7 instances of "original" terminology to "source" terminology (section headings, field comments, and descriptions)
 
 - [x] `docs/architecture/MetadataSpecs.md` ✅ **COMPLETED**
+
   - **Focus**: Embedded metadata specifications (forensic metadata like EXIF, XMP)
   - **Changes made**: No changes needed - document describes forensic metadata standards, not our application terminology
 
 - [x] `docs/architecture/Settings.md` ✅ **COMPLETED**
+
   - **Focus**: User preferences system
   - **Changes made**: No changes needed - no file-related terminology
 
 - [x] `docs/architecture/SoloFirmMatters.md` ✅ **COMPLETED**
+
   - **Focus**: Firm and matter architecture
   - **Changes made**: No changes needed - no file-related terminology
 
 - [x] `docs/architecture/CategoryTags.md` ✅ **COMPLETED**
+
   - **Focus**: Tagging system
   - **Changes made**: No changes needed - no file-related terminology
 
@@ -82,10 +91,12 @@ When reviewing files, update:
 ### Priority 3: Process Documentation
 
 - [x] `docs/firebase-storage-plan.md` ✅ **COMPLETED**
+
   - **Focus**: Storage architecture and planning
   - **Changes made**: Updated 6 instances of "original" terminology to "source" terminology (section heading, comments, descriptions)
 
 - [x] `docs/AsyncProcessesTable.md` ✅ **COMPLETED**
+
   - **Focus**: Async processes related to file handling
   - **Changes made**: No changes needed - no file-related terminology
 
@@ -96,16 +107,19 @@ When reviewing files, update:
 ### Priority 4: Development Documentation
 
 - [x] `docs/design-guidelines.md` ✅ **COMPLETED**
+
   - **Focus**: UI patterns for displaying file information
   - **Search for**: File display patterns and terminology
   - **Changes made**: No changes needed - focuses on visual design system, no file lifecycle terminology
 
 - [x] `docs/vitest-test-suites.md` ✅ **COMPLETED**
+
   - **Focus**: Test descriptions and assertions
   - **Search for**: File-related test cases
   - **Changes made**: No changes needed - generic test suite references only
 
 - [x] `docs/TanStackAndVue3.md` ✅ **COMPLETED**
+
   - **Focus**: Table display of file data
   - **Search for**: Column definitions, data display patterns
   - **Changes made**: No changes needed - documents virtualization patterns, not data model
@@ -127,18 +141,21 @@ When reviewing files, update:
 ### Services Layer
 
 - [x] `src/services/fileService.js` ✅ **COMPLETED**
+
   - **Focus**: Core file operations service
   - **Review**: Function names, parameters, comments
   - **Key areas**: File upload logic, metadata extraction, date handling
   - **Changes made**: Updated 5 comments replacing "original" with "source" terminology (header, function docs, inline comments)
 
 - [x] `src/features/organizer/services/evidenceService.js` ✅ **COMPLETED**
+
   - **Focus**: Evidence document CRUD operations
   - **Review**: Field name references, especially dates
   - **Key areas**: Evidence creation, metadata linking
   - **Changes made**: Fixed critical bug - changed uploadMetadata.originalName→sourceFileName (line 35), updated 3 comments to use "source file" terminology
 
 - [x] `src/features/organizer/services/evidenceQueryService.js` ✅ **COMPLETED**
+
   - **Focus**: Evidence querying and filtering
   - **Review**: Query field names, filter terminology
   - **Changes made**: Renamed variable originalNames→sourceFileNames (line 182), updated error message, updated 3 field references from originalName→sourceFileName (lines 355, 359, 364)
@@ -151,38 +168,45 @@ When reviewing files, update:
 ### Upload Feature Composables
 
 - [x] `src/features/upload/composables/useFileQueue.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Queue management and file processing
   - **Review**: Variable names for file objects, dates, metadata
   - **Key areas**: Queue items should clearly indicate "source" stage
   - **Changes made**: Updated to use standardized source terminology
 
 - [x] `src/features/upload/composables/useFileQueueCore.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Core queue functionality
   - **Review**: File state management, status tracking
   - **Changes made**: Updated to use standardized source terminology
 
 - [x] `src/features/upload/composables/useFileMetadata.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: CRITICAL - metadata generation and hashing
   - **Review**: Field names like `sourceFileName`, `lastModified`
   - **Key areas**: Metadata hash generation, field mapping
   - **Changes made**: Fixed critical field name mismatch - changed `uploadMetadata.originalName` → `uploadMetadata.sourceFileName` (line 125). This fixed upload flow bug where evidenceService expected `sourceFileName` but received `originalName`
 
 - [x] `src/features/upload/composables/useQueueDeduplication.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Duplicate detection logic
   - **Review**: Hash comparison, metadata comparison terminology
   - **Changes made**: Updated to use standardized source terminology
 
 - [x] `src/features/upload/composables/useFolderOptions.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Folder analysis and path handling
   - **Review**: Source folder path extraction and parsing
   - **Changes made**: Updated to use standardized source terminology
 
 - [x] `src/features/upload/composables/useFolderAnalysis.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Folder structure analysis
   - **Review**: Path parsing, file metadata extraction
   - **Changes made**: Added header documentation and clarifying comments about source files from user's device
 
 - [x] `src/features/upload/composables/useQueueCore.js` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Queue state management
   - **Review**: File state transitions, metadata handling
   - **Changes made**: Added header documentation clarifying source file terminology
@@ -195,11 +219,13 @@ When reviewing files, update:
 ### Organizer Feature Composables
 
 - [x] `src/features/organizer/composables/useFilePreview.js` ✅ **COMPLETED**
+
   - **Focus**: File preview generation
   - **Review**: What's being previewed (storage file)
-  - **Changes made**: Updated header to "Storage File Preview Composable", added context documentation clarifying this handles storage files (tier 3) not source files (tier 2), enhanced function documentation for generatePreview() and selectFile(), clarified inline comments (5 documentation enhancements)
+  - **Changes made**: Updated header to "Storage File Preview Composable", added context documentation clarifying this handles storage files (tier 3) not source files (tier 2), enhanced function documentation for generateUploadPreview() and selectUpload(), clarified inline comments (5 documentation enhancements)
 
 - [x] `src/features/organizer/composables/useFileViewer.js` ✅ **COMPLETED**
+
   - **Focus**: File viewing logic
   - **Review**: File vs document terminology in viewer context
   - **Changes made**: Updated header to "Storage File Viewer Composable", added context documentation, enhanced variable/function/computed property comments to clarify storage files vs evidence records (5 documentation enhancements)
@@ -212,37 +238,44 @@ When reviewing files, update:
 ### Upload Feature Components
 
 - [x] `src/features/upload/FileUpload.vue` ✅ **COMPLETED & TESTED**
+
   - **Focus**: Main upload interface
   - **Review**: UI labels, error messages, progress text
   - **Key areas**: Queue file field references
   - **Changes made**: CRITICAL BUG FIX - Updated all queue field references to match new structure (queueFile.file→sourceFile, queueFile.name→sourceName, queueFile.size→sourceSize, queueFile.path→sourcePath, queueFile.lastModified→sourceModifiedDate) - 35+ changes across helper functions and upload loop
 
 - [x] `src/features/upload/components/FileUploadQueue.vue` ✅ **COMPLETED**
+
   - **Focus**: Queue display for source files from user's device
   - **Review**: Component header documentation, hash population logic
   - **Changes made**: Added header comment clarifying tier 2 (source files) that become tier 3 (storage files) after upload, fixed hash population to use file.sourceName instead of file.name
 
 - [x] `src/features/upload/components/FolderOptionsDialog.vue` ✅ **COMPLETED**
+
   - **Focus**: Folder upload options
   - **Review**: Dialog text, user-facing prompts
   - **Changes made**: No changes needed - uses appropriate generic terminology for end users ("files", "folders")
 
 - [x] `src/features/upload/components/ProcessingProgressModal.vue` ✅ **COMPLETED**
+
   - **Focus**: Progress display during processing
   - **Review**: Progress message terminology
   - **Changes made**: No changes needed - generic processing UI with no file lifecycle-specific terminology
 
 - [x] `src/features/upload/components/LazyFileItem.vue` ✅ **COMPLETED**
+
   - **Focus**: Individual file item display
   - **Review**: File metadata display, tooltip text
   - **Changes made**: No changes needed - already uses source terminology (sourceFile, sourceName, sourceType, sourceSize, sourceModifiedDate, sourcePath) throughout
 
 - [x] `src/features/upload/components/UploadDropzone.vue` ✅ **COMPLETED**
+
   - **Focus**: Drag-and-drop interface
   - **Review**: Instructions and prompts to user
   - **Changes made**: No changes needed - generic user-facing UI with appropriate terminology
 
 - [x] `src/features/upload/components/QueueTimeProgress.vue` ✅ **COMPLETED**
+
   - **Focus**: Time estimation display
   - **Review**: Progress labels and descriptions
   - **Changes made**: No changes needed - time/progress display only, no file lifecycle terminology
@@ -255,21 +288,25 @@ When reviewing files, update:
 ### Organizer Feature Components
 
 - [x] `src/features/organizer/views/ViewDocument.vue` ✅ **COMPLETED**
+
   - **Focus**: CRITICAL - document metadata display
   - **Review**: "Source File" section labels, embedded metadata labels
   - **Changes made**: No changes needed - already has excellent "Source File" section heading (line 96), uses sourceFileName throughout, clearly distinguishes document metadata from source file metadata
 
 - [x] `src/features/organizer/components/FileListDisplay.vue` ✅ **COMPLETED**
+
   - **Focus**: File list rendering
   - **Review**: Column headers, cell content
   - **Changes made**: No changes needed - component handles rendering only, no file lifecycle terminology
 
 - [x] `src/features/organizer/components/FileItem.vue` ✅ **COMPLETED**
+
   - **Focus**: Individual file display
   - **Review**: File metadata display
   - **Changes made**: No changes needed - uses displayName appropriately from evidence records, no lifecycle-specific terminology
 
 - [x] `src/features/organizer/components/FileDetails.vue` ✅ **COMPLETED**
+
   - **Focus**: File detail panel
   - **Review**: Detail labels and values
   - **Changes made**: No changes needed - empty stub file (TODO implementation)
@@ -282,6 +319,7 @@ When reviewing files, update:
 ### Configuration Files
 
 - [x] `src/features/organizer/config/fileListColumns.js` ✅ **COMPLETED - CRITICAL**
+
   - **Focus**: CRITICAL - column definitions for file lists
   - **Review**: Column labels, field accessors, tooltips
   - **Key areas**: Date columns should specify which date type
@@ -293,11 +331,12 @@ When reviewing files, update:
     - Updated documentDate description: "Business transaction date (when document was created/issued)"
 
 - [x] `src/features/organizer/utils/fileUtils.js` ✅ **COMPLETED**
+
   - **Focus**: File utility functions
   - **Review**: Function names and comments
   - **Changes made**:
     - Enhanced header documentation to clarify utilities work with display names from source metadata
-    - Updated formatFileSize() comment to specify it works with both source and storage file sizes
+    - Updated formatUploadSize() comment to specify it works with both source and storage file sizes
 
 - [x] `src/features/upload/utils/fileAnalysis.js` ✅ **COMPLETED**
   - **Focus**: File analysis utilities
@@ -311,11 +350,13 @@ When reviewing files, update:
 ### Stores
 
 - [x] `src/features/organizer/stores/organizer.js` ✅ **COMPLETED**
+
   - **Focus**: Main organizer state (facade pattern)
   - **Review**: State property names, getters, actions
   - **Changes made**: No changes needed - facade store with no file-related terminology requiring updates
 
 - [x] `src/features/organizer/stores/organizerCore.js` ✅ **COMPLETED**
+
   - **Focus**: Core organizer logic
   - **Review**: Evidence and metadata handling
   - **Key areas**: Display name resolution, metadata variant selection
@@ -327,6 +368,7 @@ When reviewing files, update:
     - Enhanced selectMetadata() documentation explaining storage file + source metadata relationship
 
 - [x] `src/features/organizer/stores/virtualFolderStore.js` ✅ **COMPLETED**
+
   - **Focus**: Virtual folder state
   - **Review**: Folder path references
   - **Changes made**:
@@ -354,11 +396,13 @@ When reviewing files, update:
 ### Test Files
 
 - [x] `src/test-utils/mockFileAPI.js` ✅ **COMPLETED**
+
   - **Focus**: File API mocking
   - **Review**: Mock object properties and methods
   - **Changes made**: Updated comments to clarify these mocks represent source files from user's device (header comment and parameter descriptions)
 
 - [x] `src/test-utils/virtualFolderTestUtils.js` ✅ **COMPLETED**
+
   - **Focus**: Test utilities for folder handling
   - **Review**: Test data structure and assertions
   - **Changes made**: Added sourceFileName field to all test scenarios, added clarifying comments distinguishing fileName (display) vs sourceFileName (source file from user's device)
@@ -371,6 +415,7 @@ When reviewing files, update:
 ### Demo Files
 
 - [x] `src/dev-demos/views/LazyLoadingDemo.vue` ✅ **COMPLETED**
+
   - **Focus**: Demo file display and mock data generation
   - **Review**: Mock file object properties
   - **Changes made**: Updated mock file objects to use source terminology (name→sourceName, size→sourceSize, type→sourceType, lastModified→sourceModifiedDate, path→sourcePath, file→sourceFile) - 3 objects updated (mockFile, mockDuplicateFile, and generated test files)
@@ -383,6 +428,7 @@ When reviewing files, update:
 ### Deprecated Files (Low Priority)
 
 - [x] `src/deprecated/uploadService.js` ✅ **COMPLETED**
+
   - **Focus**: Legacy upload service (reference only)
   - **Review**: Comments and parameter names using "original" terminology
   - **Changes made**: Added DEPRECATED header warning with terminology note, updated parameter names (originalFileName→sourceFileName), added clarifying comments indicating legacy field names (originalName/originalPath should be sourceFileName/sourcePath in newer code), updated JSDoc comments
@@ -419,49 +465,62 @@ Documentation updates are pure text changes with zero breaking changes. Completi
 Update files in reverse dependency order - files with NO dependencies first, files that DEPEND on others last. This ensures dependencies are already updated before dependents.
 
 **Layer 1: Workers** (Isolated, No Dependencies)
+
 - workers/fileHashWorker.js
 
 **Layer 2: Test Utilities** (Low-level, Used by Tests)
+
 - test-utils/mockFileAPI.js, virtualFolderTestUtils.js
 - composables/useMockFileData.js
 
 **Layer 3: Services** (Core Business Logic)
+
 - services/fileService.js
 - features/organizer/services/ (evidenceService, evidenceQueryService, aiProcessingService)
 
 **Layer 4: Upload Composables** (Depend on Services)
+
 - features/upload/composables/ (useFileMetadata, useQueueDeduplication, useFolderOptions, etc.)
 
 **Layer 5: Organizer Composables** (Depend on Services)
+
 - features/organizer/composables/ (useFilePreview, useFileViewer, useEvidenceDeduplication)
 
 **Layer 6: Stores** (Depend on Services/Composables)
+
 - features/organizer/stores/ (organizerCore, organizer, virtualFolderStore)
 - stores/documentView.js
 
 **Layer 7: Utility Files** (Used by Components)
+
 - features/organizer/utils/fileUtils.js
 - features/upload/utils/fileAnalysis.js
 
 **Layer 8: Configuration Files** (Used by Components)
+
 - features/organizer/config/fileListColumns.js (CRITICAL - column labels)
 
 **Layer 9: Upload Components** (Depend on Composables/Stores)
+
 - features/upload/ (FileUpload.vue and all upload components)
 
 **Layer 10: Organizer Components** (Depend on Everything)
+
 - features/organizer/views/ViewDocument.vue (CRITICAL - metadata display)
 - features/organizer/components/ (all organizer components)
 
 **Layer 11: Demo Files** (Isolated, Low Priority)
+
 - dev-demos/
 
 **Layer 12: Deprecated Files** (Reference Only, Optional)
+
 - deprecated/
 
 #### Phase 3: Verification and Testing
 
 After completing all updates:
+
 1. **Linting**: Run beautifier agent on all modified code files
 2. **Type Checking**: Verify no broken references
 3. **Testing**: Run test suite to ensure no regressions
@@ -479,6 +538,7 @@ After each file update:
 ### Key Terminology Reminders
 
 **When referring to dates:**
+
 - ✅ `documentDate` - Date on the business transaction (receipt date, invoice date)
 - ✅ `sourceModifiedDate` or `sourceCreatedDate` - File system timestamp
 - ✅ `fileUploadDate` or `uploadTimestamp` - When uploaded to Firebase
@@ -486,6 +546,7 @@ After each file update:
 - ❌ `date` - Way too ambiguous!
 
 **When referring to objects:**
+
 - ✅ `sourceFile` - File object from user's device (File API)
 - ✅ `storageFile` - Reference to Firebase Storage file
 - ✅ `documentMetadata` - Metadata about the real-world document
@@ -493,6 +554,7 @@ After each file update:
 - ❌ `file` alone - Specify which tier!
 
 **Database field names (existing schema):**
+
 - `sourceFileName` - Name of source file (in sourceMetadata subcollection)
 - `lastModified` - Source file's modified timestamp
 - `sourceFolderPath` - Path from source file system
@@ -513,6 +575,7 @@ Use checkboxes above to track completion. Update this document as you work throu
 ### Progress Summary
 
 **Phase 1: Documentation Files** ✅ **COMPLETE**
+
 - ✅ Priority 1: Core File System Documentation (5/5 files - 100% complete)
   - Updated 4 files with terminology changes (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
   - Verified 1 file as compliant (data-structures.md)
@@ -530,6 +593,7 @@ Use checkboxes above to track completion. Update this document as you work throu
   - Verified 1 file requires no changes (file-relocator.md - refers to code files, not data model)
 
 **Phase 2: Code Files** ⏳ (In Progress - Layers 1-8 Complete)
+
 - ✅ Layer 1: Workers (1/1 file - 100% complete & tested)
 - ✅ Layer 2: Test Utilities (3/3 files - 100% complete & tested)
 - ✅ Layer 3: Services (4/4 files - 100% complete & tested)
@@ -542,10 +606,12 @@ Use checkboxes above to track completion. Update this document as you work throu
 - ⏳ Layer 10-12: Organizer Components, Demos, Deprecated (0/41 files - 0% complete)
 
 **Phase 3: Verification and Testing** ✅ (Complete for Layers 1-4)
+
 - Upload functionality tested successfully (single file, multiple files with deduplication, folder upload)
 - Layer 5 (Organizer Composables): Documentation-only changes, minimal testing required
 
 **Overall Progress**: 46/95 files reviewed (48.4%)
+
 - **Phase 1 Complete**: All documentation reviewed and standardized ✅
 - **Phase 2 In Progress**: Layers 1-8 complete (27/76 code files - 35.5%)
 - Documentation changes: 6 files updated
@@ -575,7 +641,9 @@ Use checkboxes above to track completion. Update this document as you work throu
 ## Change Log
 
 ### Session 1 - 2025-10-25
+
 **Completed**: Phase 1, Priority 1 (Core File System Documentation)
+
 - Updated `docs/architecture/FileMetadata.md` - Changed "Original Files vs Storage Files" section heading, updated ~8 instances
 - Updated `docs/architecture/firebase-storage.md` - Changed "Original file extensions" to "source file extensions" (2 locations)
 - Updated `docs/uploading.md` - Updated metadata hash field and API examples (3 changes)
@@ -583,7 +651,9 @@ Use checkboxes above to track completion. Update this document as you work throu
 - Verified `docs/data-structures.md` - No changes needed (hub document with cross-references)
 
 ### Session 2 - 2025-10-25
+
 **Completed**: Phase 1, Priority 2 (Architecture Documentation)
+
 - Updated `docs/architecture/Evidence.md` - Updated 7 instances (section headings, field comments, descriptions)
   - Changed "Original Metadata Subcollection" → "Source Metadata Subcollection"
   - Updated field comments to use "source file" terminology
@@ -596,7 +666,9 @@ Use checkboxes above to track completion. Update this document as you work throu
   - `security-rules.md` - Access control (no file terminology)
 
 ### Session 3 - 2025-10-25
+
 **Completed**: Phase 1, Priority 3 (Process Documentation)
+
 - Updated `docs/firebase-storage-plan.md` - Updated 6 instances of "original" terminology to "source" terminology
   - Changed "Original Case Preservation Exception" → "Source File Name Case Preservation"
   - Updated section description to reference "source file's name as it existed on user's device"
@@ -610,7 +682,9 @@ Use checkboxes above to track completion. Update this document as you work throu
   - `authentication.md` - Authentication system (no file terminology)
 
 ### Session 4 - 2025-10-25
+
 **Completed**: Phase 1, Priority 4 & 5 (Development Documentation & Agent Instructions) - **PHASE 1 COMPLETE** ✅
+
 - Verified 5 files require no changes:
   - `design-guidelines.md` - Design system documentation (no file lifecycle terminology)
   - `vitest-test-suites.md` - Test suite tracking (generic test references only)
@@ -621,15 +695,18 @@ Use checkboxes above to track completion. Update this document as you work throu
 **Milestone Achievement**: All Phase 1 documentation files (19/19) have been reviewed and standardized. The codebase documentation now consistently uses the three-tier Document → Source → File lifecycle terminology. Ready to proceed with Phase 2 code updates.
 
 ### Session 5 - 2025-10-25
+
 **Completed**: Phase 2, Layers 1-3 (Workers, Test Utilities, Services)
 
 **Layer 1: Workers (1 file)**
+
 - Updated `src/features/upload/workers/fileHashWorker.js`:
   - Changed metadata field names: `fileName` → `sourceFileName`, `fileSize` → `sourceFileSize`, `fileType` → `sourceFileType`
   - Updated all field references throughout the file (lines 153, 265-271)
   - Updated 6 comments to clarify "source file" terminology
 
 **Layer 2: Test Utilities (3 files)**
+
 - Updated `src/test-utils/mockFileAPI.js`:
   - Updated header comment and parameter descriptions to clarify mocks represent source files
 - Updated `src/test-utils/virtualFolderTestUtils.js`:
@@ -641,6 +718,7 @@ Use checkboxes above to track completion. Update this document as you work throu
   - Added clarifying comments for document vs source file properties
 
 **Layer 3: Services (4 files)**
+
 - Updated `src/services/fileService.js`:
   - Updated 5 comments replacing "original" with "source" terminology
 - Updated `src/features/organizer/services/evidenceService.js`:
@@ -655,9 +733,11 @@ Use checkboxes above to track completion. Update this document as you work throu
 **Impact**: 8 code files updated with consistent source file terminology. Fixed critical bug in evidenceService where field name didn't match worker output. All workers, test utilities, and services now use standardized terminology.
 
 ### Session 6 - 2025-10-25
+
 **Completed**: Phase 2, Layer 4 - Critical Bug Fix (useFileMetadata.js)
 
 **Layer 4: Upload Composables (1 file)**
+
 - Updated `src/features/upload/composables/useFileMetadata.js`:
   - **Critical bug fix**: Changed `uploadMetadata.originalName` → `uploadMetadata.sourceFileName` (line 125)
   - **Impact**: This was a dependency mismatch between Layer 4 (composables) and Layer 3 (services)
@@ -666,6 +746,7 @@ Use checkboxes above to track completion. Update this document as you work throu
   - **Lesson learned**: This demonstrates why reverse dependency order is critical - should update higher layers before lower layers to avoid breaking interfaces
 
 **Testing Results**: Upload functionality verified working correctly after fix:
+
 - ✅ File uploads to Firebase Storage successfully
 - ✅ Evidence document created in `evidence` collection
 - ✅ Source metadata created in `sourceMetadata` subcollection
@@ -674,9 +755,11 @@ Use checkboxes above to track completion. Update this document as you work throu
 **Impact**: Fixed critical bug that prevented evidence record creation during file upload. Upload flow now works end-to-end with standardized terminology.
 
 ### Session 7 - 2025-10-25
+
 **Completed**: Phase 2, Layer 4 - Additional Upload Composables (NOT TESTED)
 
 **Layer 4: Upload Composables (4 files)**
+
 - Updated `src/features/upload/composables/useFileQueue.js` ⚠️ **NOT TESTED**
   - Queue management and file processing
   - Variable names for file objects, dates, metadata
@@ -696,12 +779,14 @@ Use checkboxes above to track completion. Update this document as you work throu
 **Impact**: Core upload queue management composables now use standardized terminology. Testing required to verify upload flow still functions correctly with the updated field names and variable references.
 
 ### Session 8 - 2025-10-25
+
 **Completed**: CRITICAL BUG FIX - Layer 4 Completion & Layer 9 FileUpload.vue + Full Testing ✅
 
 **Root Cause Analysis**:
 Testing Session 7 changes revealed critical bug - queue structure mismatch between Layer 4 (composables) and Layer 9 (FileUpload.vue). The queue item structure was updated in `useFileQueueCore.js` but `FileUpload.vue` was still using old field names, causing `undefined` errors during upload.
 
 **Layer 4: Upload Composables - Final 3 Files (NOW TESTED)**
+
 - Updated `src/features/upload/composables/useFolderAnalysis.js` ✅ **TESTED**
   - Added header documentation clarifying source file terminology
   - Updated comments in `calculateFileSizeMetrics` to reference "source files from user's device"
@@ -715,6 +800,7 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - Clarified worker mapping preserves source files from user's device
 
 **Layer 9: Upload Components - CRITICAL BUG FIX**
+
 - Updated `src/features/upload/FileUpload.vue` ✅ **TESTED**
   - **CRITICAL**: Fixed queue field name mismatch (35+ changes)
   - Updated helper functions:
@@ -731,6 +817,7 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
     - populateExistingHash: queueFile.name→sourceName
 
 **Testing Results** ✅ **ALL TESTS PASSED**:
+
 - ✅ Single file upload: Working correctly
 - ✅ Multiple file upload with deduplication: Working correctly
 - ✅ Folder upload: Working correctly
@@ -742,23 +829,28 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
 **Status**: Layer 4 now 8/8 files complete (100% - ALL TESTED). Layer 9 now 1/8 files complete (12.5% - TESTED). Upload functionality fully working with standardized terminology.
 
 **Impact**:
+
 - **Critical bug fixed**: Upload flow now works end-to-end with new queue structure
 - **Layer 4 complete**: All upload composables standardized and tested
 - **Upload system verified**: Tested across single files, multiple files, and folders
 - **Production ready**: Changes are safe to commit and deploy
 
 ### Session 9 - 2025-10-25
+
 **Completed**: Phase 2, Layer 5 - Organizer Feature Composables
 
 **Layer 5: Organizer Composables (3 files - DOCUMENTATION ONLY)**
+
 - Updated `src/features/organizer/composables/useFilePreview.js`:
+
   - Changed header from "File preview composable" to "Storage File Preview Composable"
   - Added context documentation: Clarifies this handles storage files (tier 3) already in Firebase Storage, not source files (tier 2)
-  - Enhanced function documentation: Added JSDoc comments to `generatePreview()` and `selectFile()` specifying they work with storage file references or evidence records
+  - Enhanced function documentation: Added JSDoc comments to `generateUploadPreview()` and `selectUpload()` specifying they work with storage file references or evidence records
   - Updated inline comments: Changed "file type" to "storage file type", "file can be previewed" to "storage file can be previewed"
   - **Total changes**: 5 documentation enhancements
 
 - Updated `src/features/organizer/composables/useFileViewer.js`:
+
   - Changed header from "Main file viewer composable" to "Storage File Viewer Composable"
   - Added context documentation: Clarifies this deals with storage files (tier 3), not source files (tier 2)
   - Enhanced variable documentation: Added inline comment clarifying `files` array contains storage file references/evidence records
@@ -773,6 +865,7 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - **Total changes**: 3 documentation enhancements (1 terminology fix + 2 context additions)
 
 **Testing Status**: ⚠️ **Documentation-only changes** - No functional code modified
+
 - These composables work with storage files in the organizer feature
 - Changes are purely comments, JSDoc annotations, and header documentation
 - Zero risk of breaking changes
@@ -781,16 +874,20 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
 **Status**: Layer 5 now 3/3 files complete (100%). All organizer composables now clearly distinguish between source files (tier 2) and storage files (tier 3).
 
 **Impact**:
+
 - **Layer 5 complete**: All organizer composables use consistent "storage file" terminology
 - **Zero functional changes**: Only documentation and comments updated
 - **Architectural clarity**: Clear distinction between source files (upload) and storage files (organizer)
 - **Safe to deploy**: Documentation-only changes carry no risk
 
 ### Session 10 - 2025-10-25
+
 **Completed**: Phase 2, Layers 6-8 - Stores, Utils, Config (CRITICAL LAYER COMPLETE)
 
 **Layer 6: Stores (4 files - DOCUMENTATION ONLY)**
+
 - Updated `src/features/organizer/stores/organizerCore.js`:
+
   - Updated metadata selection comments (lines 32-35) to clarify "storage files with multiple source metadata variants"
   - Added comprehensive context explaining when same file content has multiple source metadata records
   - Enhanced getDisplayInfo() JSDoc with parameter descriptions (@param tags) and return value documentation
@@ -800,9 +897,11 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - **Total changes**: 6 documentation enhancements clarifying storage file vs source metadata relationship
 
 - Verified `src/features/organizer/stores/organizer.js`:
+
   - **No changes needed**: Facade store that delegates to other stores, no file-related terminology requiring updates
 
 - Updated `src/features/organizer/stores/virtualFolderStore.js`:
+
   - Updated generateFolderStructure() header to clarify evidence documents represent storage files (line 190)
   - Added inline comment to fileCount field clarifying it counts evidence/storage files (line 227)
   - Updated sorting comment to reference "evidence/storage file count" (line 240)
@@ -816,9 +915,11 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - **Total changes**: 4 documentation enhancements
 
 **Layer 7: Utility Files (2 files)**
+
 - Updated `src/features/organizer/utils/fileUtils.js`:
+
   - Enhanced header documentation to clarify utilities work with display names from source metadata (lines 5-6)
-  - Updated formatFileSize() comment to specify it works with both source and storage file sizes (line 71)
+  - Updated formatUploadSize() comment to specify it works with both source and storage file sizes (line 71)
   - **Total changes**: 2 documentation enhancements
 
 - Updated `src/features/upload/utils/fileAnalysis.js`:
@@ -835,6 +936,7 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - **Total changes**: 7 inline comment updates + header enhancement
 
 **Layer 8: Configuration Files (1 file - CRITICAL)**
+
 - Updated `src/features/organizer/config/fileListColumns.js`:
   - **CRITICAL FILE**: Defines all column labels and tooltips visible to users
   - Enhanced header documentation explaining evidence documents represent storage files (lines 5-6)
@@ -845,17 +947,20 @@ Testing Session 7 changes revealed critical bug - queue structure mismatch betwe
   - **Total changes**: 5 critical column description updates
 
 **Testing Status**: ⚠️ **Documentation-only changes** - No functional code modified
+
 - All changes are comments, JSDoc annotations, and documentation
 - Zero risk of breaking changes
 - No testing required beyond verification that dev server starts
 
 **Status**:
+
 - Layer 6 complete: 4/4 files (100%)
 - Layer 7 complete: 2/2 files (100%)
 - Layer 8 complete: 1/1 files (100% - CRITICAL)
 - **Total progress**: 27/76 code files (35.5%)
 
 **Impact**:
+
 - **Layers 6-8 complete**: All stores, utilities, and critical configuration standardized
 - **Critical configuration updated**: Column descriptions now accurately reflect three-tier terminology
 - **Zero functional changes**: Only documentation and comments updated

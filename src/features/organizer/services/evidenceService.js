@@ -8,6 +8,7 @@ import {
   getDoc,
   serverTimestamp,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 
 /**
@@ -40,10 +41,23 @@ export class EvidenceService {
       const fileHash = uploadMetadata.hash;
       const metadataHash = uploadMetadata.metadataHash;
 
+      // Convert Storage timestamp to Firestore Timestamp, or fallback to serverTimestamp
+      let fileCreatedTimestamp;
+      if (uploadMetadata.storageCreatedTimestamp) {
+        try {
+          fileCreatedTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
+        } catch (error) {
+          console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp:', error);
+          fileCreatedTimestamp = serverTimestamp();
+        }
+      } else {
+        fileCreatedTimestamp = serverTimestamp();
+      }
+
       // Create evidence document with simplified structure
       const evidenceData = {
         // Display configuration (simplified to just metadataHash string)
-        displayCopy: metadataHash,
+        sourceID: metadataHash,
 
         // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
@@ -59,7 +73,7 @@ export class EvidenceService {
         reviewRequiredCount: 0,
 
         // Timestamps
-        updatedAt: serverTimestamp(),
+        fileCreated: fileCreatedTimestamp,
       };
 
       // Use setDoc with fileHash as document ID (automatic deduplication)
@@ -99,9 +113,22 @@ export class EvidenceService {
         );
         evidenceIds.push(fileHash);
 
+        // Convert Storage timestamp to Firestore Timestamp, or fallback to serverTimestamp
+        let fileCreatedTimestamp;
+        if (uploadMetadata.storageCreatedTimestamp) {
+          try {
+            fileCreatedTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
+          } catch (error) {
+            console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp:', error);
+            fileCreatedTimestamp = serverTimestamp();
+          }
+        } else {
+          fileCreatedTimestamp = serverTimestamp();
+        }
+
         const evidenceData = {
-          // Simplified displayCopy (just metadataHash string)
-          displayCopy: uploadMetadata.metadataHash || 'temp-hash',
+          // Simplified sourceID (just metadataHash string)
+          sourceID: uploadMetadata.metadataHash || 'temp-hash',
 
           fileSize: uploadMetadata.size || 0,
 
@@ -114,7 +141,7 @@ export class EvidenceService {
           autoApprovedCount: 0,
           reviewRequiredCount: 0,
 
-          updatedAt: serverTimestamp(),
+          fileCreated: fileCreatedTimestamp,
         };
 
         batch.set(evidenceRef, evidenceData);
@@ -151,7 +178,7 @@ export class EvidenceService {
       );
       await updateDoc(evidenceRef, {
         displayName: displayName.trim(),
-        updatedAt: serverTimestamp(),
+        fileCreated: serverTimestamp(),
       });
     } catch (error) {
       throw error;
@@ -174,7 +201,7 @@ export class EvidenceService {
 
       const updateData = {
         processingStage: stage,
-        updatedAt: serverTimestamp(),
+        fileCreated: serverTimestamp(),
         ...additionalData,
       };
 

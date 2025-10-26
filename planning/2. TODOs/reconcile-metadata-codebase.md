@@ -8,9 +8,9 @@ This document outlines the specific code changes needed to align the codebase wi
 
 ## Required Code Changes
 
-### 1. Fix displayCopy Field Structure
+### 1. Fix sourceID Field Structure
 
-**Issue**: `displayCopy` is currently an object but should be a string containing only the metadataHash.
+**Issue**: `sourceID` is currently an object but should be a string containing only the metadataHash.
 
 **Files to Update**:
 
@@ -19,7 +19,7 @@ This document outlines the specific code changes needed to align the codebase wi
 **Current Code**:
 
 ```javascript
-displayCopy: {
+sourceID: {
   metadataHash: metadataHash,
   folderPath: uploadMetadata.folderPath || '/'
 },
@@ -28,23 +28,23 @@ displayCopy: {
 **Change To**:
 
 ```javascript
-displayCopy: metadataHash,
+sourceID: metadataHash,
 ```
 
-**Note**: Remove the folderPath from displayCopy in both `createEvidenceFromUpload` and `createEvidenceFromUploads` methods.
+**Note**: Remove the folderPath from sourceID in both `createEvidenceFromUpload` and `createEvidenceFromUploads` methods.
 
 #### `src/features/organizer/stores/organizerCore.js`
 
 **Current Code**:
 
 ```javascript
-const displayInfo = await getDisplayInfo(evidence.displayCopy?.metadataHash, firmId);
+const displayInfo = await getDisplayInfo(evidence.sourceID?.metadataHash, firmId);
 ```
 
 **Change To**:
 
 ```javascript
-const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId);
+const displayInfo = await getDisplayInfo(evidence.sourceID, firmId);
 ```
 
 ### 2. Add fileTypes Field to storageRef
@@ -106,7 +106,7 @@ getFileExtension(filename) {
 ```javascript
 const evidenceData = {
   storageRef: { ... },
-  displayCopy: ...,
+  sourceID: ...,
   fileSize: uploadMetadata.size || 0,
   isProcessed: false,
   hasAllPages: null,
@@ -120,7 +120,7 @@ const evidenceData = {
 ```javascript
 const evidenceData = {
   storageRef: { ... },
-  displayCopy: metadataHash,
+  sourceID: metadataHash,
   displayName: uploadMetadata.originalName, // Add this line
   fileSize: uploadMetadata.size || 0,
   isProcessed: false,
@@ -164,25 +164,25 @@ if (evidence.storageRef?.fileTypes) {
 
 1. **Phase 1 - Core Structure Changes** (Do First)
 
-   - Update `evidenceService.js` to fix displayCopy structure
+   - Update `evidenceService.js` to fix sourceID structure
    - Add fileTypes field to storageRef
    - Add displayName initialization
 
 2. **Phase 2 - Consumer Updates** (Do Second)
 
-   - Update `organizerCore.js` to handle string displayCopy
+   - Update `organizerCore.js` to handle string sourceID
    - Update `fileProcessingService.js` to use fileTypes field
 
 3. **Phase 3 - Testing** (Do Last)
    - Test file upload flow
    - Verify displayName appears in UI
    - Confirm fileTypes field is populated
-   - Check that displayCopy correctly links to sourceMetadata
+   - Check that sourceID correctly links to sourceMetadata
 
 ## Testing Checklist
 
 - [ ] Upload a new file and verify evidence document structure
-- [ ] Check that displayCopy is a string (metadataHash only)
+- [ ] Check that sourceID is a string (metadataHash only)
 - [ ] Verify fileTypes field contains lowercase extension
 - [ ] Confirm displayName is set to originalName initially
 - [ ] Test that organizerCore correctly fetches display info
@@ -193,7 +193,7 @@ if (evidence.storageRef?.fileTypes) {
 
 Since we're in the testing phase with the 'general' matter:
 
-1. **Existing Evidence Documents**: May have object-based displayCopy fields
+1. **Existing Evidence Documents**: May have object-based sourceID fields
 2. **Backward Compatibility**: Code should handle both old and new formats during transition
 3. **Optional Migration Script**: Could update existing documents to new format
 
@@ -202,9 +202,7 @@ Since we're in the testing phase with the 'general' matter:
 ```javascript
 // Handle both old object format and new string format
 const metadataHash =
-  typeof evidence.displayCopy === 'string'
-    ? evidence.displayCopy
-    : evidence.displayCopy?.metadataHash;
+  typeof evidence.sourceID === 'string' ? evidence.sourceID : evidence.sourceID?.metadataHash;
 const displayInfo = await getDisplayInfo(metadataHash, firmId);
 ```
 

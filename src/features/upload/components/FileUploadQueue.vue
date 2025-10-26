@@ -174,7 +174,7 @@
         </div>
 
         <div class="text-body-2 text-grey-darken-1">
-          Total size: <strong>{{ formatFileSize(totalSize) }}</strong>
+          Total size: <strong>{{ formatUploadSize(totalSize) }}</strong>
         </div>
       </div>
     </v-card-actions>
@@ -365,7 +365,8 @@ const groupedFiles = computed(() => {
 
   // Group files by hash (for duplicates) or by unique ID (for singles)
   props.files.forEach((file) => {
-    const groupKey = file.hash || `unique_${file.sourceName}_${file.sourceSize}_${file.sourceModifiedDate}`;
+    const groupKey =
+      file.hash || `unique_${file.sourceName}_${file.sourceSize}_${file.sourceModifiedDate}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
@@ -418,7 +419,7 @@ const hasUploadStarted = computed(() => {
 });
 
 // Methods
-const formatFileSize = (bytes) => {
+const formatUploadSize = (bytes) => {
   if (bytes === 0) return '0 B';
 
   const k = 1024;
