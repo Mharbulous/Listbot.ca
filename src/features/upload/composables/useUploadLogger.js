@@ -12,8 +12,8 @@ export function useUploadLogger() {
    * @param {Object} event - Upload event details
    * @param {string} event.eventType - Type of event ('upload_interrupted', 'upload_success', 'upload_failed', 'upload_skipped_metadata_recorded')
    * @param {string} event.fileName - Original file name
-   * @param {string} event.fileHash - SHA-256 hash of file content
-   * @param {string} event.metadataHash - SHA-256 hash of metadata
+   * @param {string} event.fileHash - BLAKE3 hash of file content
+   * @param {string} event.metadataHash - xxHash of metadata
    */
   const logUploadEvent = async (event) => {
     try {
@@ -49,14 +49,8 @@ export function useUploadLogger() {
       );
       const docRef = await addDoc(eventsCollection, eventData);
 
-      console.log(`Upload event logged: ${event.eventType} - ${event.fileName}`, {
-        eventId: docRef.id,
-        fileHash: event.fileHash,
-      });
-
       return docRef.id;
     } catch (error) {
-      console.error('Failed to log upload event:', error);
       throw error;
     }
   };
@@ -87,10 +81,8 @@ export function useUploadLogger() {
 
       await updateDoc(eventDocRef, updates);
 
-      console.log(`Upload event updated: ${eventId}`, updates);
       return eventId;
     } catch (error) {
-      console.error('Failed to update upload event:', error);
       throw error;
     }
   };

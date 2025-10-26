@@ -6,6 +6,9 @@
 
 <script setup>
 import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences';
+import { formatDate as formatDateUtil } from '@/utils/dateFormatter';
 
 const props = defineProps({
   value: {
@@ -22,22 +25,36 @@ const props = defineProps({
   },
 });
 
+// Get user preferences store
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat } = storeToRefs(preferencesStore);
+
 const formattedDate = computed(() => {
   if (!props.value) return '—';
 
   try {
-    const date = new Date(props.value);
+    // Handle different input types (Date, String, Number)
+    let date;
+    if (props.value instanceof Date) {
+      date = props.value;
+    } else if (typeof props.value === 'string') {
+      date = new Date(props.value);
+    } else if (typeof props.value === 'number') {
+      date = new Date(props.value);
+    } else if (props.value.toDate) {
+      // Firestore timestamp
+      date = props.value.toDate();
+    } else {
+      return '—';
+    }
 
     // Check if date is valid
     if (isNaN(date.getTime())) {
       return '—';
     }
 
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    // Format using user's preference
+    return formatDateUtil(date, dateFormat.value);
   } catch {
     return '—';
   }

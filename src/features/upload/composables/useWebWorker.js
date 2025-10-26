@@ -39,7 +39,7 @@ export function useWebWorker(workerPath) {
     }
 
     try {
-      worker.value = new Worker(new URL(workerPath, import.meta.url));
+      worker.value = new Worker(new URL(workerPath, import.meta.url), { type: 'module' });
 
       worker.value.onmessage = (event) => {
         handleWorkerMessage(event.data);

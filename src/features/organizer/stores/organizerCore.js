@@ -29,7 +29,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   // Cache for display information
   const displayInfoCache = ref(new Map());
 
-  // Track metadata selections for files with multiple metadata variants
+  // Track metadata selections for storage files with multiple source metadata variants
+  // When the same file content (fileHash) is uploaded multiple times with different source metadata,
+  // users can select which source metadata variant to display
   const metadataSelections = ref(new Map()); // evidenceId -> selectedMetadataHash
 
   // Track active Firestore listener for cleanup
@@ -192,6 +194,12 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
   /**
    * Fetch display information from sourceMetadata subcollection
+   * Gets source file metadata (filename, modified date) for display purposes
+   * @param {string} metadataHash - Hash of source metadata to fetch
+   * @param {string} firmId - Firm ID
+   * @param {string} fileHash - Storage file hash (evidence document ID)
+   * @param {string} matterId - Matter ID
+   * @returns {Promise<Object>} Display info with displayName and createdAt from source metadata
    */
   const getDisplayInfo = async (metadataHash, firmId, fileHash, matterId) => {
     try {
@@ -229,7 +237,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
         const displayInfo = {
           displayName: displayName,
-          createdAt: data.lastModified || null,
+          createdAt: data.lastModified || null, // Source file's lastModified timestamp
         };
 
         // Cache the result
@@ -313,7 +321,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
             // Load tags for this evidence document
             const tagData = await loadTagsForEvidence(docSnapshot.id, firmId);
 
-            // File size fallback and auto-migration
+            // Storage file size fallback and auto-migration
+            // If Evidence document lacks fileSize, fetch from Firebase Storage file
             let finalFileSize = evidenceData.fileSize || 0;
             if (!finalFileSize && evidenceData.storageRef?.fileHash) {
               try {
@@ -324,7 +333,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
                 if (storageFileSize > 0) {
                   finalFileSize = storageFileSize;
 
-                  // Auto-migrate: Update Evidence document with correct file size
+                  // Auto-migrate: Update Evidence document with correct storage file size
                   const evidenceDocRef = doc(
                     db,
                     'firms',
@@ -338,12 +347,12 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
                     fileSize: storageFileSize,
                   });
                   console.log(
-                    `[OrganizerCore] Auto-migrated file size for evidence ${docSnapshot.id}: ${storageFileSize} bytes`
+                    `[OrganizerCore] Auto-migrated storage file size for evidence ${docSnapshot.id}: ${storageFileSize} bytes`
                   );
                 }
               } catch (error) {
                 console.warn(
-                  `[OrganizerCore] Failed to get file size fallback for evidence ${docSnapshot.id}:`,
+                  `[OrganizerCore] Failed to get storage file size fallback for evidence ${docSnapshot.id}:`,
                   error
                 );
               }
@@ -501,8 +510,10 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   };
 
   /**
-   * Select a different metadata variant for a file with multiple options
-   * @param {string} evidenceId - Evidence document ID
+   * Select a different source metadata variant for a storage file with multiple options
+   * When the same storage file (fileHash) has multiple source metadata records from different uploads,
+   * this allows selecting which source metadata to display (filename, modified date, etc.)
+   * @param {string} evidenceId - Evidence document ID (storage file hash)
    * @param {string} metadataHash - displayCopy (metadataHash) to switch to
    */
   const selectMetadata = (evidenceId, metadataHash) => {

@@ -187,8 +187,9 @@ export const useVirtualFolderStore = defineStore('virtualFolder', () => {
 
   /**
    * Generate folder structure from evidence data for current navigation level
+   * Each evidence document represents a storage file in Firebase Storage
    * @param {Array} evidenceList - Evidence documents with tags
-   * @returns {Array} Folder structure with file counts
+   * @returns {Array} Folder structure with evidence/storage file counts
    */
   const generateFolderStructure = (evidenceList) => {
     if (!nextCategory.value || !evidenceList?.length) {
@@ -223,20 +224,20 @@ export const useVirtualFolderStore = defineStore('virtualFolder', () => {
                 categoryId,
                 categoryName: nextCategory.value.categoryName,
                 tagName,
-                fileCount: 0,
+                fileCount: 0, // Count of evidence documents (storage files) in this folder
                 evidenceIds: new Set(),
               });
             }
 
             const folder = folders.get(tagName);
             folder.evidenceIds.add(evidence.id);
-            folder.fileCount = folder.evidenceIds.size;
+            folder.fileCount = folder.evidenceIds.size; // Count unique evidence/storage files
           }
         });
       }
     });
 
-    // Convert to array and sort by file count (descending) then name
+    // Convert to array and sort by evidence/storage file count (descending) then name
     const result = Array.from(folders.values()).sort((a, b) => {
       if (b.fileCount !== a.fileCount) {
         return b.fileCount - a.fileCount;

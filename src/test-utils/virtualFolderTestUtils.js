@@ -86,10 +86,10 @@ export const generateMockEvidence = (count = 20, categories = null) => {
   for (let i = 0; i < count; i++) {
     const doc = {
       id: `evidence-${i + 1}`,
-      fileName: `document-${i + 1}.pdf`,
-      sourceFileName: `Document ${i + 1}.pdf`,
+      fileName: `document-${i + 1}.pdf`, // Display/identifier name
+      sourceFileName: `Document ${i + 1}.pdf`, // Name of source file from user's device
       size: Math.floor(Math.random() * 5000000) + 10000, // 10KB to 5MB
-      fileUrl: `https://storage.example.com/evidence-${i + 1}.pdf`,
+      fileUrl: `https://storage.example.com/evidence-${i + 1}.pdf`, // Stored file URL in Firebase
       uploadedAt: new Date(
         2024,
         Math.floor(Math.random() * 12),
@@ -141,6 +141,7 @@ export const testScenarios = {
   emptyEvidence: () => ({
     id: 'empty-evidence',
     fileName: 'empty.pdf',
+    sourceFileName: 'Empty Document.pdf',
     tags: {},
   }),
 
@@ -150,6 +151,7 @@ export const testScenarios = {
   malformedTagsEvidence: () => ({
     id: 'malformed-evidence',
     fileName: 'malformed.pdf',
+    sourceFileName: 'Malformed Tags.pdf',
     tags: {
       'cat-1': null,
       'cat-2': 'not-an-array',
@@ -176,6 +178,7 @@ export const testScenarios = {
       {
         id: 'doc-1',
         fileName: 'invoice-abc-2024.pdf',
+        sourceFileName: 'Invoice_ABC_2024.pdf',
         tags: {
           'doc-type': [{ tagName: 'Invoice', categoryId: 'doc-type' }],
           client: [{ tagName: 'ABC Corp', categoryId: 'client' }],
@@ -185,6 +188,7 @@ export const testScenarios = {
       {
         id: 'doc-2',
         fileName: 'invoice-xyz-2024.pdf',
+        sourceFileName: 'Invoice_XYZ_2024.pdf',
         tags: {
           'doc-type': [{ tagName: 'Invoice', categoryId: 'doc-type' }],
           client: [{ tagName: 'XYZ Ltd', categoryId: 'client' }],
@@ -194,6 +198,7 @@ export const testScenarios = {
       {
         id: 'doc-3',
         fileName: 'receipt-abc-2023.pdf',
+        sourceFileName: 'Receipt_ABC_2023.pdf',
         tags: {
           'doc-type': [{ tagName: 'Receipt', categoryId: 'doc-type' }],
           client: [{ tagName: 'ABC Corp', categoryId: 'client' }],

@@ -1,7 +1,19 @@
 import { analyzeFiles } from '@/features/upload/utils/fileAnalysis.js';
 
+/**
+ * Folder Analysis Composable
+ *
+ * TERMINOLOGY - Source Files:
+ * ============================
+ * This composable analyzes SOURCE FILES from the user's device during folder upload.
+ * It works with an intermediate file structure: { file: File, path: string }
+ * where 'file' is the Browser File object from the user's filesystem.
+ *
+ * These are SOURCE FILES (not yet in queue, not yet uploaded to storage).
+ */
 export function useFolderAnalysis() {
   // Single preprocessing function to parse all paths once and extract all needed information
+  // from source files selected by the user
   const preprocessFileData = (files) => {
     const directories = new Map(); // directory path -> depth
     const fileDepths = [];
@@ -10,7 +22,7 @@ export function useFolderAnalysis() {
     let hasSubfolders = false;
 
     files.forEach((fileData) => {
-      // Parse path once and extract all information
+      // Parse source file path once and extract all information
       const pathParts = fileData.path.split('/').filter((part) => part !== '');
       const fileDepth = pathParts.length - 1; // Subtract 1 because last part is filename
       const isMainFolder = pathParts.length === 2; // Exactly 2 parts: folder/file (no subfolders)
@@ -68,11 +80,13 @@ export function useFolderAnalysis() {
     };
   };
 
+  // Calculate file size metrics from source files selected by user
   const calculateFileSizeMetrics = (files) => {
+    // Extract sizes from source files (Browser File objects from user's device)
     const fileSizes = files.map((f) => f.file.size);
     const totalSizeMB = fileSizes.reduce((sum, size) => sum + size, 0) / (1024 * 1024);
 
-    // Group files by size to find identical sizes
+    // Group source files by size to find identical sizes (potential duplicates)
     const sizeGroups = new Map();
     fileSizes.forEach((size) => {
       sizeGroups.set(size, (sizeGroups.get(size) || 0) + 1);
@@ -82,7 +96,7 @@ export function useFolderAnalysis() {
     const identicalSizeFiles = fileSizes.length - uniqueFiles;
     const zeroByteFiles = fileSizes.filter((size) => size === 0).length;
 
-    // Get top 5 largest files
+    // Get top 5 largest source files
     const sortedSizes = [...fileSizes].sort((a, b) => b - a);
     const largestFileSizesMB = sortedSizes
       .slice(0, 5)
@@ -259,6 +273,7 @@ export function useFolderAnalysis() {
                         );
                       });
 
+                      // Store source file from user's device with its filesystem path
                       files.push({ file, path: entry.fullPath });
 
                       // Report incremental progress
@@ -269,12 +284,12 @@ export function useFolderAnalysis() {
                       // Cloud files show NotFoundError when not locally available
                       // This is expected behavior - count and continue silently
                       if (error.name === 'NotFoundError') {
-                        // Track cloud-only files for user feedback
+                        // Track cloud-only source files for user feedback
                         if (abortSignal?.onCloudFile) {
                           abortSignal.onCloudFile(entry.fullPath, error);
                         }
                       } else {
-                        // Log unexpected file errors for debugging
+                        // Log unexpected source file read errors for debugging
                         console.warn(`Unexpected file read error for ${entry.fullPath}:`, error);
                       }
                       // Continue processing other files

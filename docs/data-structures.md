@@ -91,7 +91,7 @@ User and firm management processes:
 
 ### File Management
 
-- Content-based deduplication using SHA-256 hashes
+- Content-based deduplication using BLAKE3 hashes
 - Multiple metadata records for same file content
 - Smart folder path system with pattern recognition
 - Future-ready processing workflow folders

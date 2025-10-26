@@ -9,7 +9,7 @@ The Bookkeeper application features a sophisticated file upload system designed 
 ### Core Components
 
 - **Upload Queue Management**: Real-time file processing with lazy loading UI
-- **Deduplication Engine**: SHA-256 hash-based duplicate detection
+- **Deduplication Engine**: BLAKE3 hash-based duplicate detection
 - **Progress Tracking**: Hardware-calibrated time estimation with 3-phase prediction
 - **Event Logging**: Individual file upload events with interruption detection
 - **Metadata Recording**: Constraint-based deduplication using metadata hashes
@@ -204,9 +204,9 @@ duplicateCandidates = files.filter((file) => sizeCount[file.size] > 1);
 #### Hash-Based Verification
 
 ```javascript
-// Only duplicate candidates undergo SHA-256 hashing
+// Only duplicate candidates undergo BLAKE3 hashing
 for (const file of duplicateCandidates) {
-  file.hash = await calculateSHA256(file);
+  file.hash = await calculateBLAKE3(file);
   if (existingHashes.has(file.hash)) {
     file.isDuplicate = true;
   }
@@ -299,8 +299,8 @@ For complete documentation of metadata hash generation, constraint-based dedupli
 
 ### Key Concepts
 
-- **File Content Hash**: SHA-256 of actual file content for storage deduplication
-- **Metadata Hash**: SHA-256 of `originalName|lastModified|fileHash` for metadata deduplication
+- **File Content Hash**: BLAKE3 (32 hex characters) of actual file content for storage deduplication
+- **Metadata Hash**: xxHash3-64bit (16 hex characters) of `sourceFileName|lastModified|fileHash` for metadata deduplication
 - **Automatic Constraints**: Firestore document IDs prevent duplicate metadata records
 - **Multi-Level Deduplication**: Storage level (content) + metadata level (combinations)
 
@@ -324,14 +324,14 @@ const predictions = {
 #### 3-Phase Time Prediction
 
 1. **Phase 1: File Analysis** - Size-based duplicate detection (~60ms baseline)
-2. **Phase 2: Hash Processing** - SHA-256 calculation (hardware calibrated)
+2. **Phase 2: Hash Processing** - BLAKE3 calculation (hardware calibrated)
 3. **Phase 3: UI Rendering** - DOM updates (complexity calibrated)
 
 ### Web Worker Architecture
 
 ```javascript
 // Background processing prevents UI blocking
-FileHashWorker → SHA-256 calculation
+FileHashWorker → BLAKE3 calculation
 FileAnalysisWorker → Path parsing and statistics
 UIUpdateWorker → Batch DOM updates
 ```
@@ -386,7 +386,7 @@ while (retryCount < maxRetries) {
 
 - **Size Limits**: Configurable per-file and per-batch limits
 - **Type Restrictions**: MIME type validation and extension checking
-- **Hash Verification**: Content integrity verification using SHA-256
+- **Hash Verification**: Content integrity verification using BLAKE3
 
 ### Data Privacy
 
@@ -414,9 +414,9 @@ const { logUploadEvent } = useUploadLogger();
 // See data-structures.md for complete field definitions
 await logUploadEvent({
   eventType: 'upload_success',
-  fileName: 'document.pdf',
-  fileHash: 'abc123...',
-  metadataHash: 'def456...',
+  fileName: 'document.pdf', // Source filename from upload
+  fileHash: 'abc123...', // BLAKE3 hash of file content
+  metadataHash: 'def456...', // xxHash of source metadata combination
 });
 ```
 
@@ -427,11 +427,11 @@ const { createMetadataRecord, generateMetadataHash } = useFileMetadata();
 
 // See data-structures.md for complete field definitions
 await createMetadataRecord({
-  sourceFileName: 'document.pdf',
-  lastModified: timestamp,
-  fileHash: 'abc123...',
+  sourceFileName: 'document.pdf', // Original filename from source file
+  lastModified: timestamp, // Source file's modification timestamp
+  fileHash: 'abc123...', // BLAKE3 hash of file content
   sourceFolderPath: 'Documents/2023', // Generated from webkitRelativePath via smart pattern recognition
-  sourceFileType: 'application/pdf', // MIME type from file.type property
+  sourceFileType: 'application/pdf', // MIME type from source file's file.type property
   // Note: sourceFolderPath field is automatically generated with pattern recognition
   // See data-structures.md#folder-path-system for complete documentation
 });

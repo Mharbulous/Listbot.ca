@@ -39,15 +39,69 @@
   position: relative;
   flex-shrink: 0;
   transition: all 0.2s ease-in-out;
+  cursor: pointer;
 }
 
-.header-label {
-  font-weight: 600;
-  font-size: 12px;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Hover state for entire header cell - show faint sort indicator */
+.header-cell:hover {
+  background: rgba(102, 126, 234, 0.08);
 }
+
+.header-cell:hover .header-label-button::before {
+  content: '⇅';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: normal;
+  color: #667eea;
+  line-height: 1;
+}
+
+/* Hide hover indicator when column is actively sorted */
+.header-cell.sorted-asc:hover .header-label-button::before,
+.header-cell.sorted-desc:hover .header-label-button::before {
+  content: none;
+}
+
+/* Sorted Ascending - Convex Appearance (entire cell) */
+.header-cell.sorted-asc {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),  /* Top highlight */
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),       /* Bottom shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-cell.sorted-asc .header-label-button {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.header-cell.sorted-asc .sort-indicator {
+  color: #667eea;
+}
+
+/* Sorted Descending - Concave Appearance (entire cell) */
+.header-cell.sorted-desc {
+  background: linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%);
+  box-shadow:
+    inset 0 -1px 2px rgba(255, 255, 255, 0.8), /* Bottom highlight */
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),        /* Top shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-cell.sorted-desc .header-label-button {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.header-cell.sorted-desc .sort-indicator {
+  color: #667eea;
+}
+
+/* .header-label styles moved to .header-label-button since the span wrapper was removed */
 
 .column-selector-cell {
   width: 100px;
@@ -231,6 +285,12 @@
   border-bottom: none; /* Remove bottom border from spacer column */
 }
 
+/* Error Text Styling */
+.error-text {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 /* Badges */
 .badge {
   display: inline-block;
@@ -303,7 +363,7 @@
   width: 8px;
   cursor: col-resize;
   user-select: none;
-  z-index: 1;
+  z-index: 2; /* Above sort button */
 }
 
 .resize-handle:hover {
@@ -330,7 +390,7 @@
   transition: opacity 0.2s ease;
   cursor: grab;
   pointer-events: auto;
-  z-index: 2;
+  z-index: 3; /* Above sort button */
 }
 
 .drag-handle:active {
@@ -384,9 +444,17 @@
   pointer-events: none;
 }
 
-/* Column selector cell should not be draggable */
+/* Column selector cell should not be draggable or sortable */
 .column-selector-cell {
   cursor: default !important;
+}
+
+.column-selector-cell:hover {
+  background: #fef3c7 !important; /* Keep original background */
+}
+
+.column-selector-cell:hover .header-label-button::before {
+  content: none !important; /* No sort indicator */
 }
 
 .column-selector-cell .drag-handle {
@@ -473,3 +541,51 @@
 .retry-button:hover {
   background: #2563eb;
 }
+
+/* ===================================
+   Sortable Column Header Styles
+   =================================== */
+
+/* Clickable Header Label Button - Fills entire cell */
+.header-label-button {
+  display: -webkit-box; /* Changed from flex to support line-clamp */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  align-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  position: absolute;
+  inset: 0; /* Fill entire header cell */
+  padding: 18px 16px 12px 16px; /* Match header-cell padding */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  z-index: 1; /* Below drag handle and resize handle */
+  overflow: hidden;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Focus state - remove default browser outline */
+.header-label-button:focus {
+  outline: none;
+}
+
+/* Sort Indicator (Arrow) - positioned in left padding, vertically centered */
+.sort-indicator {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Header label text styling now applied directly to .header-label-button (no nested span) */

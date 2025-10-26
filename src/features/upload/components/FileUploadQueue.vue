@@ -182,6 +182,11 @@
 </template>
 
 <script setup>
+/**
+ * File Upload Queue Component
+ * Displays source files (tier 2) selected by user from their device for upload
+ * After upload, these become storage files (tier 3) in Firebase Storage
+ */
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { useLazyHashTooltip } from '../composables/useLazyHashTooltip.js';
 import { useLazyFileList } from '../composables/useLazyFileList.js';
@@ -280,7 +285,7 @@ const { populateExistingHash, clearCache } = useLazyHashTooltip();
 const populateExistingHashes = () => {
   props.files.forEach((file) => {
     if (file.hash) {
-      populateExistingHash(file.id || file.name, file.hash);
+      populateExistingHash(file.id || file.sourceName, file.hash);
     }
   });
 };
@@ -360,13 +365,13 @@ const groupedFiles = computed(() => {
 
   // Group files by hash (for duplicates) or by unique ID (for singles)
   props.files.forEach((file) => {
-    const groupKey = file.hash || `unique_${file.name}_${file.size}_${file.lastModified}`;
+    const groupKey = file.hash || `unique_${file.sourceName}_${file.sourceSize}_${file.sourceModifiedDate}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
         files: [],
         isDuplicateGroup: false,
-        groupName: file.name,
+        groupName: file.sourceName,
       });
     }
 
@@ -394,7 +399,7 @@ const groupedFiles = computed(() => {
 watch(() => props.files, populateExistingHashes, { deep: true });
 
 const totalSize = computed(() => {
-  return uploadableFiles.value.reduce((total, file) => total + file.size, 0);
+  return uploadableFiles.value.reduce((total, file) => total + file.sourceSize, 0);
 });
 
 const hasErrors = computed(() => {

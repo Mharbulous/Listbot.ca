@@ -2,6 +2,10 @@ import { useQueueCore } from './useQueueCore';
 import { useQueueWorkers } from './useQueueWorkers';
 import { useQueueProgress } from './useQueueProgress';
 
+/**
+ * Coordinates source file deduplication across worker and main thread processing paths.
+ * Ensures consistent metadata structure for source files before upload to Firebase Storage.
+ */
 export function useQueueDeduplication() {
   // Initialize component modules
   const queueCore = useQueueCore();
@@ -12,6 +16,7 @@ export function useQueueDeduplication() {
   let timeMonitoringCallback = null;
 
   // Create main thread processing function with core logic
+  // Processes source files from user's device, detecting duplicates via hash comparison
   const processFilesMainThread = async (
     files,
     updateUploadQueue,
@@ -94,10 +99,10 @@ export function useQueueDeduplication() {
   };
 
   return {
-    // Core methods (from useQueueCore)
-    generateFileHash: queueCore.generateFileHash,
-    chooseBestFile: queueCore.chooseBestFile,
-    getFilePath: queueCore.getFilePath,
+    // Core methods (from useQueueCore) - operate on source file metadata
+    generateFileHash: queueCore.generateFileHash, // Hash source file content
+    chooseBestFile: queueCore.chooseBestFile, // Select best source file from duplicates
+    getFilePath: queueCore.getFilePath, // Extract source file path
 
     // Main processing methods (coordinated)
     processFiles,

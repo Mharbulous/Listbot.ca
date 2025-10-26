@@ -78,10 +78,6 @@ export function useCategoryManager() {
 
       loading.value = false;
 
-      console.log(
-        `[CategoryManager] Loaded categories - System: ${systemCats.length}, Firm: ${firmCats.length}, Matter: ${matterCats.length}`
-      );
-
       return {
         systemcategories: systemCats,
         firmCategories: firmCats,

@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { blake3 } from 'hash-wasm';
 
 export function useLazyHashTooltip() {
   // Cache for calculated hashes - maps fileId to hash value
@@ -17,11 +18,12 @@ export function useLazyHashTooltip() {
   const generateFileHash = async (file) => {
     try {
       const buffer = await file.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+      const uint8Array = new Uint8Array(buffer);
 
-      // Return standard SHA-256 hash of file content
+      // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
+      const hash = await blake3(uint8Array, 128);
+
+      // Return BLAKE3 hash of file content (32 hex characters)
       return hash;
     } catch (error) {
       console.error('Error generating hash for tooltip:', error);

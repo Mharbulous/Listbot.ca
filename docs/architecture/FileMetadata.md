@@ -2,12 +2,12 @@
 
 Last Updated: 2025-10-17
 
-## Critical Concept: Original Files vs Storage Files
+## Critical Concept: Source Files vs Storage Files
 
-This application preserves complete legal metadata about **original files** while implementing storage deduplication. Understanding this distinction is essential:
+This application preserves complete legal metadata about **source files** while implementing storage deduplication. Understanding this distinction is essential:
 
-- **Original Files**: Multiple files on users' computers - may be identical content with different names, locations, timestamps
-- **Storage Files**: Single deduplicated copy in Firebase Storage, named by SHA-256 hash
+- **Source Files**: Multiple files on users' computers - may be identical content with different names, locations, timestamps
+- **Storage Files**: Single deduplicated copy in Firebase Storage, named by BLAKE3 hash
 
 **Example**: Three clients upload the same PDF contract:
 
@@ -23,7 +23,7 @@ The application presents metadata to users in three distinct categories, reflect
 
 ### Source File
 
-**Definition**: Intrinsic properties of the original file as it existed on the user's computer.
+**Definition**: Intrinsic properties of the source file as it existed on the user's computer.
 
 **Displayed Fields**:
 
@@ -34,7 +34,7 @@ The application presents metadata to users in three distinct categories, reflect
 
 **Data Sources**: Combines data from `sourceMetadata` subcollection, `evidence` collection, and Firebase Storage metadata.
 
-**Purpose**: Shows users the file's original properties for identification and context.
+**Purpose**: Shows users the source file's properties for identification and context.
 
 #### Metadata Variant Selection
 
@@ -43,7 +43,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **UI Implementation**:
 
 - **Dropdown Menu**: Appears when multiple sourceMetadata records exist for a single evidence document
-- **Variant Identification**: Shows original filename with duplicate indicators (e.g., "Report.PDF", "report.pdf (2)")
+- **Variant Identification**: Shows source filename with duplicate indicators (e.g., "Report.PDF", "report.pdf (2)")
 - **Earlier Copy Notification**: Displays a notification message when a file with an earlier modification date already exists in storage
 - **Persistence**: Selected variant is stored in `evidence.displayCopy` field
 
@@ -143,7 +143,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **Displayed Fields**:
 
 - **Date Uploaded**: Firebase Storage upload timestamp from storage metadata `timeCreated`
-- **File Hash**: SHA-256 hash of file content, used as both `evidence` document ID and storage filename
+- **File Hash**: BLAKE3 hash of file content, used as both `evidence` document ID and storage filename
 
 **Data Sources**: Firebase Storage metadata API and `evidence` document ID.
 
@@ -248,25 +248,25 @@ Cloud:
 **Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 **Current**: `/firms/{firmId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 
-**Purpose**: Preserves metadata about original desktop files as a subcollection under evidence documents
+**Purpose**: Preserves metadata about source files from user's desktop as a subcollection under evidence documents
 
-**Document ID**: `metadataHash` - SHA-256 hash of `originalName|lastModified|fileHash`
+**Document ID**: `metadataHash` - xxHash3-64bit hash of `originalName|lastModified|fileHash` (16 hex characters)
 
 **Fields**:
 
 ```javascript
 {
   sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
-  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
-  fileHash: string,            // SHA-256 of file content (64 hex chars)
+  lastModified: Timestamp,      // Source file's timestamp from user's filesystem (Firestore Timestamp)
+  fileHash: string,            // BLAKE3 of file content (32 hex chars)
   sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
   sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
 }
 ```
 
-**Important**: The `sourceFileName` field is the ONLY place where the original file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
+**Important**: The `sourceFileName` field is the ONLY place where the source file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
 
-**Metadata Capture Implementation**: For detailed information about how original file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../uploading.md#metadata-management)**.
+**Metadata Capture Implementation**: For detailed information about how source file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../uploading.md#metadata-management)**.
 
 ### 2. evidence Collection
 
@@ -275,13 +275,13 @@ Cloud:
 
 **Purpose**: Links deduplicated storage files to their display metadata
 
-**Document ID**: `fileHash` - SHA-256 hash of file content (provides automatic deduplication)
+**Document ID**: `fileHash` - BLAKE3 hash of file content (provides automatic deduplication)
 
 **Fields**:
 
 ```javascript
 {
-  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
+  // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   displayCopy: string,       // metadataHash pointing to sourceMetadata record
   fileSize: number,          // File size in bytes
@@ -326,9 +326,9 @@ Cloud:
 {
   eventType: string,         // 'upload_success' | 'upload_duplicate' | 'upload_error' | 'upload_interrupted'
   timestamp: timestamp,       // When upload was attempted
-  fileName: string,          // Original filename from upload attempt
-  fileHash: string,          // SHA-256 of file content
-  metadataHash: string,      // SHA-256 of metadata
+  fileName: string,          // Source filename from upload attempt
+  fileHash: string,          // BLAKE3 of file content
+  metadataHash: string,      // xxHash of metadata
   firmId: string,            // Firm context
   userId: string,            // User who uploaded
   errorMessage: string       // Optional - only for upload_error events
@@ -361,7 +361,7 @@ Create sourceMetadata record as subcollection under evidence document →
 
 ## File Extension Handling
 
-**Preservation**: Original file extension case is preserved ONLY in `sourceMetadata.sourceFileName`
+**Preservation**: Source file extension case is preserved ONLY in `sourceMetadata.sourceFileName`
 
 **Standardization**: Everywhere else uses lowercase:
 
@@ -391,7 +391,7 @@ Create sourceMetadata record as subcollection under evidence document →
 - Multiple sourceMetadata documents can exist under one evidence document
 - Each represents a different upload context (different name, timestamp, or path)
 - Path: `/evidence/{fileHash}/sourceMetadata/{metadataHash}`
-- Note: The `metadataHash` is generated from `sourceFileName|lastModified|fileHash`
+- Note: The `metadataHash` is a xxHash3-64bit hash generated from `sourceFileName|lastModified|fileHash` (16 hex characters)
 
 **Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
@@ -439,6 +439,6 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one sourceMetadata subcollection document under evidence (identified by metadataHash from `sourceFileName|lastModified|fileHash`)
+- Same metadata = one sourceMetadata subcollection document under evidence (identified by xxHash3-64bit metadataHash from `sourceFileName|lastModified|fileHash`)
 - Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

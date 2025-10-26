@@ -1,16 +1,24 @@
 import { ref, computed } from 'vue';
 
 /**
- * File preview composable
- * Handles file preview functionality and preview generation
+ * Storage File Preview Composable
+ *
+ * Handles preview generation for storage files (files already uploaded to Firebase Storage).
+ * Works with evidence records to display file previews in the organizer.
+ *
+ * Context: This composable deals with storage files (tier 3 of the file lifecycle),
+ * not source files from the user's device (tier 2).
  */
 export function useFilePreview() {
-  const selectedFile = ref(null);
+  const selectedFile = ref(null); // Storage file reference or evidence record
   const previewData = ref(null);
   const previewLoading = ref(false);
   const previewError = ref(null);
 
-  // TODO: Implement preview generation logic
+  /**
+   * Generate preview for a storage file
+   * @param {Object} file - Storage file reference or evidence record
+   */
   const generatePreview = async (file) => {
     if (!file) return;
 
@@ -18,7 +26,7 @@ export function useFilePreview() {
     previewError.value = null;
 
     try {
-      // Generate preview based on file type
+      // Generate preview based on storage file type
       switch (file.type) {
         case 'image':
           // Generate image preview
@@ -40,6 +48,10 @@ export function useFilePreview() {
     }
   };
 
+  /**
+   * Select a storage file for preview
+   * @param {Object} file - Storage file reference or evidence record to preview
+   */
   const selectFile = async (file) => {
     selectedFile.value = file;
     await generatePreview(file);
@@ -47,7 +59,7 @@ export function useFilePreview() {
 
   const canPreview = computed(() => {
     if (!selectedFile.value) return false;
-    // TODO: Determine if file can be previewed
+    // TODO: Determine if storage file can be previewed based on type
     return true;
   });
 

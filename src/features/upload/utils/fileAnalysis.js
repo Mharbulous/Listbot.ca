@@ -1,8 +1,12 @@
 /**
- * File analysis utility for estimating processing time and duplication
- * Extracted from worker logic for reuse in UI components
+ * Source File Analysis Utility
  *
- * Supports both standard predictions and hardware-calibrated predictions
+ * Analyzes source files from user's device (tier 2) for:
+ * - Processing time estimation
+ * - Duplication detection before upload
+ * - Hardware-calibrated performance predictions
+ *
+ * Extracted from worker logic for reuse in UI components
  */
 
 import {
@@ -11,8 +15,9 @@ import {
 } from './hardwareCalibration.js';
 
 /**
- * Analyze files to provide count, size, duplication estimates, and hardware-calibrated time predictions
- * @param {File[]} files - Array of File objects to analyze
+ * Analyze source files from user's device to provide count, size, duplication estimates,
+ * and hardware-calibrated time predictions before upload
+ * @param {File[]} files - Array of File objects from user's device (source files)
  * @param {number} totalDirectoryCount - Total number of unique directories (optional)
  * @param {number} avgDirectoryDepth - Average directory nesting depth (optional)
  * @param {number} avgFileDepth - Average file nesting depth (optional)
@@ -37,8 +42,8 @@ export function analyzeFiles(
     };
   }
 
-  // Step 1: Group files by size to identify unique-sized files
-  const fileSizeGroups = new Map(); // file_size -> [files]
+  // Step 1: Group source files by size to identify unique-sized files
+  const fileSizeGroups = new Map(); // file_size -> [source files]
 
   files.forEach((file) => {
     const fileSize = file.size;
@@ -52,23 +57,23 @@ export function analyzeFiles(
   const uniqueFiles = [];
   const duplicateCandidates = [];
 
-  // Step 2: Separate unique-sized files from potential duplicates
+  // Step 2: Separate unique-sized source files from potential duplicates
   for (const [, fileGroup] of fileSizeGroups) {
     if (fileGroup.length === 1) {
-      // Unique file size - definitely not a duplicate
+      // Unique source file size - definitely not a duplicate
       uniqueFiles.push(...fileGroup);
     } else {
-      // Multiple files with same size - need hash verification
+      // Multiple source files with same size - need hash verification
       duplicateCandidates.push(...fileGroup);
     }
   }
 
-  // Calculate total size for hash candidates
+  // Calculate total size for source files requiring hash calculation
   const totalSizeForHashing = duplicateCandidates.reduce((sum, file) => sum + file.size, 0);
   const totalSizeMB = totalSizeForHashing / (1024 * 1024);
   const totalFilesSizeMB = files.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024);
 
-  // Estimate duplication percentage based on files needing hash verification
+  // Estimate duplication percentage based on source files needing hash verification
   // Use +1 buffer to avoid "less than 0%" scenarios and provide conservative estimate
   const bufferedDuplicateCandidates = duplicateCandidates.length + 1;
   const bufferedTotalFiles = files.length + 1;
@@ -101,7 +106,7 @@ export function analyzeFiles(
     hardwarePerformanceFactor
   );
 
-  // Calculate unique file size (files that can skip hash calculation)
+  // Calculate unique source file size (source files that can skip hash calculation)
   const uniqueFilesSizeMB = uniqueFiles.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024);
 
   return {

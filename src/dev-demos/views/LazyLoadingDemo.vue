@@ -161,17 +161,17 @@ const groupedTestFiles = computed(() => {
 const { loadItem, isItemLoaded, preloadInitialItems, resetLoadedItems } =
   useLazyFileList(groupedTestFiles);
 
-// Mock data for LazyFileItem testing
+// Mock data for LazyFileItem testing (source files from user's device)
 const mockFile = ref({
   id: 'mock-file-1',
-  name: 'document.pdf',
-  size: 1024000,
-  type: 'application/pdf',
-  lastModified: new Date('2024-01-15T10:30:00'),
-  path: '/documents/project/document.pdf',
+  sourceName: 'document.pdf',
+  sourceSize: 1024000,
+  sourceType: 'application/pdf',
+  sourceModifiedDate: new Date('2024-01-15T10:30:00'),
+  sourcePath: '/documents/project/document.pdf',
   status: 'ready',
   isDuplicate: false,
-  file: new File(['mock content'], 'document.pdf', { type: 'application/pdf' }),
+  sourceFile: new File(['mock content'], 'document.pdf', { type: 'application/pdf' }),
 });
 
 const mockGroup = ref({
@@ -181,16 +181,16 @@ const mockGroup = ref({
 
 const mockDuplicateFile = ref({
   id: 'mock-file-2',
-  name: 'image.jpg',
-  size: 2048000,
-  type: 'image/jpeg',
-  lastModified: new Date('2024-01-20T14:45:00'),
-  path: '/images/photos/image.jpg',
+  sourceName: 'image.jpg',
+  sourceSize: 2048000,
+  sourceType: 'image/jpeg',
+  sourceModifiedDate: new Date('2024-01-20T14:45:00'),
+  sourcePath: '/images/photos/image.jpg',
   status: 'processing',
   isDuplicate: true,
   isPreviousUpload: false,
   duplicateMessage: 'This file already exists in your storage',
-  file: new File(['mock image data'], 'image.jpg', { type: 'image/jpeg' }),
+  sourceFile: new File(['mock image data'], 'image.jpg', { type: 'image/jpeg' }),
 });
 
 const mockDuplicateGroup = ref({
@@ -282,15 +282,15 @@ const generateLargeFileList = () => {
 
     const file = {
       id: `test-file-${i}`,
-      name: `${fileType.name}_${i}.${fileType.ext}`,
-      size: Math.floor(Math.random() * 10000000) + 1024, // 1KB to 10MB
-      type: fileType.type,
-      lastModified: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000), // Random date within last year
-      path: `${folder}/${fileType.name}_${i}.${fileType.ext}`,
+      sourceName: `${fileType.name}_${i}.${fileType.ext}`,
+      sourceSize: Math.floor(Math.random() * 10000000) + 1024, // 1KB to 10MB
+      sourceType: fileType.type,
+      sourceModifiedDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000), // Random date within last year
+      sourcePath: `${folder}/${fileType.name}_${i}.${fileType.ext}`,
       status: statusOptions[Math.floor(Math.random() * statusOptions.length)],
       isDuplicate,
       isPreviousUpload,
-      file: new File([`mock content ${i}`], `${fileType.name}_${i}.${fileType.ext}`, {
+      sourceFile: new File([`mock content ${i}`], `${fileType.name}_${i}.${fileType.ext}`, {
         type: fileType.type,
       }),
     };

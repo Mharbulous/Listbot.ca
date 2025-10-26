@@ -19,7 +19,7 @@ Firebase Storage structure for file storage with automatic deduplication based o
 - **Content Deduplication**: Identical files (same hash) stored only once
 - **Multi-Reference**: Single storage file can be referenced by multiple metadata records
 - **Matter-Scoped**: Files organized under specific matters for proper access control
-- **Extension Preservation**: Original file extensions maintained for proper file handling
+- **Extension Preservation**: Source file extensions maintained for proper file handling
 
 **Examples**:
 
@@ -170,7 +170,7 @@ service firebase.storage {
 
 ### Automatic Deduplication
 
-1. **Content-Based**: Files with identical SHA-256 hashes stored once
+1. **Content-Based**: Files with identical BLAKE3 hashes stored once
 2. **Metadata Preservation**: Multiple metadata records for different contexts
 3. **Reference Counting**: Multiple evidence documents can reference same file
 4. **Storage Efficiency**: Significant space savings for duplicate files
@@ -178,7 +178,7 @@ service firebase.storage {
 ### Path Normalization
 
 - **Consistent Structure**: All paths follow `/firms/{firmId}/matters/{matterId}/` pattern
-- **Extension Preservation**: Original file extensions maintained for proper handling
+- **Extension Preservation**: Source file extensions maintained for proper handling
 - **Hash-Based Names**: File names use content hash to ensure uniqueness
 - **Cross-Platform**: Forward slashes used regardless of client OS
 

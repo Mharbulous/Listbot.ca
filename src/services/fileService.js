@@ -1,17 +1,17 @@
 /**
- * File Service - Firestore integration for file/evidence data
+ * File Service - Firestore integration for evidence data with source file metadata
  * Queries the evidence collection and maps to Cloud table format
  */
 
-import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
- * Fetch files (evidence documents) from Firestore
+ * Fetch evidence documents from Firestore with source file metadata
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
  * @param {number} maxResults - Maximum number of results to fetch (default: 10000)
- * @returns {Promise<Array>} Array of file records formatted for Cloud table
+ * @returns {Promise<Array>} Array of evidence records formatted for Cloud table
  */
 export async function fetchFiles(firmId, matterId = 'general', maxResults = 10000) {
   try {
@@ -26,39 +26,85 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
     // Execute the query
     const querySnapshot = await getDocs(q);
 
-    // Map Firestore documents to table format
-    const files = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
+    // Collect all documents and their metadata promises
+    const filePromises = [];
 
-      // Map evidence document to table row format
-      // Note: Some fields may not exist in evidence documents - we'll use placeholders
-      files.push({
-        id: doc.id, // fileHash (SHA-256)
-        fileHash: doc.id,
+    querySnapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      const fileHash = docSnapshot.id;
+      const displayCopyId = data.displayCopy;
 
-        // File properties that exist in evidence documents
-        size: formatFileSize(data.fileSize || 0),
-        date: formatDate(data.updatedAt),
+      // Create a promise to fetch the sourceMetadata
+      const filePromise = (async () => {
+        let sourceFileName = 'ERROR: Missing metadata';
 
-        // Processing status
-        status: getStatusLabel(data.processingStage || 'uploaded'),
+        // Try to fetch the source filename from sourceMetadata subcollection
+        if (displayCopyId) {
+          try {
+            const sourceMetadataRef = doc(
+              db,
+              'firms',
+              firmId,
+              'matters',
+              matterId,
+              'evidence',
+              fileHash,
+              'sourceMetadata',
+              displayCopyId
+            );
+            const sourceMetadataDoc = await getDoc(sourceMetadataRef);
 
-        // Tag information
-        tagCount: data.tagCount || 0,
+            if (sourceMetadataDoc.exists()) {
+              const sourceMetadata = sourceMetadataDoc.data();
+              sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
+            } else {
+              console.error(`[Cloud Table] sourceMetadata not found for ${fileHash}, displayCopy: ${displayCopyId}`);
+              sourceFileName = 'ERROR: Metadata not found';
+            }
+          } catch (error) {
+            console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
+            sourceFileName = 'ERROR: Fetch failed';
+          }
+        } else {
+          console.error(`[Cloud Table] No displayCopy ID for evidence document: ${fileHash}`);
+          sourceFileName = 'ERROR: No displayCopy ID';
+        }
 
-        // Placeholder fields (to be enhanced later with sourceMetadata)
-        fileType: 'Unknown', // Will need sourceMetadata lookup
-        fileName: doc.id, // Full file hash (SHA-256)
-        privilege: 'Unclassified',
-        description: `${data.tagCount || 0} tags`,
-        documentType: getDocumentTypeFromStage(data.processingStage),
-        author: 'Unknown',
-        custodian: 'System',
-        createdDate: formatDate(data.updatedAt),
-        modifiedDate: formatDate(data.updatedAt)
-      });
+        // Map evidence document to table row format
+        return {
+          id: fileHash, // fileHash (BLAKE3)
+          fileHash: fileHash,
+
+          // File properties that exist in evidence documents
+          size: data.fileSize ? formatFileSize(data.fileSize) : 'ERROR: Missing file size',
+          date: formatDate(data.updatedAt),
+
+          // Processing status
+          status: getStatusLabel(data.processingStage),
+
+          // Tag information
+          tagCount: data.tagCount || 0,
+
+          // Source filename from sourceMetadata subcollection
+          fileName: sourceFileName,
+
+          // Placeholder fields (to be enhanced later)
+          fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
+          privilege: 'ERROR: Privilege not available',
+          description: data.tagCount !== undefined ? `${data.tagCount} tags` : 'ERROR: Tag count not available',
+          documentType: getDocumentTypeFromStage(data.processingStage),
+          author: 'ERROR: Author not available',
+          custodian: 'ERROR: Custodian not available',
+          createdDate: formatDate(data.updatedAt),
+          modifiedDate: formatDate(data.updatedAt)
+        };
+      })();
+
+      filePromises.push(filePromise);
     });
+
+    // Wait for all sourceMetadata queries to complete in parallel
+    const files = await Promise.all(filePromises);
 
     return files;
 
@@ -69,8 +115,8 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 }
 
 /**
- * Format file size in bytes to human-readable format
- * @param {number} bytes - File size in bytes
+ * Format size in bytes to human-readable format
+ * @param {number} bytes - Size in bytes
  * @returns {string} Formatted size (e.g., "1.5MB")
  */
 function formatFileSize(bytes) {
@@ -83,10 +129,10 @@ function formatFileSize(bytes) {
 /**
  * Format Firestore timestamp to date string
  * @param {Object} timestamp - Firestore timestamp
- * @returns {string} Formatted date (YYYY-MM-DD)
+ * @returns {string} Formatted date (YYYY-MM-DD) or error message
  */
 function formatDate(timestamp) {
-  if (!timestamp) return 'Unknown';
+  if (!timestamp) return 'ERROR: Date not available';
 
   // Handle Firestore Timestamp object
   if (timestamp.toDate) {
@@ -103,31 +149,35 @@ function formatDate(timestamp) {
     return new Date(timestamp).toISOString().split('T')[0];
   }
 
-  return 'Unknown';
+  return 'ERROR: Invalid date format';
 }
 
 /**
  * Get user-friendly status label from processing stage
  * @param {string} stage - Processing stage enum value
- * @returns {string} Display label
+ * @returns {string} Display label or error message
  */
 function getStatusLabel(stage) {
+  if (!stage) return 'ERROR: Status not available';
+
   const stageMap = {
     'uploaded': 'Active',
     'splitting': 'Processing',
     'merging': 'Processing',
     'complete': 'Final'
   };
-  return stageMap[stage] || 'Active';
+  return stageMap[stage] || 'ERROR: Unknown status';
 }
 
 /**
  * Get document type from processing stage
  * @param {string} stage - Processing stage
- * @returns {string} Document type label
+ * @returns {string} Document type label or error message
  */
 function getDocumentTypeFromStage(stage) {
+  if (!stage) return 'ERROR: Document type not available';
   if (stage === 'complete') return 'Document';
   if (stage === 'splitting' || stage === 'merging') return 'Processing';
-  return 'Evidence';
+  if (stage === 'uploaded') return 'Evidence';
+  return 'ERROR: Unknown document type';
 }

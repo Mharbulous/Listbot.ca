@@ -10,7 +10,6 @@ let processingStartTime = null;
  */
 export function startProcessingTimer() {
   processingStartTime = Date.now();
-  console.log('PROCESSING_START: 0');
   return processingStartTime;
 }
 
@@ -20,12 +19,10 @@ export function startProcessingTimer() {
  */
 export function logProcessingTime(eventName) {
   if (processingStartTime === null) {
-    console.warn(`⚠️  ProcessingTimer: ${eventName} logged before timer started`);
     return;
   }
 
   const relativeTime = Date.now() - processingStartTime;
-  console.log(`${eventName}: ${relativeTime}`);
 }
 
 /**

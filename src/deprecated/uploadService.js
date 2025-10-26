@@ -4,8 +4,10 @@ import { doc, setDoc, getDoc, deleteDoc, serverTimestamp } from 'firebase/firest
 import { updateFolderPaths } from '../features/upload/utils/folderPathUtils.js';
 
 /**
- * Upload Service for Firebase Storage with atomic metadata operations
- * Handles file uploads, progress tracking, error classification, and metadata preservation
+ * DEPRECATED: Upload Service for Firebase Storage
+ * This file is deprecated and maintained for reference only
+ * Handles file uploads for source files (from user's device) to Firebase Storage
+ * Note: Uses legacy "original" terminology - newer code should use "source" terminology
  */
 
 // Upload configuration constants
@@ -286,9 +288,11 @@ export class UploadService {
 
   /**
    * Generates storage path for a file based on firm, matter, and hash
+   * @param {string} fileHash - BLAKE3 hash of file content
+   * @param {string} sourceFileName - Name of source file from user's device
    */
-  generateStoragePath(fileHash, originalFileName) {
-    const extension = originalFileName.split('.').pop().toLowerCase();
+  generateStoragePath(fileHash, sourceFileName) {
+    const extension = sourceFileName.split('.').pop().toLowerCase();
     return `firms/${this.firmId}/matters/general/uploads/${fileHash}.${extension}`;
   }
 
@@ -301,10 +305,12 @@ export class UploadService {
 
   /**
    * Checks if file content already exists in storage
+   * @param {string} fileHash - BLAKE3 hash of file content
+   * @param {string} sourceFileName - Name of source file from user's device
    */
-  async checkFileExists(fileHash, originalFileName) {
+  async checkFileExists(fileHash, sourceFileName) {
     try {
-      const storagePath = this.generateStoragePath(fileHash, originalFileName);
+      const storagePath = this.generateStoragePath(fileHash, sourceFileName);
       const storageRef = ref(storage, storagePath);
 
       // Try to get download URL - if it succeeds, file exists
@@ -327,10 +333,10 @@ export class UploadService {
 
       if (docSnap.exists()) {
         const existingData = docSnap.data();
-        // Check if this exact metadata already exists
+        // Check if this exact metadata already exists (checking source file metadata)
         return (
-          existingData.originalName === metadata.originalName &&
-          existingData.originalPath === metadata.originalPath &&
+          existingData.originalName === metadata.originalName && // Legacy: should be sourceFileName
+          existingData.originalPath === metadata.originalPath && // Legacy: should be sourcePath
           existingData.lastModified === metadata.lastModified &&
           existingData.size === metadata.size
         );
@@ -437,7 +443,7 @@ export class UploadService {
           customMetadata: {
             firmId: this.firmId,
             userId: this.userId,
-            originalName: file.name,
+            originalName: file.name, // Legacy: should be sourceFileName
             hash: hash,
           },
         });
@@ -492,7 +498,7 @@ export class UploadService {
         downloadURL = await getDownloadURL(storageRef);
       }
 
-      // Extract folder path from original file path
+      // Extract folder path from source file path (originalPath is legacy name for sourcePath)
       let currentFolderPath = '';
       if (metadata.originalPath) {
         const pathParts = metadata.originalPath.split('/');

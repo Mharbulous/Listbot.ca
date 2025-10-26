@@ -1,6 +1,7 @@
 /**
- * Mock data factories for generating realistic test data in dev demos
- * These utilities create representative data that mirrors real-world usage patterns
+ * Mock Data Factories for Source Files (Tier 2)
+ * Generates realistic test data representing source files from user's device
+ * These simulate files selected for upload before they become storage files (tier 3)
  */
 
 export const fileTypeTemplates = [
@@ -43,7 +44,8 @@ export const statusOptions = [
 ];
 
 /**
- * Generate a realistic file object for testing
+ * Generate a realistic source file object for testing
+ * Represents a file selected by user from their device (tier 2)
  */
 export function createMockFile(index, options = {}) {
   const {
@@ -74,15 +76,15 @@ export function createMockFile(index, options = {}) {
 
   const file = {
     id: `mock-file-${index}`,
-    name: `${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
-    size: Math.floor(Math.random() * (maxSize - minSize)) + minSize,
-    type: fileType.type,
-    lastModified: new Date(Date.now() - Math.random() * dateRangeMonths * 30 * 24 * 60 * 60 * 1000),
-    path: `${folder}/${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
+    sourceName: `${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
+    sourceSize: Math.floor(Math.random() * (maxSize - minSize)) + minSize,
+    sourceType: fileType.type,
+    sourceModifiedDate: new Date(Date.now() - Math.random() * dateRangeMonths * 30 * 24 * 60 * 60 * 1000),
+    sourcePath: `${folder}/${fileType.name}_${String(index).padStart(4, '0')}.${fileType.ext}`,
     status: selectedStatus,
     isDuplicate,
     isPreviousUpload,
-    file: new File([`mock content ${index}`], `${fileType.name}_${index}.${fileType.ext}`, {
+    sourceFile: new File([`mock content ${index}`], `${fileType.name}_${index}.${fileType.ext}`, {
       type: fileType.type,
     }),
   };
@@ -103,7 +105,8 @@ export function createMockFile(index, options = {}) {
 }
 
 /**
- * Generate a collection of mock files with realistic distribution
+ * Generate a collection of mock source files with realistic distribution
+ * Represents files selected by user from their device
  */
 export function createMockFileCollection(count, options = {}) {
   const files = [];
@@ -171,19 +174,20 @@ export const performanceTestScenarios = [
 ];
 
 /**
- * Generate realistic folder structure data
+ * Generate realistic folder structure data from source files
+ * Analyzes source file paths from user's device
  */
 export function generateFolderStructureData(fileCount) {
   const files = createMockFileCollection(fileCount);
 
-  // Calculate folder structure metrics
+  // Calculate folder structure metrics from source file paths
   const folderCounts = {};
   const depthCounts = {};
   let totalDepth = 0;
   let maxDepth = 0;
 
   files.forEach((file) => {
-    const pathParts = file.path.split('/').filter((part) => part);
+    const pathParts = file.sourcePath.split('/').filter((part) => part);
     const depth = pathParts.length - 1; // Subtract filename
     const folderPath = pathParts.slice(0, -1).join('/');
 

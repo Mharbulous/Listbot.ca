@@ -2,12 +2,15 @@
  * Evidence Deduplication Composable
  *
  * Groups evidence documents by document ID (which is the fileHash)
- * and provides metadata options for files with multiple metadata variants.
+ * and provides metadata options for storage files with multiple metadata variants.
  *
  * Use Case:
  * - With the new schema, each unique fileHash gets ONE evidence document (automatic deduplication)
  * - Different metadata variants are handled through the sourceMetadata collection
  * - This composable primarily handles UI display and metadata selection
+ *
+ * Context: Works with evidence documents (Firestore) that reference storage files (Firebase Storage).
+ * The fileHash serves as both the document ID and the storage file identifier.
  */
 
 /**

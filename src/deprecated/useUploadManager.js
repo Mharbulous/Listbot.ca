@@ -3,8 +3,10 @@ import { UploadService } from '../../../services/uploadService.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
 
 /**
- * Upload Manager Composable
- * Manages file upload state, progress tracking, and coordination with UploadService
+ * DEPRECATED: Upload Manager Composable
+ * This file is deprecated and maintained for reference only
+ * Manages upload state for source files (from user's device) to Firebase Storage
+ * Note: Uses legacy "original" terminology - newer code should use "source" terminology
  */
 
 // Upload states
@@ -254,7 +256,8 @@ export function useUploadManager() {
   };
 
   /**
-   * Prepare files for upload (convert queue items to upload format)
+   * Prepare source files for upload (convert queue items to upload format)
+   * Note: Uses legacy "original" field names (should be "source" in newer code)
    */
   const prepareFiles = (queueFiles) => {
     if (!Array.isArray(queueFiles) || queueFiles.length === 0) {
@@ -271,12 +274,12 @@ export function useUploadManager() {
       }
 
       return {
-        file: queueFile.file,
+        file: queueFile.file, // Source file from user's device
         hash: queueFile.hash,
         metadata: {
           id: queueFile.id,
-          originalName: queueFile.name,
-          originalPath: queueFile.path,
+          originalName: queueFile.name, // Legacy: should be sourceFileName
+          originalPath: queueFile.path, // Legacy: should be sourcePath
           size: queueFile.size,
           type: queueFile.type,
           lastModified: queueFile.lastModified,

@@ -34,10 +34,10 @@ export class AIProcessingService {
 
   /**
    * Generate tag suggestions using Firebase Vertex AI
-   * @param {string} base64Data - Base64 encoded file content
+   * @param {string} base64Data - Base64 encoded source file content
    * @param {Array} categories - User's categories
    * @param {Object} evidence - Evidence document
-   * @param {string} extension - File extension as fallback for MIME type
+   * @param {string} extension - Source file extension as fallback for MIME type
    * @returns {Promise<Array>} - Array of suggested tags
    */
   async generateTagSuggestions(base64Data, categories, evidence, extension = 'pdf') {

@@ -2,6 +2,42 @@ import { ref, nextTick } from 'vue';
 import { logProcessingTime } from '../../upload/utils/processingTimer.js';
 import { useFileQueueCore } from './useFileQueueCore';
 
+/**
+ * File Upload Queue Management Composable
+ *
+ * TERMINOLOGY - Three-Tier File Lifecycle:
+ * ==========================================
+ * This composable manages SOURCE FILES during the upload process.
+ *
+ * 1. DOCUMENT - Original real-world artifact (not handled by this composable)
+ *    - Physical or digital original (paper receipt, email PDF, etc.)
+ *    - Has a "document date" (transaction date)
+ *
+ * 2. SOURCE - Digital file on user's device BEFORE upload (handled here)
+ *    - Browser File object from user's file system
+ *    - Has "source" properties: sourceName, sourceSize, sourceModifiedDate, sourcePath
+ *    - This is what we're processing in the queue
+ *
+ * 3. FILE - Digital file AFTER upload to Firebase Storage (not handled here)
+ *    - Stored with hash-based deduplication
+ *    - Has upload metadata, storage path, etc.
+ *
+ * QUEUE STRUCTURE:
+ * ================
+ * Each queue item represents a SOURCE FILE being prepared for upload:
+ * {
+ *   id: string,                    // Unique queue item ID
+ *   sourceFile: File,              // Browser File object (the actual source file)
+ *   sourceName: string,            // Name of source file
+ *   sourceSize: number,            // Size in bytes of source file
+ *   sourceType: string,            // MIME type of source file
+ *   sourceModifiedDate: number,    // Timestamp when source file was last modified
+ *   sourcePath: string,            // Path of source file on user's filesystem
+ *   status: string,                // Processing status: 'pending', 'ready', 'uploading', etc.
+ *   isDuplicate: boolean,          // Whether this source file is a duplicate (by hash)
+ *   metadata: object               // Additional metadata about the source file
+ * }
+ */
 export function useFileQueue() {
   // Initialize core queue management
   const queueCore = useFileQueueCore();
@@ -13,12 +49,12 @@ export function useFileQueue() {
   const showSingleFileNotification = ref(false);
   const singleFileNotification = ref({ message: '', color: 'info' });
 
-  // Progress state tracking
+  // Progress state tracking (processing source files before upload)
   const processingProgress = ref({
     current: 0,
     total: 0,
     percentage: 0,
-    currentFile: '',
+    currentSourceFile: '', // Name of source file currently being processed
     isProcessing: false,
   });
 
@@ -31,7 +67,7 @@ export function useFileQueue() {
     phase: 'loading', // 'loading', 'awaiting-upload', 'complete'
   });
 
-  // Upload status tracking
+  // Upload status tracking (uploading source files to Firebase Storage)
   const uploadStatus = ref({
     successful: 0,
     failed: 0,
@@ -39,7 +75,7 @@ export function useFileQueue() {
     isUploading: false,
     isPaused: false,
     pauseRequested: false,
-    currentFile: null,
+    currentSourceFile: null, // Name of source file currently being uploaded
     currentAction: null, // 'calculating_hash', 'checking_existing', 'uploading'
     currentUploadIndex: 0,
   });
@@ -50,7 +86,7 @@ export function useFileQueue() {
       current: progressData.current || 0,
       total: progressData.total || 0,
       percentage: progressData.percentage || 0,
-      currentFile: progressData.currentFile || '',
+      currentSourceFile: progressData.currentSourceFile || '',
       isProcessing: true,
     };
   };
@@ -61,7 +97,7 @@ export function useFileQueue() {
       current: 0,
       total: 0,
       percentage: 0,
-      currentFile: '',
+      currentSourceFile: '',
       isProcessing: false,
     };
   };
@@ -91,39 +127,39 @@ export function useFileQueue() {
       isUploading: false,
       isPaused: false,
       pauseRequested: false,
-      currentFile: null,
+      currentSourceFile: null,
       currentAction: null,
       currentUploadIndex: 0,
     };
   };
 
-  // Individual file status update function
-  const updateFileStatus = (fileReference, status) => {
-    // Support both file object and filename for backward compatibility
-    let file;
-    if (typeof fileReference === 'string') {
-      // Legacy filename-based lookup (less reliable but kept for compatibility)
-      file = queueCore.uploadQueue.value.find((f) => f.name === fileReference);
-    } else if (fileReference && typeof fileReference === 'object') {
-      // Direct file object reference (preferred approach)
-      file = fileReference;
+  // Individual source file status update function (updates queue item for a source file)
+  const updateFileStatus = (sourceFileReference, status) => {
+    // Support both queue item object and source filename
+    let queueItem;
+    if (typeof sourceFileReference === 'string') {
+      // Source filename-based lookup
+      queueItem = queueCore.uploadQueue.value.find((item) => item.sourceName === sourceFileReference);
+    } else if (sourceFileReference && typeof sourceFileReference === 'object') {
+      // Direct queue item object reference (preferred approach)
+      queueItem = sourceFileReference;
     }
 
-    if (file) {
-      file.status = status;
+    if (queueItem) {
+      queueItem.status = status;
     }
   };
 
-  // Update all ready files to "ready" status after deduplication completes
+  // Update all ready source files to "ready" status after deduplication completes
   const updateAllFilesToReady = () => {
-    queueCore.uploadQueue.value.forEach((file) => {
-      if (!file.isDuplicate && (!file.status || file.status === 'pending')) {
-        file.status = 'ready';
+    queueCore.uploadQueue.value.forEach((queueItem) => {
+      if (!queueItem.isDuplicate && (!queueItem.status || queueItem.status === 'pending')) {
+        queueItem.status = 'ready';
       }
     });
   };
 
-  const updateUploadStatus = (type, fileName = null, action = null) => {
+  const updateUploadStatus = (type, sourceFileName = null, action = null) => {
     switch (type) {
       case 'start':
         uploadStatus.value.isUploading = true;
@@ -134,7 +170,7 @@ export function useFileQueue() {
         uploadStatus.value.isUploading = false;
         uploadStatus.value.isPaused = false;
         uploadStatus.value.pauseRequested = false;
-        uploadStatus.value.currentFile = null;
+        uploadStatus.value.currentSourceFile = null;
         uploadStatus.value.currentAction = null;
         uploadStatus.value.currentUploadIndex = 0;
         break;
@@ -161,18 +197,18 @@ export function useFileQueue() {
         uploadStatus.value.skipped++;
         break;
       case 'currentFile':
-        uploadStatus.value.currentFile = fileName;
+        uploadStatus.value.currentSourceFile = sourceFileName;
         uploadStatus.value.currentAction = action;
         break;
       case 'setUploadIndex':
-        uploadStatus.value.currentUploadIndex = fileName; // reusing fileName param for index
+        uploadStatus.value.currentUploadIndex = sourceFileName; // reusing sourceFileName param for index
         break;
     }
   };
 
-  // Instant Upload Queue initialization - show immediately with first 100 files
-  const initializeQueueInstantly = async (files) => {
-    const totalFiles = files.length;
+  // Instant Upload Queue initialization - show immediately with first 100 source files
+  const initializeQueueInstantly = async (sourceFiles) => {
+    const totalFiles = sourceFiles.length;
 
     // Show Upload Queue immediately
     isProcessingUIUpdate.value = true;
@@ -186,21 +222,21 @@ export function useFileQueue() {
     // Force Vue reactivity update
     await nextTick();
 
-    // Process first 100 files instantly for immediate display
-    const initialFiles = files.slice(0, 100).map((file) => ({
+    // Process first 100 source files instantly for immediate display
+    const initialQueueItems = sourceFiles.slice(0, 100).map((sourceFile) => ({
       id: crypto.randomUUID(),
-      file: file,
-      metadata: {},
+      sourceFile: sourceFile, // Browser File object (source file from user's device)
+      sourceName: sourceFile.name,
+      sourceSize: sourceFile.size,
+      sourceType: sourceFile.type,
+      sourceModifiedDate: sourceFile.lastModified,
+      sourcePath: sourceFile.path,
       status: 'ready',
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified,
-      path: file.path,
       isDuplicate: false,
+      metadata: {},
     }));
 
-    queueCore.uploadQueue.value = initialFiles;
+    queueCore.uploadQueue.value = initialQueueItems;
 
     if (totalFiles <= 100) {
       uiUpdateProgress.value = {
@@ -221,9 +257,10 @@ export function useFileQueue() {
   };
 
   // Simple 2-chunk UI updates for optimal user feedback
-  const updateFromWorkerResults = async (readyFiles, duplicateFiles) => {
-    const allFiles = [...readyFiles, ...duplicateFiles];
-    const totalFiles = allFiles.length;
+  // Receives processed source file results from worker (ready and duplicate source files)
+  const updateFromWorkerResults = async (readySourceFiles, duplicateSourceFiles) => {
+    const allSourceFiles = [...readySourceFiles, ...duplicateSourceFiles];
+    const totalFiles = allSourceFiles.length;
 
     // Start UI update process (if not already started by initializeQueueInstantly)
     if (!isProcessingUIUpdate.value) {
@@ -238,7 +275,7 @@ export function useFileQueue() {
 
     if (totalFiles <= 100) {
       // For small file sets, just load everything at once
-      queueCore.uploadQueue.value = queueCore.processFileChunk(allFiles);
+      queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
       uiUpdateProgress.value = {
         current: totalFiles,
@@ -266,7 +303,7 @@ export function useFileQueue() {
         }
 
         // Then replace with full processed results
-        queueCore.uploadQueue.value = queueCore.processFileChunk(allFiles);
+        queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
         uiUpdateProgress.value = {
           current: totalFiles,
@@ -279,10 +316,10 @@ export function useFileQueue() {
         window.instantQueueStartTime = null;
       } else {
         // Fallback to original 2-chunk strategy if queue wasn't pre-initialized
-        // CHUNK 1: Initial batch (first 100 files) - immediate user feedback
+        // CHUNK 1: Initial batch (first 100 source files) - immediate user feedback
         const chunk1Size = 100;
-        const chunk1Files = allFiles.slice(0, chunk1Size);
-        queueCore.uploadQueue.value = queueCore.processFileChunk(chunk1Files);
+        const chunk1SourceFiles = allSourceFiles.slice(0, chunk1Size);
+        queueCore.uploadQueue.value = queueCore.processFileChunk(chunk1SourceFiles);
 
         uiUpdateProgress.value = {
           current: chunk1Size,
@@ -291,11 +328,11 @@ export function useFileQueue() {
           phase: 'loading',
         };
 
-        // Brief delay to let user see the initial files and get visual feedback
+        // Brief delay to let user see the initial source files and get visual feedback
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-        // CHUNK 2: Full render of ALL files
-        queueCore.uploadQueue.value = queueCore.processFileChunk(allFiles);
+        // CHUNK 2: Full render of ALL source files
+        queueCore.uploadQueue.value = queueCore.processFileChunk(allSourceFiles);
 
         uiUpdateProgress.value = {
           current: totalFiles,
@@ -333,8 +370,8 @@ export function useFileQueue() {
   };
 
   // Legacy method - maintains backward compatibility
-  const updateUploadQueue = async (readyFiles, duplicateFiles) => {
-    await updateFromWorkerResults(readyFiles, duplicateFiles);
+  const updateUploadQueue = async (readySourceFiles, duplicateSourceFiles) => {
+    await updateFromWorkerResults(readySourceFiles, duplicateSourceFiles);
   };
 
   // Time monitoring integration

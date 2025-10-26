@@ -35,7 +35,7 @@ export function useFolderOptions() {
   // Main reactive data
   const showFolderOptions = ref(false);
   const includeSubfolders = ref(false);
-  const pendingFolderFiles = ref([]);
+  const pendingSourceFiles = ref([]);
   const subfolderCount = ref(0);
 
   // Analysis state
@@ -43,12 +43,12 @@ export function useFolderOptions() {
   const mainFolderAnalysis = ref(null);
   const allFilesAnalysis = ref(null);
 
-  // Directory entry count (for display purposes - shows total files File Explorer can see)
+  // Directory entry count (for display purposes - shows total source files File Explorer can see)
   const totalDirectoryEntryCount = ref(0);
 
-  // Main analysis function that coordinates both main folder and all files analysis
+  // Main analysis function that coordinates both main folder and all source files analysis
   const analyzeFilesForOptions = async () => {
-    if (pendingFolderFiles.value.length === 0) return;
+    if (pendingSourceFiles.value.length === 0) return;
 
     // Check if already timed out before proceeding
     if (analysisTimedOut.value) {
@@ -58,22 +58,22 @@ export function useFolderOptions() {
     try {
       // Use the progress module to perform dual analysis
       await performDualAnalysis(
-        pendingFolderFiles.value,
+        pendingSourceFiles.value,
         mainFolderAnalysis,
         allFilesAnalysis,
         analysisTimedOut
       );
 
       // Show completion message and cleanup
-      const fileCount = pendingFolderFiles.value.length - skippedFolders.value.length;
+      const fileCount = pendingSourceFiles.value.length - skippedFolders.value.length;
       showCompletionMessage(fileCount);
       setTimeout(() => cleanup(), 500); // Brief delay to show completion message
 
       // Update subfolder count
-      const { folderStats } = preprocessFileData(pendingFolderFiles.value);
+      const { folderStats } = preprocessFileData(pendingSourceFiles.value);
       subfolderCount.value = folderStats.rootFolderCount;
     } catch (error) {
-      console.error('Error analyzing files for folder options:', error);
+      console.error('Error analyzing source files for folder options:', error);
       cleanup();
       // Fallback analysis is handled in performDualAnalysis
     } finally {
@@ -85,7 +85,7 @@ export function useFolderOptions() {
   };
 
   // Background analysis chain - runs after modal is displayed
-  const performBackgroundAnalysis = async (files, addFilesToQueueCallback = null) => {
+  const performBackgroundAnalysis = async (sourceFiles, addFilesToQueueCallback = null) => {
     try {
       // Check if already timed out before starting analysis
       if (analysisTimedOut.value) {
@@ -93,7 +93,7 @@ export function useFolderOptions() {
       }
 
       // Step 1: Quick subfolder detection (can hide modal if no subfolders)
-      const subfolderResult = hasSubfoldersQuick(files);
+      const subfolderResult = hasSubfoldersQuick(sourceFiles);
 
       if (!subfolderResult) {
         // Clear timeout since we're successfully completing
@@ -102,14 +102,14 @@ export function useFolderOptions() {
         showFolderOptions.value = false;
         isAnalyzing.value = false;
 
-        // Auto-process files if callback provided
+        // Auto-process source files if callback provided
         if (addFilesToQueueCallback) {
-          const filesWithPath = files.map((f) => {
+          const sourceFilesWithPath = sourceFiles.map((f) => {
             f.file.path = f.path;
             return f.file;
           });
-          addFilesToQueueCallback(filesWithPath);
-          pendingFolderFiles.value = [];
+          addFilesToQueueCallback(sourceFilesWithPath);
+          pendingSourceFiles.value = [];
         }
 
         return { hasSubfolders: false };
@@ -129,20 +129,20 @@ export function useFolderOptions() {
   };
 
   // Show modal immediately, calculate later - KISS solution
-  const showFolderOptionsWithAnalysis = (files, addFilesToQueueCallback = null) => {
+  const showFolderOptionsWithAnalysis = (sourceFiles, addFilesToQueueCallback = null) => {
     // SHOW MODAL FIRST - no conditions, no calculations
     showFolderOptions.value = true;
     console.log('T = 0');
     console.log(
       'DEBUG: showFolderOptionsWithAnalysis called with',
-      files ? files.length : 'no files',
-      'files'
+      sourceFiles ? sourceFiles.length : 'no source files',
+      'source files'
     );
 
-    // Store File Explorer count for later comparison (from file input)
-    window.fileExplorerCount = files ? files.length : null;
-    // Store for display purposes (this is what File Explorer shows)
-    totalDirectoryEntryCount.value = files ? files.length : 0;
+    // Store File Explorer count for later comparison (from source file input)
+    window.fileExplorerCount = sourceFiles ? sourceFiles.length : null;
+    // Store for display purposes (this is what File Explorer shows for source files)
+    totalDirectoryEntryCount.value = sourceFiles ? sourceFiles.length : 0;
 
     window.folderOptionsStartTime = performance.now();
     isAnalyzing.value = true;
@@ -165,19 +165,19 @@ export function useFolderOptions() {
       isAnalyzingAllFiles.value = false;
     });
 
-    // Store files for analysis
-    if (files) {
-      pendingFolderFiles.value = files;
+    // Store source files for analysis
+    if (sourceFiles) {
+      pendingSourceFiles.value = sourceFiles;
     }
 
     // Use a brief delay to ensure modal renders first
     setTimeout(() => {
-      performBackgroundAnalysis(pendingFolderFiles.value, addFilesToQueueCallback);
+      performBackgroundAnalysis(pendingSourceFiles.value, addFilesToQueueCallback);
     }, 100);
   };
 
   const processFolderEntry = async (dirEntry, addFilesToQueue) => {
-    // SHOW MODAL IMMEDIATELY - don't wait for file reading
+    // SHOW MODAL IMMEDIATELY - don't wait for source file reading
     showFolderOptions.value = true;
     console.log('T = 0');
 
@@ -212,14 +212,14 @@ export function useFolderOptions() {
       let explorerEquivalentCount = null;
       try {
         explorerEquivalentCount = await getDirectoryEntryCount(dirEntry);
-        // Store for display purposes (this is what File Explorer would show)
+        // Store for display purposes (this is what File Explorer would show for source files)
         totalDirectoryEntryCount.value = explorerEquivalentCount || 0;
       } catch (error) {
         console.warn('Failed to get directory entry count:', error);
         totalDirectoryEntryCount.value = 0;
       }
 
-      // Read files in background with timeout signal
+      // Read source files in background with timeout signal
       updateProgressMessage('Reading directory contents...');
 
       // Create signal for readDirectoryRecursive with progress reporting
@@ -235,65 +235,65 @@ export function useFolderOptions() {
           cloudDetection.reportProgress(fileCount);
         },
         onCloudFile: (path, error) => {
-          // Silently track cloud-only files - reduces console noise
-          console.debug(`Cloud-only file detected: ${path}`);
+          // Silently track cloud-only source files - reduces console noise
+          console.debug(`Cloud-only source file detected: ${path}`);
         },
         resetGlobalTimeout: cloudDetection.reportProgress,
       };
 
-      const files = await readDirectoryRecursive(dirEntry, signal);
+      const sourceFiles = await readDirectoryRecursive(dirEntry, signal);
 
       // Clear the File Explorer count if it was set
       if (window.fileExplorerCount !== null && window.fileExplorerCount !== undefined) {
         window.fileExplorerCount = null;
       }
 
-      // Check if timeout occurred during file reading
+      // Check if timeout occurred during source file reading
       if (analysisTimedOut.value) {
         console.log('DEBUG: Timeout already occurred, not proceeding with analysis');
         return;
       }
 
-      // Store files and start analysis
-      pendingFolderFiles.value = files;
-      performBackgroundAnalysis(files, addFilesToQueue);
+      // Store source files and start analysis
+      pendingSourceFiles.value = sourceFiles;
+      performBackgroundAnalysis(sourceFiles, addFilesToQueue);
     } catch (error) {
       console.error('Error reading directory:', error);
       // If reading fails, let the timeout handle it
     }
   };
 
-  const processFolderFiles = (files, addFilesToQueueCallback = null) => {
-    // Convert to our standard format
-    const fileDataArray = files.map((file) => ({
+  const processFolderFiles = (sourceFiles, addFilesToQueueCallback = null) => {
+    // Convert source files to our standard format
+    const sourceFileDataArray = sourceFiles.map((file) => ({
       file,
       path: file.webkitRelativePath,
     }));
 
     // Show modal immediately - let background analysis determine if subfolders exist
-    showFolderOptionsWithAnalysis(fileDataArray, addFilesToQueueCallback);
+    showFolderOptionsWithAnalysis(sourceFileDataArray, addFilesToQueueCallback);
 
     // Return null to indicate modal handling is in progress
-    // Caller should not proceed with direct file processing
+    // Caller should not proceed with direct source file processing
     return null;
   };
 
   // Folder options handlers
   const confirmFolderOptions = (addFilesToQueue) => {
     const processingStartTime = Date.now();
-    let filesToAdd = pendingFolderFiles.value;
+    let sourceFilesToAdd = pendingSourceFiles.value;
 
     if (!includeSubfolders.value) {
-      // Use preprocessed data to filter main folder files (no more path parsing!)
-      const { preprocessedFiles } = preprocessFileData(pendingFolderFiles.value);
-      filesToAdd = preprocessedFiles.filter((f) => f.isMainFolder);
+      // Use preprocessed data to filter main folder source files (no more path parsing!)
+      const { preprocessedFiles } = preprocessFileData(pendingSourceFiles.value);
+      sourceFilesToAdd = preprocessedFiles.filter((f) => f.isMainFolder);
     }
 
     // Start the processing timer and log T=0
     startProcessingTimer();
 
-    // Preserve path information when adding files to queue
-    const filesWithPath = filesToAdd.map((f) => {
+    // Preserve source file path information when adding files to queue
+    const sourceFilesWithPath = sourceFilesToAdd.map((f) => {
       f.file.path = f.path;
       return f.file;
     });
@@ -301,15 +301,15 @@ export function useFolderOptions() {
     // Store processing start time for performance measurement
     window.folderProcessingStartTime = processingStartTime;
 
-    addFilesToQueue(filesWithPath);
+    addFilesToQueue(sourceFilesWithPath);
 
     showFolderOptions.value = false;
-    pendingFolderFiles.value = [];
+    pendingSourceFiles.value = [];
   };
 
   const cancelFolderUpload = () => {
     showFolderOptions.value = false;
-    pendingFolderFiles.value = [];
+    pendingSourceFiles.value = [];
 
     // Clear timeout and reset state
     cleanup();
@@ -319,7 +319,7 @@ export function useFolderOptions() {
     // Reactive data
     showFolderOptions,
     includeSubfolders,
-    pendingFolderFiles,
+    pendingSourceFiles,
     subfolderCount,
 
     // Analysis state

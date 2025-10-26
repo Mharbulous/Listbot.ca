@@ -25,14 +25,14 @@ export class EvidenceService {
   }
 
   /**
-   * Create a new evidence document from uploaded file metadata
-   * @param {Object} uploadMetadata - Metadata from the upload system
+   * Create a new evidence document from uploaded source file metadata
+   * @param {Object} uploadMetadata - Source file metadata from the upload system
    * @param {Object} options - Additional options
    * @returns {Promise<string>} - Evidence document ID (fileHash)
    */
   async createEvidenceFromUpload(uploadMetadata, options = {}) {
     try {
-      if (!uploadMetadata.hash || !uploadMetadata.originalName) {
+      if (!uploadMetadata.hash || !uploadMetadata.sourceFileName) {
         throw new Error('Missing required upload metadata: hash and sourceFileName');
       }
 
@@ -45,7 +45,7 @@ export class EvidenceService {
         // Display configuration (simplified to just metadataHash string)
         displayCopy: metadataHash,
 
-        // File properties (for quick access)
+        // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
 
         // Processing status (for future Document Processing Workflow)
@@ -66,22 +66,15 @@ export class EvidenceService {
       const docRef = doc(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence', fileHash);
       await setDoc(docRef, evidenceData);
 
-      console.log(`[EvidenceService] Created evidence document: ${fileHash.substring(0, 8)}...`, {
-        metadataHash: metadataHash.substring(0, 8) + '...',
-        fileHash: fileHash.substring(0, 8) + '...',
-        processingStage: evidenceData.processingStage,
-      });
-
       return fileHash;
     } catch (error) {
-      console.error('[EvidenceService] Failed to create evidence:', error);
       throw error;
     }
   }
 
   /**
-   * Batch create evidence documents from multiple uploaded files
-   * @param {Array} uploadMetadataList - Array of upload metadata objects
+   * Batch create evidence documents from multiple uploaded source files
+   * @param {Array} uploadMetadataList - Array of source file upload metadata objects
    * @returns {Promise<Array>} - Array of evidence document IDs (fileHashes)
    */
   async createEvidenceFromUploads(uploadMetadataList) {
@@ -129,10 +122,8 @@ export class EvidenceService {
 
       await batch.commit();
 
-      console.log(`[EvidenceService] Batch created ${evidenceIds.length} evidence documents`);
       return evidenceIds;
     } catch (error) {
-      console.error('[EvidenceService] Failed to batch create evidence:', error);
       throw error;
     }
   }
@@ -162,10 +153,7 @@ export class EvidenceService {
         displayName: displayName.trim(),
         updatedAt: serverTimestamp(),
       });
-
-      console.log(`[EvidenceService] Updated display name for ${evidenceId}: ${displayName}`);
     } catch (error) {
-      console.error('[EvidenceService] Failed to update display name:', error);
       throw error;
     }
   }
@@ -200,10 +188,7 @@ export class EvidenceService {
         evidenceId
       );
       await updateDoc(evidenceRef, updateData);
-
-      console.log(`[EvidenceService] Updated processing stage for ${evidenceId}: ${stage}`);
     } catch (error) {
-      console.error('[EvidenceService] Failed to update processing stage:', error);
       throw error;
     }
   }
@@ -225,10 +210,7 @@ export class EvidenceService {
         evidenceId
       );
       await deleteDoc(evidenceRef);
-
-      console.log(`[EvidenceService] Deleted evidence document: ${evidenceId}`);
     } catch (error) {
-      console.error('[EvidenceService] Failed to delete evidence:', error);
       throw error;
     }
   }
@@ -260,7 +242,6 @@ export class EvidenceService {
         return null;
       }
     } catch (error) {
-      console.error('[EvidenceService] Failed to get evidence:', error);
       throw error;
     }
   }
@@ -297,13 +278,8 @@ export class EvidenceService {
         });
       });
 
-      console.log(
-        `[EvidenceService] Found ${variants.length} metadata variants for ${fileHash.substring(0, 8)}...`
-      );
-
       return variants;
     } catch (error) {
-      console.error('[EvidenceService] Failed to get source metadata variants:', error);
       throw error;
     }
   }

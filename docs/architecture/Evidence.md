@@ -6,7 +6,7 @@
 /firms/{firmId}/matters/general/evidence/{fileHash}
 ```
 
-**IMPORTANT**: Document ID is the SHA-256 hash of the file content (64 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
+**IMPORTANT**: Document ID is the BLAKE3 hash of the file content (32 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
 
 **Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
@@ -16,7 +16,7 @@
 
 ```javascript
 {
-  // Document ID = fileHash (SHA-256, 64 chars) - NOT A STORED FIELD
+  // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   // Display Configuration - REQUIRED
   displayCopy: string,           // Metadata hash - references sourceMetadata collection
@@ -43,7 +43,7 @@
 
 **Document ID (fileHash):**
 
-- **MUST** be a valid SHA-256 hash (64 hexadecimal characters)
+- **MUST** be a valid BLAKE3 hash (32 hexadecimal characters)
 - **AUTOMATIC DEDUPLICATION**: Using fileHash as document ID prevents duplicate evidence records
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence document
 - **NEVER** manually set document ID - use the fileHash from upload process
@@ -51,10 +51,10 @@
 **displayCopy:**
 
 - **ALWAYS** verify hash exists in sourceMetadata collection
-- **MUST** be a valid metadataHash (SHA-256, 64 characters)
+- **MUST** be a valid metadataHash (xxHash, 16 characters)
 - **USE** hash-based lookup for metadata retrieval
 
-**Note**: For understanding the critical distinction between original file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
+**Note**: For understanding the critical distinction between source file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
 
 **processingStage:**
 
@@ -70,7 +70,7 @@
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 
-## Original Metadata Subcollection
+## Source Metadata Subcollection
 
 ### Path Structure
 
@@ -80,16 +80,16 @@
 
 ### Purpose
 
-The sourceMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all original file contexts while maintaining efficient storage deduplication.
+The sourceMetadata subcollection stores variant metadata for files with identical content but different upload contexts (different names, timestamps, or folder paths). This preserves all source file contexts while maintaining efficient storage deduplication.
 
-### Original Metadata Document Schema
+### Source Metadata Document Schema
 
 ```javascript
 {
   // Core file metadata
-  sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED
-  lastModified: number,         // Original file's timestamp (milliseconds since epoch)
-  fileHash: string,            // SHA-256 of file content (64 hex chars)
+  sourceFileName: string,      // Exact filename with SOURCE FILE CASE PRESERVED
+  lastModified: Timestamp,      // Source file's timestamp (Firestore Timestamp)
+  fileHash: string,            // BLAKE3 of file content (32 hex chars)
 
   // File path information
   sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
@@ -104,7 +104,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 - **Multiple variants per evidence**: One evidence document can have multiple sourceMetadata subcollection documents
 - **Automatic deduplication**: Identical metadata (same metadataHash) stored only once per evidence document
 - **Preserves original context**: Each document represents a unique upload context with different name, timestamp, or path
-- **Case preservation**: The ONLY place where original file extension case is preserved
+- **Case preservation**: The ONLY place where source file extension case is preserved
 
 ## Tag Subcollection
 
@@ -158,7 +158,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ```javascript
 match /firms/{firmId}/matters/general/evidence/{fileHash} {
   // Evidence document access
-  // Note: fileHash is the document ID (SHA-256, 64 hex chars)
+  // Note: fileHash is the document ID (BLAKE3, 32 hex chars)
   allow read: if request.auth != null &&
                  request.auth.token.firmId == firmId;
 
@@ -189,8 +189,8 @@ function validateEvidenceCreate(data, fileHash) {
   return data.keys().hasAll(['displayCopy', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
                               'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
-         fileHash.size() == 64 &&  // Document ID must be valid SHA-256 hash
-         data.displayCopy.size() == 64 &&  // Must be valid metadata hash
+         fileHash.size() == 32 &&  // Document ID must be valid BLAKE3 hash
+         data.displayCopy.size() == 16 &&  // Must be valid xxHash metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&
