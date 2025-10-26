@@ -1,6 +1,9 @@
 /**
  * File utilities for the organizer feature
  * Extracted from Organizer.vue for reusability and maintainability
+ *
+ * These utilities work with display names and metadata from evidence documents,
+ * which are derived from source metadata (sourceFileName from uploaded files).
  */
 
 import { formatDate as formatDateUtil } from '@/utils/dateFormatter.js';
@@ -65,6 +68,7 @@ export const getFileIconColor = (filename) => {
 
 /**
  * Format file size in bytes to human readable format
+ * Works with both source file sizes and storage file sizes
  * @param {number} bytes - File size in bytes
  * @returns {string} Formatted file size (e.g., '1.2 MB')
  */

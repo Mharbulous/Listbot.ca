@@ -1,6 +1,9 @@
 /**
  * File List Column Configuration
  * Defines all available columns for the evidence files list
+ *
+ * Evidence documents represent storage files in Firebase Storage.
+ * Display names come from source metadata (sourceFileName from uploaded files).
  */
 
 export const FILE_LIST_COLUMNS = [
@@ -13,7 +16,7 @@ export const FILE_LIST_COLUMNS = [
     visible: true,
     required: false,
     align: 'left',
-    description: 'File extension type',
+    description: 'File extension from display name (source metadata)',
     rendererProps: {
       variant: 'fileType',
     },
@@ -27,7 +30,7 @@ export const FILE_LIST_COLUMNS = [
     visible: true,
     required: false,
     align: 'left',
-    description: 'Name of the file',
+    description: 'Display name from source metadata (sourceFileName)',
     rendererProps: {
       fontWeight: '500',
       showTooltip: true,
@@ -42,7 +45,7 @@ export const FILE_LIST_COLUMNS = [
     visible: true,
     required: false,
     align: 'left',
-    description: 'Size of the file in bytes',
+    description: 'Storage file size in bytes (from Firebase Storage)',
   },
   {
     key: 'documentDate',
@@ -53,7 +56,7 @@ export const FILE_LIST_COLUMNS = [
     visible: true,
     required: false,
     align: 'left',
-    description: 'Date of the document',
+    description: 'Business transaction date (when document was created/issued)',
   },
   {
     key: 'privilege',
