@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMPORTANT**: Development is at a very early stage. We can easily delete the entire Firestore database and delete all files in Firebase Storage to create a clean slate.
 
 **Planning Implications**:
+
 - **No migration scripts required** - Data schema changes can be implemented directly
 - **No backward compatibility needed** - Feel free to redesign data structures
 - **Simplified planning** - Focus on optimal architecture without legacy constraints
@@ -130,27 +131,35 @@ Core feature for uploading and processing files with sophisticated time estimati
 
 ### File Lifecycle Terminology
 
-The application distinguishes between three related but distinct concepts in the file handling lifecycle. **Consistent use of this terminology is critical** throughout code, comments, UI text, and documentation.
+The application distinguishes between related but distinct concepts in the file handling lifecycle. **Consistent use of this terminology is critical** throughout code, comments, UI text, and documentation.
 
-#### Three-Tier File Lifecycle
+#### File Lifecycle
 
-1. **Document** - The original real-world artifact containing business information
+1. **Document** - The original real-world evidence
+
    - May be physical (paper receipt, printed invoice) or digital (email attachment, downloaded file)
-   - Has a **document date** reflecting when the underlying business transaction occurred
-   - Examples: Paper parking receipt dated Jan 15, invoice PDF received via email
-   - Represents the business event being recorded
 
 2. **Source** - The digital file created or obtained by the user for upload to the application
    - Always digital: scanned PDF, smartphone photo, screenshot, downloaded file
-   - Has a **source date** (file modified/created timestamp) reflecting when it was created or last modified
    - This is what exists on the user's device/filesystem before upload
-   - Examples: PDF scan created Jan 20, JPEG photo taken with phone camera
+3. **Upload** - The digital file stored in Firebase Storage in the '../uploads' subfolder
 
-3. **File** - The digital file stored in Firebase Storage after upload through the application
    - Stored with hash-based deduplication (BLAKE3)
-   - Has **upload metadata**: upload timestamp, storage path, hash, size
-   - Managed by the application's storage and database systems
-   - One **file** may be linked to multiple business records (via hash-based deduplication)
+   - One **Upload** may be linked to multiple **Sources**
+
+4. **Batesed** - **Upload** files that have been converted to PDF format, digitally bates stamped, and stored in Firebase Storage in the '../Batesed' subfolder
+
+5. **Page** - **Batesed** files split into single page PDF files and stored in Firebase Storage in the '../Pages' subfolder for near duplicate analysis.
+
+6. **Redacted** - **Batesed** files that have been redacted in preparation for production and saved in Firebase Storage in the '../Redacted' subfolder
+
+7. **Production** - The final set of documents that have been approved for production and saved in Firebase storage in the '../Production' subfolder
+
+   - Copied from a mix of **Batesed** files, **Redacted** files
+
+8. **Storage** - Refers in general to all digital files saved in Firebase Storage, specifically: **Upload**, **Batesed**, **Page**, **Redacted**, and **Production**
+   - Does not have its own subfolder.
+   - Useful for describing functions, variables or constants that apply to all multiple file types; e.g. **Upload**, **Batesed**, **Page**, **Redacted**, and **Production**
 
 #### Example Flow
 
@@ -165,6 +174,7 @@ PDF in Firebase Storage (file, uploaded: Jan 20, 2025, hash: abc123...)
 #### Usage Guidelines
 
 **Variable Naming:**
+
 ```javascript
 // Good - Clear and specific
 const documentDate = receipt.transactionDate;
@@ -177,11 +187,13 @@ const fileDate = ???; // Source or upload date?
 ```
 
 **UI/UX Text:**
+
 - "Document date" or "Transaction date" for the business event date
 - "Scanned on" or "Created on" for source file creation
 - "Uploaded on" for when file entered system
 
 **Database Fields:**
+
 ```javascript
 {
   documentDate: '2025-01-15',      // Business transaction date
@@ -191,6 +203,7 @@ const fileDate = ???; // Source or upload date?
 ```
 
 **Code Comments:**
+
 ```javascript
 // Extract document date from OCR text (not source file metadata)
 const documentDate = extractDateFromContent(ocrText);
