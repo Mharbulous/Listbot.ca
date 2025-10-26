@@ -152,8 +152,6 @@ export function useMockFileData() {
     generationTime.value = performance.now() - startTime;
     isGenerating.value = false;
 
-    console.log(`✅ Generated ${count} mock files in ${generationTime.value.toFixed(2)}ms`);
-
     return files.value;
   }
 
@@ -170,12 +168,7 @@ export function useMockFileData() {
    * @param {number} count - Number of files to generate
    */
   function generateWithLogging(count) {
-    console.log(`🔄 Generating ${count} mock files...`);
     const result = generateMockFiles(count);
-    console.log(`📊 Mock data generation complete`);
-    console.log(`   - File count: ${count}`);
-    console.log(`   - Generation time: ${generationTime.value.toFixed(2)}ms`);
-    console.log(`   - Time per file: ${(generationTime.value / count).toFixed(4)}ms`);
     return result;
   }
 

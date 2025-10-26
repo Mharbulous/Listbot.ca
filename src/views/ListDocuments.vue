@@ -113,12 +113,6 @@ const domNodeCount = ref(0);
  * Load files and measure performance
  */
 async function loadFiles(count) {
-  console.clear();
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`🚀 Loading ${count.toLocaleString()} files...`);
-  console.log(`📊 Visible Columns: ${visibleColumns.value.length}/${allColumns.value.length}`);
-  console.log(`${'='.repeat(60)}\n`);
-
   // Start performance monitoring
   performanceMonitor.startMonitoring();
 
@@ -136,39 +130,6 @@ async function loadFiles(count) {
     const summary = performanceMonitor.getSummary();
     lastRenderTime.value = summary.renderTime;
     domNodeCount.value = summary.domNodeCount;
-
-    // Additional performance analysis
-    console.log('\n📈 Performance Analysis:');
-
-    if (count >= 1000) {
-      const timePerFile = (summary.renderTime / count) * 1000;
-      console.log(`   - Time per file: ${timePerFile.toFixed(4)}ms`);
-    }
-
-    const visibleNodes = performanceMonitor.countVisibleNodes('app');
-    console.log(`   - Visible DOM nodes: ${visibleNodes.toLocaleString()}`);
-
-    const efficiency = count / summary.domNodeCount;
-    console.log(`   - Efficiency ratio: ${efficiency.toFixed(2)}x (files per DOM node)`);
-
-    // Virtual scrolling verification
-    console.log('\n✅ Virtual Scrolling Verification:');
-    console.log(`   - Dataset size: ${count.toLocaleString()} files`);
-    console.log(`   - DOM nodes rendered: ${summary.domNodeCount.toLocaleString()}`);
-    console.log(`   - Reduction: ${(((count - summary.domNodeCount) / count) * 100).toFixed(1)}%`);
-
-    // Performance targets
-    console.log('\n🎯 Performance Targets:');
-    const target = count <= 100 ? 20 : count <= 1000 ? 50 : 100;
-    const achieved = summary.renderTime < target;
-    console.log(
-      `   - Target: <${target}ms | Actual: ${summary.renderTime.toFixed(2)}ms | ${achieved ? '✅ PASS' : '❌ FAIL'}`
-    );
-    console.log(
-      `   - DOM Nodes: <100 | Actual: ${summary.domNodeCount} | ${summary.domNodeCount < 100 ? '✅ PASS' : '❌ FAIL'}`
-    );
-
-    console.log(`\n${'='.repeat(60)}\n`);
   }, 100);
 }
 
@@ -180,14 +141,13 @@ function clearFiles() {
   lastRenderTime.value = 0;
   domNodeCount.value = 0;
   performanceMonitor.reset();
-  console.log('🗑️  Files cleared');
 }
 
 /**
  * Handle row click
  */
 function handleRowClick(file) {
-  console.log('📄 File clicked:', file.fileName);
+  // Handle file click
 }
 
 /**
@@ -212,10 +172,6 @@ function getPerformanceMessage() {
 
 // Load 100 files by default on mount
 onMounted(() => {
-  console.log('📊 Virtual File List - Performance Testing Page');
-  console.log('💡 Features: Virtual Scrolling + Dynamic Columns');
-  console.log('Click the buttons above to test different dataset sizes');
-  console.log('Click the "Columns" button to show/hide columns\n');
   loadFiles(100);
 });
 </script>

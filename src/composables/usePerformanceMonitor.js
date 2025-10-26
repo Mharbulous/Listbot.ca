@@ -43,27 +43,7 @@ export function usePerformanceMonitor(componentName = 'Component') {
    * Log performance metrics to console
    */
   function logPerformance() {
-    console.group(`📊 Performance Metrics: ${componentName}`);
-    console.log(`⏱️  Render Time: ${renderTime.value.toFixed(2)}ms`);
-    console.log(`🔢 DOM Nodes: ${domNodeCount.value.toLocaleString()}`);
-
-    if (memoryUsage.value > 0) {
-      const memoryMB = (memoryUsage.value / (1024 * 1024)).toFixed(2);
-      console.log(`💾 Memory Usage: ${memoryMB} MB`);
-    }
-
-    // Performance indicators
-    if (renderTime.value < 50) {
-      console.log('✅ Excellent performance (<50ms)');
-    } else if (renderTime.value < 100) {
-      console.log('⚠️  Good performance (50-100ms)');
-    } else if (renderTime.value < 200) {
-      console.log('⚠️  Acceptable performance (100-200ms)');
-    } else {
-      console.log('❌ Poor performance (>200ms)');
-    }
-
-    console.groupEnd();
+    // Performance logging disabled
   }
 
   /**
@@ -73,8 +53,6 @@ export function usePerformanceMonitor(componentName = 'Component') {
     const start = performance.now();
     const result = operation();
     const duration = performance.now() - start;
-
-    console.log(`⏱️  ${name}: ${duration.toFixed(2)}ms`);
 
     return result;
   }
@@ -86,8 +64,6 @@ export function usePerformanceMonitor(componentName = 'Component') {
     const start = performance.now();
     const result = await operation();
     const duration = performance.now() - start;
-
-    console.log(`⏱️  ${name}: ${duration.toFixed(2)}ms`);
 
     return result;
   }
@@ -117,7 +93,6 @@ export function usePerformanceMonitor(componentName = 'Component') {
           : scrollContainer;
 
       if (!container) {
-        console.error('Scroll container not found');
         resolve(0);
         return;
       }
@@ -141,18 +116,12 @@ export function usePerformanceMonitor(componentName = 'Component') {
             const elapsed = performance.now() - lastTime;
             const fps = Math.round((frameCount / elapsed) * 1000);
 
-            console.log(
-              `📊 Scroll FPS: ${fps} fps (${frameCount} frames in ${elapsed.toFixed(0)}ms)`
-            );
-
             resolve(fps);
           }, duration);
         }
       }
 
       container.addEventListener('scroll', handleScroll, { once: true });
-
-      console.log('🔄 Scroll the container to measure FPS...');
     });
   }
 
