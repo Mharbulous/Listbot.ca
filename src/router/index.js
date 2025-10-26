@@ -51,7 +51,7 @@ const router = createRouter({
     {
       path: '/list',
       name: 'list',
-      component: () => import('../views/ListDocuments.vue'),
+      component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Evidence List' },
     },
     {
