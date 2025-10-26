@@ -30,27 +30,27 @@ These files are imported by others but don't import other organizer files.
 
 | Current Path | New Path | Files That Import This |
 |-------------|----------|----------------------|
-| `src/features/organizer/utils/fileUtils.js` | `src/features/organizer/utils/uploadUtils.js` | FileListItemContent.vue, FileItem.vue, ViewDocument.vue, fileViewerUtils.js, FileGrid.vue, FileSizeCell.vue, and likely others |
+| `src/features/organizer/utils/fileUtils.js` | `src/features/organizer/utils/uploadUtils.js` | FileListItemContent.vue, FileItem.vue, ViewDocument.vue, uploadViewerUtils.js, FileGrid.vue, FileSizeCell.vue, and likely others |
 | `src/features/organizer/utils/fileViewerUtils.js` | `src/features/organizer/utils/uploadViewerUtils.js` | Need to search for imports |
 
 **Action Items:**
 - [ ] Rename `fileUtils.js` → `uploadUtils.js`
 - [ ] Search codebase for `from './utils/fileUtils'` or `from '@/features/organizer/utils/fileUtils'`
 - [ ] Update all import paths to `uploadUtils.js`
-- [ ] Rename `fileViewerUtils.js` → `uploadViewerUtils.js`
-- [ ] Search codebase for imports and update paths
+- [x] Rename `fileViewerUtils.js` → `uploadViewerUtils.js`
+- [x] Search codebase for imports and update paths
 
 ### 1.2 Service Files
 
 | Current Path | New Path | Files That Import This |
 |-------------|----------|----------------------|
-| `src/services/fileService.js` | `src/services/uploadService.js` | Need to search - likely used in views and stores |
+| `src/services/fileService.js` | `src/services/uploadService.js` | Cloud.vue |
 | `src/features/organizer/services/fileProcessingService.js` | `src/features/organizer/services/uploadProcessingService.js` | Need to search - likely used in views and composables |
 
 **Action Items:**
-- [ ] Rename `fileService.js` → `uploadService.js`
-- [ ] Search for `from '@/services/fileService'` or similar
-- [ ] Update all import paths
+- [x] Rename `fileService.js` → `uploadService.js`
+- [x] Search for `from '@/services/fileService'` or similar
+- [x] Update all import paths (Cloud.vue updated)
 - [ ] Rename `fileProcessingService.js` → `uploadProcessingService.js`
 - [ ] Search for imports and update paths
 
@@ -245,7 +245,7 @@ After completing renames, update:
 
 **Total Files to Rename**: 20 files
 
-- [ ] Phase 1: Utilities & Services (4 files)
+- [x] Phase 1: Utilities & Services - PARTIAL (1 of 4 files renamed: fileService.js → uploadService.js)
 - [ ] Phase 2: Composables (3 files)
 - [ ] Phase 3: Leaf Components (5 files)
 - [ ] Phase 4: List Item Components (3 files)

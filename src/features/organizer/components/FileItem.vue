@@ -73,7 +73,7 @@ import {
   getUploadIconColor,
   formatUploadSize,
   formatDate,
-} from '../utils/fileUtils.js';
+} from '../utils/uploadUtils.js';
 
 // Props
 const props = defineProps({

@@ -145,7 +145,7 @@ stores/organizer.js
 - `useFileSearch.js`: 44 lines (partial implementation with basic search logic)
 - Additional skeleton files: `FileGrid.vue`, `FilePreview.vue`, `FileDetails.vue`, `ViewModeToggle.vue`, `FileTypeFilters.vue` (all basic skeletons)
 - Composables: `useFileViewer.js`, `useFilePreview.js`, `useViewerNavigation.js` (skeleton files)
-- Utils: `fileViewerUtils.js`, `previewGenerators.js` (skeleton files)
+- Utils: `uploadViewerUtils.js`, `previewGenerators.js` (skeleton files)
 
 **Total Existing**: ~15 skeleton files with approximately 200 lines of placeholder code
 
