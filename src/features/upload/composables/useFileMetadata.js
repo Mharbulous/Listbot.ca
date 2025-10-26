@@ -52,11 +52,12 @@ export function useFileMetadata() {
    * @param {number} fileData.size - File size in bytes (used for Evidence document creation)
    * @param {string} [fileData.originalPath] - Full relative path from folder upload (used to extract folderPath)
    * @param {string} [fileData.sourceFileType] - MIME type of the file
+   * @param {string} [fileData.storageCreatedTimestamp] - Firebase Storage timeCreated timestamp (ISO 8601 string)
    * @returns {Promise<string>} - The metadata hash used as document ID
    */
   const createMetadataRecord = async (fileData) => {
     try {
-      const { sourceFileName, lastModified, fileHash, size, originalPath, sourceFileType } =
+      const { sourceFileName, lastModified, fileHash, size, originalPath, sourceFileType, storageCreatedTimestamp } =
         fileData;
 
       if (!sourceFileName || !lastModified || !fileHash) {
@@ -122,6 +123,7 @@ export function useFileMetadata() {
         size: size || 0,
         folderPath: currentFolderPath || '/',
         metadataHash: metadataHash,
+        storageCreatedTimestamp: storageCreatedTimestamp,
       };
 
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);

@@ -114,7 +114,7 @@ export class EvidenceDocumentService {
       const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', evidenceId);
       await updateDoc(evidenceRef, {
         lastAIProcessed: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        fileCreated: serverTimestamp(),
       });
     } catch (error) {
       console.error('[EvidenceDocumentService] Failed to store AI suggestions:', error);
@@ -140,7 +140,7 @@ export class EvidenceDocumentService {
 
       const updateData = {
         ...updates,
-        updatedAt: serverTimestamp(),
+        fileCreated: serverTimestamp(),
       };
 
       await updateDoc(evidenceRef, updateData);

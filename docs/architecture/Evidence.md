@@ -35,7 +35,7 @@
   reviewRequiredCount: number,   // Default: 0, tags with confidence < 85%
 
   // Timestamps - REQUIRED
-  updatedAt: timestamp           // Server timestamp, update on any change
+  fileCreated: timestamp         // Firebase Storage creation timestamp (from timeCreated metadata)
 }
 ```
 
@@ -66,7 +66,16 @@
 
 - **INCREMENT** counters atomically using FieldValue.increment()
 - **NEVER** manually calculate from subcollection
-- **UPDATE** updatedAt whenever counters change
+- **UPDATE** fileCreated whenever counters change
+
+**fileCreated Timestamp:**
+
+- **PRIMARY SOURCE**: Retrieved from Firebase Storage metadata's `timeCreated` field after upload completes
+- **CONVERSION**: Storage timestamp (ISO 8601 string) is converted to Firestore Timestamp object
+- **FALLBACK**: Uses Firestore `serverTimestamp()` if Storage metadata unavailable
+- **PURPOSE**: Ensures exact timestamp match between Storage file and Firestore evidence document
+- **ACCURACY**: Eliminates 1-second discrepancies between Storage and Firestore operations
+- **IMMUTABILITY**: Represents when file was created in Storage (not when document was modified)
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 

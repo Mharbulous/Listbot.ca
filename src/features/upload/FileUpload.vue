@@ -330,7 +330,9 @@ const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = 
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve({ success: true, downloadURL });
+          const metadata = await getMetadata(uploadTask.snapshot.ref);
+          const storageCreatedTimestamp = metadata.timeCreated;
+          resolve({ success: true, downloadURL, storageCreatedTimestamp });
         } catch (error) {
           reject(error);
         }
@@ -364,7 +366,7 @@ const safeMetadata = async (metadataFn, context) => {
 };
 
 // Helper function for creating file metadata
-const createFileMetadataRecord = async (queueFile, fileHash) => {
+const createFileMetadataRecord = async (queueFile, fileHash, storageCreatedTimestamp = null) => {
   await createMetadataRecord({
     sourceFileName: queueFile.sourceName,
     lastModified: queueFile.sourceModifiedDate,
@@ -373,6 +375,7 @@ const createFileMetadataRecord = async (queueFile, fileHash) => {
     sessionId: getCurrentSessionId(),
     originalPath: queueFile.sourcePath,
     sourceFileType: queueFile.sourceFile?.type || '',
+    storageCreatedTimestamp: storageCreatedTimestamp,
   });
 };
 
@@ -656,7 +659,7 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   }
 
   const uploadStartTime = Date.now();
-  await uploadSingleFile(queueFile.sourceFile, fileHash, queueFile.sourceName, uploadAbortController.signal);
+  const uploadResult = await uploadSingleFile(queueFile.sourceFile, fileHash, queueFile.sourceName, uploadAbortController.signal);
   const uploadDurationMs = Date.now() - uploadStartTime;
 
   updateUploadStatus('successful');
@@ -672,7 +675,7 @@ const processNewFileUpload = async (queueFile, fileHash) => {
   }
 
   await safeMetadata(
-    async () => await createFileMetadataRecord(queueFile, fileHash),
+    async () => await createFileMetadataRecord(queueFile, fileHash, uploadResult.storageCreatedTimestamp),
     `for uploaded file ${queueFile.sourceName}`
   );
 };

@@ -295,7 +295,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
       const evidenceQuery = query(
         evidenceRef,
-        orderBy('updatedAt', 'desc'),
+        orderBy('fileCreated', 'desc'),
         limit(1000) // Reasonable limit for v1.0
       );
 
