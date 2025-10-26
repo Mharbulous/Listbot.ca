@@ -96,7 +96,6 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           documentType: getDocumentTypeFromStage(data.processingStage),
           author: 'ERROR: Author not available',
           custodian: 'ERROR: Custodian not available',
-          createdDate: formatDate(data.fileCreated),
           modifiedDate: formatDate(data.fileCreated),
         };
       })();

@@ -12,7 +12,6 @@ const COLUMN_TYPES = {
 
   // Date columns
   date: 'date',
-  createdDate: 'date',
   modifiedDate: 'date',
 
   // String columns (default)

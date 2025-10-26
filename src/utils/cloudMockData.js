@@ -117,9 +117,8 @@ function generateFileRecord(index) {
   const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
   const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
 
-  // Generate created date first, then modified date after it
-  const createdDate = randomDate(new Date(2024, 0, 1), new Date(2024, 9, 1));
-  const modifiedDate = randomDate(new Date(createdDate), new Date(2024, 10, 21));
+  // Generate modified date
+  const modifiedDate = randomDate(new Date(2024, 0, 1), new Date(2024, 10, 21));
 
   return {
     id: index,
@@ -132,7 +131,6 @@ function generateFileRecord(index) {
     documentType: randomElement(DOCUMENT_TYPES),
     author: randomElement(AUTHORS),
     custodian: randomElement(CUSTODIANS),
-    createdDate: createdDate,
     modifiedDate: modifiedDate,
     status: randomElement(STATUSES)
   };

@@ -166,9 +166,9 @@
                 {{ sortedData[virtualItem.index].size }}
               </span>
 
-              <!-- Date -->
-              <span v-else-if="column.key === 'date'" :class="{ 'error-text': sortedData[virtualItem.index].date.startsWith('ERROR:') }">
-                {{ formatDate(sortedData[virtualItem.index].date) }}
+              <!-- Date (Uploaded Timestamp) -->
+              <span v-else-if="column.key === 'date'">
+                {{ formatTimestamp(sortedData[virtualItem.index].date) }}
               </span>
 
               <!-- Privilege -->
@@ -200,11 +200,6 @@
               <!-- Custodian -->
               <span v-else-if="column.key === 'custodian'" :class="{ 'error-text': sortedData[virtualItem.index].custodian.startsWith('ERROR:') }">
                 {{ sortedData[virtualItem.index].custodian }}
-              </span>
-
-              <!-- Created Date -->
-              <span v-else-if="column.key === 'createdDate'" :class="{ 'error-text': sortedData[virtualItem.index].createdDate.startsWith('ERROR:') }">
-                {{ formatDate(sortedData[virtualItem.index].createdDate) }}
               </span>
 
               <!-- Modified Date -->
@@ -245,7 +240,7 @@ import { fetchFiles } from '@/services/uploadService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences';
-import { formatDate as formatDateUtil } from '@/utils/dateFormatter';
+import { formatDate as formatDateUtil, formatTimestamp as formatTimestampUtil } from '@/utils/dateFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 
 // Initialize performance monitor
@@ -255,9 +250,9 @@ const perfMonitor = new PerformanceMonitor('Cloud Table');
 const authStore = useAuthStore();
 const matterViewStore = useMatterViewStore();
 
-// User preferences store for date formatting
+// User preferences store for date and time formatting
 const preferencesStore = useUserPreferencesStore();
-const { dateFormat } = storeToRefs(preferencesStore);
+const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
 
 // Column selector and refs
 const showColumnSelector = ref(false);
@@ -364,6 +359,22 @@ const formatDate = (dateString) => {
   } catch (error) {
     console.error('[Cloud] Error formatting date:', error);
     return dateString; // Return original on error
+  }
+};
+
+/**
+ * Format a timestamp (date + time) using user preferences
+ * Handles Firestore timestamp objects from the service layer
+ */
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+
+  try {
+    // Format using user's date and time preferences with " at " separator
+    return formatTimestampUtil(timestamp, dateFormat.value, timeFormat.value);
+  } catch (error) {
+    console.error('[Cloud] Error formatting timestamp:', error);
+    return 'Invalid timestamp';
   }
 };
 

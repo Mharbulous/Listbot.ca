@@ -75,7 +75,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
           // File properties that exist in evidence documents
           size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
-          date: formatDate(data.fileCreated),
+          date: data.fileCreated, // Preserve raw Firestore timestamp for display in Cloud.vue
 
           // Processing status
           status: getStatusLabel(data.processingStage),
@@ -96,7 +96,6 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           documentType: getDocumentTypeFromStage(data.processingStage),
           author: 'ERROR: Author not available',
           custodian: 'ERROR: Custodian not available',
-          createdDate: formatDate(data.fileCreated),
           modifiedDate: formatDate(data.fileCreated),
         };
       })();
