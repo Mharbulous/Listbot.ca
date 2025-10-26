@@ -6,13 +6,13 @@
 /**
  * Calculate Hardware Performance Factor (H) based on folder analysis timing
  * H represents how many files per millisecond this hardware can analyze
- * @param {number} totalFiles - Number of files analyzed
+ * @param {number} totalUploads - Number of files analyzed
  * @param {number} folderAnalysisTimeMs - Time taken for folder analysis in milliseconds
  * @returns {number} Hardware performance factor (files/ms)
  */
 export function calculateHardwarePerformanceFactor(totalFiles, folderAnalysisTimeMs) {
   if (folderAnalysisTimeMs <= 0) return 0;
-  return totalFiles / folderAnalysisTimeMs;
+  return totalUploads / folderAnalysisTimeMs;
 }
 
 /**
@@ -28,7 +28,7 @@ export function calculateHardwarePerformanceFactor(totalFiles, folderAnalysisTim
  */
 export function calculateCalibratedProcessingTime(folderData, hardwarePerformanceFactor) {
   const {
-    totalFiles,
+    totalUploads,
     duplicateCandidates,
     duplicateCandidatesSizeMB,
     avgDirectoryDepth = 2.5,
@@ -45,7 +45,7 @@ export function calculateCalibratedProcessingTime(folderData, hardwarePerformanc
 
   // Validate and normalize folder data
   const safeData = {
-    totalFiles: Math.max(1, totalFiles || 1), // Ensure at least 1 file
+    totalUploads: Math.max(1, totalUploads || 1), // Ensure at least 1 file
     duplicateCandidates: Math.max(0, duplicateCandidates || 0),
     duplicateCandidatesSizeMB: Math.max(0, duplicateCandidatesSizeMB || 0),
     avgDirectoryDepth: Math.max(1, avgDirectoryDepth || 2.5),
@@ -186,19 +186,19 @@ export function getStoredHardwarePerformanceFactor() {
 
 /**
  * Store hardware performance factor measurement
- * @param {number} totalFiles - Number of files in measurement
+ * @param {number} totalUploads - Number of files in measurement
  * @param {number} folderAnalysisTimeMs - Folder analysis time
  * @param {Object} additionalData - Additional context data
  */
 export function storeHardwarePerformanceFactor(
-  totalFiles,
+  totalUploads,
   folderAnalysisTimeMs,
   additionalData = {}
 ) {
   try {
     // Validate input parameters
-    if (!totalFiles || totalFiles <= 0 || !Number.isInteger(totalFiles)) {
-      console.warn(`Invalid totalFiles for calibration: ${totalFiles}`);
+    if (!totalFiles || totalUploads <= 0 || !Number.isInteger(totalFiles)) {
+      console.warn(`Invalid totalUploads for calibration: ${totalFiles}`);
       return;
     }
 
@@ -223,7 +223,7 @@ export function storeHardwarePerformanceFactor(
 
     const measurement = {
       timestamp: Date.now(),
-      totalFiles,
+      totalUploads,
       folderAnalysisTimeMs,
       H: Math.round(H * 1000) / 1000, // Round to 3 decimal places
       ...additionalData,

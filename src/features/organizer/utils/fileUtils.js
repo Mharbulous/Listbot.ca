@@ -13,7 +13,7 @@ import { formatDate as formatDateUtil } from '@/utils/dateFormatter.js';
  * @param {string} filename - The filename to extract extension from
  * @returns {string} File extension with dot (e.g., '.pdf')
  */
-export const getFileExtension = (filename) => {
+export const getUploadExtension = (filename) => {
   return filename.includes('.') ? '.' + filename.split('.').pop().toLowerCase() : '';
 };
 
@@ -22,8 +22,8 @@ export const getFileExtension = (filename) => {
  * @param {string} filename - The filename to get icon for
  * @returns {string} Material Design icon name
  */
-export const getFileIcon = (filename) => {
-  const ext = getFileExtension(filename);
+export const getUploadIcon = (filename) => {
+  const ext = getUploadExtension(filename);
   const iconMap = {
     '.pdf': 'mdi-file-pdf-box',
     '.doc': 'mdi-file-word-box',
@@ -48,8 +48,8 @@ export const getFileIcon = (filename) => {
  * @param {string} filename - The filename to get color for
  * @returns {string} Vuetify color name
  */
-export const getFileIconColor = (filename) => {
-  const ext = getFileExtension(filename);
+export const getUploadIconColor = (filename) => {
+  const ext = getUploadExtension(filename);
   const colorMap = {
     '.pdf': 'red-darken-1',
     '.doc': 'blue-darken-1',
@@ -72,7 +72,7 @@ export const getFileIconColor = (filename) => {
  * @param {number} bytes - File size in bytes
  * @returns {string} Formatted file size (e.g., '1.2 MB')
  */
-export const formatFileSize = (bytes) => {
+export const formatUploadSize = (bytes) => {
   if (!bytes) return '0 B';
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));

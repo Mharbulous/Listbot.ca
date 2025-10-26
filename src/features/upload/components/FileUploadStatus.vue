@@ -24,7 +24,7 @@
     <v-list-item-subtitle class="file-details">
       <div class="d-flex align-center justify-space-between">
         <span class="file-size text-grey-darken-1">
-          {{ formatFileSize(fileSize) }}
+          {{ formatUploadSize(fileSize) }}
         </span>
 
         <div class="status-info d-flex align-center">
@@ -59,8 +59,8 @@
       <!-- Transfer details (if uploading) -->
       <div v-if="isUploading && fileState.bytesTransferred" class="transfer-details mt-1">
         <span class="text-caption text-grey-darken-1">
-          {{ formatFileSize(fileState.bytesTransferred) }} of
-          {{ formatFileSize(fileState.totalBytes) }}
+          {{ formatUploadSize(fileState.bytesTransferred) }} of
+          {{ formatUploadSize(fileState.totalBytes) }}
           <template v-if="fileState.speed"> • {{ formatSpeed(fileState.speed) }} </template>
         </span>
       </div>
@@ -184,7 +184,7 @@ const isRetrying = computed(() => props.fileState.state === FILE_STATES.RETRYING
 const isRetryable = computed(() => props.fileState.error?.classified?.retryable || false);
 
 // File type detection
-const getFileIcon = () => {
+const getUploadIcon = () => {
   const extension = props.fileName.split('.').pop()?.toLowerCase() || '';
 
   // Image files
@@ -225,7 +225,7 @@ const getFileIcon = () => {
   return 'mdi-file';
 };
 
-const getFileIconColor = () => {
+const getUploadIconColor = () => {
   if (isFailed.value) return 'error';
   if (isCompleted.value) return 'success';
   if (isSkipped.value) return 'info';
@@ -336,7 +336,7 @@ const getErrorMessage = () => {
 };
 
 // Utility functions
-const formatFileSize = (bytes) => {
+const formatUploadSize = (bytes) => {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];

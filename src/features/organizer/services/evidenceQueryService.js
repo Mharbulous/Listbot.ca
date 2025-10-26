@@ -173,7 +173,11 @@ export class EvidenceQueryService {
         this.matterId,
         'evidence'
       );
-      const q = query(evidenceRef, where('isProcessed', '==', false), orderBy('fileCreated', 'asc'));
+      const q = query(
+        evidenceRef,
+        where('isProcessed', '==', false),
+        orderBy('fileCreated', 'asc')
+      );
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
 
@@ -245,7 +249,7 @@ export class EvidenceQueryService {
         processed: 0,
         unprocessed: 0,
         byStage: { uploaded: 0, splitting: 0, merging: 0, complete: 0 },
-        totalFileSize: 0,
+        totalUploadsize: 0,
         taggedDocuments: 0,
       };
 

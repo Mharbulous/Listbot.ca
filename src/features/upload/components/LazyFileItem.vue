@@ -11,7 +11,7 @@
             size="48"
             class="cursor-help"
           >
-            <v-icon :icon="getFileIcon(file.sourceType)" size="24" />
+            <v-icon :icon="getUploadIcon(file.sourceType)" size="24" />
           </v-avatar>
         </template>
         {{ getHashDisplay(file.id || file.sourceName) }}
@@ -34,7 +34,7 @@
 
     <v-list-item-subtitle>
       <div class="d-flex align-center text-caption text-grey-darken-1">
-        <span>{{ formatFileSize(file.sourceSize) }}</span>
+        <span>{{ formatUploadSize(file.sourceSize) }}</span>
         <v-divider vertical class="mx-2" />
         <span>{{ formatDate(file.sourceModifiedDate) }}</span>
         <v-divider vertical class="mx-2" />
@@ -150,7 +150,7 @@ const props = defineProps({
 const { onTooltipHover, onTooltipLeave, getHashDisplay } = useLazyHashTooltip();
 
 // File icon mapping
-const getFileIcon = (mimeType) => {
+const getUploadIcon = (mimeType) => {
   if (!mimeType) return 'mdi-file-outline';
 
   const iconMap = {
@@ -188,7 +188,7 @@ const getFileIcon = (mimeType) => {
 };
 
 // File size formatting
-const formatFileSize = (bytes) => {
+const formatUploadSize = (bytes) => {
   if (bytes === 0) return '0 B';
 
   const k = 1024;

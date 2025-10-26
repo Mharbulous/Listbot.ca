@@ -135,7 +135,7 @@
 
                 <!-- File size -->
                 <div class="metadata-item-simple">
-                  <span class="metadata-value">{{ formatFileSize(evidence.fileSize) }}</span>
+                  <span class="metadata-value">{{ formatUploadSize(evidence.fileSize) }}</span>
                 </div>
 
                 <!-- MIME type -->
@@ -371,7 +371,7 @@ const currentDocumentIndex = computed(() => {
 });
 
 // Format file size helper
-const formatFileSize = (bytes) => {
+const formatUploadSize = (bytes) => {
   if (!bytes) return 'Unknown';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

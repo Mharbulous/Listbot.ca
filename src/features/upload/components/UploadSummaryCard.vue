@@ -44,7 +44,7 @@
 
         <v-col cols="6" md="3">
           <div class="text-center">
-            <div class="text-h5 text-primary">{{ totalFiles }}</div>
+            <div class="text-h5 text-primary">{{ totalUploads }}</div>
             <div class="text-caption text-grey-darken-1">Total</div>
           </div>
         </v-col>
@@ -171,7 +171,7 @@ const props = defineProps({
 defineEmits(['retry-failed', 'view-details', 'clear-queue']);
 
 // Computed properties
-const totalFiles = computed(
+const totalUploads = computed(
   () => props.results.successful.length + props.results.failed.length + props.results.skipped.length
 );
 
@@ -249,9 +249,9 @@ const getSubtitle = () => {
   const successful = props.results.successful.length + props.results.skipped.length;
 
   if (hasErrors.value) {
-    return `${successful} of ${totalFiles.value} files uploaded successfully`;
+    return `${successful} of ${totalUploads.value} files uploaded successfully`;
   } else {
-    return `All ${totalFiles.value} files processed successfully`;
+    return `All ${totalUploads.value} files processed successfully`;
   }
 };
 

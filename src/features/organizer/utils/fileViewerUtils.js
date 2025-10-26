@@ -3,10 +3,10 @@
  * General utilities for file viewer functionality
  */
 
-import { formatFileSize, formatDate } from './fileUtils.js';
+import { formatUploadSize, formatDate } from './fileUtils.js';
 
 // Re-export utility functions for compatibility
-export { formatFileSize, formatDate };
+export { formatUploadSize, formatDate };
 
 /**
  * Get file type from filename or MIME type
@@ -55,7 +55,7 @@ export function getFileType(filename, mimeType = '') {
  * @param {string} fileType - File type
  * @returns {string} Icon class name
  */
-export function getFileIcon(fileType) {
+export function getUploadIcon(fileType) {
   const icons = {
     image: 'mdi-file-image',
     document: 'mdi-file-document',

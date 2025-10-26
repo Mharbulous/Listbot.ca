@@ -50,7 +50,7 @@ function getFilePath(file) {
 
 // Main source file processing logic
 async function processFiles(files, batchId) {
-  const totalFiles = files.length;
+  const totalUploads = files.length;
   let processedCount = 0;
   let lastProgressUpdate = 0;
 
@@ -64,8 +64,8 @@ async function processFiles(files, batchId) {
         batchId,
         progress: {
           current: processedCount,
-          total: totalFiles,
-          percentage: Math.round((processedCount / totalFiles) * 100),
+          total: totalUploads,
+          percentage: Math.round((processedCount / totalUploads) * 100),
         },
       });
       lastProgressUpdate = now;

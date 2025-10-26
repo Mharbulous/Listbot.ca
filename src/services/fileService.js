@@ -74,7 +74,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           fileHash: fileHash,
 
           // File properties that exist in evidence documents
-          size: data.fileSize ? formatFileSize(data.fileSize) : 'ERROR: Missing file size',
+          size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
           date: formatDate(data.fileCreated),
 
           // Processing status
@@ -119,7 +119,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
  * @param {number} bytes - Size in bytes
  * @returns {string} Formatted size (e.g., "1.5MB")
  */
-function formatFileSize(bytes) {
+function formatUploadSize(bytes) {
   if (bytes === 0) return '0B';
   if (bytes < 1024) return bytes + 'B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';

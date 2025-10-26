@@ -200,7 +200,7 @@ const mainFolderDisplayData = computed(() => {
 
   return {
     ...props.mainFolderAnalysis,
-    totalFiles: props.totalDirectoryEntryCount, // Use File Explorer count for display
+    totalUploads: props.totalDirectoryEntryCount, // Use File Explorer count for display
   };
 });
 
@@ -209,7 +209,7 @@ const allFilesDisplayData = computed(() => {
 
   return {
     ...props.allFilesAnalysis,
-    totalFiles: props.totalDirectoryEntryCount, // Use File Explorer count for display
+    totalUploads: props.totalDirectoryEntryCount, // Use File Explorer count for display
   };
 });
 

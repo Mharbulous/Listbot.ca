@@ -68,10 +68,10 @@
 import { computed } from 'vue';
 import TagSelector from './TagSelector.vue';
 import {
-  getFileExtension,
-  getFileIcon,
-  getFileIconColor,
-  formatFileSize,
+  getUploadExtension,
+  getUploadIcon,
+  getUploadIconColor,
+  formatUploadSize,
   formatDate,
 } from '../utils/fileUtils.js';
 
@@ -95,10 +95,10 @@ const props = defineProps({
 defineEmits(['tagsUpdated', 'download', 'rename', 'viewDetails']);
 
 // Computed properties using utility functions
-const fileExtension = computed(() => getFileExtension(props.evidence.displayName));
-const fileIcon = computed(() => getFileIcon(props.evidence.displayName));
-const fileIconColor = computed(() => getFileIconColor(props.evidence.displayName));
-const formattedFileSize = computed(() => formatFileSize(props.evidence.fileSize));
+const fileExtension = computed(() => getUploadExtension(props.evidence.displayName));
+const fileIcon = computed(() => getUploadIcon(props.evidence.displayName));
+const fileIconColor = computed(() => getUploadIconColor(props.evidence.displayName));
+const formattedFileSize = computed(() => formatUploadSize(props.evidence.fileSize));
 const formattedDate = computed(() => formatDate(props.evidence.createdAt));
 </script>
 

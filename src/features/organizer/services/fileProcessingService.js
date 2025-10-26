@@ -106,7 +106,7 @@ export class FileProcessingService {
    * @param {Object} evidence - Evidence document
    * @returns {string} - File extension
    */
-  getFileExtension(evidence) {
+  getUploadExtension(evidence) {
     const displayName = evidence.displayName || '';
     return displayName.split('.').pop()?.toLowerCase() || 'pdf';
   }

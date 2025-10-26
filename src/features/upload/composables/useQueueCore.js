@@ -123,15 +123,15 @@ export function useQueueCore() {
     }
     // Track progress for main thread processing
     let processedCount = 0;
-    const totalFiles = processableFiles.length; // Use processable files count for progress
+    const totalUploads = processableFiles.length; // Use processable files count for progress
 
     const sendProgress = () => {
       if (onProgress) {
         onProgress({
           current: processedCount,
-          total: totalFiles,
-          percentage: Math.round((processedCount / totalFiles) * 100),
-          currentFile: processedCount < totalFiles ? processableFiles[processedCount]?.name : '',
+          total: totalUploads,
+          percentage: Math.round((processedCount / totalUploads) * 100),
+          currentFile: processedCount < totalUploads ? processableFiles[processedCount]?.name : '',
         });
       }
     };
