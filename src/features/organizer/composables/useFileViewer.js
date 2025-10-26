@@ -10,7 +10,7 @@ import { ref, computed } from 'vue';
  * not source files from the user's device (tier 2).
  */
 export function useFileViewer() {
-  const files = ref([]); // Array of storage file references / evidence records
+  const uploads = ref([]); // Array of storage file references / evidence records
   const loading = ref(false);
   const error = ref(null);
 
@@ -29,10 +29,10 @@ export function useFileViewer() {
   };
 
   // Total count of storage files / evidence records
-  const totalUploads = computed(() => files.value.length);
+  const totalUploads = computed(() => uploads.value.length);
 
   return {
-    files,
+    files: uploads,
     loading,
     error,
     totalUploads,

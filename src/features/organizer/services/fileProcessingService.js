@@ -30,8 +30,8 @@ export class FileProcessingService {
       }
 
       // Get file extension from displayName (preserve original case to match storage)
-      const displayName = evidence.displayName || '';
-      const extension = displayName.split('.').pop() || 'pdf';
+      const uploadFileName = evidence.displayName || '';
+      const extension = uploadFileName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
       const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
@@ -84,8 +84,8 @@ export class FileProcessingService {
         throw new Error('No file hash found in evidence document ID');
       }
 
-      const displayName = evidence.displayName || '';
-      const extension = displayName.split('.').pop() || 'pdf';
+      const uploadFileName = evidence.displayName || '';
+      const extension = uploadFileName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
       const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
@@ -107,8 +107,8 @@ export class FileProcessingService {
    * @returns {string} - File extension
    */
   getUploadExtension(evidence) {
-    const displayName = evidence.displayName || '';
-    return displayName.split('.').pop()?.toLowerCase() || 'pdf';
+    const uploadFileName = evidence.displayName || '';
+    return uploadFileName.split('.').pop()?.toLowerCase() || 'pdf';
   }
 
   /**
@@ -164,8 +164,8 @@ export class FileProcessingService {
       }
 
       // Get file extension from displayName
-      const displayName = evidence.displayName || '';
-      const originalExtension = displayName.split('.').pop() || 'pdf';
+      const uploadFileName = evidence.displayName || '';
+      const originalExtension = uploadFileName.split('.').pop() || 'pdf';
 
       // Use lowercase extension (UploadService standard)
       // Note: All files now use lowercase extensions after re-upload standardization
