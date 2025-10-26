@@ -50,7 +50,7 @@
 - **Evidence Collection**: `/firms/{firmId}/evidence/{evidenceId}` - Document metadata and references
 - **Tag Subcollections**: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
 - **Categories**: `/firms/{firmId}/categories/{categoryId}` - User-defined category structures with colors
-- **Display References**: Evidence documents point to sourceMetadata via `displayCopy.metadataHash`
+- **Display References**: Evidence documents point to sourceMetadata via `sourceID.metadataHash`
 
 ## Core Goal
 
@@ -65,7 +65,7 @@
 - **Evidence Collection**: `/firms/{firmId}/evidence/{evidenceId}` - Document metadata and references
 - **Tag Subcollections**: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` - Category-based tags with confidence/approval workflow
 - **Categories**: `/firms/{firmId}/categories/{categoryId}` - User-defined category structures with colors
-- **Display References**: Evidence documents point to sourceMetadata via `displayCopy.metadataHash`
+- **Display References**: Evidence documents point to sourceMetadata via `sourceID.metadataHash`
 
 ## Research Documentation
 

@@ -43,7 +43,7 @@ export class EvidenceService {
       // Create evidence document with simplified structure
       const evidenceData = {
         // Display configuration (simplified to just metadataHash string)
-        displayCopy: metadataHash,
+        sourceID: metadataHash,
 
         // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
@@ -100,8 +100,8 @@ export class EvidenceService {
         evidenceIds.push(fileHash);
 
         const evidenceData = {
-          // Simplified displayCopy (just metadataHash string)
-          displayCopy: uploadMetadata.metadataHash || 'temp-hash',
+          // Simplified sourceID (just metadataHash string)
+          sourceID: uploadMetadata.metadataHash || 'temp-hash',
 
           fileSize: uploadMetadata.size || 0,
 

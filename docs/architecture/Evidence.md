@@ -19,7 +19,7 @@
   // Document ID = fileHash (BLAKE3, 32 chars) - NOT A STORED FIELD
 
   // Display Configuration - REQUIRED
-  displayCopy: string,           // Metadata hash - references sourceMetadata collection
+  sourceID: string,           // Metadata hash - references sourceMetadata collection
 
   // File Properties - REQUIRED
   fileSize: number,              // Bytes, must be > 0
@@ -48,7 +48,7 @@
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence document
 - **NEVER** manually set document ID - use the fileHash from upload process
 
-**displayCopy:**
+**sourceID:**
 
 - **ALWAYS** verify hash exists in sourceMetadata collection
 - **MUST** be a valid metadataHash (xxHash, 16 characters)
@@ -186,11 +186,11 @@ match /firms/{firmId}/matters/general/evidence/{fileHash} {
 
 // Validation Functions
 function validateEvidenceCreate(data, fileHash) {
-  return data.keys().hasAll(['displayCopy', 'fileSize',
+  return data.keys().hasAll(['sourceID', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
                               'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
          fileHash.size() == 32 &&  // Document ID must be valid BLAKE3 hash
-         data.displayCopy.size() == 16 &&  // Must be valid xxHash metadata hash
+         data.sourceID.size() == 16 &&  // Must be valid xxHash metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&

@@ -22,7 +22,7 @@ This document outlines the incremental implementation phases for the Organizer f
 **Implementation Scope**:
 
 - ✅ New "Organizer" view in navigation - Added to router and sidebar
-- ✅ File list component using Evidence collection with displayCopy references - Card-based layout
+- ✅ File list component using Evidence collection with sourceID references - Card-based layout
 - ✅ Tag input interface for human tags (tagsByHuman array) - TagInput.vue with keyboard shortcuts
 - ✅ Evidence documents reference sourceMetadata for display names - Store fetches and caches display info
 - ✅ Basic text-based filtering combining tagsByAI and tagsByHuman - Real-time search in store
@@ -30,9 +30,9 @@ This document outlines the incremental implementation phases for the Organizer f
 **User Flow** (Implemented):
 
 1. ✅ User navigates to Organizer view
-2. ✅ Sees list of evidence documents with display names from displayCopy references
+2. ✅ Sees list of evidence documents with display names from sourceID references
 3. ✅ Clicks on a file to add human tags (tagsByHuman array)
-4. ❌ ~~Can optionally change display name via dropdown~~ **REMOVED:** Single displayCopy sufficient for v1.0
+4. ❌ ~~Can optionally change display name via dropdown~~ **REMOVED:** Single sourceID sufficient for v1.0
 5. ✅ Can filter file list by typing tag names (searches both AI and human tags)
 
 **Architecture Implemented**:

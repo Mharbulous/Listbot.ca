@@ -312,7 +312,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
             // Fetch display information from referenced metadata
             const displayInfo = await getDisplayInfo(
-              evidenceData.displayCopy,
+              evidenceData.sourceID,
               firmId,
               docSnapshot.id,
               matterId
@@ -442,7 +442,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Re-fetch display info to ensure cache is fresh
       const evidence = evidenceList.value[evidenceIndex];
-      const displayInfo = await getDisplayInfo(evidence.displayCopy, firmId, evidenceId, matterId);
+      const displayInfo = await getDisplayInfo(evidence.sourceID, firmId, evidenceId, matterId);
 
       // Update the evidence with fresh display info
       evidenceList.value[evidenceIndex] = {
@@ -514,7 +514,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    * When the same storage file (fileHash) has multiple source metadata records from different uploads,
    * this allows selecting which source metadata to display (filename, modified date, etc.)
    * @param {string} evidenceId - Evidence document ID (storage file hash)
-   * @param {string} metadataHash - displayCopy (metadataHash) to switch to
+   * @param {string} metadataHash - sourceID (metadataHash) to switch to
    */
   const selectMetadata = (evidenceId, metadataHash) => {
     try {
@@ -536,7 +536,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       }
 
       // Find the requested metadata option
-      const option = evidence.metadataOptions.find((opt) => opt.displayCopy === metadataHash);
+      const option = evidence.metadataOptions.find((opt) => opt.sourceID === metadataHash);
       if (!option) {
         console.warn(
           `[OrganizerCore] Metadata ${metadataHash} not found in options for evidence ${evidenceId}`
@@ -550,7 +550,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         displayName: option.displayName,
         createdAt: option.createdAt,
         selectedMetadataHash: metadataHash,
-        displayCopy: metadataHash, // Update displayCopy to reflect selection
+        sourceID: metadataHash, // Update sourceID to reflect selection
       };
 
       // Track the selection in state

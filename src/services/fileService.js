@@ -17,11 +17,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
-    const q = query(
-      evidenceRef,
-      orderBy('updatedAt', 'desc'),
-      limit(maxResults)
-    );
+    const q = query(evidenceRef, orderBy('updatedAt', 'desc'), limit(maxResults));
 
     // Execute the query
     const querySnapshot = await getDocs(q);
@@ -32,14 +28,14 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
       const fileHash = docSnapshot.id;
-      const displayCopyId = data.displayCopy;
+      const sourceIDId = data.sourceID;
 
       // Create a promise to fetch the sourceMetadata
       const filePromise = (async () => {
         let sourceFileName = 'ERROR: Missing metadata';
 
         // Try to fetch the source filename from sourceMetadata subcollection
-        if (displayCopyId) {
+        if (sourceIDId) {
           try {
             const sourceMetadataRef = doc(
               db,
@@ -50,7 +46,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
               'evidence',
               fileHash,
               'sourceMetadata',
-              displayCopyId
+              sourceIDId
             );
             const sourceMetadataDoc = await getDoc(sourceMetadataRef);
 
@@ -58,7 +54,9 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
             } else {
-              console.error(`[Cloud Table] sourceMetadata not found for ${fileHash}, displayCopy: ${displayCopyId}`);
+              console.error(
+                `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
+              );
               sourceFileName = 'ERROR: Metadata not found';
             }
           } catch (error) {
@@ -66,8 +64,8 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
             sourceFileName = 'ERROR: Fetch failed';
           }
         } else {
-          console.error(`[Cloud Table] No displayCopy ID for evidence document: ${fileHash}`);
-          sourceFileName = 'ERROR: No displayCopy ID';
+          console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
+          sourceFileName = 'ERROR: No sourceID ID';
         }
 
         // Map evidence document to table row format
@@ -91,12 +89,15 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Placeholder fields (to be enhanced later)
           fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
           privilege: 'ERROR: Privilege not available',
-          description: data.tagCount !== undefined ? `${data.tagCount} tags` : 'ERROR: Tag count not available',
+          description:
+            data.tagCount !== undefined
+              ? `${data.tagCount} tags`
+              : 'ERROR: Tag count not available',
           documentType: getDocumentTypeFromStage(data.processingStage),
           author: 'ERROR: Author not available',
           custodian: 'ERROR: Custodian not available',
           createdDate: formatDate(data.updatedAt),
-          modifiedDate: formatDate(data.updatedAt)
+          modifiedDate: formatDate(data.updatedAt),
         };
       })();
 
@@ -107,7 +108,6 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
     const files = await Promise.all(filePromises);
 
     return files;
-
   } catch (error) {
     console.error('[Cloud Table] Firestore query failed:', error);
     throw error;
@@ -161,10 +161,10 @@ function getStatusLabel(stage) {
   if (!stage) return 'ERROR: Status not available';
 
   const stageMap = {
-    'uploaded': 'Active',
-    'splitting': 'Processing',
-    'merging': 'Processing',
-    'complete': 'Final'
+    uploaded: 'Active',
+    splitting: 'Processing',
+    merging: 'Processing',
+    complete: 'Final',
   };
   return stageMap[stage] || 'ERROR: Unknown status';
 }

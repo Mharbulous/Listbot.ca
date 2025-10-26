@@ -30,7 +30,7 @@ firms/{firmId}/evidence/{docId}
 │   fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     fileTypes: '.pdf'
 │ }
-├── displayCopy: 'xyz789abc123def456789abc123def456789abc123def456' // Refers to a metadata hash
+├── sourceID: 'xyz789abc123def456789abc123def456789abc123def456' // Refers to a metadata hash
 ├── fileSize: 2048576
 ├── isProcessed: true
 ├── hasAllPages: true
@@ -268,7 +268,7 @@ With all data deleted, we can implement the optimal structure directly:
   },
 
   // Display metadata reference
-  displayCopy: {
+  sourceID: {
     metadataHash: 'meta456def789abc123456789abc123456789abc123456789abc',
     folderPath: '/Legal/Contracts/2025/ClientABC'
   },
