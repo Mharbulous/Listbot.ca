@@ -159,10 +159,10 @@
                 :class="
                   sortedData[virtualItem.index].fileType.startsWith('ERROR:')
                     ? 'error-text'
-                    : ['badge', getBadgeClass(sortedData[virtualItem.index].fileType)]
+                    : ['badge', getBadgeClass(formatMimeType(sortedData[virtualItem.index].fileType))]
                 "
               >
-                {{ sortedData[virtualItem.index].fileType }}
+                {{ formatMimeType(sortedData[virtualItem.index].fileType) }}
               </span>
 
               <!-- File Name -->
@@ -274,6 +274,7 @@ import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences';
 import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
+import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 
 // Initialize performance monitor
@@ -303,7 +304,7 @@ const NON_SYSTEM_COLUMNS = [
   { key: 'fileName', label: 'Source File Name', defaultWidth: 300 },
   { key: 'size', label: 'File Size', defaultWidth: 100 },
   { key: 'date', label: 'Upload Date', defaultWidth: 200 },
-  { key: 'fileType', label: 'File Type', defaultWidth: 200 },
+  { key: 'fileType', label: 'File Format', defaultWidth: 200 },
   { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
   { key: 'alternateSources', label: 'Alternate Sources', defaultWidth: 180 },
 ];
