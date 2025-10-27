@@ -14,7 +14,13 @@
     </div>
 
     <!-- Scrollable container fills viewport -->
-    <div v-else ref="scrollContainer" class="scroll-container" @dragover="onDragOver" @drop="onDrop">
+    <div
+      v-else
+      ref="scrollContainer"
+      class="scroll-container"
+      @dragover="onDragOver"
+      @drop="onDrop"
+    >
       <!-- Sticky Table Header -->
       <div class="table-mockup-header">
         <!-- Column Selector Button (always at far left) -->
@@ -31,10 +37,10 @@
           :key="column.key"
           class="header-cell"
           :class="{
-            'dragging': isColumnDragging(column.key),
+            dragging: isColumnDragging(column.key),
             'drag-gap': isDragGap(column.key),
             'sorted-asc': isSorted(column.key) && sortDirection === 'asc',
-            'sorted-desc': isSorted(column.key) && sortDirection === 'desc'
+            'sorted-desc': isSorted(column.key) && sortDirection === 'desc',
           }"
           :style="{ width: columnWidths[column.key] + 'px' }"
           :data-column-key="column.key"
@@ -93,11 +99,7 @@
           @focusout="handleFocusOut"
         >
           <div class="popover-header">Show/Hide Columns</div>
-          <label
-            v-for="column in orderedColumns"
-            :key="column.key"
-            class="column-option"
-          >
+          <label v-for="column in orderedColumns" :key="column.key" class="column-option">
             <input
               type="checkbox"
               :checked="isColumnVisible(column.key)"
@@ -118,7 +120,7 @@
           class="virtual-container"
           :style="{
             height: virtualTotalSize + 'px',
-            position: 'relative'
+            position: 'relative',
           }"
         >
           <!-- Virtual rows (only visible + overscan rendered) -->
@@ -133,7 +135,7 @@
               left: 0,
               height: virtualItem.size + 'px',
               transform: `translateY(${virtualItem.start}px)`,
-              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white'
+              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
             }"
           >
             <!-- Spacer cell to align with Cols button header -->
@@ -146,63 +148,103 @@
               class="row-cell"
               :class="{
                 'drag-gap': isDragGap(column.key),
-                'emoji-cell': sortedData[virtualItem.index][column.key] === '🤖'
+                'emoji-cell': sortedData[virtualItem.index][column.key] === '🤖',
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
             >
               <!-- File Type -->
-              <span v-if="column.key === 'fileType'"
-                    :class="sortedData[virtualItem.index].fileType.startsWith('ERROR:')
-                      ? 'error-text'
-                      : ['badge', getBadgeClass(sortedData[virtualItem.index].fileType)]">
+              <span
+                v-if="column.key === 'fileType'"
+                :class="
+                  sortedData[virtualItem.index].fileType.startsWith('ERROR:')
+                    ? 'error-text'
+                    : ['badge', getBadgeClass(sortedData[virtualItem.index].fileType)]
+                "
+              >
                 {{ sortedData[virtualItem.index].fileType }}
               </span>
 
               <!-- File Name -->
-              <span v-else-if="column.key === 'fileName'" :class="{ 'error-text': sortedData[virtualItem.index].fileName.startsWith('ERROR:') }">
+              <span
+                v-else-if="column.key === 'fileName'"
+                :class="{
+                  'error-text': sortedData[virtualItem.index].fileName.startsWith('ERROR:'),
+                }"
+              >
                 {{ sortedData[virtualItem.index].fileName }}
               </span>
 
               <!-- Size -->
-              <span v-else-if="column.key === 'size'" :class="{ 'error-text': sortedData[virtualItem.index].size.startsWith('ERROR:') }">
+              <span
+                v-else-if="column.key === 'size'"
+                :class="{ 'error-text': sortedData[virtualItem.index].size.startsWith('ERROR:') }"
+              >
                 {{ sortedData[virtualItem.index].size }}
               </span>
 
               <!-- Privilege -->
-              <span v-else-if="column.key === 'privilege'"
-                    :class="sortedData[virtualItem.index].privilege.startsWith('ERROR:')
-                      ? 'error-text'
-                      : 'badge badge-privilege'">
+              <span
+                v-else-if="column.key === 'privilege'"
+                :class="
+                  sortedData[virtualItem.index].privilege.startsWith('ERROR:')
+                    ? 'error-text'
+                    : 'badge badge-privilege'
+                "
+              >
                 {{ sortedData[virtualItem.index].privilege }}
               </span>
 
               <!-- Description -->
-              <span v-else-if="column.key === 'description'" :class="{ 'error-text': sortedData[virtualItem.index].description.startsWith('ERROR:') }">
+              <span
+                v-else-if="column.key === 'description'"
+                :class="{
+                  'error-text': sortedData[virtualItem.index].description.startsWith('ERROR:'),
+                }"
+              >
                 {{ sortedData[virtualItem.index].description }}
               </span>
 
               <!-- Author -->
-              <span v-else-if="column.key === 'author'" :class="{ 'error-text': sortedData[virtualItem.index].author.startsWith('ERROR:') }">
+              <span
+                v-else-if="column.key === 'author'"
+                :class="{ 'error-text': sortedData[virtualItem.index].author.startsWith('ERROR:') }"
+              >
                 {{ sortedData[virtualItem.index].author }}
               </span>
 
               <!-- Custodian -->
-              <span v-else-if="column.key === 'custodian'" :class="{ 'error-text': sortedData[virtualItem.index].custodian.startsWith('ERROR:') }">
+              <span
+                v-else-if="column.key === 'custodian'"
+                :class="{
+                  'error-text': sortedData[virtualItem.index].custodian.startsWith('ERROR:'),
+                }"
+              >
                 {{ sortedData[virtualItem.index].custodian }}
               </span>
 
               <!-- Timestamp columns (Upload Date, Source Modified Date, etc.) -->
-              <span v-else-if="isTimestampColumn(column.key)" :class="{ 'error-text': getCellValue(sortedData[virtualItem.index], column.key).startsWith('ERROR:') }">
+              <span
+                v-else-if="isTimestampColumn(column.key)"
+                :class="{
+                  'error-text': getCellValue(sortedData[virtualItem.index], column.key).startsWith(
+                    'ERROR:'
+                  ),
+                }"
+              >
                 {{ getCellValue(sortedData[virtualItem.index], column.key) }}
               </span>
 
-              <!-- Status -->
-              <span v-else-if="column.key === 'status'"
-                    :class="sortedData[virtualItem.index].status.startsWith('ERROR:')
-                      ? 'error-text'
-                      : 'badge badge-status'">
-                {{ sortedData[virtualItem.index].status }}
+              <!-- Alternate Sources -->
+              <span
+                v-else-if="column.key === 'alternateSources'"
+                :class="
+                  sortedData[virtualItem.index].alternateSources === 'No source information'
+                    ? 'error-text'
+                    : 'badge badge-status'
+                "
+              >
+                {{ sortedData[virtualItem.index].alternateSources }}
               </span>
             </div>
           </div>
@@ -213,7 +255,6 @@
       <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
         <span>Total Documents: {{ sortedData.length }}</span>
       </div>
-
     </div>
   </div>
 </template>
@@ -264,7 +305,7 @@ const NON_SYSTEM_COLUMNS = [
   { key: 'date', label: 'Upload Date', defaultWidth: 200 },
   { key: 'fileType', label: 'File Type', defaultWidth: 200 },
   { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
-  { key: 'status', label: 'Status', defaultWidth: 120 }
+  { key: 'alternateSources', label: 'Alternate Sources', defaultWidth: 180 },
 ];
 
 // Columns that contain Firestore timestamps and should be formatted with date+time
@@ -276,12 +317,11 @@ const allColumns = computed(() => {
   const columns = [...NON_SYSTEM_COLUMNS];
 
   // Add system category columns (alphabetically sorted by name)
-  const systemCategoryColumns = systemCategories.value
-    .map(category => ({
-      key: category.id,
-      label: category.name,
-      defaultWidth: 180 // Default width for system category columns
-    }));
+  const systemCategoryColumns = systemCategories.value.map((category) => ({
+    key: category.id,
+    label: category.name,
+    defaultWidth: 180, // Default width for system category columns
+  }));
 
   // Combine: non-system first, then system categories
   return [...columns, ...systemCategoryColumns];
@@ -309,25 +349,15 @@ const {
   onDrop,
   onDragEnd,
   isColumnDragging,
-  isDragGap
+  isDragGap,
 } = useColumnDragDrop(allColumns.value);
 
 // Use column visibility composable
-const {
-  isColumnVisible,
-  toggleColumnVisibility,
-  resetToDefaults
-} = useColumnVisibility();
+const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
 
 // Use column sort composable
-const {
-  sortColumn,
-  sortDirection,
-  sortedData,
-  toggleSort,
-  getSortClass,
-  isSorted
-} = useColumnSort(mockData);
+const { sortColumn, sortDirection, sortedData, toggleSort, getSortClass, isSorted } =
+  useColumnSort(mockData);
 
 // Initialize virtual table (MUST be called during setup, not in onMounted)
 // scrollContainer.value is null initially - that's OK, virtualizer handles it
@@ -338,18 +368,18 @@ const {
   virtualTotalSize,
   scrollOffset,
   virtualRange,
-  scrollMetrics
+  scrollMetrics,
 } = useVirtualTable({
   data: sortedData,
   scrollContainer,
   estimateSize: 48,
   overscan: 5,
-  enableSmoothScroll: true
+  enableSmoothScroll: true,
 });
 
 // Compute visible columns by filtering ordered columns
 const visibleColumns = computed(() => {
-  return orderedColumns.value.filter(col => isColumnVisible(col.key));
+  return orderedColumns.value.filter((col) => isColumnVisible(col.key));
 });
 
 // Column selector cell width constant
@@ -490,9 +520,9 @@ onMounted(async () => {
       const q = query(systemCategoriesRef, orderBy('name', 'asc'));
       const querySnapshot = await getDocs(q);
 
-      systemCategories.value = querySnapshot.docs.map(doc => ({
+      systemCategories.value = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       console.log(`[Cloud Table] Loaded ${systemCategories.value.length} system categories`);
@@ -512,7 +542,6 @@ onMounted(async () => {
     fetchDuration = fetchEndTime - fetchStartTime;
 
     isLoading.value = false;
-
   } catch (err) {
     console.error('[Cloud Table] Error fetching files:', err);
     error.value = `Failed to load files: ${err.message}`;

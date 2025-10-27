@@ -129,6 +129,35 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
         // Fetch all system category tags for this evidence document
         const systemTags = await fetchSystemTags(firmId, matterId, fileHash, systemCategories);
 
+        // Count sourceMetadata documents to determine if alternate sources exist
+        let alternateSources = 'No source information';
+        try {
+          const sourceMetadataCollectionRef = collection(
+            db,
+            'firms',
+            firmId,
+            'matters',
+            matterId,
+            'evidence',
+            fileHash,
+            'sourceMetadata'
+          );
+          const sourceMetadataSnapshot = await getDocs(sourceMetadataCollectionRef);
+          const sourceMetadataCount = sourceMetadataSnapshot.size;
+
+          if (sourceMetadataCount === 0) {
+            console.warn('[Cloud Table] Missing source metadata for evidence:', fileHash);
+            alternateSources = 'No source information';
+          } else if (sourceMetadataCount === 1) {
+            alternateSources = 'FALSE';
+          } else {
+            alternateSources = 'TRUE';
+          }
+        } catch (error) {
+          console.error(`[Cloud Table] Failed to count sourceMetadata for ${fileHash}:`, error);
+          alternateSources = 'No source information';
+        }
+
         // Map evidence document to table row format
         return {
           id: fileHash, // fileHash (BLAKE3)
@@ -139,8 +168,8 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
           date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
           fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
 
-          // Processing status
-          status: getStatusLabel(data.processingStage),
+          // Alternate sources indicator
+          alternateSources: alternateSources,
 
           // Tag information
           tagCount: data.tagCount || 0,
