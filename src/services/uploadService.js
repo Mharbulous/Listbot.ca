@@ -86,8 +86,9 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
       // Create a promise to fetch the sourceMetadata
       const filePromise = (async () => {
         let sourceFileName = 'ERROR: Missing metadata';
+        let sourceLastModified = null;
 
-        // Try to fetch the source filename from sourceMetadata subcollection
+        // Try to fetch the source filename and last modified date from sourceMetadata subcollection
         if (sourceIDId) {
           try {
             const sourceMetadataRef = doc(
@@ -106,19 +107,23 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
             if (sourceMetadataDoc.exists()) {
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
+              sourceLastModified = sourceMetadata.sourceLastModified || null;
             } else {
               console.error(
                 `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
               );
               sourceFileName = 'ERROR: Metadata not found';
+              sourceLastModified = null;
             }
           } catch (error) {
             console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
             sourceFileName = 'ERROR: Fetch failed';
+            sourceLastModified = null;
           }
         } else {
           console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
           sourceFileName = 'ERROR: No sourceID ID';
+          sourceLastModified = null;
         }
 
         // Fetch all system category tags for this evidence document
@@ -144,7 +149,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
 
           // Other fields
           documentType: getDocumentTypeFromStage(data.processingStage),
-          modifiedDate: formatDate(data.uploadDate),
+          modifiedDate: sourceLastModified ? formatDate(sourceLastModified) : 'ERROR: Modified date not available',
 
           // System category tags from Firestore tags subcollection (dynamic)
           ...systemTags,
