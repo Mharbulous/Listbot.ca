@@ -144,7 +144,10 @@
               v-for="column in visibleColumns"
               :key="column.key"
               class="row-cell"
-              :class="{ 'drag-gap': isDragGap(column.key) }"
+              :class="{
+                'drag-gap': isDragGap(column.key),
+                'emoji-cell': sortedData[virtualItem.index][column.key] === '🤖'
+              }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
             >

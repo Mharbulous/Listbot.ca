@@ -31,8 +31,11 @@ The application distinguishes between related but distinct concepts in the file 
    - Copied from a mix of **Batesed** files, **Redacted** files
 
 8. **Storage** - Refers in general to all digital files saved in Firebase Storage, specifically: **Upload**, **Batesed**, **Page**, **Redacted**, and **Production**
+
    - Does not have its own subfolder.
    - Useful for describing functions, variables or constants that apply to all multiple file types; e.g. **Upload**, **Batesed**, **Page**, **Redacted**, and **Production**
+
+9. **Document** - Refers in general to all versions of evidence, from **Original** to **Storage**, for situations where we are talking about all versions of the file. For example, 'Document Description' would be used to refer to text that is a description of the **Original** and of the **Source** and the **Storage** files in Firebase storage.
 
 ### Example Flow
 

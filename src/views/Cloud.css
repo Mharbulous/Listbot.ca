@@ -589,3 +589,8 @@
 }
 
 /* Header label text styling now applied directly to .header-label-button (no nested span) */
+
+/* Emoji Centering - for system category tags that don't exist */
+.emoji-cell {
+  justify-content: center;
+}

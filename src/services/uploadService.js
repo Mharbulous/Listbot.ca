@@ -7,6 +7,65 @@ import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebas
 import { db } from './firebase';
 
 /**
+ * Configuration for system category tags
+ * Maps column keys to their Firestore tag document IDs and field names
+ */
+const SYSTEM_TAG_CONFIG = {
+  description: { tagId: 'DocumentDescription', field: 'textArea' },
+  author: { tagId: 'Author', field: 'text' },
+  privilege: { tagId: 'Privilege', field: 'value' },
+  fileType: { tagId: 'FileType', field: 'value' },
+  custodian: { tagId: 'Custodian', field: 'text' },
+};
+
+/**
+ * Fetch all system category tags for a given evidence document
+ * @param {string} firmId - The firm ID
+ * @param {string} matterId - The matter ID
+ * @param {string} fileHash - The evidence document ID (BLAKE3 hash)
+ * @returns {Promise<Object>} Object mapping column keys to tag values (string or 🤖 emoji)
+ */
+async function fetchSystemTags(firmId, matterId, fileHash) {
+  // Create promises to fetch all system tags in parallel
+  const tagPromises = Object.entries(SYSTEM_TAG_CONFIG).map(async ([columnKey, config]) => {
+    try {
+      const tagRef = doc(
+        db,
+        'firms',
+        firmId,
+        'matters',
+        matterId,
+        'evidence',
+        fileHash,
+        'tags',
+        config.tagId
+      );
+      const tagDoc = await getDoc(tagRef);
+
+      if (tagDoc.exists()) {
+        const tagData = tagDoc.data();
+        const value = tagData[config.field];
+        return [columnKey, value || '🤖'];
+      } else {
+        return [columnKey, '🤖'];
+      }
+    } catch (error) {
+      console.error(
+        `[Cloud Table] Failed to fetch ${config.tagId} tag for ${fileHash}:`,
+        error
+      );
+      return [columnKey, '🤖'];
+    }
+  });
+
+  // Wait for all tag fetches to complete
+  const tagResults = await Promise.all(tagPromises);
+
+  // Convert array of [key, value] pairs to object
+  return Object.fromEntries(tagResults);
+}
+
+/**
  * Fetch evidence documents from Firestore with source file metadata
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
@@ -68,6 +127,9 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           sourceFileName = 'ERROR: No sourceID ID';
         }
 
+        // Fetch all system category tags for this evidence document
+        const systemTags = await fetchSystemTags(firmId, matterId, fileHash);
+
         // Map evidence document to table row format
         return {
           id: fileHash, // fileHash (BLAKE3)
@@ -86,16 +148,15 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Source filename from sourceMetadata subcollection
           fileName: sourceFileName,
 
-          // Placeholder fields (to be enhanced later)
-          fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
-          privilege: 'ERROR: Privilege not available',
-          description:
-            data.tagCount !== undefined
-              ? `${data.tagCount} tags`
-              : 'ERROR: Tag count not available',
+          // System category tags from Firestore tags subcollection
+          fileType: systemTags.fileType,
+          privilege: systemTags.privilege,
+          description: systemTags.description,
+          author: systemTags.author,
+          custodian: systemTags.custodian,
+
+          // Other fields
           documentType: getDocumentTypeFromStage(data.processingStage),
-          author: 'ERROR: Author not available',
-          custodian: 'ERROR: Custodian not available',
           modifiedDate: formatDate(data.uploadDate),
         };
       })();
