@@ -41,9 +41,16 @@ const conversionRules = {
     allowedConversions: ['Currency'], // Cannot convert to other types
     warnings: {},
   },
+  Text: {
+    allowedConversions: ['Text', 'Text Area'],
+    warnings: {}, // No warnings needed for Text -> Text Area (safe upgrade)
+  },
   'Text Area': {
-    allowedConversions: ['Text Area'], // Cannot convert to other types
-    warnings: {},
+    allowedConversions: ['Text Area', 'Text'],
+    warnings: {
+      Text:
+        'Converting from Text Area to Text will impose a 64-character limit and disallow line breaks. Existing values exceeding these limits may need to be edited.',
+    },
   },
 };
 
@@ -167,6 +174,14 @@ export function getTypeConversionTransform(fromType, toType, categoryData) {
     transform.remove.push('defaultSequenceFormat', 'allowGaps');
     transform.add.regexDefinition = '.*';
     transform.add.regexExamples = '';
+  }
+
+  // Text ↔ Text Area: Preserve allowDuplicateValues
+  if (
+    (fromType === 'Text' && toType === 'Text Area') ||
+    (fromType === 'Text Area' && toType === 'Text')
+  ) {
+    transform.preserve.push('allowDuplicateValues');
   }
 
   return transform;

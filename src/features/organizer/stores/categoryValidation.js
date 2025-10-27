@@ -215,6 +215,36 @@ export function useCategoryValidation(categories) {
   };
 
   /**
+   * Validate a text value for 'Text' type categories
+   * Text type values must be 64 characters or less and cannot contain newlines
+   */
+  const validateTextValue = (value) => {
+    const errors = [];
+
+    if (value === null || value === undefined || value === '') {
+      // Empty values are allowed
+      return errors;
+    }
+
+    if (typeof value !== 'string') {
+      errors.push('Text value must be a string');
+      return errors;
+    }
+
+    // Check for newline characters
+    if (/[\n\r]/.test(value)) {
+      errors.push('Text values cannot contain line breaks');
+    }
+
+    // Check length (64 character limit)
+    if (value.length > 64) {
+      errors.push('Text values must be 64 characters or less');
+    }
+
+    return errors;
+  };
+
+  /**
    * Check if category data has changes compared to original
    */
   const hasChanges = (originalCategory, newData) => {
@@ -253,6 +283,7 @@ export function useCategoryValidation(categories) {
     // validateCategoryColor removed - colors are now automatically assigned by UI
     validateCategoryTags,
     validateCategoryData,
+    validateTextValue,
 
     // Business rules
     canDeleteCategory,

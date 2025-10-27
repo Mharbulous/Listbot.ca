@@ -177,9 +177,9 @@
               </div>
             </v-col>
 
-            <!-- Allow Duplicate Values checkbox for Text Area, Sequence, and Regex -->
+            <!-- Allow Duplicate Values checkbox for Text, Text Area, Sequence, and Regex -->
             <v-col
-              v-if="['Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)"
+              v-if="['Text', 'Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)"
               cols="12"
             >
               <v-checkbox
@@ -532,7 +532,7 @@ const validateCategory = () => {
   }
 
   // Validate allow duplicate values for applicable types
-  if (['Text Area', 'Sequence', 'Regex'].includes(type)) {
+  if (['Text', 'Text Area', 'Sequence', 'Regex'].includes(type)) {
     if (typeof allowDuplicateValues !== 'boolean') {
       allowDuplicateValuesErrors.push('Allow duplicate values setting is required');
     }
