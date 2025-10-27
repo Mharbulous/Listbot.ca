@@ -70,11 +70,10 @@ This `CLAUDE.md` is lean. You MUST reference the files below using `@path/to/fil
   - **CRITICAL**: The definitive guide to all file terminology (Original, Source, Upload, Batesed, Page, Redacted, Production, Storage).
   - **You MUST use this exact terminology.**
 - `@docs/architecture/file-processing.md`
-  - Detailed 5-step file processing pipeline.
-  - Web Worker implementation (`fileHashWorker.js`).
-  * Deduplication strategy (size-pre-filter, BLAKE3 hash as ID).
   - The 3-phase hardware-calibrated time estimation formulas.
+  - Deduplication strategy (size-pre-filter, BLAKE3 hash as ID).
   - Path parsing optimization logic.
+  - Hardware performance calibration (H-Factor system).
 - `@src/dev-demos/README.md`
   - Overview of the demo system, routes (`/dev/*`), and components.
 - `@docs/testing/performance-analysis.md`
