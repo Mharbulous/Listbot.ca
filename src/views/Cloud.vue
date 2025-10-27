@@ -223,6 +223,16 @@
                 {{ sortedData[virtualItem.index].custodian }}
               </span>
 
+              <!-- Source Folder Path -->
+              <span
+                v-else-if="column.key === 'sourceFolderPath'"
+                :class="{
+                  'error-text': sortedData[virtualItem.index].sourceFolderPath.startsWith('ERROR:'),
+                }"
+              >
+                {{ sortedData[virtualItem.index].sourceFolderPath }}
+              </span>
+
               <!-- Timestamp columns (Upload Date, Source Modified Date, etc.) -->
               <span
                 v-else-if="isTimestampColumn(column.key)"
@@ -306,6 +316,7 @@ const NON_SYSTEM_COLUMNS = [
   { key: 'date', label: 'Upload Date', defaultWidth: 200 },
   { key: 'fileType', label: 'File Format', defaultWidth: 200 },
   { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
+  { key: 'sourceFolderPath', label: 'Source Folder', defaultWidth: 300 },
   { key: 'alternateSources', label: 'Alternate Sources', defaultWidth: 180 },
 ];
 

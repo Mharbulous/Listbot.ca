@@ -87,8 +87,9 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
       const filePromise = (async () => {
         let sourceFileName = 'ERROR: Missing metadata';
         let sourceLastModified = null;
+        let sourceFolderPath = 'ERROR: Missing metadata';
 
-        // Try to fetch the source filename and last modified date from sourceMetadata subcollection
+        // Try to fetch the source filename, last modified date, and folder path from sourceMetadata subcollection
         if (sourceIDId) {
           try {
             const sourceMetadataRef = doc(
@@ -108,22 +109,26 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
               sourceLastModified = sourceMetadata.sourceLastModified || null;
+              sourceFolderPath = sourceMetadata.sourceFolderPath || 'ERROR: Missing sourceFolderPath';
             } else {
               console.error(
                 `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
               );
               sourceFileName = 'ERROR: Metadata not found';
               sourceLastModified = null;
+              sourceFolderPath = 'ERROR: Metadata not found';
             }
           } catch (error) {
             console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
             sourceFileName = 'ERROR: Fetch failed';
             sourceLastModified = null;
+            sourceFolderPath = 'ERROR: Fetch failed';
           }
         } else {
           console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
           sourceFileName = 'ERROR: No sourceID ID';
           sourceLastModified = null;
+          sourceFolderPath = 'ERROR: No sourceID ID';
         }
 
         // Fetch all system category tags for this evidence document
@@ -179,6 +184,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
 
           // Other fields
           modifiedDate: sourceLastModified || null,
+          sourceFolderPath: sourceFolderPath,
 
           // System category tags from Firestore tags subcollection (dynamic)
           ...systemTags,
