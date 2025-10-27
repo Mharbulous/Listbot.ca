@@ -30,7 +30,7 @@
 }
 
 .header-cell {
-  padding: 18px 16px 12px 16px;
+  padding: 12px 16px 12px 16px;
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -558,7 +558,7 @@
   padding: 0;
   position: absolute;
   inset: 0; /* Fill entire header cell */
-  padding: 18px 16px 12px 16px; /* Match header-cell padding */
+  padding: 12px 16px 12px 16px; /* Match header-cell padding */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -567,6 +567,7 @@
   overflow: hidden;
   font-weight: 600;
   font-size: 12px;
+  line-height: 1.0;
   color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.5px;

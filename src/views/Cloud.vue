@@ -159,7 +159,10 @@
                 :class="
                   sortedData[virtualItem.index].fileType.startsWith('ERROR:')
                     ? 'error-text'
-                    : ['badge', getBadgeClass(formatMimeType(sortedData[virtualItem.index].fileType))]
+                    : [
+                        'badge',
+                        getBadgeClass(formatMimeType(sortedData[virtualItem.index].fileType)),
+                      ]
                 "
               >
                 {{ formatMimeType(sortedData[virtualItem.index].fileType) }}
@@ -245,7 +248,7 @@
                 {{ getCellValue(sortedData[virtualItem.index], column.key) }}
               </span>
 
-              <!-- Alternate Sources -->
+              <!-- Multiple Source Files -->
               <span
                 v-else-if="column.key === 'alternateSources'"
                 :class="
@@ -317,7 +320,7 @@ const NON_SYSTEM_COLUMNS = [
   { key: 'fileType', label: 'File Format', defaultWidth: 200 },
   { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
   { key: 'sourceFolderPath', label: 'Source Folder', defaultWidth: 300 },
-  { key: 'alternateSources', label: 'Alternate Sources', defaultWidth: 180 },
+  { key: 'alternateSources', label: 'Multiple Source Files', defaultWidth: 180 },
 ];
 
 // Columns that contain Firestore timestamps and should be formatted with date+time

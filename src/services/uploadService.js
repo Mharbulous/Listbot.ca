@@ -43,10 +43,7 @@ async function fetchSystemTags(firmId, matterId, fileHash, systemCategories) {
         return [categoryId, '🤖'];
       }
     } catch (error) {
-      console.error(
-        `[Cloud Table] Failed to fetch ${categoryId} tag for ${fileHash}:`,
-        error
-      );
+      console.error(`[Cloud Table] Failed to fetch ${categoryId} tag for ${fileHash}:`, error);
       return [categoryId, '🤖'];
     }
   });
@@ -66,7 +63,12 @@ async function fetchSystemTags(firmId, matterId, fileHash, systemCategories) {
  * @param {number} maxResults - Maximum number of results to fetch (default: 10000)
  * @returns {Promise<Array>} Array of evidence records formatted for Cloud table
  */
-export async function fetchFiles(firmId, matterId = 'general', systemCategories = [], maxResults = 10000) {
+export async function fetchFiles(
+  firmId,
+  matterId = 'general',
+  systemCategories = [],
+  maxResults = 10000
+) {
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
@@ -109,7 +111,8 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
               sourceLastModified = sourceMetadata.sourceLastModified || null;
-              sourceFolderPath = sourceMetadata.sourceFolderPath || 'ERROR: Missing sourceFolderPath';
+              sourceFolderPath =
+                sourceMetadata.sourceFolderPath || 'ERROR: Missing sourceFolderPath';
             } else {
               console.error(
                 `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
@@ -134,7 +137,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
         // Fetch all system category tags for this evidence document
         const systemTags = await fetchSystemTags(firmId, matterId, fileHash, systemCategories);
 
-        // Count sourceMetadata documents to determine if alternate sources exist
+        // Count sourceMetadata documents to determine if Multiple Source Files exist
         let alternateSources = 'No source information';
         try {
           const sourceMetadataCollectionRef = collection(
@@ -173,7 +176,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
           date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
           fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
 
-          // Alternate sources indicator
+          // Multiple Source Files indicator
           alternateSources: alternateSources,
 
           // Tag information
