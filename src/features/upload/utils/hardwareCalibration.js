@@ -10,7 +10,7 @@
  * @param {number} folderAnalysisTimeMs - Time taken for folder analysis in milliseconds
  * @returns {number} Hardware performance factor (files/ms)
  */
-export function calculateHardwarePerformanceFactor(totalFiles, folderAnalysisTimeMs) {
+export function calculateHardwarePerformanceFactor(totalUploads, folderAnalysisTimeMs) {
   if (folderAnalysisTimeMs <= 0) return 0;
   return totalUploads / folderAnalysisTimeMs;
 }
@@ -78,7 +78,7 @@ export function calculateCalibratedProcessingTime(folderData, hardwarePerformanc
 
   const phase3BaseTime =
     PHASE3_BASE_MS +
-    safeData.totalFiles * PHASE3_FILE_FACTOR +
+    safeData.totalUploads * PHASE3_FILE_FACTOR +
     safeData.avgDirectoryDepth * PHASE3_DEPTH_FACTOR;
 
   // Apply hardware calibration factor
@@ -108,7 +108,7 @@ export function calculateCalibratedProcessingTime(folderData, hardwarePerformanc
     breakdown: {
       phase1Description: 'Size-based filtering to identify duplicate candidates',
       phase2Description: `Hash calculation for ${safeData.duplicateCandidates} duplicate candidates (${safeData.duplicateCandidatesSizeMB.toFixed(1)} MB)`,
-      phase3Description: `UI rendering for ${safeData.totalFiles} files with ${safeData.avgDirectoryDepth.toFixed(1)} avg depth`,
+      phase3Description: `UI rendering for ${safeData.totalUploads} files with ${safeData.avgDirectoryDepth.toFixed(1)} avg depth`,
     },
   };
 }
@@ -197,8 +197,8 @@ export function storeHardwarePerformanceFactor(
 ) {
   try {
     // Validate input parameters
-    if (!totalFiles || totalUploads <= 0 || !Number.isInteger(totalFiles)) {
-      console.warn(`Invalid totalUploads for calibration: ${totalFiles}`);
+    if (!totalUploads || totalUploads <= 0 || !Number.isInteger(totalUploads)) {
+      console.warn(`Invalid totalUploads for calibration: ${totalUploads}`);
       return;
     }
 
@@ -211,12 +211,12 @@ export function storeHardwarePerformanceFactor(
       return;
     }
 
-    const H = calculateHardwarePerformanceFactor(totalFiles, folderAnalysisTimeMs);
+    const H = calculateHardwarePerformanceFactor(totalUploads, folderAnalysisTimeMs);
 
     // Enhanced validation for H-factor
     if (!H || H <= 0 || !Number.isFinite(H) || H > 100) {
       console.warn(
-        `Invalid calculated H-factor: ${H} (files: ${totalFiles}, time: ${folderAnalysisTimeMs}ms)`
+        `Invalid calculated H-factor: ${H} (files: ${totalUploads}, time: ${folderAnalysisTimeMs}ms)`
       );
       return;
     }
