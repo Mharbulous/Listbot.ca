@@ -149,7 +149,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
 
           // Other fields
           documentType: getDocumentTypeFromStage(data.processingStage),
-          modifiedDate: sourceLastModified ? formatDate(sourceLastModified) : 'ERROR: Modified date not available',
+          modifiedDate: sourceLastModified || null,
 
           // System category tags from Firestore tags subcollection (dynamic)
           ...systemTags,

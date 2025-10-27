@@ -169,11 +169,6 @@
                 {{ sortedData[virtualItem.index].size }}
               </span>
 
-              <!-- Date (Uploaded Timestamp) -->
-              <span v-else-if="column.key === 'date'">
-                {{ formatTimestamp(sortedData[virtualItem.index].date) }}
-              </span>
-
               <!-- Privilege -->
               <span v-else-if="column.key === 'privilege'"
                     :class="sortedData[virtualItem.index].privilege.startsWith('ERROR:')
@@ -205,9 +200,9 @@
                 {{ sortedData[virtualItem.index].custodian }}
               </span>
 
-              <!-- Modified Date -->
-              <span v-else-if="column.key === 'modifiedDate'" :class="{ 'error-text': sortedData[virtualItem.index].modifiedDate.startsWith('ERROR:') }">
-                {{ formatDate(sortedData[virtualItem.index].modifiedDate) }}
+              <!-- Timestamp columns (Upload Date, Source Modified Date, etc.) -->
+              <span v-else-if="isTimestampColumn(column.key)" :class="{ 'error-text': getCellValue(sortedData[virtualItem.index], column.key).startsWith('ERROR:') }">
+                {{ getCellValue(sortedData[virtualItem.index], column.key) }}
               </span>
 
               <!-- Status -->
@@ -245,7 +240,7 @@ import { fetchFiles } from '@/services/uploadService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences';
-import { formatDate as formatDateUtil, formatTimestamp as formatTimestampUtil } from '@/utils/dateFormatter';
+import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 
 // Initialize performance monitor
@@ -276,9 +271,12 @@ const NON_SYSTEM_COLUMNS = [
   { key: 'size', label: 'Size', defaultWidth: 100 },
   { key: 'date', label: 'Upload Date', defaultWidth: 200 },
   { key: 'documentType', label: 'Document Type', defaultWidth: 200 },
-  { key: 'modifiedDate', label: 'Modified Date', defaultWidth: 150 },
+  { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
   { key: 'status', label: 'Status', defaultWidth: 120 }
 ];
+
+// Columns that contain Firestore timestamps and should be formatted with date+time
+const TIMESTAMP_COLUMNS = ['date', 'modifiedDate'];
 
 // Dynamic column configuration combining non-system + system category columns
 const allColumns = computed(() => {
@@ -382,43 +380,31 @@ const getBadgeClass = (fileType) => {
 };
 
 /**
- * Format a date string using user preferences
- * Handles dates that are already formatted as strings from the service layer
+ * Check if a column contains timestamp data
  */
-const formatDate = (dateString) => {
-  if (!dateString || dateString === 'Unknown') return dateString;
-
-  try {
-    // Parse the date string (format: YYYY-MM-DD from fileService)
-    const date = new Date(dateString);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return dateString; // Return original if invalid
-    }
-
-    // Format using user's preference
-    return formatDateUtil(date, dateFormat.value);
-  } catch (error) {
-    console.error('[Cloud] Error formatting date:', error);
-    return dateString; // Return original on error
-  }
+const isTimestampColumn = (columnKey) => {
+  return TIMESTAMP_COLUMNS.includes(columnKey);
 };
 
 /**
- * Format a timestamp (date + time) using user preferences
- * Handles Firestore timestamp objects from the service layer
+ * Get cell value with appropriate formatting
+ * Handles timestamps, errors, and regular values
  */
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '';
+const getCellValue = (row, columnKey) => {
+  const value = row[columnKey];
 
-  try {
-    // Format using user's date and time preferences with " at " separator
-    return formatTimestampUtil(timestamp, dateFormat.value, timeFormat.value);
-  } catch (error) {
-    console.error('[Cloud] Error formatting timestamp:', error);
-    return 'Invalid timestamp';
+  // Handle timestamp columns
+  if (isTimestampColumn(columnKey)) {
+    // If null or missing, show error
+    if (!value) {
+      return 'ERROR: Date not available';
+    }
+    // Format with user preferences (space separator, no "at")
+    return formatDateTimeUtil(value, dateFormat.value, timeFormat.value);
   }
+
+  // For non-timestamp columns, return value as-is
+  return value;
 };
 
 // Auto-focus popover when it opens
