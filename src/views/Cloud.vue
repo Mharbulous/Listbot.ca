@@ -333,6 +333,27 @@ const NON_SYSTEM_COLUMNS = [
 // Columns that contain Firestore timestamps and should be formatted with date+time
 const TIMESTAMP_COLUMNS = ['date', 'modifiedDate'];
 
+/**
+ * Calculate the width needed for column header text
+ * Uses canvas measureText API for accurate measurement
+ * @param {string} text - The column header text
+ * @param {string} font - Font specification (default: '14px Roboto')
+ * @returns {number} Width in pixels needed for the text plus padding/icons
+ */
+const calculateColumnWidth = (text, font = '14px Roboto, sans-serif') => {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  context.font = font;
+  const metrics = context.measureText(text);
+  const textWidth = metrics.width;
+
+  // Add padding for: left/right padding (32px) + sort icon (24px) + resize handle (20px) + buffer (4px) = 80px
+  const totalWidth = Math.ceil(textWidth + 80);
+
+  // Ensure minimum width of 180px (same as built-in columns)
+  return Math.max(180, totalWidth);
+};
+
 // Dynamic column configuration combining all four column types
 const allColumns = computed(() => {
   // Start with non-system (built-in) columns
@@ -342,21 +363,21 @@ const allColumns = computed(() => {
   const systemCategoryColumns = systemCategories.value.map((category) => ({
     key: category.id,
     label: category.name,
-    defaultWidth: 180,
+    defaultWidth: calculateColumnWidth(category.name),
   }));
 
   // Firm category columns (placeholder data)
   const firmCategoryColumns = firmCategories.value.map((category) => ({
     key: category.id,
     label: category.name,
-    defaultWidth: 180,
+    defaultWidth: calculateColumnWidth(category.name),
   }));
 
   // Matter category columns (placeholder data)
   const matterCategoryColumns = matterCategories.value.map((category) => ({
     key: category.id,
     label: category.name,
-    defaultWidth: 180,
+    defaultWidth: calculateColumnWidth(category.name),
   }));
 
   // Combine: built-in, then system, then firm, then matter
