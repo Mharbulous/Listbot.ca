@@ -64,6 +64,12 @@ export const categoryTypeOptions = [
     icon: 'mdi-text-box-outline',
     color: '#5d4037', // Brown
   },
+  {
+    title: 'Boolean',
+    value: 'Boolean',
+    icon: 'mdi-toggle-switch',
+    color: '#455a64', // Blue Grey
+  },
 ];
 
 /**
