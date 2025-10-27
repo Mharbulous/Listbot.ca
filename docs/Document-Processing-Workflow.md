@@ -8,7 +8,7 @@ A visual file organization system for managing uploaded files in Firebase Storag
 
 This workflow operates on files that have progressed through the application's three-tier file lifecycle:
 
-1. **Document** - Original real-world artifact (e.g., paper receipt, dated when business transaction occurred)
+1. **Original** - Original real-world artifact (e.g., paper receipt, dated when business transaction occurred)
 2. **Source** - Digital file created by user for upload (e.g., scanned PDF, photo taken with phone)
 3. **File** - Digital file stored in Firebase Storage (deduplicated, hash-named)
 
