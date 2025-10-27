@@ -259,6 +259,11 @@
               >
                 {{ sortedData[virtualItem.index].alternateSources }}
               </span>
+
+              <!-- Generic fallback for category columns (system, firm, matter) -->
+              <span v-else>
+                {{ sortedData[virtualItem.index][column.key] || '🤖' }}
+              </span>
             </div>
           </div>
         </div>
@@ -311,6 +316,8 @@ const mockData = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const systemCategories = ref([]);
+const firmCategories = ref([]);
+const matterCategories = ref([]);
 
 // Non-system column definitions (fixed columns that don't come from systemcategories collection)
 const NON_SYSTEM_COLUMNS = [
@@ -326,20 +333,34 @@ const NON_SYSTEM_COLUMNS = [
 // Columns that contain Firestore timestamps and should be formatted with date+time
 const TIMESTAMP_COLUMNS = ['date', 'modifiedDate'];
 
-// Dynamic column configuration combining non-system + system category columns
+// Dynamic column configuration combining all four column types
 const allColumns = computed(() => {
-  // Start with non-system columns
+  // Start with non-system (built-in) columns
   const columns = [...NON_SYSTEM_COLUMNS];
 
-  // Add system category columns (alphabetically sorted by name)
+  // System category columns (with actual tag data)
   const systemCategoryColumns = systemCategories.value.map((category) => ({
     key: category.id,
     label: category.name,
-    defaultWidth: 180, // Default width for system category columns
+    defaultWidth: 180,
   }));
 
-  // Combine: non-system first, then system categories
-  return [...columns, ...systemCategoryColumns];
+  // Firm category columns (placeholder data)
+  const firmCategoryColumns = firmCategories.value.map((category) => ({
+    key: category.id,
+    label: category.name,
+    defaultWidth: 180,
+  }));
+
+  // Matter category columns (placeholder data)
+  const matterCategoryColumns = matterCategories.value.map((category) => ({
+    key: category.id,
+    label: category.name,
+    defaultWidth: 180,
+  }));
+
+  // Combine: built-in, then system, then firm, then matter
+  return [...columns, ...systemCategoryColumns, ...firmCategoryColumns, ...matterCategoryColumns];
 });
 
 // Build default column widths object from allColumns
@@ -355,9 +376,20 @@ const defaultColumnWidths = computed(() => {
 // Use column resize composable (pass dynamic default widths)
 const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths.value);
 
+// Watch defaultColumnWidths and sync to columnWidths when categories load
+// This ensures new category columns get their default widths immediately
+watch(defaultColumnWidths, (newWidths) => {
+  Object.keys(newWidths).forEach(key => {
+    if (columnWidths.value[key] === undefined) {
+      columnWidths.value[key] = newWidths[key];
+    }
+  });
+}, { immediate: false });
+
 // Use column drag-drop composable (pass dynamic columns)
 const {
-  orderedColumns,
+  columnOrder,
+  orderedColumns: composableOrderedColumns,
   dragState,
   onDragStart,
   onDragOver,
@@ -366,6 +398,14 @@ const {
   isColumnDragging,
   isDragGap,
 } = useColumnDragDrop(allColumns.value);
+
+// Create reactive orderedColumns that syncs with allColumns (unlike composable's version which uses stale snapshot)
+const orderedColumns = computed(() => {
+  // Map columnOrder keys to actual column objects from allColumns (reactive)
+  return columnOrder.value
+    .map(key => allColumns.value.find(col => col.key === key))
+    .filter(Boolean); // Filter out undefined (in case columnOrder has stale keys)
+});
 
 // Use column visibility composable
 const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
@@ -391,6 +431,23 @@ const {
   overscan: 5,
   enableSmoothScroll: true,
 });
+
+// Watch for allColumns changes and add new columns to columnOrder when categories load
+watch(allColumns, (newColumns, oldColumns) => {
+  // Detect if columns were added (categories loaded)
+  if (newColumns.length > oldColumns.length) {
+    const currentOrderKeys = new Set(columnOrder.value);
+    const newColumnKeys = newColumns
+      .map(col => col.key)
+      .filter(key => !currentOrderKeys.has(key));
+
+    if (newColumnKeys.length > 0) {
+      console.log(`[Cloud Table] Adding ${newColumnKeys.length} new columns to order`);
+      // Append new column keys to the end of the current order
+      columnOrder.value = [...columnOrder.value, ...newColumnKeys];
+    }
+  }
+}, { immediate: false });
 
 // Compute visible columns by filtering ordered columns
 const visibleColumns = computed(() => {
@@ -547,6 +604,44 @@ onMounted(async () => {
       systemCategories.value = [];
     }
     perfMonitor.end('System Categories Fetch');
+
+    // Fetch firm categories (firm-wide, from 'general' matter)
+    perfMonitor.start('Firm Categories Fetch');
+    try {
+      const firmCategoriesRef = collection(db, 'firms', firmId, 'matters', 'general', 'categories');
+      const firmQuery = query(firmCategoriesRef, orderBy('name', 'asc'));
+      const firmSnapshot = await getDocs(firmQuery);
+
+      firmCategories.value = firmSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      console.log(`[Cloud Table] Loaded ${firmCategories.value.length} firm categories`);
+    } catch (firmError) {
+      console.error('[Cloud Table] Failed to load firm categories:', firmError);
+      firmCategories.value = [];
+    }
+    perfMonitor.end('Firm Categories Fetch');
+
+    // Fetch matter categories (matter-specific)
+    perfMonitor.start('Matter Categories Fetch');
+    try {
+      const matterCategoriesRef = collection(db, 'firms', firmId, 'matters', matterId, 'categories');
+      const matterQuery = query(matterCategoriesRef, orderBy('name', 'asc'));
+      const matterSnapshot = await getDocs(matterQuery);
+
+      matterCategories.value = matterSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      console.log(`[Cloud Table] Loaded ${matterCategories.value.length} matter categories`);
+    } catch (matterError) {
+      console.error('[Cloud Table] Failed to load matter categories:', matterError);
+      matterCategories.value = [];
+    }
+    perfMonitor.end('Matter Categories Fetch');
 
     // Fetch files with system categories
     perfMonitor.start('Data Fetch');
