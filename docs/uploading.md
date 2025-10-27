@@ -431,8 +431,9 @@ await createMetadataRecord({
   sourceLastModified: timestamp, // Source file's modification timestamp
   fileHash: 'abc123...', // BLAKE3 hash of file content
   sourceFolderPath: 'Documents/2023', // Generated from webkitRelativePath via smart pattern recognition
-  sourceFileType: 'application/pdf', // MIME type from source file's file.type property
+  sourceFileType: 'application/pdf', // MIME type from source file (passed to evidence.fileType)
   // Note: sourceFolderPath field is automatically generated with pattern recognition
+  // Note: sourceFileType is passed through to evidence.fileType (not stored in sourceMetadata)
   // See data-structures.md#folder-path-system for complete documentation
 });
 ```

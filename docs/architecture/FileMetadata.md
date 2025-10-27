@@ -260,7 +260,6 @@ Cloud:
   sourceLastModified: Timestamp,    // Source file's timestamp from user's filesystem (Firestore Timestamp)
   fileHash: string,                 // BLAKE3 of file content (32 hex chars)
   sourceFolderPath: string,         // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
-  sourceFileType: string            // MIME type from file.type property (e.g., "application/pdf")
 }
 ```
 
@@ -304,7 +303,7 @@ Cloud:
 - **Tag Counters**: Added for performance optimization
 - **Access file hash**: Use `evidence.id` (document ID) instead of `evidence.storageRef.fileHash`
 - **Updated sourceMetadata field names**: `originalName` → `sourceFileName`, `folderPaths` → `sourceFolderPath`
-- **Added MIME type capture**: New `sourceFileType` field stores file MIME type
+- **Moved MIME type to evidence**: `fileType` now stored in evidence collection (not sourceMetadata) since identical files always have identical MIME types
 
 **Key Implementation**:
 

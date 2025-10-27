@@ -86,8 +86,10 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Source filename from sourceMetadata subcollection
           fileName: sourceFileName,
 
+          // File properties from evidence document
+          fileType: data.fileType || 'ERROR: File type not available', // MIME type from evidence document
+
           // Placeholder fields (to be enhanced later)
-          fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
           privilege: 'ERROR: Privilege not available',
           description:
             data.tagCount !== undefined

@@ -182,14 +182,6 @@
                 {{ sortedData[virtualItem.index].description }}
               </span>
 
-              <!-- Document Type -->
-              <span v-else-if="column.key === 'documentType'"
-                    :class="sortedData[virtualItem.index].documentType.startsWith('ERROR:')
-                      ? 'error-text'
-                      : 'badge badge-doctype'">
-                {{ sortedData[virtualItem.index].documentType }}
-              </span>
-
               <!-- Author -->
               <span v-else-if="column.key === 'author'" :class="{ 'error-text': sortedData[virtualItem.index].author.startsWith('ERROR:') }">
                 {{ sortedData[virtualItem.index].author }}
@@ -268,9 +260,9 @@ const systemCategories = ref([]);
 // Non-system column definitions (fixed columns that don't come from systemcategories collection)
 const NON_SYSTEM_COLUMNS = [
   { key: 'fileName', label: 'Source File Name', defaultWidth: 300 },
-  { key: 'size', label: 'Size', defaultWidth: 100 },
+  { key: 'size', label: 'File Size', defaultWidth: 100 },
   { key: 'date', label: 'Upload Date', defaultWidth: 200 },
-  { key: 'documentType', label: 'Document Type', defaultWidth: 200 },
+  { key: 'fileType', label: 'File Type', defaultWidth: 200 },
   { key: 'modifiedDate', label: 'Source Modified Date', defaultWidth: 150 },
   { key: 'status', label: 'Status', defaultWidth: 120 }
 ];

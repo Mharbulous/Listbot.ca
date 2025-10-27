@@ -137,6 +137,7 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
           // File properties that exist in evidence documents
           size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
           date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
+          fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
 
           // Processing status
           status: getStatusLabel(data.processingStage),
@@ -148,7 +149,6 @@ export async function fetchFiles(firmId, matterId = 'general', systemCategories 
           fileName: sourceFileName,
 
           // Other fields
-          documentType: getDocumentTypeFromStage(data.processingStage),
           modifiedDate: sourceLastModified || null,
 
           // System category tags from Firestore tags subcollection (dynamic)

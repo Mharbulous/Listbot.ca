@@ -61,6 +61,7 @@ export class EvidenceService {
 
         // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
+        fileType: uploadMetadata.fileType || '', // MIME type from source file
 
         // Processing status (for future Document Processing Workflow)
         isProcessed: false,
@@ -131,6 +132,7 @@ export class EvidenceService {
           sourceID: uploadMetadata.metadataHash || 'temp-hash',
 
           fileSize: uploadMetadata.size || 0,
+          fileType: uploadMetadata.fileType || '', // MIME type from source file
 
           isProcessed: false,
           hasAllPages: null,

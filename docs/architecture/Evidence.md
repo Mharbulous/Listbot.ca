@@ -23,6 +23,7 @@
 
   // File Properties - REQUIRED
   fileSize: number,              // Bytes, must be > 0
+  fileType: string,              // MIME type from source file (e.g., "application/pdf")
 
   // Processing Status - REQUIRED
   isProcessed: boolean,          // Default: false
@@ -95,16 +96,13 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 
 ```javascript
 {
-  // Core file metadata
+  // Core file metadata (only what varies between identical files)
   sourceFileName: string,           // Exact filename with SOURCE FILE CASE PRESERVED
   sourceLastModified: Timestamp,    // Source file's timestamp (Firestore Timestamp)
   fileHash: string,                 // BLAKE3 of file content (32 hex chars)
 
   // File path information
   sourceFolderPath: string,         // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
-
-  // MIME type information
-  sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
 }
 ```
 

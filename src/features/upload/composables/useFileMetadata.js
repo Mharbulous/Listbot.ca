@@ -51,7 +51,7 @@ export function useFileMetadata() {
    * @param {string} fileData.fileHash - Content hash of the file
    * @param {number} fileData.size - File size in bytes (used for Evidence document creation)
    * @param {string} [fileData.originalPath] - Full relative path from folder upload (used to extract folderPath)
-   * @param {string} [fileData.sourceFileType] - MIME type of the file
+   * @param {string} [fileData.sourceFileType] - MIME type of the file (passed to Evidence document)
    * @param {string} [fileData.storageCreatedTimestamp] - Firebase Storage timeCreated timestamp (ISO 8601 string)
    * @returns {Promise<string>} - The metadata hash used as document ID
    */
@@ -124,6 +124,7 @@ export function useFileMetadata() {
         folderPath: currentFolderPath || '/',
         metadataHash: metadataHash,
         storageCreatedTimestamp: storageCreatedTimestamp,
+        fileType: sourceFileType || '', // MIME type from source file
       };
 
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);
@@ -137,9 +138,6 @@ export function useFileMetadata() {
 
         // File path information
         sourceFolderPath: pathUpdate.folderPaths,
-
-        // MIME type information
-        sourceFileType: sourceFileType || '',
       };
 
       // Save to Firestore: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}
