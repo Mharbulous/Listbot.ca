@@ -79,6 +79,8 @@ This `CLAUDE.md` is lean. You MUST reference the files below using `@path/to/fil
 - `@docs/testing/performance-analysis.md`
   - Instructions for performance data collection (`parse_console_log.py`).
   - Details on the H-Factor (Hardware Calibration) system.
+- `@docs/front-end/DocumentTable.md`
+  - DocumentTable architecture and the 4 column data sources (Built-in, System, Firm, Matter categories).
 
 ---
 
