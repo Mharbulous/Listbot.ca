@@ -143,7 +143,7 @@ export class EvidenceQueryService {
       const q = query(
         evidenceRef,
         where('processingStage', '==', stage),
-        orderBy('fileCreated', 'desc')
+        orderBy('uploadDate', 'desc')
       );
       const querySnapshot = await getDocs(q);
       const evidenceList = [];
@@ -176,7 +176,7 @@ export class EvidenceQueryService {
       const q = query(
         evidenceRef,
         where('isProcessed', '==', false),
-        orderBy('fileCreated', 'asc')
+        orderBy('uploadDate', 'asc')
       );
       const querySnapshot = await getDocs(q);
       const evidenceList = [];

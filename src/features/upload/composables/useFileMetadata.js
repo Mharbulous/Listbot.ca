@@ -132,7 +132,7 @@ export function useFileMetadata() {
       const metadataRecord = {
         // Core file metadata (only what varies between identical files)
         sourceFileName: sourceFileName,
-        lastModified: Timestamp.fromMillis(lastModified),
+        sourceLastModified: Timestamp.fromMillis(lastModified),
         fileHash: fileHash,
 
         // File path information

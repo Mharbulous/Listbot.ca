@@ -17,7 +17,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
-    const q = query(evidenceRef, orderBy('fileCreated', 'desc'), limit(maxResults));
+    const q = query(evidenceRef, orderBy('uploadDate', 'desc'), limit(maxResults));
 
     // Execute the query
     const querySnapshot = await getDocs(q);
@@ -75,7 +75,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
           // File properties that exist in evidence documents
           size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
-          date: data.fileCreated, // Preserve raw Firestore timestamp for display in Cloud.vue
+          date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
 
           // Processing status
           status: getStatusLabel(data.processingStage),
@@ -96,7 +96,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           documentType: getDocumentTypeFromStage(data.processingStage),
           author: 'ERROR: Author not available',
           custodian: 'ERROR: Custodian not available',
-          modifiedDate: formatDate(data.fileCreated),
+          modifiedDate: formatDate(data.uploadDate),
         };
       })();
 

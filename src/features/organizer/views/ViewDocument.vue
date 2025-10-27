@@ -453,10 +453,10 @@ const earlierCopyMessage = computed(() => {
     return '';
   }
 
-  // Check if any other variant has an earlier lastModified date
+  // Check if any other variant has an earlier sourceLastModified date
   const hasEarlierCopy = sourceMetadataVariants.value.some(
     (v) =>
-      v.metadataHash !== selectedMetadataHash.value && v.lastModified < currentVariant.lastModified
+      v.metadataHash !== selectedMetadataHash.value && v.sourceLastModified < currentVariant.sourceLastModified
   );
 
   return hasEarlierCopy ? 'earlier copy found' : 'no earlier copies found';
@@ -525,7 +525,7 @@ const handleMetadataSelection = async (newMetadataHash) => {
       ...evidence.value,
       sourceID: newMetadataHash,
       displayName: selectedVariant.sourceFileName || 'Unknown File',
-      createdAt: selectedVariant.lastModified,
+      createdAt: selectedVariant.sourceLastModified,
     };
 
     // Update selected hash
@@ -633,11 +633,11 @@ const loadEvidence = async () => {
 
     if (currentVariant) {
       displayName = currentVariant.sourceFileName || 'Unknown File';
-      createdAt = currentVariant.lastModified;
+      createdAt = currentVariant.sourceLastModified;
     } else if (variants.length > 0) {
       // Fallback to first variant if sourceID doesn't match any
       displayName = variants[0].sourceFileName || 'Unknown File';
-      createdAt = variants[0].lastModified;
+      createdAt = variants[0].sourceLastModified;
       selectedMetadataHash.value = variants[0].metadataHash;
     }
 

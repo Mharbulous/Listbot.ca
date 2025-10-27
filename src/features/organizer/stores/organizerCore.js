@@ -237,7 +237,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
         const displayInfo = {
           displayName: uploadFileName,
-          createdAt: data.lastModified || null, // Source file's lastModified timestamp
+          createdAt: data.sourceLastModified || null, // Source file's sourceLastModified timestamp
         };
 
         // Cache the result
@@ -295,7 +295,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
       const evidenceQuery = query(
         evidenceRef,
-        orderBy('fileCreated', 'desc'),
+        orderBy('uploadDate', 'desc'),
         limit(1000) // Reasonable limit for v1.0
       );
 

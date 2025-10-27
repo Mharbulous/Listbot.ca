@@ -7,7 +7,7 @@ export const COLUMNS = [
   { key: 'fileType', label: 'File Type', defaultWidth: 80 },
   { key: 'fileName', label: 'File Name', defaultWidth: 300 },
   { key: 'size', label: 'Size', defaultWidth: 100 },
-  { key: 'date', label: 'Uploaded', defaultWidth: 200 },
+  { key: 'date', label: 'Upload Date', defaultWidth: 200 },
   { key: 'privilege', label: 'Privilege', defaultWidth: 140 },
   { key: 'description', label: 'Description', defaultWidth: 250 },
   { key: 'documentType', label: 'Document Type', defaultWidth: 200 },

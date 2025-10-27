@@ -135,13 +135,15 @@ The application distinguishes between related but distinct concepts in the file 
 
 #### File Lifecycle
 
-1. **Document** - The original real-world evidence
+1. **Original** - The original real-world evidence
 
    - May be physical (paper receipt, printed invoice) or digital (email attachment, downloaded file)
 
 2. **Source** - The digital file created or obtained by the user for upload to the application
+
    - Always digital: scanned PDF, smartphone photo, screenshot, downloaded file
    - This is what exists on the user's device/filesystem before upload
+
 3. **Upload** - The digital file stored in Firebase Storage in the '../uploads' subfolder
 
    - Stored with hash-based deduplication (BLAKE3)
