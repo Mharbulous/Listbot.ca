@@ -1,19 +1,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { getDefaultColumnWidths } from '@/utils/columnConfig';
 
 // Column resize constants
 const MIN_COLUMN_WIDTH = 50;
 const MAX_COLUMN_WIDTH = 500;
 const STORAGE_KEY = 'analyze-column-widths';
 
-// Get default column widths from centralized config
-const defaultColumnWidths = getDefaultColumnWidths();
-
 /**
  * Composable for managing column resizing functionality
  * Handles column width storage, resize operations, and persistence
+ * @param {Object} defaultColumnWidths - Object mapping column keys to default widths
  */
-export function useColumnResize() {
+export function useColumnResize(defaultColumnWidths) {
   // Reactive column widths
   const columnWidths = ref({ ...defaultColumnWidths });
 

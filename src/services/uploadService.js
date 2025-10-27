@@ -5,29 +5,22 @@
 
 import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
-
-/**
- * Configuration for system category tags
- * Maps column keys to their Firestore tag document IDs and field names
- */
-const SYSTEM_TAG_CONFIG = {
-  description: { tagId: 'DocumentDescription', field: 'textArea' },
-  author: { tagId: 'Author', field: 'text' },
-  privilege: { tagId: 'Privilege', field: 'value' },
-  fileType: { tagId: 'FileType', field: 'value' },
-  custodian: { tagId: 'Custodian', field: 'text' },
-};
+import { getCategoryFieldName } from '../utils/categoryFieldMapping';
 
 /**
  * Fetch all system category tags for a given evidence document
  * @param {string} firmId - The firm ID
  * @param {string} matterId - The matter ID
  * @param {string} fileHash - The evidence document ID (BLAKE3 hash)
- * @returns {Promise<Object>} Object mapping column keys to tag values (string or 🤖 emoji)
+ * @param {Array} systemCategories - Array of system category objects from Firestore
+ * @returns {Promise<Object>} Object mapping category IDs to tag values (string or 🤖 emoji)
  */
-async function fetchSystemTags(firmId, matterId, fileHash) {
+async function fetchSystemTags(firmId, matterId, fileHash, systemCategories) {
   // Create promises to fetch all system tags in parallel
-  const tagPromises = Object.entries(SYSTEM_TAG_CONFIG).map(async ([columnKey, config]) => {
+  const tagPromises = systemCategories.map(async (category) => {
+    const categoryId = category.id;
+    const fieldName = getCategoryFieldName(category.type);
+
     try {
       const tagRef = doc(
         db,
@@ -38,23 +31,23 @@ async function fetchSystemTags(firmId, matterId, fileHash) {
         'evidence',
         fileHash,
         'tags',
-        config.tagId
+        categoryId
       );
       const tagDoc = await getDoc(tagRef);
 
       if (tagDoc.exists()) {
         const tagData = tagDoc.data();
-        const value = tagData[config.field];
-        return [columnKey, value || '🤖'];
+        const value = tagData[fieldName];
+        return [categoryId, value || '🤖'];
       } else {
-        return [columnKey, '🤖'];
+        return [categoryId, '🤖'];
       }
     } catch (error) {
       console.error(
-        `[Cloud Table] Failed to fetch ${config.tagId} tag for ${fileHash}:`,
+        `[Cloud Table] Failed to fetch ${categoryId} tag for ${fileHash}:`,
         error
       );
-      return [columnKey, '🤖'];
+      return [categoryId, '🤖'];
     }
   });
 
@@ -69,10 +62,11 @@ async function fetchSystemTags(firmId, matterId, fileHash) {
  * Fetch evidence documents from Firestore with source file metadata
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
+ * @param {Array} systemCategories - Array of system category objects from Firestore
  * @param {number} maxResults - Maximum number of results to fetch (default: 10000)
  * @returns {Promise<Array>} Array of evidence records formatted for Cloud table
  */
-export async function fetchFiles(firmId, matterId = 'general', maxResults = 10000) {
+export async function fetchFiles(firmId, matterId = 'general', systemCategories = [], maxResults = 10000) {
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
@@ -128,7 +122,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
         }
 
         // Fetch all system category tags for this evidence document
-        const systemTags = await fetchSystemTags(firmId, matterId, fileHash);
+        const systemTags = await fetchSystemTags(firmId, matterId, fileHash, systemCategories);
 
         // Map evidence document to table row format
         return {
@@ -148,16 +142,12 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Source filename from sourceMetadata subcollection
           fileName: sourceFileName,
 
-          // System category tags from Firestore tags subcollection
-          fileType: systemTags.fileType,
-          privilege: systemTags.privilege,
-          description: systemTags.description,
-          author: systemTags.author,
-          custodian: systemTags.custodian,
-
           // Other fields
           documentType: getDocumentTypeFromStage(data.processingStage),
           modifiedDate: formatDate(data.uploadDate),
+
+          // System category tags from Firestore tags subcollection (dynamic)
+          ...systemTags,
         };
       })();
 

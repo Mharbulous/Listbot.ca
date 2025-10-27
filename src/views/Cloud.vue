@@ -234,6 +234,8 @@
 <script setup>
 import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
@@ -266,11 +268,49 @@ const columnSelectorPopover = ref(null);
 const mockData = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
+const systemCategories = ref([]);
 
-// Use column resize composable
-const { columnWidths, totalTableWidth, startResize } = useColumnResize();
+// Non-system column definitions (fixed columns that don't come from systemcategories collection)
+const NON_SYSTEM_COLUMNS = [
+  { key: 'fileName', label: 'Source File Name', defaultWidth: 300 },
+  { key: 'size', label: 'Size', defaultWidth: 100 },
+  { key: 'date', label: 'Upload Date', defaultWidth: 200 },
+  { key: 'documentType', label: 'Document Type', defaultWidth: 200 },
+  { key: 'modifiedDate', label: 'Modified Date', defaultWidth: 150 },
+  { key: 'status', label: 'Status', defaultWidth: 120 }
+];
 
-// Use column drag-drop composable
+// Dynamic column configuration combining non-system + system category columns
+const allColumns = computed(() => {
+  // Start with non-system columns
+  const columns = [...NON_SYSTEM_COLUMNS];
+
+  // Add system category columns (alphabetically sorted by name)
+  const systemCategoryColumns = systemCategories.value
+    .map(category => ({
+      key: category.id,
+      label: category.name,
+      defaultWidth: 180 // Default width for system category columns
+    }));
+
+  // Combine: non-system first, then system categories
+  return [...columns, ...systemCategoryColumns];
+});
+
+// Build default column widths object from allColumns
+const defaultColumnWidths = computed(() => {
+  return allColumns.value.reduce((acc, col) => {
+    acc[col.key] = col.defaultWidth;
+    return acc;
+  }, {});
+});
+
+// Note: Composables are initialized with current columns
+// When systemCategories loads, allColumns will update reactively
+// Use column resize composable (pass dynamic default widths)
+const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths.value);
+
+// Use column drag-drop composable (pass dynamic columns)
 const {
   orderedColumns,
   dragState,
@@ -280,7 +320,7 @@ const {
   onDragEnd,
   isColumnDragging,
   isDragGap
-} = useColumnDragDrop();
+} = useColumnDragDrop(allColumns.value);
 
 // Use column visibility composable
 const {
@@ -465,8 +505,29 @@ onMounted(async () => {
 
     const fetchStartTime = performance.now();
 
+    // Fetch system categories first (global, alphabetically sorted)
+    perfMonitor.start('System Categories Fetch');
+    try {
+      const systemCategoriesRef = collection(db, 'systemcategories');
+      const q = query(systemCategoriesRef, orderBy('name', 'asc'));
+      const querySnapshot = await getDocs(q);
+
+      systemCategories.value = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log(`[Cloud Table] Loaded ${systemCategories.value.length} system categories`);
+    } catch (categoryError) {
+      console.error('[Cloud Table] Failed to load system categories:', categoryError);
+      // Continue without system categories rather than failing completely
+      systemCategories.value = [];
+    }
+    perfMonitor.end('System Categories Fetch');
+
+    // Fetch files with system categories
     perfMonitor.start('Data Fetch');
-    mockData.value = await fetchFiles(firmId, matterId, 10000);
+    mockData.value = await fetchFiles(firmId, matterId, systemCategories.value, 10000);
     perfMonitor.end('Data Fetch');
 
     const fetchEndTime = performance.now();

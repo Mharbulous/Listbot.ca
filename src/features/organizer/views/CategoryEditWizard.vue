@@ -256,7 +256,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
@@ -274,7 +274,6 @@ import {
   requiresWarning,
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
-import { isSystemCategory } from '../constants/systemcategories.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
 import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
 

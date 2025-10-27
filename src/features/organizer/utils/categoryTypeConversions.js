@@ -48,8 +48,7 @@ const conversionRules = {
   'Text Area': {
     allowedConversions: ['Text Area', 'Text'],
     warnings: {
-      Text:
-        'Converting from Text Area to Text will impose a 64-character limit and disallow line breaks. Existing values exceeding these limits may need to be edited.',
+      Text: 'Converting from Text Area to Text will impose a 64-character limit and disallow line breaks. Existing values exceeding these limits may need to be edited.',
     },
   },
 };

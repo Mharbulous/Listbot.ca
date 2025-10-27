@@ -156,7 +156,10 @@
             </v-col>
 
             <!-- Allow Duplicate Values checkbox for Text, Text Area, Sequence, and Regex -->
-            <v-col v-if="['Text', 'Text Area', 'Sequence', 'Regex'].includes(newCategory.type)" cols="12">
+            <v-col
+              v-if="['Text', 'Text Area', 'Sequence', 'Regex'].includes(newCategory.type)"
+              cols="12"
+            >
               <v-checkbox
                 v-model="newCategory.allowDuplicateValues"
                 label="Allow duplicate values"
@@ -230,9 +233,7 @@ import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { getAutomaticTagColor } from '../utils/automaticTagColors.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
-import {
-  sequenceFormatOptions,
-} from '../utils/categoryFormOptions.js';
+import { sequenceFormatOptions } from '../utils/categoryFormOptions.js';
 import {
   generateRegexExamples,
   capitalizeFirstLetter,
