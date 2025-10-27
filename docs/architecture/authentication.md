@@ -614,3 +614,18 @@ All new users automatically get a solo firm upon registration. No special handli
 ---
 
 This authentication system provides a robust, scalable foundation for Vue 3 applications requiring Firebase Authentication with proper handling of timing issues, reactivity concerns, and a clean architecture for both individual users and future firm features.
+
+## Authentication Timing Solutions
+
+The auth system solves Firebase Auth's race condition issues where `onAuthStateChanged` fires multiple times during initialization:
+
+```javascript
+// Proper auth state checking
+if (!authStore.isInitialized) {
+  return; // Wait for auth determination
+}
+
+if (authStore.isAuthenticated) {
+  // User is definitely logged in
+}
+```
