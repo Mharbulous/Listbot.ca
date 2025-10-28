@@ -28,7 +28,7 @@
       <div class="table-mockup-header">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
-          <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
+          <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
             <span>{{ columnSelectorLabel }}</span>
             <span class="dropdown-icon">▼</span>
           </button>
@@ -236,6 +236,7 @@ const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
+const columnSelectorBtn = ref(null);
 
 // Build default column widths object from columns prop
 const defaultColumnWidths = computed(() => {
@@ -342,7 +343,8 @@ watch(showColumnSelector, async (isOpen) => {
 
 // Handle focus leaving the popover
 const handleFocusOut = (event) => {
-  if (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget)) {
+  const clickedButton = event.relatedTarget === columnSelectorBtn.value;
+  if (!clickedButton && (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))) {
     showColumnSelector.value = false;
   }
 };

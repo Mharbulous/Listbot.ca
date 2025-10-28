@@ -131,6 +131,10 @@
   border-color: #667eea;
 }
 
+.column-selector-btn:focus {
+  outline: none;
+}
+
 .dropdown-icon {
   font-size: 10px;
 }
@@ -157,10 +161,32 @@
   z-index: 1000;
   margin-top: 8px;
   outline: none; /* Remove default focus outline since we have custom border */
+  max-height: 60vh; /* Limit to 60% of viewport height */
+  overflow-y: auto; /* Enable vertical scrolling when needed */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .column-selector-popover:focus {
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* Custom scrollbar styling for column selector popover */
+.column-selector-popover::-webkit-scrollbar {
+  width: 8px;
+}
+
+.column-selector-popover::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.column-selector-popover::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 4px;
+}
+
+.column-selector-popover::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 .popover-header {
