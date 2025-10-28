@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   writeBatch,
   getDoc,
+  deleteField,
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 
@@ -64,7 +65,18 @@ class TagSubcollectionService {
   }
 
   /**
+   * Get reference to evidence document (for embedded tags sync)
+   */
+  getEvidenceDoc(docId, firmId) {
+    if (!firmId) {
+      throw new Error('Firm ID is required for tag operations');
+    }
+    return doc(db, 'firms', firmId, 'matters', 'general', 'evidence', docId);
+  }
+
+  /**
    * Add a new tag to a document (using NEW data structure with categoryId as document ID)
+   * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
   async addTag(docId, tagData, firmId) {
     try {
@@ -100,9 +112,31 @@ class TagSubcollectionService {
         tagDoc.reviewedAt = serverTimestamp();
       }
 
-      // Use categoryId as document ID instead of generating random ID
+      // Use batch writes to sync both subcollection and embedded tags
+      const batch = writeBatch(db);
+
+      // Write to subcollection (audit trail, full metadata)
       const tagDocRef = doc(tagsCollection, tagData.categoryId);
-      await setDoc(tagDocRef, tagDoc);
+      batch.set(tagDocRef, tagDoc);
+
+      // Write to parent document embedded tags (fast table access)
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const embeddedTag = {
+        tagName: tagData.tagName,
+        confidence: tagData.confidence,
+        autoApproved: autoApproved,
+        reviewRequired: tagData.reviewRequired,
+        source: tagData.source,
+        createdAt: serverTimestamp(),
+      };
+      if (autoApproved && tagData.source !== 'human') {
+        embeddedTag.reviewedAt = serverTimestamp();
+      }
+      batch.update(evidenceRef, {
+        [`tags.${tagData.categoryId}`]: embeddedTag
+      });
+
+      await batch.commit();
 
       return { id: tagData.categoryId, ...tagDoc };
     } catch (error) {
@@ -204,18 +238,29 @@ class TagSubcollectionService {
 
   /**
    * Approve an AI tag (NEW structure)
+   * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
   async approveAITag(docId, categoryId, firmId) {
     try {
-      const tagRef = this.getTagDoc(docId, categoryId, firmId);
+      const batch = writeBatch(db);
 
+      // Update subcollection (full metadata, audit trail)
+      const tagRef = this.getTagDoc(docId, categoryId, firmId);
       const updateData = {
         reviewRequired: false,
         reviewedAt: serverTimestamp(),
         humanApproved: true,
       };
+      batch.update(tagRef, updateData);
 
-      await updateDoc(tagRef, updateData);
+      // Update embedded tag in evidence document (fast table access)
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      batch.update(evidenceRef, {
+        [`tags.${categoryId}.reviewRequired`]: false,
+        [`tags.${categoryId}.reviewedAt`]: serverTimestamp(),
+      });
+
+      await batch.commit();
       return { id: categoryId, ...updateData };
     } catch (error) {
       console.error('Error approving AI tag:', error);
@@ -225,19 +270,30 @@ class TagSubcollectionService {
 
   /**
    * Reject an AI tag (NEW structure)
+   * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
+   * Rejected tags are removed from embedded tags (not displayed in table)
    */
   async rejectAITag(docId, categoryId, firmId) {
     try {
-      const tagRef = this.getTagDoc(docId, categoryId, firmId);
+      const batch = writeBatch(db);
 
+      // Update subcollection (full metadata, audit trail - keeps rejected tags for history)
+      const tagRef = this.getTagDoc(docId, categoryId, firmId);
       const updateData = {
         reviewRequired: false,
         rejected: true,
         reviewedAt: serverTimestamp(),
         humanRejected: true,
       };
+      batch.update(tagRef, updateData);
 
-      await updateDoc(tagRef, updateData);
+      // Remove from embedded tags (rejected tags should not appear in table)
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      batch.update(evidenceRef, {
+        [`tags.${categoryId}`]: deleteField(),
+      });
+
+      await batch.commit();
       return { id: categoryId, ...updateData };
     } catch (error) {
       console.error('Error rejecting AI tag:', error);
@@ -261,17 +317,26 @@ class TagSubcollectionService {
 
   /**
    * Bulk approve multiple tags (NEW structure)
+   * OPTIMIZED: Syncs both subcollection AND embedded tags map in single batch
    */
   async approveTagsBatch(docId, categoryIds, firmId) {
     try {
       const batch = writeBatch(db);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
 
       for (const categoryId of categoryIds) {
+        // Update subcollection (audit trail, full metadata)
         const tagRef = this.getTagDoc(docId, categoryId, firmId);
         batch.update(tagRef, {
           reviewRequired: false,
           reviewedAt: serverTimestamp(),
           humanApproved: true,
+        });
+
+        // Update embedded tag (fast table access)
+        batch.update(evidenceRef, {
+          [`tags.${categoryId}.reviewRequired`]: false,
+          [`tags.${categoryId}.reviewedAt`]: serverTimestamp(),
         });
       }
 
@@ -285,18 +350,27 @@ class TagSubcollectionService {
 
   /**
    * Bulk reject multiple tags (NEW structure)
+   * OPTIMIZED: Syncs both subcollection AND embedded tags map in single batch
+   * Rejected tags are removed from embedded tags (not displayed in table)
    */
   async rejectTagsBatch(docId, categoryIds, firmId) {
     try {
       const batch = writeBatch(db);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
 
       for (const categoryId of categoryIds) {
+        // Update subcollection (audit trail - keeps rejected tags for history)
         const tagRef = this.getTagDoc(docId, categoryId, firmId);
         batch.update(tagRef, {
           reviewRequired: false,
           rejected: true,
           reviewedAt: serverTimestamp(),
           humanRejected: true,
+        });
+
+        // Remove from embedded tags (rejected tags should not appear in table)
+        batch.update(evidenceRef, {
+          [`tags.${categoryId}`]: deleteField(),
         });
       }
 
@@ -310,11 +384,23 @@ class TagSubcollectionService {
 
   /**
    * Delete a tag
+   * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
   async deleteTag(docId, tagId, firmId) {
     try {
+      const batch = writeBatch(db);
+
+      // Delete from subcollection (removes audit trail)
       const tagRef = this.getTagDoc(docId, tagId, firmId);
-      await deleteDoc(tagRef);
+      batch.delete(tagRef);
+
+      // Remove from embedded tags (removes from table display)
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      batch.update(evidenceRef, {
+        [`tags.${tagId}`]: deleteField(),
+      });
+
+      await batch.commit();
       return { id: tagId, deleted: true };
     } catch (error) {
       console.error('Error deleting tag:', error);
@@ -324,16 +410,24 @@ class TagSubcollectionService {
 
   /**
    * Delete all tags for a document
+   * OPTIMIZED: Syncs both subcollection deletion AND embedded tags reset
    */
   async deleteAllTags(docId, firmId) {
     try {
       const tags = await this.getTags(docId, {}, firmId);
       const batch = writeBatch(db);
 
+      // Delete all tag subcollection documents (removes audit trail)
       for (const tag of tags) {
         const tagRef = this.getTagDoc(docId, tag.id, firmId);
         batch.delete(tagRef);
       }
+
+      // Reset embedded tags map to empty object (clears table display)
+      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      batch.update(evidenceRef, {
+        tags: {},
+      });
 
       await batch.commit();
       return { deleted: tags.length };

@@ -1,5 +1,5 @@
 import { db } from '../../../services/firebase.js';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, Timestamp, updateDoc, increment } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
@@ -154,6 +154,36 @@ export function useFileMetadata() {
       );
       await setDoc(docRef, metadataRecord);
 
+      // STEP 3: Update evidence document with embedded source metadata
+      // This enables single-query table rendering by eliminating subcollection queries
+      const evidenceRef = doc(
+        db,
+        'firms',
+        firmId,
+        'matters',
+        matterId,
+        'evidence',
+        fileHash
+      );
+
+      await updateDoc(evidenceRef, {
+        // Primary source metadata (for fast table rendering)
+        sourceFileName: sourceFileName,
+        sourceLastModified: Timestamp.fromMillis(lastModified),
+        sourceFolderPath: pathUpdate.folderPaths,
+
+        // Add to sourceMetadataVariants map (for deduplication tracking)
+        [`sourceMetadataVariants.${metadataHash}`]: {
+          sourceFileName: sourceFileName,
+          sourceLastModified: Timestamp.fromMillis(lastModified),
+          sourceFolderPath: pathUpdate.folderPaths,
+          uploadDate: Timestamp.now()
+        },
+
+        // Increment variant count
+        sourceMetadataCount: increment(1)
+      });
+
       return metadataHash;
     } catch (error) {
       throw error;
@@ -182,6 +212,7 @@ export function useFileMetadata() {
 
   /**
    * Check if a metadata record already exists
+   * OPTIMIZED: Checks embedded sourceMetadataVariants map instead of querying subcollection
    * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
@@ -202,21 +233,25 @@ export function useFileMetadata() {
         throw new Error('No matter selected. Please select a matter before checking metadata.');
       }
 
-      // Try to get the document from subcollection
-      const docRef = doc(
+      // Check embedded sourceMetadataVariants map in evidence document
+      // This is MUCH faster than querying the subcollection
+      const evidenceRef = doc(
         db,
         'firms',
         firmId,
         'matters',
         matterId,
         'evidence',
-        fileHash,
-        'sourceMetadata',
-        metadataHash
+        fileHash
       );
-      const docSnapshot = await getDoc(docRef);
+      const evidenceDoc = await getDoc(evidenceRef);
 
-      return docSnapshot.exists();
+      if (!evidenceDoc.exists()) {
+        return false;
+      }
+
+      const data = evidenceDoc.data();
+      return data.sourceMetadataVariants && data.sourceMetadataVariants[metadataHash] !== undefined;
     } catch (error) {
       return false;
     }

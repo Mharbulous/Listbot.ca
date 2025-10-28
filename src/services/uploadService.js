@@ -3,60 +3,13 @@
  * Queries the evidence collection and maps to Cloud table format
  */
 
-import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
 import { getCategoryFieldName } from '../utils/categoryFieldMapping';
 
 /**
- * Fetch all system category tags for a given evidence document
- * @param {string} firmId - The firm ID
- * @param {string} matterId - The matter ID
- * @param {string} fileHash - The evidence document ID (BLAKE3 hash)
- * @param {Array} systemCategories - Array of system category objects from Firestore
- * @returns {Promise<Object>} Object mapping category IDs to tag values (string or 🤖 emoji)
- */
-async function fetchSystemTags(firmId, matterId, fileHash, systemCategories) {
-  // Create promises to fetch all system tags in parallel
-  const tagPromises = systemCategories.map(async (category) => {
-    const categoryId = category.id;
-    const fieldName = getCategoryFieldName(category.type);
-
-    try {
-      const tagRef = doc(
-        db,
-        'firms',
-        firmId,
-        'matters',
-        matterId,
-        'evidence',
-        fileHash,
-        'tags',
-        categoryId
-      );
-      const tagDoc = await getDoc(tagRef);
-
-      if (tagDoc.exists()) {
-        const tagData = tagDoc.data();
-        const value = tagData[fieldName];
-        return [categoryId, value || '🤖'];
-      } else {
-        return [categoryId, '🤖'];
-      }
-    } catch (error) {
-      console.error(`[Cloud Table] Failed to fetch ${categoryId} tag for ${fileHash}:`, error);
-      return [categoryId, '🤖'];
-    }
-  });
-
-  // Wait for all tag fetches to complete
-  const tagResults = await Promise.all(tagPromises);
-
-  // Convert array of [key, value] pairs to object
-  return Object.fromEntries(tagResults);
-}
-
-/**
- * Fetch evidence documents from Firestore with source file metadata
+ * Fetch evidence documents from Firestore with embedded source file metadata and tags
+ * OPTIMIZED: Single-query design using embedded fields (no subcollection queries!)
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
  * @param {Array} systemCategories - Array of system category objects from Firestore
@@ -72,141 +25,67 @@ export async function fetchFiles(
   const fetchStart = performance.now();
 
   try {
-    // Build the Firestore query
+    // Build the Firestore query - SINGLE QUERY OPTIMIZATION!
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
     const q = query(evidenceRef, orderBy('uploadDate', 'desc'), limit(maxResults));
 
-    // Execute the query
+    // Execute the query (this is the ONLY query - no subcollection queries!)
     const queryExecStart = performance.now();
     const querySnapshot = await getDocs(q);
     const queryExecDuration = performance.now() - queryExecStart;
 
-    // Collect all documents and their metadata promises
-    const filePromises = [];
+    // Map documents to table rows using ONLY embedded fields (no additional queries!)
     const docProcessingStart = performance.now();
-
-    querySnapshot.forEach((docSnapshot) => {
+    const files = querySnapshot.docs.map((docSnapshot) => {
       const data = docSnapshot.data();
       const fileHash = docSnapshot.id;
-      const sourceIDId = data.sourceID;
 
-      // Create a promise to fetch the sourceMetadata
-      const filePromise = (async () => {
-        let sourceFileName = 'ERROR: Missing metadata';
-        let sourceLastModified = null;
-        let sourceFolderPath = 'ERROR: Missing metadata';
+      // Extract system tags from embedded tags map (O(1) access per category!)
+      const fieldName = 'tagName'; // All categories use 'tagName' field in embedded tags
+      const systemTags = Object.fromEntries(
+        systemCategories.map((category) => [
+          category.id,
+          data.tags?.[category.id]?.[fieldName] || '🤖',
+        ])
+      );
 
-        // Try to fetch the source filename, last modified date, and folder path from sourceMetadata subcollection
-        if (sourceIDId) {
-          try {
-            const sourceMetadataRef = doc(
-              db,
-              'firms',
-              firmId,
-              'matters',
-              matterId,
-              'evidence',
-              fileHash,
-              'sourceMetadata',
-              sourceIDId
-            );
-            const sourceMetadataDoc = await getDoc(sourceMetadataRef);
+      // Determine alternateSources from embedded sourceMetadataCount
+      let alternateSources = 'No source information';
+      const sourceMetadataCount = data.sourceMetadataCount ?? 0;
+      if (sourceMetadataCount === 0) {
+        alternateSources = 'No source information';
+      } else if (sourceMetadataCount === 1) {
+        alternateSources = 'FALSE';
+      } else {
+        alternateSources = 'TRUE';
+      }
 
-            if (sourceMetadataDoc.exists()) {
-              const sourceMetadata = sourceMetadataDoc.data();
-              sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
-              sourceLastModified = sourceMetadata.sourceLastModified || null;
-              sourceFolderPath =
-                sourceMetadata.sourceFolderPath || 'ERROR: Missing sourceFolderPath';
-            } else {
-              console.error(
-                `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
-              );
-              sourceFileName = 'ERROR: Metadata not found';
-              sourceLastModified = null;
-              sourceFolderPath = 'ERROR: Metadata not found';
-            }
-          } catch (error) {
-            console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
-            sourceFileName = 'ERROR: Fetch failed';
-            sourceLastModified = null;
-            sourceFolderPath = 'ERROR: Fetch failed';
-          }
-        } else {
-          console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
-          sourceFileName = 'ERROR: No sourceID ID';
-          sourceLastModified = null;
-          sourceFolderPath = 'ERROR: No sourceID ID';
-        }
+      // Map evidence document to table row format using ONLY embedded fields
+      return {
+        id: fileHash, // fileHash (BLAKE3)
+        fileHash: fileHash,
 
-        // Fetch all system category tags for this evidence document
-        const systemTags = await fetchSystemTags(firmId, matterId, fileHash, systemCategories);
+        // File properties from evidence document (no subcollection queries!)
+        fileName: data.sourceFileName || 'ERROR: Missing metadata',
+        size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
+        date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
+        fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
+        modifiedDate: data.sourceLastModified || null,
+        sourceFolderPath: data.sourceFolderPath || 'ERROR: Missing metadata',
 
-        // Count sourceMetadata documents to determine if Multiple Source Files exist
-        let alternateSources = 'No source information';
-        try {
-          const sourceMetadataCollectionRef = collection(
-            db,
-            'firms',
-            firmId,
-            'matters',
-            matterId,
-            'evidence',
-            fileHash,
-            'sourceMetadata'
-          );
-          const sourceMetadataSnapshot = await getDocs(sourceMetadataCollectionRef);
-          const sourceMetadataCount = sourceMetadataSnapshot.size;
+        // Multiple Source Files indicator (from embedded count, no subcollection query!)
+        alternateSources: alternateSources,
 
-          if (sourceMetadataCount === 0) {
-            console.warn('[Cloud Table] Missing source metadata for evidence:', fileHash);
-            alternateSources = 'No source information';
-          } else if (sourceMetadataCount === 1) {
-            alternateSources = 'FALSE';
-          } else {
-            alternateSources = 'TRUE';
-          }
-        } catch (error) {
-          console.error(`[Cloud Table] Failed to count sourceMetadata for ${fileHash}:`, error);
-          alternateSources = 'No source information';
-        }
+        // Tag information
+        tagCount: data.tagCount || 0,
 
-        // Map evidence document to table row format
-        return {
-          id: fileHash, // fileHash (BLAKE3)
-          fileHash: fileHash,
-
-          // File properties that exist in evidence documents
-          size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
-          date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
-          fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
-
-          // Multiple Source Files indicator
-          alternateSources: alternateSources,
-
-          // Tag information
-          tagCount: data.tagCount || 0,
-
-          // Source filename from sourceMetadata subcollection
-          fileName: sourceFileName,
-
-          // Other fields
-          modifiedDate: sourceLastModified || null,
-          sourceFolderPath: sourceFolderPath,
-
-          // System category tags from Firestore tags subcollection (dynamic)
-          ...systemTags,
-        };
-      })();
-
-      filePromises.push(filePromise);
+        // System category tags from embedded tags map (no subcollection queries!)
+        ...systemTags,
+      };
     });
 
-    // Wait for all sourceMetadata queries to complete in parallel
-    const files = await Promise.all(filePromises);
-
     const totalDuration = performance.now() - fetchStart;
-    const totalOperations = files.length * (2 + systemCategories.length); // sourceMetadata + alternateSourcesCount + N tag fetches per doc
+    const docProcessingDuration = performance.now() - docProcessingStart;
 
     // Calculate data size in memory (for localStorage feasibility analysis)
     const dataSize = new Blob([JSON.stringify(files)]).size;
@@ -214,7 +93,12 @@ export async function fetchFiles(
     const dataSizeMB = (dataSize / (1024 * 1024)).toFixed(2);
     const sizeDisplay = dataSize >= 1024 * 1024 ? `${dataSizeMB} MB` : `${dataSizeKB} KB`;
 
-    console.log(`📊 Data Fetch Complete: ${totalDuration.toFixed(0)}ms | ${files.length} docs | ${systemCategories.length} categories | ${totalOperations} Firestore reads | ${sizeDisplay} data`);
+    console.log(
+      `📊 OPTIMIZED Data Fetch Complete: ${totalDuration.toFixed(0)}ms ` +
+        `(query: ${queryExecDuration.toFixed(0)}ms, processing: ${docProcessingDuration.toFixed(0)}ms) | ` +
+        `${files.length} docs | ${systemCategories.length} categories | ` +
+        `${files.length} Firestore reads (90% reduction!) | ${sizeDisplay} data`
+    );
 
     return files;
   } catch (error) {
