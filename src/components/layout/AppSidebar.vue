@@ -1,14 +1,14 @@
 <template>
   <nav
-    class="w-[60px] bg-gradient-to-b from-slate-800 to-slate-700 text-white transition-all duration-300 ease-in-out fixed left-0 top-0 h-screen z-[1000] overflow-hidden hover:w-[280px] group"
+    class="w-[60px] transition-all duration-300 ease-in-out fixed left-0 top-0 h-screen z-[1000] overflow-hidden hover:w-[280px] group sidebar-nav"
     id="app-sidebar"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div class="p-5 border-b border-slate-600 h-20 flex items-center relative">
+    <div class="p-5 h-20 flex items-center relative sidebar-header">
       <!-- Text that appears on hover -->
       <div
-        class="absolute left-5 top-1/2 transform -translate-y-1/2 font-bold text-lg whitespace-nowrap text-white transition-opacity duration-300 ease-in-out"
+        class="absolute left-5 top-1/2 transform -translate-y-1/2 font-bold text-lg whitespace-nowrap transition-opacity duration-300 ease-in-out sidebar-title"
         :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
       >
         Coryphaeus
@@ -25,7 +25,7 @@
         />
       </div>
       <div
-        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-base text-slate-400 opacity-100 transition-all duration-300 ease-in-out before:content-['❯'] group-hover:before:content-['❮']"
+        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-base opacity-100 transition-all duration-300 ease-in-out before:content-['❯'] group-hover:before:content-['❮'] sidebar-arrow"
       ></div>
     </div>
 
@@ -36,7 +36,7 @@
 
     <div class="py-0 relative">
       <div
-        class="absolute top-5 left-2 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-opacity duration-300 ease-in-out pointer-events-none"
+        class="absolute top-5 left-2 text-xs font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none sidebar-menu-label"
         :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
       >
         Main Menu
@@ -44,8 +44,8 @@
       <div class="h-14"></div>
       <router-link
         to="/matters"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/matters' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/matters' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🗄️</div>
         <span
@@ -56,8 +56,8 @@
       </router-link>
       <router-link
         to="/categories"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/categories' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/categories' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🗃️</div>
         <span
@@ -68,8 +68,8 @@
       </router-link>
       <router-link
         to="/upload"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/upload' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/upload' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📤</div>
         <span
@@ -80,8 +80,8 @@
       </router-link>
       <router-link
         to="/cloud"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/cloud' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/cloud' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">☁️</div>
         <span
@@ -92,8 +92,8 @@
       </router-link>
       <router-link
         to="/list"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/list' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/list' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📃</div>
         <span
@@ -104,8 +104,8 @@
       </router-link>
       <router-link
         to="/analyze"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/analyze' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/analyze' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🕵️</div>
         <span
@@ -116,8 +116,8 @@
       </router-link>
       <router-link
         to="/about"
-        class="flex items-center py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white"
-        :class="{ 'bg-brand-blue text-white': $route.path === '/about' }"
+        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        :class="{ 'sidebar-link-active': $route.path === '/about' }"
       >
         <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">ℹ️</div>
         <span
@@ -147,5 +147,40 @@ export default {
 </script>
 
 <style scoped>
-/* Custom styles for the sidebar */
+/* Sidebar styles using CSS variables from main.css */
+.sidebar-nav {
+  background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
+  color: var(--sidebar-text-primary);
+}
+
+.sidebar-header {
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-title {
+  color: var(--sidebar-text-primary);
+}
+
+.sidebar-arrow {
+  color: var(--sidebar-icon-accent);
+}
+
+.sidebar-menu-label {
+  color: var(--sidebar-text-accent);
+}
+
+.sidebar-link {
+  color: var(--sidebar-text-secondary);
+}
+
+.sidebar-link:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
+}
+
+.sidebar-link-active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  font-weight: 600;
+}
 </style>
