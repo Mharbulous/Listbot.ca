@@ -28,7 +28,7 @@ The application presents metadata to users in three distinct categories, reflect
 **Displayed Fields**:
 
 - **Name**: Dropdown showing available metadata variants (e.g., "Report.PDF", "report.pdf (2)"). User can select which variant to display. Shows earlier copy notification when a file with an earlier modification date already exists in storage.
-- **Date Modified (Source File)**: File system modification timestamp from `sourceMetadata.lastModified`
+- **Date Modified (Source File)**: File system modification timestamp from `sourceMetadata.sourceLastModified`
 - **Size**: File size in bytes from `evidence.fileSize`
 - **MIME Type**: Content type from Firebase Storage metadata.contentType (not from sourceMetadata)
 
@@ -50,7 +50,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **Data Structure**:
 
 - Multiple sourceMetadata documents share the same parent evidence document (identified by fileHash)
-- Each sourceMetadata document has a unique metadataHash (generated from `sourceFileName|lastModified|fileHash`)
+- Each sourceMetadata document has a unique metadataHash (generated from `sourceFileName|sourceLastModified|fileHash`)
 - The `sourceID` field in the evidence document points to the currently selected metadataHash
 
 **Use Case Example**:
@@ -156,7 +156,7 @@ UI Category          → Data Source
 ────────────────────────────────────────────────────────────
 Source File:
   Name               → sourceMetadata.sourceFileName (with variant selection dropdown)
-  Date Modified      → sourceMetadata.lastModified
+  Date Modified      → sourceMetadata.sourceLastModified
   Size               → evidence.fileSize
   MIME Type          → Firebase Storage metadata.contentType
 
@@ -250,17 +250,16 @@ Cloud:
 
 **Purpose**: Preserves metadata about source files from user's desktop as a subcollection under evidence documents
 
-**Document ID**: `metadataHash` - xxHash3-64bit hash of `originalName|lastModified|fileHash` (16 hex characters)
+**Document ID**: `metadataHash` - xxHash3-64bit hash of `sourceFileName|sourceLastModified|fileHash` (16 hex characters)
 
 **Fields**:
 
 ```javascript
 {
-  sourceFileName: string,      // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
-  lastModified: Timestamp,      // Source file's timestamp from user's filesystem (Firestore Timestamp)
-  fileHash: string,            // BLAKE3 of file content (32 hex chars)
-  sourceFolderPath: string,    // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
-  sourceFileType: string       // MIME type from file.type property (e.g., "application/pdf")
+  sourceFileName: string,           // Exact filename with ORIGINAL CASE PRESERVED (e.g., "Contract.PDF")
+  sourceLastModified: Timestamp,    // Source file's timestamp from user's filesystem (Firestore Timestamp)
+  fileHash: string,                 // BLAKE3 of file content (32 hex chars)
+  sourceFolderPath: string,         // Pipe-delimited paths (e.g., "Documents/2023|Archive/Legal")
 }
 ```
 
@@ -304,7 +303,7 @@ Cloud:
 - **Tag Counters**: Added for performance optimization
 - **Access file hash**: Use `evidence.id` (document ID) instead of `evidence.storageRef.fileHash`
 - **Updated sourceMetadata field names**: `originalName` → `sourceFileName`, `folderPaths` → `sourceFolderPath`
-- **Added MIME type capture**: New `sourceFileType` field stores file MIME type
+- **Moved MIME type to evidence**: `fileType` now stored in evidence collection (not sourceMetadata) since identical files always have identical MIME types
 
 **Key Implementation**:
 
@@ -391,7 +390,7 @@ Create sourceMetadata record as subcollection under evidence document →
 - Multiple sourceMetadata documents can exist under one evidence document
 - Each represents a different upload context (different name, timestamp, or path)
 - Path: `/evidence/{fileHash}/sourceMetadata/{metadataHash}`
-- Note: The `metadataHash` is a xxHash3-64bit hash generated from `sourceFileName|lastModified|fileHash` (16 hex characters)
+- Note: The `metadataHash` is a xxHash3-64bit hash generated from `sourceFileName|sourceLastModified|fileHash` (16 hex characters)
 
 **Result**: Triple-layer deduplication - efficient storage while preserving all original contexts through the subcollection structure
 
@@ -439,6 +438,6 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 
 - Same file content = one storage file (named by fileHash)
 - Same file content = ONE evidence document (fileHash as document ID)
-- Same metadata = one sourceMetadata subcollection document under evidence (identified by xxHash3-64bit metadataHash from `sourceFileName|lastModified|fileHash`)
+- Same metadata = one sourceMetadata subcollection document under evidence (identified by xxHash3-64bit metadataHash from `sourceFileName|sourceLastModified|fileHash`)
 - Multiple metadata variants = multiple subcollection documents under same evidence document
 - Every upload = new uploadEvent (for audit trail)

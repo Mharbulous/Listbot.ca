@@ -1,5 +1,4 @@
 import { ref, computed, onMounted } from 'vue';
-import { COLUMNS, getDefaultColumnOrder, getColumnByKey } from '@/utils/columnConfig';
 
 const STORAGE_KEY = 'analyze-column-order';
 
@@ -7,8 +6,15 @@ const STORAGE_KEY = 'analyze-column-order';
  * Composable for managing column drag-and-drop reordering with live reshuffling
  * Uses static drop zones frozen at drag start to prevent oscillation with variable-width columns
  * Implements directional insertion logic for intuitive left/right drag behavior
+ * @param {Array} columns - Array of column objects with {key, label, defaultWidth}
  */
-export function useColumnDragDrop() {
+export function useColumnDragDrop(columns) {
+  // Helper function to get default column order from columns array
+  const getDefaultColumnOrder = () => columns.map(col => col.key);
+
+  // Helper function to get column by key
+  const getColumnByKey = (key) => columns.find(col => col.key === key);
+
   // Column order state (array of column keys)
   const columnOrder = ref(getDefaultColumnOrder());
 
@@ -31,8 +37,8 @@ export function useColumnDragDrop() {
       if (saved) {
         const parsed = JSON.parse(saved);
         // Validate that all expected columns are present
-        const validOrder = parsed.filter(key => COLUMNS.some(col => col.key === key));
-        if (validOrder.length === COLUMNS.length) {
+        const validOrder = parsed.filter(key => columns.some(col => col.key === key));
+        if (validOrder.length === columns.length) {
           columnOrder.value = validOrder;
         }
       }

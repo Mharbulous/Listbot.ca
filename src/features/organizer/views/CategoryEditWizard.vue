@@ -129,6 +129,21 @@
               />
             </v-col>
 
+            <!-- Boolean-specific child controls -->
+            <v-col v-if="editedCategory.type === 'Boolean'" cols="12">
+              <v-select
+                v-model="editedCategory.defaultBooleanFormat"
+                label="Boolean Format"
+                variant="outlined"
+                density="comfortable"
+                :error-messages="categoryErrors.defaultBooleanFormat"
+                :items="booleanFormatOptions"
+                item-title="title"
+                item-value="value"
+                placeholder="Select boolean format"
+              />
+            </v-col>
+
             <!-- Fixed List and Open List tag options -->
             <v-col v-if="['Fixed List', 'Open List'].includes(editedCategory.type)" cols="12">
               <TagOptionsManager
@@ -177,9 +192,9 @@
               </div>
             </v-col>
 
-            <!-- Allow Duplicate Values checkbox for Text Area, Sequence, and Regex -->
+            <!-- Allow Duplicate Values checkbox for Text, Text Area, Sequence, and Regex -->
             <v-col
-              v-if="['Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)"
+              v-if="['Text', 'Text Area', 'Sequence', 'Regex'].includes(editedCategory.type)"
               cols="12"
             >
               <v-checkbox
@@ -256,14 +271,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import { useOrganizerStore } from '../stores/organizer.js';
 import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { categoryTypeOptions } from '../utils/categoryTypes.js';
 import { currencyOptions } from '../utils/currencyOptions.js';
-import { sequenceFormatOptions } from '../utils/categoryFormOptions.js';
+import { sequenceFormatOptions, booleanFormatOptions } from '../utils/categoryFormOptions.js';
 import {
   generateRegexExamples,
   capitalizeFirstLetter,
@@ -274,7 +289,6 @@ import {
   requiresWarning,
   getConversionWarningMessage,
 } from '../utils/categoryTypeConversions.js';
-import { isSystemCategory } from '../constants/systemcategories.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
 import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
 
@@ -301,6 +315,7 @@ const editedCategory = ref({
   tags: [],
   defaultCurrency: 'CAD',
   defaultSequenceFormat: '1, 2, 3, ...',
+  defaultBooleanFormat: 'TRUE/FALSE',
   regexDefinition: '.*',
   allowDuplicateValues: false,
   allowGaps: false,
@@ -311,6 +326,7 @@ const categoryErrors = ref({
   type: [],
   defaultCurrency: [],
   defaultSequenceFormat: [],
+  defaultBooleanFormat: [],
   regexDefinition: [],
   allowDuplicateValues: [],
   allowGaps: [],
@@ -354,6 +370,7 @@ const isFormValid = computed(() => {
     type &&
     (editedCategory.value.type !== 'Currency' || editedCategory.value.defaultCurrency) &&
     (editedCategory.value.type !== 'Sequence' || editedCategory.value.defaultSequenceFormat) &&
+    (editedCategory.value.type !== 'Boolean' || editedCategory.value.defaultBooleanFormat) &&
     isRegexValid.value &&
     (!['Text Area', 'Sequence', 'Regex'].includes(editedCategory.value.type) ||
       typeof editedCategory.value.allowDuplicateValues === 'boolean') &&
@@ -372,6 +389,7 @@ const hasChanges = computed(() => {
     'type',
     'defaultCurrency',
     'defaultSequenceFormat',
+    'defaultBooleanFormat',
     'regexDefinition',
     'allowDuplicateValues',
     'allowGaps',
@@ -481,6 +499,7 @@ const validateCategory = () => {
   const typeErrors = [];
   const defaultCurrencyErrors = [];
   const defaultSequenceFormatErrors = [];
+  const defaultBooleanFormatErrors = [];
   const allowDuplicateValuesErrors = [];
   const allowGapsErrors = [];
   const regexDefinitionErrors = [];
@@ -489,6 +508,7 @@ const validateCategory = () => {
   const type = editedCategory.value.type;
   const defaultCurrency = editedCategory.value.defaultCurrency;
   const defaultSequenceFormat = editedCategory.value.defaultSequenceFormat;
+  const defaultBooleanFormat = editedCategory.value.defaultBooleanFormat;
   const regexDefinition = editedCategory.value.regexDefinition;
   const allowDuplicateValues = editedCategory.value.allowDuplicateValues;
   const allowGaps = editedCategory.value.allowGaps;
@@ -531,8 +551,17 @@ const validateCategory = () => {
     }
   }
 
+  // Validate boolean-specific fields (for Boolean only)
+  if (type === 'Boolean') {
+    if (!defaultBooleanFormat) {
+      defaultBooleanFormatErrors.push('Boolean format is required for Boolean categories');
+    } else if (!booleanFormatOptions.find((option) => option.value === defaultBooleanFormat)) {
+      defaultBooleanFormatErrors.push('Please select a valid boolean format');
+    }
+  }
+
   // Validate allow duplicate values for applicable types
-  if (['Text Area', 'Sequence', 'Regex'].includes(type)) {
+  if (['Text', 'Text Area', 'Sequence', 'Regex'].includes(type)) {
     if (typeof allowDuplicateValues !== 'boolean') {
       allowDuplicateValuesErrors.push('Allow duplicate values setting is required');
     }
@@ -563,6 +592,7 @@ const validateCategory = () => {
   categoryErrors.value.type = typeErrors;
   categoryErrors.value.defaultCurrency = defaultCurrencyErrors;
   categoryErrors.value.defaultSequenceFormat = defaultSequenceFormatErrors;
+  categoryErrors.value.defaultBooleanFormat = defaultBooleanFormatErrors;
   categoryErrors.value.regexDefinition = regexDefinitionErrors;
   categoryErrors.value.allowDuplicateValues = allowDuplicateValuesErrors;
   categoryErrors.value.allowGaps = allowGapsErrors;
@@ -572,6 +602,7 @@ const validateCategory = () => {
     typeErrors.length === 0 &&
     defaultCurrencyErrors.length === 0 &&
     defaultSequenceFormatErrors.length === 0 &&
+    defaultBooleanFormatErrors.length === 0 &&
     regexDefinitionErrors.length === 0 &&
     allowDuplicateValuesErrors.length === 0 &&
     allowGapsErrors.length === 0
@@ -601,6 +632,10 @@ const saveCategory = async () => {
     if (editedCategory.value.type === 'Sequence') {
       updates.defaultSequenceFormat = editedCategory.value.defaultSequenceFormat;
       updates.allowGaps = editedCategory.value.allowGaps;
+    }
+
+    if (editedCategory.value.type === 'Boolean') {
+      updates.defaultBooleanFormat = editedCategory.value.defaultBooleanFormat;
     }
 
     if (editedCategory.value.type === 'Regex') {
@@ -661,6 +696,7 @@ const loadCategory = async () => {
       tags: foundCategory.tags || [],
       defaultCurrency: foundCategory.defaultCurrency || 'CAD',
       defaultSequenceFormat: foundCategory.defaultSequenceFormat || '1, 2, 3, ...',
+      defaultBooleanFormat: foundCategory.defaultBooleanFormat || 'TRUE/FALSE',
       regexDefinition: foundCategory.regexDefinition || '.*',
       allowDuplicateValues: foundCategory.allowDuplicateValues || false,
       allowGaps: foundCategory.allowGaps || false,

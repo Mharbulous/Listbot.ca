@@ -185,3 +185,17 @@ export const formatDateTime = (timestamp, dateFormat = 'YYYY-MM-DD', timeFormat 
   if (!timestamp) return '';
   return `${formatDate(timestamp, dateFormat)} ${formatTime(timestamp, timeFormat)}`;
 };
+
+/**
+ * Format timestamp with date and time using user preferences
+ * Displays in format: "{date} at {time}"
+ *
+ * @param {*} timestamp - Firestore timestamp or Date object
+ * @param {string} dateFormat - Date format pattern (defaults to 'YYYY-MM-DD')
+ * @param {string} timeFormat - Time format pattern (defaults to 'HH:mm')
+ * @returns {string} Formatted timestamp string with " at " separator
+ */
+export const formatTimestamp = (timestamp, dateFormat = 'YYYY-MM-DD', timeFormat = 'HH:mm') => {
+  if (!timestamp) return '';
+  return `${formatDate(timestamp, dateFormat)} at ${formatTime(timestamp, timeFormat)}`;
+};

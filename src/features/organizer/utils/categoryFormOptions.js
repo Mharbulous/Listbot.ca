@@ -41,3 +41,9 @@ export const sequenceFormatOptions = [
   { title: '1st, 2nd, 3rd, ...', value: '1st, 2nd, 3rd, ...' },
   { title: 'First, Second, Third, ...', value: 'First, Second, Third, ...' },
 ];
+
+// Boolean format options
+export const booleanFormatOptions = [
+  { title: 'TRUE/FALSE', value: 'TRUE/FALSE' },
+  { title: 'YES/NO', value: 'YES/NO' },
+];

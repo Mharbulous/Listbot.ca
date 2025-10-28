@@ -53,10 +53,22 @@ export const categoryTypeOptions = [
     color: '#c62828', // Red
   },
   {
+    title: 'Text',
+    value: 'Text',
+    icon: 'mdi-form-textbox',
+    color: '#6d4c41', // Lighter brown (short text, max 64 chars)
+  },
+  {
     title: 'Text Area',
     value: 'Text Area',
     icon: 'mdi-text-box-outline',
     color: '#5d4037', // Brown
+  },
+  {
+    title: 'Boolean',
+    value: 'Boolean',
+    icon: 'mdi-toggle-switch',
+    color: '#455a64', // Blue Grey
   },
 ];
 

@@ -27,7 +27,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const isInitializing = ref(false);
 
   // Cache for display information
-  const displayInfoCache = ref(new Map());
+  const uploadDisplayCache = ref(new Map());
 
   // Track metadata selections for storage files with multiple source metadata variants
   // When the same file content (fileHash) is uploaded multiple times with different source metadata,
@@ -204,8 +204,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const getDisplayInfo = async (metadataHash, firmId, fileHash, matterId) => {
     try {
       // Check cache first
-      if (displayInfoCache.value.has(metadataHash)) {
-        return displayInfoCache.value.get(metadataHash);
+      if (uploadDisplayCache.value.has(metadataHash)) {
+        return uploadDisplayCache.value.get(metadataHash);
       }
 
       // Fetch from Firestore subcollection
@@ -226,22 +226,22 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         const data = metadataDoc.data();
 
         // Normalize display name to use lowercase extension for consistency
-        let displayName = data.sourceFileName || 'Unknown File';
-        if (displayName !== 'Unknown File') {
-          const parts = displayName.split('.');
+        let uploadFileName = data.sourceFileName || 'Unknown File';
+        if (uploadFileName !== 'Unknown File') {
+          const parts = uploadFileName.split('.');
           if (parts.length > 1) {
             parts[parts.length - 1] = parts[parts.length - 1].toLowerCase();
-            displayName = parts.join('.');
+            uploadFileName = parts.join('.');
           }
         }
 
         const displayInfo = {
-          displayName: displayName,
-          createdAt: data.lastModified || null, // Source file's lastModified timestamp
+          displayName: uploadFileName,
+          createdAt: data.sourceLastModified || null, // Source file's sourceLastModified timestamp
         };
 
         // Cache the result
-        displayInfoCache.value.set(metadataHash, displayInfo);
+        uploadDisplayCache.value.set(metadataHash, displayInfo);
         return displayInfo;
       } else {
         console.warn(`[OrganizerCore] Metadata not found for hash: ${metadataHash}`);
@@ -295,7 +295,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
       const evidenceQuery = query(
         evidenceRef,
-        orderBy('fileCreated', 'desc'),
+        orderBy('uploadDate', 'desc'),
         limit(1000) // Reasonable limit for v1.0
       );
 
@@ -495,7 +495,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    * Clear display info cache
    */
   const clearDisplayCache = () => {
-    displayInfoCache.value.clear();
+    uploadDisplayCache.value.clear();
     console.log('[OrganizerCore] Display info cache cleared');
   };
 
@@ -504,8 +504,8 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    */
   const getCacheStats = () => {
     return {
-      size: displayInfoCache.value.size,
-      entries: Array.from(displayInfoCache.value.keys()),
+      size: uploadDisplayCache.value.size,
+      entries: Array.from(uploadDisplayCache.value.keys()),
     };
   };
 
@@ -576,7 +576,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
     error.value = null;
     isInitialized.value = false;
     isInitializing.value = false;
-    displayInfoCache.value.clear();
+    uploadDisplayCache.value.clear();
     metadataSelections.value.clear();
     activeUnsubscribe = null;
   };

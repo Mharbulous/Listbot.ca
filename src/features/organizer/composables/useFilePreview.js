@@ -19,7 +19,7 @@ export function useFilePreview() {
    * Generate preview for a storage file
    * @param {Object} file - Storage file reference or evidence record
    */
-  const generateUploadPreview = async (file) => {
+  const generateUploadPreview = async (upload) => {
     if (!file) return;
 
     previewLoading.value = true;
@@ -52,7 +52,7 @@ export function useFilePreview() {
    * Select a storage file for preview
    * @param {Object} file - Storage file reference or evidence record to preview
    */
-  const selectUpload = async (file) => {
+  const selectUpload = async (upload) => {
     selectedUpload.value = file;
     await generateUploadPreview(file);
   };

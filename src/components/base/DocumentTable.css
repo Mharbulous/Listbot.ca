@@ -1,6 +1,6 @@
-/* Page Container - Full viewport height minus header */
-.analyze-mockup-page {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+/* Document Table Container */
+.document-table {
+  height: 100%; /* Fill parent container */
   width: 100%; /* Full width of parent */
   background: white;
   overflow: hidden; /* Prevent page-level scrolling */
@@ -100,8 +100,6 @@
 .header-cell.sorted-desc .sort-indicator {
   color: #667eea;
 }
-
-/* .header-label styles moved to .header-label-button since the span wrapper was removed */
 
 .column-selector-cell {
   width: 100px;
@@ -221,24 +219,6 @@
   background: #e5e7eb;
 }
 
-/* Scroll Annotations */
-.scroll-annotation {
-  position: fixed;
-  background: #667eea;
-  color: white;
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-  z-index: 20;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.header-annotation {
-  top: 90px;
-  right: 80px;
-}
-
 /* Table Body - Expands to content width */
 .table-mockup-body {
   background: white;
@@ -260,7 +240,7 @@
 }
 
 .table-mockup-row.even {
-  background: #f3f4f6; /* More visible gray for even rows (zebra pattern) - changed from #f9fafb for better visibility */
+  background: #f3f4f6; /* More visible gray for even rows (zebra pattern) */
 }
 
 .table-mockup-row:hover {
@@ -588,8 +568,6 @@
   font-weight: 700;
   line-height: 1;
 }
-
-/* Header label text styling now applied directly to .header-label-button (no nested span) */
 
 /* Emoji Centering - for system category tags that don't exist */
 .emoji-cell {

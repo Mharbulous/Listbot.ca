@@ -5,19 +5,74 @@
 
 import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { getCategoryFieldName } from '../utils/categoryFieldMapping';
+
+/**
+ * Fetch all system category tags for a given evidence document
+ * @param {string} firmId - The firm ID
+ * @param {string} matterId - The matter ID
+ * @param {string} fileHash - The evidence document ID (BLAKE3 hash)
+ * @param {Array} systemCategories - Array of system category objects from Firestore
+ * @returns {Promise<Object>} Object mapping category IDs to tag values (string or 🤖 emoji)
+ */
+async function fetchSystemTags(firmId, matterId, fileHash, systemCategories) {
+  // Create promises to fetch all system tags in parallel
+  const tagPromises = systemCategories.map(async (category) => {
+    const categoryId = category.id;
+    const fieldName = getCategoryFieldName(category.type);
+
+    try {
+      const tagRef = doc(
+        db,
+        'firms',
+        firmId,
+        'matters',
+        matterId,
+        'evidence',
+        fileHash,
+        'tags',
+        categoryId
+      );
+      const tagDoc = await getDoc(tagRef);
+
+      if (tagDoc.exists()) {
+        const tagData = tagDoc.data();
+        const value = tagData[fieldName];
+        return [categoryId, value || '🤖'];
+      } else {
+        return [categoryId, '🤖'];
+      }
+    } catch (error) {
+      console.error(`[Cloud Table] Failed to fetch ${categoryId} tag for ${fileHash}:`, error);
+      return [categoryId, '🤖'];
+    }
+  });
+
+  // Wait for all tag fetches to complete
+  const tagResults = await Promise.all(tagPromises);
+
+  // Convert array of [key, value] pairs to object
+  return Object.fromEntries(tagResults);
+}
 
 /**
  * Fetch evidence documents from Firestore with source file metadata
  * @param {string} firmId - The firm ID to query
  * @param {string} matterId - The matter ID (default: 'general')
+ * @param {Array} systemCategories - Array of system category objects from Firestore
  * @param {number} maxResults - Maximum number of results to fetch (default: 10000)
  * @returns {Promise<Array>} Array of evidence records formatted for Cloud table
  */
-export async function fetchFiles(firmId, matterId = 'general', maxResults = 10000) {
+export async function fetchFiles(
+  firmId,
+  matterId = 'general',
+  systemCategories = [],
+  maxResults = 10000
+) {
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
-    const q = query(evidenceRef, orderBy('fileCreated', 'desc'), limit(maxResults));
+    const q = query(evidenceRef, orderBy('uploadDate', 'desc'), limit(maxResults));
 
     // Execute the query
     const querySnapshot = await getDocs(q);
@@ -33,8 +88,10 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
       // Create a promise to fetch the sourceMetadata
       const filePromise = (async () => {
         let sourceFileName = 'ERROR: Missing metadata';
+        let sourceLastModified = null;
+        let sourceFolderPath = 'ERROR: Missing metadata';
 
-        // Try to fetch the source filename from sourceMetadata subcollection
+        // Try to fetch the source filename, last modified date, and folder path from sourceMetadata subcollection
         if (sourceIDId) {
           try {
             const sourceMetadataRef = doc(
@@ -53,19 +110,60 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
             if (sourceMetadataDoc.exists()) {
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
+              sourceLastModified = sourceMetadata.sourceLastModified || null;
+              sourceFolderPath =
+                sourceMetadata.sourceFolderPath || 'ERROR: Missing sourceFolderPath';
             } else {
               console.error(
                 `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
               );
               sourceFileName = 'ERROR: Metadata not found';
+              sourceLastModified = null;
+              sourceFolderPath = 'ERROR: Metadata not found';
             }
           } catch (error) {
             console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
             sourceFileName = 'ERROR: Fetch failed';
+            sourceLastModified = null;
+            sourceFolderPath = 'ERROR: Fetch failed';
           }
         } else {
           console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
           sourceFileName = 'ERROR: No sourceID ID';
+          sourceLastModified = null;
+          sourceFolderPath = 'ERROR: No sourceID ID';
+        }
+
+        // Fetch all system category tags for this evidence document
+        const systemTags = await fetchSystemTags(firmId, matterId, fileHash, systemCategories);
+
+        // Count sourceMetadata documents to determine if Multiple Source Files exist
+        let alternateSources = 'No source information';
+        try {
+          const sourceMetadataCollectionRef = collection(
+            db,
+            'firms',
+            firmId,
+            'matters',
+            matterId,
+            'evidence',
+            fileHash,
+            'sourceMetadata'
+          );
+          const sourceMetadataSnapshot = await getDocs(sourceMetadataCollectionRef);
+          const sourceMetadataCount = sourceMetadataSnapshot.size;
+
+          if (sourceMetadataCount === 0) {
+            console.warn('[Cloud Table] Missing source metadata for evidence:', fileHash);
+            alternateSources = 'No source information';
+          } else if (sourceMetadataCount === 1) {
+            alternateSources = 'FALSE';
+          } else {
+            alternateSources = 'TRUE';
+          }
+        } catch (error) {
+          console.error(`[Cloud Table] Failed to count sourceMetadata for ${fileHash}:`, error);
+          alternateSources = 'No source information';
         }
 
         // Map evidence document to table row format
@@ -75,10 +173,11 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
           // File properties that exist in evidence documents
           size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
-          date: formatDate(data.fileCreated),
+          date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
+          fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
 
-          // Processing status
-          status: getStatusLabel(data.processingStage),
+          // Multiple Source Files indicator
+          alternateSources: alternateSources,
 
           // Tag information
           tagCount: data.tagCount || 0,
@@ -86,18 +185,12 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
           // Source filename from sourceMetadata subcollection
           fileName: sourceFileName,
 
-          // Placeholder fields (to be enhanced later)
-          fileType: 'ERROR: File type not available', // Will need sourceMetadata lookup
-          privilege: 'ERROR: Privilege not available',
-          description:
-            data.tagCount !== undefined
-              ? `${data.tagCount} tags`
-              : 'ERROR: Tag count not available',
-          documentType: getDocumentTypeFromStage(data.processingStage),
-          author: 'ERROR: Author not available',
-          custodian: 'ERROR: Custodian not available',
-          createdDate: formatDate(data.fileCreated),
-          modifiedDate: formatDate(data.fileCreated),
+          // Other fields
+          modifiedDate: sourceLastModified || null,
+          sourceFolderPath: sourceFolderPath,
+
+          // System category tags from Firestore tags subcollection (dynamic)
+          ...systemTags,
         };
       })();
 

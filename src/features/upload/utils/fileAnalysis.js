@@ -111,7 +111,7 @@ export function analyzeFiles(
 
   return {
     totalUploads: files.length,
-    totalSizeMB: Math.round(totalFilesSizeMB * 10) / 10, // Round to 1 decimal
+    totalSizeMB: Math.round(totalUploadsSizeMB * 10) / 10, // Round to 1 decimal
     uniqueFiles: uniqueFiles.length,
     uniqueFilesSizeMB: Math.round(uniqueFilesSizeMB * 10) / 10,
     duplicateCandidates: duplicateCandidates.length,

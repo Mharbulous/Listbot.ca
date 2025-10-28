@@ -42,16 +42,16 @@ export class EvidenceService {
       const metadataHash = uploadMetadata.metadataHash;
 
       // Convert Storage timestamp to Firestore Timestamp, or fallback to serverTimestamp
-      let fileCreatedTimestamp;
+      let uploadDateTimestamp;
       if (uploadMetadata.storageCreatedTimestamp) {
         try {
-          fileCreatedTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
+          uploadDateTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
         } catch (error) {
           console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp:', error);
-          fileCreatedTimestamp = serverTimestamp();
+          uploadDateTimestamp = serverTimestamp();
         }
       } else {
-        fileCreatedTimestamp = serverTimestamp();
+        uploadDateTimestamp = serverTimestamp();
       }
 
       // Create evidence document with simplified structure
@@ -61,6 +61,7 @@ export class EvidenceService {
 
         // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
+        fileType: uploadMetadata.fileType || '', // MIME type from source file
 
         // Processing status (for future Document Processing Workflow)
         isProcessed: false,
@@ -73,7 +74,7 @@ export class EvidenceService {
         reviewRequiredCount: 0,
 
         // Timestamps
-        fileCreated: fileCreatedTimestamp,
+        uploadDate: uploadDateTimestamp,
       };
 
       // Use setDoc with fileHash as document ID (automatic deduplication)
@@ -114,16 +115,16 @@ export class EvidenceService {
         evidenceIds.push(fileHash);
 
         // Convert Storage timestamp to Firestore Timestamp, or fallback to serverTimestamp
-        let fileCreatedTimestamp;
+        let uploadDateTimestamp;
         if (uploadMetadata.storageCreatedTimestamp) {
           try {
-            fileCreatedTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
+            uploadDateTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
           } catch (error) {
             console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp:', error);
-            fileCreatedTimestamp = serverTimestamp();
+            uploadDateTimestamp = serverTimestamp();
           }
         } else {
-          fileCreatedTimestamp = serverTimestamp();
+          uploadDateTimestamp = serverTimestamp();
         }
 
         const evidenceData = {
@@ -131,6 +132,7 @@ export class EvidenceService {
           sourceID: uploadMetadata.metadataHash || 'temp-hash',
 
           fileSize: uploadMetadata.size || 0,
+          fileType: uploadMetadata.fileType || '', // MIME type from source file
 
           isProcessed: false,
           hasAllPages: null,
@@ -141,7 +143,7 @@ export class EvidenceService {
           autoApprovedCount: 0,
           reviewRequiredCount: 0,
 
-          fileCreated: fileCreatedTimestamp,
+          uploadDate: uploadDateTimestamp,
         };
 
         batch.set(evidenceRef, evidenceData);
@@ -178,7 +180,7 @@ export class EvidenceService {
       );
       await updateDoc(evidenceRef, {
         displayName: displayName.trim(),
-        fileCreated: serverTimestamp(),
+        uploadDate: serverTimestamp(),
       });
     } catch (error) {
       throw error;
@@ -201,7 +203,7 @@ export class EvidenceService {
 
       const updateData = {
         processingStage: stage,
-        fileCreated: serverTimestamp(),
+        uploadDate: serverTimestamp(),
         ...additionalData,
       };
 
@@ -276,7 +278,7 @@ export class EvidenceService {
   /**
    * Get all source metadata variants for a file (all copies with different names/dates)
    * @param {string} fileHash - Evidence document ID (file hash)
-   * @returns {Promise<Array>} - Array of metadata variants sorted by lastModified (oldest to newest)
+   * @returns {Promise<Array>} - Array of metadata variants sorted by sourceLastModified (oldest to newest)
    */
   async getAllSourceMetadata(fileHash) {
     try {
@@ -293,8 +295,8 @@ export class EvidenceService {
         'sourceMetadata'
       );
 
-      // Query and sort by lastModified (oldest first)
-      const metadataQuery = query(metadataRef, orderBy('lastModified', 'asc'));
+      // Query and sort by sourceLastModified (oldest first)
+      const metadataQuery = query(metadataRef, orderBy('sourceLastModified', 'asc'));
       const querySnapshot = await getDocs(metadataQuery);
 
       const variants = [];

@@ -34,7 +34,7 @@
                     {{ currentProgressMessage || 'Analyzing files...' }}
                   </template>
                   <template v-else>
-                    <strong>{{ formatNumber(mainFolderDisplayData.totalFiles) }}</strong> files in
+                    <strong>{{ formatNumber(mainFolderDisplayData.totalUploads) }}</strong> files in
                     this folder totalling <strong>{{ mainFolderDisplayData.totalSizeMB }}</strong
                     >MB (<strong>{{ mainFolderDisplayData.duplicateCandidatesSizeMB }}</strong
                     >MB possible duplicates).
@@ -57,7 +57,7 @@
                     {{ currentProgressMessage || 'Analyzing files...' }}
                   </template>
                   <template v-else>
-                    <strong>{{ formatNumber(allFilesDisplayData.totalFiles) }}</strong> files in
+                    <strong>{{ formatNumber(allFilesDisplayData.totalUploads) }}</strong> files in
                     <strong>{{ formatNumber(allFilesDisplayData.totalDirectoryCount) }}</strong>
                     folders totalling <strong>{{ allFilesDisplayData.totalSizeMB }}</strong
                     >MB (<strong>{{ allFilesDisplayData.duplicateCandidatesSizeMB }}</strong
@@ -174,6 +174,9 @@ const isInPostSwitchDelay = ref(false);
 
 // Formatting helpers
 const formatNumber = (num) => {
+  if (num === undefined || num === null) {
+    return '0';
+  }
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'k';
   }

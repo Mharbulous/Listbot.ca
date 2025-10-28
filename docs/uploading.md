@@ -300,7 +300,7 @@ For complete documentation of metadata hash generation, constraint-based dedupli
 ### Key Concepts
 
 - **File Content Hash**: BLAKE3 (32 hex characters) of actual file content for storage deduplication
-- **Metadata Hash**: xxHash3-64bit (16 hex characters) of `sourceFileName|lastModified|fileHash` for metadata deduplication
+- **Metadata Hash**: xxHash3-64bit (16 hex characters) of `sourceFileName|sourceLastModified|fileHash` for metadata deduplication
 - **Automatic Constraints**: Firestore document IDs prevent duplicate metadata records
 - **Multi-Level Deduplication**: Storage level (content) + metadata level (combinations)
 
@@ -428,11 +428,12 @@ const { createMetadataRecord, generateMetadataHash } = useFileMetadata();
 // See data-structures.md for complete field definitions
 await createMetadataRecord({
   sourceFileName: 'document.pdf', // Original filename from source file
-  lastModified: timestamp, // Source file's modification timestamp
+  sourceLastModified: timestamp, // Source file's modification timestamp
   fileHash: 'abc123...', // BLAKE3 hash of file content
   sourceFolderPath: 'Documents/2023', // Generated from webkitRelativePath via smart pattern recognition
-  sourceFileType: 'application/pdf', // MIME type from source file's file.type property
+  sourceFileType: 'application/pdf', // MIME type from source file (passed to evidence.fileType)
   // Note: sourceFolderPath field is automatically generated with pattern recognition
+  // Note: sourceFileType is passed through to evidence.fileType (not stored in sourceMetadata)
   // See data-structures.md#folder-path-system for complete documentation
 });
 ```

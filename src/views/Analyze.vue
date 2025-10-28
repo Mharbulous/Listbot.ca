@@ -130,9 +130,6 @@
             <!-- Custodian -->
             <template v-else-if="column.key === 'custodian'">Legal Dept.</template>
 
-            <!-- Created Date -->
-            <template v-else-if="column.key === 'createdDate'">2024-09-{{ String(i).padStart(2, '0') }}</template>
-
             <!-- Modified Date -->
             <template v-else-if="column.key === 'modifiedDate'">2024-10-{{ String(i).padStart(2, '0') }}</template>
 
