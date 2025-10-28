@@ -1,292 +1,113 @@
 <template>
   <div class="analyze-mockup-page" style="min-width: 0">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Loading files from Firestore...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <div class="error-icon">⚠️</div>
-      <p class="error-message">{{ error }}</p>
-      <button @click="window.location.reload()" class="retry-button">Retry</button>
-    </div>
-
-    <!-- Scrollable container fills viewport -->
-    <div
-      v-else
-      ref="scrollContainer"
-      class="scroll-container"
+    <DocumentTable
+      :data="mockData"
+      :columns="allColumns"
+      :loading="isLoading"
+      :error="error"
+      :row-height="48"
+      :overscan="5"
+      column-selector-label="Cols"
       @dragover="onDragOver"
       @drop="onDrop"
+      @retry="handleRetry"
     >
-      <!-- Sticky Table Header -->
-      <div class="table-mockup-header">
-        <!-- Column Selector Button (always at far left) -->
-        <div class="header-cell column-selector-cell">
-          <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
-            <span>Cols</span>
-            <span class="dropdown-icon">▼</span>
-          </button>
-        </div>
-
-        <!-- Dynamic Column Headers with Drag-and-Drop -->
-        <div
-          v-for="(column, index) in visibleColumns"
-          :key="column.key"
-          class="header-cell"
-          :class="{
-            dragging: isColumnDragging(column.key),
-            'drag-gap': isDragGap(column.key),
-            'sorted-asc': isSorted(column.key) && sortDirection === 'asc',
-            'sorted-desc': isSorted(column.key) && sortDirection === 'desc',
-          }"
-          :style="{ width: columnWidths[column.key] + 'px' }"
-          :data-column-key="column.key"
+      <!-- Custom cell rendering for File Type column -->
+      <template #cell-fileType="{ row, value }">
+        <span
+          :class="
+            value.startsWith('ERROR:')
+              ? 'error-text'
+              : ['badge', getBadgeClass(formatMimeType(value))]
+          "
         >
-          <!-- Drag Handle Icon (shown on hover) -->
-          <div
-            class="drag-handle"
-            title="Drag to reorder"
-            draggable="true"
-            @dragstart="onDragStart(column.key, $event)"
-            @dragend="onDragEnd"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
-              <!-- Top row - 6 dots -->
-              <circle cx="3" cy="4" r="1" />
-              <circle cx="9" cy="4" r="1" />
-              <circle cx="15" cy="4" r="1" />
-              <circle cx="21" cy="4" r="1" />
-              <circle cx="27" cy="4" r="1" />
-              <circle cx="33" cy="4" r="1" />
+          {{ formatMimeType(value) }}
+        </span>
+      </template>
 
-              <!-- Bottom row - 6 dots -->
-              <circle cx="3" cy="8" r="1" />
-              <circle cx="9" cy="8" r="1" />
-              <circle cx="15" cy="8" r="1" />
-              <circle cx="21" cy="8" r="1" />
-              <circle cx="27" cy="8" r="1" />
-              <circle cx="33" cy="8" r="1" />
-            </svg>
-          </div>
+      <!-- Custom cell rendering for File Name column -->
+      <template #cell-fileName="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
 
-          <!-- Sort Indicator - positioned relative to header cell for proper centering -->
-          <span class="sort-indicator" v-if="isSorted(column.key)">
-            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-          </span>
+      <!-- Custom cell rendering for Size column -->
+      <template #cell-size="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
 
-          <!-- Sortable Column Label (Clickable Button) -->
-          <button
-            class="header-label-button"
-            @click="toggleSort(column.key)"
-            :title="`Click to sort by ${column.label}`"
-          >
-            {{ column.label }}
-          </button>
-
-          <!-- Resize Handle -->
-          <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
-        </div>
-
-        <!-- Column Selector Popover -->
-        <div
-          v-if="showColumnSelector"
-          ref="columnSelectorPopover"
-          class="column-selector-popover"
-          tabindex="0"
-          @focusout="handleFocusOut"
+      <!-- Custom cell rendering for Privilege column -->
+      <template #cell-privilege="{ row, value }">
+        <span
+          :class="value.startsWith('ERROR:') ? 'error-text' : 'badge badge-privilege'"
         >
-          <div class="popover-header">Show/Hide Columns</div>
-          <label v-for="column in orderedColumns" :key="column.key" class="column-option">
-            <input
-              type="checkbox"
-              :checked="isColumnVisible(column.key)"
-              @change="toggleColumnVisibility(column.key)"
-            />
-            {{ column.label }}
-          </label>
-          <div class="popover-footer">
-            <button class="reset-btn" @click="resetToDefaults">Reset to Defaults</button>
-          </div>
-        </div>
-      </div>
+          {{ value }}
+        </span>
+      </template>
 
-      <!-- Scrollable Table Body with Virtual Scrolling -->
-      <div class="table-mockup-body">
-        <!-- Virtual container with dynamic height -->
-        <div
-          class="virtual-container"
-          :style="{
-            height: virtualTotalSize + 'px',
-            position: 'relative',
-          }"
+      <!-- Custom cell rendering for Description column -->
+      <template #cell-description="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
+
+      <!-- Custom cell rendering for Author column -->
+      <template #cell-author="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
+
+      <!-- Custom cell rendering for Custodian column -->
+      <template #cell-custodian="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
+
+      <!-- Custom cell rendering for Source Folder Path column -->
+      <template #cell-sourceFolderPath="{ row, value }">
+        <span :class="{ 'error-text': value.startsWith('ERROR:') }">
+          {{ value }}
+        </span>
+      </template>
+
+      <!-- Custom cell rendering for Timestamp columns (Upload Date, Source Modified Date) -->
+      <template #cell-date="{ row, value }">
+        <span :class="{ 'error-text': getCellValue(row, 'date').startsWith('ERROR:') }">
+          {{ getCellValue(row, 'date') }}
+        </span>
+      </template>
+
+      <template #cell-modifiedDate="{ row, value }">
+        <span :class="{ 'error-text': getCellValue(row, 'modifiedDate').startsWith('ERROR:') }">
+          {{ getCellValue(row, 'modifiedDate') }}
+        </span>
+      </template>
+
+      <!-- Custom cell rendering for Multiple Source Files column -->
+      <template #cell-alternateSources="{ row, value }">
+        <span
+          :class="
+            value === 'No source information' ? 'error-text' : 'badge badge-status'
+          "
         >
-          <!-- Virtual rows (only visible + overscan rendered) -->
-          <div
-            v-for="virtualItem in virtualItems"
-            :key="virtualItem.key"
-            class="table-mockup-row"
-            :class="{ even: virtualItem.index % 2 === 0 }"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: virtualItem.size + 'px',
-              transform: `translateY(${virtualItem.start}px)`,
-              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
-            }"
-          >
-            <!-- Spacer cell to align with Cols button header -->
-            <div class="row-cell column-selector-spacer" style="width: 100px"></div>
-
-            <!-- Dynamic cells matching column order -->
-            <div
-              v-for="column in visibleColumns"
-              :key="column.key"
-              class="row-cell"
-              :class="{
-                'drag-gap': isDragGap(column.key),
-                'emoji-cell': sortedData[virtualItem.index][column.key] === '🤖',
-              }"
-              :style="{ width: columnWidths[column.key] + 'px' }"
-              :data-column-key="column.key"
-            >
-              <!-- File Type -->
-              <span
-                v-if="column.key === 'fileType'"
-                :class="
-                  sortedData[virtualItem.index].fileType.startsWith('ERROR:')
-                    ? 'error-text'
-                    : [
-                        'badge',
-                        getBadgeClass(formatMimeType(sortedData[virtualItem.index].fileType)),
-                      ]
-                "
-              >
-                {{ formatMimeType(sortedData[virtualItem.index].fileType) }}
-              </span>
-
-              <!-- File Name -->
-              <span
-                v-else-if="column.key === 'fileName'"
-                :class="{
-                  'error-text': sortedData[virtualItem.index].fileName.startsWith('ERROR:'),
-                }"
-              >
-                {{ sortedData[virtualItem.index].fileName }}
-              </span>
-
-              <!-- Size -->
-              <span
-                v-else-if="column.key === 'size'"
-                :class="{ 'error-text': sortedData[virtualItem.index].size.startsWith('ERROR:') }"
-              >
-                {{ sortedData[virtualItem.index].size }}
-              </span>
-
-              <!-- Privilege -->
-              <span
-                v-else-if="column.key === 'privilege'"
-                :class="
-                  sortedData[virtualItem.index].privilege.startsWith('ERROR:')
-                    ? 'error-text'
-                    : 'badge badge-privilege'
-                "
-              >
-                {{ sortedData[virtualItem.index].privilege }}
-              </span>
-
-              <!-- Description -->
-              <span
-                v-else-if="column.key === 'description'"
-                :class="{
-                  'error-text': sortedData[virtualItem.index].description.startsWith('ERROR:'),
-                }"
-              >
-                {{ sortedData[virtualItem.index].description }}
-              </span>
-
-              <!-- Author -->
-              <span
-                v-else-if="column.key === 'author'"
-                :class="{ 'error-text': sortedData[virtualItem.index].author.startsWith('ERROR:') }"
-              >
-                {{ sortedData[virtualItem.index].author }}
-              </span>
-
-              <!-- Custodian -->
-              <span
-                v-else-if="column.key === 'custodian'"
-                :class="{
-                  'error-text': sortedData[virtualItem.index].custodian.startsWith('ERROR:'),
-                }"
-              >
-                {{ sortedData[virtualItem.index].custodian }}
-              </span>
-
-              <!-- Source Folder Path -->
-              <span
-                v-else-if="column.key === 'sourceFolderPath'"
-                :class="{
-                  'error-text': sortedData[virtualItem.index].sourceFolderPath.startsWith('ERROR:'),
-                }"
-              >
-                {{ sortedData[virtualItem.index].sourceFolderPath }}
-              </span>
-
-              <!-- Timestamp columns (Upload Date, Source Modified Date, etc.) -->
-              <span
-                v-else-if="isTimestampColumn(column.key)"
-                :class="{
-                  'error-text': getCellValue(sortedData[virtualItem.index], column.key).startsWith(
-                    'ERROR:'
-                  ),
-                }"
-              >
-                {{ getCellValue(sortedData[virtualItem.index], column.key) }}
-              </span>
-
-              <!-- Multiple Source Files -->
-              <span
-                v-else-if="column.key === 'alternateSources'"
-                :class="
-                  sortedData[virtualItem.index].alternateSources === 'No source information'
-                    ? 'error-text'
-                    : 'badge badge-status'
-                "
-              >
-                {{ sortedData[virtualItem.index].alternateSources }}
-              </span>
-
-              <!-- Generic fallback for category columns (system, firm, matter) -->
-              <span v-else>
-                {{ sortedData[virtualItem.index][column.key] || '🤖' }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer with document count -->
-      <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
-        <span>Total Documents: {{ sortedData.length }}</span>
-      </div>
-    </div>
+          {{ value }}
+        </span>
+      </template>
+    </DocumentTable>
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { useColumnResize } from '@/composables/useColumnResize';
-import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
-import { useColumnVisibility } from '@/composables/useColumnVisibility';
-import { useVirtualTable } from '@/composables/useVirtualTable';
-import { useColumnSort } from '@/composables/useColumnSort';
 import { fetchFiles } from '@/services/uploadService';
 import { useAuthStore } from '@/core/stores/auth';
 import { useMatterViewStore } from '@/stores/matterView';
@@ -294,6 +115,7 @@ import { useUserPreferencesStore } from '@/core/stores/userPreferences';
 import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
+import DocumentTable from '@/components/base/DocumentTable.vue';
 
 // Initialize performance monitor
 const perfMonitor = new PerformanceMonitor('Cloud Table');
@@ -305,11 +127,6 @@ const matterViewStore = useMatterViewStore();
 // User preferences store for date and time formatting
 const preferencesStore = useUserPreferencesStore();
 const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
-
-// Column selector and refs
-const showColumnSelector = ref(false);
-const scrollContainer = ref(null);
-const columnSelectorPopover = ref(null);
 
 // Data state
 const mockData = ref([]);
@@ -384,105 +201,6 @@ const allColumns = computed(() => {
   return [...columns, ...systemCategoryColumns, ...firmCategoryColumns, ...matterCategoryColumns];
 });
 
-// Build default column widths object from allColumns
-const defaultColumnWidths = computed(() => {
-  return allColumns.value.reduce((acc, col) => {
-    acc[col.key] = col.defaultWidth;
-    return acc;
-  }, {});
-});
-
-// Note: Composables are initialized with current columns
-// When systemCategories loads, allColumns will update reactively
-// Use column resize composable (pass dynamic default widths)
-const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths.value);
-
-// Watch defaultColumnWidths and sync to columnWidths when categories load
-// This ensures new category columns get their default widths immediately
-watch(defaultColumnWidths, (newWidths) => {
-  Object.keys(newWidths).forEach(key => {
-    if (columnWidths.value[key] === undefined) {
-      columnWidths.value[key] = newWidths[key];
-    }
-  });
-}, { immediate: false });
-
-// Use column drag-drop composable (pass dynamic columns)
-const {
-  columnOrder,
-  orderedColumns: composableOrderedColumns,
-  dragState,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
-  isColumnDragging,
-  isDragGap,
-} = useColumnDragDrop(allColumns.value);
-
-// Create reactive orderedColumns that syncs with allColumns (unlike composable's version which uses stale snapshot)
-const orderedColumns = computed(() => {
-  // Map columnOrder keys to actual column objects from allColumns (reactive)
-  return columnOrder.value
-    .map(key => allColumns.value.find(col => col.key === key))
-    .filter(Boolean); // Filter out undefined (in case columnOrder has stale keys)
-});
-
-// Use column visibility composable
-const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
-
-// Use column sort composable
-const { sortColumn, sortDirection, sortedData, toggleSort, getSortClass, isSorted } =
-  useColumnSort(mockData);
-
-// Initialize virtual table (MUST be called during setup, not in onMounted)
-// scrollContainer.value is null initially - that's OK, virtualizer handles it
-// Use sortedData instead of mockData to show sorted results
-const {
-  rowVirtualizer,
-  virtualItems,
-  virtualTotalSize,
-  scrollOffset,
-  virtualRange,
-  scrollMetrics,
-} = useVirtualTable({
-  data: sortedData,
-  scrollContainer,
-  estimateSize: 48,
-  overscan: 5,
-  enableSmoothScroll: true,
-});
-
-// Watch for allColumns changes and add new columns to columnOrder when categories load
-watch(allColumns, (newColumns, oldColumns) => {
-  // Detect if columns were added (categories loaded)
-  if (newColumns.length > oldColumns.length) {
-    const currentOrderKeys = new Set(columnOrder.value);
-    const newColumnKeys = newColumns
-      .map(col => col.key)
-      .filter(key => !currentOrderKeys.has(key));
-
-    if (newColumnKeys.length > 0) {
-      console.log(`[Cloud Table] Adding ${newColumnKeys.length} new columns to order`);
-      // Append new column keys to the end of the current order
-      columnOrder.value = [...columnOrder.value, ...newColumnKeys];
-    }
-  }
-}, { immediate: false });
-
-// Compute visible columns by filtering ordered columns
-const visibleColumns = computed(() => {
-  return orderedColumns.value.filter((col) => isColumnVisible(col.key));
-});
-
-// Column selector cell width constant
-const COLUMN_SELECTOR_WIDTH = 100;
-
-// Compute total footer width (includes column selector width)
-const totalFooterWidth = computed(() => {
-  return totalTableWidth.value + COLUMN_SELECTOR_WIDTH;
-});
-
 /**
  * Get badge CSS class based on file type
  */
@@ -522,64 +240,31 @@ const getCellValue = (row, columnKey) => {
   return value;
 };
 
-// Auto-focus popover when it opens
-watch(showColumnSelector, async (isOpen) => {
-  if (isOpen) {
-    await nextTick();
-    columnSelectorPopover.value?.focus();
-  }
-});
-
-// Handle focus leaving the popover
-const handleFocusOut = (event) => {
-  // Only close if focus is leaving the popover entirely (not moving to a child element)
-  if (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget)) {
-    showColumnSelector.value = false;
-  }
+/**
+ * Handle drag over event for file upload
+ */
+const onDragOver = (event) => {
+  event.preventDefault();
 };
 
-// FPS monitoring
-let fpsFrameCount = 0;
-let fpsLastTime = performance.now();
-let fpsAnimationId = null;
-
-const measureFPS = () => {
-  fpsFrameCount++;
-  const currentTime = performance.now();
-  const elapsed = currentTime - fpsLastTime;
-
-  if (elapsed >= 1000) {
-    const fps = Math.round((fpsFrameCount / elapsed) * 1000);
-    // FPS logging removed for production
-    fpsFrameCount = 0;
-    fpsLastTime = currentTime;
-  }
-
-  fpsAnimationId = requestAnimationFrame(measureFPS);
+/**
+ * Handle drop event for file upload
+ */
+const onDrop = (event) => {
+  event.preventDefault();
+  // File upload logic would go here
+  console.log('Files dropped:', event.dataTransfer.files);
 };
 
-// Start FPS monitoring on scroll
-const handleScroll = () => {
-  if (!fpsAnimationId) {
-    measureFPS();
-  }
-
-  // Virtual range logging removed for production
+/**
+ * Handle retry button click
+ */
+const handleRetry = () => {
+  window.location.reload();
 };
 
 // Component lifecycle
 onMounted(async () => {
-  // Timing variables for performance tracking
-  let fetchDuration = 0;
-  let renderDuration = 0;
-
-  // Verify TanStack Virtual is available
-  try {
-    await import('@tanstack/vue-virtual');
-  } catch (error) {
-    console.error('[Cloud Table] TanStack Virtual not available:', error);
-  }
-
   // Fetch real data from Firestore
   try {
     // Wait for auth to be ready
@@ -603,8 +288,6 @@ onMounted(async () => {
       isLoading.value = false;
       return;
     }
-
-    const fetchStartTime = performance.now();
 
     // Fetch system categories first (global, alphabetically sorted)
     perfMonitor.start('System Categories Fetch');
@@ -669,9 +352,6 @@ onMounted(async () => {
     mockData.value = await fetchFiles(firmId, matterId, systemCategories.value, 10000);
     perfMonitor.end('Data Fetch');
 
-    const fetchEndTime = performance.now();
-    fetchDuration = fetchEndTime - fetchStartTime;
-
     isLoading.value = false;
   } catch (err) {
     console.error('[Cloud Table] Error fetching files:', err);
@@ -679,56 +359,17 @@ onMounted(async () => {
     isLoading.value = false;
     return;
   }
-
-  // Wait for DOM to be ready
-  await nextTick();
-
-  // Track initial render
-  const renderStartTime = performance.now();
-
-  perfMonitor.start('Initial Render');
-
-  // Wait for next tick to ensure DOM is updated
-  await nextTick();
-
-  perfMonitor.end('Initial Render');
-  const renderEndTime = performance.now();
-  renderDuration = renderEndTime - renderStartTime;
-
-  // Wait for virtualizer to measure
-  if (scrollContainer.value) {
-    await nextTick();
-    await nextTick(); // Extra tick to ensure virtualizer has measured
-  }
-
-  // Count DOM nodes AFTER measure (for performance report)
-  const domNodeCount = document.querySelectorAll('.table-mockup-row').length;
-
-  // Add scroll event listener for FPS monitoring
-  if (scrollContainer.value) {
-    let scrollTimeout;
-    scrollContainer.value.addEventListener('scroll', () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(handleScroll, 100); // Throttle logging
-    });
-  }
-
-  // Memory usage tracking (for performance report)
-  let memoryUsage = 0;
-  if (performance.memory) {
-    memoryUsage = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
-  }
-
-  // Calculate Time to First Render (TTFR) = fetch time + render time
-  const ttfr = fetchDuration + renderDuration;
-});
-
-// Cleanup
-onUnmounted(() => {
-  if (fpsAnimationId) {
-    cancelAnimationFrame(fpsAnimationId);
-  }
 });
 </script>
 
-<style scoped src="./Cloud.css"></style>
+<style scoped>
+/* Page Container - Full viewport height minus header */
+.analyze-mockup-page {
+  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  width: 100%; /* Full width of parent */
+  background: white;
+  overflow: hidden; /* Prevent page-level scrolling */
+  display: flex;
+  flex-direction: column;
+}
+</style>

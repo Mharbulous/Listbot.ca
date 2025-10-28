@@ -1,0 +1,351 @@
+<template>
+  <div class="document-table" style="min-width: 0">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <slot name="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+      </slot>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <slot name="error" :error="error">
+        <div class="error-icon">⚠️</div>
+        <p class="error-message">{{ error }}</p>
+        <button @click="$emit('retry')" class="retry-button">Retry</button>
+      </slot>
+    </div>
+
+    <!-- Scrollable container fills viewport -->
+    <div
+      v-else
+      ref="scrollContainer"
+      class="scroll-container"
+      v-bind="$attrs"
+    >
+      <!-- Sticky Table Header -->
+      <div class="table-mockup-header">
+        <!-- Column Selector Button (always at far left) -->
+        <div class="header-cell column-selector-cell">
+          <button class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
+            <span>{{ columnSelectorLabel }}</span>
+            <span class="dropdown-icon">▼</span>
+          </button>
+        </div>
+
+        <!-- Dynamic Column Headers with Drag-and-Drop -->
+        <div
+          v-for="(column, index) in visibleColumns"
+          :key="column.key"
+          class="header-cell"
+          :class="{
+            dragging: isColumnDragging(column.key),
+            'drag-gap': isDragGap(column.key),
+            'sorted-asc': isSorted(column.key) && sortDirection === 'asc',
+            'sorted-desc': isSorted(column.key) && sortDirection === 'desc',
+          }"
+          :style="{ width: columnWidths[column.key] + 'px' }"
+          :data-column-key="column.key"
+        >
+          <!-- Drag Handle Icon (shown on hover) -->
+          <div
+            class="drag-handle"
+            title="Drag to reorder"
+            draggable="true"
+            @dragstart="onDragStart(column.key, $event)"
+            @dragend="onDragEnd"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
+              <!-- Top row - 6 dots -->
+              <circle cx="3" cy="4" r="1" />
+              <circle cx="9" cy="4" r="1" />
+              <circle cx="15" cy="4" r="1" />
+              <circle cx="21" cy="4" r="1" />
+              <circle cx="27" cy="4" r="1" />
+              <circle cx="33" cy="4" r="1" />
+
+              <!-- Bottom row - 6 dots -->
+              <circle cx="3" cy="8" r="1" />
+              <circle cx="9" cy="8" r="1" />
+              <circle cx="15" cy="8" r="1" />
+              <circle cx="21" cy="8" r="1" />
+              <circle cx="27" cy="8" r="1" />
+              <circle cx="33" cy="8" r="1" />
+            </svg>
+          </div>
+
+          <!-- Sort Indicator - positioned relative to header cell for proper centering -->
+          <span class="sort-indicator" v-if="isSorted(column.key)">
+            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+          </span>
+
+          <!-- Sortable Column Label (Clickable Button) -->
+          <button
+            class="header-label-button"
+            @click="toggleSort(column.key)"
+            :title="`Click to sort by ${column.label}`"
+          >
+            {{ column.label }}
+          </button>
+
+          <!-- Resize Handle -->
+          <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
+        </div>
+
+        <!-- Column Selector Popover -->
+        <div
+          v-if="showColumnSelector"
+          ref="columnSelectorPopover"
+          class="column-selector-popover"
+          tabindex="0"
+          @focusout="handleFocusOut"
+        >
+          <div class="popover-header">Show/Hide Columns</div>
+          <label v-for="column in orderedColumns" :key="column.key" class="column-option">
+            <input
+              type="checkbox"
+              :checked="isColumnVisible(column.key)"
+              @change="toggleColumnVisibility(column.key)"
+            />
+            {{ column.label }}
+          </label>
+          <div class="popover-footer">
+            <button class="reset-btn" @click="resetToDefaults">Reset to Defaults</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Table Body with Virtual Scrolling -->
+      <div class="table-mockup-body">
+        <!-- Virtual container with dynamic height -->
+        <div
+          class="virtual-container"
+          :style="{
+            height: virtualTotalSize + 'px',
+            position: 'relative',
+          }"
+        >
+          <!-- Virtual rows (only visible + overscan rendered) -->
+          <div
+            v-for="virtualItem in virtualItems"
+            :key="virtualItem.key"
+            class="table-mockup-row"
+            :class="{ even: virtualItem.index % 2 === 0 }"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: virtualItem.size + 'px',
+              transform: `translateY(${virtualItem.start}px)`,
+              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
+            }"
+          >
+            <!-- Spacer cell to align with Cols button header -->
+            <div class="row-cell column-selector-spacer" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }"></div>
+
+            <!-- Dynamic cells matching column order -->
+            <div
+              v-for="column in visibleColumns"
+              :key="column.key"
+              class="row-cell"
+              :class="{
+                'drag-gap': isDragGap(column.key),
+              }"
+              :style="{ width: columnWidths[column.key] + 'px' }"
+              :data-column-key="column.key"
+            >
+              <!-- Cell content via slot -->
+              <slot
+                :name="`cell-${column.key}`"
+                :row="sortedData[virtualItem.index]"
+                :column="column"
+                :value="sortedData[virtualItem.index][column.key]"
+              >
+                <!-- Default cell rendering -->
+                <span>{{ sortedData[virtualItem.index][column.key] || '🤖' }}</span>
+              </slot>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer with document count -->
+      <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
+        <slot name="footer" :rowCount="sortedData.length">
+          <span>Total Documents: {{ sortedData.length }}</span>
+        </slot>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, nextTick, watch, computed, onMounted } from 'vue';
+import { useColumnResize } from '@/composables/useColumnResize';
+import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
+import { useColumnVisibility } from '@/composables/useColumnVisibility';
+import { useVirtualTable } from '@/composables/useVirtualTable';
+import { useColumnSort } from '@/composables/useColumnSort';
+
+// Props
+const props = defineProps({
+  // Row data array
+  data: {
+    type: Array,
+    required: true,
+    default: () => []
+  },
+  // Column definitions: [{key: string, label: string, defaultWidth: number}]
+  columns: {
+    type: Array,
+    required: true,
+    default: () => []
+  },
+  // Loading state
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  // Error message
+  error: {
+    type: String,
+    default: null
+  },
+  // Virtual row height in pixels
+  rowHeight: {
+    type: Number,
+    default: 48
+  },
+  // Overscan rows for virtual scrolling
+  overscan: {
+    type: Number,
+    default: 5
+  },
+  // Column selector button label
+  columnSelectorLabel: {
+    type: String,
+    default: 'Cols'
+  }
+});
+
+// Emits
+const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
+
+// Column selector and refs
+const showColumnSelector = ref(false);
+const scrollContainer = ref(null);
+const columnSelectorPopover = ref(null);
+
+// Build default column widths object from columns prop
+const defaultColumnWidths = computed(() => {
+  return props.columns.reduce((acc, col) => {
+    acc[col.key] = col.defaultWidth;
+    return acc;
+  }, {});
+});
+
+// Use column resize composable
+const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths.value);
+
+// Watch defaultColumnWidths and sync to columnWidths when columns change
+watch(defaultColumnWidths, (newWidths) => {
+  Object.keys(newWidths).forEach(key => {
+    if (columnWidths.value[key] === undefined) {
+      columnWidths.value[key] = newWidths[key];
+    }
+  });
+}, { immediate: false });
+
+// Use column drag-drop composable
+const {
+  columnOrder,
+  orderedColumns: composableOrderedColumns,
+  dragState,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isColumnDragging,
+  isDragGap,
+} = useColumnDragDrop(props.columns);
+
+// Create reactive orderedColumns that syncs with columns prop
+const orderedColumns = computed(() => {
+  return columnOrder.value
+    .map(key => props.columns.find(col => col.key === key))
+    .filter(Boolean);
+});
+
+// Watch for columns changes and add new columns to columnOrder
+watch(() => props.columns, (newColumns, oldColumns) => {
+  if (newColumns.length > oldColumns.length) {
+    const currentOrderKeys = new Set(columnOrder.value);
+    const newColumnKeys = newColumns
+      .map(col => col.key)
+      .filter(key => !currentOrderKeys.has(key));
+
+    if (newColumnKeys.length > 0) {
+      columnOrder.value = [...columnOrder.value, ...newColumnKeys];
+    }
+  }
+}, { immediate: false });
+
+// Use column visibility composable
+const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
+
+// Use column sort composable
+const { sortColumn, sortDirection, sortedData, toggleSort, getSortClass, isSorted } =
+  useColumnSort(computed(() => props.data));
+
+// Watch sort changes and emit event
+watch([sortColumn, sortDirection], ([column, direction]) => {
+  emit('sort-change', { column, direction });
+});
+
+// Initialize virtual table
+const {
+  rowVirtualizer,
+  virtualItems,
+  virtualTotalSize,
+  scrollOffset,
+  virtualRange,
+  scrollMetrics,
+} = useVirtualTable({
+  data: sortedData,
+  scrollContainer,
+  estimateSize: props.rowHeight,
+  overscan: props.overscan,
+  enableSmoothScroll: true,
+});
+
+// Compute visible columns by filtering ordered columns
+const visibleColumns = computed(() => {
+  return orderedColumns.value.filter((col) => isColumnVisible(col.key));
+});
+
+// Column selector cell width constant
+const COLUMN_SELECTOR_WIDTH = 100;
+
+// Compute total footer width (includes column selector width)
+const totalFooterWidth = computed(() => {
+  return totalTableWidth.value + COLUMN_SELECTOR_WIDTH;
+});
+
+// Auto-focus popover when it opens
+watch(showColumnSelector, async (isOpen) => {
+  if (isOpen) {
+    await nextTick();
+    columnSelectorPopover.value?.focus();
+  }
+});
+
+// Handle focus leaving the popover
+const handleFocusOut = (event) => {
+  if (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget)) {
+    showColumnSelector.value = false;
+  }
+};
+</script>
+
+<style scoped src="./DocumentTable.css"></style>
