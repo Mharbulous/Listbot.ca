@@ -2,24 +2,26 @@
 
 /* Sidebar Color Scheme Variables */
 :root {
-  /* Primary - Main sidebar background gradient */
-  --sidebar-bg-primary: theme('colors.amber.100');
-  --sidebar-bg-secondary: theme('colors.amber.50');
+/* Van Gogh "Starry Night" inspired color scheme */
 
-  /* Text colors */
-  --sidebar-text-primary: theme('colors.slate.800');
-  --sidebar-text-secondary: theme('colors.slate.700');
-  --sidebar-text-accent: theme('colors.amber.700');
+/* Primary - Deep night sky blues */
+--sidebar-bg-primary: theme('colors.blue.900');
+--sidebar-bg-secondary: theme('colors.indigo.950');
 
-  /* Border colors */
-  --sidebar-border: theme('colors.amber.300');
+/* Text colors - Soft moonlight and star whites */
+--sidebar-text-primary: theme('colors.slate.100');
+--sidebar-text-secondary: theme('colors.blue.200');
+--sidebar-text-accent: theme('colors.yellow.300');
 
-  /* Interactive states */
-  --sidebar-hover-bg: theme('colors.amber.200');
-  --sidebar-hover-text: theme('colors.slate.900');
-  --sidebar-active-bg: theme('colors.amber.300');
-  --sidebar-active-text: theme('colors.slate.900');
+/* Border colors - Darker blue tones */
+--sidebar-border: theme('colors.blue.800');
 
-  /* Accent colors */
-  --sidebar-icon-accent: theme('colors.amber.600');
+/* Interactive states - Swirling blues and vibrant yellows */
+--sidebar-hover-bg: theme('colors.blue.800');
+--sidebar-hover-text: theme('colors.yellow.200');
+--sidebar-active-bg: theme('colors.sky.700');
+--sidebar-active-text: theme('colors.yellow.100');
+
+/* Accent colors - Bright starlight yellow */
+--sidebar-icon-accent: theme('colors.yellow.400');
 }
