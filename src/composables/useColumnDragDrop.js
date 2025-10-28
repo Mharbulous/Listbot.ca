@@ -123,6 +123,7 @@ export function useColumnDragDrop(columns) {
    * Handle drag start - captures static drop zones that remain fixed during drag
    */
   const onDragStart = (columnKey, event) => {
+    const startTime = performance.now();
     const headerCell = event.target.closest('.header-cell');
     const startIndex = columnOrder.value.indexOf(columnKey);
 
@@ -143,6 +144,10 @@ export function useColumnDragDrop(columns) {
       currentInsertionIndex: startIndex,
       staticZones: staticZones
     };
+
+    // Initialize drag over counter for this drag session
+    dragState.value.dragOverCount = 0;
+    dragState.value.dragStartTime = startTime;
 
     // Set drag data
     event.dataTransfer.effectAllowed = 'move';
@@ -165,6 +170,8 @@ export function useColumnDragDrop(columns) {
    */
   const onDragOver = (event) => {
     if (!dragState.value.isDragging) return;
+
+    dragState.value.dragOverCount = (dragState.value.dragOverCount || 0) + 1;
 
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';

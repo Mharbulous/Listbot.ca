@@ -109,6 +109,8 @@ export function useColumnSort(data) {
       return data.value;
     }
 
+    const sortStart = performance.now();
+
     // Create a shallow copy to avoid mutating the original array
     const sorted = [...data.value];
 
@@ -131,6 +133,14 @@ export function useColumnSort(data) {
       // Apply sort direction
       return sortDirection.value === 'asc' ? comparison : -comparison;
     });
+
+    const sortDuration = performance.now() - sortStart;
+    const columnType = COLUMN_TYPES[sortColumn.value] || 'string';
+
+    // Only log if sort takes a noticeable amount of time (>50ms)
+    if (sortDuration > 50) {
+      console.log(`⚡ Sorted ${data.value.length} rows by ${sortColumn.value} (${columnType}) in ${sortDuration.toFixed(0)}ms`);
+    }
 
     return sorted;
   });

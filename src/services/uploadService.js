@@ -69,16 +69,21 @@ export async function fetchFiles(
   systemCategories = [],
   maxResults = 10000
 ) {
+  const fetchStart = performance.now();
+
   try {
     // Build the Firestore query
     const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
     const q = query(evidenceRef, orderBy('uploadDate', 'desc'), limit(maxResults));
 
     // Execute the query
+    const queryExecStart = performance.now();
     const querySnapshot = await getDocs(q);
+    const queryExecDuration = performance.now() - queryExecStart;
 
     // Collect all documents and their metadata promises
     const filePromises = [];
+    const docProcessingStart = performance.now();
 
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
@@ -199,6 +204,11 @@ export async function fetchFiles(
 
     // Wait for all sourceMetadata queries to complete in parallel
     const files = await Promise.all(filePromises);
+
+    const totalDuration = performance.now() - fetchStart;
+    const totalOperations = files.length * (2 + systemCategories.length); // sourceMetadata + alternateSourcesCount + N tag fetches per doc
+
+    console.log(`📊 Data Fetch Complete: ${totalDuration.toFixed(0)}ms | ${files.length} docs | ${systemCategories.length} categories | ${totalOperations} Firestore reads`);
 
     return files;
   } catch (error) {

@@ -19,7 +19,9 @@ export function useColumnResize(defaultColumnWidths) {
     isResizing: false,
     columnKey: null,
     startX: 0,
-    startWidth: 0
+    startWidth: 0,
+    resizeCount: 0,
+    resizeStartTime: 0
   });
 
   /**
@@ -54,11 +56,14 @@ export function useColumnResize(defaultColumnWidths) {
    * @param {MouseEvent} event - The mousedown event
    */
   const startResize = (columnKey, event) => {
+    const start = performance.now();
     resizeState.value = {
       isResizing: true,
       columnKey,
       startX: event.pageX,
-      startWidth: columnWidths.value[columnKey]
+      startWidth: columnWidths.value[columnKey],
+      resizeCount: 0,
+      resizeStartTime: start
     };
 
     // Prevent text selection during drag
@@ -73,6 +78,8 @@ export function useColumnResize(defaultColumnWidths) {
    */
   const handleResize = (event) => {
     if (!resizeState.value.isResizing) return;
+
+    resizeState.value.resizeCount++;
 
     const delta = event.pageX - resizeState.value.startX;
     const newWidth = resizeState.value.startWidth + delta;
@@ -100,7 +107,9 @@ export function useColumnResize(defaultColumnWidths) {
       isResizing: false,
       columnKey: null,
       startX: 0,
-      startWidth: 0
+      startWidth: 0,
+      resizeCount: 0,
+      resizeStartTime: 0
     };
   };
 

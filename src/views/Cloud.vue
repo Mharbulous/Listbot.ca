@@ -173,6 +173,8 @@ const calculateColumnWidth = (text, font = '14px Roboto, sans-serif') => {
 
 // Dynamic column configuration combining all four column types
 const allColumns = computed(() => {
+  const computeStart = performance.now();
+
   // Start with non-system (built-in) columns
   const columns = [...NON_SYSTEM_COLUMNS];
 
@@ -198,7 +200,17 @@ const allColumns = computed(() => {
   }));
 
   // Combine: built-in, then system, then firm, then matter
-  return [...columns, ...systemCategoryColumns, ...firmCategoryColumns, ...matterCategoryColumns];
+  const allColumnsArray = [...columns, ...systemCategoryColumns, ...firmCategoryColumns, ...matterCategoryColumns];
+
+  const totalColumnCount = allColumnsArray.length;
+  const duration = performance.now() - computeStart;
+
+  // Warn if column count is very high (potential performance issue)
+  if (totalColumnCount > 50) {
+    console.warn(`⚠️ High Column Count: ${totalColumnCount} columns (>50 may impact performance) | Computed in ${duration.toFixed(0)}ms`);
+  }
+
+  return allColumnsArray;
 });
 
 /**
@@ -265,6 +277,8 @@ const handleRetry = () => {
 
 // Component lifecycle
 onMounted(async () => {
+  const mountStart = performance.now();
+
   // Fetch real data from Firestore
   try {
     // Wait for auth to be ready
@@ -353,6 +367,9 @@ onMounted(async () => {
     perfMonitor.end('Data Fetch');
 
     isLoading.value = false;
+
+    const totalMountTime = performance.now() - mountStart;
+    console.log(`✅ Table Ready: ${totalMountTime.toFixed(0)}ms | ${mockData.value.length} documents | ${allColumns.value.length} columns`);
   } catch (err) {
     console.error('[Cloud Table] Error fetching files:', err);
     error.value = `Failed to load files: ${err.message}`;
