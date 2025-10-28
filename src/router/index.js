@@ -57,8 +57,7 @@ const router = createRouter({
     {
       path: '/documents',
       name: 'documents',
-      component: () => import('../features/organizer/views/Organizer.vue'),
-      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents' },
+      redirect: '/cloud',
     },
     {
       path: '/documents/view/:fileHash',
