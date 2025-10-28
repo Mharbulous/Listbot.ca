@@ -106,20 +106,6 @@ export default {
 };
 </script>
 
-<style>
-/* Global styles - disable browser scrollbar */
-html,
-body {
-  overflow: hidden;
-  height: 100%;
-  margin: 0;
-}
-
-#app {
-  height: 100%;
-}
-</style>
-
 <style scoped>
 .loading-spinner {
   width: 32px;
