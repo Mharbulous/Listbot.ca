@@ -153,7 +153,7 @@
   top: 100%;
   left: 0;
   background: white;
-  border: 2px solid #667eea;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px;
@@ -164,10 +164,6 @@
   max-height: 60vh; /* Limit to 60% of viewport height */
   overflow-y: auto; /* Enable vertical scrolling when needed */
   overflow-x: hidden; /* Prevent horizontal scrolling */
-}
-
-.column-selector-popover:focus {
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
 
 /* Custom scrollbar styling for column selector popover */
