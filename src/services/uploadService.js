@@ -208,7 +208,13 @@ export async function fetchFiles(
     const totalDuration = performance.now() - fetchStart;
     const totalOperations = files.length * (2 + systemCategories.length); // sourceMetadata + alternateSourcesCount + N tag fetches per doc
 
-    console.log(`📊 Data Fetch Complete: ${totalDuration.toFixed(0)}ms | ${files.length} docs | ${systemCategories.length} categories | ${totalOperations} Firestore reads`);
+    // Calculate data size in memory (for localStorage feasibility analysis)
+    const dataSize = new Blob([JSON.stringify(files)]).size;
+    const dataSizeKB = (dataSize / 1024).toFixed(2);
+    const dataSizeMB = (dataSize / (1024 * 1024)).toFixed(2);
+    const sizeDisplay = dataSize >= 1024 * 1024 ? `${dataSizeMB} MB` : `${dataSizeKB} KB`;
+
+    console.log(`📊 Data Fetch Complete: ${totalDuration.toFixed(0)}ms | ${files.length} docs | ${systemCategories.length} categories | ${totalOperations} Firestore reads | ${sizeDisplay} data`);
 
     return files;
   } catch (error) {
