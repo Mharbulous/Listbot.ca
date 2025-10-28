@@ -103,6 +103,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Import Matters' },
     },
     {
+      path: '/matters/edit/:matterId',
+      name: 'edit-matter',
+      component: () => import('../views/EditMatter.vue'),
+      meta: { requiresAuth: true, title: 'Edit Matter' },
+    },
+    {
       path: '/matters/:id',
       name: 'matter-detail',
       component: () => import('../views/MatterDetail.vue'),

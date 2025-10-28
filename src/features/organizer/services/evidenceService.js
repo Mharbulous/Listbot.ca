@@ -73,6 +73,13 @@ export class EvidenceService {
         autoApprovedCount: 0,
         reviewRequiredCount: 0,
 
+        // Embedded tags (denormalized for performance)
+        tags: {},
+
+        // Embedded source metadata (denormalized for performance)
+        sourceMetadata: {},
+        sourceMetadataVariants: {},
+
         // Timestamps
         uploadDate: uploadDateTimestamp,
       };
@@ -142,6 +149,10 @@ export class EvidenceService {
           tagCount: 0,
           autoApprovedCount: 0,
           reviewRequiredCount: 0,
+
+          // Embedded source metadata (denormalized for performance)
+          sourceMetadata: {},
+          sourceMetadataVariants: {},
 
           uploadDate: uploadDateTimestamp,
         };
