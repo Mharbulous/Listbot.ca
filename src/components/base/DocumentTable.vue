@@ -143,8 +143,23 @@
               backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
             }"
           >
-            <!-- Spacer cell to align with Cols button header -->
-            <div class="row-cell column-selector-spacer" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }"></div>
+            <!-- Action Buttons Cell -->
+            <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
+              <button
+                class="process-ai-button"
+                @click.stop="handleProcessWithAI(sortedData[virtualItem.index])"
+                title="Process with AI"
+              >
+                🤖
+              </button>
+              <button
+                class="view-document-button"
+                @click.stop="handleViewDocument(sortedData[virtualItem.index])"
+                title="View document"
+              >
+                📄
+              </button>
+            </div>
 
             <!-- Dynamic cells matching column order -->
             <div
@@ -190,6 +205,7 @@
 
 <script setup>
 import { ref, nextTick, watch, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
@@ -239,6 +255,22 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
+
+// Router for navigation
+const router = useRouter();
+
+// Handle view document button click
+const handleViewDocument = (row) => {
+  if (row && row.id) {
+    router.push(`/documents/view/${row.id}`);
+  }
+};
+
+// Handle process with AI button click
+const handleProcessWithAI = (row) => {
+  // TODO: Implement AI processing logic
+  console.log('Process with AI:', row);
+};
 
 // Column selector and refs
 const showColumnSelector = ref(false);
