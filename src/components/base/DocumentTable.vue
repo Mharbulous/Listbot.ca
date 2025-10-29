@@ -153,6 +153,7 @@
               class="row-cell"
               :class="{
                 'drag-gap': isDragGap(column.key),
+                'emoji-cell': !sortedData[virtualItem.index][column.key],
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
@@ -165,7 +166,12 @@
                 :value="sortedData[virtualItem.index][column.key]"
               >
                 <!-- Default cell rendering -->
-                <span>{{ sortedData[virtualItem.index][column.key] || '🤖' }}</span>
+                <template v-if="!sortedData[virtualItem.index][column.key]">
+                  <button class="robot-button" @click.stop>🤖</button>
+                </template>
+                <template v-else>
+                  <span>{{ sortedData[virtualItem.index][column.key] }}</span>
+                </template>
               </slot>
             </div>
           </div>

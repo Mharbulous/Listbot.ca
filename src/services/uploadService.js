@@ -45,7 +45,7 @@ export async function fetchFiles(
       const systemTags = Object.fromEntries(
         systemCategories.map((category) => [
           category.id,
-          data.tags?.[category.id]?.[fieldName] || '🤖',
+          data.tags?.[category.id]?.[fieldName] || null,
         ])
       );
 
