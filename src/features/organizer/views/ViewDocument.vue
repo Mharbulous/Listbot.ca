@@ -77,7 +77,7 @@
           <v-card variant="outlined" class="metadata-card">
             <!-- Card header with toggle button -->
             <div class="metadata-card-header">
-              <h3 class="metadata-card-title">Metadata</h3>
+              <h3 class="metadata-card-title">File Metadata</h3>
               <v-btn
                 icon
                 variant="text"
@@ -96,50 +96,58 @@
                 <h3 class="metadata-section-title">Source File Information</h3>
 
                 <!-- File name dropdown for selecting metadata variants -->
-                <div class="metadata-item-simple dropdown-container" @click="toggleDropdown">
-                  <div
-                    class="source-file-selector"
-                    :class="{ disabled: updatingMetadata || sourceMetadataVariants.length === 0 }"
-                  >
-                    {{
-                      sourceMetadataVariants.find((v) => v.metadataHash === selectedMetadataHash)
-                        ?.sourceFileName || 'Unknown File'
-                    }}
-                    <span v-if="sourceMetadataVariants.length > 1" class="dropdown-arrow">▼</span>
-                  </div>
-                  <span v-if="updatingMetadata" class="updating-indicator">Updating...</span>
-
-                  <!-- Custom dropdown menu -->
-                  <div v-if="dropdownOpen" class="dropdown-menu" @click.stop>
+                <div class="metadata-item">
+                  <span class="metadata-label">Source File Name:</span>
+                  <div class="dropdown-container" @click="toggleDropdown">
                     <div
-                      v-for="variant in sourceMetadataVariants"
-                      :key="variant.metadataHash"
-                      class="dropdown-item"
-                      :class="{ selected: variant.metadataHash === selectedMetadataHash }"
-                      @click="selectVariant(variant.metadataHash)"
+                      class="source-file-selector"
+                      :class="{ disabled: updatingMetadata || sourceMetadataVariants.length === 0 }"
                     >
-                      {{ variant.sourceFileName }}
+                      {{
+                        sourceMetadataVariants.find((v) => v.metadataHash === selectedMetadataHash)
+                          ?.sourceFileName || 'Unknown File'
+                      }}
+                      <span v-if="sourceMetadataVariants.length > 1" class="dropdown-arrow">▼</span>
+                    </div>
+                    <span v-if="updatingMetadata" class="updating-indicator">Updating...</span>
+
+                    <!-- Custom dropdown menu -->
+                    <div v-if="dropdownOpen" class="dropdown-menu" @click.stop>
+                      <div
+                        v-for="variant in sourceMetadataVariants"
+                        :key="variant.metadataHash"
+                        class="dropdown-item"
+                        :class="{ selected: variant.metadataHash === selectedMetadataHash }"
+                        @click="selectVariant(variant.metadataHash)"
+                      >
+                        {{ variant.sourceFileName }}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Date modified display -->
-                <div class="metadata-item-simple date-with-notification">
-                  <span class="metadata-value">{{
-                    formatDateTime(evidence.createdAt, dateFormat, timeFormat)
-                  }}</span>
-                  <span v-if="earlierCopyMessage" class="earlier-copy-message">{{
-                    earlierCopyMessage
-                  }}</span>
+                <div class="metadata-item">
+                  <span class="metadata-label">Source Date Modified:</span>
+                  <div class="date-with-notification">
+                    <span class="metadata-value">{{
+                      formatDateTime(evidence.createdAt, dateFormat, timeFormat)
+                    }}</span>
+                    <span v-if="earlierCopyMessage" class="earlier-copy-message">{{
+                      earlierCopyMessage
+                    }}</span>
+                  </div>
                 </div>
 
                 <!-- File size -->
-                <div class="metadata-item-simple">
+                <div class="metadata-item">
+                  <span class="metadata-label">Size:</span>
                   <span class="metadata-value">{{ formatUploadSize(evidence.fileSize) }}</span>
                 </div>
 
                 <!-- MIME type -->
-                <div class="metadata-item-simple">
+                <div class="metadata-item">
+                  <span class="metadata-label">MIME Type:</span>
                   <span class="metadata-value">{{ mimeType }}</span>
                 </div>
               </div>
@@ -373,9 +381,10 @@ const currentDocumentIndex = computed(() => {
 // Format file size helper
 const formatUploadSize = (bytes) => {
   if (!bytes) return 'Unknown';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const formattedBytes = bytes.toLocaleString('en-US');
+  if (bytes < 1024) return `${bytes} B (${formattedBytes} bytes)`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB (${formattedBytes} bytes)`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB (${formattedBytes} bytes)`;
 };
 
 // Format date helper
