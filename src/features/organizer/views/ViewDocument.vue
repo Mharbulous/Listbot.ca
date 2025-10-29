@@ -738,8 +738,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 100%;
-  overflow-y: auto;
 }
 
 .document-nav-panel {
