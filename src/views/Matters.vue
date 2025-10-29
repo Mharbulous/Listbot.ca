@@ -490,7 +490,7 @@ const selectMatter = async (matter) => {
   await updateLastAccessed(matter.id);
 
   // Navigate to Documents view
-  router.push('/cloud');
+  router.push('/documents');
 };
 </script>
 

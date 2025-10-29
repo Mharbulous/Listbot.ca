@@ -57,7 +57,8 @@ const router = createRouter({
     {
       path: '/documents',
       name: 'documents',
-      redirect: '/cloud',
+      component: () => import('../views/Cloud.vue'),
+      meta: { requiresAuth: true, title: 'Documents' },
     },
     {
       path: '/documents/view/:fileHash',
@@ -112,12 +113,6 @@ const router = createRouter({
       name: 'matter-detail',
       component: () => import('../views/MatterDetail.vue'),
       meta: { requiresAuth: true, title: 'Matter Details' },
-    },
-    {
-      path: '/cloud',
-      name: 'cloud',
-      component: () => import('../views/Cloud.vue'),
-      meta: { requiresAuth: true, title: 'Cloud' },
     },
     {
       path: '/login',

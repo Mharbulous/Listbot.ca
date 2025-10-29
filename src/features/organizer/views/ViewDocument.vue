@@ -394,9 +394,9 @@ const formatDate = (timestamp) => {
   }
 };
 
-// Navigate back to cloud view
+// Navigate back to documents view
 const goBack = () => {
-  router.push('/cloud');
+  router.push('/documents');
 };
 
 // Toggle metadata visibility
