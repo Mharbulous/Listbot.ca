@@ -23,7 +23,7 @@
         @mouseenter="handleMouseEnter($event, item.key)"
         @mouseleave="handleMouseLeave"
       >
-        <span class="nav-icon">{{ item.icon }}</span>
+        <span class="nav-icon">{{ getItemIcon(item) }}</span>
       </RouterLink>
     </nav>
 
@@ -99,6 +99,17 @@ const handleMouseEnter = (event, itemKey) => {
 // Mouse leave handler: Hide tooltip
 const handleMouseLeave = () => {
   hoveredItem.value = null
+}
+
+// Get icon for item (handles dynamic folder icon for Documents)
+const getItemIcon = (item) => {
+  // Special handling for Documents item - show open folder when hovered or active
+  if (item.key === 'cloud') {
+    const isHovered = hoveredItem.value === 'cloud'
+    const isActive = route.path === item.path
+    return (isHovered || isActive) ? '📂' : '📁'
+  }
+  return item.icon
 }
 </script>
 
