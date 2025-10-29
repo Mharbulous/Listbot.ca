@@ -11,7 +11,7 @@
     <!-- Normal app content -->
     <template v-else>
       <template v-if="$route.path !== '/login'">
-        <AppSidebar />
+        <NewSideBar />
         <AppHeader />
       </template>
       <div
@@ -39,7 +39,7 @@
 <script>
 import { onUnmounted } from 'vue';
 import { useAuthStore } from './core/stores/auth';
-import AppSidebar from './components/layout/AppSidebar.vue';
+import NewSideBar from './components/layout/NewSideBar.vue';
 import AppHeader from './components/layout/AppHeader.vue';
 import { useFavicon } from './composables/useFavicon';
 import { useAsyncInspector } from './composables/useAsyncInspector';
@@ -48,7 +48,7 @@ import { useAsyncRegistry } from './composables/useAsyncRegistry';
 export default {
   name: 'App',
   components: {
-    AppSidebar,
+    NewSideBar,
     AppHeader,
   },
   setup() {

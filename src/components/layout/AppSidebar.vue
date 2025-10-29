@@ -1,137 +1,108 @@
 <template>
-  <nav
-    class="w-[60px] transition-all duration-300 ease-in-out fixed left-0 top-0 h-screen z-[1000] overflow-hidden hover:w-[280px] group sidebar-nav"
-    id="app-sidebar"
-    @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false"
-  >
-    <div class="p-5 h-20 flex items-center relative sidebar-header">
-      <!-- Text that appears on hover -->
-      <div
-        class="absolute left-5 top-1/2 transform -translate-y-1/2 font-bold text-lg whitespace-nowrap transition-opacity duration-300 ease-in-out sidebar-title"
-        :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-      >
-        Coryphaeus
-      </div>
-      <!-- Icon that appears when collapsed -->
-      <div
-        class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out"
-        :class="{ 'opacity-0': isHovered, 'opacity-100': !isHovered }"
-      >
-        <img
-          src="/src/assets/images/BDLC Logo transparent.png"
-          alt="Logo"
-          class="w-8 h-8 object-cover rounded"
-        />
-      </div>
-      <div
-        class="absolute right-2 top-1/2 transform -translate-y-1/2 text-base opacity-100 transition-all duration-300 ease-in-out before:content-['❯'] group-hover:before:content-['❮'] sidebar-arrow"
-      ></div>
+  <nav class="w-[60px] fixed left-0 top-0 h-screen z-[1000] sidebar-nav" id="app-sidebar">
+    <div class="p-5 h-20 flex items-center justify-center sidebar-header">
+      <img
+        src="/src/assets/images/BDLC Logo transparent.png"
+        alt="Logo"
+        class="w-8 h-8 object-cover rounded"
+      />
     </div>
 
     <div class="py-0">
-      <!-- App Switcher with integrated dropdown -->
-      <AppSwitcher :is-hovered="isHovered" />
+      <!-- App Switcher -->
+      <AppSwitcher :is-hovered="false" />
     </div>
 
     <div class="py-0 relative">
-      <div
-        class="absolute top-5 left-2 text-xs font-semibold uppercase tracking-wider transition-opacity duration-300 ease-in-out pointer-events-none sidebar-menu-label"
-        :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-      >
-        Main Menu
-      </div>
-      <div class="h-14"></div>
+      <div class="h-8"></div>
+
+      <!-- Navigation Links with Tooltips -->
       <router-link
         to="/matters"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/matters' }"
+        @mouseenter="setHoveredItem('matters', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🗄️</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Matters</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">🗄️</div>
       </router-link>
+
       <router-link
         to="/categories"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/categories' }"
+        @mouseenter="setHoveredItem('categories', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🗃️</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Categories</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">🗃️</div>
       </router-link>
+
       <router-link
         to="/upload"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/upload' }"
+        @mouseenter="setHoveredItem('upload', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📤</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Upload</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">📤</div>
       </router-link>
+
       <router-link
         to="/cloud"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/cloud' }"
+        @mouseenter="setHoveredItem('cloud', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">☁️</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Cloud</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">☁️</div>
       </router-link>
+
       <router-link
         to="/list"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/list' }"
+        @mouseenter="setHoveredItem('list', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📃</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >List</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">📃</div>
       </router-link>
+
       <router-link
         to="/analyze"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/analyze' }"
+        @mouseenter="setHoveredItem('analyze', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">🕵️</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Analyze</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">🕵️</div>
       </router-link>
+
       <router-link
         to="/about"
-        class="flex items-center py-3 px-3 no-underline transition-all duration-200 ease-in-out relative cursor-pointer sidebar-link"
+        class="flex items-center justify-center py-3 px-3 no-underline transition-all duration-200 ease-in-out cursor-pointer sidebar-link"
         :class="{ 'sidebar-link-active': $route.path === '/about' }"
+        @mouseenter="setHoveredItem('about', $event)"
+        @mouseleave="hoveredItem = null"
       >
-        <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">ℹ️</div>
-        <span
-          class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
-          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
-          >Information</span
-        >
+        <div class="w-[30px] h-[30px] flex items-center justify-center text-xl">ℹ️</div>
       </router-link>
     </div>
+
+    <!-- Floating Tooltip (rendered outside sidebar, using Teleport) -->
+    <Teleport to="body">
+      <div
+        v-if="hoveredItem && tooltipPosition"
+        class="sidebar-tooltip"
+        :style="{ top: tooltipPosition.top + 'px', left: tooltipPosition.left + 'px' }"
+      >
+        {{ tooltipLabels[hoveredItem] }}
+      </div>
+    </Teleport>
   </nav>
 </template>
 
 <script>
-import AppSwitcher from '../AppSwitcher.vue';
+import AppSwitcher from '../AppSwitcher.vue'
 
 export default {
   name: 'AppSidebar',
@@ -140,33 +111,45 @@ export default {
   },
   data() {
     return {
-      isHovered: false,
-    };
+      hoveredItem: null,
+      tooltipPosition: null,
+      tooltipLabels: {
+        matters: 'Matters',
+        categories: 'Categories',
+        upload: 'Upload',
+        cloud: 'Cloud',
+        list: 'List',
+        analyze: 'Analyze',
+        about: 'Information',
+      },
+    }
   },
-};
+  methods: {
+    setHoveredItem(item, event) {
+      this.hoveredItem = item
+      const rect = event.currentTarget.getBoundingClientRect()
+      this.tooltipPosition = {
+        top: rect.top + rect.height / 2,
+        left: 68, // 60px sidebar + 8px spacing
+      }
+    },
+  },
+}
 </script>
 
 <style scoped>
 /* Sidebar styles using CSS variables from main.css */
 .sidebar-nav {
-  background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
+  background: linear-gradient(
+    to bottom,
+    var(--sidebar-bg-primary),
+    var(--sidebar-bg-secondary)
+  );
   color: var(--sidebar-text-primary);
 }
 
 .sidebar-header {
   border-bottom: 1px solid var(--sidebar-border);
-}
-
-.sidebar-title {
-  color: var(--sidebar-text-primary);
-}
-
-.sidebar-arrow {
-  color: var(--sidebar-icon-accent);
-}
-
-.sidebar-menu-label {
-  color: var(--sidebar-text-accent);
 }
 
 .sidebar-link {
@@ -182,5 +165,34 @@ export default {
   background-color: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
   font-weight: 600;
+}
+
+/* Floating Tooltip styles */
+.sidebar-tooltip {
+  position: fixed;
+  background: var(--sidebar-bg-primary);
+  color: var(--sidebar-text-primary);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--sidebar-border);
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-50%);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 </style>
