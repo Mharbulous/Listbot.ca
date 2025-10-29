@@ -729,7 +729,7 @@ onBeforeUnmount(() => {
   flex: 1;
   gap: 24px;
   padding: 24px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .sidebar-container {
@@ -738,6 +738,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 100%;
   overflow-y: auto;
 }
 
@@ -976,6 +977,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   min-height: 11in; /* US Letter paper height */
+  max-height: 100%;
   overflow-y: auto;
   transition: opacity 0.2s ease-in-out;
 }
