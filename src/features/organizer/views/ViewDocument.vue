@@ -77,7 +77,7 @@
           <v-card variant="outlined" class="metadata-card">
             <!-- Card header with toggle button -->
             <div class="metadata-card-header">
-              <h3 class="metadata-card-title">Document Information</h3>
+              <h3 class="metadata-card-title">Metadata</h3>
               <v-btn
                 icon
                 variant="text"
@@ -93,7 +93,7 @@
             <v-card-text v-if="metadataVisible">
               <!-- Source File Section -->
               <div class="metadata-section">
-                <h3 class="metadata-section-title">Source File</h3>
+                <h3 class="metadata-section-title">Source File Information</h3>
 
                 <!-- File name dropdown for selecting metadata variants -->
                 <div class="metadata-item-simple dropdown-container" @click="toggleDropdown">
@@ -146,9 +146,9 @@
 
               <!-- Cloud Section -->
               <div class="metadata-section">
-                <h3 class="metadata-section-title">Cloud</h3>
+                <h3 class="metadata-section-title">Cloud Storage Information</h3>
                 <div class="metadata-item">
-                  <span class="metadata-label">Date Uploaded:</span>
+                  <span class="metadata-label">Upload Date:</span>
                   <span class="metadata-value">{{
                     storageMetadata?.timeCreated
                       ? formatDateTime(
