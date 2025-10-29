@@ -365,19 +365,13 @@ onUnmounted(() => {
 }
 
 .app-switcher-dropdown {
-  @apply fixed top-20 z-[2000] bg-slate-800 border border-slate-600 rounded-lg shadow-lg min-w-[280px] max-w-[320px] transition-all duration-300 ease-in-out;
-  left: 60px; /* Default collapsed state */
+  @apply fixed bottom-16 z-[2000] bg-slate-800 border border-slate-600 rounded-lg shadow-lg min-w-[280px] max-w-[320px];
+  left: 68px; /* Static position to the right of 60px sidebar */
   /* Material Design elevation styles */
   box-shadow:
     0px 5px 5px -3px rgba(0, 0, 0, 0.2),
     0px 8px 10px 1px rgba(0, 0, 0, 0.14),
     0px 3px 14px 2px rgba(0, 0, 0, 0.12);
-}
-
-/* Position dropdown based on sidebar state */
-#app-sidebar:hover ~ * .app-switcher-dropdown,
-#app-sidebar:hover .app-switcher-dropdown {
-  left: 280px; /* Expanded state */
 }
 
 .app-switcher-header {

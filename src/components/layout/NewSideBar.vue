@@ -9,11 +9,6 @@
       />
     </div>
 
-    <!-- App Switcher -->
-    <div class="sidebar-section">
-      <AppSwitcher :is-hovered="false" />
-    </div>
-
     <!-- Spacer -->
     <div class="sidebar-spacer"></div>
 
@@ -31,6 +26,14 @@
         <span class="nav-icon">{{ item.icon }}</span>
       </RouterLink>
     </nav>
+
+    <!-- Flexible spacer to push AppSwitcher to bottom -->
+    <div class="sidebar-flex-spacer"></div>
+
+    <!-- App Switcher -->
+    <div class="sidebar-section">
+      <AppSwitcher :is-hovered="false" />
+    </div>
 
     <!-- Floating Tooltip (rendered to body) -->
     <Teleport to="body">
@@ -114,6 +117,8 @@ const handleMouseLeave = () => {
     var(--sidebar-bg-secondary)
   );
   color: var(--sidebar-text-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header Section */
@@ -141,6 +146,11 @@ const handleMouseLeave = () => {
 /* Spacer */
 .sidebar-spacer {
   height: 32px;
+}
+
+/* Flexible Spacer - Pushes AppSwitcher to bottom */
+.sidebar-flex-spacer {
+  flex-grow: 1;
 }
 
 /* Navigation Container */
