@@ -23,6 +23,8 @@
       ref="scrollContainer"
       class="scroll-container"
       v-bind="$attrs"
+      @dragover="onDragOver"
+      @drop="onDrop"
     >
       <!-- Sticky Table Header -->
       <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
