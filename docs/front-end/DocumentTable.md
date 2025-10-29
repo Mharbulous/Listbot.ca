@@ -135,7 +135,7 @@ Category columns display tag values from the evidence document's tags subcollect
 
 **Display Logic**:
 - If tag exists: Display the `tagName` value
-- If no tag exists: Display 🤖 emoji (indicating no tag assigned)
+- If no tag exists: Display "t.b.d." in italics (indicating no tag assigned)
 - If error: Display error message prefixed with "ERROR:"
 
 ## Current Implementation

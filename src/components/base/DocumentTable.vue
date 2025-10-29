@@ -182,7 +182,7 @@
               >
                 <!-- Default cell rendering -->
                 <template v-if="!sortedData[virtualItem.index][column.key]">
-                  <button class="robot-button" @click.stop>🤖</button>
+                  <span class="tbd-text">t.b.d.</span>
                 </template>
                 <template v-else>
                   <span>{{ sortedData[virtualItem.index][column.key] }}</span>

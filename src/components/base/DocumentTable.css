@@ -596,6 +596,13 @@
   justify-content: center;
 }
 
+/* Italic "t.b.d." text for empty cells */
+.tbd-text {
+  font-style: italic;
+  color: #999;
+  font-size: 0.9em;
+}
+
 /* 3D Button styling for robot emoji */
 .robot-button {
   /* Remove default button styling */
