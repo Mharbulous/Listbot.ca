@@ -489,8 +489,8 @@ const selectMatter = async (matter) => {
   // Update last accessed timestamp
   await updateLastAccessed(matter.id);
 
-  // Navigate to Matter Details view
-  router.push(`/matters/${matter.id}`);
+  // Navigate to Documents view
+  router.push('/cloud');
 };
 </script>
 
