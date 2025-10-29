@@ -61,7 +61,7 @@ const navItems = [
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
   { key: 'categories', path: '/categories', icon: '🗃️', label: 'Categories' },
   { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
-  { key: 'cloud', path: '/cloud', icon: '☁️', label: 'Cloud' },
+  { key: 'cloud', path: '/cloud', icon: '📁', label: 'Documents' },
   { key: 'list', path: '/list', icon: '📃', label: 'List' },
   { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
