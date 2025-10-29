@@ -9,8 +9,9 @@ const STORAGE_KEY = 'analyze-column-widths';
  * Composable for managing column resizing functionality
  * Handles column width storage, resize operations, and persistence
  * @param {Object} defaultColumnWidths - Object mapping column keys to default widths
+ * @param {Ref} visibleColumns - Optional computed ref of visible columns array
  */
-export function useColumnResize(defaultColumnWidths) {
+export function useColumnResize(defaultColumnWidths, visibleColumns = null) {
   // Reactive column widths
   const columnWidths = ref({ ...defaultColumnWidths });
 
@@ -115,8 +116,16 @@ export function useColumnResize(defaultColumnWidths) {
 
   /**
    * Calculate total table width dynamically
+   * Only sums visible columns if visibleColumns is provided
    */
   const totalTableWidth = computed(() => {
+    if (visibleColumns && visibleColumns.value) {
+      // Only sum widths of visible columns
+      return visibleColumns.value.reduce((sum, col) => {
+        return sum + (columnWidths.value[col.key] || 0);
+      }, 0);
+    }
+    // Fallback for components not passing visibleColumns
     return Object.values(columnWidths.value).reduce((sum, width) => sum + width, 0);
   });
 

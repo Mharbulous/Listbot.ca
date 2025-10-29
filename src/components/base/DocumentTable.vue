@@ -25,7 +25,7 @@
       v-bind="$attrs"
     >
       <!-- Sticky Table Header -->
-      <div class="table-mockup-header">
+      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
           <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
@@ -117,7 +117,7 @@
       </div>
 
       <!-- Scrollable Table Body with Virtual Scrolling -->
-      <div class="table-mockup-body">
+      <div class="table-mockup-body" :style="{ minWidth: totalFooterWidth + 'px' }">
         <!-- Virtual container with dynamic height -->
         <div
           class="virtual-container"
@@ -246,18 +246,6 @@ const defaultColumnWidths = computed(() => {
   }, {});
 });
 
-// Use column resize composable
-const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths.value);
-
-// Watch defaultColumnWidths and sync to columnWidths when columns change
-watch(defaultColumnWidths, (newWidths) => {
-  Object.keys(newWidths).forEach(key => {
-    if (columnWidths.value[key] === undefined) {
-      columnWidths.value[key] = newWidths[key];
-    }
-  });
-}, { immediate: false });
-
 // Use column drag-drop composable
 const {
   columnOrder,
@@ -324,6 +312,21 @@ const {
 const visibleColumns = computed(() => {
   return orderedColumns.value.filter((col) => isColumnVisible(col.key));
 });
+
+// Use column resize composable (placed after visibleColumns to avoid reference errors)
+const { columnWidths, totalTableWidth, startResize } = useColumnResize(
+  defaultColumnWidths.value,
+  visibleColumns
+);
+
+// Watch defaultColumnWidths and sync to columnWidths when columns change
+watch(defaultColumnWidths, (newWidths) => {
+  Object.keys(newWidths).forEach(key => {
+    if (columnWidths.value[key] === undefined) {
+      columnWidths.value[key] = newWidths[key];
+    }
+  });
+}, { immediate: false });
 
 // Column selector cell width constant
 const COLUMN_SELECTOR_WIDTH = 100;
