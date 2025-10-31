@@ -295,8 +295,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       const evidenceRef = collection(db, 'firms', firmId, 'matters', matterId, 'evidence');
       const evidenceQuery = query(
         evidenceRef,
-        orderBy('uploadDate', 'desc'),
-        limit(1000) // Reasonable limit for v1.0
+        orderBy('uploadDate', 'desc')
       );
 
       // Set up real-time listener
@@ -306,70 +305,66 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           const evidence = [];
 
           // Process each evidence document
-          let processedCount = 0;
           for (const docSnapshot of snapshot.docs) {
             const evidenceData = docSnapshot.data();
 
-            // Fetch display information from referenced metadata
-            const displayInfo = await getDisplayInfo(
-              evidenceData.sourceID,
-              firmId,
-              docSnapshot.id,
-              matterId
-            );
-
-            // Load tags for this evidence document
-            const tagData = await loadTagsForEvidence(docSnapshot.id, firmId);
-
-            // Storage file size fallback and auto-migration
-            // If Evidence document lacks fileSize, fetch from Firebase Storage file
-            let finalFileSize = evidenceData.fileSize || 0;
-            if (!finalFileSize && evidenceData.storageRef?.fileHash) {
-              try {
-                const storageFileSize = await fileProcessingService.getFileSize(
-                  evidenceData,
-                  firmId
-                );
-                if (storageFileSize > 0) {
-                  finalFileSize = storageFileSize;
-
-                  // Auto-migrate: Update Evidence document with correct storage file size
-                  const evidenceDocRef = doc(
-                    db,
-                    'firms',
-                    firmId,
-                    'matters',
-                    matterId,
-                    'evidence',
-                    docSnapshot.id
-                  );
-                  await updateDoc(evidenceDocRef, {
-                    fileSize: storageFileSize,
-                  });
-                  console.log(
-                    `[OrganizerCore] Auto-migrated storage file size for evidence ${docSnapshot.id}: ${storageFileSize} bytes`
-                  );
-                }
-              } catch (error) {
-                console.warn(
-                  `[OrganizerCore] Failed to get storage file size fallback for evidence ${docSnapshot.id}:`,
-                  error
-                );
+            // OPTIMIZED: Use embedded display fields instead of subcollection queries
+            // Normalize displayName to use lowercase extension for consistency
+            let displayName = evidenceData.sourceFileName || 'Unknown File';
+            if (displayName !== 'Unknown File') {
+              const parts = displayName.split('.');
+              if (parts.length > 1) {
+                parts[parts.length - 1] = parts[parts.length - 1].toLowerCase();
+                displayName = parts.join('.');
               }
             }
 
-            processedCount++;
+            // OPTIMIZED: Extract tags from embedded tags map instead of subcollection query
+            let subcollectionTags = [];
+            let groupedTags = {};
+
+            if (evidenceData.tags && typeof evidenceData.tags === 'object') {
+              for (const [categoryId, tagData] of Object.entries(evidenceData.tags)) {
+                // Skip if category store not initialized yet (validation on next load)
+                if (!categoryStore.isInitialized) {
+                  continue;
+                }
+
+                // Skip if category doesn't exist or is inactive
+                const category = categoryStore.getCategoryById(categoryId);
+                if (!category || category.isActive === false) {
+                  continue;
+                }
+
+                const tagEntry = {
+                  categoryId,
+                  categoryName: category.name || categoryId,
+                  tagName: tagData.tagName,
+                  name: tagData.tagName,
+                  confidence: tagData.confidence,
+                  status: tagData.status,
+                  autoApproved: tagData.autoApproved,
+                };
+
+                subcollectionTags.push(tagEntry);
+
+                if (!groupedTags[categoryId]) {
+                  groupedTags[categoryId] = [];
+                }
+                groupedTags[categoryId].push(tagEntry);
+              }
+            }
 
             evidence.push({
               id: docSnapshot.id,
               ...evidenceData,
-              // Add computed display fields
-              displayName: displayInfo.displayName,
-              createdAt: displayInfo.createdAt,
-              fileSize: finalFileSize,
-              // Add tag data for both store compatibility
-              subcollectionTags: tagData.subcollectionTags,
-              tags: tagData.tags,
+              // Use embedded display fields (no subcollection queries!)
+              displayName: displayName,
+              createdAt: evidenceData.sourceLastModified || null,
+              fileSize: evidenceData.fileSize || 0,
+              // Use embedded tags (no subcollection queries!)
+              subcollectionTags: subcollectionTags,
+              tags: groupedTags,
             });
           }
 
@@ -382,7 +377,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           isInitializing.value = false;
 
           console.log(
-            `[OrganizerCore] Loaded ${evidence.length} raw documents → ${deduplicated.length} deduplicated with display info`
+            `[OrganizerCore] ⚡ OPTIMIZED: Loaded ${evidence.length} documents → ${deduplicated.length} deduplicated (single query, embedded data, no N+1 queries)`
           );
 
           // Notify query store to update filters if it exists
