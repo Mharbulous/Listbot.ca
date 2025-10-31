@@ -16,8 +16,35 @@
 
     <!-- Main content (visible once evidence is loaded, persists during navigation) -->
     <div v-else class="view-document-content">
-      <!-- Sidebar containing document navigation and metadata panels -->
-      <div class="sidebar-container">
+      <!-- Left: Thumbnail panel (collapsible) -->
+      <div class="thumbnail-panel" :class="{ 'thumbnail-panel--collapsed': !thumbnailsVisible }">
+        <v-card variant="outlined" class="thumbnail-card">
+          <!-- Toggle button -->
+          <v-btn
+            icon
+            variant="text"
+            size="small"
+            :title="thumbnailsVisible ? 'Collapse thumbnails' : 'Expand thumbnails'"
+            class="thumbnail-toggle-btn"
+            :class="{ 'thumbnail-toggle-btn--collapsed': !thumbnailsVisible }"
+            @click="toggleThumbnailsVisibility"
+          >
+            <v-icon>{{ thumbnailsVisible ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</v-icon>
+          </v-btn>
+
+          <!-- Expanded content -->
+          <div v-if="thumbnailsVisible" class="thumbnail-content">
+            <h3 class="thumbnail-title">Thumbnails</h3>
+            <div class="thumbnail-placeholder-content">
+              <v-icon size="48" color="grey-lighten-1">mdi-image-multiple-outline</v-icon>
+              <p class="mt-2 text-caption text-grey">Thumbnails Coming Soon</p>
+            </div>
+          </div>
+        </v-card>
+      </div>
+
+      <!-- Center: Document controls + PDF Viewer -->
+      <div class="center-panel">
         <!-- Document navigation control panel -->
         <div class="document-nav-panel">
           <v-card class="document-nav-card">
@@ -72,7 +99,32 @@
           </v-card>
         </div>
 
-        <!-- File metadata box -->
+        <!-- PDF Viewer Area -->
+        <div class="viewer-area">
+        <!-- Loading state during document transitions -->
+        <v-card v-if="viewerLoading" variant="outlined" class="viewer-placeholder">
+          <div class="placeholder-content">
+            <v-progress-circular indeterminate size="64" color="primary" />
+            <p class="mt-4 text-body-1">Loading document...</p>
+          </div>
+        </v-card>
+
+        <!-- PDF Viewer Placeholder (when not loading) -->
+        <v-card v-else variant="outlined" class="viewer-placeholder">
+          <div class="placeholder-content">
+            <v-icon size="120" color="grey-lighten-1">mdi-file-document-outline</v-icon>
+            <h2 class="mt-6 text-h5 text-grey-darken-1">PDF Viewer Coming Soon</h2>
+            <p class="mt-2 text-body-2 text-grey">This is where the document will be displayed</p>
+            <p v-if="evidence" class="mt-1 text-caption text-grey">
+              File: <strong>{{ evidence.displayName }}</strong>
+            </p>
+          </div>
+        </v-card>
+      </div>
+    </div>
+
+      <!-- Right: File metadata panel -->
+      <div class="metadata-panel">
         <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
           <v-card variant="outlined" class="metadata-card">
             <!-- Card header with toggle button -->
@@ -292,29 +344,6 @@
           </v-card>
         </div>
       </div>
-
-      <!-- PDF Viewer Area -->
-      <div class="viewer-area">
-        <!-- Loading state during document transitions -->
-        <v-card v-if="viewerLoading" variant="outlined" class="viewer-placeholder">
-          <div class="placeholder-content">
-            <v-progress-circular indeterminate size="64" color="primary" />
-            <p class="mt-4 text-body-1">Loading document...</p>
-          </div>
-        </v-card>
-
-        <!-- PDF Viewer Placeholder (when not loading) -->
-        <v-card v-else variant="outlined" class="viewer-placeholder">
-          <div class="placeholder-content">
-            <v-icon size="120" color="grey-lighten-1">mdi-file-document-outline</v-icon>
-            <h2 class="mt-6 text-h5 text-grey-darken-1">PDF Viewer Coming Soon</h2>
-            <p class="mt-2 text-body-2 text-grey">This is where the document will be displayed</p>
-            <p v-if="evidence" class="mt-1 text-caption text-grey">
-              File: <strong>{{ evidence.displayName }}</strong>
-            </p>
-          </div>
-        </v-card>
-      </div>
     </div>
   </div>
 </template>
@@ -362,6 +391,9 @@ const dropdownOpen = ref(false);
 
 // Metadata visibility state (bound to user preferences)
 const metadataVisible = metadataBoxVisible;
+
+// Thumbnail panel visibility state
+const thumbnailsVisible = ref(true);
 
 // Document navigation state
 // Get sorted evidence list for consistent ordering
@@ -411,6 +443,11 @@ const goBack = () => {
 // Toggle metadata visibility
 const toggleMetadataVisibility = async () => {
   await preferencesStore.updateMetadataBoxVisible(!metadataVisible.value);
+};
+
+// Toggle thumbnail panel visibility
+const toggleThumbnailsVisibility = () => {
+  thumbnailsVisible.value = !thumbnailsVisible.value;
 };
 
 // Document navigation methods
@@ -741,12 +778,86 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 
-.sidebar-container {
-  width: 500px;
+/* Left: Thumbnail panel */
+.thumbnail-panel {
+  width: 200px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.thumbnail-panel--collapsed {
+  width: 40px;
+}
+
+.thumbnail-panel--collapsed .thumbnail-card {
+  overflow: visible;
+  min-height: 60px; /* Ensure button has space */
+}
+
+.thumbnail-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.thumbnail-toggle-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.thumbnail-toggle-btn--collapsed {
+  /* Center the button in the 40px collapsed panel */
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.thumbnail-content {
+  padding: 48px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.thumbnail-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.thumbnail-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+/* Center: Document controls + PDF viewer */
+.center-panel {
+  flex: 1;
+  min-width: 500px;
+  max-width: 9.2in; /* Match viewer width */
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+}
+
+/* Right: File metadata panel */
+.metadata-panel {
+  width: 350px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .document-nav-panel {
@@ -980,10 +1091,21 @@ onBeforeUnmount(() => {
 .viewer-area {
   flex: 1;
   min-width: 500px;
-  max-width: 9.2in; /* Slightly larger than US Letter paper width for better visibility */
+
+  /*
+   * IMPORTANT: These dimensions are calibrated to match hardcopy office paper (US Letter)
+   * - max-width: 9.2in matches the physical width of US Letter paper (8.5in) with margins
+   * - min-height: 11in matches the physical height of US Letter paper
+   *
+   * DO NOT CHANGE these values without careful consideration, as they ensure the PDF viewport
+   * displays documents at the same size as they would appear when printed on physical paper.
+   * This 1:1 scale relationship is critical for document review and comparison workflows.
+   */
+  max-width: 9.2in;
+  min-height: 11in;
+
   display: flex;
   flex-direction: column;
-  min-height: 11in; /* US Letter paper height */
   max-height: 100%;
   overflow-y: auto;
   transition: opacity 0.2s ease-in-out;
@@ -1093,14 +1215,33 @@ onBeforeUnmount(() => {
   word-wrap: break-word;
 }
 
+/* Responsive layout for tablets and mobile */
 @media (max-width: 1150px) {
   .view-document-content {
     flex-direction: column;
   }
 
-  .sidebar-container {
+  .thumbnail-panel {
     width: 100%;
     max-width: 100%;
+    order: 3; /* Move to bottom on mobile */
+  }
+
+  .thumbnail-panel--collapsed {
+    width: 100%;
+  }
+
+  .center-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: auto;
+    order: 1; /* Show first on mobile */
+  }
+
+  .metadata-panel {
+    width: 100%;
+    max-width: 100%;
+    order: 2; /* Show second on mobile */
   }
 
   .viewer-area {
