@@ -34,10 +34,24 @@
 
           <!-- Expanded content -->
           <div v-if="thumbnailsVisible" class="thumbnail-content">
-            <h3 class="thumbnail-title">Thumbnails</h3>
-            <div class="thumbnail-placeholder-content">
+            <h3 class="thumbnail-title">Pages</h3>
+
+            <!-- PDF Thumbnails -->
+            <PdfThumbnailList
+              v-if="isPdfFile && pdfDocument"
+              :pdf-document="pdfDocument"
+              :total-pages="totalPages"
+              :current-page="currentVisiblePage"
+              :max-thumbnail-width="150"
+              @page-selected="handlePageSelected"
+            />
+
+            <!-- No PDF loaded -->
+            <div v-else class="thumbnail-placeholder-content">
               <v-icon size="48" color="grey-lighten-1">mdi-image-multiple-outline</v-icon>
-              <p class="mt-2 text-caption text-grey">Thumbnails Coming Soon</p>
+              <p class="mt-2 text-caption text-grey">
+                {{ isPdfFile ? 'Loading thumbnails...' : 'No PDF loaded' }}
+              </p>
             </div>
           </div>
         </v-card>
@@ -74,6 +88,29 @@
             <span class="document-indicator"
               >Document {{ currentDocumentIndex }} of {{ totalDocuments }}</span
             >
+
+            <!-- Page jump input (for PDFs) -->
+            <div v-if="isPdfFile && totalPages > 1" class="page-jump-control">
+              <input
+                v-model.number="pageJumpInput"
+                type="number"
+                :min="1"
+                :max="totalPages"
+                class="page-jump-input"
+                placeholder="Page"
+                @keypress.enter="jumpToPage"
+              />
+              <span class="page-jump-label">/ {{ totalPages }}</span>
+              <v-btn
+                icon
+                variant="text"
+                size="small"
+                title="Go to page"
+                @click="jumpToPage"
+              >
+                <v-icon>mdi-arrow-right-circle</v-icon>
+              </v-btn>
+            </div>
 
             <!-- Right controls -->
             <v-btn
@@ -398,6 +435,7 @@ import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
 import PdfPageCanvas from '@/features/organizer/components/PdfPageCanvas.vue';
+import PdfThumbnailList from '@/features/organizer/components/PdfThumbnailList.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -466,6 +504,11 @@ const isPdfFile = computed(() => {
   return evidence.value?.displayName?.toLowerCase().endsWith('.pdf') || false;
 });
 
+// Current visible page for thumbnail highlighting (always a number)
+const currentVisiblePage = computed(() => {
+  return pageVisibility.mostVisiblePage.value || 1;
+});
+
 // Format file size helper
 const formatUploadSize = (bytes) => {
   if (!bytes) return 'Unknown';
@@ -488,6 +531,22 @@ const toggleMetadataVisibility = async () => {
 // Toggle thumbnail panel visibility
 const toggleThumbnailsVisibility = () => {
   thumbnailsVisible.value = !thumbnailsVisible.value;
+};
+
+/**
+ * Handle thumbnail page selection
+ * Scrolls the main viewer to the selected page
+ */
+const handlePageSelected = (pageNumber) => {
+  // Find the canvas for the selected page
+  const pageElement = document.querySelector(`.pdf-page-container[data-page-number="${pageNumber}"]`);
+
+  if (pageElement) {
+    pageElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
 };
 
 // Document navigation methods
@@ -754,6 +813,59 @@ const closeDropdown = (event) => {
   }
 };
 
+// Page jump input state
+const pageJumpInput = ref(null);
+
+// Jump to specific page number
+const jumpToPage = () => {
+  const pageNum = parseInt(pageJumpInput.value);
+  if (pageNum >= 1 && pageNum <= totalPages.value) {
+    handlePageSelected(pageNum);
+    pageJumpInput.value = null; // Clear input
+  }
+};
+
+// Keyboard navigation
+const handleKeydown = (event) => {
+  // Only handle if it's a PDF file with pages and user is not typing in an input
+  if (
+    !isPdfFile.value ||
+    !totalPages.value ||
+    event.target.tagName === 'INPUT' ||
+    event.target.tagName === 'TEXTAREA'
+  ) {
+    return;
+  }
+
+  switch (event.key) {
+    case 'ArrowUp':
+    case 'PageUp':
+      event.preventDefault();
+      if (pageVisibility.mostVisiblePage.value > 1) {
+        handlePageSelected(pageVisibility.mostVisiblePage.value - 1);
+      }
+      break;
+
+    case 'ArrowDown':
+    case 'PageDown':
+      event.preventDefault();
+      if (pageVisibility.mostVisiblePage.value < totalPages.value) {
+        handlePageSelected(pageVisibility.mostVisiblePage.value + 1);
+      }
+      break;
+
+    case 'Home':
+      event.preventDefault();
+      handlePageSelected(1);
+      break;
+
+    case 'End':
+      event.preventDefault();
+      handlePageSelected(totalPages.value);
+      break;
+  }
+};
+
 // Watch for route changes to reload document when navigating between documents
 watch(
   () => route.params.fileHash,
@@ -784,6 +896,8 @@ onMounted(async () => {
   loadEvidence();
   // Add click listener to close dropdown when clicking outside
   document.addEventListener('click', closeDropdown);
+  // Add keyboard navigation listener
+  window.addEventListener('keydown', handleKeydown);
 });
 
 // Clean up store when component unmounts
@@ -793,9 +907,10 @@ onUnmounted(() => {
   cleanupPdf();
 });
 
-// Clean up event listener
+// Clean up event listeners
 onBeforeUnmount(() => {
   document.removeEventListener('click', closeDropdown);
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -858,11 +973,13 @@ onBeforeUnmount(() => {
 }
 
 .thumbnail-content {
-  padding: 48px 16px 16px 16px;
+  padding: 48px 0 16px 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .thumbnail-title {
@@ -936,6 +1053,48 @@ onBeforeUnmount(() => {
   flex-grow: 1;
   text-align: center;
   transition: opacity 0.15s ease-in-out;
+}
+
+.page-jump-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.page-jump-input {
+  width: 50px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.page-jump-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Remove number input spinners */
+.page-jump-input::-webkit-inner-spin-button,
+.page-jump-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.page-jump-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.page-jump-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
 }
 
 .metadata-box {

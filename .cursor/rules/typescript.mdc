@@ -1,0 +1,6 @@
+---
+description: Example TypeScript rule
+globs: ["**/*.ts", "**/*.tsx"]
+---
+
+Prefer `interface` over `type` for data shapes.
