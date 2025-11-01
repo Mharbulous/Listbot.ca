@@ -5,6 +5,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { LogService } from './logService';
 
 // Get current user
 const getCurrentUser = () => {
@@ -34,7 +35,7 @@ const getUserRole = async (userId) => {
     }
     return null; // User document not found
   } catch (error) {
-    console.error('Error fetching user role:', error);
+    LogService.error('Error fetching user role', error, { userId });
     throw error; // Re-throw to be handled by the caller
   }
 };
@@ -47,7 +48,7 @@ const signIn = async (email, password) => {
 
     return firebaseUser;
   } catch (error) {
-    console.error('Firebase sign-in error:', error);
+    LogService.error('Firebase sign-in error', error, { email });
     throw error;
   }
 };
@@ -58,7 +59,7 @@ const signOut = async () => {
     await firebaseSignOut(auth);
     // The onAuthStateChanged listener in useAuth will handle clearing the state
   } catch (error) {
-    console.error('Firebase sign-out error:', error);
+    LogService.error('Firebase sign-out error', error);
     throw error; // Re-throw to be handled by the caller
   }
 };

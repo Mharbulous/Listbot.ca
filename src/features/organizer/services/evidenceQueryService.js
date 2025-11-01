@@ -1,6 +1,7 @@
 import { db } from '../../../services/firebase.js';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { EvidenceService } from './evidenceService.js';
+import { LogService } from '@/services/logService.js';
 
 /**
  * Evidence Query Service - Handles complex queries, searches, and migrations for evidence documents
@@ -45,7 +46,10 @@ export class EvidenceQueryService {
 
       return null;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to find evidence by hash:', error);
+      LogService.error('Failed to find evidence by hash', error, {
+        service: 'EvidenceQueryService',
+        fileHash,
+      });
       throw error;
     }
   }
@@ -117,7 +121,11 @@ export class EvidenceQueryService {
         (a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)
       );
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to find evidence by tags:', error);
+      LogService.error('Failed to find evidence by tags', error, {
+        service: 'EvidenceQueryService',
+        tags,
+        matchAll,
+      });
       throw error;
     }
   }
@@ -154,7 +162,10 @@ export class EvidenceQueryService {
 
       return evidenceList;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to find evidence by processing stage:', error);
+      LogService.error('Failed to find evidence by processing stage', error, {
+        service: 'EvidenceQueryService',
+        stage,
+      });
       throw error;
     }
   }
@@ -187,7 +198,9 @@ export class EvidenceQueryService {
 
       return evidenceList;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to find unprocessed evidence:', error);
+      LogService.error('Failed to find unprocessed evidence', error, {
+        service: 'EvidenceQueryService',
+      });
       throw error;
     }
   }
@@ -223,7 +236,10 @@ export class EvidenceQueryService {
 
       return sourceFileNames;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to get available source file names:', error);
+      LogService.error('Failed to get available source file names', error, {
+        service: 'EvidenceQueryService',
+        fileHash,
+      });
       return [];
     }
   }
@@ -298,7 +314,9 @@ export class EvidenceQueryService {
 
       return stats;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to get evidence statistics:', error);
+      LogService.error('Failed to get evidence statistics', error, {
+        service: 'EvidenceQueryService',
+      });
       throw error;
     }
   }
@@ -369,7 +387,10 @@ export class EvidenceQueryService {
 
       return results.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to search evidence by text:', error);
+      LogService.error('Failed to search evidence by text', error, {
+        service: 'EvidenceQueryService',
+        searchTerm,
+      });
       throw error;
     }
   }
@@ -381,9 +402,10 @@ export class EvidenceQueryService {
    */
   async migrateUploadsToEvidence(uploadMetadataList) {
     try {
-      console.log(
-        `[EvidenceQueryService] Starting migration of ${uploadMetadataList.length} uploads`
-      );
+      LogService.debug('Starting migration of uploads', {
+        service: 'EvidenceQueryService',
+        count: uploadMetadataList.length,
+      });
       const results = { successful: [], skipped: [], failed: [] };
 
       for (const uploadMeta of uploadMetadataList) {
@@ -402,10 +424,11 @@ export class EvidenceQueryService {
             sourceFileName: uploadMeta.sourceFileName,
           });
         } catch (error) {
-          console.error(
-            `[EvidenceQueryService] Failed to migrate ${uploadMeta.sourceFileName}:`,
-            error
-          );
+          LogService.error(`Failed to migrate ${uploadMeta.sourceFileName}`, error, {
+            service: 'EvidenceQueryService',
+            hash: uploadMeta.hash,
+            sourceFileName: uploadMeta.sourceFileName,
+          });
           results.failed.push({
             hash: uploadMeta.hash,
             sourceFileName: uploadMeta.sourceFileName,
@@ -414,10 +437,16 @@ export class EvidenceQueryService {
         }
       }
 
-      console.log(`[EvidenceQueryService] Migration complete:`, results);
+      LogService.service('EvidenceQueryService', 'migrateUploadsToEvidence', {
+        successful: results.successful.length,
+        skipped: results.skipped.length,
+        failed: results.failed.length,
+      });
       return results;
     } catch (error) {
-      console.error('[EvidenceQueryService] Migration failed:', error);
+      LogService.error('Migration failed', error, {
+        service: 'EvidenceQueryService',
+      });
       throw error;
     }
   }
@@ -444,7 +473,10 @@ export class EvidenceQueryService {
       querySnapshot.forEach((doc) => evidenceList.push({ id: doc.id, ...doc.data() }));
       return evidenceList;
     } catch (error) {
-      console.error('[EvidenceQueryService] Failed to get all evidence:', error);
+      LogService.error('Failed to get all evidence', error, {
+        service: 'EvidenceQueryService',
+        documentLimit,
+      });
       throw error;
     }
   }

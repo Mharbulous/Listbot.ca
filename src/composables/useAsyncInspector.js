@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import { useGlobalAsyncRegistry } from './useAsyncRegistry';
+import { LogService } from '../services/logService';
 
 export function useAsyncInspector() {
   if (import.meta.env.PROD) {
@@ -53,15 +54,16 @@ export function useAsyncInspector() {
 
     // Special case: multiple monitoring processes (should never happen)
     if (monitoringProcesses.length > 1) {
-      console.error(
-        `Multiple async-monitoring processes detected (${monitoringProcesses.length})! Should only be 1:`,
-        monitoringProcesses
+      LogService.error(
+        `Multiple async-monitoring processes detected (${monitoringProcesses.length})! Should only be 1`,
+        new Error('Multiple monitoring processes'),
+        { count: monitoringProcesses.length, processes: monitoringProcesses }
       );
     }
 
     // Show suspicious non-monitoring processes if any
     if (suspiciousProcesses.value.length > 0) {
-      console.warn('Suspicious long-running processes:', suspiciousProcesses.value);
+      LogService.warn('Suspicious long-running processes', suspiciousProcesses.value);
     }
 
     console.groupEnd();
@@ -78,9 +80,9 @@ export function useAsyncInspector() {
       debugWorkers: () => {
         const workerProcesses = processes.value.filter((p) => p.type === 'worker');
         console.group('[AsyncTracker] Worker Process Debug');
-        console.log('Total worker processes:', workerProcesses.length);
+        LogService.debug('Total worker processes:', workerProcesses.length);
         workerProcesses.forEach((process, index) => {
-          console.log(`Worker ${index + 1}:`, {
+          LogService.debug(`Worker ${index + 1}:`, {
             id: process.id,
             type: process.type,
             component: process.component,
@@ -89,7 +91,7 @@ export function useAsyncInspector() {
             created: new Date(process.created).toISOString(),
             hasCleanup: typeof process.cleanup === 'function',
           });
-          console.log(`Worker ${index + 1} cleanup function:`, process.cleanup?.toString());
+          LogService.debug(`Worker ${index + 1} cleanup function:`, process.cleanup?.toString());
         });
         console.groupEnd();
         return workerProcesses;
@@ -100,15 +102,15 @@ export function useAsyncInspector() {
         const allProcesses = processes.value;
         const worker = allProcesses.find((p) => p.id === workerId);
         if (worker) {
-          console.log('Attempting to cleanup worker:', workerId);
+          LogService.debug('Attempting to cleanup worker:', workerId);
           try {
             worker.cleanup?.();
-            console.log('Worker cleanup function executed');
+            LogService.debug('Worker cleanup function executed');
           } catch (error) {
-            console.error('Error during worker cleanup:', error);
+            LogService.error('Error during worker cleanup', error, { workerId });
           }
         } else {
-          console.warn('Worker not found:', workerId);
+          LogService.warn('Worker not found', workerId);
         }
       },
     };

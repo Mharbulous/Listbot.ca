@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { FirmService } from '../services/firmService';
+import { LogService } from '../../services/logService';
 
 export const useFirmStore = defineStore('firm', {
   state: () => ({
@@ -40,9 +41,9 @@ export const useFirmStore = defineStore('firm', {
       try {
         const firm = await FirmService.getFirm(firmId);
         this.currentFirm = firm;
-        console.log('Firm loaded:', firm?.name);
+        LogService.debug('Firm loaded', firm?.name);
       } catch (error) {
-        console.error('Error loading firm:', error);
+        LogService.error('Error loading firm', error, { firmId });
         this.error = error.message;
         this.currentFirm = null;
       } finally {
@@ -65,9 +66,9 @@ export const useFirmStore = defineStore('firm', {
       try {
         const firms = await FirmService.getUserFirms(userId);
         this.userFirms = firms;
-        console.log(`Loaded ${firms.length} firms for user`);
+        LogService.debug(`Loaded ${firms.length} firms for user`);
       } catch (error) {
-        console.error('Error loading user firms:', error);
+        LogService.error('Error loading user firms', error, { userId });
         this.error = error.message;
         this.userFirms = [];
       } finally {
@@ -91,9 +92,9 @@ export const useFirmStore = defineStore('firm', {
           await this.loadUserFirms(authStore.user.uid);
         }
 
-        console.log('Firm created successfully');
+        LogService.debug('Firm created successfully');
       } catch (error) {
-        console.error('Error creating firm:', error);
+        LogService.error('Error creating firm', error, { firmId });
         this.error = error.message;
         throw error;
       } finally {
@@ -118,9 +119,9 @@ export const useFirmStore = defineStore('firm', {
         // Reload firm data to get updated member list
         await this.loadFirm(this.currentFirm.id);
 
-        console.log('Member added successfully');
+        LogService.debug('Member added successfully');
       } catch (error) {
-        console.error('Error adding member:', error);
+        LogService.error('Error adding member', error, { firmId: this.currentFirm?.id, userId });
         this.error = error.message;
         throw error;
       } finally {
@@ -145,9 +146,9 @@ export const useFirmStore = defineStore('firm', {
         // Reload firm data to get updated member list
         await this.loadFirm(this.currentFirm.id);
 
-        console.log('Member removed successfully');
+        LogService.debug('Member removed successfully');
       } catch (error) {
-        console.error('Error removing member:', error);
+        LogService.error('Error removing member', error, { firmId: this.currentFirm?.id, userId });
         this.error = error.message;
         throw error;
       } finally {
@@ -172,9 +173,9 @@ export const useFirmStore = defineStore('firm', {
         // Reload firm data to get updated roles
         await this.loadFirm(this.currentFirm.id);
 
-        console.log('Member role updated successfully');
+        LogService.debug('Member role updated successfully');
       } catch (error) {
-        console.error('Error updating member role:', error);
+        LogService.error('Error updating member role', error, { firmId: this.currentFirm?.id, userId, newRole });
         this.error = error.message;
         throw error;
       } finally {
@@ -190,7 +191,7 @@ export const useFirmStore = defineStore('firm', {
       this.userFirms = [];
       this.loading = false;
       this.error = null;
-      console.log('Firm data cleared');
+      LogService.debug('Firm data cleared');
     },
   },
 });

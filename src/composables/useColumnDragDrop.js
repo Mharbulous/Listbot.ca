@@ -1,4 +1,5 @@
 import { ref, computed, onMounted } from 'vue';
+import { LogService } from '../services/logService';
 
 const STORAGE_KEY = 'analyze-column-order';
 
@@ -43,7 +44,7 @@ export function useColumnDragDrop(columns) {
         }
       }
     } catch (error) {
-      console.error('Error loading column order:', error);
+      LogService.error('Error loading column order', error, { storageKey: STORAGE_KEY });
     }
   };
 
@@ -54,7 +55,7 @@ export function useColumnDragDrop(columns) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(columnOrder.value));
     } catch (error) {
-      console.error('Error saving column order:', error);
+      LogService.error('Error saving column order', error, { storageKey: STORAGE_KEY });
     }
   };
 

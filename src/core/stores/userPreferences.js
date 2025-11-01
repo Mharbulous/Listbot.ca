@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
+import { LogService } from '../../services/logService';
 
 /**
  * User Preferences Store
@@ -60,7 +61,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     async initialize(userId) {
       if (!userId) {
-        console.error('[UserPreferences] Cannot initialize without userId');
+        LogService.error('[UserPreferences] Cannot initialize without userId');
         return;
       }
 
@@ -77,7 +78,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
         await this._loadPreferences(userId);
         this.isInitialized = true;
       } catch (error) {
-        console.error('[UserPreferences] Error initializing preferences:', error);
+        LogService.error('[UserPreferences] Error initializing preferences', error, { userId });
         this.error = error.message;
         // Set defaults on error
         this.dateFormat = 'YYYY-MM-DD';
@@ -96,7 +97,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     async updateDateFormat(format) {
       if (!this._userId) {
-        console.error('[UserPreferences] Cannot update dateFormat without initialized user');
+        LogService.error('[UserPreferences] Cannot update dateFormat without initialized user');
         return;
       }
 
@@ -111,7 +112,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
-        console.error('[UserPreferences] Error updating date format:', error);
+        LogService.error('[UserPreferences] Error updating date format', error, { userId: this._userId, format });
         // Revert on error
         this.dateFormat = previousFormat;
         this.error = error.message;
@@ -125,7 +126,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     async updateTimeFormat(format) {
       if (!this._userId) {
-        console.error('[UserPreferences] Cannot update timeFormat without initialized user');
+        LogService.error('[UserPreferences] Cannot update timeFormat without initialized user');
         return;
       }
 
@@ -140,7 +141,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
-        console.error('[UserPreferences] Error updating time format:', error);
+        LogService.error('[UserPreferences] Error updating time format', error, { userId: this._userId, format });
         // Revert on error
         this.timeFormat = previousFormat;
         this.error = error.message;
@@ -154,7 +155,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     async updateDarkMode(enabled) {
       if (!this._userId) {
-        console.error('[UserPreferences] Cannot update darkMode without initialized user');
+        LogService.error('[UserPreferences] Cannot update darkMode without initialized user');
         return;
       }
 
@@ -169,7 +170,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           metadataBoxVisible: this.metadataBoxVisible,
         });
       } catch (error) {
-        console.error('[UserPreferences] Error updating dark mode:', error);
+        LogService.error('[UserPreferences] Error updating dark mode', error, { userId: this._userId, enabled });
         // Revert on error
         this.darkMode = previousMode;
         this.error = error.message;
@@ -183,7 +184,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
      */
     async updateMetadataBoxVisible(visible) {
       if (!this._userId) {
-        console.error('[UserPreferences] Cannot update metadataBoxVisible without initialized user');
+        LogService.error('[UserPreferences] Cannot update metadataBoxVisible without initialized user');
         return;
       }
 
@@ -198,7 +199,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           metadataBoxVisible: visible,
         });
       } catch (error) {
-        console.error('[UserPreferences] Error updating metadata box visibility:', error);
+        LogService.error('[UserPreferences] Error updating metadata box visibility', error, { userId: this._userId, visible });
         // Revert on error
         this.metadataBoxVisible = previousVisible;
         this.error = error.message;
@@ -233,7 +234,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           this.metadataBoxVisible = true;
         }
       } catch (error) {
-        console.error('[UserPreferences] Error loading preferences:', error);
+        LogService.error('[UserPreferences] Error loading preferences', error, { userId });
         throw error;
       }
     },
@@ -266,7 +267,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
           { merge: true }
         );
       } catch (error) {
-        console.error('[UserPreferences] Error saving preferences:', error);
+        LogService.error('[UserPreferences] Error saving preferences', error, { userId });
         throw error;
       }
     },

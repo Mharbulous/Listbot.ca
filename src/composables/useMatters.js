@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import { MatterService } from '../services/matterService.js';
 import { useAuthStore } from '../core/stores/auth.js';
+import { LogService } from '../services/logService.js';
 
 /**
  * Composable for managing matter data
@@ -36,7 +37,7 @@ export function useMatters() {
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
-      console.error('Error fetching matters:', err);
+      LogService.error('Error fetching matters', err, { firmId: authStore.firmId });
       error.value = err.message || 'Failed to load matters';
       return [];
     } finally {
@@ -62,7 +63,7 @@ export function useMatters() {
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
-      console.error('Error fetching active matters:', err);
+      LogService.error('Error fetching active matters', err, { firmId: authStore.firmId });
       error.value = err.message || 'Failed to load active matters';
       return [];
     } finally {
@@ -91,7 +92,7 @@ export function useMatters() {
       matters.value = fetchedMatters;
       return fetchedMatters;
     } catch (err) {
-      console.error('Error fetching my matters:', err);
+      LogService.error('Error fetching my matters', err, { firmId: authStore.firmId, userId: authStore.user?.uid });
       error.value = err.message || 'Failed to load your matters';
       return [];
     } finally {
@@ -117,7 +118,7 @@ export function useMatters() {
       const matter = await MatterService.getMatter(authStore.firmId, matterId);
       return matter;
     } catch (err) {
-      console.error('Error fetching matter:', err);
+      LogService.error('Error fetching matter', err, { firmId: authStore.firmId, matterId });
       error.value = err.message || 'Failed to load matter';
       return null;
     } finally {
@@ -151,7 +152,7 @@ export function useMatters() {
 
       return matterId;
     } catch (err) {
-      console.error('Error creating matter:', err);
+      LogService.error('Error creating matter', err, { firmId: authStore.firmId, userId: authStore.user?.uid });
       error.value = err.message || 'Failed to create matter';
       return null;
     } finally {
@@ -182,7 +183,7 @@ export function useMatters() {
 
       return true;
     } catch (err) {
-      console.error('Error updating matter:', err);
+      LogService.error('Error updating matter', err, { firmId: authStore.firmId, matterId, userId: authStore.user?.uid });
       error.value = err.message || 'Failed to update matter';
       return false;
     } finally {
@@ -212,7 +213,7 @@ export function useMatters() {
 
       return true;
     } catch (err) {
-      console.error('Error archiving matter:', err);
+      LogService.error('Error archiving matter', err, { firmId: authStore.firmId, matterId, userId: authStore.user?.uid });
       error.value = err.message || 'Failed to archive matter';
       return false;
     } finally {
@@ -242,7 +243,7 @@ export function useMatters() {
 
       return true;
     } catch (err) {
-      console.error('Error unarchiving matter:', err);
+      LogService.error('Error unarchiving matter', err, { firmId: authStore.firmId, matterId, userId: authStore.user?.uid });
       error.value = err.message || 'Failed to unarchive matter';
       return false;
     } finally {
@@ -272,7 +273,7 @@ export function useMatters() {
 
       return true;
     } catch (err) {
-      console.error('Error deleting matter:', err);
+      LogService.error('Error deleting matter', err, { firmId: authStore.firmId, matterId });
       error.value = err.message || 'Failed to delete matter';
       return false;
     } finally {
@@ -292,7 +293,7 @@ export function useMatters() {
     try {
       await MatterService.updateLastAccessed(authStore.firmId, matterId);
     } catch (err) {
-      console.error('Error updating last accessed:', err);
+      LogService.error('Error updating last accessed', err, { firmId: authStore.firmId, matterId });
       // Don't set error for this non-critical operation
     }
   }

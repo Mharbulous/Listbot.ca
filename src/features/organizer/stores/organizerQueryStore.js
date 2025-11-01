@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useOrganizerCoreStore } from './organizerCore.js';
+import { LogService } from '../../../services/logService.js';
 
 export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
   // State
@@ -54,7 +55,7 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
       return false;
     });
 
-    console.log(
+    LogService.debug(
       `[OrganizerQuery] Filtered ${filteredEvidence.value.length} from ${coreStore.evidenceList.length} documents`
     );
   };
@@ -98,7 +99,7 @@ export const useOrganizerQueryStore = defineStore('organizerQuery', () => {
     });
 
     filteredEvidence.value = filtered;
-    console.log(`[OrganizerQuery] Applied category filters: ${filtered.length} results`);
+    LogService.debug(`[OrganizerQuery] Applied category filters: ${filtered.length} results`);
   };
 
   /**

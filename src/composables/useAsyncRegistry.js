@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { LogService } from '../services/logService';
 
 const globalProcesses = new Map();
 let processCounter = 0;
@@ -23,9 +24,7 @@ export function useAsyncRegistry() {
     globalProcesses.set(id, process);
     componentProcesses.add(id);
 
-    if (import.meta.env.DEV) {
-      console.debug(`[AsyncTracker] Registered ${type}:`, id);
-    }
+    LogService.debug(`[AsyncTracker] Registered ${type}:`, id);
 
     return id;
   };
@@ -36,9 +35,7 @@ export function useAsyncRegistry() {
       globalProcesses.delete(id);
       componentProcesses.delete(id);
 
-      if (import.meta.env.DEV) {
-        console.debug(`[AsyncTracker] Unregistered ${process.type}:`, id);
-      }
+      LogService.debug(`[AsyncTracker] Unregistered ${process.type}:`, id);
     }
   };
 
@@ -55,11 +52,9 @@ export function useAsyncRegistry() {
         globalProcesses.delete(process.id);
         componentProcesses.delete(process.id);
 
-        if (import.meta.env.DEV) {
-          console.debug(`[AsyncTracker] Cleaned up ${process.type}:`, process.id);
-        }
+        LogService.debug(`[AsyncTracker] Cleaned up ${process.type}:`, process.id);
       } catch (error) {
-        console.warn(`[AsyncTracker] Cleanup failed for ${process.id}:`, error);
+        LogService.warn(`[AsyncTracker] Cleanup failed for ${process.id}`, error);
       }
     });
   };
@@ -120,11 +115,9 @@ export function useGlobalAsyncRegistry() {
       try {
         process.cleanup?.();
 
-        if (import.meta.env.DEV) {
-          console.debug(`[AsyncTracker] Global cleanup ${process.type}:`, process.id);
-        }
+        LogService.debug(`[AsyncTracker] Global cleanup ${process.type}:`, process.id);
       } catch (error) {
-        console.warn(`[AsyncTracker] Global cleanup failed for ${process.id}:`, error);
+        LogService.warn(`[AsyncTracker] Global cleanup failed for ${process.id}`, error);
       }
     });
 

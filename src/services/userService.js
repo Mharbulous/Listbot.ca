@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from './firebase.js';
+import { LogService } from './logService.js';
 
 /**
  * UserService - Manages user information and display names
@@ -29,6 +30,11 @@ export class UserService {
         const displayName =
           auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Current User';
         this.userCache.set(userId, displayName);
+        LogService.service('UserService', 'getUserDisplayName', {
+          userId,
+          displayName,
+          source: 'currentUser',
+        });
         return displayName;
       }
 
@@ -50,9 +56,14 @@ export class UserService {
 
       // Cache the result
       this.userCache.set(userId, displayName);
+      LogService.service('UserService', 'getUserDisplayName', {
+        userId,
+        displayName,
+        source: 'fallback',
+      });
       return displayName;
     } catch (error) {
-      console.error('Error fetching user display name:', error);
+      LogService.error('Error fetching user display name', error, { userId });
 
       // Cache the fallback to prevent repeated failed lookups
       this.userCache.set(userId, 'Unknown User');
@@ -98,8 +109,18 @@ export class UserService {
 
       // Clear cache to force refresh of user data
       this.userCache.delete(firebaseUser.uid);
+
+      LogService.service('UserService', 'createOrUpdateUserDocument', {
+        userId: firebaseUser.uid,
+        role: userData.role,
+        firmId: userData.firmId,
+        isNewUser: !existingDoc.exists(),
+      });
     } catch (error) {
-      console.error('Error creating/updating user document:', error);
+      LogService.error('Error creating/updating user document', error, {
+        userId: firebaseUser?.uid,
+        firmId: additionalData?.firmId,
+      });
       throw error;
     }
   }
@@ -134,8 +155,13 @@ export class UserService {
 
       // Clear cache to force refresh
       this.userCache.delete(userId);
+
+      LogService.service('UserService', 'updateUserPreferences', {
+        userId,
+        preferencesKeys: Object.keys(preferences),
+      });
     } catch (error) {
-      console.error('Error updating user preferences:', error);
+      LogService.error('Error updating user preferences', error, { userId });
       throw error;
     }
   }

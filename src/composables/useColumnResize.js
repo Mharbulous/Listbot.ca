@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { LogService } from '../services/logService';
 
 // Column resize constants
 const MIN_COLUMN_WIDTH = 50;
@@ -36,7 +37,7 @@ export function useColumnResize(defaultColumnWidths, visibleColumns = null) {
         columnWidths.value = { ...defaultColumnWidths, ...parsed };
       }
     } catch (error) {
-      console.error('Error loading column widths:', error);
+      LogService.error('Error loading column widths', error, { storageKey: STORAGE_KEY });
     }
   };
 
@@ -47,7 +48,7 @@ export function useColumnResize(defaultColumnWidths, visibleColumns = null) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(columnWidths.value));
     } catch (error) {
-      console.error('Error saving column widths:', error);
+      LogService.error('Error saving column widths', error, { storageKey: STORAGE_KEY });
     }
   };
 

@@ -1,5 +1,6 @@
 import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI } from '../../../services/firebase.js';
+import { LogService } from '@/services/logService.js';
 
 /**
  * AI Processing Service - Handles AI-powered document categorization using Firebase Vertex AI
@@ -49,7 +50,9 @@ export class AIProcessingService {
       // Get Gemini model
       const model = getGenerativeModel(firebaseAI, { model: 'gemini-1.5-flash' });
 
-      console.log('[AIProcessingService] Using full document content analysis');
+      LogService.debug('Using full document content analysis', {
+        service: 'AIProcessingService',
+      });
 
       // Build category context for AI
       const categoryContext = categories
@@ -59,9 +62,13 @@ export class AIProcessingService {
         })
         .join('\n');
 
-      console.log(`[AIProcessingService] DEBUG: Sending ${categories.length} categories to AI:`);
-      categories.forEach((cat) => {
-        console.log(`  - ${cat.name}: [${cat.tags.map((tag) => tag.name).join(', ')}]`);
+      LogService.debug('Sending categories to AI', {
+        service: 'AIProcessingService',
+        categoryCount: categories.length,
+        categories: categories.map((cat) => ({
+          name: cat.name,
+          tags: cat.tags.map((tag) => tag.name),
+        })),
       });
 
       // Create AI prompt
@@ -73,9 +80,12 @@ export class AIProcessingService {
         // Use passed extension as fallback
         mimeType = this.getMimeType(`dummy.${extension}`);
       }
-      console.log(
-        `[AIProcessingService] File: ${evidence.displayName}, Extension: ${extension}, MIME type: ${mimeType}`
-      );
+      LogService.debug('Processing file with AI', {
+        service: 'AIProcessingService',
+        fileName: evidence.displayName,
+        extension,
+        mimeType,
+      });
 
       // Generate AI response using inline data (full content analysis)
       const result = await model.generateContent([
@@ -86,20 +96,28 @@ export class AIProcessingService {
       const response = await result.response;
       const text = response.text();
 
-      console.log(`[AIProcessingService] DEBUG: Raw AI response:`, text);
+      LogService.debug('Raw AI response received', {
+        service: 'AIProcessingService',
+        response: text,
+      });
 
       // Parse AI response
       const parsedSuggestions = this.parseAIResponse(text, categories);
-      console.log(`[AIProcessingService] DEBUG: Parsed ${parsedSuggestions.length} suggestions:`);
-      parsedSuggestions.forEach((suggestion) => {
-        console.log(
-          `  - ${suggestion.categoryName}: ${suggestion.tagName} (confidence: ${suggestion.confidence})`
-        );
+      LogService.debug('Parsed AI suggestions', {
+        service: 'AIProcessingService',
+        count: parsedSuggestions.length,
+        suggestions: parsedSuggestions.map((s) => ({
+          category: s.categoryName,
+          tag: s.tagName,
+          confidence: s.confidence,
+        })),
       });
 
       return parsedSuggestions;
     } catch (error) {
-      console.error('[AIProcessingService] Failed to generate AI suggestions:', error);
+      LogService.error('Failed to generate AI suggestions', error, {
+        service: 'AIProcessingService',
+      });
       throw error;
     }
   }
@@ -160,15 +178,22 @@ Please analyze the document and provide tag suggestions:
       const suggestions = JSON.parse(jsonMatch[0]);
       const validatedSuggestions = [];
 
-      console.log(`[AIProcessingService] DEBUG: Raw suggestions from AI: ${suggestions.length}`);
-      suggestions.forEach((suggestion) => {
-        console.log(`  - Raw: ${suggestion.categoryName} → ${suggestion.tagName}`);
+      LogService.debug('Raw suggestions from AI', {
+        service: 'AIProcessingService',
+        count: suggestions.length,
+        suggestions: suggestions.map((s) => ({
+          category: s.categoryName,
+          tag: s.tagName,
+        })),
       });
 
       for (const suggestion of suggestions) {
         // Validate suggestion structure
         if (!suggestion.categoryName || !suggestion.tagName) {
-          console.log(`[AIProcessingService] DEBUG: Skipped invalid suggestion:`, suggestion);
+          LogService.debug('Skipped invalid suggestion', {
+            service: 'AIProcessingService',
+            suggestion,
+          });
           continue;
         }
 
@@ -178,9 +203,10 @@ Please analyze the document and provide tag suggestions:
         );
 
         if (!category) {
-          console.log(
-            `[AIProcessingService] DEBUG: Skipped - category not found: "${suggestion.categoryName}"`
-          );
+          LogService.debug('Skipped - category not found', {
+            service: 'AIProcessingService',
+            categoryName: suggestion.categoryName,
+          });
           continue;
         }
 
@@ -199,7 +225,9 @@ Please analyze the document and provide tag suggestions:
 
       return validatedSuggestions.slice(0, 5); // Limit to 5 suggestions
     } catch (error) {
-      console.error('[AIProcessingService] Failed to parse AI response:', error);
+      LogService.error('Failed to parse AI response', error, {
+        service: 'AIProcessingService',
+      });
       return [];
     }
   }

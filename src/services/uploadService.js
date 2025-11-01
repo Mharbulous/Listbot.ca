@@ -6,6 +6,7 @@
 import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
 import { getCategoryFieldName } from '../utils/categoryFieldMapping';
+import { LogService } from './logService.js';
 
 /**
  * Fetch evidence documents from Firestore with embedded source file metadata and tags
@@ -93,16 +94,27 @@ export async function fetchFiles(
     const dataSizeMB = (dataSize / (1024 * 1024)).toFixed(2);
     const sizeDisplay = dataSize >= 1024 * 1024 ? `${dataSizeMB} MB` : `${dataSizeKB} KB`;
 
-    console.log(
-      `📊 OPTIMIZED Data Fetch Complete: ${totalDuration.toFixed(0)}ms ` +
-        `(query: ${queryExecDuration.toFixed(0)}ms, processing: ${docProcessingDuration.toFixed(0)}ms) | ` +
-        `${files.length} docs | ${systemCategories.length} categories | ` +
-        `${files.length} Firestore reads (90% reduction!) | ${sizeDisplay} data`
-    );
+    LogService.service('UploadService', 'fetchFiles', {
+      firmId,
+      matterId,
+      totalDurationMs: totalDuration.toFixed(0),
+      queryDurationMs: queryExecDuration.toFixed(0),
+      processingDurationMs: docProcessingDuration.toFixed(0),
+      documentCount: files.length,
+      categoryCount: systemCategories.length,
+      firestoreReads: files.length,
+      dataSize: sizeDisplay,
+      message: 'OPTIMIZED Data Fetch Complete (90% reduction!)',
+    });
 
     return files;
   } catch (error) {
-    console.error('[Cloud Table] Firestore query failed:', error);
+    LogService.error('Firestore query failed in fetchFiles', error, {
+      firmId,
+      matterId,
+      maxResults,
+      categoryCount: systemCategories.length,
+    });
     throw error;
   }
 }

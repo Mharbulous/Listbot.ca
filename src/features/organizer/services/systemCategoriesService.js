@@ -11,6 +11,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
+import { LogService } from '@/services/logService.js';
 
 /**
  * System Categories Service
@@ -78,7 +79,9 @@ export class systemcategoriesService {
 
       return categories;
     } catch (error) {
-      console.error('[systemcategoriesService] Failed to get system categories:', error);
+      LogService.error('Failed to get system categories', error, {
+        service: 'systemcategoriesService',
+      });
       throw error;
     }
   }
@@ -174,7 +177,10 @@ export class systemcategoriesService {
         isSystemCategory: true,
       };
     } catch (error) {
-      console.error('[systemcategoriesService] Failed to create system category:', error);
+      LogService.error('Failed to create system category', error, {
+        service: 'systemcategoriesService',
+        categoryName: categoryData.name,
+      });
       throw error;
     }
   }
@@ -216,7 +222,10 @@ export class systemcategoriesService {
 
       return true;
     } catch (error) {
-      console.error('[systemcategoriesService] Failed to update system category:', error);
+      LogService.error('Failed to update system category', error, {
+        service: 'systemcategoriesService',
+        categoryId,
+      });
       throw error;
     }
   }

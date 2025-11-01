@@ -5,6 +5,7 @@
 
 import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { LogService } from './logService.js';
 
 /**
  * Fetch evidence documents from Firestore with source file metadata
@@ -54,17 +55,29 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
             } else {
-              console.error(
-                `[Cloud Table] sourceMetadata not found for ${fileHash}, sourceID: ${sourceIDId}`
-              );
+              LogService.error('sourceMetadata not found', new Error('Missing sourceMetadata'), {
+                fileHash,
+                sourceIDId,
+                firmId,
+                matterId,
+              });
               sourceFileName = 'ERROR: Metadata not found';
             }
           } catch (error) {
-            console.error(`[Cloud Table] Failed to fetch sourceMetadata for ${fileHash}:`, error);
+            LogService.error('Failed to fetch sourceMetadata', error, {
+              fileHash,
+              sourceIDId,
+              firmId,
+              matterId,
+            });
             sourceFileName = 'ERROR: Fetch failed';
           }
         } else {
-          console.error(`[Cloud Table] No sourceID ID for evidence document: ${fileHash}`);
+          LogService.error('No sourceID for evidence document', new Error('Missing sourceID'), {
+            fileHash,
+            firmId,
+            matterId,
+          });
           sourceFileName = 'ERROR: No sourceID ID';
         }
 
@@ -110,7 +123,11 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
     return files;
   } catch (error) {
-    console.error('[Cloud Table] Firestore query failed:', error);
+    LogService.error('Firestore query failed', error, {
+      firmId,
+      matterId,
+      maxResults,
+    });
     throw error;
   }
 }

@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue';
+import { LogService } from '../services/logService';
 
 const STORAGE_KEY = 'analyze-column-visibility';
 
@@ -33,7 +34,7 @@ export function useColumnVisibility() {
         }
       }
     } catch (error) {
-      console.error('Error loading column visibility:', error);
+      LogService.error('Error loading column visibility', error, { storageKey: STORAGE_KEY });
     }
   };
 
@@ -44,7 +45,7 @@ export function useColumnVisibility() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumnKeys.value));
     } catch (error) {
-      console.error('Error saving column visibility:', error);
+      LogService.error('Error saving column visibility', error, { storageKey: STORAGE_KEY });
     }
   };
 

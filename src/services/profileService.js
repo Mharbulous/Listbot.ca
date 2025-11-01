@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile as updateFirebaseProfile } from 'firebase/auth';
 import { db, auth } from './firebase';
+import { LogService } from './logService.js';
 
 /**
  * ProfileService - Manages user profile operations
@@ -38,7 +39,7 @@ export class ProfileService {
 
       return null;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      LogService.error('Error fetching user profile', error, { userId });
       throw error;
     }
   }
@@ -100,9 +101,9 @@ export class ProfileService {
         await this.updateFirmMemberIsLawyer(firmId, userId, isLawyer);
       }
 
-      console.log('Profile updated successfully');
+      LogService.service('ProfileService', 'profile updated successfully', { userId, firmId });
     } catch (error) {
-      console.error('Error updating profile:', error);
+      LogService.error('Error updating profile', error, { userId, firmId, profileData });
       throw error;
     }
   }
@@ -143,9 +144,9 @@ export class ProfileService {
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`isLawyer status updated to ${isLawyer} for user ${userId}`);
+      LogService.service('ProfileService', 'isLawyer status updated', { firmId, userId, isLawyer });
     } catch (error) {
-      console.error('Error updating firm member isLawyer status:', error);
+      LogService.error('Error updating firm member isLawyer status', error, { firmId, userId, isLawyer });
       throw error;
     }
   }
@@ -174,7 +175,7 @@ export class ProfileService {
 
       return members[userId]?.isLawyer || false;
     } catch (error) {
-      console.error('Error fetching isLawyer status:', error);
+      LogService.error('Error fetching isLawyer status', error, { firmId, userId });
       return false;
     }
   }

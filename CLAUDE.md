@@ -17,6 +17,10 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
     - Firestore and Storage can be wiped clean at any time. Focus on the _optimal_ architecture, not backward compatibility.
 3.  **TERMINOLOGY:** The file processing lifecycle has very specific terminology (Original, Source, Upload, Batesed, etc.). You MUST consult `@docs/architecture/file-lifecycle.md` to ensure you use this terminology correctly in all code, comments, and UI text.
 4.  **TESTS:** All Vitest unit/component tests MUST be located in the `/tests` folder.
+5.  **LOGGING:** You MUST use `LogService` for all logging operations. Do NOT use `console.*` directly.
+    - _Example_: `LogService.debug('Flow trace', data)` for dev-only logs.
+    - _Example_: `LogService.service('MatterService', 'created', matterId)` for service operations.
+    - _Example_: `LogService.error('Operation failed', error, { context })` for errors.
 
 ---
 
@@ -96,3 +100,10 @@ This is a brief overview of core concepts. For details, see the `@docs` above.
   2.  Only files with matching sizes are hashed.
   3.  The final BLAKE3 hash is used as the document ID in Firestore, providing automatic, database-level deduplication.
 - **Multi-App SSO**: All apps (Bookkeeper, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
+- **Centralized Logging**: All logging MUST use `LogService` (`@/services/logService.js`). This provides automatic debug log filtering in production and standardized formats.
+  - `LogService.debug()` - Development-only logs (auto-filtered in production)
+  - `LogService.info()` - Application events and user actions
+  - `LogService.warn()` - Degraded states and fallbacks
+  - `LogService.error()` - Errors with context
+  - `LogService.performance()` - Timing metrics with ⚡ prefix
+  - `LogService.service()` - Service operations with [ServiceName] prefix

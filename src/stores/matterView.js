@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { LogService } from '../services/logService';
 
 const STORAGE_KEY = 'bookkeeper_selected_matter';
 const LEGACY_STORAGE_KEY = 'bookkeeper_active_matter'; // For migration
@@ -79,7 +80,7 @@ export const useMatterViewStore = defineStore('matterView', {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(matterData));
       } catch (error) {
-        console.error('Failed to save matter to localStorage:', error);
+        LogService.error('Failed to save matter to localStorage', error, { storageKey: STORAGE_KEY, matterId: matter?.id });
       }
     },
 
@@ -93,7 +94,7 @@ export const useMatterViewStore = defineStore('matterView', {
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
-        console.error('Failed to remove matter from localStorage:', error);
+        LogService.error('Failed to remove matter from localStorage', error, { storageKey: STORAGE_KEY });
       }
     },
 
@@ -126,7 +127,7 @@ export const useMatterViewStore = defineStore('matterView', {
           this.currentMatter = matterData;
         }
       } catch (error) {
-        console.error('Failed to load matter from localStorage:', error);
+        LogService.error('Failed to load matter from localStorage', error, { storageKey: STORAGE_KEY });
         // Clear corrupted data from both keys
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(LEGACY_STORAGE_KEY);

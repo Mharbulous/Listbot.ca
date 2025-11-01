@@ -13,6 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase.js';
+import { LogService } from './logService.js';
 
 /**
  * MatterService - Manages matter/case operations for firm-based data
@@ -48,7 +49,7 @@ export class MatterService {
       // For new matters, any match means it exists
       return !querySnapshot.empty;
     } catch (error) {
-      console.error('Error checking matter number:', error);
+      LogService.error('Error checking matter number existence', error, { firmId, matterNumber, excludeMatterId });
       throw error;
     }
   }
@@ -103,11 +104,11 @@ export class MatterService {
       };
 
       await setDoc(newMatterRef, matter);
-      console.log(`Matter created: ${newMatterRef.id} in firm ${firmId}`);
+      LogService.service('MatterService', 'Matter created successfully', { firmId, matterId: newMatterRef.id, matterNumber: matterData.matterNumber });
 
       return newMatterRef.id;
     } catch (error) {
-      console.error('Error creating matter:', error);
+      LogService.error('Error creating matter', error, { firmId, matterNumber: matterData.matterNumber, createdBy });
       throw error;
     }
   }
@@ -136,7 +137,7 @@ export class MatterService {
 
       return null;
     } catch (error) {
-      console.error('Error fetching matter:', error);
+      LogService.error('Error fetching matter', error, { firmId, matterId });
       throw error;
     }
   }
@@ -166,7 +167,7 @@ export class MatterService {
 
       return matters;
     } catch (error) {
-      console.error('Error fetching matters:', error);
+      LogService.error('Error fetching all matters', error, { firmId });
       throw error;
     }
   }
@@ -196,7 +197,7 @@ export class MatterService {
 
       return matters;
     } catch (error) {
-      console.error('Error fetching active matters:', error);
+      LogService.error('Error fetching active matters', error, { firmId });
       throw error;
     }
   }
@@ -231,7 +232,7 @@ export class MatterService {
 
       return matters;
     } catch (error) {
-      console.error('Error fetching user matters:', error);
+      LogService.error('Error fetching user matters', error, { firmId, userId });
       throw error;
     }
   }
@@ -268,9 +269,9 @@ export class MatterService {
       };
 
       await updateDoc(matterRef, updateData);
-      console.log(`Matter updated: ${matterId} in firm ${firmId}`);
+      LogService.service('MatterService', 'Matter updated successfully', { firmId, matterId, updatedBy });
     } catch (error) {
-      console.error('Error updating matter:', error);
+      LogService.error('Error updating matter', error, { firmId, matterId, updatedBy });
       throw error;
     }
   }
@@ -328,7 +329,7 @@ export class MatterService {
         lastAccessed: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Error updating last accessed:', error);
+      LogService.error('Error updating last accessed', error, { firmId, matterId });
       // Don't throw - this is a non-critical operation
     }
   }
@@ -347,9 +348,9 @@ export class MatterService {
     try {
       const matterRef = doc(db, 'firms', firmId, 'matters', matterId);
       await deleteDoc(matterRef);
-      console.log(`Matter deleted: ${matterId} from firm ${firmId}`);
+      LogService.service('MatterService', 'Matter deleted successfully', { firmId, matterId });
     } catch (error) {
-      console.error('Error deleting matter:', error);
+      LogService.error('Error deleting matter', error, { firmId, matterId });
       throw error;
     }
   }
@@ -369,7 +370,7 @@ export class MatterService {
       const date = new Date(dateString);
       return Timestamp.fromDate(date);
     } catch (error) {
-      console.error('Error converting date string:', error);
+      LogService.error('Error converting date string to timestamp', error, { dateString });
       return serverTimestamp();
     }
   }

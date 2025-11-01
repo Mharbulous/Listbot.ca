@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 import { EvidenceDocumentService } from './evidenceDocumentService.js';
 import tagSubcollectionService from './tagSubcollectionService.js';
+import { LogService } from '@/services/logService.js';
 
 /**
  * Tag Operation Service - Handles tag approval/rejection workflow operations
@@ -38,7 +39,10 @@ export class TagOperationService {
       // Use the subcollection service's approve method instead of updating directly
       const updatedTag = await this.tagService.approveAITag(evidenceId, aiTag.id, firmId);
 
-      console.log(`[TagOperationService] Approved AI tag: ${aiTag.tagName} for ${evidenceId}`);
+      LogService.service('TagOperationService', 'approveAITag', {
+        tagName: aiTag.tagName,
+        evidenceId,
+      });
 
       return {
         success: true,
@@ -46,7 +50,11 @@ export class TagOperationService {
         evidenceId,
       };
     } catch (error) {
-      console.error('[TagOperationService] Failed to approve AI tag:', error);
+      LogService.error('Failed to approve AI tag', error, {
+        service: 'TagOperationService',
+        evidenceId,
+        tagName: aiTag.tagName,
+      });
       throw error;
     }
   }
@@ -67,7 +75,10 @@ export class TagOperationService {
       // Use the subcollection service's reject method instead of updating directly
       const updatedTag = await this.tagService.rejectAITag(evidenceId, aiTag.id, firmId);
 
-      console.log(`[TagOperationService] Rejected AI tag: ${aiTag.tagName} for ${evidenceId}`);
+      LogService.service('TagOperationService', 'rejectAITag', {
+        tagName: aiTag.tagName,
+        evidenceId,
+      });
 
       return {
         success: true,
@@ -75,7 +86,11 @@ export class TagOperationService {
         evidenceId,
       };
     } catch (error) {
-      console.error('[TagOperationService] Failed to reject AI tag:', error);
+      LogService.error('Failed to reject AI tag', error, {
+        service: 'TagOperationService',
+        evidenceId,
+        tagName: aiTag.tagName,
+      });
       throw error;
     }
   }
@@ -102,7 +117,11 @@ export class TagOperationService {
           await this.approveAITag(evidenceId, firmId, aiTag);
           results.approvedCount++;
         } catch (error) {
-          console.error(`Failed to approve tag ${aiTag.tagName}:`, error);
+          LogService.error(`Failed to approve tag ${aiTag.tagName}`, error, {
+            service: 'TagOperationService',
+            evidenceId,
+            tagName: aiTag.tagName,
+          });
           results.errors.push({ tag: aiTag, error: error.message, action: 'approve' });
         }
       }
@@ -112,14 +131,20 @@ export class TagOperationService {
           await this.rejectAITag(evidenceId, firmId, aiTag);
           results.rejectedCount++;
         } catch (error) {
-          console.error(`Failed to reject tag ${aiTag.tagName}:`, error);
+          LogService.error(`Failed to reject tag ${aiTag.tagName}`, error, {
+            service: 'TagOperationService',
+            evidenceId,
+            tagName: aiTag.tagName,
+          });
           results.errors.push({ tag: aiTag, error: error.message, action: 'reject' });
         }
       }
 
-      console.log(
-        `[TagOperationService] Processed review changes: ${results.approvedCount} approved, ${results.rejectedCount} rejected`
-      );
+      LogService.service('TagOperationService', 'processReviewChanges', {
+        approvedCount: results.approvedCount,
+        rejectedCount: results.rejectedCount,
+        evidenceId,
+      });
 
       return {
         success: true,
@@ -127,7 +152,10 @@ export class TagOperationService {
         evidenceId,
       };
     } catch (error) {
-      console.error('[TagOperationService] Failed to process review changes:', error);
+      LogService.error('Failed to process review changes', error, {
+        service: 'TagOperationService',
+        evidenceId,
+      });
       throw error;
     }
   }
@@ -157,7 +185,11 @@ export class TagOperationService {
 
       return aiTags;
     } catch (error) {
-      console.error('[TagOperationService] Failed to get AI tags by status:', error);
+      LogService.error('Failed to get AI tags by status', error, {
+        service: 'TagOperationService',
+        evidenceId,
+        status,
+      });
       throw error;
     }
   }

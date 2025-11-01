@@ -13,6 +13,7 @@ import {
 import { db } from '../../../services/firebase.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { CategoryService } from '../services/categoryService.js';
+import { LogService } from '../../../services/logService.js';
 
 /**
  * Category Core Module
@@ -64,9 +65,9 @@ export function useCategoryCore() {
           orderBy('createdAt', 'asc')
         );
       } catch (queryError) {
-        console.log(
-          '[CategoryCore] isActive query setup failed, using fallback query:',
-          queryError.message
+        LogService.debug(
+          '[CategoryCore] isActive query setup failed, using fallback query',
+          { message: queryError.message }
         );
         // Fallback: Query without isActive filter
         categoriesQuery = query(categoriesRef, orderBy('createdAt', 'asc'));
@@ -104,11 +105,11 @@ export function useCategoryCore() {
 
           // Migrate categories missing isActive field
           if (categoriesToMigrate.length > 0) {
-            console.log(
+            LogService.debug(
               `[CategoryCore] Migrating ${categoriesToMigrate.length} categories to add isActive field`
             );
             CategoryService.migrateIsActiveField(firmId, categoriesToMigrate).catch((err) => {
-              console.error('[CategoryCore] Migration failed:', err);
+              LogService.error('[CategoryCore] Migration failed', err, { firmId, count: categoriesToMigrate.length });
             });
           }
 
@@ -116,10 +117,10 @@ export function useCategoryCore() {
           loading.value = false;
           isInitialized.value = true;
 
-          console.log(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
+          LogService.debug(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
         },
         (err) => {
-          console.error('[CategoryCore] Error loading categories:', err);
+          LogService.error('[CategoryCore] Error loading categories', err, { firmId, matterId });
           error.value = err.message;
           loading.value = false;
         }
@@ -127,7 +128,7 @@ export function useCategoryCore() {
 
       return unsubscribe;
     } catch (err) {
-      console.error('[CategoryCore] Failed to load categories:', err);
+      LogService.error('[CategoryCore] Failed to load categories', err, { firmId: authStore.currentFirm });
       error.value = err.message;
       loading.value = false;
     }
@@ -176,10 +177,10 @@ export function useCategoryCore() {
       const categoriesRef = collection(db, 'firms', firmId, 'matters', matterId, 'categories');
       const docRef = await addDoc(categoriesRef, newCategory);
 
-      console.log(`[CategoryCore] Created category: ${categoryData.name}`);
+      LogService.debug(`[CategoryCore] Created category: ${categoryData.name}`, { categoryId: docRef.id });
       return docRef.id;
     } catch (err) {
-      console.error('[CategoryCore] Failed to create category:', err);
+      LogService.error('[CategoryCore] Failed to create category', err, { categoryData, firmId });
       throw err;
     }
   };
@@ -217,10 +218,10 @@ export function useCategoryCore() {
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`[CategoryCore] Updated category: ${categoryId}`);
+      LogService.debug(`[CategoryCore] Updated category: ${categoryId}`, { updates });
       return true;
     } catch (err) {
-      console.error('[CategoryCore] Failed to update category:', err);
+      LogService.error('[CategoryCore] Failed to update category', err, { categoryId, firmId, updates });
       throw err;
     }
   };
@@ -247,10 +248,10 @@ export function useCategoryCore() {
         updatedAt: serverTimestamp(),
       });
 
-      console.log(`[CategoryCore] Deleted category: ${categoryId}`);
+      LogService.debug(`[CategoryCore] Deleted category: ${categoryId}`);
       return true;
     } catch (err) {
-      console.error('[CategoryCore] Failed to delete category:', err);
+      LogService.error('[CategoryCore] Failed to delete category', err, { categoryId, firmId });
       throw err;
     }
   };

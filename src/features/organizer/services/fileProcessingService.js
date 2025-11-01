@@ -1,5 +1,6 @@
 import { ref, getDownloadURL, getBytes, getMetadata } from 'firebase/storage';
 import { storage } from '../../../services/firebase.js';
+import { LogService } from '@/services/logService.js';
 
 /**
  * File Processing Service - Handles file content retrieval from Firebase Storage
@@ -43,10 +44,16 @@ export class FileProcessingService {
       // Convert ArrayBuffer to base64 efficiently (avoid stack overflow for large files)
       const base64Data = this.arrayBufferToBase64(arrayBuffer);
 
-      console.log(`[FileProcessingService] Retrieved file content from: ${storagePath}`);
+      LogService.debug('Retrieved file content', {
+        service: 'FileProcessingService',
+        storagePath,
+      });
       return base64Data;
     } catch (error) {
-      console.error('[FileProcessingService] Failed to get file for processing:', error);
+      LogService.error('Failed to get file for processing', error, {
+        service: 'FileProcessingService',
+        storagePath,
+      });
       throw error;
     }
   }
@@ -93,10 +100,16 @@ export class FileProcessingService {
 
       const downloadURL = await getDownloadURL(fileRef);
 
-      console.log(`[FileProcessingService] Generated download URL for: ${storagePath}`);
+      LogService.debug('Generated download URL', {
+        service: 'FileProcessingService',
+        storagePath,
+      });
       return downloadURL;
     } catch (error) {
-      console.error('[FileProcessingService] Failed to get download URL:', error);
+      LogService.error('Failed to get download URL', error, {
+        service: 'FileProcessingService',
+        storagePath,
+      });
       throw error;
     }
   }
@@ -137,7 +150,10 @@ export class FileProcessingService {
       await this.getFileDownloadURL(evidence, firmId);
       return true;
     } catch (error) {
-      console.warn(`[FileProcessingService] File does not exist: ${error.message}`);
+      LogService.warn('File does not exist', {
+        service: 'FileProcessingService',
+        error: error.message,
+      });
       return false;
     }
   }
@@ -159,7 +175,9 @@ export class FileProcessingService {
       // Document ID is the fileHash
       const fileHash = evidence.id;
       if (!fileHash) {
-        console.warn('[FileProcessingService] No file hash found in evidence document ID');
+        LogService.warn('No file hash found in evidence document ID', {
+          service: 'FileProcessingService',
+        });
         return 0;
       }
 
@@ -178,10 +196,11 @@ export class FileProcessingService {
       const uniqueExtensions = [...new Set(extensionVariations)];
 
       // Try each extension variation until one works
-      console.log(
-        `[FileProcessingService] Attempting to find file for ${evidence.displayName} with extensions:`,
-        uniqueExtensions
-      );
+      LogService.debug('Attempting to find file', {
+        service: 'FileProcessingService',
+        displayName: evidence.displayName,
+        extensions: uniqueExtensions,
+      });
 
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
@@ -189,27 +208,36 @@ export class FileProcessingService {
         const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
 
-        console.log(
-          `[FileProcessingService] Trying path ${i + 1}/${uniqueExtensions.length}: ${storagePath}`
-        );
+        LogService.debug(`Trying path ${i + 1}/${uniqueExtensions.length}`, {
+          service: 'FileProcessingService',
+          storagePath,
+        });
 
         try {
           // Get file metadata from Firebase Storage
           const metadata = await getMetadata(fileRef);
 
           if (i > 0) {
-            console.log(
-              `[FileProcessingService] ✅ Found file using case variation ${i + 1}: ${storagePath}`
-            );
+            LogService.debug(`Found file using case variation ${i + 1}`, {
+              service: 'FileProcessingService',
+              storagePath,
+            });
           } else {
-            console.log(`[FileProcessingService] ✅ Found file on first try: ${storagePath}`);
+            LogService.debug('Found file on first try', {
+              service: 'FileProcessingService',
+              storagePath,
+            });
           }
-          console.log(
-            `[FileProcessingService] Retrieved file size from storage: ${metadata.size} bytes`
-          );
+          LogService.debug('Retrieved file size from storage', {
+            service: 'FileProcessingService',
+            size: metadata.size,
+          });
           return metadata.size || 0;
         } catch (extensionError) {
-          console.log(`[FileProcessingService] ❌ Failed path ${i + 1}: ${extensionError.message}`);
+          LogService.debug(`Failed path ${i + 1}`, {
+            service: 'FileProcessingService',
+            error: extensionError.message,
+          });
           // This extension variation didn't work, try the next one
           if (i === uniqueExtensions.length - 1) {
             // This was the last attempt, log the error
@@ -220,10 +248,9 @@ export class FileProcessingService {
 
       return 0;
     } catch (error) {
-      console.error(
-        '[FileProcessingService] Failed to get file size from Firebase Storage:',
-        error
-      );
+      LogService.error('Failed to get file size from Firebase Storage', error, {
+        service: 'FileProcessingService',
+      });
       return 0;
     }
   }

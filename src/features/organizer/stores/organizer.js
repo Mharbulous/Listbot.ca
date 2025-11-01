@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, watch } from 'vue';
 import { db } from '../../../services/firebase.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
+import { LogService } from '../../../services/logService.js';
 
 // Import decomposed stores
 import { useOrganizerCoreStore } from './organizerCore.js';
@@ -49,7 +50,7 @@ export const useOrganizerStore = defineStore('organizer', () => {
 
       return { evidenceUnsubscribe, categoryUnsubscribe };
     } catch (err) {
-      console.error('[OrganizerStore] Failed to initialize:', err);
+      LogService.error('[OrganizerStore] Failed to initialize', err);
       throw err;
     }
   };
