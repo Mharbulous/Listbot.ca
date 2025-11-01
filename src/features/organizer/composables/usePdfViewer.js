@@ -1,59 +1,83 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
 import { LogService } from '@/services/logService.js';
+import { usePdfCache } from './usePdfCache.js';
 
 /**
  * Composable for PDF viewing functionality
  *
  * Handles loading PDF documents and managing page rendering lifecycle.
+ * Uses document caching for instant navigation between PDFs.
  * Provides reactive state for loading/error states and cleanup functionality.
  *
  * @returns {Object} PDF viewer state and functions
  */
 export function usePdfViewer() {
+  // Initialize PDF cache
+  const pdfCache = usePdfCache();
+
   // State
   const pdfDocument = shallowRef(null);
+  const currentDocumentId = ref(null);
   const totalPages = ref(0);
   const loadingDocument = ref(false);
   const renderingPages = shallowRef(new Set());
   const loadError = ref(null);
 
   /**
-   * Load PDF document from Firebase Storage URL
+   * Check if a document is already cached
    *
-   * @param {string} downloadUrl - Firebase Storage download URL
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @returns {boolean} True if document is cached and ready
    */
-  const loadPdf = async (downloadUrl) => {
+  const isDocumentCached = (documentId) => {
+    return pdfCache.hasDocument(documentId);
+  };
+
+  /**
+   * Load PDF document from Firebase Storage URL using cache
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @param {string|null} downloadUrl - Firebase Storage download URL (optional if cached)
+   */
+  const loadPdf = async (documentId, downloadUrl = null) => {
     try {
       loadingDocument.value = true;
       loadError.value = null;
 
-      LogService.debug('Loading PDF document', { url: downloadUrl });
+      LogService.debug('Loading PDF document', { documentId, url: downloadUrl });
 
-      // Load PDF document with streaming enabled for better performance
-      const loadingTask = pdfjsLib.getDocument({
-        url: downloadUrl,
-        // Enable streaming for better performance
-        disableAutoFetch: false,
-        disableStream: false,
-      });
-
-      const pdfDoc = await loadingTask.promise;
+      // Get document from cache (instant if cached, loads if not)
+      const pdfDoc = await pdfCache.getDocument(documentId, downloadUrl);
 
       pdfDocument.value = pdfDoc;
+      currentDocumentId.value = documentId;
       totalPages.value = pdfDoc.numPages;
 
       LogService.info('PDF document loaded successfully', {
+        documentId,
         totalPages: pdfDoc.numPages,
       });
     } catch (err) {
-      LogService.error('Failed to load PDF document', err);
+      LogService.error('Failed to load PDF document', err, { documentId });
       loadError.value = err.message || 'Failed to load PDF document';
       pdfDocument.value = null;
+      currentDocumentId.value = null;
       totalPages.value = 0;
     } finally {
       loadingDocument.value = false;
     }
+  };
+
+  /**
+   * Pre-load adjacent documents for instant navigation
+   *
+   * @param {string|null} previousId - Previous document ID (null if at start)
+   * @param {string|null} nextId - Next document ID (null if at end)
+   * @param {Function} getDownloadUrl - Async function to get download URL for a document ID
+   */
+  const preloadAdjacentDocuments = async (previousId, nextId, getDownloadUrl) => {
+    await pdfCache.preloadAdjacentDocuments(previousId, nextId, getDownloadUrl);
   };
 
   /**
@@ -115,32 +139,45 @@ export function usePdfViewer() {
   /**
    * Clean up PDF resources when component unmounts
    */
-  const cleanup = () => {
-    // Release PDF.js resources
-    if (pdfDocument.value) {
-      LogService.debug('Cleaning up PDF document');
-      pdfDocument.value.destroy();
-      pdfDocument.value = null;
-    }
+  const cleanup = async () => {
+    LogService.debug('Cleaning up PDF viewer');
 
-    // Clear state
+    // Clear all cached documents (cache handles resource cleanup)
+    await pdfCache.clearCache();
+
+    // Clear local state
+    pdfDocument.value = null;
+    currentDocumentId.value = null;
     totalPages.value = 0;
     renderingPages.value.clear();
     loadError.value = null;
     loadingDocument.value = false;
   };
 
+  /**
+   * Get cache statistics for monitoring
+   *
+   * @returns {Object} Cache statistics
+   */
+  const getCacheStats = () => {
+    return pdfCache.getCacheStats();
+  };
+
   return {
     // State
     pdfDocument,
+    currentDocumentId,
     totalPages,
     loadingDocument,
     renderingPages,
     loadError,
 
     // Methods
+    isDocumentCached,
     loadPdf,
+    preloadAdjacentDocuments,
     renderPage,
     cleanup,
+    getCacheStats,
   };
 }

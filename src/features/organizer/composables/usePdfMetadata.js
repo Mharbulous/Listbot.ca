@@ -1,7 +1,4 @@
 import { ref, computed } from 'vue';
-import { ref as storageRef, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/services/firebase.js';
-import { pdfjsLib } from '@/config/pdfWorker.js';
 
 /**
  * Composable for extracting and managing PDF embedded metadata
@@ -120,16 +117,21 @@ export function usePdfMetadata() {
   };
 
   /**
-   * Extract metadata from PDF file
+   * Extract metadata from PDF document
    *
-   * @param {string} firmId - Firm ID for Firebase Storage path
-   * @param {string} matterId - Matter ID for Firebase Storage path
-   * @param {string} fileHash - File hash (document ID)
-   * @param {string} displayName - File display name to get extension
+   * @param {string} fileHash - File hash (document ID) - used for logging
+   * @param {string} displayName - File display name - used for PDF file check
+   * @param {PDFDocumentProxy} pdfDocument - Already-loaded PDF document from cache
    */
-  const extractMetadata = async (firmId, matterId, fileHash, displayName) => {
+  const extractMetadata = async (fileHash, displayName, pdfDocument) => {
     // Only process PDF files
     if (!displayName?.toLowerCase().endsWith('.pdf')) {
+      return;
+    }
+
+    // Require a valid PDF document
+    if (!pdfDocument) {
+      console.warn('[usePdfMetadata] No PDF document provided for metadata extraction');
       return;
     }
 
@@ -138,28 +140,8 @@ export function usePdfMetadata() {
       metadataError.value = null;
       pdfMetadata.value = null;
 
-      // Get file extension
-      const extension = displayName.split('.').pop() || 'pdf';
-
-      // Build storage path
-      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
-      const fileRef = storageRef(storage, storagePath);
-
-      // Get download URL
-      const downloadURL = await getDownloadURL(fileRef);
-
-      // Load PDF document (only metadata, no rendering)
-      const loadingTask = pdfjsLib.getDocument({
-        url: downloadURL,
-        // Only load enough to get metadata (don't load all pages)
-        disableAutoFetch: true,
-        disableStream: false,
-      });
-
-      const pdfDoc = await loadingTask.promise;
-
-      // Extract metadata
-      const metadata = await pdfDoc.getMetadata();
+      // Extract metadata from the provided PDF document
+      const metadata = await pdfDocument.getMetadata();
 
       // Process Document Information Dictionary (info)
       const info = metadata.info || {};

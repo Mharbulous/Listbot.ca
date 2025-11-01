@@ -421,7 +421,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, onBeforeUnmount, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref as storageRef, getMetadata, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, getMetadata, getDownloadURL, getStorage } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
 import { useAuthStore } from '@/core/stores/auth.js';
 import { useDocumentViewStore } from '@/stores/documentView.js';
@@ -431,6 +431,7 @@ import { useOrganizerStore } from '@/features/organizer/stores/organizer.js';
 import { storeToRefs } from 'pinia';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
+import { LogService } from '@/services/logService.js';
 import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.js';
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
@@ -456,8 +457,11 @@ const {
   totalPages,
   loadingDocument,
   loadError: pdfLoadError,
+  isDocumentCached,
   loadPdf,
+  preloadAdjacentDocuments,
   cleanup: cleanupPdf,
+  getCacheStats,
 } = usePdfViewer();
 
 // Page Visibility composable (for tracking visible pages)
@@ -484,6 +488,9 @@ const metadataVisible = metadataBoxVisible;
 // Thumbnail panel visibility state
 const thumbnailsVisible = ref(true);
 
+// Performance timing for navigation
+const navigationStartTime = ref(null);
+
 // Document navigation state
 // Get sorted evidence list for consistent ordering
 const sortedEvidence = computed(() => organizerStore.sortedEvidenceList || []);
@@ -497,6 +504,27 @@ const currentDocumentIndex = computed(() => {
 
   const index = sortedEvidence.value.findIndex((ev) => ev.id === fileHash.value);
   return index >= 0 ? index + 1 : 1; // Convert 0-based to 1-based index
+});
+
+// Get adjacent document IDs for caching
+const previousDocumentId = computed(() => {
+  if (sortedEvidence.value.length === 0) return null;
+
+  const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
+  if (currentIndex > 0) {
+    return sortedEvidence.value[currentIndex - 1]?.id || null;
+  }
+  return null;
+});
+
+const nextDocumentId = computed(() => {
+  if (sortedEvidence.value.length === 0) return null;
+
+  const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
+  if (currentIndex < sortedEvidence.value.length - 1) {
+    return sortedEvidence.value[currentIndex + 1]?.id || null;
+  }
+  return null;
 });
 
 // Check if current file is a PDF
@@ -562,6 +590,11 @@ const goToPreviousDocument = () => {
   const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
   if (currentIndex > 0) {
     const prevDoc = sortedEvidence.value[currentIndex - 1];
+    navigationStartTime.value = performance.now();
+    LogService.info('⬅️ Navigation to previous document started', {
+      fromDoc: fileHash.value,
+      toDoc: prevDoc.id,
+    });
     router.push(`/documents/view/${prevDoc.id}`);
   }
 };
@@ -572,6 +605,11 @@ const goToNextDocument = () => {
   const currentIndex = currentDocumentIndex.value - 1; // Convert to 0-based
   if (currentIndex < sortedEvidence.value.length - 1) {
     const nextDoc = sortedEvidence.value[currentIndex + 1];
+    navigationStartTime.value = performance.now();
+    LogService.info('➡️ Navigation to next document started', {
+      fromDoc: fileHash.value,
+      toDoc: nextDoc.id,
+    });
     router.push(`/documents/view/${nextDoc.id}`);
   }
 };
@@ -580,6 +618,39 @@ const goToLastDocument = () => {
   if (sortedEvidence.value.length === 0) return;
   const lastDoc = sortedEvidence.value[sortedEvidence.value.length - 1];
   router.push(`/documents/view/${lastDoc.id}`);
+};
+
+/**
+ * Get download URL for a document by its ID
+ * Used for pre-loading adjacent documents
+ *
+ * @param {string} documentId - Document ID (file hash)
+ * @returns {Promise<string>} Firebase Storage download URL
+ */
+const getDocumentDownloadUrl = async (documentId) => {
+  const firmId = authStore.currentFirm;
+  const matterId = matterStore.currentMatterId;
+
+  if (!firmId || !matterId || !documentId) {
+    throw new Error('Missing firm ID, matter ID, or document ID');
+  }
+
+  // Find the document in sortedEvidence to get its display name
+  const doc = sortedEvidence.value.find((ev) => ev.id === documentId);
+  if (!doc) {
+    throw new Error(`Document ${documentId} not found in evidence list`);
+  }
+
+  // Get file extension from displayName
+  const extension = doc.displayName.split('.').pop() || 'pdf';
+
+  // Construct storage path using file hash (documentId) and extension
+  const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+  const storage = getStorage();
+  const fileRef = storageRef(storage, storagePath);
+
+  // Get download URL
+  return await getDownloadURL(fileRef);
 };
 
 // Compute earlier copy notification message
@@ -705,11 +776,41 @@ const fetchStorageMetadata = async (firmId, displayName) => {
 
     // Extract PDF embedded metadata if this is a PDF file
     if (displayName?.toLowerCase().endsWith('.pdf')) {
-      await extractMetadata(firmId, matterId, fileHash.value, displayName);
+      // Check cache first to avoid unnecessary Firebase Storage API call
+      if (isDocumentCached(fileHash.value)) {
+        // Document is cached - no URL needed (instant load)
+        await loadPdf(fileHash.value);
+      } else {
+        // Document not cached - fetch URL and load
+        const downloadURL = await getDownloadURL(fileRef);
+        await loadPdf(fileHash.value, downloadURL);
+      }
 
-      // Load PDF for viewing
-      const downloadURL = await getDownloadURL(fileRef);
-      await loadPdf(downloadURL);
+      // Calculate navigation timing if this was triggered by navigation
+      if (navigationStartTime.value !== null) {
+        const elapsedMs = performance.now() - navigationStartTime.value;
+        LogService.performance('Document navigation completed', elapsedMs, {
+          documentId: fileHash.value,
+          seconds: (elapsedMs / 1000).toFixed(3),
+        });
+        navigationStartTime.value = null; // Reset for next navigation
+      }
+
+      // Extract metadata from the already-loaded PDF (no duplicate load)
+      await extractMetadata(fileHash.value, displayName, pdfDocument.value);
+
+      LogService.info('Current document ready for rendering, starting background pre-load', {
+        currentDocId: fileHash.value,
+        previousDocId: previousDocumentId.value,
+        nextDocId: nextDocumentId.value,
+      });
+
+      // Pre-load adjacent documents in background (non-blocking)
+      preloadAdjacentDocuments(
+        previousDocumentId.value,
+        nextDocumentId.value,
+        getDocumentDownloadUrl
+      );
     }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
