@@ -173,6 +173,9 @@ export function usePdfCache() {
         // Enable streaming for better performance
         disableAutoFetch: false,
         disableStream: false,
+        // Enable hardware acceleration (GPU rendering) for faster page rendering
+        // Falls back to Canvas 2D automatically if HWA is not supported
+        enableHWA: true,
       });
 
       const pdfDocument = await loadingTask.promise;

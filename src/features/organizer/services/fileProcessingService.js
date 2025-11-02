@@ -34,7 +34,7 @@ export class FileProcessingService {
       const extension = uploadFileName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       // Get file bytes directly from Firebase Storage
@@ -88,7 +88,7 @@ export class FileProcessingService {
       const extension = uploadFileName.split('.').pop() || 'pdf';
 
       // Use the EXACT same path format as UploadService.generateStoragePath()
-      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = ref(storage, storagePath);
 
       const downloadURL = await getDownloadURL(fileRef);
@@ -123,7 +123,7 @@ export class FileProcessingService {
     if (!matterId) {
       throw new Error('Matter ID is required to build storage path');
     }
-    return `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension}`;
+    return `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
   }
 
   /**
@@ -186,7 +186,7 @@ export class FileProcessingService {
       for (let i = 0; i < uniqueExtensions.length; i++) {
         const extension = uniqueExtensions[i];
         // Use the EXACT same path format as UploadService.generateStoragePath()
-        const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension}`;
+        const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension}`;
         const fileRef = ref(storage, storagePath);
 
         console.debug(`[FileProcessingService] Trying path ${i + 1}/${uniqueExtensions.length}`, storagePath);

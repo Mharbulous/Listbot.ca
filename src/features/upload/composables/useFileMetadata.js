@@ -140,7 +140,7 @@ export function useFileMetadata() {
         sourceFolderPath: pathUpdate.folderPaths,
       };
 
-      // Save to Firestore: /firms/{firmId}/matter/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}
+      // Save to Firestore: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}
       const docRef = doc(
         db,
         'firms',

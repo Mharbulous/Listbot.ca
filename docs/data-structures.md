@@ -110,17 +110,17 @@ User and firm management processes:
 ```
 /users/{userId}                                    // User preferences
 /firms/{firmId}                                    // Firm info with embedded members
-/firms/{firmId}/matter/{matterId}                 // Matter/case records (client names stored directly)
+/firms/{firmId}/matters/{matterId}                 // Matter/case records (client names stored directly)
 // File metadata collections are documented in data-structures/FileMetadata.md
 ```
 
 ### Storage Paths
 
 ```
-/firms/{firmId}/matter/{matterId}/uploads/{fileHash}.{ext}  // Current uploads
-/firms/{firmId}/matter/{matterId}/OCRed/                    // Future OCR files
-/firms/{firmId}/matter/{matterId}/split/                    // Future split files
-/firms/{firmId}/matter/{matterId}/merged/                   // Future merged files
+/firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{ext}  // Current uploads
+/firms/{firmId}/matters/{matterId}/OCRed/                    // Future OCR files
+/firms/{firmId}/matters/{matterId}/split/                    // Future split files
+/firms/{firmId}/matters/{matterId}/merged/                   // Future merged files
 ```
 
 ### Security Pattern

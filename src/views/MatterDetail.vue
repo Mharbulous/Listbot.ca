@@ -598,7 +598,7 @@ function clearMatter() {
 
 // Navigate to edit matter page
 function editMatter() {
-  router.push(`/matter/edit/${route.params.id}`);
+  router.push(`/matters/edit/${route.params.id}`);
 }
 
 // Handle archived badge click

@@ -46,7 +46,7 @@ export function useEvidenceLoader(
 
       // Get file extension and build storage path
       const extension = displayName.split('.').pop() || 'pdf';
-      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
 
       // Load storage metadata if not cached
@@ -202,7 +202,7 @@ export function useEvidenceLoader(
 
         // Fetch storage metadata
         const extension = displayName.split('.').pop() || 'pdf';
-        const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
+        const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${extension.toLowerCase()}`;
         const fileRef = storageRef(storage, storagePath);
         const metadata = await getMetadata(fileRef);
         storageMetadata.value = metadata;

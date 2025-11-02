@@ -149,7 +149,7 @@ const role = token.claims.role;
 match /users/user-123 with auth.uid === 'user-123'
 
 // Firm member accessing firm matter ✓
-match /firms/firm-abc/matter/matter-1 with token.firmId === 'firm-abc'
+match /firms/firm-abc/matters/matter-1 with token.firmId === 'firm-abc'
 
 // Admin modifying firm settings ✓
 match /firms/firm-abc with token.firmId === 'firm-abc' && token.role === 'admin'

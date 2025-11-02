@@ -269,7 +269,7 @@ const generateStoragePath = (fileHash, originalFileName) => {
   if (!matterId) {
     throw new Error('No matter selected. Please select a matter before uploading files.');
   }
-  return `firms/${authStore.currentFirm}/matter/${matterId}/uploads/${fileHash}.${extension}`;
+  return `firms/${authStore.currentFirm}/matters/${matterId}/uploads/${fileHash}.${extension}`;
 };
 
 const checkFileExists = async (fileHash) => {

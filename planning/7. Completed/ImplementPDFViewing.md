@@ -251,7 +251,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
     }
 
     const extension = displayName.split('.').pop() || 'pdf'
-    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`
+    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`
     const fileRef = storageRef(storage, storagePath)
 
     // Get metadata from Firebase Storage

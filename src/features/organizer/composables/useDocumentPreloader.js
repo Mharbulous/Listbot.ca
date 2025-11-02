@@ -44,7 +44,7 @@ export function useDocumentPreloader(
 
     // Get file extension and construct storage path
     const extension = doc.displayName.split('.').pop() || 'pdf';
-    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
     const storage = getStorage();
     const fileRef = storageRef(storage, storagePath);
 
@@ -60,7 +60,7 @@ export function useDocumentPreloader(
       const matterId = matterStore.currentMatterId;
 
       if (!firmId || !matterId || !documentId) {
-        console.warn('Cannot pre-load metadata: missing firm/matter/document ID', { documentId });
+        console.warn('Cannot pre-load metadata: missing firm/matters/document ID', { documentId });
         return;
       }
 
@@ -104,7 +104,7 @@ export function useDocumentPreloader(
 
       // Fetch storage metadata
       const extension = displayName.split('.').pop() || 'pdf';
-      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
       const storageMetadata_fetched = await getMetadata(fileRef);
 
@@ -137,7 +137,7 @@ export function useDocumentPreloader(
       const matterId = matterStore.currentMatterId;
 
       if (!firmId || !matterId || !documentId) {
-        console.warn('Cannot extract PDF metadata: missing firm/matter/document ID', { documentId });
+        console.warn('Cannot extract PDF metadata: missing firm/matters/document ID', { documentId });
         return;
       }
 

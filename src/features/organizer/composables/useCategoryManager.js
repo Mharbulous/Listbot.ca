@@ -9,8 +9,8 @@ import { CategoryService } from '../services/categoryService.js';
  *
  * Handles loading and managing categories from three different sources:
  * - System categories (/systemcategories)
- * - Firm categories (/firms/{firmId}/matter/general/categories)
- * - Matter categories (/firms/{firmId}/matter/{matterId}/categories)
+ * - Firm categories (/firms/{firmId}/matters/general/categories)
+ * - Matter categories (/firms/{firmId}/matters/{matterId}/categories)
  */
 export function useCategoryManager(matterId = null) {
   const authStore = useAuthStore();
@@ -105,7 +105,7 @@ export function useCategoryManager(matterId = null) {
   };
 
   /**
-   * Load firm categories from /firms/{firmId}/matter/general/categories
+   * Load firm categories from /firms/{firmId}/matters/general/categories
    */
   const loadFirmCategories = async (firmId) => {
     try {

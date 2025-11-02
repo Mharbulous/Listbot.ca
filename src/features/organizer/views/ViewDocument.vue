@@ -164,10 +164,18 @@ const handleFirstPageRendered = (pageNumber) => {
   if (pageNumber !== 1 || navigation.navigationStartTime.value === null) return;
 
   const elapsedMs = performance.now() - navigation.navigationStartTime.value;
-  console.log(`⚡ 🎨 First page rendered on screen: ${elapsedMs}ms`, {
+
+  // Performance classification for HWA testing
+  const isOptimal = elapsedMs < 50;  // Target: <50ms
+  const isGood = elapsedMs < 100;     // Good: <100ms
+  const performanceIcon = isOptimal ? '🚀' : isGood ? '✅' : '⚠️';
+
+  console.log(`⚡ 🎨 ${performanceIcon} First page rendered (HWA enabled): ${elapsedMs.toFixed(1)}ms`, {
     documentId: fileHash.value,
     milliseconds: elapsedMs.toFixed(1),
     seconds: (elapsedMs / 1000).toFixed(3),
+    performance: isOptimal ? 'OPTIMAL (<50ms)' : isGood ? 'GOOD (<100ms)' : 'NEEDS WORK (>100ms)',
+    hardwareAcceleration: 'enabled',
   });
 
   navigation.navigationStartTime.value = null;

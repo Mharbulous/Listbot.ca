@@ -118,7 +118,7 @@
       <div class="text-right pb-4 px-6">
         <span class="bulk-import-text">
           Creating multiple matters?
-          <router-link to="/matter/import" class="bulk-import-link">Use bulk import</router-link>
+          <router-link to="/matters/import" class="bulk-import-link">Use bulk import</router-link>
         </span>
       </div>
     </v-card>

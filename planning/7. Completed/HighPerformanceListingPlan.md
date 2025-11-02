@@ -425,7 +425,7 @@ class FileMetadataService {
 **Firestore Structure:**
 
 ```
-/firms/{firmId}/matter/{matterId}/files/{fileId}
+/firms/{firmId}/matters/{matterId}/files/{fileId}
 {
   fileName: string,
   fileType: string,

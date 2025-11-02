@@ -11,7 +11,7 @@ Firebase Storage structure for file storage with automatic deduplication based o
 **Purpose**: Store actual file content with automatic deduplication based on file hash
 
 ```
-/firms/{firmId}/matter/{matterId}/uploads/{fileHash}.{extension}
+/firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{extension}
 ```
 
 **Key Features**:
@@ -24,9 +24,9 @@ Firebase Storage structure for file storage with automatic deduplication based o
 **Examples**:
 
 ```
-/firms/firm-abc-123/matter/general/uploads/abc123def456789abcdef012345.pdf
-/firms/firm-abc-123/matter/matter-001/uploads/xyz789ghi012345fedcba678901.docx
-/firms/solo-user-789/matter/general/uploads/def456abc123789012345abcdef.jpg
+/firms/firm-abc-123/matters/general/uploads/abc123def456789abcdef012345.pdf
+/firms/firm-abc-123/matters/matter-001/uploads/xyz789ghi012345fedcba678901.docx
+/firms/solo-user-789/matters/general/uploads/def456abc123789012345abcdef.jpg
 ```
 
 **Storage Efficiency**:
@@ -41,7 +41,7 @@ Firebase Storage structure for file storage with automatic deduplication based o
 
 The following folders are reserved for future file processing workflows:
 
-### OCRed Files: `/firms/{firmId}/matter/{matterId}/OCRed/`
+### OCRed Files: `/firms/{firmId}/matters/{matterId}/OCRed/`
 
 **Purpose**: Store files that have been processed through Optical Character Recognition
 
@@ -49,7 +49,7 @@ The following folders are reserved for future file processing workflows:
 - Maintains original file hash for deduplication
 - Enables full-text search capabilities
 
-### Split Files: `/firms/{firmId}/matter/{matterId}/split/`
+### Split Files: `/firms/{firmId}/matters/{matterId}/split/`
 
 **Purpose**: Store files that have been split from larger documents
 
@@ -57,7 +57,7 @@ The following folders are reserved for future file processing workflows:
 - Each split file gets its own hash and metadata record
 - Maintains reference to original source file
 
-### Merged Files: `/firms/{firmId}/matter/{matterId}/merged/`
+### Merged Files: `/firms/{firmId}/matters/{matterId}/merged/`
 
 **Purpose**: Store files that have been merged from multiple source files
 
@@ -122,7 +122,7 @@ File Merging → /merged/
 **Storage**: Single file at one location
 
 ```
-/firms/firm-abc-123/matter/matter-001/uploads/abc123def456.pdf
+/firms/firm-abc-123/matters/matter-001/uploads/abc123def456.pdf
 ```
 
 **File Metadata**: Multiple metadata records preserve different contexts as documented in **[FileMetadata.md](./FileMetadata.md)**
@@ -134,7 +134,7 @@ File Merging → /merged/
 **Storage**: Single file (same content hash)
 
 ```
-/firms/firm-abc-123/matter/general/uploads/abc123def456.pdf
+/firms/firm-abc-123/matters/general/uploads/abc123def456.pdf
 ```
 
 **File Metadata**: Different metadata records for each name variation as documented in **[FileMetadata.md](./FileMetadata.md)**
@@ -177,7 +177,7 @@ service firebase.storage {
 
 ### Path Normalization
 
-- **Consistent Structure**: All paths follow `/firms/{firmId}/matter/{matterId}/` pattern
+- **Consistent Structure**: All paths follow `/firms/{firmId}/matters/{matterId}/` pattern
 - **Extension Preservation**: Source file extensions maintained for proper handling
 - **Hash-Based Names**: File names use content hash to ensure uniqueness
 - **Cross-Platform**: Forward slashes used regardless of client OS

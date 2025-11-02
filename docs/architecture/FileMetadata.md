@@ -237,7 +237,7 @@ Cloud:
 
 ## Matter Organization (Current Testing Phase)
 
-**Current Implementation**: All collections are hardcoded to use `/matter/general/` as a testing ground for feature development.
+**Current Implementation**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development.
 
 **Future Implementation**: The 'general' matter will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
@@ -245,8 +245,8 @@ Cloud:
 
 ### 1. sourceMetadata Subcollection
 
-**Path**: `/firms/{firmId}/matter/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
-**Current**: `/firms/{firmId}/matter/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Current**: `/firms/{firmId}/matters/general/evidence/{fileHash}/sourceMetadata/{metadataHash}`
 
 **Purpose**: Preserves metadata about source files from user's desktop as a subcollection under evidence documents
 
@@ -269,8 +269,8 @@ Cloud:
 
 ### 2. evidence Collection
 
-**Path**: `/firms/{firmId}/matter/{matterId}/evidence/{fileHash}`
-**Current**: `/firms/{firmId}/matter/general/evidence/{fileHash}`
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}`
+**Current**: `/firms/{firmId}/matters/general/evidence/{fileHash}`
 
 **Purpose**: Links deduplicated storage files to their display metadata
 
@@ -312,8 +312,8 @@ Cloud:
 
 ### 3. uploadEvents Collection
 
-**Path**: `/firms/{firmId}/matter/{matterId}/uploadEvents/{eventId}`  
-**Current**: `/firms/{firmId}/matter/general/uploadEvents/{eventId}`
+**Path**: `/firms/{firmId}/matters/{matterId}/uploadEvents/{eventId}`  
+**Current**: `/firms/{firmId}/matters/general/uploadEvents/{eventId}`
 
 **Purpose**: Audit trail of every upload attempt (successful or duplicate)
 

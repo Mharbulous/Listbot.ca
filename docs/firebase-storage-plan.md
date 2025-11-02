@@ -10,7 +10,7 @@ This eliminates confusion about where files belong and simplifies security rules
 
 **Key Principles:**
 
-- One storage pattern to rule them all: `/firms/{firmId}/matter/{matterId}/uploads/{fileHash}.{ext}`
+- One storage pattern to rule them all: `/firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{ext}`
 - Every upload attempt is logged (successful or duplicate)
 - Simple, consistent security rules
 - Clear audit trail for compliance
@@ -77,7 +77,7 @@ return `${fileSize} • ${fileExtension.toUpperCase()} • ${date}`;
 
 ```
 Firebase Storage Root
-└── /firms/{firmId}/matter/{matterId}/uploads/{fileHash}.{ext}
+└── /firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{ext}
 ```
 
 That's it. One pattern. Every file follows this structure.
@@ -107,7 +107,7 @@ class StorageService {
     const fileHash = await this.calculateBLAKE3(file);
     const extension = file.name.split('.').pop().toLowerCase(); // Standardize to lowercase
     const fileName = `${fileHash}.${extension}`;
-    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileName}`;
+    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileName}`;
 
     // 2. Create upload event record (ALWAYS, even for duplicates)
     const eventId = await this.logUploadEvent({
