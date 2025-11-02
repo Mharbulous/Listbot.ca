@@ -100,7 +100,6 @@ export function useEvidenceLoader(
                 selectedMetadataHash: selectedMetadataHash.value,
                 pdfMetadata: { ...pdfMetadataComposable.pdfMetadata },
               });
-              console.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash });
             } catch (err) {
               console.warn('Background PDF metadata extraction failed:', err);
             }
@@ -277,10 +276,6 @@ export function useEvidenceLoader(
 
       selectedMetadataHash.value = newMetadataHash;
       documentViewStore.setDocumentName(selectedVariant.sourceFileName || 'Unknown File');
-
-      console.log(
-        `[EvidenceLoader] Updated sourceID to: ${selectedVariant.sourceFileName} (${newMetadataHash.substring(0, 8)}...)`
-      );
     } catch (err) {
       console.error('[EvidenceLoader] Failed to update metadata selection:', err);
       // Revert selection on error

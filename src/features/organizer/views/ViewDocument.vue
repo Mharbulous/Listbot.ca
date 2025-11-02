@@ -95,6 +95,10 @@ import { usePageVisibility } from '@/features/organizer/composables/usePageVisib
 import { useDocumentNavigation } from '@/features/organizer/composables/useDocumentNavigation.js';
 import { useEvidenceLoader } from '@/features/organizer/composables/useEvidenceLoader.js';
 import { useDocumentPreloader } from '@/features/organizer/composables/useDocumentPreloader.js';
+import { useRenderTracking } from '@/features/organizer/composables/useRenderTracking.js';
+import { analyzePageComplexity, formatComplexityForLog } from '@/features/organizer/composables/usePageComplexity.js';
+import { verifyWebGLContext, formatWebGLForLog } from '@/utils/webglDetection.js';
+import { getMemoryStats, formatMemoryForLog } from '@/utils/memoryTracking.js';
 import DocumentNavigationBar from '@/components/document/DocumentNavigationBar.vue';
 import PdfThumbnailPanel from '@/components/document/PdfThumbnailPanel.vue';
 import PdfViewerArea from '@/components/document/PdfViewerArea.vue';
@@ -116,6 +120,7 @@ const pdfMetadata = usePdfMetadata();
 const pdfCache = usePdfCache();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
+const renderTracking = useRenderTracking();
 const navigation = useDocumentNavigation(fileHash, router, organizerStore);
 const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata);
 const preloader = useDocumentPreloader(
@@ -160,23 +165,73 @@ const handleMetadataSelection = async (newMetadataHash) => {
   await evidenceLoader.updateSelectedMetadata(fileHash.value, newMetadataHash);
 };
 
-const handleFirstPageRendered = (pageNumber) => {
+const handleFirstPageRendered = async (pageNumber) => {
   if (pageNumber !== 1 || navigation.navigationStartTime.value === null) return;
 
   const elapsedMs = performance.now() - navigation.navigationStartTime.value;
+  const docId = fileHash.value;
 
-  // Performance classification for HWA testing
-  const isOptimal = elapsedMs < 50;  // Target: <50ms
-  const isGood = elapsedMs < 100;     // Good: <100ms
+  // Check if this is first-time render or re-render
+  const isFirstRender = renderTracking.isFirstRender(docId);
+  const renderType = isFirstRender ? 'FIRST' : 'RE-RENDER';
+
+  // Apply different thresholds for first-render vs re-render
+  let isOptimal, isGood;
+  if (isFirstRender) {
+    // First-render thresholds (cold start)
+    isOptimal = elapsedMs < 100;  // Optimal: <100ms
+    isGood = elapsedMs < 250;     // Good: <250ms
+  } else {
+    // Re-render thresholds (cached content)
+    isOptimal = elapsedMs < 20;   // Optimal: <20ms
+    isGood = elapsedMs < 50;      // Good: <50ms
+  }
+
   const performanceIcon = isOptimal ? '🚀' : isGood ? '✅' : '⚠️';
 
-  console.log(`⚡ 🎨 ${performanceIcon} First page rendered (HWA enabled): ${elapsedMs.toFixed(1)}ms`, {
-    documentId: fileHash.value,
-    milliseconds: elapsedMs.toFixed(1),
-    seconds: (elapsedMs / 1000).toFixed(3),
-    performance: isOptimal ? 'OPTIMAL (<50ms)' : isGood ? 'GOOD (<100ms)' : 'NEEDS WORK (>100ms)',
-    hardwareAcceleration: 'enabled',
-  });
+  // Gather context information
+  const memoryStats = getMemoryStats();
+  const cacheStats = pdfCache.getCacheStats();
+
+  // Get page complexity (inline)
+  let complexity = null;
+  let complexityStr = 'unknown';
+  if (pdfViewer.pdfDocument.value) {
+    try {
+      const page = await pdfViewer.pdfDocument.value.getPage(1);
+      complexity = await analyzePageComplexity(page);
+      complexityStr = formatComplexityForLog(complexity);
+    } catch (err) {
+      // Non-critical, continue without complexity data
+    }
+  }
+
+  // Get WebGL context info (inline)
+  let webglInfo = { hwaEnabled: false, contextType: 'Unknown' };
+  const canvasElement = document.querySelector('.pdf-page-canvas');
+  if (canvasElement) {
+    webglInfo = verifyWebGLContext(canvasElement);
+  }
+
+  // Log comprehensive performance data (inline in ViewDocument.vue)
+  console.log(
+    `⚡ 🎨 ${performanceIcon} ${renderType} render: ${elapsedMs.toFixed(1)}ms | ${complexityStr} | ${formatWebGLForLog(webglInfo)} | ${formatMemoryForLog(memoryStats, cacheStats.size)}`,
+    {
+      documentId: docId.substring(0, 8),
+      renderType,
+      milliseconds: elapsedMs.toFixed(1),
+      performance: isOptimal ? 'OPTIMAL' : isGood ? 'GOOD' : 'SLOW',
+      complexity,
+      webgl: webglInfo,
+      memory: memoryStats,
+      cache: cacheStats,
+    }
+  );
+
+  // Mark as rendered for future tracking
+  if (isFirstRender) {
+    renderTracking.markAsRendered(docId);
+  }
 
   navigation.navigationStartTime.value = null;
 
@@ -187,7 +242,9 @@ const handleFirstPageRendered = (pageNumber) => {
       navigation.previousDocumentId.value,
       navigation.nextDocumentId.value
     )
-    .catch((err) => console.debug('Background pre-load promise rejected', { error: err.message }));
+    .catch(() => {
+      // Ignore pre-load errors - they are non-blocking
+    });
 };
 
 // Keyboard Navigation
@@ -237,7 +294,6 @@ onMounted(async () => {
   if (!organizerStore.isInitialized) {
     try {
       await organizerStore.initialize();
-      console.log('[NewViewDocument2] Organizer store initialized, evidenceCount:', organizerStore.evidenceCount);
     } catch (err) {
       console.error('[NewViewDocument2] Failed to initialize organizer store:', err);
     }

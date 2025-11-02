@@ -40,10 +40,6 @@ export function usePageVisibility() {
 
       if (maxRatio > 0) {
         mostVisiblePage.value = maxPage;
-        console.debug('Most visible page changed', {
-          pageNumber: maxPage,
-          intersectionRatio: maxRatio,
-        });
       }
     },
     {
@@ -77,7 +73,6 @@ export function usePageVisibility() {
 
   // Cleanup observer when component unmounts
   onBeforeUnmount(() => {
-    console.debug('Disconnecting page visibility observer');
     observer.disconnect();
   });
 

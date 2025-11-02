@@ -72,8 +72,6 @@ export function useThumbnailRenderer() {
       const blobURL = URL.createObjectURL(blob);
       thumbnailCache.value.set(cacheKey, blobURL);
 
-      console.debug('Thumbnail rendered', { pageNumber, maxWidth });
-
       return blobURL;
     } catch (err) {
       console.error(`Failed to render thumbnail for page ${pageNumber}`, err);
@@ -91,15 +89,12 @@ export function useThumbnailRenderer() {
    */
   const renderAllThumbnails = async (pdfDocument, totalPages, batchSize = 5) => {
     if (isRendering.value) {
-      console.debug('Thumbnail rendering already in progress');
       return;
     }
 
     isRendering.value = true;
 
     try {
-      console.debug('Starting thumbnail batch rendering', { totalPages, batchSize });
-
       for (let i = 1; i <= totalPages; i += batchSize) {
         const batch = [];
         const end = Math.min(i + batchSize - 1, totalPages);
@@ -136,7 +131,6 @@ export function useThumbnailRenderer() {
     });
 
     thumbnailCache.value.clear();
-    console.debug('Thumbnail cache cleared');
   };
 
   return {

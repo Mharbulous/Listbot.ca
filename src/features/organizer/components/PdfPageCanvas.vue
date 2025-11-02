@@ -55,26 +55,30 @@ const renderPageToCanvas = async () => {
     return;
   }
 
+  const startTime = performance.now();
+  let parseTime, drawTime;
+
   try {
     isRendering.value = true;
     renderError.value = null;
 
-    console.debug('Rendering page to canvas', { pageNumber: props.pageNumber });
-
-    // Get page from document
+    // Stage 1: Parse (get page from document)
+    const parseStart = performance.now();
     const page = await props.pdfDocument.getPage(props.pageNumber);
+    parseTime = performance.now() - parseStart;
 
     // Calculate scale to fit width
     const viewport = page.getViewport({ scale: 1.0 });
     const scale = props.width / viewport.width;
     const scaledViewport = page.getViewport({ scale });
 
-    // Set canvas dimensions
+    // Set canvas dimensions (synchronous DOM update)
     const canvas = canvasRef.value;
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
 
-    // Render to canvas
+    // Stage 2: Draw (render to canvas)
+    const drawStart = performance.now();
     const renderContext = {
       canvasContext: canvas.getContext('2d'),
       viewport: scaledViewport,
@@ -82,8 +86,22 @@ const renderPageToCanvas = async () => {
 
     renderTask.value = page.render(renderContext);
     await renderTask.value.promise;
+    drawTime = performance.now() - drawStart;
 
-    console.debug('Page rendered to canvas successfully', { pageNumber: props.pageNumber });
+    const totalTime = performance.now() - startTime;
+
+    // Log pipeline timing for page 1 only (inline in PdfPageCanvas.vue)
+    if (props.pageNumber === 1) {
+      console.log(
+        `🔧 Pipeline timing: parse ${parseTime.toFixed(1)}ms | draw ${drawTime.toFixed(1)}ms | total ${totalTime.toFixed(1)}ms`,
+        {
+          pageNumber: props.pageNumber,
+          parse: parseTime.toFixed(1) + 'ms',
+          draw: drawTime.toFixed(1) + 'ms',
+          total: totalTime.toFixed(1) + 'ms',
+        }
+      );
+    }
 
     // Emit event to notify parent that this page has finished rendering
     emit('page-rendered', props.pageNumber);

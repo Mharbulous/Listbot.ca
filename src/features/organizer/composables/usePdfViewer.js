@@ -64,8 +64,6 @@ export function usePdfViewer() {
       loadingDocument.value = true;
       loadError.value = null;
 
-      console.debug('Loading PDF document', { documentId, url: downloadUrl });
-
       // Get document from cache (instant if cached, loads if not)
       const pdfDoc = await pdfCache.getDocument(documentId, downloadUrl);
 
@@ -108,14 +106,11 @@ export function usePdfViewer() {
     }
 
     if (renderingPages.value.has(pageNumber)) {
-      console.debug('Page already rendering, skipping', { pageNumber });
       return;
     }
 
     try {
       renderingPages.value.add(pageNumber);
-
-      console.debug('Rendering PDF page', { pageNumber });
 
       // Get page from document
       const page = await pdfDocument.value.getPage(pageNumber);
@@ -140,8 +135,6 @@ export function usePdfViewer() {
       };
 
       await page.render(renderContext).promise;
-
-      console.debug('Page rendered successfully', { pageNumber });
     } catch (err) {
       console.error(`Failed to render page ${pageNumber}`, err);
       throw err;
@@ -154,8 +147,6 @@ export function usePdfViewer() {
    * Clean up PDF resources when component unmounts
    */
   const cleanup = async () => {
-    console.debug('Cleaning up PDF viewer');
-
     // Clear all cached documents (cache handles resource cleanup)
     await pdfCache.clearCache();
 
