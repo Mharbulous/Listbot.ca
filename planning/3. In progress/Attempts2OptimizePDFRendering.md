@@ -4,7 +4,7 @@ This document tracks all attempts to optimize PDF page rendering performance in 
 
 **Goal**: Achieve <50ms first page render timing (instant feel)
 
-**Current Status**: **ANALYSIS PHASE** - Caching optimization is complete (see [Attempts2OptimizePDFCaching.md](./Attempts2OptimizePDFCaching.md)). Now focusing on the rendering pipeline bottleneck.
+**Current Status**: **ANALYSIS PHASE** - Caching optimization is complete (see Attempts2OptimizePDFCaching.md). Now focusing on the rendering pipeline bottleneck.
 
 ---
 
@@ -12,7 +12,7 @@ This document tracks all attempts to optimize PDF page rendering performance in 
 
 The PDF optimization work has been split into two phases:
 
-1. **Phase 1: Caching (COMPLETE ✅)** - [Attempts2OptimizePDFCaching.md](./Attempts2OptimizePDFCaching.md)
+1. **Phase 1: Caching (COMPLETE ✅)** - Attempts2OptimizePDFCaching.md
    - Goal: Eliminate network delays by pre-loading and caching PDFs
    - Result: **27-44ms data loading** (goal achieved!)
    - Achievement: PDF loads from cache in 7-15ms (40-85x faster than original 200-300ms)
@@ -146,24 +146,30 @@ onMounted(() => {
 
 ## Potential Optimization Strategies
 
-### Strategy 1: Pre-Render During Background Pre-Load
-**Concept**: Render canvas in background while user views current document, swap in on navigation.
+### Strategy 1: WebGL-Accelerated Rendering (PDF.js Feature)
+**Concept**: Use PDF.js's WebGL backend to offload rendering to GPU.
 
 **Pros**:
-- Leverages user viewing time (1-3 seconds before navigation)
-- No user-perceived render delay
-- Natural extension of pre-loading architecture
-- Canvas ready instantly on navigation
+- GPU acceleration: Much faster than CPU
+- PDF.js has built-in support
+- No architectural changes needed
+- Should work with existing code
+- Works on all Windows 11 computers (DirectX 12 requirement ensures GPU availability)
+- Effective with integrated graphics (not just gaming GPUs)
+- Offloads CPU for better overall performance
 
 **Cons**:
-- Memory overhead: Multiple canvases in memory
-- Need to manage canvas lifecycle
-- May compete with thumbnail rendering
+- Browser compatibility (modern browsers only)
+- Slightly higher complexity
+- May have subtle rendering differences
+- Need to test fallback behavior
 
 **Implementation**:
-- Extend `useDocumentPreloader.js` to pre-render adjacent pages
-- Cache rendered canvas elements
-- Swap DOM on navigation (instant)
+- Enable `enableWebGL: true` in PDF.js loading options
+- Test rendering quality and performance
+- Minimal code changes
+
+**Reference**: PDF.js documentation on WebGL rendering
 
 ---
 
@@ -189,27 +195,24 @@ onMounted(() => {
 
 ---
 
-### Strategy 3: WebGL-Accelerated Rendering (PDF.js Feature)
-**Concept**: Use PDF.js's WebGL backend to offload rendering to GPU.
+### Strategy 3: Pre-Render During Background Pre-Load
+**Concept**: Render canvas in background while user views current document, swap in on navigation.
 
 **Pros**:
-- GPU acceleration: Much faster than CPU
-- PDF.js has built-in support
-- No architectural changes needed
-- Should work with existing code
+- Leverages user viewing time (1-3 seconds before navigation)
+- No user-perceived render delay
+- Natural extension of pre-loading architecture
+- Canvas ready instantly on navigation
 
 **Cons**:
-- Browser compatibility (modern browsers only)
-- Slightly higher complexity
-- May have subtle rendering differences
-- Need to test fallback behavior
+- Memory overhead: Multiple canvases in memory
+- Need to manage canvas lifecycle
+- May compete with thumbnail rendering
 
 **Implementation**:
-- Enable `enableWebGL: true` in PDF.js loading options
-- Test rendering quality and performance
-- Minimal code changes
-
-**Reference**: PDF.js documentation on WebGL rendering
+- Extend `useDocumentPreloader.js` to pre-render adjacent pages
+- Cache rendered canvas elements
+- Swap DOM on navigation (instant)
 
 ---
 
@@ -262,23 +265,23 @@ onMounted(() => {
 
 Based on the analysis, the most promising strategies are:
 
-### Phase 1: Quick Win - Pre-Render During Background Pre-Load ⭐
+### Phase 1: Quick Win - WebGL Acceleration ⭐
+- **Expected improvement**: Unknown (could be 2-10x faster, potentially 650ms → **65-325ms** or better)
+- **Risk**: Low (built-in PDF.js feature with automatic fallback)
+- **Effort**: Low (configuration change + testing)
+- **Rationale**: Free performance boost with minimal code changes. Works on all Windows 11 computers (DirectX 12 requirement ensures GPU availability). Effective with integrated graphics found in typical office computers.
+
+### Phase 2: If Needed - Pre-Render During Background Pre-Load
 - **Expected improvement**: 650ms → **<50ms** (near-instant!)
 - **Risk**: Low (extends existing pre-loading architecture)
 - **Effort**: Medium (modify pre-loader to render canvases)
-- **Rationale**: Users spend 1-3 seconds viewing a page before navigating. Use that time to render the next page's canvas in background.
+- **Rationale**: Users spend 1-3 seconds viewing a page before navigating. Use that time to render the next page's canvas in background. Can be combined with WebGL for maximum performance.
 
-### Phase 2: If Needed - Low-Resolution Preview
+### Phase 3: If Needed - Low-Resolution Preview
 - **Expected improvement**: 650ms → **50-100ms** initial, then upgrade to full quality
 - **Risk**: Low (two-pass rendering is well understood)
 - **Effort**: Medium (add low-res render pass + progressive swap)
 - **Rationale**: Provides instant visual feedback even if pre-rendering fails or user navigates quickly.
-
-### Phase 3: Investigate - WebGL Acceleration
-- **Expected improvement**: Unknown (could be 2-10x faster)
-- **Risk**: Medium (browser compatibility, subtle rendering differences)
-- **Effort**: Low (configuration change + testing)
-- **Rationale**: Free performance boost if it works reliably.
 
 ---
 
@@ -297,24 +300,25 @@ Based on the analysis, the most promising strategies are:
 
 ## Next Steps
 
-1. **Implement Strategy 1**: Pre-render canvases during background pre-load
-   - Modify `useDocumentPreloader.js` to include canvas pre-rendering
-   - Cache rendered canvases alongside PDF documents
-   - Swap canvas on navigation (DOM replacement, no re-render)
-   - Test with single-page and multi-page documents
+1. **Implement Strategy 1**: Enable WebGL acceleration
+   - Enable `enableWebGL: true` in PDF.js initialization options
+   - Test rendering quality and performance across different PDF types
+   - Verify compatibility with existing caching architecture
+   - Measure performance improvement vs baseline (650-750ms)
 
-2. **Measure Results**: Track canvas render timing
-   - Add timing logs for pre-render vs on-demand render
-   - Measure navigation time with pre-rendered canvases
-   - Compare against baseline (650-750ms)
+2. **Measure Results**: Track WebGL impact
+   - Add timing logs for WebGL render vs Canvas 2D baseline
+   - Test on computers with integrated graphics (typical office setups)
+   - Compare rendering quality for subtle differences
+   - Document browser compatibility
 
 3. **Evaluate Secondary Strategies**: If needed
-   - Test low-resolution preview approach
-   - Investigate WebGL acceleration
-   - Consider hybrid approach (pre-render + low-res fallback)
+   - Implement pre-rendering during background pre-load (Strategy 3)
+   - Test low-resolution preview approach (Strategy 2)
+   - Consider hybrid approach (WebGL + pre-render for maximum performance)
 
 4. **Document Results**: Update this file with attempt results
    - Performance measurements
-   - Cache hit rates for rendered canvases
-   - User experience observations
+   - Rendering quality comparison
+   - Browser/hardware compatibility findings
    - Next iteration plans
