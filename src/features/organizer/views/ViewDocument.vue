@@ -432,7 +432,6 @@ import { useOrganizerStore } from '@/features/organizer/stores/organizer.js';
 import { storeToRefs } from 'pinia';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
-import { LogService } from '@/services/logService.js';
 import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.js';
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePdfCache } from '@/features/organizer/composables/usePdfCache.js';
@@ -598,7 +597,7 @@ const goToPreviousDocument = () => {
   if (currentIndex > 0) {
     const prevDoc = sortedEvidence.value[currentIndex - 1];
     navigationStartTime.value = performance.now();
-    LogService.info('⬅️ Navigation to previous document started', {
+    console.info('⬅️ Navigation to previous document started', {
       fromDoc: fileHash.value,
       toDoc: prevDoc.id,
     });
@@ -613,7 +612,7 @@ const goToNextDocument = () => {
   if (currentIndex < sortedEvidence.value.length - 1) {
     const nextDoc = sortedEvidence.value[currentIndex + 1];
     navigationStartTime.value = performance.now();
-    LogService.info('➡️ Navigation to next document started', {
+    console.info('➡️ Navigation to next document started', {
       fromDoc: fileHash.value,
       toDoc: nextDoc.id,
     });
@@ -638,7 +637,7 @@ const handleFirstPageRendered = (pageNumber) => {
   }
 
   const elapsedMs = performance.now() - navigationStartTime.value;
-  LogService.performance('🎨 First page rendered on screen', elapsedMs, {
+  console.log(`⚡ 🎨 First page rendered on screen: ${elapsedMs}ms`, {
     documentId: fileHash.value,
     milliseconds: elapsedMs.toFixed(1),
     seconds: (elapsedMs / 1000).toFixed(3),
@@ -651,7 +650,7 @@ const handleFirstPageRendered = (pageNumber) => {
   // This eliminates race conditions and ensures PDFs are cached before metadata extraction
   startBackgroundPreload().catch(err => {
     // Errors already logged in startBackgroundPreload
-    LogService.debug('Background pre-load promise rejected', { error: err.message });
+    console.debug('Background pre-load promise rejected', { error: err.message });
   });
 };
 
@@ -700,25 +699,25 @@ const fetchAndCacheMetadata = async (documentId) => {
     const matterId = matterStore.currentMatterId;
 
     if (!firmId || !matterId || !documentId) {
-      LogService.warn('Cannot pre-load metadata: missing firm/matter/document ID', { documentId });
+      console.warn('Cannot pre-load metadata: missing firm/matter/document ID', { documentId });
       return;
     }
 
     // Skip if metadata is already cached
     const cached = getCachedMetadata(documentId);
     if (cached) {
-      LogService.debug('Metadata already cached, skipping pre-load', { documentId });
+      console.debug('Metadata already cached, skipping pre-load', { documentId });
       return;
     }
 
-    LogService.debug('Pre-loading metadata for document', { documentId });
+    console.debug('Pre-loading metadata for document', { documentId });
 
     // Fetch evidence document from Firestore
     const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', documentId);
     const evidenceSnap = await getDoc(evidenceRef);
 
     if (!evidenceSnap.exists()) {
-      LogService.warn('Evidence document not found during pre-load', { documentId });
+      console.warn('Evidence document not found during pre-load', { documentId });
       return;
     }
 
@@ -758,10 +757,10 @@ const fetchAndCacheMetadata = async (documentId) => {
       pdfMetadata: null, // Will be populated when PDF metadata is extracted
     });
 
-    LogService.info('📋 Pre-loaded and cached metadata', { documentId });
+    console.info('📋 Pre-loaded and cached metadata', { documentId });
   } catch (err) {
     // Non-blocking - pre-load failures should not affect current navigation
-    LogService.warn('Failed to pre-load metadata (non-blocking)', {
+    console.warn('Failed to pre-load metadata (non-blocking)', {
       documentId,
       error: err.message,
     });
@@ -780,13 +779,13 @@ const extractAndCachePdfMetadata = async (documentId) => {
     const matterId = matterStore.currentMatterId;
 
     if (!firmId || !matterId || !documentId) {
-      LogService.warn('Cannot extract PDF metadata: missing firm/matter/document ID', { documentId });
+      console.warn('Cannot extract PDF metadata: missing firm/matter/document ID', { documentId });
       return;
     }
 
     // Check if PDF is cached (pre-loaded)
     if (!isDocumentCached(documentId)) {
-      LogService.debug('PDF not cached yet, skipping metadata extraction', { documentId });
+      console.debug('PDF not cached yet, skipping metadata extraction', { documentId });
       return;
     }
 
@@ -795,17 +794,17 @@ const extractAndCachePdfMetadata = async (documentId) => {
 
     // Skip if PDF metadata is already cached
     if (cachedMetadata?.pdfMetadata) {
-      LogService.debug('PDF metadata already cached, skipping extraction', { documentId });
+      console.debug('PDF metadata already cached, skipping extraction', { documentId });
       return;
     }
 
     // Skip if we don't have the basic metadata yet (need displayName)
     if (!cachedMetadata?.displayName) {
-      LogService.debug('Basic metadata not cached yet, skipping PDF metadata extraction', { documentId });
+      console.debug('Basic metadata not cached yet, skipping PDF metadata extraction', { documentId });
       return;
     }
 
-    LogService.debug('Pre-loading PDF metadata for document', { documentId });
+    console.debug('Pre-loading PDF metadata for document', { documentId });
 
     // Retrieve the pre-loaded PDF from cache
     const pdfDoc = await pdfCache.getDocument(documentId, null);
@@ -821,10 +820,10 @@ const extractAndCachePdfMetadata = async (documentId) => {
       pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
     });
 
-    LogService.info('📄 Pre-loaded and cached PDF metadata', { documentId });
+    console.info('📄 Pre-loaded and cached PDF metadata', { documentId });
   } catch (err) {
     // Non-blocking - pre-load failures should not affect current navigation
-    LogService.warn('Failed to pre-load PDF metadata (non-blocking)', {
+    console.warn('Failed to pre-load PDF metadata (non-blocking)', {
       documentId,
       error: err.message,
     });
@@ -845,7 +844,7 @@ const startBackgroundPreload = async () => {
     const prevId = previousDocumentId.value;
     const nextId = nextDocumentId.value;
 
-    LogService.info('🚀 Starting background pre-load after first page render', {
+    console.info('🚀 Starting background pre-load after first page render', {
       currentDocId: fileHash.value,
       previousDocId: prevId,
       nextDocId: nextId,
@@ -860,14 +859,14 @@ const startBackgroundPreload = async () => {
     if (prevId) {
       metadataPromises.push(
         fetchAndCacheMetadata(prevId).catch(err => {
-          LogService.warn('Failed to pre-load metadata for previous doc', { prevId, error: err.message });
+          console.warn('Failed to pre-load metadata for previous doc', { prevId, error: err.message });
         })
       );
     }
     if (nextId) {
       metadataPromises.push(
         fetchAndCacheMetadata(nextId).catch(err => {
-          LogService.warn('Failed to pre-load metadata for next doc', { nextId, error: err.message });
+          console.warn('Failed to pre-load metadata for next doc', { nextId, error: err.message });
         })
       );
     }
@@ -877,23 +876,23 @@ const startBackgroundPreload = async () => {
     // No setTimeout needed - PDFs are already loaded!
     if (prevId) {
       await extractAndCachePdfMetadata(prevId).catch(err => {
-        LogService.warn('Failed to extract PDF metadata for previous doc', { prevId, error: err.message });
+        console.warn('Failed to extract PDF metadata for previous doc', { prevId, error: err.message });
       });
     }
     if (nextId) {
       await extractAndCachePdfMetadata(nextId).catch(err => {
-        LogService.warn('Failed to extract PDF metadata for next doc', { nextId, error: err.message });
+        console.warn('Failed to extract PDF metadata for next doc', { nextId, error: err.message });
       });
     }
 
-    LogService.info('✅ Background pre-load completed', {
+    console.info('✅ Background pre-load completed', {
       currentDocId: fileHash.value,
       previousDocId: prevId,
       nextDocId: nextId,
     });
   } catch (err) {
     // Non-blocking - pre-load failures should not affect UX
-    LogService.warn('Background pre-load failed (non-blocking)', {
+    console.warn('Background pre-load failed (non-blocking)', {
       error: err.message,
     });
   }
@@ -1039,7 +1038,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
       // Render timing is measured separately in handleFirstPageRendered()
       if (navigationStartTime.value !== null) {
         const elapsedMs = performance.now() - navigationStartTime.value;
-        LogService.performance('📦 PDF document loaded into memory', elapsedMs, {
+        console.log(`⚡ 📦 PDF document loaded into memory: ${elapsedMs}ms`, {
           documentId: fileHash.value,
           milliseconds: elapsedMs.toFixed(1),
           seconds: (elapsedMs / 1000).toFixed(3),
@@ -1052,7 +1051,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
       const cachedMetadata = getCachedMetadata(fileHash.value);
       if (cachedMetadata?.pdfMetadata) {
         // Use cached PDF metadata (skip extraction)
-        LogService.info('📄 PDF metadata cache HIT', { documentId: fileHash.value });
+        console.info('📄 PDF metadata cache HIT', { documentId: fileHash.value });
         // Note: pdfMetadata reactive state is managed by usePdfMetadata composable
         // We need to populate it from cache manually
         Object.assign(pdfMetadata, cachedMetadata.pdfMetadata);
@@ -1069,7 +1068,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
           selectedMetadataHash: selectedMetadataHash.value,
           pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
         });
-        LogService.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
+        console.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
       }
 
       // Pre-loading now happens AFTER first page renders (see handleFirstPageRendered)
@@ -1122,7 +1121,7 @@ const loadEvidence = async () => {
 
     if (cachedMetadata) {
       // ✅ CACHE HIT - Use cached metadata (instant, no network calls)
-      LogService.info('📋 Metadata cache HIT', { documentId: fileHash.value });
+      console.info('📋 Metadata cache HIT', { documentId: fileHash.value });
 
       evidenceData = cachedMetadata.evidenceData;
       variants = cachedMetadata.sourceVariants;
@@ -1136,7 +1135,7 @@ const loadEvidence = async () => {
       storageMetadata.value = storageMetadata_cached;
     } else {
       // ❌ CACHE MISS - Fetch from Firestore/Storage
-      LogService.info('📋 Metadata cache MISS', { documentId: fileHash.value });
+      console.info('📋 Metadata cache MISS', { documentId: fileHash.value });
 
       // Fetch single evidence document from Firestore
       // Path: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}
