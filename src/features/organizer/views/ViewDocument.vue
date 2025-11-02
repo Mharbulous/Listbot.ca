@@ -19,21 +19,8 @@
       <!-- Left: Thumbnail panel (collapsible) -->
       <div class="thumbnail-panel" :class="{ 'thumbnail-panel--collapsed': !thumbnailsVisible }">
         <v-card variant="outlined" class="thumbnail-card">
-          <!-- Toggle button -->
-          <v-btn
-            icon
-            variant="text"
-            size="small"
-            :title="thumbnailsVisible ? 'Collapse thumbnails' : 'Expand thumbnails'"
-            class="thumbnail-toggle-btn"
-            :class="{ 'thumbnail-toggle-btn--collapsed': !thumbnailsVisible }"
-            @click="toggleThumbnailsVisibility"
-          >
-            <v-icon>{{ thumbnailsVisible ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</v-icon>
-          </v-btn>
-
           <!-- Expanded content -->
-          <div v-if="thumbnailsVisible" class="thumbnail-content">
+          <div v-show="thumbnailsVisible" class="thumbnail-content">
             <h3 class="thumbnail-title">Pages</h3>
 
             <!-- PDF Thumbnails -->
@@ -63,6 +50,17 @@
         <div class="document-nav-panel">
           <v-card class="document-nav-card">
             <!-- Left controls -->
+            <!-- Thumbnail toggle button -->
+            <v-btn
+              variant="text"
+              size="small"
+              :title="thumbnailsVisible ? 'Hide thumbnails' : 'Show thumbnails'"
+              class="thumbnail-toggle-btn"
+              :class="{ 'thumbnail-toggle-btn--visible': thumbnailsVisible, 'thumbnail-toggle-btn--hidden': !thumbnailsVisible }"
+              @click="toggleThumbnailsVisibility"
+            >
+              🖼️
+            </v-btn>
             <v-btn
               icon
               variant="text"
@@ -1039,16 +1037,16 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  margin-right: 0;
+  transition: width 0.3s ease-out, margin-right 0.3s ease-out; /* Fast start, slow end */
 }
 
 .thumbnail-panel--collapsed {
-  width: 40px;
-}
-
-.thumbnail-panel--collapsed .thumbnail-card {
-  overflow: visible;
-  min-height: 60px; /* Ensure button has space */
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  margin-right: -24px; /* Offset the gap when collapsed */
+  transition: width 0.3s ease-out, margin-right 0.3s ease-out; /* Fast start, slow end */
 }
 
 .thumbnail-card {
@@ -1056,21 +1054,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   position: relative;
-}
-
-.thumbnail-toggle-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  transition: all 0.3s ease;
-}
-
-.thumbnail-toggle-btn--collapsed {
-  /* Center the button in the 40px collapsed panel */
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
 }
 
 .thumbnail-content {
@@ -1081,6 +1064,15 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: left center;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.thumbnail-panel--collapsed .thumbnail-content {
+  opacity: 0;
+  transform: scale(0.95);
 }
 
 .thumbnail-title {
@@ -1144,6 +1136,62 @@ onBeforeUnmount(() => {
 .document-nav-card .v-btn:disabled {
   color: rgba(255, 255, 255, 0.4);
   cursor: not-allowed;
+}
+
+/* Thumbnail toggle button styles */
+.thumbnail-toggle-btn {
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: white !important;
+}
+
+/* Flat and illuminated when thumbnails are visible */
+.thumbnail-toggle-btn--visible {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(255, 255, 255, 0.15) !important;
+  transform: none !important;
+}
+
+.thumbnail-toggle-btn--visible:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 3D and elevated when thumbnails are hidden */
+.thumbnail-toggle-btn--hidden {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.thumbnail-toggle-btn--hidden:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.25),
+    0 6px 12px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.thumbnail-toggle-btn--hidden:active {
+  transform: translateY(0) !important;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .document-indicator {
@@ -1550,7 +1598,9 @@ onBeforeUnmount(() => {
   }
 
   .thumbnail-panel--collapsed {
-    width: 100%;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .center-panel {
