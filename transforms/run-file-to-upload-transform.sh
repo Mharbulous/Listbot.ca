@@ -68,7 +68,7 @@ FILES=(
     # Phase 5: Components
     "src/features/organizer/components/FileListItemContent.vue"
     "src/features/organizer/components/FileItem.vue"
-    "src/features/organizer/views/NewViewDocument2.vue"
+    "src/features/organizer/views/ViewDocument.vue"
 )
 
 echo -e "${BLUE}📋 Files to transform: ${#FILES[@]}${NC}"

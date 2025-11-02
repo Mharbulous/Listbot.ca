@@ -358,7 +358,7 @@ Update all read operations to access embedded data instead of querying subcollec
 ### Phase 3: UI Updates
 
 #### Phase 3.1: Update Document Detail View ⏳ PENDING
-- **File**: `src/views/NewViewDocument2.vue`
+- **File**: `src/views/ViewDocument.vue`
 - **Changes**: Use embedded `sourceMetadata` fields instead of subcollection queries for basic info
 - **Note**: Keep subcollection queries for detailed metadata display
 

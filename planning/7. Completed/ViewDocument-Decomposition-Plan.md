@@ -1,4 +1,4 @@
-# NewViewDocument2.vue Decomposition Plan
+# ViewDocument.vue Decomposition Plan
 
 **Status**: TODO
 **Created**: 2025-11-02
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Decompose the monolithic NewViewDocument2.vue component (1,903 lines) into a maintainable component-based architecture, reducing the main component to ~400 lines through extraction of 4 focused UI components.
+Decompose the monolithic ViewDocument.vue component (1,903 lines) into a maintainable component-based architecture, reducing the main component to ~400 lines through extraction of 4 focused UI components.
 
 ## Current State Analysis
 
@@ -31,7 +31,7 @@ Decompose the monolithic NewViewDocument2.vue component (1,903 lines) into a mai
 ### Current Architecture
 
 ```
-NewViewDocument2.vue (1,903 lines)
+ViewDocument.vue (1,903 lines)
 ├── Template (417 lines)
 │   ├── Thumbnail Panel (Left Sidebar) - Lines 19-58
 │   ├── Center Panel (Main Viewer) - Lines 60-194
@@ -272,7 +272,7 @@ NewViewDocument2.vue (1,903 lines)
 
 ---
 
-### Component 5: NewViewDocument2.vue (Updated)
+### Component 5: ViewDocument.vue (Updated)
 
 **Lines After Refactor**: ~400 lines total
 - Template: ~150 lines (component integration)
@@ -388,7 +388,7 @@ NewViewDocument2.vue (1,903 lines)
    - Define props and events
    - Test in isolation
 
-### Step 3: Update NewViewDocument2.vue
+### Step 3: Update ViewDocument.vue
 1. Import all 4 new components
 2. Replace template sections with component tags
 3. Pass props from parent state
@@ -463,7 +463,7 @@ NewViewDocument2.vue (1,903 lines)
 - Test user interactions
 
 **Integration Tests**:
-- Test NewViewDocument2.vue with child components
+- Test ViewDocument.vue with child components
 - Verify data flow between components
 - Test event handling
 
@@ -472,14 +472,14 @@ NewViewDocument2.vue (1,903 lines)
 ## Expected Outcomes
 
 ### Before Decomposition
-- **1 file**: NewViewDocument2.vue (1,903 lines)
+- **1 file**: ViewDocument.vue (1,903 lines)
 - **Complexity**: High (9 distinct responsibilities)
 - **Maintainability**: Low (cognitive overload)
 - **Testability**: Difficult (too many concerns)
 
 ### After Phase 1 Decomposition
 - **5 files**:
-  - NewViewDocument2.vue (~400 lines) - Orchestrator
+  - ViewDocument.vue (~400 lines) - Orchestrator
   - DocumentNavigationBar.vue (~100 lines)
   - PdfThumbnailPanel.vue (~80 lines)
   - PdfViewerArea.vue (~120 lines)
@@ -493,14 +493,14 @@ NewViewDocument2.vue (1,903 lines)
 - **Main component size reduction**: 1,903 → 400 lines (79% reduction)
 - **Number of components**: 1 → 5
 - **Average component size**: 1,903 → 200 lines
-- **Largest component**: 1,903 → 400 lines (NewViewDocument2.vue orchestrator)
+- **Largest component**: 1,903 → 400 lines (ViewDocument.vue orchestrator)
 
 ---
 
 ## Future Enhancements (Not in Phase 1)
 
 ### Phase 3: Extract Composables (Future)
-If orchestration logic in NewViewDocument2.vue becomes too complex (>500 lines):
+If orchestration logic in ViewDocument.vue becomes too complex (>500 lines):
 
 1. **useDocumentNavigation.js** (~150 lines)
    - Extract navigation state and methods
@@ -554,7 +554,7 @@ If DocumentMetadataPanel.vue becomes too complex (>400 lines):
 
 ### Risk 4: State Management Confusion
 **Mitigation**:
-- Keep all state in NewViewDocument2.vue (single source of truth)
+- Keep all state in ViewDocument.vue (single source of truth)
 - Child components are stateless (props in, events out)
 - Document data flow clearly
 
@@ -564,7 +564,7 @@ If DocumentMetadataPanel.vue becomes too complex (>400 lines):
 
 ### Phase 1 Complete When:
 - [ ] All 4 components extracted and tested
-- [ ] NewViewDocument2.vue reduced to ~400 lines
+- [ ] ViewDocument.vue reduced to ~400 lines
 - [ ] All existing functionality works
 - [ ] No console errors or warnings
 - [ ] Manual testing checklist complete

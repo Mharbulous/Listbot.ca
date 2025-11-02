@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-**Objective**: Replace the "PDF Viewer Coming Soon" placeholder in `NewViewDocument2.vue` with a functional PDF viewer that displays all pages of a PDF file in a continuous scrollable view.
+**Objective**: Replace the "PDF Viewer Coming Soon" placeholder in `ViewDocument.vue` with a functional PDF viewer that displays all pages of a PDF file in a continuous scrollable view.
 
-**Current State**: The viewer area (lines 102-123 in NewViewDocument2.vue:102-123) displays a placeholder with document metadata.
+**Current State**: The viewer area (lines 102-123 in ViewDocument.vue:102-123) displays a placeholder with document metadata.
 
 **Target State**: A fully functional PDF viewer that:
 - Renders all pages of the currently loaded PDF document
@@ -29,7 +29,7 @@
 - Worker configured for background processing
 - Already used in `usePdfMetadata.js` composable for metadata extraction
 
-**Viewport Dimensions** (NewViewDocument2.vue:1091-1112):
+**Viewport Dimensions** (ViewDocument.vue:1091-1112):
 ```css
 .viewer-area {
   max-width: 9.2in;   /* Matches US Letter paper width with margins */
@@ -40,7 +40,7 @@
 **Critical Design Note**: These dimensions are calibrated to match hardcopy office paper (US Letter). DO NOT change these values - they ensure 1:1 scale for document review workflows.
 
 **Current Component Architecture**:
-- `NewViewDocument2.vue` - Main document viewer component
+- `ViewDocument.vue` - Main document viewer component
 - `usePdfMetadata.js` - Existing composable for PDF metadata extraction
 - Firebase Storage integration already working for PDF file retrieval
 
@@ -212,11 +212,11 @@ export function usePdfViewer() {
 
 ---
 
-### Phase 2: Integrate PDF Viewer into NewViewDocument2.vue (2-4 hours)
+### Phase 2: Integrate PDF Viewer into ViewDocument.vue (2-4 hours)
 
 #### Step 2.1: Import Dependencies
 
-**Location**: NewViewDocument2.vue:351-366 (script setup section)
+**Location**: ViewDocument.vue:351-366 (script setup section)
 
 Add imports:
 ```javascript
@@ -240,7 +240,7 @@ const {
 
 #### Step 2.3: Load PDF When Document Loads
 
-**Modify** `fetchStorageMetadata` function (NewViewDocument2.vue:595-623):
+**Modify** `fetchStorageMetadata` function (ViewDocument.vue:595-623):
 
 ```javascript
 const fetchStorageMetadata = async (firmId, displayName) => {
@@ -275,7 +275,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
 
 #### Step 2.4: Replace Viewer Placeholder with PDF Pages
 
-**Location**: NewViewDocument2.vue:102-123
+**Location**: ViewDocument.vue:102-123
 
 **Current Code**:
 ```vue
@@ -374,7 +374,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
 
 #### Step 2.5: Add Cleanup on Unmount
 
-**Location**: NewViewDocument2.vue:752-760 (onUnmounted hook)
+**Location**: ViewDocument.vue:752-760 (onUnmounted hook)
 
 ```javascript
 // Clean up store when component unmounts
@@ -391,7 +391,7 @@ onUnmounted(() => {
 
 #### Step 3.1: Add PDF Container Styles
 
-**Location**: NewViewDocument2.vue:763 (bottom of `<style scoped>` section)
+**Location**: ViewDocument.vue:763 (bottom of `<style scoped>` section)
 
 Add new styles:
 
@@ -488,7 +488,7 @@ Add new styles:
 
 **Implementation Approach**: Replace complex virtualization libraries with native CSS `content-visibility`.
 
-**Add to NewViewDocument2.vue Styles** (Phase 3):
+**Add to ViewDocument.vue Styles** (Phase 3):
 
 ```css
 /* PDF Page with CSS Content-Visibility (Modern Lazy Rendering) */
@@ -666,7 +666,7 @@ onMounted(() => {
 
 **Goal**: Render pages in priority order for better perceived performance
 
-**Implementation in NewViewDocument2.vue**:
+**Implementation in ViewDocument.vue**:
 
 ```javascript
 /**
@@ -715,7 +715,7 @@ const renderPagesProgressively = async () => {
 
 #### Step 4.4: Add Page Number Indicator
 
-**Enhancement to NewViewDocument2.vue** (optional but recommended):
+**Enhancement to ViewDocument.vue** (optional but recommended):
 
 Add a floating page indicator that shows current page while scrolling:
 
@@ -772,7 +772,7 @@ const currentVisiblePage = ref(1)
 1. ✅ Desktop (1920×1080)
 2. ✅ Laptop (1366×768)
 3. ✅ Tablet (768×1024)
-4. ✅ Mobile responsiveness (NewViewDocument2.vue:1218-1252)
+4. ✅ Mobile responsiveness (ViewDocument.vue:1218-1252)
 
 ---
 
@@ -793,7 +793,7 @@ const currentVisiblePage = ref(1)
   - [ ] Handle lifecycle properly
 
 ### Phase 2: Integration
-- [ ] Import dependencies in `NewViewDocument2.vue`
+- [ ] Import dependencies in `ViewDocument.vue`
 - [ ] Initialize `usePdfViewer` composable
 - [ ] Modify `fetchStorageMetadata()` to load PDF
 - [ ] Replace viewer placeholder with PDF pages container
@@ -824,7 +824,7 @@ const currentVisiblePage = ref(1)
 - [ ] Fix any bugs discovered
 
 ### Phase 6: Documentation
-- [ ] Update `NewViewDocument2.vue` code comments
+- [ ] Update `ViewDocument.vue` code comments
 - [ ] Document `usePdfViewer.js` API
 - [ ] Document `PdfPageCanvas.vue` props and events
 - [ ] Add JSDoc comments to functions
@@ -863,7 +863,7 @@ These features are intentionally excluded from the initial implementation to mai
 ## References
 
 - **pdf.js Documentation**: https://mozilla.github.io/pdf.js/
-- **NewViewDocument2.vue**: src/features/organizer/views/NewViewDocument2.vue
+- **ViewDocument.vue**: src/features/organizer/views/ViewDocument.vue
 - **usePdfMetadata.js**: src/features/organizer/composables/usePdfMetadata.js (reference implementation)
 - **pdfWorker.js**: src/config/pdfWorker.js (pdf.js configuration)
 - **File Lifecycle**: docs/architecture/file-lifecycle.md

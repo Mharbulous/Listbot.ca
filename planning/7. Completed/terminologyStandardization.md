@@ -287,7 +287,7 @@ When reviewing files, update:
 
 ### Organizer Feature Components
 
-- [x] `src/features/organizer/views/NewViewDocument2.vue` ✅ **COMPLETED**
+- [x] `src/features/organizer/views/ViewDocument.vue` ✅ **COMPLETED**
 
   - **Focus**: CRITICAL - document metadata display
   - **Review**: "Source File" section labels, embedded metadata labels
@@ -506,7 +506,7 @@ Update files in reverse dependency order - files with NO dependencies first, fil
 
 **Layer 10: Organizer Components** (Depend on Everything)
 
-- features/organizer/views/NewViewDocument2.vue (CRITICAL - metadata display)
+- features/organizer/views/ViewDocument.vue (CRITICAL - metadata display)
 - features/organizer/components/ (all organizer components)
 
 **Layer 11: Demo Files** (Isolated, Low Priority)

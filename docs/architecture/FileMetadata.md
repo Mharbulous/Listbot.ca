@@ -73,7 +73,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 **Extraction Architecture**:
 
 - **Library**: pdfjs-dist v5.4.296 with Vite-configured Web Worker
-- **Trigger**: Automatic extraction when viewing PDF files in NewViewDocument2.vue
+- **Trigger**: Automatic extraction when viewing PDF files in ViewDocument.vue
 - **Performance**: ~100-300ms (metadata only, no page rendering)
 - **Storage**: Client-side only (real-time extraction, not persisted to Firestore)
 - **Bandwidth**: Minimal - only reads PDF header via Firebase Storage range requests
@@ -164,7 +164,7 @@ Embedded Metadata (PDF - Implemented):
   Document Info Dict → Client-side: pdfjs-dist extraction from Firebase Storage
   XMP Metadata       → Client-side: pdfjs-dist extraction from Firebase Storage
   Storage            → Not persisted (real-time extraction only)
-  Display            → NewViewDocument2.vue "Embedded Metadata" section
+  Display            → ViewDocument.vue "Embedded Metadata" section
 
 Embedded Metadata (Other Formats - Future):
   Images             → EXIF, XMP, GPS (not yet implemented)
@@ -178,7 +178,7 @@ Cloud:
   File Hash          → evidence.id (document ID)
 ```
 
-**Implementation Reference**: See `src/features/organizer/views/NewViewDocument2.vue` for current UI implementation of these metadata categories.
+**Implementation Reference**: See `src/features/organizer/views/ViewDocument.vue` for current UI implementation of these metadata categories.
 
 ### PDF Metadata Extraction Implementation
 
@@ -192,7 +192,7 @@ Cloud:
 - Handles extraction errors gracefully with user-friendly error messages
 - Returns structured metadata object with `info` and `xmp` properties
 
-**Display Component**: `src/features/organizer/views/NewViewDocument2.vue`
+**Display Component**: `src/features/organizer/views/ViewDocument.vue`
 
 - **Location**: "Embedded Metadata" section (template lines 95-191)
 - **Conditional Rendering**: Only displays for PDF files (checks MIME type and file extension)
@@ -211,7 +211,7 @@ Cloud:
 
 **Extraction Workflow**:
 
-1. User navigates to NewViewDocument2.vue with PDF file
+1. User navigates to ViewDocument.vue with PDF file
 2. Component loads evidence and sourceMetadata from Firestore
 3. `fetchStorageMetadata()` detects PDF file by extension
 4. Calls `extractMetadata()` from usePdfMetadata composable
@@ -417,7 +417,7 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 **Working with PDF metadata?**
 
 - **Extraction**: See `src/features/organizer/composables/usePdfMetadata.js`
-- **Display**: See `src/features/organizer/views/NewViewDocument2.vue` (Embedded Metadata section)
+- **Display**: See `src/features/organizer/views/ViewDocument.vue` (Embedded Metadata section)
 - **Worker Config**: See `src/config/pdfWorker.js`
 - **Adding new PDF fields**: Update `parseXmpMetadata()` or `processedInfo` in usePdfMetadata.js
 - **Note**: PDF metadata is client-side only (not persisted to Firestore)
@@ -430,9 +430,9 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
   - Hash calculation: `src/workers/fileHashWorker.js`
   - Metadata management: `src/features/upload/composables/useFileMetadata.js`
   - Evidence management: `src/features/organizer/services/evidenceService.js`
-  - Display components: `src/features/organizer/stores/organizerCore.js`, `src/features/organizer/views/NewViewDocument2.vue`
+  - Display components: `src/features/organizer/stores/organizerCore.js`, `src/features/organizer/views/ViewDocument.vue`
   - **PDF metadata extraction**: `src/features/organizer/composables/usePdfMetadata.js`
-  - **PDF metadata display**: `src/features/organizer/views/NewViewDocument2.vue`
+  - **PDF metadata display**: `src/features/organizer/views/ViewDocument.vue`
 
 **Understanding the deduplication?**
 

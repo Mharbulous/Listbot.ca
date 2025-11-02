@@ -37,7 +37,7 @@ Navigation starts
 **Console Log Evidence**:
 ```
 useEvidenceLoader.js:71 ⚡ 📦 PDF document loaded into memory: 8.5ms
-NewViewDocument2.vue:167 ⚡ 🎨 First page rendered on screen: 717.7ms
+ViewDocument.vue:167 ⚡ 🎨 First page rendered on screen: 717.7ms
 ```
 
 The **709ms gap** between data load and render is pure canvas rendering time.
