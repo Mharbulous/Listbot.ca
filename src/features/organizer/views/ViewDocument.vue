@@ -1056,19 +1056,37 @@ const fetchStorageMetadata = async (firmId, displayName) => {
         // We need to populate it from cache manually
         Object.assign(pdfMetadata, cachedMetadata.pdfMetadata);
       } else {
-        // Extract metadata from the already-loaded PDF
-        await extractMetadata(fileHash.value, displayName, pdfDocument.value);
-
-        // Cache all metadata now that PDF is loaded and metadata extracted
+        // PERFORMANCE: Defer metadata extraction to avoid blocking first page render
+        // Metadata extraction is CPU-intensive (50-150ms) and not critical for initial display
+        // Cache metadata immediately (Firestore + Storage data is already loaded)
         cacheMetadata(fileHash.value, {
           evidenceData: evidence.value,
           sourceVariants: sourceMetadataVariants.value,
           storageMetadata: storageMetadata.value,
           displayName: evidence.value.displayName,
           selectedMetadataHash: selectedMetadataHash.value,
-          pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
+          pdfMetadata: null, // Will be populated after extraction
         });
-        console.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
+
+        // Extract PDF metadata in background (non-blocking)
+        setTimeout(async () => {
+          try {
+            await extractMetadata(fileHash.value, displayName, pdfDocument.value);
+
+            // Update cache with extracted PDF metadata
+            cacheMetadata(fileHash.value, {
+              evidenceData: evidence.value,
+              sourceVariants: sourceMetadataVariants.value,
+              storageMetadata: storageMetadata.value,
+              displayName: evidence.value.displayName,
+              selectedMetadataHash: selectedMetadataHash.value,
+              pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
+            });
+            console.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
+          } catch (err) {
+            console.warn('Background PDF metadata extraction failed:', err);
+          }
+        }, 0);
       }
 
       // Pre-loading now happens AFTER first page renders (see handleFirstPageRendered)

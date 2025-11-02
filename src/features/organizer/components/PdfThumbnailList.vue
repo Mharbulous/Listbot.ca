@@ -111,7 +111,7 @@ watch(
 // Watch PDF document changes
 watch(
   () => [props.pdfDocument, props.totalPages],
-  async (newValues, oldValues) => {
+  (newValues, oldValues) => {
     // Handle initial mount (oldValues may be undefined)
     if (!newValues || newValues.length === 0) {
       return;
@@ -130,10 +130,16 @@ watch(
       // Clear old thumbnails
       clearCache();
 
-      // Start rendering new thumbnails
-      if (newTotal > 0) {
-        await renderAllThumbnails(newDoc, newTotal);
-      }
+      // PERFORMANCE: Defer thumbnail rendering to allow first page to render immediately
+      // This prevents thumbnails from blocking the critical first page render
+      // 50ms delay ensures browser has time to render the main page first
+      setTimeout(() => {
+        if (newTotal > 0) {
+          renderAllThumbnails(newDoc, newTotal).catch(err => {
+            console.warn('Thumbnail rendering failed:', err);
+          });
+        }
+      }, 50);
     }
   },
   { immediate: true }
