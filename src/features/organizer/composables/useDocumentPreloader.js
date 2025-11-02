@@ -14,7 +14,7 @@
  */
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, getMetadata, getDownloadURL, getStorage } from 'firebase/storage';
-import { db } from '@/services/firebase.js';
+import { db, storage } from '@/services/firebase.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
 
 export function useDocumentPreloader(
@@ -105,7 +105,7 @@ export function useDocumentPreloader(
       // Fetch storage metadata
       const extension = displayName.split('.').pop() || 'pdf';
       const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
-      const fileRef = storageRef(db.storage, storagePath);
+      const fileRef = storageRef(storage, storagePath);
       const storageMetadata_fetched = await getMetadata(fileRef);
 
       // Cache metadata

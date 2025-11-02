@@ -82,16 +82,6 @@ export function useEvidenceLoader(
           console.info('📄 PDF metadata cache HIT', { documentId: fileHash });
           Object.assign(pdfMetadataComposable.pdfMetadata, cachedMetadata.pdfMetadata);
         } else {
-          // Cache basic metadata immediately
-          pdfViewer.cacheMetadata(fileHash, {
-            evidenceData: evidence.value,
-            sourceVariants: sourceMetadataVariants.value,
-            storageMetadata: storageMetadata.value,
-            displayName: evidence.value.displayName,
-            selectedMetadataHash: selectedMetadataHash.value,
-            pdfMetadata: null,
-          });
-
           // Extract PDF metadata in background
           setTimeout(async () => {
             try {
