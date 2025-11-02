@@ -10,7 +10,6 @@ import {
   writeBatch,
   Timestamp,
 } from 'firebase/firestore';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Evidence Service - Manages core CRUD operations for evidence documents in Firestore
@@ -48,10 +47,7 @@ export class EvidenceService {
         try {
           uploadDateTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
         } catch (error) {
-          LogService.warn('Failed to convert Storage timestamp, using serverTimestamp', {
-            service: 'EvidenceService',
-            error: error.message,
-          });
+          console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp', error.message);
           uploadDateTimestamp = serverTimestamp();
         }
       } else {
@@ -131,10 +127,7 @@ export class EvidenceService {
           try {
             uploadDateTimestamp = Timestamp.fromDate(new Date(uploadMetadata.storageCreatedTimestamp));
           } catch (error) {
-            LogService.warn('Failed to convert Storage timestamp, using serverTimestamp', {
-              service: 'EvidenceService',
-              error: error.message,
-            });
+            console.warn('[EvidenceService] Failed to convert Storage timestamp, using serverTimestamp', error.message);
             uploadDateTimestamp = serverTimestamp();
           }
         } else {

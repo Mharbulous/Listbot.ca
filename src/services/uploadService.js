@@ -6,7 +6,6 @@
 import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
 import { getCategoryFieldName } from '../utils/categoryFieldMapping';
-import { LogService } from './logService.js';
 
 /**
  * Fetch evidence documents from Firestore with embedded source file metadata and tags
@@ -94,7 +93,7 @@ export async function fetchFiles(
     const dataSizeMB = (dataSize / (1024 * 1024)).toFixed(2);
     const sizeDisplay = dataSize >= 1024 * 1024 ? `${dataSizeMB} MB` : `${dataSizeKB} KB`;
 
-    LogService.service('UploadService', 'fetchFiles', {
+    console.log('[UploadService] fetchFiles', {
       firmId,
       matterId,
       totalDurationMs: totalDuration.toFixed(0),
@@ -109,7 +108,7 @@ export async function fetchFiles(
 
     return files;
   } catch (error) {
-    LogService.error('Firestore query failed in fetchFiles', error, {
+    console.error('[UploadService] Firestore query failed in fetchFiles', error, {
       firmId,
       matterId,
       maxResults,

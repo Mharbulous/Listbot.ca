@@ -2,7 +2,6 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 import { useCategoryStore } from '../stores/categoryStore.js';
 import tagSubcollectionService from './tagSubcollectionService.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Evidence Document Service - Handles evidence document operations and Firestore data retrieval
@@ -39,10 +38,7 @@ export class EvidenceDocumentService {
 
       return null;
     } catch (error) {
-      LogService.error('Failed to get evidence document', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get evidence document', error, evidenceId);
       throw error;
     }
   }
@@ -68,10 +64,7 @@ export class EvidenceDocumentService {
         tags: category.tags || [],
       }));
     } catch (error) {
-      LogService.error('Failed to get user categories', error, {
-        service: 'EvidenceDocumentService',
-        firmId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get user categories', error, firmId);
       throw error;
     }
   }
@@ -112,7 +105,7 @@ export class EvidenceDocumentService {
 
         // Get stats to log approval information
         const stats = await this.tagService.getTagStats(evidenceId);
-        LogService.service('EvidenceDocumentService', 'storeaiAlternatives', {
+        console.info('[EvidenceDocumentService] storeaiAlternatives', {
           evidenceId,
           suggestionsCount: suggestions.length,
           autoApproved: stats.autoApproved,
@@ -127,10 +120,7 @@ export class EvidenceDocumentService {
         uploadDate: serverTimestamp(),
       });
     } catch (error) {
-      LogService.error('Failed to store AI suggestions', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to store AI suggestions', error, evidenceId);
       throw error;
     }
   }
@@ -158,15 +148,9 @@ export class EvidenceDocumentService {
 
       await updateDoc(evidenceRef, updateData);
 
-      LogService.debug('Updated evidence document', {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.debug('[EvidenceDocumentService] Updated evidence document', evidenceId);
     } catch (error) {
-      LogService.error('Failed to update evidence document', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to update evidence document', error, evidenceId);
       throw error;
     }
   }
@@ -210,10 +194,7 @@ export class EvidenceDocumentService {
     try {
       return await this.tagService.getTagsByStatus(evidenceId);
     } catch (error) {
-      LogService.error('Failed to get tags by status', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get tags by status', error, evidenceId);
       throw error;
     }
   }
@@ -227,10 +208,7 @@ export class EvidenceDocumentService {
     try {
       return await this.tagService.getApprovedTags(evidenceId);
     } catch (error) {
-      LogService.error('Failed to get approved tags', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get approved tags', error, evidenceId);
       throw error;
     }
   }
@@ -244,10 +222,7 @@ export class EvidenceDocumentService {
     try {
       return await this.tagService.getPendingTags(evidenceId);
     } catch (error) {
-      LogService.error('Failed to get pending AI tags', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get pending AI tags', error, evidenceId);
       throw error;
     }
   }
@@ -261,10 +236,7 @@ export class EvidenceDocumentService {
     try {
       return await this.tagService.getTagStats(evidenceId);
     } catch (error) {
-      LogService.error('Failed to get tag stats', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get tag stats', error, evidenceId);
       throw error;
     }
   }
@@ -279,10 +251,7 @@ export class EvidenceDocumentService {
     try {
       return await this.tagService.getPendingTags(evidenceId);
     } catch (error) {
-      LogService.error('Failed to get AI suggestions', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get AI suggestions', error, evidenceId);
       throw error;
     }
   }
@@ -298,10 +267,7 @@ export class EvidenceDocumentService {
       const approvedTags = await this.tagService.getApprovedTags(evidenceId);
       return approvedTags.filter((tag) => tag.source === 'manual');
     } catch (error) {
-      LogService.error('Failed to get human tags', error, {
-        service: 'EvidenceDocumentService',
-        evidenceId,
-      });
+      console.error('[EvidenceDocumentService] Failed to get human tags', error, evidenceId);
       throw error;
     }
   }

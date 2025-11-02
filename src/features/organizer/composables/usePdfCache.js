@@ -1,6 +1,5 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Module-level singleton cache shared across all component instances
@@ -108,7 +107,7 @@ export function usePdfCache() {
    */
   const getDocument = async (documentId, downloadUrl = null) => {
     // DEBUG: Log cache state on entry
-    LogService.info('🔍 Cache lookup', {
+    console.info('🔍 Cache lookup', {
       requestedDocId: documentId,
       cacheSize: cache.value.size,
       cachedDocIds: Array.from(cache.value.keys()),
@@ -122,7 +121,7 @@ export function usePdfCache() {
       // Verify the cached document is still valid
       if (entry.pdfDocument) {
         cacheHits.value++;
-        LogService.info('✅ PDF cache HIT', {
+        console.info('✅ PDF cache HIT', {
           documentId,
           cacheSize: cache.value.size,
           hitRate: `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
@@ -133,14 +132,14 @@ export function usePdfCache() {
         return entry.pdfDocument;
       } else {
         // Cache entry is invalid (no pdfDocument), remove it
-        LogService.warn('Invalid cache entry found, evicting', { documentId });
+        console.warn('Invalid cache entry found, evicting', { documentId });
         await evictDocument(documentId);
       }
     }
 
     // Cache miss - load the document
     cacheMisses.value++;
-    LogService.info('❌ PDF cache MISS', {
+    console.info('❌ PDF cache MISS', {
       documentId,
       cacheSize: cache.value.size,
       hitRate: cacheHits.value + cacheMisses.value > 0
@@ -166,7 +165,7 @@ export function usePdfCache() {
    */
   const loadAndCacheDocument = async (documentId, downloadUrl) => {
     try {
-      LogService.debug('Loading PDF document', { documentId, url: downloadUrl });
+      console.debug('Loading PDF document', { documentId, url: downloadUrl });
 
       // Load PDF document with streaming enabled for better performance
       const loadingTask = pdfjsLib.getDocument({
@@ -197,7 +196,7 @@ export function usePdfCache() {
 
       return pdfDocument;
     } catch (err) {
-      LogService.error('Failed to load PDF document', err, { documentId });
+      console.error('Failed to load PDF document', err, { documentId });
       throw err;
     }
   };
@@ -214,24 +213,24 @@ export function usePdfCache() {
 
     // Pre-load previous document if it exists and isn't cached
     if (previousId && !cache.value.has(previousId)) {
-      LogService.debug('Pre-loading previous document', { previousId });
+      console.debug('Pre-loading previous document', { previousId });
       preloadPromises.push(
         getDownloadUrl(previousId)
           .then(url => loadAndCacheDocument(previousId, url))
           .catch(err => {
-            LogService.warn('Failed to pre-load previous document', { previousId, error: err.message });
+            console.warn('Failed to pre-load previous document', { previousId, error: err.message });
           })
       );
     }
 
     // Pre-load next document if it exists and isn't cached
     if (nextId && !cache.value.has(nextId)) {
-      LogService.debug('Pre-loading next document', { nextId });
+      console.debug('Pre-loading next document', { nextId });
       preloadPromises.push(
         getDownloadUrl(nextId)
           .then(url => loadAndCacheDocument(nextId, url))
           .catch(err => {
-            LogService.warn('Failed to pre-load next document', { nextId, error: err.message });
+            console.warn('Failed to pre-load next document', { nextId, error: err.message });
           })
       );
     }
@@ -253,7 +252,7 @@ export function usePdfCache() {
       return;
     }
 
-    LogService.debug('Evicting document from cache', { documentId });
+    console.debug('Evicting document from cache', { documentId });
 
     // Clean up PDF.js resources to prevent memory leaks
     try {
@@ -267,7 +266,7 @@ export function usePdfCache() {
         await entry.pdfDocument.destroy();
       }
     } catch (err) {
-      LogService.warn('Error during document eviction cleanup', { documentId, error: err.message });
+      console.warn('Error during document eviction cleanup', { documentId, error: err.message });
     }
 
     // Remove from cache
@@ -296,7 +295,7 @@ export function usePdfCache() {
     }
 
     if (oldestId) {
-      LogService.debug('Cache limit exceeded, evicting oldest document', {
+      console.debug('Cache limit exceeded, evicting oldest document', {
         documentId: oldestId,
         cacheSize: cache.value.size,
         maxSize: MAX_CACHE_SIZE
@@ -309,7 +308,7 @@ export function usePdfCache() {
    * Clear all cached documents and reset cache
    */
   const clearCache = async () => {
-    LogService.debug('Clearing entire PDF cache', { cacheSize: cache.value.size });
+    console.debug('Clearing entire PDF cache', { cacheSize: cache.value.size });
 
     // Evict all documents
     const evictPromises = Array.from(cache.value.keys()).map(documentId =>

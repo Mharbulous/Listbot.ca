@@ -4,7 +4,6 @@ import { EvidenceDocumentService } from './evidenceDocumentService.js';
 import { TagOperationService } from './tagOperationService.js';
 import { FileProcessingService } from './fileProcessingService.js';
 import tagSubcollectionService from './tagSubcollectionService.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * AI Tag Service - Handles AI-powered document categorization using Firebase Vertex AI
@@ -88,7 +87,7 @@ export class AITagService {
       // Get approval statistics
       const stats = await tagSubcollectionService.getTagStats(evidenceId, firmId);
 
-      LogService.service('AITagService', 'processSingleDocument', {
+      console.info('[AITagService] processSingleDocument', {
         evidenceId,
         suggestionsCount: aiAlternatives.length,
         autoApproved: stats.autoApproved,
@@ -104,10 +103,7 @@ export class AITagService {
         autoApprovalThreshold: tagSubcollectionService.getConfidenceThreshold(),
       };
     } catch (error) {
-      LogService.error('Failed to process document', error, {
-        service: 'AITagService',
-        evidenceId,
-      });
+      console.error('[AITagService] Failed to process document', error, evidenceId);
       throw error;
     }
   }
@@ -214,10 +210,7 @@ export class AITagService {
 
       return storedTags;
     } catch (error) {
-      LogService.error('Error storing AI suggestions', error, {
-        service: 'AITagService',
-        evidenceId,
-      });
+      console.error('[AITagService] Error storing AI suggestions', error, evidenceId);
       throw error;
     }
   }

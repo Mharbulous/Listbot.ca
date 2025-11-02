@@ -1,5 +1,4 @@
 import { ref, shallowRef, onBeforeUnmount } from 'vue';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Shared IntersectionObserver for tracking visible PDF pages
@@ -41,7 +40,7 @@ export function usePageVisibility() {
 
       if (maxRatio > 0) {
         mostVisiblePage.value = maxPage;
-        LogService.debug('Most visible page changed', {
+        console.debug('Most visible page changed', {
           pageNumber: maxPage,
           intersectionRatio: maxRatio,
         });
@@ -78,7 +77,7 @@ export function usePageVisibility() {
 
   // Cleanup observer when component unmounts
   onBeforeUnmount(() => {
-    LogService.debug('Disconnecting page visibility observer');
+    console.debug('Disconnecting page visibility observer');
     observer.disconnect();
   });
 

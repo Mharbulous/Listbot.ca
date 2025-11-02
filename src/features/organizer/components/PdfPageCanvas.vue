@@ -17,7 +17,6 @@
 
 <script setup>
 import { ref, shallowRef, onMounted, watch, onBeforeUnmount, inject } from 'vue';
-import { LogService } from '@/services/logService.js';
 
 const props = defineProps({
   pageNumber: {
@@ -60,7 +59,7 @@ const renderPageToCanvas = async () => {
     isRendering.value = true;
     renderError.value = null;
 
-    LogService.debug('Rendering page to canvas', { pageNumber: props.pageNumber });
+    console.debug('Rendering page to canvas', { pageNumber: props.pageNumber });
 
     // Get page from document
     const page = await props.pdfDocument.getPage(props.pageNumber);
@@ -84,18 +83,18 @@ const renderPageToCanvas = async () => {
     renderTask.value = page.render(renderContext);
     await renderTask.value.promise;
 
-    LogService.debug('Page rendered to canvas successfully', { pageNumber: props.pageNumber });
+    console.debug('Page rendered to canvas successfully', { pageNumber: props.pageNumber });
 
     // Emit event to notify parent that this page has finished rendering
     emit('page-rendered', props.pageNumber);
   } catch (err) {
     // Ignore cancelled renders
     if (err.name === 'RenderingCancelledException') {
-      LogService.debug('Page render cancelled', { pageNumber: props.pageNumber });
+      console.debug('Page render cancelled', { pageNumber: props.pageNumber });
       return;
     }
 
-    LogService.error(`Failed to render page ${props.pageNumber}`, err);
+    console.error(`Failed to render page ${props.pageNumber}`, err);
     renderError.value = err.message || 'Failed to render page';
   } finally {
     isRendering.value = false;

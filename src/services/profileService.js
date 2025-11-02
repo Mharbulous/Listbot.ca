@@ -1,7 +1,6 @@
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile as updateFirebaseProfile } from 'firebase/auth';
 import { db, auth } from './firebase';
-import { LogService } from './logService.js';
 
 /**
  * ProfileService - Manages user profile operations
@@ -39,7 +38,7 @@ export class ProfileService {
 
       return null;
     } catch (error) {
-      LogService.error('Error fetching user profile', error, { userId });
+      console.error('[ProfileService] Error fetching user profile', error, { userId });
       throw error;
     }
   }
@@ -101,9 +100,9 @@ export class ProfileService {
         await this.updateFirmMemberIsLawyer(firmId, userId, isLawyer);
       }
 
-      LogService.service('ProfileService', 'profile updated successfully', { userId, firmId });
+      console.log('[ProfileService] profile updated successfully', { userId, firmId });
     } catch (error) {
-      LogService.error('Error updating profile', error, { userId, firmId, profileData });
+      console.error('[ProfileService] Error updating profile', error, { userId, firmId, profileData });
       throw error;
     }
   }
@@ -144,9 +143,9 @@ export class ProfileService {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.service('ProfileService', 'isLawyer status updated', { firmId, userId, isLawyer });
+      console.log('[ProfileService] isLawyer status updated', { firmId, userId, isLawyer });
     } catch (error) {
-      LogService.error('Error updating firm member isLawyer status', error, { firmId, userId, isLawyer });
+      console.error('[ProfileService] Error updating firm member isLawyer status', error, { firmId, userId, isLawyer });
       throw error;
     }
   }
@@ -175,7 +174,7 @@ export class ProfileService {
 
       return members[userId]?.isLawyer || false;
     } catch (error) {
-      LogService.error('Error fetching isLawyer status', error, { firmId, userId });
+      console.error('[ProfileService] Error fetching isLawyer status', error, { firmId, userId });
       return false;
     }
   }

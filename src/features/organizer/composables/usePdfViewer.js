@@ -1,6 +1,5 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
-import { LogService } from '@/services/logService.js';
 import { usePdfCache } from './usePdfCache.js';
 
 /**
@@ -65,7 +64,7 @@ export function usePdfViewer() {
       loadingDocument.value = true;
       loadError.value = null;
 
-      LogService.debug('Loading PDF document', { documentId, url: downloadUrl });
+      console.debug('Loading PDF document', { documentId, url: downloadUrl });
 
       // Get document from cache (instant if cached, loads if not)
       const pdfDoc = await pdfCache.getDocument(documentId, downloadUrl);
@@ -74,12 +73,12 @@ export function usePdfViewer() {
       currentDocumentId.value = documentId;
       totalPages.value = pdfDoc.numPages;
 
-      LogService.info('PDF document loaded successfully', {
+      console.info('PDF document loaded successfully', {
         documentId,
         totalPages: pdfDoc.numPages,
       });
     } catch (err) {
-      LogService.error('Failed to load PDF document', err, { documentId });
+      console.error('Failed to load PDF document', err, { documentId });
       loadError.value = err.message || 'Failed to load PDF document';
       pdfDocument.value = null;
       currentDocumentId.value = null;
@@ -114,14 +113,14 @@ export function usePdfViewer() {
     }
 
     if (renderingPages.value.has(pageNumber)) {
-      LogService.debug('Page already rendering, skipping', { pageNumber });
+      console.debug('Page already rendering, skipping', { pageNumber });
       return;
     }
 
     try {
       renderingPages.value.add(pageNumber);
 
-      LogService.debug('Rendering PDF page', { pageNumber });
+      console.debug('Rendering PDF page', { pageNumber });
 
       // Get page from document
       const page = await pdfDocument.value.getPage(pageNumber);
@@ -147,9 +146,9 @@ export function usePdfViewer() {
 
       await page.render(renderContext).promise;
 
-      LogService.debug('Page rendered successfully', { pageNumber });
+      console.debug('Page rendered successfully', { pageNumber });
     } catch (err) {
-      LogService.error(`Failed to render page ${pageNumber}`, err);
+      console.error(`Failed to render page ${pageNumber}`, err);
       throw err;
     } finally {
       renderingPages.value.delete(pageNumber);
@@ -160,7 +159,7 @@ export function usePdfViewer() {
    * Clean up PDF resources when component unmounts
    */
   const cleanup = async () => {
-    LogService.debug('Cleaning up PDF viewer');
+    console.debug('Cleaning up PDF viewer');
 
     // Clear all cached documents (cache handles resource cleanup)
     await pdfCache.clearCache();

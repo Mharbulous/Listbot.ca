@@ -14,7 +14,6 @@ import {
   isSystemCategory,
   getSystemCategory,
 } from '../constants/systemcategories.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * System Category Service
@@ -40,15 +39,10 @@ export class SystemCategoryService {
         });
       });
 
-      LogService.debug('Fetched system categories', {
-        service: 'SystemCategoryService',
-        count: categories.length,
-      });
+      console.debug('[SystemCategoryService] Fetched system categories', categories.length);
       return categories;
     } catch (error) {
-      LogService.error('Failed to get system categories', error, {
-        service: 'SystemCategoryService',
-      });
+      console.error('[SystemCategoryService] Failed to get system categories', error);
       throw error;
     }
   }
@@ -78,8 +72,7 @@ export class SystemCategoryService {
       }
 
       if (missingIds.length > 0) {
-        LogService.debug('Matter missing system categories', {
-          service: 'SystemCategoryService',
+        console.debug('[SystemCategoryService] Matter missing system categories', {
           matterId,
           count: missingIds.length,
           missingIds,
@@ -88,10 +81,7 @@ export class SystemCategoryService {
 
       return missingIds;
     } catch (error) {
-      LogService.error('Failed to check missing categories', error, {
-        service: 'SystemCategoryService',
-        matterId,
-      });
+      console.error('[SystemCategoryService] Failed to check missing categories', error, matterId);
       throw error;
     }
   }
@@ -109,19 +99,13 @@ export class SystemCategoryService {
         throw new Error('Valid firm ID is required');
       }
 
-      LogService.debug('Initializing system categories', {
-        service: 'SystemCategoryService',
-        firmId,
-        matterId,
-      });
+      console.debug('[SystemCategoryService] Initializing system categories', { firmId, matterId });
 
       // Check which categories are missing
       const missingIds = await this.checkMissingCategories(firmId, matterId);
 
       if (missingIds.length === 0) {
-        LogService.debug('All system categories already exist', {
-          service: 'SystemCategoryService',
-        });
+        console.debug('[SystemCategoryService] All system categories already exist');
         return {
           created: 0,
           skipped: SYSTEM_CATEGORY_IDS.length,
@@ -136,10 +120,7 @@ export class SystemCategoryService {
       for (const categoryId of missingIds) {
         const categoryDef = getSystemCategory(categoryId);
         if (!categoryDef) {
-          LogService.warn('No definition found for category ID', {
-            service: 'SystemCategoryService',
-            categoryId,
-          });
+          console.warn('[SystemCategoryService] No definition found for category ID', categoryId);
           continue;
         }
 
@@ -175,10 +156,7 @@ export class SystemCategoryService {
       // Commit the batch
       await batch.commit();
 
-      LogService.service('SystemCategoryService', 'initializesystemcategories', {
-        createdCount,
-        matterId,
-      });
+      console.info('[SystemCategoryService] initializesystemcategories', { createdCount, matterId });
 
       return {
         created: createdCount,
@@ -186,10 +164,7 @@ export class SystemCategoryService {
         total: SYSTEM_CATEGORY_IDS.length,
       };
     } catch (error) {
-      LogService.error('Failed to initialize system categories', error, {
-        service: 'SystemCategoryService',
-        matterId,
-      });
+      console.error('[SystemCategoryService] Failed to initialize system categories', error, matterId);
       throw error;
     }
   }
@@ -201,9 +176,7 @@ export class SystemCategoryService {
    */
   static async seedGlobalsystemcategories() {
     try {
-      LogService.debug('Seeding global system categories collection', {
-        service: 'SystemCategoryService',
-      });
+      console.debug('[SystemCategoryService] Seeding global system categories collection');
 
       const batch = writeBatch(db);
       let createdCount = 0;
@@ -214,10 +187,7 @@ export class SystemCategoryService {
         // Check if already exists
         const existingDoc = await getDoc(categoryRef);
         if (existingDoc.exists()) {
-          LogService.debug('System category already exists, skipping', {
-            service: 'SystemCategoryService',
-            categoryId: categoryDef.id,
-          });
+          console.debug('[SystemCategoryService] System category already exists, skipping', categoryDef.id);
           continue;
         }
 
@@ -232,9 +202,7 @@ export class SystemCategoryService {
 
       await batch.commit();
 
-      LogService.service('SystemCategoryService', 'seedGlobalsystemcategories', {
-        createdCount,
-      });
+      console.info('[SystemCategoryService] seedGlobalsystemcategories', { createdCount });
 
       return {
         created: createdCount,
@@ -242,9 +210,7 @@ export class SystemCategoryService {
         total: SYSTEM_CATEGORIES.length,
       };
     } catch (error) {
-      LogService.error('Failed to seed global system categories', error, {
-        service: 'SystemCategoryService',
-      });
+      console.error('[SystemCategoryService] Failed to seed global system categories', error);
       throw error;
     }
   }

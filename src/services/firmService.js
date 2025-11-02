@@ -1,6 +1,5 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase.js';
-import { LogService } from './logService.js';
 
 /**
  * FirmService - Manages firm operations for Multi-App SSO
@@ -30,9 +29,9 @@ export class FirmService {
       };
 
       await setDoc(firmDocRef, firm);
-      LogService.service('FirmService', 'created', firmId);
+      console.log('[FirmService] created', firmId);
     } catch (error) {
-      LogService.error('Error creating firm', error, { firmId, firmData });
+      console.error('[FirmService] Error creating firm', error, { firmId, firmData });
       throw error;
     }
   }
@@ -57,7 +56,7 @@ export class FirmService {
 
       return null;
     } catch (error) {
-      LogService.error('Error fetching firm', error, { firmId });
+      console.error('[FirmService] Error fetching firm', error, { firmId });
       throw error;
     }
   }
@@ -100,9 +99,9 @@ export class FirmService {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.service('FirmService', 'member added', { firmId, userId });
+      console.log('[FirmService] member added', { firmId, userId });
     } catch (error) {
-      LogService.error('Error adding firm member', error, { firmId, userId, memberData });
+      console.error('[FirmService] Error adding firm member', error, { firmId, userId, memberData });
       throw error;
     }
   }
@@ -139,9 +138,9 @@ export class FirmService {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.service('FirmService', 'member removed', { firmId, userId });
+      console.log('[FirmService] member removed', { firmId, userId });
     } catch (error) {
-      LogService.error('Error removing firm member', error, { firmId, userId });
+      console.error('[FirmService] Error removing firm member', error, { firmId, userId });
       throw error;
     }
   }
@@ -161,7 +160,7 @@ export class FirmService {
       const firm = await this.getFirm(firmId);
       return firm && firm.members && firm.members[userId] !== undefined;
     } catch (error) {
-      LogService.error('Error checking firm membership', error, { firmId, userId });
+      console.error('[FirmService] Error checking firm membership', error, { firmId, userId });
       return false;
     }
   }
@@ -195,7 +194,7 @@ export class FirmService {
           }
         }
       } catch (soloError) {
-        LogService.debug('Solo firm not found or not accessible', soloError.message);
+        console.debug('[FirmService] Solo firm not found or not accessible', soloError.message);
       }
 
       // TODO: In future phases, we would query for other firms the user belongs to
@@ -205,7 +204,7 @@ export class FirmService {
 
       return userFirms;
     } catch (error) {
-      LogService.error('Error fetching user firms', error, { userId });
+      console.error('[FirmService] Error fetching user firms', error, { userId });
       return [];
     }
   }
@@ -247,9 +246,9 @@ export class FirmService {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.service('FirmService', 'member role updated', { firmId, userId, newRole });
+      console.log('[FirmService] member role updated', { firmId, userId, newRole });
     } catch (error) {
-      LogService.error('Error updating member role', error, { firmId, userId, newRole });
+      console.error('[FirmService] Error updating member role', error, { firmId, userId, newRole });
       throw error;
     }
   }
