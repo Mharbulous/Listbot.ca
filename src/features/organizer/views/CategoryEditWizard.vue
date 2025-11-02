@@ -29,7 +29,7 @@
         <div v-else-if="!category" class="text-center py-6">
           <v-icon size="64" color="error">mdi-alert-circle</v-icon>
           <p class="text-h6 mt-2">Category not found</p>
-          <v-btn :to="{ name: 'category-manager' }" class="mt-4">Back to Categories</v-btn>
+          <v-btn :to="{ name: 'category-manager', params: { matterId: route.params.matterId } }" class="mt-4">Back to Categories</v-btn>
         </div>
 
         <v-form v-else @submit.prevent="saveCategory">
@@ -223,7 +223,7 @@
       </v-card-text>
 
       <v-card-actions v-if="category" class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'category-manager' }">
+        <v-btn variant="outlined" :to="{ name: 'category-manager', params: { matterId: route.params.matterId } }">
           <v-icon start>mdi-arrow-left</v-icon>
           Discard Changes
         </v-btn>
@@ -447,7 +447,7 @@ const deleteCategory = async () => {
     await categoryManager.deleteCategory(category.value.id, categorySource.value);
     showNotification(`Category "${categoryName}" deleted successfully`, 'success');
     setTimeout(() => {
-      router.push({ name: 'category-manager' });
+      router.push({ name: 'category-manager', params: { matterId: route.params.matterId } });
     }, 1500);
   } catch (error) {
     showNotification('Failed to delete category: ' + error.message, 'error');
@@ -654,7 +654,7 @@ const saveCategory = async () => {
 
     // Navigate back to category manager after a brief delay
     setTimeout(() => {
-      router.push({ name: 'category-manager' });
+      router.push({ name: 'category-manager', params: { matterId: route.params.matterId } });
     }, 1500);
   } catch (error) {
     showNotification('Failed to update category: ' + error.message, 'error');

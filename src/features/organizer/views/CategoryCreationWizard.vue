@@ -5,7 +5,7 @@
         <v-icon class="mr-2">mdi-plus-circle</v-icon>
         New Category
         <v-spacer />
-        <v-btn variant="text" icon :to="{ name: 'category-manager' }" color="default">
+        <v-btn variant="text" icon :to="{ name: 'category-manager', params: { matterId: route.params.matterId } }" color="default">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -201,7 +201,7 @@
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6">
-        <v-btn variant="outlined" :to="{ name: 'category-manager' }" class="mr-3">
+        <v-btn variant="outlined" :to="{ name: 'category-manager', params: { matterId: route.params.matterId } }" class="mr-3">
           <v-icon start>mdi-arrow-left</v-icon>
           Back
         </v-btn>
@@ -486,7 +486,7 @@ const createCategory = async () => {
 
     // Navigate back to category manager after a brief delay
     setTimeout(() => {
-      router.push({ name: 'category-manager' });
+      router.push({ name: 'category-manager', params: { matterId: route.params.matterId } });
     }, 1500);
   } catch (error) {
     showNotification('Failed to create category: ' + error.message, 'error');

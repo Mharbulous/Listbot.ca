@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
-import { systemcategoriesService } from '../services/systemcategoriesService.js';
+import { systemcategoriesService } from '../services/systemCategoriesService.js';
 import { CategoryService } from '../services/categoryService.js';
 
 /**
@@ -12,7 +12,7 @@ import { CategoryService } from '../services/categoryService.js';
  * - Firm categories (/firms/{firmId}/matters/general/categories)
  * - Matter categories (/firms/{firmId}/matters/{matterId}/categories)
  */
-export function useCategoryManager() {
+export function useCategoryManager(matterId = null) {
   const authStore = useAuthStore();
   const matterStore = useMatterViewStore();
 
@@ -69,7 +69,7 @@ export function useCategoryManager() {
       const [systemCats, firmCats, matterCats] = await Promise.all([
         loadsystemcategories(),
         loadFirmCategories(firmId),
-        loadMatterCategories(firmId, matterStore.currentMatterId || 'general'),
+        loadMatterCategories(firmId, matterId || matterStore.currentMatterId || 'general'),
       ]);
 
       systemcategories.value = systemCats;
@@ -149,12 +149,12 @@ export function useCategoryManager() {
         throw new Error('No firm ID available');
       }
 
-      let matterId = 'general';
+      let matterIdForCreate = 'general';
       if (activeTab.value === 'matter') {
-        matterId = matterStore.currentMatterId || 'general';
+        matterIdForCreate = matterId || matterStore.currentMatterId || 'general';
       }
 
-      const result = await CategoryService.createCategory(firmId, categoryData, matterId);
+      const result = await CategoryService.createCategory(firmId, categoryData, matterIdForCreate);
 
       // Reload the appropriate category list
       await loadAllCategories();
@@ -181,10 +181,10 @@ export function useCategoryManager() {
           throw new Error('No firm ID available');
         }
 
-        const matterId =
-          categorySource === 'matter' ? matterStore.currentMatterId || 'general' : 'general';
+        const matterIdForUpdate =
+          categorySource === 'matter' ? matterId || matterStore.currentMatterId || 'general' : 'general';
 
-        await CategoryService.updateCategory(firmId, categoryId, updates, matterId);
+        await CategoryService.updateCategory(firmId, categoryId, updates, matterIdForUpdate);
       }
 
       // Reload categories
@@ -231,10 +231,10 @@ export function useCategoryManager() {
         throw new Error('No firm ID available');
       }
 
-      const matterId =
-        categorySource === 'matter' ? matterStore.currentMatterId || 'general' : 'general';
+      const matterIdForDelete =
+        categorySource === 'matter' ? matterId || matterStore.currentMatterId || 'general' : 'general';
 
-      await CategoryService.deleteCategory(firmId, categoryId, matterId);
+      await CategoryService.deleteCategory(firmId, categoryId, matterIdForDelete);
 
       // Reload categories
       await loadAllCategories();
