@@ -435,6 +435,7 @@ import { EvidenceService } from '@/features/organizer/services/evidenceService.j
 import { LogService } from '@/services/logService.js';
 import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.js';
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
+import { usePdfCache } from '@/features/organizer/composables/usePdfCache.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
 import PdfPageCanvas from '@/features/organizer/components/PdfPageCanvas.vue';
 import PdfThumbnailList from '@/features/organizer/components/PdfThumbnailList.vue';
@@ -451,6 +452,9 @@ const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesSt
 // PDF Metadata composable
 const { metadataLoading, metadataError, pdfMetadata, hasMetadata, extractMetadata } =
   usePdfMetadata();
+
+// PDF Cache composable (for direct cache access during pre-load)
+const pdfCache = usePdfCache();
 
 // PDF Viewer composable
 const {
@@ -642,6 +646,13 @@ const handleFirstPageRendered = (pageNumber) => {
 
   // Reset navigation timer
   navigationStartTime.value = null;
+
+  // Start background pre-loading AFTER first page renders
+  // This eliminates race conditions and ensures PDFs are cached before metadata extraction
+  startBackgroundPreload().catch(err => {
+    // Errors already logged in startBackgroundPreload
+    LogService.debug('Background pre-load promise rejected', { error: err.message });
+  });
 };
 
 /**
@@ -752,6 +763,137 @@ const fetchAndCacheMetadata = async (documentId) => {
     // Non-blocking - pre-load failures should not affect current navigation
     LogService.warn('Failed to pre-load metadata (non-blocking)', {
       documentId,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Extract and cache PDF metadata for a pre-loaded document
+ * Used during background pre-loading to complete the caching pipeline
+ *
+ * @param {string} documentId - Document ID (file hash)
+ */
+const extractAndCachePdfMetadata = async (documentId) => {
+  try {
+    const firmId = authStore.currentFirm;
+    const matterId = matterStore.currentMatterId;
+
+    if (!firmId || !matterId || !documentId) {
+      LogService.warn('Cannot extract PDF metadata: missing firm/matter/document ID', { documentId });
+      return;
+    }
+
+    // Check if PDF is cached (pre-loaded)
+    if (!isDocumentCached(documentId)) {
+      LogService.debug('PDF not cached yet, skipping metadata extraction', { documentId });
+      return;
+    }
+
+    // Get existing cached metadata
+    const cachedMetadata = getCachedMetadata(documentId);
+
+    // Skip if PDF metadata is already cached
+    if (cachedMetadata?.pdfMetadata) {
+      LogService.debug('PDF metadata already cached, skipping extraction', { documentId });
+      return;
+    }
+
+    // Skip if we don't have the basic metadata yet (need displayName)
+    if (!cachedMetadata?.displayName) {
+      LogService.debug('Basic metadata not cached yet, skipping PDF metadata extraction', { documentId });
+      return;
+    }
+
+    LogService.debug('Pre-loading PDF metadata for document', { documentId });
+
+    // Retrieve the pre-loaded PDF from cache
+    const pdfDoc = await pdfCache.getDocument(documentId, null);
+
+    // Extract metadata from the pre-loaded PDF
+    // Note: extractMetadata() updates the shared pdfMetadata reactive ref
+    await extractMetadata(documentId, cachedMetadata.displayName, pdfDoc);
+
+    // Immediately clone and cache the extracted metadata
+    // This updates the existing cache entry with the PDF metadata field
+    cacheMetadata(documentId, {
+      ...cachedMetadata,
+      pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
+    });
+
+    LogService.info('📄 Pre-loaded and cached PDF metadata', { documentId });
+  } catch (err) {
+    // Non-blocking - pre-load failures should not affect current navigation
+    LogService.warn('Failed to pre-load PDF metadata (non-blocking)', {
+      documentId,
+      error: err.message,
+    });
+  }
+};
+
+/**
+ * Start background pre-loading of adjacent documents
+ * Called AFTER first page render to avoid race conditions
+ *
+ * Sequential flow:
+ * 1. Pre-load PDFs (wait for completion)
+ * 2. Pre-load metadata (wait for completion)
+ * 3. Extract PDF metadata (PDFs guaranteed to be cached)
+ */
+const startBackgroundPreload = async () => {
+  try {
+    const prevId = previousDocumentId.value;
+    const nextId = nextDocumentId.value;
+
+    LogService.info('🚀 Starting background pre-load after first page render', {
+      currentDocId: fileHash.value,
+      previousDocId: prevId,
+      nextDocId: nextId,
+    });
+
+    // Step 1: Pre-load PDFs and wait for completion
+    // This ensures PDFs are cached before we try to extract their metadata
+    await preloadAdjacentDocuments(prevId, nextId, getDocumentDownloadUrl);
+
+    // Step 2: Pre-load metadata for adjacent documents (parallel)
+    const metadataPromises = [];
+    if (prevId) {
+      metadataPromises.push(
+        fetchAndCacheMetadata(prevId).catch(err => {
+          LogService.warn('Failed to pre-load metadata for previous doc', { prevId, error: err.message });
+        })
+      );
+    }
+    if (nextId) {
+      metadataPromises.push(
+        fetchAndCacheMetadata(nextId).catch(err => {
+          LogService.warn('Failed to pre-load metadata for next doc', { nextId, error: err.message });
+        })
+      );
+    }
+    await Promise.allSettled(metadataPromises);
+
+    // Step 3: Extract PDF metadata (PDFs are guaranteed cached now)
+    // No setTimeout needed - PDFs are already loaded!
+    if (prevId) {
+      await extractAndCachePdfMetadata(prevId).catch(err => {
+        LogService.warn('Failed to extract PDF metadata for previous doc', { prevId, error: err.message });
+      });
+    }
+    if (nextId) {
+      await extractAndCachePdfMetadata(nextId).catch(err => {
+        LogService.warn('Failed to extract PDF metadata for next doc', { nextId, error: err.message });
+      });
+    }
+
+    LogService.info('✅ Background pre-load completed', {
+      currentDocId: fileHash.value,
+      previousDocId: prevId,
+      nextDocId: nextId,
+    });
+  } catch (err) {
+    // Non-blocking - pre-load failures should not affect UX
+    LogService.warn('Background pre-load failed (non-blocking)', {
       error: err.message,
     });
   }
@@ -930,30 +1072,8 @@ const fetchStorageMetadata = async (firmId, displayName) => {
         LogService.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
       }
 
-      LogService.info('Current document ready for rendering, starting background pre-load', {
-        currentDocId: fileHash.value,
-        previousDocId: previousDocumentId.value,
-        nextDocId: nextDocumentId.value,
-      });
-
-      // Pre-load adjacent documents (PDF + metadata) in background (non-blocking)
-      preloadAdjacentDocuments(
-        previousDocumentId.value,
-        nextDocumentId.value,
-        getDocumentDownloadUrl
-      );
-
-      // Pre-load metadata for adjacent documents (runs in parallel with PDF pre-load)
-      if (previousDocumentId.value) {
-        fetchAndCacheMetadata(previousDocumentId.value).catch(() => {
-          // Errors already logged in fetchAndCacheMetadata
-        });
-      }
-      if (nextDocumentId.value) {
-        fetchAndCacheMetadata(nextDocumentId.value).catch(() => {
-          // Errors already logged in fetchAndCacheMetadata
-        });
-      }
+      // Pre-loading now happens AFTER first page renders (see handleFirstPageRendered)
+      // This eliminates race conditions and ensures PDFs are cached before metadata extraction
     }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
