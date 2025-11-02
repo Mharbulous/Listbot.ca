@@ -4,7 +4,7 @@ This document tracks all attempts to optimize PDF document navigation performanc
 
 **Goal**: Achieve <50ms navigation timing for cached documents (instant feel)
 
-**Current Status**: **48ms best case (GOAL ACHIEVED!)** but inconsistent (48-741ms) due to cache invalidation bug
+**Current Status**: **ARCHITECTURE REFACTORED** - NewViewDocument2.vue created with extracted composables. All optimizations from Attempts #1-#8 preserved. Cache invalidation bug from Attempt #8 still present (needs fixing).
 
 ---
 
@@ -20,60 +20,76 @@ This document tracks all attempts to optimize PDF document navigation performanc
 | 6 | **PDF Metadata Pre-load Implementation** <br><br>Completes the caching pipeline by extracting and caching PDF metadata during background pre-load. <br><br>**Solution**: <br>- Created `extractAndCachePdfMetadata()` helper function <br>- Chains after `fetchAndCacheMetadata()` completes <br>- Retrieves pre-loaded PDF from cache <br>- Extracts PDF metadata in background <br>- Updates cache entry with `pdfMetadata` field <br><br>**Safety features**: <br>- Checks if PDF is cached before extraction <br>- Skips if PDF metadata already cached <br>- Skips if basic metadata not available yet <br>- Non-blocking error handling <br>- 100ms setTimeout to allow PDF pre-load to complete | - Added import for `usePdfCache` composable <br>- Created `extractAndCachePdfMetadata()` function (lines 766-821) <br>- Modified pre-load flow to chain PDF metadata extraction: <br>&nbsp;&nbsp;1. Pre-load PDF (existing) <br>&nbsp;&nbsp;2. Pre-load metadata (existing) <br>&nbsp;&nbsp;3. Extract PDF metadata (NEW) <br>- Uses 100ms setTimeout to handle race conditions <br><br>**Files Modified**: <br>- `NewViewDocument2.vue` (lines 438, 457, 766-821, 1015-1043) <br><br>**Expected Flow**: <br>```javascript <br>fetchAndCacheMetadata(docId) <br>&nbsp;&nbsp;.then(() => { <br>&nbsp;&nbsp;&nbsp;&nbsp;setTimeout(() => { <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;extractAndCachePdfMetadata(docId); <br>&nbsp;&nbsp;&nbsp;&nbsp;}, 100); <br>&nbsp;&nbsp;}); <br>``` | **FAILED - Race Condition** ❌ <br><br>**Actual Results**: <br>- PDF metadata pre-load **NEVER ran** <br>- Zero instances of "📄 Pre-loaded and cached PDF metadata" <br>- Only 2 PDF metadata cache hits (backward nav to previously viewed docs) <br>- Most navigations: 57-804ms (still extracting metadata) ❌ <br><br>**Root Cause**: <br>Race condition - 100ms timeout insufficient. PDF pre-load runs async in parallel with metadata pre-load. PDF not cached within 100ms of metadata completing. Function returns early from safety check `if (!isDocumentCached(documentId))`. |
 | 7 | **Sequential Pre-load After First Page Render** <br><br>Eliminates race conditions by delaying ALL pre-loading until AFTER first page renders. <br><br>**Key Insight**: <br>Users spend 1-3 seconds viewing a page before navigating. Pre-loading has plenty of time to complete sequentially without rushing. <br><br>**Solution**: <br>- Move pre-load trigger from `fetchStorageMetadata()` to `handleFirstPageRendered()` <br>- Created `startBackgroundPreload()` with sequential await flow <br>- Guarantees PDFs are cached before metadata extraction <br>- No timeouts, no guessing, no race conditions | - Created `startBackgroundPreload()` function (lines 827-893) <br>&nbsp;&nbsp;- Sequential flow with explicit awaits: <br>&nbsp;&nbsp;&nbsp;&nbsp;1. `await preloadAdjacentDocuments()` ✅ <br>&nbsp;&nbsp;&nbsp;&nbsp;2. `await fetchAndCacheMetadata()` ✅ <br>&nbsp;&nbsp;&nbsp;&nbsp;3. `await extractAndCachePdfMetadata()` ✅ <br>- Removed 100ms setTimeout (not needed) <br>- Added to `handleFirstPageRendered()` (line 652) <br>- Removed old pre-load logic from `fetchStorageMetadata()` <br><br>**Files Modified**: <br>- `NewViewDocument2.vue` (lines 634-656, 827-893, 1075-1077) <br><br>**Actual Flow**: <br>```javascript <br>First page renders → <br>startBackgroundPreload() → <br>&nbsp;&nbsp;await PDFs → <br>&nbsp;&nbsp;await metadata → <br>&nbsp;&nbsp;await extractPdfMetadata() <br>``` | **SUCCESS!** ✅🎯 <br><br>**All Navigations Show Full Cache Hits**: <br>- 📋 Metadata cache HIT ✅ <br>- ✅ PDF cache HIT ✅ <br>- 📄 PDF metadata cache HIT ✅ <br>- 📄 Pre-loaded and cached PDF metadata ✅ <br><br>**Performance**: <br>- PDF cache hit rate: **92.6%** ✅ <br>- PDF load: **8-18ms** ✅ (instant!) <br>- Best case render: **52ms** 🎯 (near goal!) <br>- Typical render: **62-101ms** ✅ (feels instant) <br>- Outliers: 245-753ms (Vue overhead, NOT caching) <br><br>**Caching Pipeline COMPLETE**: <br>- Zero race conditions ✅ <br>- Zero PDF metadata extraction on navigation ✅ <br>- Sequential flow guarantees correctness ✅ <br>- <50ms goal nearly achieved (52ms best) 🎯 |
 | 8 | **Deferred Rendering (Thumbnails + Metadata Extraction)** <br><br>Identified that thumbnail rendering (500-700ms) and metadata extraction (50-150ms) were blocking first page render even with full cache hits. <br><br>**Root Cause**: <br>- Watcher in `PdfThumbnailList.vue` triggered immediately when `pdfDocument` changed <br>- `renderAllThumbnails()` blocked main thread with CPU-intensive canvas operations <br>- `extractMetadata()` called synchronously before page render <br>- Gap of 743ms between PDF load (10ms) and first page render (754ms) <br><br>**Solution**: <br>- Defer thumbnail rendering with `setTimeout(..., 50)` <br>- Defer PDF metadata extraction with `setTimeout(..., 0)` <br>- Let first page render complete before background tasks start | - Modified `PdfThumbnailList.vue` watcher (lines 112-146): <br>&nbsp;&nbsp;- Wrapped `renderAllThumbnails()` in `setTimeout(..., 50)` <br>&nbsp;&nbsp;- Changed from `async` watcher to sync with deferred execution <br>&nbsp;&nbsp;- Added error handling for fire-and-forget rendering <br><br>- Modified `NewViewDocument2.vue` metadata extraction (lines 1050-1090): <br>&nbsp;&nbsp;- Cache metadata immediately (without pdfMetadata field) <br>&nbsp;&nbsp;- Wrapped `extractMetadata()` in `setTimeout(..., 0)` <br>&nbsp;&nbsp;- Update cache with pdfMetadata after background extraction <br><br>**Files Modified**: <br>- `PdfThumbnailList.vue` (lines 112-146) <br>- `NewViewDocument2.vue` (lines 1050-1090) | **PARTIAL SUCCESS** ⚠️ <br><br>**Goal Achieved (Sometimes)**: <br>- **Best case**: **48ms** 🎯 (GOAL MET! <50ms) <br>- Good cases: 67-162ms (majority of navigations) <br>- Cache hit rate: **90%** ✅ <br><br>**CRITICAL BUG - Cache Invalidation** ❌: <br>- Console shows "Invalid cache entry found, evicting" <br>- Cache entries being evicted and reloaded from Firebase <br>- Example: Doc loaded in 409ms instead of 8ms <br>- Regression to 1047ms render time <br><br>**Root Cause**: <br>Premature `cacheMetadata()` call creates entries with `pdfMetadata: null` but NO `pdfDocument` field yet. When navigation occurs before PDF loads, cache check finds `entry.pdfDocument` is null and evicts the entry as invalid. This is the SAME bug as Attempt #3. <br><br>**Performance Variance**: <br>- Best: 48ms (when cache valid) ✅ <br>- Typical: 67-162ms (acceptable) ⚠️ <br>- Bad: 267-741ms (cache invalidated) ❌ <br>- Worst: 1047ms (cache miss + reload) ❌ <br><br>**Status**: Rendering optimization works, but introduced cache invalidation regression. Need to fix metadata caching order. |
+| 9 | **Architectural Refactoring - Extract to Composables** <br><br>ViewDocument.vue had grown to ~1000 lines with complex intertwined logic making it difficult to maintain and debug (especially the cache invalidation bug from Attempt #8). <br><br>**NOT a performance optimization** - this is a code quality/maintainability improvement. <br><br>**Goal**: <br>- Extract complex logic into focused composables <br>- Reduce main component to <300 lines <br>- Improve readability and testability <br>- Preserve ALL optimizations from Attempts #1-#8 <br>- Make it easier to fix cache invalidation bug | **Created 4 new files**: <br><br>1. **`useDocumentNavigation.js`** (110 lines) <br>&nbsp;&nbsp;- Document navigation state/methods <br>&nbsp;&nbsp;- Adjacent document IDs for pre-loading <br>&nbsp;&nbsp;- Performance timing <br><br>2. **`useEvidenceLoader.js`** (318 lines) <br>&nbsp;&nbsp;- Firestore evidence loading <br>&nbsp;&nbsp;- Metadata variant management <br>&nbsp;&nbsp;- Storage metadata fetching <br>&nbsp;&nbsp;- PDF loading integration <br><br>3. **`useDocumentPreloader.js`** (269 lines) <br>&nbsp;&nbsp;- Background pre-loading pipeline <br>&nbsp;&nbsp;- 3-phase sequential flow <br>&nbsp;&nbsp;- Metadata + PDF + PDF metadata <br><br>4. **`NewViewDocument2.vue`** (304 lines) ⭐ <br>&nbsp;&nbsp;- Thin orchestrator component <br>&nbsp;&nbsp;- Template: 80 lines (unchanged) <br>&nbsp;&nbsp;- Script: 168 lines (vs 865 in original) <br>&nbsp;&nbsp;- Style: 46 lines (unchanged) <br><br>**Files Created**: <br>- `src/features/organizer/composables/useDocumentNavigation.js` <br>- `src/features/organizer/composables/useEvidenceLoader.js` <br>- `src/features/organizer/composables/useDocumentPreloader.js` <br>- `src/features/organizer/views/NewViewDocument2.vue` | **NOT YET TESTED** ⚠️ <br><br>**Architectural Improvements**: <br>- ✅ Main component: **1000 → 304 lines** (70% reduction) <br>- ✅ Single Responsibility: Each file has one clear purpose <br>- ✅ KISS Principle: Simple orchestration, complex logic encapsulated <br>- ✅ Testability: Composables can be unit tested in isolation <br>- ✅ Reusability: Composables can be used in other views <br>- ✅ Maintainability: Easier to locate and fix bugs <br><br>**Preserved Functionality**: <br>- ✅ All performance optimizations from Attempts #1-#8 <br>- ✅ Sequential pre-loading after first page render <br>- ✅ Deferred thumbnail rendering <br>- ✅ Deferred PDF metadata extraction <br>- ✅ Cache hit/miss optimization <br>- ✅ Performance timing and logging <br>- ✅ Keyboard navigation <br><br>**Known Issues Preserved**: <br>- ❌ Cache invalidation bug from Attempt #8 STILL PRESENT <br>- ❌ Premature `cacheMetadata()` call still in `useEvidenceLoader.js` <br>- ❌ Needs testing to verify functional equivalence <br><br>**Next Steps**: <br>1. Test NewViewDocument2.vue for functional equivalence <br>2. Fix cache invalidation bug in useEvidenceLoader.js <br>3. Swap into production if tests pass |
 
 ---
 
-## Current State Analysis (After Attempt #8)
+## Current State Analysis (After Attempt #9)
 
-### ⚠️ GOAL ACHIEVED BUT UNSTABLE
+### ✅ ARCHITECTURE REFACTORED - CLEAN CODEBASE
 
-**Attempt #8 - Deferred Rendering** successfully achieved the <50ms goal (**48ms best case**) but introduced a critical cache invalidation bug causing inconsistent performance.
+**Attempt #9 - Architectural Refactoring** extracted complex logic from the monolithic ViewDocument.vue (~1000 lines) into focused composables, creating NewViewDocument2.vue (304 lines). This is a **code quality improvement**, not a performance optimization.
+
+**All optimizations from Attempts #1-#8 have been preserved**, including the cache invalidation bug from Attempt #8 which still needs to be fixed.
 
 ### What's Working ✅
 
-1. **Rendering Optimization Successful**
+1. **Architectural Improvements (NEW in Attempt #9)** ⭐
+   - ✅ **Clean separation of concerns**: Navigation, Loading, Pre-loading isolated
+   - ✅ **70% code reduction**: Main component 1000 → 304 lines
+   - ✅ **Single Responsibility Principle**: Each file has one clear purpose
+   - ✅ **Composable reusability**: Logic can be used in other views
+   - ✅ **Improved testability**: Composables can be unit tested
+   - ✅ **KISS principle**: Simple orchestration, complex logic encapsulated
+   - ✅ **Easier debugging**: Bug location is obvious from file structure
+
+2. **Rendering Optimization (From Attempt #8 - Preserved)**
    - ✅ Thumbnail rendering deferred (no longer blocks first page)
    - ✅ PDF metadata extraction deferred (background processing)
    - ✅ **Goal achieved**: 48ms best case (<50ms target!) 🎯
    - ✅ Majority of navigations: 67-162ms (acceptable performance)
 
-2. **Cache Pipeline Still Operational**
+3. **Cache Pipeline (From Attempts #1-#7 - Preserved)**
    - ✅ PDF caching: 90% hit rate, 8-12ms loads when valid
    - ✅ Metadata caching: Working for pre-loaded documents
    - ✅ PDF metadata caching: Working for pre-loaded documents
    - ✅ Background pre-loading: Still functioning
+   - ✅ Sequential pre-loading: Eliminates race conditions
 
-### Critical Bug Introduced ❌
+### Critical Bug Still Present ❌
 
-**CACHE INVALIDATION BUG**:
+**CACHE INVALIDATION BUG** (From Attempt #8, preserved in refactoring):
 - Console shows "Invalid cache entry found, evicting"
 - Cache entries being marked invalid and evicted
 - Forces reload from Firebase Storage (409ms instead of 8ms)
 - Regression to 1047ms render time
 
 **Root Cause**:
-Premature `cacheMetadata()` call in `NewViewDocument2.vue` lines 1062-1069:
+Premature `cacheMetadata()` call now located in **`useEvidenceLoader.js` lines 71-79**:
 ```javascript
-cacheMetadata(fileHash.value, {
+// Cache basic metadata immediately
+pdfViewer.cacheMetadata(fileHash, {
   evidenceData: evidence.value,
   sourceVariants: sourceMetadataVariants.value,
   storageMetadata: storageMetadata.value,
   displayName: evidence.value.displayName,
   selectedMetadataHash: selectedMetadataHash.value,
-  pdfMetadata: null, // Will be populated after extraction
+  pdfMetadata: null,
 });
 ```
 
 **Problem**: This creates a cache entry with metadata but NO `pdfDocument` field yet. When `usePdfCache.getDocument()` later checks the entry (line 122), it finds `entry.pdfDocument` is null and evicts it as "invalid". This is **the exact same bug as Attempt #3**.
 
 **Sequence of Events**:
-1. PDF starts loading asynchronously
-2. `cacheMetadata()` called immediately (before PDF loads)
+1. PDF starts loading asynchronously (line 45-48 in `useEvidenceLoader.js`)
+2. `cacheMetadata()` called immediately BEFORE PDF loads (lines 71-79)
 3. Cache entry created: `{ pdfDocument: null, metadata: {...} }`
 4. User navigates quickly to that document
 5. Cache check: `if (entry.pdfDocument)` → false
 6. Entry evicted as "invalid cache entry"
 7. PDF must be reloaded from Firebase Storage
+
+**NEW ADVANTAGE**: With the refactoring, the bug is **now isolated to `useEvidenceLoader.js`** making it much easier to locate and fix. Previously, this was buried in 1000 lines of ViewDocument.vue.
 
 ### Performance Variance ⚠️
 
@@ -100,36 +116,51 @@ cacheMetadata(fileHash.value, {
 
 **Key Innovations**:
 
-1. **Sequential Pre-loading** (Attempt #7):
+1. **Composable Architecture** (Attempt #9 - NEW) ⭐:
+   - **`useDocumentNavigation.js`**: Document navigation state and methods
+   - **`useEvidenceLoader.js`**: Firestore/Storage loading and metadata management
+   - **`useDocumentPreloader.js`**: Background pre-loading pipeline
+   - **`NewViewDocument2.vue`**: Thin orchestrator (304 lines vs 1000)
+   - **Benefits**: Single Responsibility, KISS principle, testability, reusability
+   - **Impact**: 70% code reduction, much easier to debug and maintain
+
+2. **Sequential Pre-loading** (Attempt #7 - Preserved):
    - Delays pre-load until AFTER first page renders
    - Eliminates all race conditions by design
    - Leverages user viewing time (1-3 seconds before navigation)
    - Sequential flow guarantees correctness
+   - **Now isolated in `useDocumentPreloader.js`** for clarity
 
-2. **Deferred Rendering** (Attempt #8):
+3. **Deferred Rendering** (Attempt #8 - Preserved):
    - Thumbnails render in background (`setTimeout(..., 50)`)
    - PDF metadata extracted in background (`setTimeout(..., 0)`)
    - First page renders immediately without blocking
    - **Achieved <50ms goal** when working correctly
+   - **Now in `useEvidenceLoader.js`** for easy modification
 
 **Caching Layers**:
 1. **PDF Document Cache**: PDFDocumentProxy objects (memory-intensive)
 2. **Metadata Cache**: Firestore + Storage metadata (lightweight)
 3. **PDF Metadata Cache**: Extracted PDF info/XMP (lightweight)
 
-All three layers work together, but cache invalidation bug causes instability.
+All three layers work together, but cache invalidation bug causes instability. **Bug is now easier to fix** due to composable isolation.
 
 ### Critical Bug to Fix
 
 **Issue**: Premature `cacheMetadata()` creates entries without `pdfDocument` field
 
-**Location**: `NewViewDocument2.vue` lines 1062-1069
+**Location**: **`useEvidenceLoader.js` lines 71-79** (isolated by refactoring!)
 
 **Fix Needed**:
 - Remove the premature `cacheMetadata()` call before PDF loads
 - Only cache metadata AFTER `loadPdf()` completes successfully
 - Restore Attempt #7 behavior: cache everything together after PDF loads
 - Keep the deferred rendering optimizations (thumbnails, PDF metadata extraction)
+
+**Advantage of Refactoring**:
+- Bug is now **isolated in a single composable** instead of buried in 1000 lines
+- Easy to locate: `useEvidenceLoader.js` → `loadStorageAndPdf()` function
+- Clear separation makes the fix obvious and testable
 
 **Expected Result After Fix**:
 - 48ms best case navigation (goal achieved) ✅
@@ -219,3 +250,6 @@ const pdfMetadata = await extractMetadata(pdfDocument);
 | **After Attempt #6**<br>PDF metadata pre-load (failed) | ~300ms | **57-804ms** ❌<br>(race condition - never ran) | N/A | N/A |
 | **After Attempt #7**<br>Sequential pre-load after render | ~300ms | **52-101ms** 🎯<br>(full cache hits!) | **52-101ms** 🎯<br>(full cache hits!) | **52ms** 🎯<br>(BEST CASE - near goal!) |
 | **After Attempt #8**<br>Deferred rendering | ~300ms | **48-162ms** ⚠️<br>(cache sometimes invalid) | **48-162ms** ⚠️<br>(cache sometimes invalid) | **48ms** ✅<br>(GOAL ACHIEVED! but unstable) |
+| **After Attempt #9**<br>Composable refactoring | **NOT TESTED** ⚠️ | **NOT TESTED** ⚠️<br>(Expected: same as #8) | **NOT TESTED** ⚠️<br>(Expected: same as #8) | **Expected: 48ms** 🎯<br>(Preserves #8 performance) |
+
+**Note on Attempt #9**: This is an **architectural refactoring**, not a performance optimization. Performance should be identical to Attempt #8 (both good and bad aspects). The benefit is **code maintainability** - bug fixes will be easier to implement.
