@@ -889,7 +889,7 @@ export function useThumbnailRenderer() {
 }
 ```
 
-**ViewDocument.vue**:
+**NewViewDocument2.vue**:
 ```javascript
 // Proper cleanup orchestration
 onUnmounted(() => {
@@ -1131,7 +1131,7 @@ pdfjsLib.getDocument({
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    ViewDocument.vue                      │
+│                    NewViewDocument2.vue                      │
 │                                                          │
 │  ┌────────────────────────────────────────────────┐    │
 │  │         PDF Pages (Continuous Scroll)          │    │

@@ -63,7 +63,7 @@ const router = createRouter({
     {
       path: '/documents/view/:fileHash',
       name: 'view-document',
-      component: () => import('../features/organizer/views/ViewDocument.vue'),
+      component: () => import('../features/organizer/views/NewViewDocument2.vue'),
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },
     },
     {

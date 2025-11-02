@@ -88,7 +88,7 @@ According to the renaming plan, these 13 files contain identifiers that need ren
 3. `src/features/organizer/utils/fileUtils.js`
 4. `src/features/organizer/components/FileListItemContent.vue`
 5. `src/features/organizer/components/FileItem.vue`
-6. `src/features/organizer/views/ViewDocument.vue`
+6. `src/features/organizer/views/NewViewDocument2.vue`
 7. `src/utils/columnConfig.js`
 8. `src/features/organizer/services/fileProcessingService.js`
 9. `src/features/organizer/services/aiProcessingService.js`

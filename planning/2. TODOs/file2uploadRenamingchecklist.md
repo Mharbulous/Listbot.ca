@@ -26,8 +26,8 @@
 | `fileIcon` computed | `uploadIcon` | `src/features/organizer/components/FileItem.vue:99` |
 | `fileIconColor` computed | `uploadIconColor` | `src/features/organizer/components/FileItem.vue:100` |
 | `formattedFileSize` computed | `uploadSizeFormatted` | `src/features/organizer/components/FileItem.vue:101` |
-| `formatFileSize(bytes)` | `formatUploadSize(bytes)` | `src/features/organizer/views/ViewDocument.vue:374` |
-| `isPdfFile` computed | `isUploadPdf` | `src/features/organizer/views/ViewDocument.vue:474` |
+| `formatFileSize(bytes)` | `formatUploadSize(bytes)` | `src/features/organizer/views/NewViewDocument2.vue:374` |
+| `isPdfFile` computed | `isUploadPdf` | `src/features/organizer/views/NewViewDocument2.vue:474` |
 | `fileName` column key | `uploadFileName` | `src/utils/columnConfig.js:8` |
 | `fileType` column key | `uploadFileType` | `src/utils/columnConfig.js:7` |
 | `getFileForProcessing(evidence, firmId, matterId)` | `getUploadForProcessing(evidence, firmId, matterId)` | `src/features/organizer/services/fileProcessingService.js:20` |

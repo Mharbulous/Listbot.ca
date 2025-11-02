@@ -4,7 +4,7 @@
 
 **Objective**: Implement a thumbnail navigation panel that displays miniature previews of all PDF pages, allowing users to quickly navigate to any page by clicking on a thumbnail.
 
-**Current State**: The thumbnail panel (ViewDocument.vue:19-44) displays a "Thumbnails Coming Soon" placeholder.
+**Current State**: The thumbnail panel (NewViewDocument2.vue:19-44) displays a "Thumbnails Coming Soon" placeholder.
 
 **Target State**: A functional thumbnail panel that:
 - Displays small preview thumbnails of all PDF pages (150px width max)
@@ -27,7 +27,7 @@
 
 ### Existing Infrastructure
 
-**Thumbnail Panel Layout** (ViewDocument.vue:19-44):
+**Thumbnail Panel Layout** (NewViewDocument2.vue:19-44):
 ```vue
 <div class="thumbnail-panel" :class="{ 'thumbnail-panel--collapsed': !thumbnailsVisible }">
   <v-card variant="outlined" class="thumbnail-card">
@@ -55,7 +55,7 @@
 </div>
 ```
 
-**Panel Styling** (ViewDocument.vue:781-843):
+**Panel Styling** (NewViewDocument2.vue:781-843):
 - Width: 200px (expanded) / 40px (collapsed)
 - Height: 100% of viewport
 - Collapsible with smooth transition
@@ -525,11 +525,11 @@ onBeforeUnmount(() => {
 
 ---
 
-### Phase 3: Integrate Thumbnail List into ViewDocument.vue (1-2 hours)
+### Phase 3: Integrate Thumbnail List into NewViewDocument2.vue (1-2 hours)
 
 #### Step 3.1: Import PdfThumbnailList Component
 
-**Location**: ViewDocument.vue:351-366
+**Location**: NewViewDocument2.vue:351-366
 
 Add import:
 ```javascript
@@ -547,7 +547,7 @@ const currentVisiblePage = ref(1)
 
 #### Step 3.3: Replace Thumbnail Placeholder
 
-**Location**: ViewDocument.vue:36-42
+**Location**: NewViewDocument2.vue:36-42
 
 **Current Code**:
 ```vue
@@ -736,7 +736,7 @@ onBeforeUnmount(() => {
 
 Add a page number input field for quick navigation:
 
-**Add to document navigation panel** (ViewDocument.vue:48-100):
+**Add to document navigation panel** (NewViewDocument2.vue:48-100):
 
 ```vue
 <div class="document-nav-panel">
@@ -1042,7 +1042,7 @@ const renderThumbnailsWithPriority = async (pdfDocument, totalPages, currentPage
   - [ ] Add rendering progress indicator
 
 ### Phase 3: Integration
-- [ ] Import `PdfThumbnailList` in ViewDocument.vue
+- [ ] Import `PdfThumbnailList` in NewViewDocument2.vue
 - [ ] Add `currentVisiblePage` state tracking
 - [ ] Replace thumbnail placeholder with component
 - [ ] Implement `handlePageSelected()` method
@@ -1075,7 +1075,7 @@ const renderThumbnailsWithPriority = async (pdfDocument, totalPages, currentPage
 - [ ] Document `useThumbnailRenderer.js` API
 - [ ] Document `PdfThumbnailList.vue` props/events
 - [ ] Add JSDoc comments
-- [ ] Update ViewDocument.vue comments
+- [ ] Update NewViewDocument2.vue comments
 - [ ] Update architecture docs if needed
 
 ---
@@ -1130,6 +1130,6 @@ const renderThumbnailsWithPriority = async (pdfDocument, totalPages, currentPage
 ## References
 
 - **pdf.js Documentation**: https://mozilla.github.io/pdf.js/
-- **ViewDocument.vue**: src/features/organizer/views/ViewDocument.vue:19-44 (thumbnail panel)
+- **NewViewDocument2.vue**: src/features/organizer/views/NewViewDocument2.vue:19-44 (thumbnail panel)
 - **ImplementPDFViewing.md**: Related plan for main PDF viewer
 - **@tanstack/vue-virtual**: https://tanstack.com/virtual/latest (for virtualization)
