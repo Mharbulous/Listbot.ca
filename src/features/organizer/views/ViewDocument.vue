@@ -17,10 +17,10 @@
     <!-- Main content (visible once evidence is loaded, persists during navigation) -->
     <div v-else class="view-document-content">
       <!-- Left: Thumbnail panel (collapsible) -->
-      <div class="thumbnail-panel" :class="{ 'thumbnail-panel--collapsed': !thumbnailsVisible }">
+      <div class="thumbnail-panel panel-container" :class="{ 'panel-container--collapsed': !thumbnailsVisible }">
         <v-card variant="outlined" class="thumbnail-card">
           <!-- Expanded content -->
-          <div v-show="thumbnailsVisible" class="thumbnail-content">
+          <div v-show="thumbnailsVisible" class="thumbnail-content panel-content">
             <h3 class="thumbnail-title">Pages</h3>
 
             <!-- PDF Thumbnails -->
@@ -131,6 +131,17 @@
             >
               <v-icon>mdi-page-last</v-icon>
             </v-btn>
+            <!-- Metadata toggle button -->
+            <v-btn
+              variant="text"
+              size="small"
+              :title="metadataVisible ? 'Hide metadata' : 'Show metadata'"
+              class="metadata-toggle-btn"
+              :class="{ 'metadata-toggle-btn--visible': metadataVisible, 'metadata-toggle-btn--hidden': !metadataVisible }"
+              @click="toggleMetadataVisibility"
+            >
+              ℹ️
+            </v-btn>
           </v-card>
         </div>
 
@@ -191,25 +202,15 @@
       </div>
 
       <!-- Right: File metadata panel -->
-      <div class="metadata-panel">
-        <div class="metadata-box" :class="{ 'metadata-box--collapsed': !metadataVisible }">
+      <div class="metadata-panel panel-container" :class="{ 'panel-container--collapsed': !metadataVisible }">
+        <div class="metadata-box">
           <v-card variant="outlined" class="metadata-card">
-            <!-- Card header with toggle button -->
-            <div class="metadata-card-header">
+            <!-- Card header -->
+            <div v-show="metadataVisible" class="metadata-card-header panel-content panel-content--right">
               <h3 class="metadata-card-title">File Metadata</h3>
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                :title="metadataVisible ? 'Hide metadata' : 'Show metadata'"
-                class="toggle-btn"
-                @click="toggleMetadataVisibility"
-              >
-                <v-icon>{{ metadataVisible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
-              </v-btn>
             </div>
 
-            <v-card-text v-if="metadataVisible">
+            <v-card-text v-show="metadataVisible" class="panel-content panel-content--right">
               <!-- Source File Section -->
               <div class="metadata-section">
                 <h3 class="metadata-section-title">Source File Information</h3>
@@ -435,6 +436,7 @@ import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
 import PdfPageCanvas from '@/features/organizer/components/PdfPageCanvas.vue';
 import PdfThumbnailList from '@/features/organizer/components/PdfThumbnailList.vue';
+import '@/styles/panel-animations.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -459,7 +461,6 @@ const {
   loadPdf,
   preloadAdjacentDocuments,
   cleanup: cleanupPdf,
-  getCacheStats,
 } = usePdfViewer();
 
 // Page Visibility composable (for tracking visible pages)
@@ -1034,19 +1035,6 @@ onBeforeUnmount(() => {
 /* Left: Thumbnail panel */
 .thumbnail-panel {
   width: 200px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  margin-right: 0;
-  transition: width 0.3s ease-out, margin-right 0.3s ease-out; /* Fast start, slow end */
-}
-
-.thumbnail-panel--collapsed {
-  width: 0;
-  min-width: 0;
-  overflow: hidden;
-  margin-right: -24px; /* Offset the gap when collapsed */
-  transition: width 0.3s ease-out, margin-right 0.3s ease-out; /* Fast start, slow end */
 }
 
 .thumbnail-card {
@@ -1064,15 +1052,6 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: hidden;
   min-height: 0;
-  opacity: 1;
-  transform: scale(1);
-  transform-origin: left center;
-  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-.thumbnail-panel--collapsed .thumbnail-content {
-  opacity: 0;
-  transform: scale(0.95);
 }
 
 .thumbnail-title {
@@ -1104,9 +1083,6 @@ onBeforeUnmount(() => {
 /* Right: File metadata panel */
 .metadata-panel {
   width: 350px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .document-nav-panel {
@@ -1152,46 +1128,68 @@ onBeforeUnmount(() => {
   align-items: center !important;
   justify-content: center !important;
   border: none !important;
+  background: transparent !important;
   cursor: pointer !important;
   color: white !important;
 }
 
-/* Flat and illuminated when thumbnails are visible */
+/* Green glow when thumbnails are visible (on) */
 .thumbnail-toggle-btn--visible {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), inset 0 0 12px rgba(255, 255, 255, 0.15) !important;
-  transform: none !important;
+  filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.8)) drop-shadow(0 0 16px rgba(76, 175, 80, 0.6)) drop-shadow(0 0 24px rgba(76, 175, 80, 0.4)) !important;
 }
 
 .thumbnail-toggle-btn--visible:hover {
-  background-color: rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.2) !important;
+  background-color: transparent !important;
+  filter: drop-shadow(0 0 12px rgba(76, 175, 80, 1)) drop-shadow(0 0 20px rgba(76, 175, 80, 0.8)) drop-shadow(0 0 30px rgba(76, 175, 80, 0.6)) !important;
 }
 
-/* 3D and elevated when thumbnails are hidden */
+/* Red glow when thumbnails are hidden (off) */
 .thumbnail-toggle-btn--hidden {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 8px rgba(0, 0, 0, 0.15),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.1) !important;
-  transform: translateY(-1px) !important;
+  filter: drop-shadow(0 0 8px rgba(244, 67, 54, 0.8)) drop-shadow(0 0 16px rgba(244, 67, 54, 0.6)) drop-shadow(0 0 24px rgba(244, 67, 54, 0.4)) !important;
 }
 
 .thumbnail-toggle-btn--hidden:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 
-    0 3px 6px rgba(0, 0, 0, 0.25),
-    0 6px 12px rgba(0, 0, 0, 0.2),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-2px) !important;
+  background-color: transparent !important;
+  filter: drop-shadow(0 0 12px rgba(244, 67, 54, 1)) drop-shadow(0 0 20px rgba(244, 67, 54, 0.8)) drop-shadow(0 0 30px rgba(244, 67, 54, 0.6)) !important;
 }
 
-.thumbnail-toggle-btn--hidden:active {
-  transform: translateY(0) !important;
-  box-shadow: 
-    0 1px 2px rgba(0, 0, 0, 0.15),
-    inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+/* Metadata toggle button styles */
+.metadata-toggle-btn {
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  color: white !important;
+}
+
+/* Green glow when metadata is visible (on) */
+.metadata-toggle-btn--visible {
+  filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.8)) drop-shadow(0 0 16px rgba(76, 175, 80, 0.6)) drop-shadow(0 0 24px rgba(76, 175, 80, 0.4)) !important;
+}
+
+.metadata-toggle-btn--visible:hover {
+  background-color: transparent !important;
+  filter: drop-shadow(0 0 12px rgba(76, 175, 80, 1)) drop-shadow(0 0 20px rgba(76, 175, 80, 0.8)) drop-shadow(0 0 30px rgba(76, 175, 80, 0.6)) !important;
+}
+
+/* Red glow when metadata is hidden (off) */
+.metadata-toggle-btn--hidden {
+  filter: drop-shadow(0 0 8px rgba(244, 67, 54, 0.8)) drop-shadow(0 0 16px rgba(244, 67, 54, 0.6)) drop-shadow(0 0 24px rgba(244, 67, 54, 0.4)) !important;
+}
+
+.metadata-toggle-btn--hidden:hover {
+  background-color: transparent !important;
+  filter: drop-shadow(0 0 12px rgba(244, 67, 54, 1)) drop-shadow(0 0 20px rgba(244, 67, 54, 0.8)) drop-shadow(0 0 30px rgba(244, 67, 54, 0.6)) !important;
 }
 
 .document-indicator {
@@ -1238,6 +1236,7 @@ onBeforeUnmount(() => {
 }
 
 .page-jump-input[type='number'] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 
@@ -1251,10 +1250,6 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   flex: 1;
   overflow-y: auto;
-}
-
-.metadata-box--collapsed {
-  overflow-y: hidden;
 }
 
 .metadata-card {

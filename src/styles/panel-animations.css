@@ -1,0 +1,106 @@
+/**
+ * Shared animation styles for collapsible panels (thumbnails and metadata)
+ * DRY principle: Both panels use the same animation logic
+ */
+
+/* Keyframe animations for panel opening and closing */
+@keyframes panelOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
+@keyframes panelClose {
+  from {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateX(-10px);
+  }
+}
+
+@keyframes panelOpenRight {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
+@keyframes panelCloseRight {
+  from {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateX(10px);
+  }
+}
+
+/* Base panel container with width transition */
+.panel-container {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width, margin-right;
+}
+
+/* Collapsed state - shrink to zero width */
+.panel-container--collapsed {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  margin-right: -24px; /* Offset the gap when collapsed */
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Panel content with fade, scale, and slide animation (default: left-aligned) */
+.panel-content {
+  opacity: 1;
+  transform: scale(1) translateX(0);
+  transform-origin: left center;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+/* Opening animation for left-aligned panels - triggers when panel expands */
+.panel-container:not(.panel-container--collapsed) .panel-content {
+  animation: panelOpen 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Right-aligned panel content (for metadata panel on the right side) */
+.panel-content--right {
+  transform-origin: right center;
+}
+
+/* Opening animation for right-aligned panels - triggers when panel expands */
+.panel-container:not(.panel-container--collapsed) .panel-content--right {
+  animation: panelOpenRight 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Closing animation for left-aligned panels - triggers when panel collapses */
+.panel-container--collapsed .panel-content {
+  opacity: 0;
+  transform: scale(0.9) translateX(-10px);
+  animation: panelClose 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Closing animation for right-aligned panels - triggers when panel collapses */
+.panel-container--collapsed .panel-content--right {
+  opacity: 0;
+  transform: scale(0.9) translateX(10px);
+  animation: panelCloseRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
