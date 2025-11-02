@@ -67,7 +67,6 @@ The PDF metadata extraction (`usePdfMetadata.extractMetadata()`) only happens wh
 
 ## Potential Next Steps
 
-### Option A: Pre-extract PDF Metadata During Background Pre-load (RECOMMENDED)
 After PDF pre-load completes, extract and cache the PDF metadata:
 
 ```javascript
@@ -88,60 +87,12 @@ const pdfMetadata = await extractMetadata(pdfDocument);
 - Slightly more CPU usage during pre-load (background, won't affect UX)
 - Need to handle case where metadata extraction fails
 
-### Option B: Accept Current Performance
-Keep current state where forward navigation is 110-235ms, backward is 39ms.
-
-**Pros**:
-- No additional work needed
-- 110-235ms is still faster than original 280-320ms
-- Stable implementation
-
-**Cons**:
-- Doesn't meet <50ms goal consistently
-- Inconsistent UX (varies by navigation direction)
-
-### Option C: Investigate Rendering Performance
-Focus on the 831ms first-navigation rendering spike.
-
-**Pros**:
-- Addresses worst-case performance
-- May improve overall perceived speed
-
-**Cons**:
-- Likely Vue.js initialization overhead (hard to optimize)
-- Only affects first navigation, not subsequent ones
-- Lower ROI than fixing PDF metadata pre-load
-
----
-
 ## Performance Summary
 
-| Scenario | Original | After Attempt #1 | After Attempt #3 | After Attempt #4 | After Attempt #5 |
-|----------|----------|------------------|------------------|------------------|------------------|
-| First view | ~300ms | ~300ms | ~300ms | ~300ms | ~300ms |
-| Forward nav (pre-loaded) | ~280-320ms | ~280-320ms | **220-294ms** | **188-255ms** (metadata overwritten) OR **10-12ms** (rare) | **110-235ms** (PDF metadata extraction) ✅ |
-| Backward nav (fully cached) | ~280-320ms | ~280-320ms | **13ms** ✅ | **10-12ms** ✅ (when metadata survives) | **39ms** ✅ (consistent) |
-| Best case (all cached) | N/A | N/A | N/A | **10-12ms** (rare) | **39ms** ✅ (when revisiting) |
-
-**Improvement**: Metadata caching now works consistently! Forward navigation improved to 110-235ms (was 280-320ms). Backward navigation consistently 39ms. To achieve <50ms goal in all directions, need to pre-extract PDF metadata during background pre-load.
-
----
-
-## Recommended Action
-
-Implement **Option A**: Pre-extract PDF metadata during background pre-load.
-
-### Implementation Details
-Modify `ViewDocument.vue` `preloadAdjacentDocuments()` to extract and cache PDF metadata after PDF pre-load completes:
-
-1. After PDF document pre-loads successfully
-2. Call `extractMetadata(pdfDocument)` to extract PDF metadata
-3. Update cache entry to include the extracted PDF metadata
-4. Handle extraction failures gracefully (non-blocking)
-
-This will complete the caching pipeline and achieve consistent <50ms navigation for all pre-loaded documents, meeting the original performance goal.
-
-### Expected Outcome
-- Forward navigation: **39-50ms** (all caches hit)
-- Backward navigation: **39ms** (already achieved)
-- Goal achieved: ✅ Consistent instant navigation in all directions
+| Attempt | First View | Forward Nav (Pre-loaded) | Backward Nav (Fully Cached) | Best Case (All Cached) |
+|---------|------------|--------------------------|----------------------------|------------------------|
+| **Original** | ~300ms | ~280-320ms | ~280-320ms | N/A |
+| **After Attempt #1**<br>Lazy URL fetching | ~300ms | ~280-320ms | ~280-320ms | N/A |
+| **After Attempt #3**<br>Metadata cache + race fix | ~300ms | **220-294ms** | **13ms** ✅ | N/A |
+| **After Attempt #4**<br>Pre-load metadata (race condition) | ~300ms | **188-255ms** (metadata overwritten)<br>OR **10-12ms** (rare) | **10-12ms** ✅<br>(when metadata survives) | **10-12ms** (rare) |
+| **After Attempt #5**<br>Cache entry preservation | ~300ms | **110-235ms** ✅<br>(PDF metadata extraction) | **39ms** ✅<br>(consistent) | **39ms** ✅<br>(when revisiting) |
