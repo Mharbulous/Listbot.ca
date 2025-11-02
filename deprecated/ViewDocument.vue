@@ -335,7 +335,7 @@ const getDocumentDownloadUrl = async (documentId) => {
   const extension = doc.displayName.split('.').pop() || 'pdf';
 
   // Construct storage path using file hash (documentId) and extension
-  const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+  const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
   const storage = getStorage();
   const fileRef = storageRef(storage, storagePath);
 
@@ -399,7 +399,7 @@ const fetchAndCacheMetadata = async (documentId) => {
 
     // Fetch storage metadata
     const extension = displayName.split('.').pop() || 'pdf';
-    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
     const fileRef = storageRef(storage, storagePath);
     const storageMetadata_fetched = await getMetadata(fileRef);
 
@@ -625,7 +625,7 @@ const fetchStorageMetadata = async (firmId, displayName) => {
     const extension = displayName.split('.').pop() || 'pdf';
 
     // Build storage path (same format as used in fileProcessingService)
-    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
     const fileRef = storageRef(storage, storagePath);
 
     // Get metadata from Firebase Storage (only if not already loaded from cache)
@@ -769,7 +769,7 @@ const loadEvidence = async () => {
       console.info('📋 Metadata cache MISS', { documentId: fileHash.value });
 
       // Fetch single evidence document from Firestore
-      // Path: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}
+      // Path: /firms/{firmId}/matter/{matterId}/evidence/{fileHash}
       const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
       const evidenceSnap = await getDoc(evidenceRef);
 
@@ -809,7 +809,7 @@ const loadEvidence = async () => {
 
       // Fetch Firebase Storage metadata (expensive network call)
       const extension = displayName.split('.').pop() || 'pdf';
-      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
       const metadata = await getMetadata(fileRef);
       storageMetadata.value = metadata;

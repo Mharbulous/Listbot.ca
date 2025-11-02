@@ -30,7 +30,7 @@ For 223 documents, the current implementation requires **2,230 Firestore reads**
 ### Current Firestore Document Structure
 
 ```
-/firms/{firmId}/matters/{matterId}/evidence/{fileHash}
+/firms/{firmId}/matter/{matterId}/evidence/{fileHash}
 ├── Evidence Document Fields:
 │   ├── sourceID: string (metadataHash)
 │   ├── fileSize: number
@@ -105,7 +105,7 @@ For each of ~7-50 system categories:
 ### Optimized Evidence Document Structure
 
 ```javascript
-/firms/{firmId}/matters/{matterId}/evidence/{fileHash}
+/firms/{firmId}/matter/{matterId}/evidence/{fileHash}
 {
   // ===== EXISTING FIELDS (unchanged) =====
   sourceID: string,                    // Primary metadataHash for display

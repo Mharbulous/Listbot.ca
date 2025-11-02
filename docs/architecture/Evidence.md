@@ -3,12 +3,12 @@
 ## Database Path
 
 ```
-/firms/{firmId}/matters/general/evidence/{fileHash}
+/firms/{firmId}/matter/general/evidence/{fileHash}
 ```
 
 **IMPORTANT**: Document ID is the BLAKE3 hash of the file content (32 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
 
-**Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
+**Note**: All collections are hardcoded to use `/matter/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
 
 ## Document Schema
 
@@ -85,7 +85,7 @@
 ### Path Structure
 
 ```
-/firms/{firmId}/matters/general/evidence/{evidenceId}/sourceMetadata/{metadataHash}
+/firms/{firmId}/matter/general/evidence/{evidenceId}/sourceMetadata/{metadataHash}
 ```
 
 ### Purpose
@@ -118,7 +118,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ### Path Structure
 
 ```
-/firms/{firmId}/matters/general/evidence/{evidenceId}/tags/{categoryId}
+/firms/{firmId}/matter/general/evidence/{evidenceId}/tags/{categoryId}
 ```
 
 ### Tag Document Schema
@@ -163,7 +163,7 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 ## Firestore Security Rules
 
 ```javascript
-match /firms/{firmId}/matters/general/evidence/{fileHash} {
+match /firms/{firmId}/matter/general/evidence/{fileHash} {
   // Evidence document access
   // Note: fileHash is the document ID (BLAKE3, 32 hex chars)
   allow read: if request.auth != null &&
@@ -396,7 +396,7 @@ Collection: tags
 
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence
 - **NEVER** store file content in Firestore
-- **USE** fileHash (document ID) to locate files in Storage: `firms/{firmId}/matters/general/uploads/{fileHash}.{extension}`
+- **USE** fileHash (document ID) to locate files in Storage: `firms/{firmId}/matter/general/uploads/{fileHash}.{extension}`
 - **ALWAYS** verify metadata hash exists in sourceMetadata collection
 - **ACCESS** file using: `evidence.id` (which is the fileHash)
 

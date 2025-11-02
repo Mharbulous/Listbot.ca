@@ -43,7 +43,7 @@ Global collection containing predefined system categories that should exist for 
 - `Author` - Open List for document authors
 - `Custodian` - Open List for document custodians
 
-### Matter-Specific Categories Collection: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
+### Matter-Specific Categories Collection: `/firms/{firmId}/matter/{matterId}/categories/{categoryId}`
 
 Each matter has its own categories collection that includes both system categories (copied from `/systemcategories`) and custom categories:
 
@@ -128,7 +128,7 @@ Each matter has its own categories collection that includes both system categori
 
 1. **Global Seed**: System categories are defined in `/systemcategories` collection (one-time setup)
 2. **Matter Initialization**: When a user accesses `/organizer/categories`, the app checks if the matter has all system categories
-3. **Auto-Copy**: Missing system categories are automatically copied from `/systemcategories` to `/firms/{firmId}/matters/{matterId}/categories/`
+3. **Auto-Copy**: Missing system categories are automatically copied from `/systemcategories` to `/firms/{firmId}/matter/{matterId}/categories/`
 4. **Reserved IDs**: System categories use reserved document IDs (e.g., `DocumentDate`) instead of auto-generated IDs
 
 ### System Category Behavior
@@ -161,7 +161,7 @@ Each matter has its own categories collection that includes both system categori
 
 All categories (system and custom) are stored at the matter level:
 
-- Path: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
+- Path: `/firms/{firmId}/matter/{matterId}/categories/{categoryId}`
 - Default matter is `general` for backward compatibility
 - Each matter has independent category data
 - System categories are copied to each matter during initialization

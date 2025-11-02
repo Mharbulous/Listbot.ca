@@ -35,7 +35,7 @@ Every user in the system belongs to a firm. Users without explicit firm membersh
 
 ### Benefits
 
-- **Consistent storage patterns**: All files follow `/firms/{firmId}/matters/{matterId}/...`
+- **Consistent storage patterns**: All files follow `/firms/{firmId}/matter/{matterId}/...`
 - **No special cases**: Same logic works for solo users and firms
 - **Future-proof**: Easy transition from solo → firm via invitations
 - **Simplified security rules**: One pattern for all users
@@ -423,7 +423,7 @@ service cloud.firestore {
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /firms/{firmId}/matters/{matterId}/{fileName} {
+    match /firms/{firmId}/matter/{matterId}/{fileName} {
       allow read, write: if request.auth != null &&
                            request.auth.uid == firmId;  // Solo firm
     }

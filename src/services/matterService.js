@@ -18,7 +18,7 @@ import { db } from './firebase.js';
  * MatterService - Manages matter/case operations for firm-based data
  *
  * All matters are scoped to a firm following the path:
- * /firms/{firmId}/matters/{matterId}
+ * /firms/{firmId}/matter/{matterId}
  *
  * For solo users: firmId === userId
  */

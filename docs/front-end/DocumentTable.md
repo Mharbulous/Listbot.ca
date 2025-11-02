@@ -27,7 +27,7 @@ These columns are hardcoded in the component and display file metadata that is n
 - **Source Folder** - Original folder path from the source system
 - **Multiple Source Files** - Indicator if multiple source files deduplicated to this evidence
 
-**Data Source**: Evidence documents at `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}` and their `sourceMetadata` subcollection.
+**Data Source**: Evidence documents at `/firms/{firmId}/matter/{matterId}/evidence/{fileHash}` and their `sourceMetadata` subcollection.
 
 #### 2. System Categories
 
@@ -56,7 +56,7 @@ Global categories defined by developers and used across all firms and matters.
 
 Categories common to all matters within a firm. These are stored in the special "general" matter.
 
-**Storage Path**: `/firms/{firmId}/matters/general/categories/{categoryId}`
+**Storage Path**: `/firms/{firmId}/matter/general/categories/{categoryId}`
 
 **Characteristics**:
 - Created by firm users/admins
@@ -71,7 +71,7 @@ Categories common to all matters within a firm. These are stored in the special 
 
 Categories specific to a single matter.
 
-**Storage Path**: `/firms/{firmId}/matters/{matterId}/categories/{categoryId}`
+**Storage Path**: `/firms/{firmId}/matter/{matterId}/categories/{categoryId}`
 
 **Characteristics**:
 - Created for a specific matter only
@@ -91,12 +91,12 @@ System Categories (Global)
     └── Copied to matters on initialization
 
 Firm Categories (Firm-wide)
-└── /firms/{firmId}/matters/general/categories/{categoryId}
+└── /firms/{firmId}/matter/general/categories/{categoryId}
     ├── System categories (isSystemCategory: true) - copied from /systemcategories
     └── Custom firm categories (isSystemCategory: false/undefined)
 
 Matter Categories (Matter-specific)
-└── /firms/{firmId}/matters/{matterId}/categories/{categoryId}
+└── /firms/{firmId}/matter/{matterId}/categories/{categoryId}
     ├── System categories (isSystemCategory: true) - copied from /systemcategories
     └── Custom matter categories (isSystemCategory: false/undefined)
 ```
@@ -131,7 +131,7 @@ All columns support:
 
 Category columns display tag values from the evidence document's tags subcollection:
 
-**Tags Storage Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/tags/{categoryId}`
+**Tags Storage Path**: `/firms/{firmId}/matter/{matterId}/evidence/{fileHash}/tags/{categoryId}`
 
 **Display Logic**:
 - If tag exists: Display the `tagName` value
@@ -150,8 +150,8 @@ Category columns display tag values from the evidence document's tags subcollect
 
 ### What's Not Yet Implemented
 
-⚠️ **Firm Categories**: Fetching and displaying columns from `/firms/{firmId}/matters/general/categories`
-⚠️ **Matter Categories**: Fetching and displaying columns from `/firms/{firmId}/matters/{matterId}/categories`
+⚠️ **Firm Categories**: Fetching and displaying columns from `/firms/{firmId}/matter/general/categories`
+⚠️ **Matter Categories**: Fetching and displaying columns from `/firms/{firmId}/matter/{matterId}/categories`
 ⚠️ **Category Hierarchy Logic**: Determining which categories take precedence when same category exists at multiple levels
 
 ## Data Flow
@@ -161,7 +161,7 @@ Category columns display tag values from the evidence document's tags subcollect
 1. User navigates to `/#/cloud`
 2. `Cloud.vue` checks authentication (authStore) and matter selection (matterViewStore)
 3. System categories fetched from `/systemcategories` (sorted alphabetically by name)
-4. Evidence documents fetched from `/firms/{firmId}/matters/{matterId}/evidence`
+4. Evidence documents fetched from `/firms/{firmId}/matter/{matterId}/evidence`
 5. For each evidence document:
    - Fetch `sourceMetadata` subcollection for built-in column data
    - Fetch `tags` subcollection for system category tag values
@@ -170,8 +170,8 @@ Category columns display tag values from the evidence document's tags subcollect
 ### Planned Flow (Future Implementation)
 
 1-3. Same as current flow
-4. **Firm categories** fetched from `/firms/{firmId}/matters/general/categories`
-5. **Matter categories** fetched from `/firms/{firmId}/matters/{matterId}/categories`
+4. **Firm categories** fetched from `/firms/{firmId}/matter/general/categories`
+5. **Matter categories** fetched from `/firms/{firmId}/matter/{matterId}/categories`
 6. All categories (system, firm, matter) merged into `allColumns` computed property
 7. Evidence documents and tags fetched as in current flow
 8. Data rendered with all category types available as columns

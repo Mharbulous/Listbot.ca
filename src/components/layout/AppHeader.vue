@@ -164,7 +164,7 @@ const pageTitle = computed(() => {
 
 const isOnMatterDetailPage = computed(() => {
   const matterId = matterViewStore.selectedMatter?.id;
-  return matterId ? route.path === `/matters/${matterId}` : false;
+  return matterId ? route.path === `/matter/${matterId}` : false;
 });
 
 const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
@@ -190,7 +190,7 @@ function clearMatter() {
 function navigateToMatter() {
   const matterId = matterViewStore.selectedMatter?.id;
   if (matterId) {
-    router.push(`/matters/${matterId}`);
+    router.push(`/matter/${matterId}`);
   }
 }
 

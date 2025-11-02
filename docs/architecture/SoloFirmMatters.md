@@ -97,7 +97,7 @@ The Solo Firm Architecture is a design pattern that treats solo users as single-
 
 **Purpose**: All firm data lives in flat collections under the firm
 
-### Matters Collection: `/firms/{firmId}/matters/{matterId}`
+### Matters Collection: `/firms/{firmId}/matter/{matterId}`
 
 **Reserved Matter ID**: Every firm has a reserved `matterId` called **"general"** where the firm stores general information about the firm, company policies, and non-client-specific documents.
 

@@ -44,7 +44,7 @@ export function useDocumentPreloader(
 
     // Get file extension and construct storage path
     const extension = doc.displayName.split('.').pop() || 'pdf';
-    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+    const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
     const storage = getStorage();
     const fileRef = storageRef(storage, storagePath);
 
@@ -104,7 +104,7 @@ export function useDocumentPreloader(
 
       // Fetch storage metadata
       const extension = displayName.split('.').pop() || 'pdf';
-      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+      const storagePath = `firms/${firmId}/matter/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
       const fileRef = storageRef(storage, storagePath);
       const storageMetadata_fetched = await getMetadata(fileRef);
 

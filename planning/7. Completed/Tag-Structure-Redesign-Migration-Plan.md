@@ -394,7 +394,7 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // Original Metadata Record
-// firms/firm-abc-123/matters/general/sourceMetadata/meta456def789abc123456789abc123456789abc123456789abc
+// firms/firm-abc-123/matter/general/sourceMetadata/meta456def789abc123456789abc123456789abc123456789abc
 {
   originalName: 'Service_Agreement_ClientABC_2025.pdf',
   lastModified: 1704067200000,  // 2025-01-01 00:00:00
@@ -404,7 +404,7 @@ With all data deleted, we can implement the optimal structure directly:
 }
 
 // Upload Event Record
-// firms/firm-abc-123/matters/general/uploadEvents/evidence-doc-789
+// firms/firm-abc-123/matter/general/uploadEvents/evidence-doc-789
 {
   eventType: 'upload_success',
   timestamp: Timestamp('2025-08-31T10:00:00Z'),
@@ -420,9 +420,9 @@ With all data deleted, we can implement the optimal structure directly:
 
 ```javascript
 // Actual file storage paths using content-based addressing
-'/firms/firm-abc-123/matters/general/uploads/a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890.pdf';
-'/firms/firm-abc-123/matters/matter-client-001/uploads/b2c3d4e5f67890a1bcdef234567890a1bcdef234567890a1bcdef234567890a1.docx';
-'/firms/solo-user-789/matters/general/uploads/c3d4e5f67890a1b2cdef345678901a2bcdef345678901a2bcdef345678901a2b.jpg';
+'/firms/firm-abc-123/matter/general/uploads/a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890.pdf';
+'/firms/firm-abc-123/matter/matter-client-001/uploads/b2c3d4e5f67890a1bcdef234567890a1bcdef234567890a1bcdef234567890a1.docx';
+'/firms/solo-user-789/matter/general/uploads/c3d4e5f67890a1b2cdef345678901a2bcdef345678901a2bcdef345678901a2b.jpg';
 ```
 
 **Confidence-Based Distribution Examples:**
