@@ -35,6 +35,26 @@ export function usePdfViewer() {
   };
 
   /**
+   * Get cached metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @returns {Object|null} Cached metadata or null if not cached
+   */
+  const getCachedMetadata = (documentId) => {
+    return pdfCache.getMetadata(documentId);
+  };
+
+  /**
+   * Cache metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @param {Object} metadata - Metadata object with evidenceData, sourceVariants, storageMetadata
+   */
+  const cacheMetadata = (documentId, metadata) => {
+    pdfCache.setMetadata(documentId, metadata);
+  };
+
+  /**
    * Load PDF document from Firebase Storage URL using cache
    *
    * @param {string} documentId - Unique document identifier (file hash)
@@ -174,6 +194,8 @@ export function usePdfViewer() {
 
     // Methods
     isDocumentCached,
+    getCachedMetadata,
+    cacheMetadata,
     loadPdf,
     preloadAdjacentDocuments,
     renderPage,

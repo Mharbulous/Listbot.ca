@@ -38,6 +38,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['page-rendered']);
+
 const canvasRef = ref(null);
 const isRendering = ref(false);
 const renderError = ref(null);
@@ -83,6 +85,9 @@ const renderPageToCanvas = async () => {
     await renderTask.value.promise;
 
     LogService.debug('Page rendered to canvas successfully', { pageNumber: props.pageNumber });
+
+    // Emit event to notify parent that this page has finished rendering
+    emit('page-rendered', props.pageNumber);
   } catch (err) {
     // Ignore cancelled renders
     if (err.name === 'RenderingCancelledException') {

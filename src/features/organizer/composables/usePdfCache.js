@@ -7,7 +7,20 @@ import { LogService } from '@/services/logService.js';
  * This ensures the cache persists across navigations and component re-renders
  *
  * Cache structure: Map<documentId, CacheEntry>
- * CacheEntry: { loadingTask, pdfDocument, downloadUrl, timestamp }
+ * CacheEntry: {
+ *   loadingTask,
+ *   pdfDocument,
+ *   downloadUrl,
+ *   timestamp,
+ *   metadata: {
+ *     evidenceData,      // Firestore evidence document data
+ *     sourceVariants,    // Firestore sourceMetadata variants
+ *     storageMetadata,   // Firebase Storage metadata
+ *     displayName,       // Computed display name
+ *     selectedMetadataHash, // Selected metadata variant hash
+ *     pdfMetadata        // Extracted PDF metadata (from usePdfMetadata)
+ *   }
+ * }
  */
 const cache = shallowRef(new Map());
 
@@ -48,6 +61,42 @@ export function usePdfCache() {
 
     const entry = cache.value.get(documentId);
     return entry?.pdfDocument != null;
+  };
+
+  /**
+   * Get cached metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @returns {Object|null} Cached metadata object or null if not cached
+   */
+  const getMetadata = (documentId) => {
+    const entry = cache.value.get(documentId);
+    return entry?.metadata || null;
+  };
+
+  /**
+   * Set metadata for a document (creates cache entry if needed)
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @param {Object} metadata - Metadata object with evidenceData, sourceVariants, storageMetadata
+   */
+  const setMetadata = (documentId, metadata) => {
+    const entry = cache.value.get(documentId);
+
+    if (entry) {
+      // Update existing entry
+      entry.metadata = metadata;
+      entry.timestamp = Date.now(); // Update LRU timestamp
+    } else {
+      // Create new cache entry with metadata only
+      cache.value.set(documentId, {
+        loadingTask: null,
+        pdfDocument: null,
+        downloadUrl: null,
+        timestamp: Date.now(),
+        metadata,
+      });
+    }
   };
 
   /**
@@ -129,17 +178,16 @@ export function usePdfCache() {
 
       const pdfDocument = await loadingTask.promise;
 
-      LogService.info('PDF document loaded successfully', {
-        documentId,
-        totalPages: pdfDocument.numPages,
-      });
+      // Get existing entry to preserve metadata (if pre-loaded)
+      const existingEntry = cache.value.get(documentId);
 
-      // Add to cache
+      // Add to cache - preserve metadata if it was pre-loaded
       const entry = {
         loadingTask,
         pdfDocument,
         downloadUrl,
         timestamp: Date.now(),
+        metadata: existingEntry?.metadata || null,
       };
 
       cache.value.set(documentId, entry);
@@ -301,6 +349,8 @@ export function usePdfCache() {
     // Methods
     hasDocument,
     getDocument,
+    getMetadata,
+    setMetadata,
     preloadAdjacentDocuments,
     clearCache,
     getCacheStats,

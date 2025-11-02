@@ -171,6 +171,7 @@
               :width="883.2"
               :height="1056"
               class="pdf-page"
+              @page-rendered="handleFirstPageRendered"
             />
           </div>
 
@@ -458,6 +459,8 @@ const {
   loadingDocument,
   loadError: pdfLoadError,
   isDocumentCached,
+  getCachedMetadata,
+  cacheMetadata,
   loadPdf,
   preloadAdjacentDocuments,
   cleanup: cleanupPdf,
@@ -621,6 +624,27 @@ const goToLastDocument = () => {
 };
 
 /**
+ * Handle first page render completion
+ * Tracks total time from navigation start to first page visible on screen
+ */
+const handleFirstPageRendered = (pageNumber) => {
+  // Only track timing for page 1 and only if we have a navigation start time
+  if (pageNumber !== 1 || navigationStartTime.value === null) {
+    return;
+  }
+
+  const elapsedMs = performance.now() - navigationStartTime.value;
+  LogService.performance('🎨 First page rendered on screen', elapsedMs, {
+    documentId: fileHash.value,
+    milliseconds: elapsedMs.toFixed(1),
+    seconds: (elapsedMs / 1000).toFixed(3),
+  });
+
+  // Reset navigation timer
+  navigationStartTime.value = null;
+};
+
+/**
  * Get download URL for a document by its ID
  * Used for pre-loading adjacent documents
  *
@@ -651,6 +675,86 @@ const getDocumentDownloadUrl = async (documentId) => {
 
   // Get download URL
   return await getDownloadURL(fileRef);
+};
+
+/**
+ * Fetch and cache metadata for a document (for pre-loading)
+ * Used during background pre-loading of adjacent documents
+ *
+ * @param {string} documentId - Document ID (file hash)
+ */
+const fetchAndCacheMetadata = async (documentId) => {
+  try {
+    const firmId = authStore.currentFirm;
+    const matterId = matterStore.currentMatterId;
+
+    if (!firmId || !matterId || !documentId) {
+      LogService.warn('Cannot pre-load metadata: missing firm/matter/document ID', { documentId });
+      return;
+    }
+
+    // Skip if metadata is already cached
+    const cached = getCachedMetadata(documentId);
+    if (cached) {
+      LogService.debug('Metadata already cached, skipping pre-load', { documentId });
+      return;
+    }
+
+    LogService.debug('Pre-loading metadata for document', { documentId });
+
+    // Fetch evidence document from Firestore
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', documentId);
+    const evidenceSnap = await getDoc(evidenceRef);
+
+    if (!evidenceSnap.exists()) {
+      LogService.warn('Evidence document not found during pre-load', { documentId });
+      return;
+    }
+
+    const evidenceData = evidenceSnap.data();
+
+    // Fetch sourceMetadata variants
+    const evidenceService = new EvidenceService(firmId, matterId);
+    const variants = await evidenceService.getAllSourceMetadata(documentId);
+
+    // Compute displayName and selectedMetadataHash
+    const currentMetadataHash = evidenceData.sourceID;
+    const currentVariant = variants.find((v) => v.metadataHash === currentMetadataHash);
+
+    let displayName = 'Unknown File';
+    let selectedMetadataHash_local = currentMetadataHash;
+
+    if (currentVariant) {
+      displayName = currentVariant.sourceFileName || 'Unknown File';
+    } else if (variants.length > 0) {
+      displayName = variants[0].sourceFileName || 'Unknown File';
+      selectedMetadataHash_local = variants[0].metadataHash;
+    }
+
+    // Fetch storage metadata
+    const extension = displayName.split('.').pop() || 'pdf';
+    const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${documentId}.${extension.toLowerCase()}`;
+    const fileRef = storageRef(storage, storagePath);
+    const storageMetadata_fetched = await getMetadata(fileRef);
+
+    // Cache metadata (PDF will be cached separately by preloadAdjacentDocuments)
+    cacheMetadata(documentId, {
+      evidenceData,
+      sourceVariants: variants,
+      storageMetadata: storageMetadata_fetched,
+      displayName,
+      selectedMetadataHash: selectedMetadataHash_local,
+      pdfMetadata: null, // Will be populated when PDF metadata is extracted
+    });
+
+    LogService.info('📋 Pre-loaded and cached metadata', { documentId });
+  } catch (err) {
+    // Non-blocking - pre-load failures should not affect current navigation
+    LogService.warn('Failed to pre-load metadata (non-blocking)', {
+      documentId,
+      error: err.message,
+    });
+  }
 };
 
 // Compute earlier copy notification message
@@ -770,9 +874,11 @@ const fetchStorageMetadata = async (firmId, displayName) => {
     const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
     const fileRef = storageRef(storage, storagePath);
 
-    // Get metadata from Firebase Storage
-    const metadata = await getMetadata(fileRef);
-    storageMetadata.value = metadata;
+    // Get metadata from Firebase Storage (only if not already loaded from cache)
+    if (!storageMetadata.value) {
+      const metadata = await getMetadata(fileRef);
+      storageMetadata.value = metadata;
+    }
 
     // Extract PDF embedded metadata if this is a PDF file
     if (displayName?.toLowerCase().endsWith('.pdf')) {
@@ -786,18 +892,43 @@ const fetchStorageMetadata = async (firmId, displayName) => {
         await loadPdf(fileHash.value, downloadURL);
       }
 
-      // Calculate navigation timing if this was triggered by navigation
+      // Calculate PDF load timing if this was triggered by navigation
+      // Note: This measures PDF load into memory, NOT render to screen
+      // Render timing is measured separately in handleFirstPageRendered()
       if (navigationStartTime.value !== null) {
         const elapsedMs = performance.now() - navigationStartTime.value;
-        LogService.performance('Document navigation completed', elapsedMs, {
+        LogService.performance('📦 PDF document loaded into memory', elapsedMs, {
           documentId: fileHash.value,
+          milliseconds: elapsedMs.toFixed(1),
           seconds: (elapsedMs / 1000).toFixed(3),
+          note: 'First page render timing logged separately'
         });
-        navigationStartTime.value = null; // Reset for next navigation
+        // Note: Do NOT reset navigationStartTime here - we need it for render timing
       }
 
-      // Extract metadata from the already-loaded PDF (no duplicate load)
-      await extractMetadata(fileHash.value, displayName, pdfDocument.value);
+      // Check if PDF metadata is already cached
+      const cachedMetadata = getCachedMetadata(fileHash.value);
+      if (cachedMetadata?.pdfMetadata) {
+        // Use cached PDF metadata (skip extraction)
+        LogService.info('📄 PDF metadata cache HIT', { documentId: fileHash.value });
+        // Note: pdfMetadata reactive state is managed by usePdfMetadata composable
+        // We need to populate it from cache manually
+        Object.assign(pdfMetadata, cachedMetadata.pdfMetadata);
+      } else {
+        // Extract metadata from the already-loaded PDF
+        await extractMetadata(fileHash.value, displayName, pdfDocument.value);
+
+        // Cache all metadata now that PDF is loaded and metadata extracted
+        cacheMetadata(fileHash.value, {
+          evidenceData: evidence.value,
+          sourceVariants: sourceMetadataVariants.value,
+          storageMetadata: storageMetadata.value,
+          displayName: evidence.value.displayName,
+          selectedMetadataHash: selectedMetadataHash.value,
+          pdfMetadata: { ...pdfMetadata }, // Clone to avoid reactivity issues
+        });
+        LogService.info('✅ Cached metadata + PDF + PDF metadata', { documentId: fileHash.value });
+      }
 
       LogService.info('Current document ready for rendering, starting background pre-load', {
         currentDocId: fileHash.value,
@@ -805,12 +936,24 @@ const fetchStorageMetadata = async (firmId, displayName) => {
         nextDocId: nextDocumentId.value,
       });
 
-      // Pre-load adjacent documents in background (non-blocking)
+      // Pre-load adjacent documents (PDF + metadata) in background (non-blocking)
       preloadAdjacentDocuments(
         previousDocumentId.value,
         nextDocumentId.value,
         getDocumentDownloadUrl
       );
+
+      // Pre-load metadata for adjacent documents (runs in parallel with PDF pre-load)
+      if (previousDocumentId.value) {
+        fetchAndCacheMetadata(previousDocumentId.value).catch(() => {
+          // Errors already logged in fetchAndCacheMetadata
+        });
+      }
+      if (nextDocumentId.value) {
+        fetchAndCacheMetadata(nextDocumentId.value).catch(() => {
+          // Errors already logged in fetchAndCacheMetadata
+        });
+      }
     }
   } catch (err) {
     console.error('Failed to load storage metadata:', err);
@@ -848,45 +991,92 @@ const loadEvidence = async () => {
       throw new Error('No file hash provided');
     }
 
-    // Fetch single evidence document from Firestore
-    // Path: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}
-    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
-    const evidenceSnap = await getDoc(evidenceRef);
+    // Check metadata cache first to avoid network calls
+    const cachedMetadata = getCachedMetadata(fileHash.value);
 
-    if (!evidenceSnap.exists()) {
-      throw new Error('Document not found');
+    let evidenceData;
+    let variants;
+    let displayName;
+    let selectedMetadataHash_local;
+    let storageMetadata_cached;
+
+    if (cachedMetadata) {
+      // ✅ CACHE HIT - Use cached metadata (instant, no network calls)
+      LogService.info('📋 Metadata cache HIT', { documentId: fileHash.value });
+
+      evidenceData = cachedMetadata.evidenceData;
+      variants = cachedMetadata.sourceVariants;
+      displayName = cachedMetadata.displayName;
+      selectedMetadataHash_local = cachedMetadata.selectedMetadataHash;
+      storageMetadata_cached = cachedMetadata.storageMetadata;
+
+      // Populate state from cache
+      sourceMetadataVariants.value = variants;
+      selectedMetadataHash.value = selectedMetadataHash_local;
+      storageMetadata.value = storageMetadata_cached;
+    } else {
+      // ❌ CACHE MISS - Fetch from Firestore/Storage
+      LogService.info('📋 Metadata cache MISS', { documentId: fileHash.value });
+
+      // Fetch single evidence document from Firestore
+      // Path: /firms/{firmId}/matters/{matterId}/evidence/{fileHash}
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash.value);
+      const evidenceSnap = await getDoc(evidenceRef);
+
+      if (!evidenceSnap.exists()) {
+        throw new Error('Document not found');
+      }
+
+      evidenceData = evidenceSnap.data();
+
+      // Fetch ALL sourceMetadata variants for this file
+      const evidenceService = new EvidenceService(firmId, matterId);
+      variants = await evidenceService.getAllSourceMetadata(fileHash.value);
+      sourceMetadataVariants.value = variants;
+
+      // Get currently selected metadata (from sourceID field)
+      const currentMetadataHash = evidenceData.sourceID;
+      selectedMetadataHash.value = currentMetadataHash;
+      selectedMetadataHash_local = currentMetadataHash;
+
+      // Find the currently selected variant
+      const currentVariant = variants.find((v) => v.metadataHash === currentMetadataHash);
+
+      let createdAt = null;
+
+      if (currentVariant) {
+        displayName = currentVariant.sourceFileName || 'Unknown File';
+        createdAt = currentVariant.sourceLastModified;
+      } else if (variants.length > 0) {
+        // Fallback to first variant if sourceID doesn't match any
+        displayName = variants[0].sourceFileName || 'Unknown File';
+        createdAt = variants[0].sourceLastModified;
+        selectedMetadataHash.value = variants[0].metadataHash;
+        selectedMetadataHash_local = variants[0].metadataHash;
+      } else {
+        displayName = 'Unknown File';
+      }
+
+      // Fetch Firebase Storage metadata (expensive network call)
+      const extension = displayName.split('.').pop() || 'pdf';
+      const storagePath = `firms/${firmId}/matters/${matterId}/uploads/${fileHash.value}.${extension.toLowerCase()}`;
+      const fileRef = storageRef(storage, storagePath);
+      const metadata = await getMetadata(fileRef);
+      storageMetadata.value = metadata;
+      storageMetadata_cached = metadata;
+
+      // Note: Metadata caching moved to fetchStorageMetadata() after PDF loads
+      // to avoid race condition with invalid cache entries
     }
 
-    const evidenceData = evidenceSnap.data();
-
-    // Fetch ALL sourceMetadata variants for this file
-    const evidenceService = new EvidenceService(firmId, matterId);
-    const variants = await evidenceService.getAllSourceMetadata(fileHash.value);
-    sourceMetadataVariants.value = variants;
-
-    // Get currently selected metadata (from sourceID field)
-    const currentMetadataHash = evidenceData.sourceID;
-    selectedMetadataHash.value = currentMetadataHash;
-
-    // Find the currently selected variant
-    const currentVariant = variants.find((v) => v.metadataHash === currentMetadataHash);
-
-    let displayName = 'Unknown File';
-    let createdAt = null;
-
-    if (currentVariant) {
-      displayName = currentVariant.sourceFileName || 'Unknown File';
-      createdAt = currentVariant.sourceLastModified;
-    } else if (variants.length > 0) {
-      // Fallback to first variant if sourceID doesn't match any
-      displayName = variants[0].sourceFileName || 'Unknown File';
-      createdAt = variants[0].sourceLastModified;
-      selectedMetadataHash.value = variants[0].metadataHash;
-    }
+    // Find createdAt from variants (common path for both cache hit/miss)
+    const currentVariant = variants.find((v) => v.metadataHash === selectedMetadataHash_local);
+    const createdAt = currentVariant?.sourceLastModified ||
+                     (variants.length > 0 ? variants[0].sourceLastModified : null);
 
     // Combine evidence and display metadata
     evidence.value = {
-      id: evidenceSnap.id,
+      id: fileHash.value,
       ...evidenceData,
       displayName,
       createdAt,
@@ -895,7 +1085,7 @@ const loadEvidence = async () => {
     // Update document view store for breadcrumb display
     documentViewStore.setDocumentName(displayName);
 
-    // Fetch Firebase Storage metadata
+    // Load PDF and extract metadata (uses PDF cache for instant load)
     await fetchStorageMetadata(firmId, displayName);
   } catch (err) {
     console.error('Failed to load evidence:', err);
