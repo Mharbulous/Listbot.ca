@@ -67,11 +67,8 @@ export function useDocumentPreloader(
       // Skip if already cached
       const cached = pdfViewer.getCachedMetadata(documentId);
       if (cached) {
-        console.debug('Metadata already cached, skipping pre-load', { documentId });
         return;
       }
-
-      console.debug('Pre-loading metadata for document', { documentId });
 
       // Fetch evidence document
       const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', documentId);
@@ -117,8 +114,6 @@ export function useDocumentPreloader(
         selectedMetadataHash: selectedMetadataHash_local,
         pdfMetadata: null, // Will be populated when PDF metadata is extracted
       });
-
-      console.info('📋 Pre-loaded and cached metadata', { documentId });
     } catch (err) {
       // Non-blocking - pre-load failures should not affect current navigation
       console.warn('Failed to pre-load metadata (non-blocking)', {
@@ -143,7 +138,6 @@ export function useDocumentPreloader(
 
       // Check if PDF is cached
       if (!pdfViewer.isDocumentCached(documentId)) {
-        console.debug('PDF not cached yet, skipping metadata extraction', { documentId });
         return;
       }
 
@@ -152,19 +146,13 @@ export function useDocumentPreloader(
 
       // Skip if PDF metadata already cached
       if (cachedMetadata?.pdfMetadata) {
-        console.debug('PDF metadata already cached, skipping extraction', { documentId });
         return;
       }
 
       // Skip if basic metadata not available
       if (!cachedMetadata?.displayName) {
-        console.debug('Basic metadata not cached yet, skipping PDF metadata extraction', {
-          documentId,
-        });
         return;
       }
-
-      console.debug('Pre-loading PDF metadata for document', { documentId });
 
       // Retrieve pre-loaded PDF from cache
       const pdfDoc = await pdfCache.getDocument(documentId, null);
@@ -177,8 +165,6 @@ export function useDocumentPreloader(
         ...cachedMetadata,
         pdfMetadata: { ...pdfMetadataComposable.pdfMetadata },
       });
-
-      console.info('📄 Pre-loaded and cached PDF metadata', { documentId });
     } catch (err) {
       // Non-blocking - pre-load failures should not affect current navigation
       console.warn('Failed to pre-load PDF metadata (non-blocking)', {
@@ -199,12 +185,6 @@ export function useDocumentPreloader(
    */
   const startBackgroundPreload = async (currentDocId, prevDocId, nextDocId) => {
     try {
-      console.info('🚀 Starting background pre-load after first page render', {
-        currentDocId,
-        previousDocId: prevDocId,
-        nextDocId: nextDocId,
-      });
-
       // Step 1: Pre-load PDFs and wait for completion
       await pdfViewer.preloadAdjacentDocuments(prevDocId, nextDocId, getDocumentDownloadUrl);
 
@@ -249,12 +229,6 @@ export function useDocumentPreloader(
           });
         });
       }
-
-      console.info('✅ Background pre-load completed', {
-        currentDocId,
-        previousDocId: prevDocId,
-        nextDocId: nextDocId,
-      });
     } catch (err) {
       // Non-blocking - pre-load failures should not affect UX
       console.warn('Background pre-load failed (non-blocking)', {

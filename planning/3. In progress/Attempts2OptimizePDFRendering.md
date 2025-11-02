@@ -94,9 +94,31 @@ onMounted(() => {
 
 ## Optimization Attempts
 
-| # | Possible Issue | Proposed Fix | Result Reported by Human Tester |
-|---|----------------|--------------|----------------------------------|
-| *No attempts yet* | *Initial analysis* | *Strategies being evaluated* | *Awaiting first implementation* |
+| # | Issue Identified | Proposed Fix | Implementation | Performance Result | Outcome |
+|---|------------------|--------------|----------------|-------------------|---------|
+| **0** | **BASELINE** (Before optimization) | N/A - Initial state | • Canvas 2D CPU rendering<br>• No hardware acceleration<br>• No pre-rendering | **Load**: 7-15ms ✅<br>**Render**: 650-750ms ❌<br>**Total**: 650-750ms<br>**Cache hit**: 87-92% ✅ | Starting point for optimization |
+| **1** | CPU-bound Canvas 2D rendering blocks main thread for 650-750ms | Enable GPU hardware acceleration via PDF.js `enableHWA` option | **Date**: 2025-11-02<br>**Files**:<br>• `usePdfCache.js:178` - Added `enableHWA: true`<br>• `ViewDocument.vue:163-179` - Enhanced perf logging<br>**Test**: 7 navigations | **Best**: 19.0ms 🎯<br>**Worst**: 931.7ms<br>**Average**: 418.4ms<br>**Success rate**: 28.6% (2/7 <50ms)<br>**Range**: 19-931ms | ⚠️ **PARTIAL SUCCESS**<br>Proved <50ms achievable but inconsistent (71.4% failed target). Renders vary wildly by page complexity. HWA unreliable for production. |
+
+### Attempt #1 - Detailed Analysis
+
+**Test Data** (7 navigations):
+```
+Navigation 1: 607.4ms  ⚠️  (cache MISS, first load)
+Navigation 2: 368.5ms  ⚠️  (cache MISS)
+Navigation 3:  19.0ms  🚀  (cache HIT) ✅ TARGET ACHIEVED
+Navigation 4: 733.9ms  ⚠️  (cache HIT, backtrack)
+Navigation 5: 931.7ms  ⚠️  (cache HIT, worst case)
+Navigation 6: 249.1ms  ⚠️  (cache HIT)
+Navigation 7:  19.1ms  🚀  (cache HIT) ✅ TARGET ACHIEVED
+```
+
+**Key Findings**:
+- ✅ Proved <50ms is achievable (19ms renders demonstrate feasibility)
+- ❌ Inconsistent: 48x variance between best (19ms) and worst (931ms)
+- ❌ Low reliability: 28.6% success rate insufficient for production
+- ⚠️ Cache hits don't guarantee fast rendering (HIT ranged from 19-931ms)
+
+**Hypothesis**: Page complexity drives performance - simple pages render instantly with HWA, complex pages don't benefit or regress. GPU acceleration activation appears unpredictable.
 
 ---
 
@@ -261,64 +283,74 @@ onMounted(() => {
 
 ---
 
-## Recommended Approach
+## Recommended Next Strategies
 
-Based on the analysis, the most promising strategies are:
+Based on Attempt #1 results, the following strategies are recommended (in priority order):
 
-### Phase 1: Quick Win - WebGL Acceleration ⭐
-- **Expected improvement**: Unknown (could be 2-10x faster, potentially 650ms → **65-325ms** or better)
-- **Risk**: Low (built-in PDF.js feature with automatic fallback)
-- **Effort**: Low (configuration change + testing)
-- **Rationale**: Free performance boost with minimal code changes. Works on all Windows 11 computers (DirectX 12 requirement ensures GPU availability). Effective with integrated graphics found in typical office computers.
+| Strategy | Rationale | Expected Improvement | Risk | Effort |
+|----------|-----------|---------------------|------|--------|
+| **3** - Pre-Render During Background Pre-Load ⭐ | **RECOMMENDED NEXT**<br>HWA proved 19ms is achievable but unreliable (28.6% success). Pre-rendering guarantees performance by rendering next page's canvas during user's 1-3 second viewing time. Swap canvas on navigation = instant. Combines with HWA for best-of-both. | **650ms → <50ms** (guaranteed)<br>Near-instant navigation regardless of page complexity. Leverages existing pre-load architecture. | **Low**<br>Natural extension of working pre-loader. Already pre-loads PDFs, just add canvas rendering step. | **Medium**<br>Modify `useDocumentPreloader.js` to pre-render canvases. Manage canvas lifecycle/memory. |
+| **2** - Low-Resolution Preview + Progressive Enhancement | If pre-rendering insufficient for rapid navigation (user moves before pre-render completes). Render 0.25x scale first (~50ms), display via CSS upscale, then swap to 1.0x when ready. Provides instant visual feedback. | **650ms → 50-100ms** initial<br>Then upgrade to full quality. Perceived instant display. | **Low**<br>Two-pass rendering well understood. Minor quality degradation during 50-100ms transition. | **Medium**<br>Add low-res render pass, CSS transform upscale, quality swap logic. |
+| **4** - Lazy Component Mounting | Only mount `PdfPageCanvas` components when entering viewport. Reduces initial overhead but doesn't help first page (always visible). Better for multi-page documents. | **Variable**<br>Reduces multi-page overhead but first page still renders at same speed (650ms). | **Low**<br>CSS `content-visibility: auto` already provides partial benefit. | **Medium**<br>Intersection Observer + `v-if` logic. Component lifecycle management. |
+| **1** - WebGL Acceleration (enableHWA) | ✅ **ALREADY ATTEMPTED**<br>Keep enabled for the 28.6% instant renders, but insufficient alone. | **Attempted: 28.6% success**<br>Best: 19ms, Worst: 931ms<br>Unreliable for production. | **Low**<br>Already implemented with fallback. | **✅ Complete**<br>Already enabled. |
+| **5** - Canvas Pooling/Reuse | Reuse canvas elements instead of recreating. Limited benefit since canvas creation is fast (~5ms). Doesn't address 650ms rendering bottleneck. | **5-10ms** improvement<br>Negligible compared to 650ms render time. | **Low**<br>Simple optimization. | **Low**<br>Cache canvas references, clear/reuse. |
 
-### Phase 2: If Needed - Pre-Render During Background Pre-Load
-- **Expected improvement**: 650ms → **<50ms** (near-instant!)
-- **Risk**: Low (extends existing pre-loading architecture)
-- **Effort**: Medium (modify pre-loader to render canvases)
-- **Rationale**: Users spend 1-3 seconds viewing a page before navigating. Use that time to render the next page's canvas in background. Can be combined with WebGL for maximum performance.
+### Recommended Implementation Order
 
-### Phase 3: If Needed - Low-Resolution Preview
-- **Expected improvement**: 650ms → **50-100ms** initial, then upgrade to full quality
-- **Risk**: Low (two-pass rendering is well understood)
-- **Effort**: Medium (add low-res render pass + progressive swap)
-- **Rationale**: Provides instant visual feedback even if pre-rendering fails or user navigates quickly.
+**Phase 1**: ✅ **COMPLETE** - HWA enabled (Attempt #1)
+- Keep `enableHWA: true` for the 28.6% instant wins
+- Use as foundation for hybrid approach
 
----
+**Phase 2**: 🎯 **NEXT** - Implement Strategy 3 (Pre-Rendering)
+- Extend `useDocumentPreloader.js` to pre-render next/previous page canvases
+- Cache rendered canvases, swap on navigation
+- **Expected result**: 100% of navigations <50ms (vs current 28.6%)
+- **Combines with HWA**: Instant when HWA works (19ms), guaranteed when it doesn't (<50ms)
 
-## Performance Summary
-
-| Phase | Metric | Before | Target | Status |
-|-------|--------|--------|--------|--------|
-| **Phase 1: Caching** | PDF Load Time | 200-300ms | <50ms | ✅ **7-15ms** |
-| **Phase 1: Caching** | Cache Hit Rate | 0% | 90%+ | ✅ **87-92%** |
-| **Phase 2: Rendering** | Canvas Render | 650-750ms | <50ms | ❌ **In Progress** |
-| **Phase 2: Rendering** | Total Navigation | 650-750ms | <50ms | ❌ **In Progress** |
-
-**Achievement from Phase 1**: The caching optimization eliminated 185-285ms of network delays, reducing data loading from 200-300ms to just 7-15ms. The <50ms goal was achieved for the **data loading** portion. Now focusing on the **rendering** portion.
+**Phase 3**: If needed - Add Strategy 2 (Low-Res Preview)
+- Fallback for rapid navigation before pre-render completes
+- Ensures visual feedback even in edge cases
 
 ---
 
 ## Next Steps
 
-1. **Implement Strategy 1**: Enable WebGL acceleration
-   - Enable `enableWebGL: true` in PDF.js initialization options
-   - Test rendering quality and performance across different PDF types
-   - Verify compatibility with existing caching architecture
-   - Measure performance improvement vs baseline (650-750ms)
+### Immediate Actions (Based on Attempt #1 Results)
 
-2. **Measure Results**: Track WebGL impact
-   - Add timing logs for WebGL render vs Canvas 2D baseline
-   - Test on computers with integrated graphics (typical office setups)
-   - Compare rendering quality for subtle differences
-   - Document browser compatibility
+1. **Investigate HWA Inconsistency** 🔍
+   - Analyze which documents rendered fast (19ms) vs slow (931ms)
+   - Check PDF page complexity (text elements, images, vector paths)
+   - Monitor browser DevTools Performance tab during renders
+   - Look for WebGL/Canvas warnings in console during slow renders
+   - Test if re-rendering same document gives consistent times
 
-3. **Evaluate Secondary Strategies**: If needed
-   - Implement pre-rendering during background pre-load (Strategy 3)
-   - Test low-resolution preview approach (Strategy 2)
-   - Consider hybrid approach (WebGL + pre-render for maximum performance)
+2. **Consider Strategy 3: Pre-Rendering** ⭐ **RECOMMENDED**
+   - **Rationale**: HWA proved 19ms is achievable, but can't guarantee it
+   - **Approach**: Combine HWA (keep enabled) + pre-render next page during viewing time
+   - **Expected result**: Guarantee <50ms by rendering in background while user reads
+   - **Implementation**: Extend `useDocumentPreloader.js` to pre-render canvas
+   - **Risk**: Low (natural extension of working pre-load system)
 
-4. **Document Results**: Update this file with attempt results
-   - Performance measurements
-   - Rendering quality comparison
-   - Browser/hardware compatibility findings
-   - Next iteration plans
+3. **Optional: Test Strategy 2 (Low-Res Preview)**
+   - If pre-rendering isn't sufficient for rapid navigation
+   - Render low-res first (50-100ms), then upscale while high-res renders
+   - Provides instant visual feedback even if pre-render cache missed
+
+4. **Performance Correlation Analysis**
+   - Track document characteristics vs render time:
+     - Page dimensions (width × height)
+     - Text complexity (character count, fonts)
+     - Image count and resolution
+     - Vector path complexity
+   - Identify if certain PDF types consistently render fast/slow with HWA
+
+### Recommended Next Attempt
+
+**Attempt #2: Hybrid Approach (HWA + Pre-Rendering)**
+
+Combine the proven benefits:
+- Keep `enableHWA: true` for the 28.6% instant renders
+- Add pre-rendering in `useDocumentPreloader.js` for guaranteed performance
+- Result: Best of both worlds - instant when HWA works, guaranteed <50ms when it doesn't
+
+**Expected Outcome**: 100% of navigations <50ms (compared to current 28.6%)

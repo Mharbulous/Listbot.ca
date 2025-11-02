@@ -106,14 +106,6 @@ export function usePdfCache() {
    * @returns {Promise<PDFDocumentProxy>} The loaded PDF document
    */
   const getDocument = async (documentId, downloadUrl = null) => {
-    // DEBUG: Log cache state on entry
-    console.info('🔍 Cache lookup', {
-      requestedDocId: documentId,
-      cacheSize: cache.value.size,
-      cachedDocIds: Array.from(cache.value.keys()),
-      hasDocument: cache.value.has(documentId),
-    });
-
     // Check cache first
     if (cache.value.has(documentId)) {
       const entry = cache.value.get(documentId);
@@ -165,8 +157,6 @@ export function usePdfCache() {
    */
   const loadAndCacheDocument = async (documentId, downloadUrl) => {
     try {
-      console.debug('Loading PDF document', { documentId, url: downloadUrl });
-
       // Load PDF document with streaming enabled for better performance
       const loadingTask = pdfjsLib.getDocument({
         url: downloadUrl,
@@ -216,7 +206,6 @@ export function usePdfCache() {
 
     // Pre-load previous document if it exists and isn't cached
     if (previousId && !cache.value.has(previousId)) {
-      console.debug('Pre-loading previous document', { previousId });
       preloadPromises.push(
         getDownloadUrl(previousId)
           .then(url => loadAndCacheDocument(previousId, url))
@@ -228,7 +217,6 @@ export function usePdfCache() {
 
     // Pre-load next document if it exists and isn't cached
     if (nextId && !cache.value.has(nextId)) {
-      console.debug('Pre-loading next document', { nextId });
       preloadPromises.push(
         getDownloadUrl(nextId)
           .then(url => loadAndCacheDocument(nextId, url))
@@ -254,8 +242,6 @@ export function usePdfCache() {
     if (!entry) {
       return;
     }
-
-    console.debug('Evicting document from cache', { documentId });
 
     // Clean up PDF.js resources to prevent memory leaks
     try {
@@ -298,11 +284,6 @@ export function usePdfCache() {
     }
 
     if (oldestId) {
-      console.debug('Cache limit exceeded, evicting oldest document', {
-        documentId: oldestId,
-        cacheSize: cache.value.size,
-        maxSize: MAX_CACHE_SIZE
-      });
       await evictDocument(oldestId);
     }
   };
@@ -311,8 +292,6 @@ export function usePdfCache() {
    * Clear all cached documents and reset cache
    */
   const clearCache = async () => {
-    console.debug('Clearing entire PDF cache', { cacheSize: cache.value.size });
-
     // Evict all documents
     const evictPromises = Array.from(cache.value.keys()).map(documentId =>
       evictDocument(documentId)
