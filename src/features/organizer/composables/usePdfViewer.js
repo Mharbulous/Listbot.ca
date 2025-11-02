@@ -72,11 +72,6 @@ export function usePdfViewer() {
       pdfDocument.value = pdfDoc;
       currentDocumentId.value = documentId;
       totalPages.value = pdfDoc.numPages;
-
-      console.info('PDF document loaded successfully', {
-        documentId,
-        totalPages: pdfDoc.numPages,
-      });
     } catch (err) {
       console.error('Failed to load PDF document', err, { documentId });
       loadError.value = err.message || 'Failed to load PDF document';
