@@ -1,5 +1,5 @@
 <template>
-  <div class="metadata-panel">
+  <div class="metadata-panel" :class="{ 'metadata-panel--collapsed': !visible }">
     <div class="metadata-box" :class="{ 'metadata-box--collapsed': !visible }">
       <v-card variant="outlined" class="metadata-card">
         <!-- Card header with toggle button -->
@@ -356,6 +356,7 @@ const handleSelectVariant = (metadataHash) => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
 }
 
 .metadata-box {
@@ -367,6 +368,10 @@ const handleSelectVariant = (metadataHash) => {
 
 .metadata-box--collapsed {
   overflow-y: hidden;
+}
+
+.metadata-panel--collapsed {
+  width: auto;
 }
 
 .metadata-box--collapsed .metadata-card {

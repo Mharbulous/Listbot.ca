@@ -83,6 +83,7 @@ defineEmits(['toggle-visibility', 'page-selected']);
 }
 
 .thumbnail-panel--collapsed {
+  width: auto;
   overflow-y: hidden;
 }
 

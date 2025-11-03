@@ -98,22 +98,18 @@ defineEmits(['page-rendered']);
   min-width: 500px;
 
   /*
-   * IMPORTANT: These dimensions are calibrated to match hardcopy office paper (US Letter)
-   * - max-width: 9.2in matches the physical width of US Letter paper (8.5in) with margins
-   * - min-height: 11in matches the physical height of US Letter paper
-   *
-   * DO NOT CHANGE these values without careful consideration, as they ensure the PDF viewport
-   * displays documents at the same size as they would appear when printed on physical paper.
-   * This 1:1 scale relationship is critical for document review and comparison workflows.
+   * NOTE: Width is now dynamic and expands based on available space between side panels.
+   * Previously constrained to max-width: 9.2in to match US Letter paper (8.5in + margins)
+   * for 1:1 physical scale. This constraint was removed to allow flexible document viewing
+   * that adapts to panel visibility states.
    */
-  max-width: 9.2in;
   min-height: 11in;
 
   display: flex;
   flex-direction: column;
   max-height: 100%;
   overflow-y: auto;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, width 0.3s ease;
 }
 
 .viewer-placeholder {
@@ -140,14 +136,13 @@ defineEmits(['page-rendered']);
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  padding: 16px;
   background-color: #f5f5f5;
+  transition: width 0.3s ease;
 }
 
 /* Individual PDF Page */
 .pdf-page {
   width: 100%;
-  max-width: 9.2in; /* Match viewport width */
   margin: 0 auto;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   background-color: white;

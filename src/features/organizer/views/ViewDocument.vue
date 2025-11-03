@@ -15,7 +15,12 @@
     </div>
 
     <!-- Main content -->
-    <div v-else class="view-document-content">
+    <div
+      v-else
+      class="view-document-content"
+      :data-thumbnails-visible="thumbnailsVisible"
+      :data-metadata-visible="metadataVisible"
+    >
       <!-- Left: Thumbnail panel -->
       <PdfThumbnailPanel
         :is-pdf-file="isPdfFile"
@@ -27,32 +32,31 @@
         @page-selected="scrollToPage"
       />
 
-      <!-- Center: Navigation + PDF Viewer -->
-      <div class="center-panel">
-        <DocumentNavigationBar
-          :current-document-index="navigation.currentDocumentIndex.value"
-          :total-documents="navigation.totalDocuments.value"
-          :is-pdf-file="isPdfFile"
-          :current-page="currentVisiblePage"
-          :total-pages="pdfViewer.totalPages.value"
-          @navigate-first="navigation.goToFirstDocument"
-          @navigate-previous="navigation.goToPreviousDocument"
-          @navigate-next="navigation.goToNextDocument"
-          @navigate-last="navigation.goToLastDocument"
-          @jump-to-page="scrollToPage"
-        />
+      <!-- Center: Navigation Bar -->
+      <DocumentNavigationBar
+        :current-document-index="navigation.currentDocumentIndex.value"
+        :total-documents="navigation.totalDocuments.value"
+        :is-pdf-file="isPdfFile"
+        :current-page="currentVisiblePage"
+        :total-pages="pdfViewer.totalPages.value"
+        @navigate-first="navigation.goToFirstDocument"
+        @navigate-previous="navigation.goToPreviousDocument"
+        @navigate-next="navigation.goToNextDocument"
+        @navigate-last="navigation.goToLastDocument"
+        @jump-to-page="scrollToPage"
+      />
 
-        <PdfViewerArea
-          :is-pdf-file="isPdfFile"
-          :pdf-document="pdfViewer.pdfDocument.value"
-          :document-id="fileHash"
-          :total-pages="pdfViewer.totalPages.value"
-          :viewer-loading="evidenceLoader.viewerLoading.value"
-          :loading-document="pdfViewer.loadingDocument.value"
-          :pdf-load-error="pdfViewer.loadError.value"
-          @page-rendered="handleFirstPageRendered"
-        />
-      </div>
+      <!-- Center: PDF Viewer (spans columns based on panel visibility) -->
+      <PdfViewerArea
+        :is-pdf-file="isPdfFile"
+        :pdf-document="pdfViewer.pdfDocument.value"
+        :document-id="fileHash"
+        :total-pages="pdfViewer.totalPages.value"
+        :viewer-loading="evidenceLoader.viewerLoading.value"
+        :loading-document="pdfViewer.loadingDocument.value"
+        :pdf-load-error="pdfViewer.loadError.value"
+        @page-rendered="handleFirstPageRendered"
+      />
 
       <!-- Right: Metadata panel -->
       <DocumentMetadataPanel
@@ -326,22 +330,79 @@ onBeforeUnmount(() => {
 }
 
 .view-document-content {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  flex: 1;
+  display: grid;
+  grid-template-columns:
+    [thumbnails-start] var(--thumbnails-width)
+    [thumbnails-end center-start] 1fr
+    [center-end metadata-start] var(--metadata-width)
+    [metadata-end];
+  grid-template-rows: auto 1fr;
   gap: 24px;
   padding: 24px;
+  flex: 1;
   overflow: auto;
+  align-items: start;
+
+  /* Default column widths (panels open) */
+  --thumbnails-width: 200px;
+  --metadata-width: 350px;
 }
 
-.center-panel {
-  flex: 1;
+/* Dynamic column widths based on panel visibility */
+.view-document-content[data-thumbnails-visible="false"] {
+  --thumbnails-width: auto;
+}
+
+.view-document-content[data-metadata-visible="false"] {
+  --metadata-width: auto;
+}
+
+/* Grid area assignments for child components */
+
+/* Thumbnail panel: column 1, spanning both rows */
+.view-document-content > :nth-child(1) {
+  grid-column: thumbnails-start / thumbnails-end;
+  grid-row: 1 / 3;
+}
+
+/* Navigation bar: column 2 (center), row 1 */
+.view-document-content > :nth-child(2) {
+  grid-column: center-start / center-end;
+  grid-row: 1;
   min-width: 500px;
-  max-width: 9.2in; /* Match viewer width */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+}
+
+/* PDF Viewer: dynamically spans columns based on panel visibility, row 2 */
+.view-document-content > :nth-child(3) {
+  grid-row: 2;
+  min-width: 500px;
+  transition: grid-column 0.3s ease;
+}
+
+/* Both panels open: PDF viewer stays in center column */
+.view-document-content[data-thumbnails-visible="true"][data-metadata-visible="true"] > :nth-child(3) {
+  grid-column: center-start / center-end;
+}
+
+/* Thumbnails closed: PDF viewer extends left */
+.view-document-content[data-thumbnails-visible="false"][data-metadata-visible="true"] > :nth-child(3) {
+  grid-column: thumbnails-start / center-end;
+}
+
+/* Metadata closed: PDF viewer extends right */
+.view-document-content[data-thumbnails-visible="true"][data-metadata-visible="false"] > :nth-child(3) {
+  grid-column: center-start / metadata-end;
+}
+
+/* Both panels closed: PDF viewer spans all columns */
+.view-document-content[data-thumbnails-visible="false"][data-metadata-visible="false"] > :nth-child(3) {
+  grid-column: thumbnails-start / metadata-end;
+}
+
+/* Metadata panel: column 3, spanning both rows */
+.view-document-content > :nth-child(4) {
+  grid-column: metadata-start / metadata-end;
+  grid-row: 1 / 3;
 }
 
 .content-center {
@@ -360,14 +421,26 @@ onBeforeUnmount(() => {
 /* Responsive layout */
 @media (max-width: 1150px) {
   .view-document-content {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
   }
 
-  .center-panel {
+  /* Stack all components vertically on mobile */
+  .view-document-content > :nth-child(1),
+  .view-document-content > :nth-child(2),
+  .view-document-content > :nth-child(3),
+  .view-document-content > :nth-child(4) {
+    grid-column: 1;
+    grid-row: auto;
     width: 100%;
     max-width: 100%;
     min-width: auto;
-    order: 1;
   }
+
+  /* Reorder: Navigation (1), Viewer (2), Thumbnails (3), Metadata (4) */
+  .view-document-content > :nth-child(1) { order: 3; } /* Thumbnails */
+  .view-document-content > :nth-child(2) { order: 1; } /* Navigation */
+  .view-document-content > :nth-child(3) { order: 2; } /* Viewer */
+  .view-document-content > :nth-child(4) { order: 4; } /* Metadata */
 }
 </style>
