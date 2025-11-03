@@ -15,7 +15,7 @@
     </div>
 
     <!-- Main content -->
-    <div v-else class="view-document-content">
+    <div v-else ref="scrollContainerRef" class="view-document-content">
       <!-- Left: Thumbnail panel -->
       <PdfThumbnailPanel
         :is-pdf-file="isPdfFile"
@@ -81,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, onBeforeUnmount, provide } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, onBeforeUnmount, provide, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/core/stores/auth.js';
@@ -93,6 +93,7 @@ import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePdfCache } from '@/features/organizer/composables/usePdfCache.js';
 import { useCanvasPreloader } from '@/features/organizer/composables/useCanvasPreloader.js';
+import { usePagePreloader } from '@/features/organizer/composables/usePagePreloader.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
 import { useDocumentNavigation } from '@/features/organizer/composables/useDocumentNavigation.js';
 import { useEvidenceLoader } from '@/features/organizer/composables/useEvidenceLoader.js';
@@ -121,6 +122,7 @@ const fileHash = ref(route.params.fileHash);
 const pdfMetadata = usePdfMetadata();
 const pdfCache = usePdfCache();
 const canvasPreloader = useCanvasPreloader();
+const pagePreloader = usePagePreloader();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
@@ -138,11 +140,13 @@ const preloader = useDocumentPreloader(
 
 provide('pageVisibility', pageVisibility);
 provide('canvasPreloader', canvasPreloader);
+provide('pagePreloader', pagePreloader);
 
 // UI State
 const thumbnailsVisible = ref(true);
 const metadataVisible = metadataBoxVisible;
 const dropdownOpen = ref(false);
+const scrollContainerRef = ref(null);
 
 // Computed
 const isPdfFile = computed(() => {
@@ -295,6 +299,42 @@ watch(
   }
 );
 
+// Strategy 8: Clear page cache when document changes
+watch(
+  fileHash,
+  (newHash, oldHash) => {
+    if (newHash && newHash !== oldHash) {
+      pagePreloader.clearCache(newHash);
+    }
+  }
+);
+
+// Strategy 8: Pre-render next page when current page changes
+watch(
+  currentVisiblePage,
+  (newPage) => {
+    console.debug(`[S8] currentVisiblePage changed to ${newPage}`);
+
+    if (!pdfViewer.pdfDocument.value || !pdfViewer.totalPages.value) {
+      console.debug(`[S8] Skipping preload - no PDF document`);
+      return;
+    }
+
+    const nextPage = newPage + 1;
+
+    // Only pre-render if next page exists and isn't already cached
+    if (nextPage <= pdfViewer.totalPages.value && !pagePreloader.hasPreRenderedPage(nextPage)) {
+      console.debug(`[S8] Scheduling preload for page ${nextPage}`);
+      // Use idle callback to avoid blocking current page
+      pagePreloader.preRenderPageIdle(pdfViewer.pdfDocument.value, nextPage);
+    } else if (nextPage > pdfViewer.totalPages.value) {
+      console.debug(`[S8] Skipping preload - page ${nextPage} exceeds total pages`);
+    } else {
+      console.debug(`[S8] Skipping preload - page ${nextPage} already cached`);
+    }
+  }
+);
+
 onMounted(async () => {
   if (!organizerStore.isInitialized) {
     try {
@@ -305,6 +345,20 @@ onMounted(async () => {
   }
   evidenceLoader.loadEvidence(fileHash.value, navigation.navigationStartTime);
   window.addEventListener('keydown', handleKeydown);
+
+  // Set the correct scroll container for IntersectionObserver
+  // The actual scroll container is .view-document-content, not .viewer-area
+  await nextTick();
+  if (pageVisibility.setRoot && scrollContainerRef.value) {
+    pageVisibility.setRoot(scrollContainerRef.value);
+    console.log('[ViewDoc] Set observer root to .view-document-content (actual scroll container)');
+
+    // Add scroll listener for debugging
+    scrollContainerRef.value.addEventListener('scroll', (e) => {
+      const scrollTop = e.target.scrollTop;
+      console.log(`📜 Scroll on .view-document-content: ${scrollTop}px`);
+    });
+  }
 });
 
 onUnmounted(() => {

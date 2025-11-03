@@ -1,22 +1,23 @@
 <template>
-  <div class="thumbnail-panel" :class="{ 'thumbnail-panel--collapsed': !visible }">
+  <div class="thumbnail-panel">
     <v-card variant="outlined" class="thumbnail-card">
-      <!-- Toggle button -->
-      <v-btn
-        icon
-        variant="text"
-        size="small"
-        :title="visible ? 'Collapse thumbnails' : 'Expand thumbnails'"
-        class="thumbnail-toggle-btn"
-        :class="{ 'thumbnail-toggle-btn--collapsed': !visible }"
-        @click="$emit('toggle-visibility')"
-      >
-        <v-icon>{{ visible ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</v-icon>
-      </v-btn>
+      <!-- Card header with toggle button -->
+      <div class="thumbnail-card-header">
+        <h3 class="thumbnail-title">Thumbnails</h3>
+        <v-btn
+          icon
+          variant="text"
+          size="small"
+          :title="visible ? 'Hide thumbnails' : 'Show thumbnails'"
+          class="toggle-btn"
+          @click="$emit('toggle-visibility')"
+        >
+          <v-icon>{{ visible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
+        </v-btn>
+      </div>
 
       <!-- Expanded content -->
       <div v-if="visible" class="thumbnail-content">
-        <h3 class="thumbnail-title">Pages</h3>
 
         <!-- PDF Thumbnails -->
         <PdfThumbnailList
@@ -78,42 +79,35 @@ defineEmits(['toggle-visibility', 'page-selected']);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
-}
-
-.thumbnail-panel--collapsed {
-  width: 40px;
-}
-
-.thumbnail-panel--collapsed .thumbnail-card {
-  overflow: visible;
-  min-height: 60px; /* Ensure button has space */
 }
 
 .thumbnail-card {
   height: 100%;
   display: flex;
   flex-direction: column;
-  position: relative;
 }
 
-.thumbnail-toggle-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  transition: all 0.3s ease;
+.thumbnail-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 56px;
 }
 
-.thumbnail-toggle-btn--collapsed {
-  /* Center the button in the 40px collapsed panel */
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+
+
+.toggle-btn {
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .thumbnail-content {
-  padding: 48px 0 16px 0;
+  padding: 16px 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -123,7 +117,7 @@ defineEmits(['toggle-visibility', 'page-selected']);
 }
 
 .thumbnail-title {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #333;
   margin: 0;
@@ -144,10 +138,6 @@ defineEmits(['toggle-visibility', 'page-selected']);
     width: 100%;
     max-width: 100%;
     order: 3; /* Move to bottom on mobile */
-  }
-
-  .thumbnail-panel--collapsed {
-    width: 100%;
   }
 }
 </style>

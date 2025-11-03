@@ -1186,3 +1186,198 @@ The PDF rendering optimization work is complete. Combined with the caching optim
 - **Instant feel** that exceeds user expectations
 
 **Attempt #2 (Canvas Pre-Rendering with ImageBitmap Cache)** is the final solution and is ready for production deployment.
+
+---
+
+## Attempt #3 - Strategy 7 (Virtualized Rendering) + Strategy 8 (Smart Preloading) 🚧 IN PROGRESS
+
+**⚠️ STATUS: INCOMPLETE - Has critical bugs preventing normal operation**
+
+**Test Date**: 2025-11-02
+**Strategy**: Combined implementation of Strategy 7 (Virtualized Rendering) and Strategy 8 (Smart Preloading)
+**Goal**: Reduce memory usage by 70% while maintaining instant forward scrolling performance
+
+### Implementation Completed ✅
+
+**1. Strategy 7: Virtualized Rendering Infrastructure**
+- ✅ Visible range calculation (current page ±1 buffer)
+- ✅ Wrapper divs for maintaining scroll position during conditional rendering
+- ✅ IntersectionObserver integration for page visibility tracking
+- ✅ Conditional component rendering based on visible range
+
+**2. Strategy 8: Page Preloader Composable**
+- ✅ Created `usePagePreloader.js` composable
+- ✅ Module-level singleton cache for ImageBitmaps
+- ✅ Pre-rendering during idle time with `requestIdleCallback`
+- ✅ Cache hit/miss tracking and logging
+
+**3. IntersectionObserver Configuration**
+- ✅ Fixed scroll container identification (`.view-document-content` not `.viewer-area`)
+- ✅ Observer root set correctly to actual scroll container
+- ✅ Dynamic wrapper registration on PDF load
+
+**4. Dynamic PDF Loading**
+- ✅ Component mounts before PDF loads (totalPages = 0)
+- ✅ Watch on `totalPages` to register wrappers when PDF loads
+- ✅ Defensive checks to skip registration until PDF ready
+
+**Files Modified**:
+- `src/features/organizer/composables/usePageVisibility.js` - Added `setRoot()` method, accept scroll container parameter
+- `src/features/organizer/composables/usePagePreloader.js` - NEW file, within-document page preloading
+- `src/components/document/PdfViewerArea.vue` - Added wrapper divs, conditional rendering, dynamic registration
+- `src/features/organizer/views/ViewDocument.vue` - Set correct scroll container as observer root, scroll listener
+- `src/features/organizer/components/PdfPageCanvas.vue` - Check pagePreloader before rendering
+
+### Critical Bugs Discovered 🐛
+
+**Bug #1: Rapid Page Oscillation**
+```
+Pattern: 1→2→1→2→3→1→2→1→2→3→1→2→1...
+Observable: Continuous jumping back to page 1 when trying to scroll down
+```
+
+**Bug #2: IntersectionObserver Over-Firing**
+```
+[Observer] Callback fired with 1 entries  (fires constantly)
+[Observer] Page 2 entered viewport
+[Observer] Page 1 entered viewport  (oscillates)
+[Observer] Page 2 entered viewport
+[Observer] Page 1 entered viewport  (repeats infinitely)
+```
+
+**Bug #3: Scroll Position Reset**
+- User scrolls to page 3-8 → gets pushed back to page 1
+- Managed to briefly see pages 3-8 when grabbing scrollbar
+- But then pushed back up through all pages until returning to page 1
+
+### Root Cause Analysis
+
+**Hypothesis: Reactive Feedback Loop**
+
+1. User scrolls → Page 2 enters viewport
+2. IntersectionObserver fires → `mostVisiblePage` updates to 2
+3. Vue reactivity → `visiblePageRange` computed updates to 1-3
+4. **Problem**: Changing visible range triggers reactive updates
+5. Observer fires again (unclear why, even with v-show)
+6. Scroll position affected → Page 1 re-enters viewport
+7. `mostVisiblePage` resets to 1 → Range contracts to 1-2
+8. **Loop repeats infinitely**
+
+### Attempted Fixes
+
+**Fix #1: Changed v-if to v-show** ❌ DID NOT FIX
+- **Rationale**: v-if mounts/unmounts components causing layout shifts
+- **Implementation**: Changed conditional rendering to use v-show (hides with CSS)
+- **Result**: Observer still fires constantly, scroll still jumps
+- **Files**: `PdfViewerArea.vue` lines 37, 47
+
+**Fix #2: Set Correct Scroll Container** ✅ PARTIALLY FIXED
+- **Rationale**: IntersectionObserver was watching viewport instead of `.view-document-content`
+- **Implementation**: Set observer root to actual scroll container
+- **Result**: Observer now fires (was completely broken before), but fires TOO MUCH
+- **Files**: `ViewDocument.vue` lines 352-361, `usePageVisibility.js` setRoot() method
+
+**Fix #3: Dynamic Wrapper Registration** ✅ WORKING
+- **Rationale**: Component mounts before PDF loads (totalPages = 0)
+- **Implementation**: Watch `totalPages`, register wrappers when PDF loads
+- **Result**: All 8 wrappers successfully registered when PDF loads
+- **Files**: `PdfViewerArea.vue` lines 222-247
+
+### Positive Outcomes Despite Bugs
+
+1. ✅ **All pages CAN render** - Quick scroll test proved pages 3-8 render successfully
+2. ✅ **Page preloading works** - Cache hits shown in logs, ImageBitmap cache functional
+3. ✅ **Observer tracks visibility** - Successfully detects when pages enter/leave viewport
+4. ✅ **Infrastructure in place** - All components and composables created and integrated
+
+### Console Log Evidence
+
+**Initial Load** (Working):
+```
+[S7] totalPages changed: 0 → 8
+[S7] PDF loaded! Re-registering wrappers...
+[Observer] Registered page 1
+[Observer] Registered page 2
+...
+[Observer] Registered page 8
+[S7] Registered 8 page wrappers with observer
+```
+
+**Oscillation Pattern** (Bug):
+```
+[Observer] mostVisiblePage updated to 2
+👁️ mostVisiblePage changed: 1 → 2
+[S7] Visible range: 1-3
+[Observer] Page 1 entered viewport
+[Observer] mostVisiblePage updated to 1
+👁️ mostVisiblePage changed: 2 → 1
+[S7] Visible range: 1-2
+(repeats infinitely)
+```
+
+**Successful Brief Scroll** (Proves rendering works):
+```
+[Observer] mostVisiblePage updated to 8
+[S7] Visible range: 7-8
+🎨 Pre-rendered page 8 in 15.9ms
+(then gets pushed back to page 1)
+```
+
+### Next Debugging Steps
+
+**Immediate Investigation Needed**:
+1. Why does IntersectionObserver fire constantly even with v-show (no DOM mutations)?
+2. What is causing scroll position to reset back to page 1?
+3. Why does changing `visiblePageRange` trigger observer callbacks?
+
+**Potential Solutions to Try**:
+1. **Debounce `mostVisiblePage` updates** - Prevent rapid oscillation
+2. **Throttle observer callback** - Limit how often it can fire
+3. **Abandon virtualized rendering** - Use CSS `content-visibility: auto` instead
+4. **Lock scroll position** - Prevent reactive updates from affecting scroll
+5. **Remove reactive dependency** - Decouple visible range from observer
+
+### Performance Data
+
+**Observer Activity** (Too frequent):
+- Callback fires: ~50 times during single scroll attempt
+- Page transitions: Oscillates between 2-3 pages rapidly
+- Expected: Smooth progression 1→2→3→4...
+- Actual: Chaotic 1→2→1→2→3→1→2→1...
+
+**Memory Usage** (Not yet measurable):
+- Cannot test due to scroll jumping bug
+- Expected: -70% reduction (3 pages vs all pages)
+- Actual: Cannot scroll past page 2 to measure
+
+**Preloading Success** (Working):
+```
+🎨 Pre-rendered page 3 in 56.8ms
+🎨 Pre-rendered page 4 in 18.5ms
+🎨 Pre-rendered page 8 in 15.9ms
+✅ Page cache HIT | Hit rate: 100.0%
+```
+
+### Comparison to Attempt #2
+
+| Metric | Attempt #2 (✅ Working) | Attempt #3 (🚧 In Progress) |
+|--------|------------------------|----------------------------|
+| **Navigation Speed** | 12.9-20.3ms | Cannot measure (scroll broken) |
+| **Memory Usage** | +2.7MB (3 cached canvases) | Cannot measure (cannot scroll) |
+| **User Experience** | Smooth, instant | Broken (jumps to page 1) |
+| **Preloading** | Working (80% hit rate) | Working (cache hits logged) |
+| **Stability** | Stable, production ready | Unstable, debugging required |
+
+### Recommendation
+
+**Status**: ⚠️ **BLOCKED - Critical bugs must be resolved**
+
+**Do NOT deploy Attempt #3** - Scroll jumping makes the application unusable
+
+**Options**:
+1. **Debug and fix** - Investigate reactive feedback loop and scroll reset
+2. **Simplify approach** - Remove virtualized rendering, keep only preloading
+3. **Alternative strategy** - Use CSS `content-visibility: auto` for memory optimization
+4. **Revert to Attempt #2** - Return to working state, revisit virtualization later
+
+**Current Work**: Actively debugging scroll jumping issue (2025-11-02)
