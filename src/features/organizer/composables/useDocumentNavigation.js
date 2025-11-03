@@ -7,11 +7,13 @@
  * @param {Ref<string>} fileHash - Current document file hash
  * @param {Router} router - Vue Router instance
  * @param {Object} organizerStore - Pinia organizer store
+ * @param {Object} pdfViewer - usePdfViewer composable instance (for cache checks)
+ * @param {Object} documentViewStore - Document view store (for breadcrumb updates)
  * @returns {Object} Navigation state and methods
  */
 import { ref, computed } from 'vue';
 
-export function useDocumentNavigation(fileHash, router, organizerStore) {
+export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore) {
   // Performance timing
   const navigationStartTime = ref(null);
 
@@ -50,10 +52,30 @@ export function useDocumentNavigation(fileHash, router, organizerStore) {
     return null;
   });
 
+  /**
+   * Pre-emptively update breadcrumb if target document metadata is cached
+   * This makes breadcrumb updates synchronous with cached navigation
+   * @param {string} targetDocId - Target document ID to check cache for
+   * @returns {boolean} True if breadcrumb was updated from cache, false otherwise
+   */
+  const preUpdateBreadcrumb = (targetDocId) => {
+    if (!pdfViewer || !documentViewStore) {
+      return false;
+    }
+
+    const cachedMetadata = pdfViewer.getCachedMetadata(targetDocId);
+    if (cachedMetadata?.displayName) {
+      documentViewStore.setDocumentName(cachedMetadata.displayName);
+      return true;
+    }
+    return false;
+  };
+
   // Navigation methods
   const goToFirstDocument = () => {
     if (sortedEvidence.value.length === 0) return;
     const firstDoc = sortedEvidence.value[0];
+    preUpdateBreadcrumb(firstDoc.id);
     router.push(`/documents/view/${firstDoc.id}`);
   };
 
@@ -63,6 +85,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore) {
     const currentIndex = currentDocumentIndex.value - 1;
     if (currentIndex > 0) {
       const prevDoc = sortedEvidence.value[currentIndex - 1];
+      preUpdateBreadcrumb(prevDoc.id);
       navigationStartTime.value = performance.now();
       console.info('⬅️ Navigation to previous document started', {
         fromDoc: fileHash.value,
@@ -78,6 +101,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore) {
     const currentIndex = currentDocumentIndex.value - 1;
     if (currentIndex < sortedEvidence.value.length - 1) {
       const nextDoc = sortedEvidence.value[currentIndex + 1];
+      preUpdateBreadcrumb(nextDoc.id);
       navigationStartTime.value = performance.now();
       console.info('➡️ Navigation to next document started', {
         fromDoc: fileHash.value,
@@ -90,6 +114,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore) {
   const goToLastDocument = () => {
     if (sortedEvidence.value.length === 0) return;
     const lastDoc = sortedEvidence.value[sortedEvidence.value.length - 1];
+    preUpdateBreadcrumb(lastDoc.id);
     router.push(`/documents/view/${lastDoc.id}`);
   };
 

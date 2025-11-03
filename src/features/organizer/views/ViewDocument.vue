@@ -128,7 +128,7 @@ const canvasPreloader = useCanvasPreloader();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
-const navigation = useDocumentNavigation(fileHash, router, organizerStore);
+const navigation = useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore);
 const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata);
 const preloader = useDocumentPreloader(
   authStore,
