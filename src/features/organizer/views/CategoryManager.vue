@@ -23,7 +23,7 @@
         <v-btn
           color="primary"
           :disabled="!canCreateCategory"
-          :to="{ name: 'category-creation-wizard', query: { scope: activeTab } }"
+          :to="{ name: 'category-creation-wizard', params: { matterId }, query: { scope: activeTab } }"
           variant="elevated"
           class="align-self-center"
         >
@@ -179,13 +179,18 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useCategoryManager } from '../composables/useCategoryManager.js';
 import { getCategoryTypeInfo, getCategoryTypeLabel } from '../utils/categoryTypes.js';
 import { getCurrencySymbol } from '../utils/currencyOptions.js';
 
 const router = useRouter();
-const categoryManager = useCategoryManager();
+const route = useRoute();
+
+// Get matterId from route params
+const matterId = computed(() => route.params.matterId);
+
+const categoryManager = useCategoryManager(matterId.value);
 
 const snackbar = ref({ show: false, message: '', color: 'success' });
 
@@ -348,7 +353,7 @@ const showNotification = (message, color = 'success') => {
 const editCategory = (category) => {
   router.push({
     name: 'category-edit',
-    params: { id: category.id },
+    params: { matterId: matterId.value, id: category.id },
     query: { source: category.source },
   });
 };

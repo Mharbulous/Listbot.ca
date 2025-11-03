@@ -1,5 +1,5 @@
 <template>
-  <div class="pdf-page-container" :data-page-number="pageNumber">
+  <div class="pdf-page-container">
     <canvas ref="canvasRef" class="pdf-page-canvas" :class="{ rendering: isRendering }" />
 
     <!-- Loading indicator -->
@@ -17,7 +17,6 @@
 
 <script setup>
 import { ref, shallowRef, onMounted, watch, onBeforeUnmount, inject } from 'vue';
-import { LogService } from '@/services/logService.js';
 
 const props = defineProps({
   pageNumber: {
@@ -26,6 +25,10 @@ const props = defineProps({
   },
   pdfDocument: {
     type: Object,
+    required: true,
+  },
+  documentId: {
+    type: String,
     required: true,
   },
   width: {
@@ -38,13 +41,69 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['page-rendered']);
+
 const canvasRef = ref(null);
 const isRendering = ref(false);
 const renderError = ref(null);
 const renderTask = shallowRef(null);
 
-// Get shared observer from parent (if provided)
-const pageVisibility = inject('pageVisibility', null);
+// Get canvas preloader from parent (if provided) - for adjacent document navigation (Strategy 3)
+const canvasPreloader = inject('canvasPreloader', null);
+
+// Get page preloader from parent (if provided) - for within-document page navigation (Strategy 8)
+const pagePreloader = inject('pagePreloader', null);
+
+/**
+ * Display a pre-rendered canvas by drawing the cached ImageBitmap
+ * This is much faster than rendering from scratch (5-15ms vs 650-750ms)
+ *
+ * @param {ImageBitmap} bitmap - The pre-rendered ImageBitmap
+ * @returns {boolean} True if successfully displayed, false otherwise
+ */
+const displayPreRenderedCanvas = (bitmap) => {
+  if (!canvasRef.value || !bitmap) {
+    return false;
+  }
+
+  const startTime = performance.now();
+
+  try {
+    const canvas = canvasRef.value;
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas dimensions to match bitmap
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    // Draw the pre-rendered bitmap to canvas (very fast!)
+    ctx.drawImage(bitmap, 0, 0);
+
+    const displayTime = performance.now() - startTime;
+
+    // Log success for page 1
+    if (props.pageNumber === 1) {
+      console.info(
+        `⚡ Canvas SWAP complete (pre-rendered): ${displayTime.toFixed(1)}ms`,
+        {
+          documentId: props.documentId.substring(0, 8),
+          pageNumber: props.pageNumber,
+          dimensions: `${bitmap.width}×${bitmap.height}`,
+          displayTime: displayTime.toFixed(1) + 'ms',
+        }
+      );
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('Failed to display pre-rendered canvas, falling back to normal render', {
+      documentId: props.documentId.substring(0, 8),
+      pageNumber: props.pageNumber,
+      error: err.message,
+    });
+    return false;
+  }
+};
 
 /**
  * Render the PDF page to the canvas
@@ -54,26 +113,30 @@ const renderPageToCanvas = async () => {
     return;
   }
 
+  const startTime = performance.now();
+  let parseTime, drawTime;
+
   try {
     isRendering.value = true;
     renderError.value = null;
 
-    LogService.debug('Rendering page to canvas', { pageNumber: props.pageNumber });
-
-    // Get page from document
+    // Stage 1: Parse (get page from document)
+    const parseStart = performance.now();
     const page = await props.pdfDocument.getPage(props.pageNumber);
+    parseTime = performance.now() - parseStart;
 
     // Calculate scale to fit width
     const viewport = page.getViewport({ scale: 1.0 });
     const scale = props.width / viewport.width;
     const scaledViewport = page.getViewport({ scale });
 
-    // Set canvas dimensions
+    // Set canvas dimensions (synchronous DOM update)
     const canvas = canvasRef.value;
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
 
-    // Render to canvas
+    // Stage 2: Draw (render to canvas)
+    const drawStart = performance.now();
     const renderContext = {
       canvasContext: canvas.getContext('2d'),
       viewport: scaledViewport,
@@ -81,16 +144,33 @@ const renderPageToCanvas = async () => {
 
     renderTask.value = page.render(renderContext);
     await renderTask.value.promise;
+    drawTime = performance.now() - drawStart;
 
-    LogService.debug('Page rendered to canvas successfully', { pageNumber: props.pageNumber });
+    const totalTime = performance.now() - startTime;
+
+    // Log pipeline timing for page 1 only (inline in PdfPageCanvas.vue)
+    if (props.pageNumber === 1) {
+      console.log(
+        `🔧 Pipeline timing: parse ${parseTime.toFixed(1)}ms | draw ${drawTime.toFixed(1)}ms | total ${totalTime.toFixed(1)}ms`,
+        {
+          pageNumber: props.pageNumber,
+          parse: parseTime.toFixed(1) + 'ms',
+          draw: drawTime.toFixed(1) + 'ms',
+          total: totalTime.toFixed(1) + 'ms',
+        }
+      );
+    }
+
+    // Emit event to notify parent that this page has finished rendering
+    emit('page-rendered', props.pageNumber);
   } catch (err) {
     // Ignore cancelled renders
     if (err.name === 'RenderingCancelledException') {
-      LogService.debug('Page render cancelled', { pageNumber: props.pageNumber });
+      console.debug('Page render cancelled', { pageNumber: props.pageNumber });
       return;
     }
 
-    LogService.error(`Failed to render page ${props.pageNumber}`, err);
+    console.error(`Failed to render page ${props.pageNumber}`, err);
     renderError.value = err.message || 'Failed to render page';
   } finally {
     isRendering.value = false;
@@ -100,12 +180,30 @@ const renderPageToCanvas = async () => {
 
 // Render on mount
 onMounted(() => {
-  // Register with shared observer if available
-  if (pageVisibility && pageVisibility.observePage) {
-    pageVisibility.observePage(canvasRef.value);
+  // Strategy 7: IntersectionObserver registration moved to PdfViewerArea.vue
+  // The observer now tracks wrapper divs instead of canvas elements
+
+  // Strategy 8: Check for pre-rendered page first (within-document navigation)
+  if (pagePreloader && pagePreloader.hasPreRenderedPage(props.pageNumber)) {
+    const bitmap = pagePreloader.getPreRenderedPage(props.pageNumber);
+    if (bitmap && displayPreRenderedCanvas(bitmap)) {
+      // Successfully displayed pre-rendered page, emit event immediately
+      emit('page-rendered', props.pageNumber);
+      return;
+    }
   }
 
-  // Render page
+  // Check for pre-rendered canvas from adjacent document navigation (Strategy 3)
+  if (canvasPreloader && canvasPreloader.hasPreRenderedCanvas(props.documentId, props.pageNumber)) {
+    const bitmap = canvasPreloader.getPreRenderedCanvas(props.documentId, props.pageNumber);
+    if (bitmap && displayPreRenderedCanvas(bitmap)) {
+      // Successfully displayed pre-rendered canvas, emit event immediately
+      emit('page-rendered', props.pageNumber);
+      return;
+    }
+  }
+
+  // Fallback: Render page normally if no pre-rendered canvas available
   renderPageToCanvas();
 });
 
@@ -125,11 +223,28 @@ watch(
   }
 );
 
-// Cancel any in-progress rendering on unmount
+// Cancel any in-progress rendering on unmount and free canvas memory
 onBeforeUnmount(() => {
+  // Cancel any in-progress render task
   if (renderTask.value) {
     renderTask.value.cancel();
     renderTask.value = null;
+  }
+
+  // Strategy 7: Free canvas memory by clearing pixels and resetting dimensions
+  if (canvasRef.value) {
+    const canvas = canvasRef.value;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      // Clear all pixels from the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Reset dimensions to 0 to force memory deallocation
+    // This signals to the browser that the canvas buffer can be freed
+    canvas.width = 0;
+    canvas.height = 0;
   }
 });
 </script>

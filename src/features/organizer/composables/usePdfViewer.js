@@ -1,6 +1,5 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
-import { LogService } from '@/services/logService.js';
 import { usePdfCache } from './usePdfCache.js';
 
 /**
@@ -35,6 +34,26 @@ export function usePdfViewer() {
   };
 
   /**
+   * Get cached metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @returns {Object|null} Cached metadata or null if not cached
+   */
+  const getCachedMetadata = (documentId) => {
+    return pdfCache.getMetadata(documentId);
+  };
+
+  /**
+   * Cache metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @param {Object} metadata - Metadata object with evidenceData, sourceVariants, storageMetadata
+   */
+  const cacheMetadata = (documentId, metadata) => {
+    pdfCache.setMetadata(documentId, metadata);
+  };
+
+  /**
    * Load PDF document from Firebase Storage URL using cache
    *
    * @param {string} documentId - Unique document identifier (file hash)
@@ -45,21 +64,14 @@ export function usePdfViewer() {
       loadingDocument.value = true;
       loadError.value = null;
 
-      LogService.debug('Loading PDF document', { documentId, url: downloadUrl });
-
       // Get document from cache (instant if cached, loads if not)
       const pdfDoc = await pdfCache.getDocument(documentId, downloadUrl);
 
       pdfDocument.value = pdfDoc;
       currentDocumentId.value = documentId;
       totalPages.value = pdfDoc.numPages;
-
-      LogService.info('PDF document loaded successfully', {
-        documentId,
-        totalPages: pdfDoc.numPages,
-      });
     } catch (err) {
-      LogService.error('Failed to load PDF document', err, { documentId });
+      console.error('Failed to load PDF document', err, { documentId });
       loadError.value = err.message || 'Failed to load PDF document';
       pdfDocument.value = null;
       currentDocumentId.value = null;
@@ -94,14 +106,11 @@ export function usePdfViewer() {
     }
 
     if (renderingPages.value.has(pageNumber)) {
-      LogService.debug('Page already rendering, skipping', { pageNumber });
       return;
     }
 
     try {
       renderingPages.value.add(pageNumber);
-
-      LogService.debug('Rendering PDF page', { pageNumber });
 
       // Get page from document
       const page = await pdfDocument.value.getPage(pageNumber);
@@ -126,10 +135,8 @@ export function usePdfViewer() {
       };
 
       await page.render(renderContext).promise;
-
-      LogService.debug('Page rendered successfully', { pageNumber });
     } catch (err) {
-      LogService.error(`Failed to render page ${pageNumber}`, err);
+      console.error(`Failed to render page ${pageNumber}`, err);
       throw err;
     } finally {
       renderingPages.value.delete(pageNumber);
@@ -140,8 +147,6 @@ export function usePdfViewer() {
    * Clean up PDF resources when component unmounts
    */
   const cleanup = async () => {
-    LogService.debug('Cleaning up PDF viewer');
-
     // Clear all cached documents (cache handles resource cleanup)
     await pdfCache.clearCache();
 
@@ -174,6 +179,8 @@ export function usePdfViewer() {
 
     // Methods
     isDocumentCached,
+    getCachedMetadata,
+    cacheMetadata,
     loadPdf,
     preloadAdjacentDocuments,
     renderPage,

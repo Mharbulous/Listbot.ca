@@ -1,6 +1,5 @@
 import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI } from '../../../services/firebase.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * AI Processing Service - Handles AI-powered document categorization using Firebase Vertex AI
@@ -50,9 +49,7 @@ export class AIProcessingService {
       // Get Gemini model
       const model = getGenerativeModel(firebaseAI, { model: 'gemini-1.5-flash' });
 
-      LogService.debug('Using full document content analysis', {
-        service: 'AIProcessingService',
-      });
+      console.debug('[AIProcessingService] Using full document content analysis');
 
       // Build category context for AI
       const categoryContext = categories
@@ -62,8 +59,7 @@ export class AIProcessingService {
         })
         .join('\n');
 
-      LogService.debug('Sending categories to AI', {
-        service: 'AIProcessingService',
+      console.debug('[AIProcessingService] Sending categories to AI', {
         categoryCount: categories.length,
         categories: categories.map((cat) => ({
           name: cat.name,
@@ -80,8 +76,7 @@ export class AIProcessingService {
         // Use passed extension as fallback
         mimeType = this.getMimeType(`dummy.${extension}`);
       }
-      LogService.debug('Processing file with AI', {
-        service: 'AIProcessingService',
+      console.debug('[AIProcessingService] Processing file with AI', {
         fileName: evidence.displayName,
         extension,
         mimeType,
@@ -96,15 +91,11 @@ export class AIProcessingService {
       const response = await result.response;
       const text = response.text();
 
-      LogService.debug('Raw AI response received', {
-        service: 'AIProcessingService',
-        response: text,
-      });
+      console.debug('[AIProcessingService] Raw AI response received', text);
 
       // Parse AI response
       const parsedSuggestions = this.parseAIResponse(text, categories);
-      LogService.debug('Parsed AI suggestions', {
-        service: 'AIProcessingService',
+      console.debug('[AIProcessingService] Parsed AI suggestions', {
         count: parsedSuggestions.length,
         suggestions: parsedSuggestions.map((s) => ({
           category: s.categoryName,
@@ -115,9 +106,7 @@ export class AIProcessingService {
 
       return parsedSuggestions;
     } catch (error) {
-      LogService.error('Failed to generate AI suggestions', error, {
-        service: 'AIProcessingService',
-      });
+      console.error('[AIProcessingService] Failed to generate AI suggestions', error);
       throw error;
     }
   }
@@ -178,8 +167,7 @@ Please analyze the document and provide tag suggestions:
       const suggestions = JSON.parse(jsonMatch[0]);
       const validatedSuggestions = [];
 
-      LogService.debug('Raw suggestions from AI', {
-        service: 'AIProcessingService',
+      console.debug('[AIProcessingService] Raw suggestions from AI', {
         count: suggestions.length,
         suggestions: suggestions.map((s) => ({
           category: s.categoryName,
@@ -190,10 +178,7 @@ Please analyze the document and provide tag suggestions:
       for (const suggestion of suggestions) {
         // Validate suggestion structure
         if (!suggestion.categoryName || !suggestion.tagName) {
-          LogService.debug('Skipped invalid suggestion', {
-            service: 'AIProcessingService',
-            suggestion,
-          });
+          console.debug('[AIProcessingService] Skipped invalid suggestion', suggestion);
           continue;
         }
 
@@ -203,10 +188,7 @@ Please analyze the document and provide tag suggestions:
         );
 
         if (!category) {
-          LogService.debug('Skipped - category not found', {
-            service: 'AIProcessingService',
-            categoryName: suggestion.categoryName,
-          });
+          console.debug('[AIProcessingService] Skipped - category not found', suggestion.categoryName);
           continue;
         }
 
@@ -225,9 +207,7 @@ Please analyze the document and provide tag suggestions:
 
       return validatedSuggestions.slice(0, 5); // Limit to 5 suggestions
     } catch (error) {
-      LogService.error('Failed to parse AI response', error, {
-        service: 'AIProcessingService',
-      });
+      console.error('[AIProcessingService] Failed to parse AI response', error);
       return [];
     }
   }

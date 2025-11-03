@@ -17,7 +17,6 @@ import tagSubcollectionService from '../services/tagSubcollectionService.js';
 import { useCategoryStore } from './categoryStore.js';
 import { FileProcessingService } from '../services/fileProcessingService.js';
 import { deduplicateEvidence } from '../composables/useEvidenceDeduplication.js';
-import { LogService } from '../../../services/logService.js';
 
 export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   // State
@@ -81,7 +80,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Ensure category store is initialized before validation
       if (!categoryStore.isInitialized) {
-        LogService.warn(
+        console.warn(
           `[OrganizerCore] Category store not initialized, skipping tag validation for evidence ${evidenceId}`
         );
         // Return tags without validation if category store isn't ready
@@ -111,7 +110,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         // Check category validation
         if (!category) {
           // Category doesn't exist - delete the orphaned tag
-          LogService.warn(
+          console.warn(
             `[OrganizerCore] Found orphaned tag for deleted category ${categoryId}, marking for deletion`,
             { evidenceId, categoryId }
           );
@@ -121,7 +120,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
         if (category.isActive === false) {
           // Category exists but is inactive - skip display but don't delete tag
-          LogService.debug(
+          console.debug(
             `[OrganizerCore] Skipping tag for inactive category ${categoryId} (${category.name})`
           );
           continue;
@@ -153,7 +152,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Clean up orphaned tags in background
       if (tagsToDelete.length > 0) {
         cleanupOrphanedTags(evidenceId, firmId, tagsToDelete).catch((error) => {
-          LogService.error(
+          console.error(
             `[OrganizerCore] Failed to cleanup orphaned tags for evidence ${evidenceId}`,
             error,
             { evidenceId, categoryIds: tagsToDelete }
@@ -166,7 +165,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         tags: groupedTags,
       };
     } catch (error) {
-      LogService.warn(`[OrganizerCore] Failed to load tags for evidence ${evidenceId}`, { evidenceId, error: error.message });
+      console.warn(`[OrganizerCore] Failed to load tags for evidence ${evidenceId}`, { evidenceId, error: error.message });
       return {
         subcollectionTags: [],
         tags: {},
@@ -179,18 +178,18 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    */
   const cleanupOrphanedTags = async (evidenceId, firmId, categoryIdsToDelete) => {
     try {
-      LogService.debug(
+      console.debug(
         `[OrganizerCore] Cleaning up ${categoryIdsToDelete.length} orphaned tags for evidence ${evidenceId}`
       );
 
       for (const categoryId of categoryIdsToDelete) {
         await tagService.deleteTag(evidenceId, categoryId, firmId);
-        LogService.debug(`[OrganizerCore] Deleted orphaned tag for category ${categoryId}`);
+        console.debug(`[OrganizerCore] Deleted orphaned tag for category ${categoryId}`);
       }
 
-      LogService.debug(`[OrganizerCore] Successfully cleaned up orphaned tags`);
+      console.debug(`[OrganizerCore] Successfully cleaned up orphaned tags`);
     } catch (error) {
-      LogService.error('[OrganizerCore] Failed to cleanup orphaned tags', error, { evidenceId, firmId, categoryIdsToDelete });
+      console.error('[OrganizerCore] Failed to cleanup orphaned tags', error, { evidenceId, firmId, categoryIdsToDelete });
       // Don't throw - this is background cleanup
     }
   };
@@ -247,14 +246,14 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
         uploadDisplayCache.value.set(metadataHash, displayInfo);
         return displayInfo;
       } else {
-        LogService.warn(`[OrganizerCore] Metadata not found for hash: ${metadataHash}`, { metadataHash, firmId, fileHash });
+        console.warn(`[OrganizerCore] Metadata not found for hash: ${metadataHash}`, { metadataHash, firmId, fileHash });
         return {
           displayName: 'Unknown File',
           createdAt: null,
         };
       }
     } catch (error) {
-      LogService.error(`[OrganizerCore] Failed to fetch display info for ${metadataHash}`, error, { metadataHash, firmId, fileHash });
+      console.error(`[OrganizerCore] Failed to fetch display info for ${metadataHash}`, error, { metadataHash, firmId, fileHash });
       return {
         displayName: 'Unknown File',
         createdAt: null,
@@ -269,7 +268,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const loadEvidence = async () => {
     // If already initialized or initializing, return existing unsubscribe
     if (isInitialized.value || isInitializing.value) {
-      LogService.debug('[OrganizerCore] Already initialized or initializing, reusing existing listener');
+      console.debug('[OrganizerCore] Already initialized or initializing, reusing existing listener');
       return activeUnsubscribe;
     }
 
@@ -379,15 +378,15 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
           isInitialized.value = true;
           isInitializing.value = false;
 
-          LogService.debug(
-            `[OrganizerCore] ⚡ OPTIMIZED: Loaded ${evidence.length} documents → ${deduplicated.length} deduplicated (single query, embedded data, no N+1 queries)`
+          console.log(
+            `⚡ [OrganizerCore] OPTIMIZED: Loaded ${evidence.length} documents → ${deduplicated.length} deduplicated (single query, embedded data, no N+1 queries)`
           );
 
           // Notify query store to update filters if it exists
           notifyDataChange();
         },
         (err) => {
-          LogService.error('[OrganizerCore] Error loading evidence', err, { firmId, matterId });
+          console.error('[OrganizerCore] Error loading evidence', err, { firmId, matterId });
           error.value = err.message;
           loading.value = false;
           isInitializing.value = false;
@@ -400,7 +399,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Return unsubscribe function for cleanup
       return unsubscribe;
     } catch (err) {
-      LogService.error('[OrganizerCore] Failed to load evidence', err, { firmId: authStore.currentFirm });
+      console.error('[OrganizerCore] Failed to load evidence', err, { firmId: authStore.currentFirm });
       error.value = err.message;
       loading.value = false;
       isInitializing.value = false;
@@ -414,7 +413,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
   const notifyDataChange = () => {
     // This will be called when evidence data changes
     // Query store can watch evidenceList to respond to changes
-    LogService.debug(`[OrganizerCore] Data change notification sent`);
+    console.debug(`[OrganizerCore] Data change notification sent`);
   };
 
   /**
@@ -450,9 +449,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       };
 
       notifyDataChange();
-      LogService.debug(`[OrganizerCore] Refreshed evidence ${evidenceId}`);
+      console.debug(`[OrganizerCore] Refreshed evidence ${evidenceId}`);
     } catch (err) {
-      LogService.error('[OrganizerCore] Failed to refresh evidence', err, { evidenceId });
+      console.error('[OrganizerCore] Failed to refresh evidence', err, { evidenceId });
     }
   };
 
@@ -468,7 +467,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Find the evidence in current list
       const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
       if (evidenceIndex === -1) {
-        LogService.warn(`[OrganizerCore] Evidence ${evidenceId} not found for tag refresh`, { evidenceId });
+        console.warn(`[OrganizerCore] Evidence ${evidenceId} not found for tag refresh`, { evidenceId });
         return;
       }
 
@@ -483,9 +482,9 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       };
 
       notifyDataChange();
-      LogService.debug(`[OrganizerCore] Refreshed tags for evidence ${evidenceId}`);
+      console.debug(`[OrganizerCore] Refreshed tags for evidence ${evidenceId}`);
     } catch (err) {
-      LogService.error('[OrganizerCore] Failed to refresh evidence tags', err, { evidenceId });
+      console.error('[OrganizerCore] Failed to refresh evidence tags', err, { evidenceId });
     }
   };
 
@@ -494,7 +493,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
    */
   const clearDisplayCache = () => {
     uploadDisplayCache.value.clear();
-    LogService.debug('[OrganizerCore] Display info cache cleared');
+    console.debug('[OrganizerCore] Display info cache cleared');
   };
 
   /**
@@ -519,7 +518,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Find the evidence document
       const evidenceIndex = evidenceList.value.findIndex((e) => e.id === evidenceId);
       if (evidenceIndex === -1) {
-        LogService.warn(`[OrganizerCore] Evidence ${evidenceId} not found for metadata selection`, { evidenceId });
+        console.warn(`[OrganizerCore] Evidence ${evidenceId} not found for metadata selection`, { evidenceId });
         return;
       }
 
@@ -527,7 +526,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
 
       // Check if this evidence has multiple metadata options
       if (!evidence.metadataOptions || evidence.metadataOptions.length <= 1) {
-        LogService.warn(
+        console.warn(
           `[OrganizerCore] Evidence ${evidenceId} has no multiple metadata options to select`,
           { evidenceId, optionsCount: evidence.metadataOptions?.length || 0 }
         );
@@ -537,7 +536,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Find the requested metadata option
       const option = evidence.metadataOptions.find((opt) => opt.sourceID === metadataHash);
       if (!option) {
-        LogService.warn(
+        console.warn(
           `[OrganizerCore] Metadata ${metadataHash} not found in options for evidence ${evidenceId}`,
           { evidenceId, metadataHash }
         );
@@ -556,7 +555,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Track the selection in state
       metadataSelections.value.set(evidenceId, metadataHash);
 
-      LogService.debug(
+      console.debug(
         `[OrganizerCore] Selected metadata for evidence ${evidenceId}: ${option.displayName} (${metadataHash.substring(0, 8)}...)`,
         { evidenceId, metadataHash, displayName: option.displayName }
       );
@@ -564,7 +563,7 @@ export const useOrganizerCoreStore = defineStore('organizerCore', () => {
       // Notify other stores
       notifyDataChange();
     } catch (err) {
-      LogService.error('[OrganizerCore] Failed to select metadata', err, { evidenceId, metadataHash });
+      console.error('[OrganizerCore] Failed to select metadata', err, { evidenceId, metadataHash });
     }
   };
 

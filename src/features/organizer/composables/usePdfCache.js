@@ -1,13 +1,26 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
-import { LogService } from '@/services/logService.js';
+import { getMemoryStats, formatMemoryForLog } from '@/utils/memoryTracking.js';
 
 /**
  * Module-level singleton cache shared across all component instances
  * This ensures the cache persists across navigations and component re-renders
  *
  * Cache structure: Map<documentId, CacheEntry>
- * CacheEntry: { loadingTask, pdfDocument, downloadUrl, timestamp }
+ * CacheEntry: {
+ *   loadingTask,
+ *   pdfDocument,
+ *   downloadUrl,
+ *   timestamp,
+ *   metadata: {
+ *     evidenceData,      // Firestore evidence document data
+ *     sourceVariants,    // Firestore sourceMetadata variants
+ *     storageMetadata,   // Firebase Storage metadata
+ *     displayName,       // Computed display name
+ *     selectedMetadataHash, // Selected metadata variant hash
+ *     pdfMetadata        // Extracted PDF metadata (from usePdfMetadata)
+ *   }
+ * }
  */
 const cache = shallowRef(new Map());
 
@@ -51,6 +64,42 @@ export function usePdfCache() {
   };
 
   /**
+   * Get cached metadata for a document
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @returns {Object|null} Cached metadata object or null if not cached
+   */
+  const getMetadata = (documentId) => {
+    const entry = cache.value.get(documentId);
+    return entry?.metadata || null;
+  };
+
+  /**
+   * Set metadata for a document (creates cache entry if needed)
+   *
+   * @param {string} documentId - Unique document identifier (file hash)
+   * @param {Object} metadata - Metadata object with evidenceData, sourceVariants, storageMetadata
+   */
+  const setMetadata = (documentId, metadata) => {
+    const entry = cache.value.get(documentId);
+
+    if (entry) {
+      // Update existing entry
+      entry.metadata = metadata;
+      entry.timestamp = Date.now(); // Update LRU timestamp
+    } else {
+      // Create new cache entry with metadata only
+      cache.value.set(documentId, {
+        loadingTask: null,
+        pdfDocument: null,
+        downloadUrl: null,
+        timestamp: Date.now(),
+        metadata,
+      });
+    }
+  };
+
+  /**
    * Get a PDF document from cache or load it if not cached
    *
    * @param {string} documentId - Unique document identifier (file hash)
@@ -58,14 +107,6 @@ export function usePdfCache() {
    * @returns {Promise<PDFDocumentProxy>} The loaded PDF document
    */
   const getDocument = async (documentId, downloadUrl = null) => {
-    // DEBUG: Log cache state on entry
-    LogService.info('🔍 Cache lookup', {
-      requestedDocId: documentId,
-      cacheSize: cache.value.size,
-      cachedDocIds: Array.from(cache.value.keys()),
-      hasDocument: cache.value.has(documentId),
-    });
-
     // Check cache first
     if (cache.value.has(documentId)) {
       const entry = cache.value.get(documentId);
@@ -73,31 +114,49 @@ export function usePdfCache() {
       // Verify the cached document is still valid
       if (entry.pdfDocument) {
         cacheHits.value++;
-        LogService.info('✅ PDF cache HIT', {
-          documentId,
-          cacheSize: cache.value.size,
-          hitRate: `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
-        });
+
+        // Get memory context (inline in usePdfCache.js)
+        const memoryStats = getMemoryStats();
+        const hitRate = `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`;
+
+        console.info(
+          `✅ PDF cache HIT | ${hitRate} | ${formatMemoryForLog(memoryStats, cache.value.size)}`,
+          {
+            documentId: documentId.substring(0, 8),
+            cacheSize: cache.value.size,
+            hitRate,
+            memory: memoryStats,
+          }
+        );
 
         // Update timestamp for LRU tracking
         entry.timestamp = Date.now();
         return entry.pdfDocument;
       } else {
         // Cache entry is invalid (no pdfDocument), remove it
-        LogService.warn('Invalid cache entry found, evicting', { documentId });
+        console.warn('Invalid cache entry found, evicting', { documentId });
         await evictDocument(documentId);
       }
     }
 
     // Cache miss - load the document
     cacheMisses.value++;
-    LogService.info('❌ PDF cache MISS', {
-      documentId,
-      cacheSize: cache.value.size,
-      hitRate: cacheHits.value + cacheMisses.value > 0
-        ? `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
-        : 'N/A'
-    });
+
+    // Get memory context (inline in usePdfCache.js)
+    const memoryStats = getMemoryStats();
+    const hitRate = cacheHits.value + cacheMisses.value > 0
+      ? `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
+      : 'N/A';
+
+    console.info(
+      `❌ PDF cache MISS | ${hitRate} | ${formatMemoryForLog(memoryStats, cache.value.size)}`,
+      {
+        documentId: documentId.substring(0, 8),
+        cacheSize: cache.value.size,
+        hitRate,
+        memory: memoryStats,
+      }
+    );
 
     // Validate download URL is provided for cache miss
     if (!downloadUrl) {
@@ -117,29 +176,29 @@ export function usePdfCache() {
    */
   const loadAndCacheDocument = async (documentId, downloadUrl) => {
     try {
-      LogService.debug('Loading PDF document', { documentId, url: downloadUrl });
-
       // Load PDF document with streaming enabled for better performance
       const loadingTask = pdfjsLib.getDocument({
         url: downloadUrl,
         // Enable streaming for better performance
         disableAutoFetch: false,
         disableStream: false,
+        // Enable hardware acceleration (GPU rendering) for faster page rendering
+        // Falls back to Canvas 2D automatically if HWA is not supported
+        enableHWA: true,
       });
 
       const pdfDocument = await loadingTask.promise;
 
-      LogService.info('PDF document loaded successfully', {
-        documentId,
-        totalPages: pdfDocument.numPages,
-      });
+      // Get existing entry to preserve metadata (if pre-loaded)
+      const existingEntry = cache.value.get(documentId);
 
-      // Add to cache
+      // Add to cache - preserve metadata if it was pre-loaded
       const entry = {
         loadingTask,
         pdfDocument,
         downloadUrl,
         timestamp: Date.now(),
+        metadata: existingEntry?.metadata || null,
       };
 
       cache.value.set(documentId, entry);
@@ -149,7 +208,7 @@ export function usePdfCache() {
 
       return pdfDocument;
     } catch (err) {
-      LogService.error('Failed to load PDF document', err, { documentId });
+      console.error('Failed to load PDF document', err, { documentId });
       throw err;
     }
   };
@@ -166,24 +225,22 @@ export function usePdfCache() {
 
     // Pre-load previous document if it exists and isn't cached
     if (previousId && !cache.value.has(previousId)) {
-      LogService.debug('Pre-loading previous document', { previousId });
       preloadPromises.push(
         getDownloadUrl(previousId)
           .then(url => loadAndCacheDocument(previousId, url))
           .catch(err => {
-            LogService.warn('Failed to pre-load previous document', { previousId, error: err.message });
+            console.warn('Failed to pre-load previous document', { previousId, error: err.message });
           })
       );
     }
 
     // Pre-load next document if it exists and isn't cached
     if (nextId && !cache.value.has(nextId)) {
-      LogService.debug('Pre-loading next document', { nextId });
       preloadPromises.push(
         getDownloadUrl(nextId)
           .then(url => loadAndCacheDocument(nextId, url))
           .catch(err => {
-            LogService.warn('Failed to pre-load next document', { nextId, error: err.message });
+            console.warn('Failed to pre-load next document', { nextId, error: err.message });
           })
       );
     }
@@ -205,8 +262,6 @@ export function usePdfCache() {
       return;
     }
 
-    LogService.debug('Evicting document from cache', { documentId });
-
     // Clean up PDF.js resources to prevent memory leaks
     try {
       // Destroy the loading task (aborts network requests, terminates worker)
@@ -219,7 +274,7 @@ export function usePdfCache() {
         await entry.pdfDocument.destroy();
       }
     } catch (err) {
-      LogService.warn('Error during document eviction cleanup', { documentId, error: err.message });
+      console.warn('Error during document eviction cleanup', { documentId, error: err.message });
     }
 
     // Remove from cache
@@ -248,11 +303,6 @@ export function usePdfCache() {
     }
 
     if (oldestId) {
-      LogService.debug('Cache limit exceeded, evicting oldest document', {
-        documentId: oldestId,
-        cacheSize: cache.value.size,
-        maxSize: MAX_CACHE_SIZE
-      });
       await evictDocument(oldestId);
     }
   };
@@ -261,8 +311,6 @@ export function usePdfCache() {
    * Clear all cached documents and reset cache
    */
   const clearCache = async () => {
-    LogService.debug('Clearing entire PDF cache', { cacheSize: cache.value.size });
-
     // Evict all documents
     const evictPromises = Array.from(cache.value.keys()).map(documentId =>
       evictDocument(documentId)
@@ -301,6 +349,8 @@ export function usePdfCache() {
     // Methods
     hasDocument,
     getDocument,
+    getMetadata,
+    setMetadata,
     preloadAdjacentDocuments,
     clearCache,
     getCacheStats,

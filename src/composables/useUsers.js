@@ -1,6 +1,5 @@
 import { ref } from 'vue';
 import { UserService } from '../services/userService.js';
-import { LogService } from '../services/logService.js';
 
 /**
  * Composable for managing user data and display names
@@ -39,7 +38,7 @@ export function useUsers() {
       userDisplayNames.value.set(userId, displayName);
       return displayName;
     } catch (err) {
-      LogService.error('Error fetching user display name', err, { userId });
+      console.error('Error fetching user display name', err, { userId });
       error.value = err.message || 'Failed to load user display name';
       return 'Unknown User';
     } finally {
@@ -89,7 +88,7 @@ export function useUsers() {
 
       return result;
     } catch (err) {
-      LogService.error('Error fetching user display names', err, { userIds, count: userIds.length });
+      console.error('Error fetching user display names', err, { userIds, count: userIds.length });
       error.value = err.message || 'Failed to load user display names';
       return new Map();
     } finally {

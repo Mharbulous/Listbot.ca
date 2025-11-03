@@ -1,5 +1,4 @@
 import { ref, computed, onMounted } from 'vue';
-import { LogService } from '../services/logService';
 
 const STORAGE_KEY = 'analyze-column-sort';
 
@@ -140,9 +139,8 @@ export function useColumnSort(data) {
 
     // Only log if sort takes a noticeable amount of time (>50ms)
     if (sortDuration > 50) {
-      LogService.performance(
-        `Sorted ${data.value.length} rows by ${sortColumn.value} (${columnType})`,
-        sortDuration,
+      console.log(
+        `⚡ Sorted ${data.value.length} rows by ${sortColumn.value} (${columnType}): ${sortDuration.toFixed(2)}ms`,
         { rowCount: data.value.length, column: sortColumn.value, type: columnType }
       );
     }
@@ -200,7 +198,7 @@ export function useColumnSort(data) {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
-      LogService.error('Error saving sort state', error, { storageKey: STORAGE_KEY });
+      console.error('Error saving sort state', error, { storageKey: STORAGE_KEY });
     }
   };
 
@@ -216,7 +214,7 @@ export function useColumnSort(data) {
         sortDirection.value = state.direction;
       }
     } catch (error) {
-      LogService.error('Error loading sort state', error, { storageKey: STORAGE_KEY });
+      console.error('Error loading sort state', error, { storageKey: STORAGE_KEY });
     }
   };
 

@@ -13,7 +13,6 @@ import {
 import { db } from '../../../services/firebase.js';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { CategoryService } from '../services/categoryService.js';
-import { LogService } from '../../../services/logService.js';
 
 /**
  * Category Core Module
@@ -65,7 +64,7 @@ export function useCategoryCore() {
           orderBy('createdAt', 'asc')
         );
       } catch (queryError) {
-        LogService.debug(
+        console.debug(
           '[CategoryCore] isActive query setup failed, using fallback query',
           { message: queryError.message }
         );
@@ -105,11 +104,11 @@ export function useCategoryCore() {
 
           // Migrate categories missing isActive field
           if (categoriesToMigrate.length > 0) {
-            LogService.debug(
+            console.debug(
               `[CategoryCore] Migrating ${categoriesToMigrate.length} categories to add isActive field`
             );
             CategoryService.migrateIsActiveField(firmId, categoriesToMigrate).catch((err) => {
-              LogService.error('[CategoryCore] Migration failed', err, { firmId, count: categoriesToMigrate.length });
+              console.error('[CategoryCore] Migration failed', err, { firmId, count: categoriesToMigrate.length });
             });
           }
 
@@ -117,10 +116,10 @@ export function useCategoryCore() {
           loading.value = false;
           isInitialized.value = true;
 
-          LogService.debug(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
+          console.debug(`[CategoryCore] Loaded ${loadedCategories.length} categories`);
         },
         (err) => {
-          LogService.error('[CategoryCore] Error loading categories', err, { firmId, matterId });
+          console.error('[CategoryCore] Error loading categories', err, { firmId, matterId });
           error.value = err.message;
           loading.value = false;
         }
@@ -128,7 +127,7 @@ export function useCategoryCore() {
 
       return unsubscribe;
     } catch (err) {
-      LogService.error('[CategoryCore] Failed to load categories', err, { firmId: authStore.currentFirm });
+      console.error('[CategoryCore] Failed to load categories', err, { firmId: authStore.currentFirm });
       error.value = err.message;
       loading.value = false;
     }
@@ -177,10 +176,10 @@ export function useCategoryCore() {
       const categoriesRef = collection(db, 'firms', firmId, 'matters', matterId, 'categories');
       const docRef = await addDoc(categoriesRef, newCategory);
 
-      LogService.debug(`[CategoryCore] Created category: ${categoryData.name}`, { categoryId: docRef.id });
+      console.debug(`[CategoryCore] Created category: ${categoryData.name}`, { categoryId: docRef.id });
       return docRef.id;
     } catch (err) {
-      LogService.error('[CategoryCore] Failed to create category', err, { categoryData, firmId });
+      console.error('[CategoryCore] Failed to create category', err, { categoryData, firmId });
       throw err;
     }
   };
@@ -218,10 +217,10 @@ export function useCategoryCore() {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.debug(`[CategoryCore] Updated category: ${categoryId}`, { updates });
+      console.debug(`[CategoryCore] Updated category: ${categoryId}`, { updates });
       return true;
     } catch (err) {
-      LogService.error('[CategoryCore] Failed to update category', err, { categoryId, firmId, updates });
+      console.error('[CategoryCore] Failed to update category', err, { categoryId, firmId, updates });
       throw err;
     }
   };
@@ -248,10 +247,10 @@ export function useCategoryCore() {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.debug(`[CategoryCore] Deleted category: ${categoryId}`);
+      console.debug(`[CategoryCore] Deleted category: ${categoryId}`);
       return true;
     } catch (err) {
-      LogService.error('[CategoryCore] Failed to delete category', err, { categoryId, firmId });
+      console.error('[CategoryCore] Failed to delete category', err, { categoryId, firmId });
       throw err;
     }
   };

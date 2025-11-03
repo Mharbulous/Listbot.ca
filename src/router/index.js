@@ -67,19 +67,19 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },
     },
     {
-      path: '/categories',
+      path: '/matters/:matterId/categories',
       name: 'category-manager',
       component: () => import('../features/organizer/views/CategoryManager.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories' },
     },
     {
-      path: '/categories/new',
+      path: '/matters/:matterId/categories/new',
       name: 'category-creation-wizard',
       component: () => import('../features/organizer/views/CategoryCreationWizard.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> New' },
     },
     {
-      path: '/categories/edit/:id',
+      path: '/matters/:matterId/categories/edit/:id',
       name: 'category-edit',
       component: () => import('../features/organizer/views/CategoryEditWizard.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> Edit' },

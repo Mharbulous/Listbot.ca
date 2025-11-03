@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
-import { LogService } from '../../services/logService';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -78,7 +77,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await setPersistence(auth, browserLocalPersistence);
       } catch (error) {
-        LogService.error('Failed to set auth persistence', error);
+        console.error('[Auth] Failed to set auth persistence', error);
       }
 
       this._initializeFirebase();
@@ -94,7 +93,7 @@ export const useAuthStore = defineStore('auth', {
             await this._handleUserUnauthenticated();
           }
         } catch (error) {
-          LogService.error('Error in auth state change handler', error);
+          console.error('[Auth] Error in auth state change handler', error);
           this.error = error.message;
           this.authState = 'error';
         }
@@ -133,7 +132,7 @@ export const useAuthStore = defineStore('auth', {
         this.authState = 'authenticated';
         this.error = null;
       } catch (error) {
-        LogService.error('Error handling authenticated user', error, { userId: firebaseUser?.uid });
+        console.error('[Auth] Error handling authenticated user', error, { userId: firebaseUser?.uid });
         // Still authenticate even if firm setup fails
         this.authState = 'authenticated';
         this.firmId = firebaseUser.uid; // Fallback to userId
@@ -155,7 +154,7 @@ export const useAuthStore = defineStore('auth', {
         const preferencesStore = useUserPreferencesStore();
         preferencesStore.clear();
       } catch (error) {
-        LogService.error('Error clearing preferences', error);
+        console.error('[Auth] Error clearing preferences', error);
       }
     },
 
@@ -166,7 +165,7 @@ export const useAuthStore = defineStore('auth', {
         const preferencesStore = useUserPreferencesStore();
         await preferencesStore.initialize(userId);
       } catch (error) {
-        LogService.error('Error initializing user preferences', error, { userId });
+        console.error('[Auth] Error initializing user preferences', error, { userId });
         // Don't fail auth for this - preferences are not critical
       }
     },
@@ -184,7 +183,7 @@ export const useAuthStore = defineStore('auth', {
         // For now, return null if no solo firm
         return null;
       } catch (error) {
-        LogService.error('Error checking firm', error, { userId });
+        console.error('[Auth] Error checking firm', error, { userId });
         return null;
       }
     },
@@ -199,7 +198,7 @@ export const useAuthStore = defineStore('auth', {
         }
         return 'member';
       } catch (error) {
-        LogService.error('Error getting role', error, { firmId, userId });
+        console.error('[Auth] Error getting role', error, { firmId, userId });
         return 'member';
       }
     },
@@ -258,7 +257,7 @@ export const useAuthStore = defineStore('auth', {
 
         await batch.commit();
       } catch (error) {
-        LogService.error('Error creating solo firm', error, { userId: firebaseUser?.uid });
+        console.error('[Auth] Error creating solo firm', error, { userId: firebaseUser?.uid });
         throw error;
       }
     },
@@ -281,7 +280,7 @@ export const useAuthStore = defineStore('auth', {
           // But DON'T store firmId or role here - those come from firm check
         }
       } catch (error) {
-        LogService.error('Error fetching user data', error, { userId });
+        console.error('[Auth] Error fetching user data', error, { userId });
         // Don't fail auth for this
       }
     },

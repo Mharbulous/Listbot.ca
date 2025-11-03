@@ -106,7 +106,6 @@ export function usePdfMetadata() {
       if (metadataMap.has('xmpMM:History')) {
         const history = metadataMap.get('xmpMM:History');
         xmpData.history = history;
-        console.log('[usePdfMetadata] Found xmpMM:History:', history);
       }
 
       return Object.keys(xmpData).length > 0 ? xmpData : null;
@@ -165,8 +164,6 @@ export function usePdfMetadata() {
         xmp: xmpData,
         hasMetadata: Object.values(processedInfo).some((v) => v !== null) || xmpData !== null,
       };
-
-      console.log('[usePdfMetadata] Successfully extracted PDF metadata:', pdfMetadata.value);
     } catch (err) {
       console.error('[usePdfMetadata] Failed to extract PDF metadata:', err);
       metadataError.value = err.message || 'Failed to extract PDF metadata';

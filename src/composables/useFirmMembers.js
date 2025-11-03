@@ -3,7 +3,6 @@ import { useAuthStore } from '../core/stores/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../services/firebase';
 import { ProfileService } from '../services/profileService';
-import { LogService } from '../services/logService';
 
 /**
  * Composable for fetching and filtering firm members
@@ -88,7 +87,7 @@ export function useFirmMembers() {
               displayName = memberData.email?.split('@')[0] || memberData.email;
             }
           } catch (err) {
-            LogService.warn(`Could not fetch display name for user ${userId}`, err);
+            console.warn(`Could not fetch display name for user ${userId}`, err);
             // Fallback to email prefix
             displayName = memberData.email?.split('@')[0] || memberData.email;
           }
@@ -106,7 +105,7 @@ export function useFirmMembers() {
 
       firmMembers.value = processedMembers;
     } catch (err) {
-      LogService.error('Error fetching firm members', err, { firmId });
+      console.error('Error fetching firm members', err, { firmId });
       error.value = err.message;
       firmMembers.value = [];
     } finally {

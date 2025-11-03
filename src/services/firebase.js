@@ -3,7 +3,6 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAI } from 'firebase/ai';
-import { LogService } from './logService.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -43,7 +42,7 @@ if (import.meta.env.VITE_ENABLE_AI_FEATURES === 'true') {
   try {
     firebaseAI = getAI(app);
   } catch (error) {
-    LogService.warn('[Firebase] Failed to initialize Firebase AI Logic', error);
+    console.warn('[Firebase] Failed to initialize Firebase AI Logic', error);
   }
 }
 

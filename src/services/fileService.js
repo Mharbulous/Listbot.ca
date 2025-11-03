@@ -5,7 +5,6 @@
 
 import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import { LogService } from './logService.js';
 
 /**
  * Fetch evidence documents from Firestore with source file metadata
@@ -55,7 +54,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
               const sourceMetadata = sourceMetadataDoc.data();
               sourceFileName = sourceMetadata.sourceFileName || 'ERROR: Missing sourceFileName';
             } else {
-              LogService.error('sourceMetadata not found', new Error('Missing sourceMetadata'), {
+              console.error('[FileService] sourceMetadata not found', new Error('Missing sourceMetadata'), {
                 fileHash,
                 sourceIDId,
                 firmId,
@@ -64,7 +63,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
               sourceFileName = 'ERROR: Metadata not found';
             }
           } catch (error) {
-            LogService.error('Failed to fetch sourceMetadata', error, {
+            console.error('[FileService] Failed to fetch sourceMetadata', error, {
               fileHash,
               sourceIDId,
               firmId,
@@ -73,7 +72,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
             sourceFileName = 'ERROR: Fetch failed';
           }
         } else {
-          LogService.error('No sourceID for evidence document', new Error('Missing sourceID'), {
+          console.error('[FileService] No sourceID for evidence document', new Error('Missing sourceID'), {
             fileHash,
             firmId,
             matterId,
@@ -123,7 +122,7 @@ export async function fetchFiles(firmId, matterId = 'general', maxResults = 1000
 
     return files;
   } catch (error) {
-    LogService.error('Firestore query failed', error, {
+    console.error('[FileService] Firestore query failed', error, {
       firmId,
       matterId,
       maxResults,

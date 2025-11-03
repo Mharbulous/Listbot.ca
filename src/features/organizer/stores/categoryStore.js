@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { useCategoryCore } from './categoryCore.js';
 import { useCategoryValidation } from './categoryValidation.js';
 import { useCategoryComposables } from './categoryComposables.js';
-import { LogService } from '../../../services/logService.js';
 
 /**
  * Main Category Store
@@ -51,7 +50,7 @@ export const useCategoryStore = defineStore('category', () => {
       // Create the category using core functionality
       return await core.createCategory(sanitizedData);
     } catch (error) {
-      LogService.error('[CategoryStore] Enhanced create failed', error, { categoryData });
+      console.error('[CategoryStore] Enhanced create failed', error, { categoryData });
       throw error;
     }
   };
@@ -82,7 +81,7 @@ export const useCategoryStore = defineStore('category', () => {
       // Use core functionality
       return await core.updateCategory(categoryId, sanitizedUpdates);
     } catch (error) {
-      LogService.error('[CategoryStore] Enhanced update failed', error, { categoryId, updates });
+      console.error('[CategoryStore] Enhanced update failed', error, { categoryId, updates });
       throw error;
     }
   };
@@ -99,7 +98,7 @@ export const useCategoryStore = defineStore('category', () => {
       // Use core functionality
       return await core.deleteCategory(categoryId);
     } catch (error) {
-      LogService.error('[CategoryStore] Enhanced delete failed', error, { categoryId });
+      console.error('[CategoryStore] Enhanced delete failed', error, { categoryId });
       throw error;
     }
   };

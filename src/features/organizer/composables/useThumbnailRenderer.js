@@ -1,5 +1,4 @@
 import { ref } from 'vue';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Composable for rendering PDF page thumbnails
@@ -73,11 +72,9 @@ export function useThumbnailRenderer() {
       const blobURL = URL.createObjectURL(blob);
       thumbnailCache.value.set(cacheKey, blobURL);
 
-      LogService.debug('Thumbnail rendered', { pageNumber, maxWidth });
-
       return blobURL;
     } catch (err) {
-      LogService.error(`Failed to render thumbnail for page ${pageNumber}`, err);
+      console.error(`Failed to render thumbnail for page ${pageNumber}`, err);
       throw err;
     }
   };
@@ -92,15 +89,12 @@ export function useThumbnailRenderer() {
    */
   const renderAllThumbnails = async (pdfDocument, totalPages, batchSize = 5) => {
     if (isRendering.value) {
-      LogService.debug('Thumbnail rendering already in progress');
       return;
     }
 
     isRendering.value = true;
 
     try {
-      LogService.debug('Starting thumbnail batch rendering', { totalPages, batchSize });
-
       for (let i = 1; i <= totalPages; i += batchSize) {
         const batch = [];
         const end = Math.min(i + batchSize - 1, totalPages);
@@ -116,9 +110,9 @@ export function useThumbnailRenderer() {
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
-      LogService.info('All thumbnails rendered successfully', { totalPages });
+      console.info('All thumbnails rendered successfully', { totalPages });
     } catch (err) {
-      LogService.error('Failed to render thumbnails', err);
+      console.error('Failed to render thumbnails', err);
       throw err;
     } finally {
       isRendering.value = false;
@@ -137,7 +131,6 @@ export function useThumbnailRenderer() {
     });
 
     thumbnailCache.value.clear();
-    LogService.debug('Thumbnail cache cleared');
   };
 
   return {

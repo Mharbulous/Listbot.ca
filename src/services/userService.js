@@ -1,6 +1,5 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from './firebase.js';
-import { LogService } from './logService.js';
 
 /**
  * UserService - Manages user information and display names
@@ -30,7 +29,7 @@ export class UserService {
         const displayName =
           auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Current User';
         this.userCache.set(userId, displayName);
-        LogService.service('UserService', 'getUserDisplayName', {
+        console.log('[UserService] getUserDisplayName', {
           userId,
           displayName,
           source: 'currentUser',
@@ -56,14 +55,14 @@ export class UserService {
 
       // Cache the result
       this.userCache.set(userId, displayName);
-      LogService.service('UserService', 'getUserDisplayName', {
+      console.log('[UserService] getUserDisplayName', {
         userId,
         displayName,
         source: 'fallback',
       });
       return displayName;
     } catch (error) {
-      LogService.error('Error fetching user display name', error, { userId });
+      console.error('[UserService] Error fetching user display name', error, { userId });
 
       // Cache the fallback to prevent repeated failed lookups
       this.userCache.set(userId, 'Unknown User');
@@ -110,14 +109,14 @@ export class UserService {
       // Clear cache to force refresh of user data
       this.userCache.delete(firebaseUser.uid);
 
-      LogService.service('UserService', 'createOrUpdateUserDocument', {
+      console.log('[UserService] createOrUpdateUserDocument', {
         userId: firebaseUser.uid,
         role: userData.role,
         firmId: userData.firmId,
         isNewUser: !existingDoc.exists(),
       });
     } catch (error) {
-      LogService.error('Error creating/updating user document', error, {
+      console.error('[UserService] Error creating/updating user document', error, {
         userId: firebaseUser?.uid,
         firmId: additionalData?.firmId,
       });
@@ -156,12 +155,12 @@ export class UserService {
       // Clear cache to force refresh
       this.userCache.delete(userId);
 
-      LogService.service('UserService', 'updateUserPreferences', {
+      console.log('[UserService] updateUserPreferences', {
         userId,
         preferencesKeys: Object.keys(preferences),
       });
     } catch (error) {
-      LogService.error('Error updating user preferences', error, { userId });
+      console.error('[UserService] Error updating user preferences', error, { userId });
       throw error;
     }
   }

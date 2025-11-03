@@ -15,7 +15,6 @@ import {
   deleteField,
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Service for managing tags in Firestore subcollections (NEW structure)
@@ -141,8 +140,7 @@ class TagSubcollectionService {
 
       return { id: tagData.categoryId, ...tagDoc };
     } catch (error) {
-      LogService.error('Error adding tag', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error adding tag', error, {
         docId,
         categoryId: tagData.categoryId,
       });
@@ -166,8 +164,7 @@ class TagSubcollectionService {
 
       return addedTags;
     } catch (error) {
-      LogService.error('Error adding tags batch', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error adding tags batch', error, {
         docId,
         count: tagsArray.length,
       });
@@ -198,8 +195,7 @@ class TagSubcollectionService {
 
       return tags;
     } catch (error) {
-      LogService.error('Error getting tags', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error getting tags', error, {
         docId,
       });
       throw error;
@@ -227,8 +223,7 @@ class TagSubcollectionService {
         rejected: allTags.filter((tag) => tag.rejected === true), // New field for rejected tags
       };
     } catch (error) {
-      LogService.error('Error getting tags by status', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error getting tags by status', error, {
         docId,
       });
       throw error;
@@ -278,8 +273,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { id: categoryId, ...updateData };
     } catch (error) {
-      LogService.error('Error approving AI tag', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error approving AI tag', error, {
         docId,
         categoryId,
       });
@@ -315,8 +309,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { id: categoryId, ...updateData };
     } catch (error) {
-      LogService.error('Error rejecting AI tag', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error rejecting AI tag', error, {
         docId,
         categoryId,
       });
@@ -366,8 +359,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { approved: categoryIds.length };
     } catch (error) {
-      LogService.error('Error approving tags batch', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error approving tags batch', error, {
         docId,
         count: categoryIds.length,
       });
@@ -404,8 +396,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { rejected: categoryIds.length };
     } catch (error) {
-      LogService.error('Error rejecting tags batch', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error rejecting tags batch', error, {
         docId,
         count: categoryIds.length,
       });
@@ -434,8 +425,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { id: tagId, deleted: true };
     } catch (error) {
-      LogService.error('Error deleting tag', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error deleting tag', error, {
         docId,
         tagId,
       });
@@ -467,8 +457,7 @@ class TagSubcollectionService {
       await batch.commit();
       return { deleted: tags.length };
     } catch (error) {
-      LogService.error('Error deleting all tags', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error deleting all tags', error, {
         docId,
       });
       throw error;
@@ -519,8 +508,7 @@ class TagSubcollectionService {
 
       return stats;
     } catch (error) {
-      LogService.error('Error getting tag stats', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error getting tag stats', error, {
         docId,
       });
       throw error;
@@ -550,8 +538,7 @@ class TagSubcollectionService {
       const doc = await getDoc(tagRef);
       return doc.exists();
     } catch (error) {
-      LogService.error('Error checking tag existence', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error checking tag existence', error, {
         docId,
         tagId,
       });
@@ -578,8 +565,7 @@ class TagSubcollectionService {
 
       return duplicates;
     } catch (error) {
-      LogService.error('Error finding duplicate tags', error, {
-        service: 'TagSubcollectionService',
+      console.error('[TagSubcollectionService] Error finding duplicate tags', error, {
         docId,
         tagName,
       });

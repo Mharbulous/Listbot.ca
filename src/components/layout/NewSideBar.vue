@@ -51,15 +51,17 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useMatterViewStore } from '../../stores/matterView'
 import AppSwitcher from '../AppSwitcher.vue'
 
 // Get current route for active state
 const route = useRoute()
+const matterViewStore = useMatterViewStore()
 
 // Navigation items configuration
 const navItems = [
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
-  { key: 'categories', path: '/categories', icon: '🗃️', label: 'Categories' },
+  { key: 'categories', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/categories` : '/categories'), icon: '🗃️', label: 'Categories' },
   { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
   { key: 'cloud', path: '/documents', icon: '📁', label: 'Documents' },
   { key: 'list', path: '/list', icon: '📃', label: 'List' },

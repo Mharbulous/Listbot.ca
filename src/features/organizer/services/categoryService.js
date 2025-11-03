@@ -13,7 +13,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
 import { SystemCategoryService } from './systemCategoryService.js';
-import { LogService } from '@/services/logService.js';
 
 /**
  * Category Service - Handles all category-related Firestore operations
@@ -122,7 +121,7 @@ export class CategoryService {
       const categoriesRef = this.getCategoriesCollection(firmId, matterId);
       const docRef = await addDoc(categoriesRef, categoryDoc);
 
-      LogService.service('CategoryService', 'createCategory', {
+      console.info('[CategoryService] createCategory', {
         categoryName: categoryData.name,
         categoryId: docRef.id,
         firmId,
@@ -132,8 +131,7 @@ export class CategoryService {
         ...categoryDoc,
       };
     } catch (error) {
-      LogService.error('Failed to create category', error, {
-        service: 'CategoryService',
+      console.error('[CategoryService] Failed to create category', error, {
         categoryName: categoryData.name,
         firmId,
       });
@@ -188,17 +186,10 @@ export class CategoryService {
       const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', categoryId);
       await updateDoc(categoryRef, updateDoc);
 
-      LogService.service('CategoryService', 'updateCategory', {
-        categoryId,
-        firmId,
-      });
+      console.info('[CategoryService] updateCategory', { categoryId, firmId });
       return true;
     } catch (error) {
-      LogService.error('Failed to update category', error, {
-        service: 'CategoryService',
-        categoryId,
-        firmId,
-      });
+      console.error('[CategoryService] Failed to update category', error, { categoryId, firmId });
       throw error;
     }
   }
@@ -230,17 +221,10 @@ export class CategoryService {
         updatedAt: serverTimestamp(),
       });
 
-      LogService.service('CategoryService', 'deleteCategory', {
-        categoryId,
-        firmId,
-      });
+      console.info('[CategoryService] deleteCategory', { categoryId, firmId });
       return true;
     } catch (error) {
-      LogService.error('Failed to delete category', error, {
-        service: 'CategoryService',
-        categoryId,
-        firmId,
-      });
+      console.error('[CategoryService] Failed to delete category', error, { categoryId, firmId });
       throw error;
     }
   }
@@ -264,10 +248,7 @@ export class CategoryService {
         q = query(categoriesRef, where('isActive', '==', true), orderBy('createdAt', 'asc'));
         snapshot = await getDocs(q);
       } catch (queryError) {
-        LogService.debug('isActive query failed, trying fallback query', {
-          service: 'CategoryService',
-          error: queryError.message,
-        });
+        console.debug('[CategoryService] isActive query failed, trying fallback query', queryError.message);
 
         // Fallback: Get all categories without isActive filter
         q = query(categoriesRef, orderBy('createdAt', 'asc'));
@@ -302,19 +283,13 @@ export class CategoryService {
 
       // Migrate categories missing isActive field
       if (categoriesToMigrate.length > 0) {
-        LogService.debug('Migrating categories to add isActive field', {
-          service: 'CategoryService',
-          count: categoriesToMigrate.length,
-        });
+        console.debug('[CategoryService] Migrating categories to add isActive field', categoriesToMigrate.length);
         await this.migrateIsActiveField(firmId, categoriesToMigrate, matterId);
       }
 
       return categories;
     } catch (error) {
-      LogService.error('Failed to get categories', error, {
-        service: 'CategoryService',
-        firmId,
-      });
+      console.error('[CategoryService] Failed to get categories', error, firmId);
       throw error;
     }
   }
@@ -336,14 +311,9 @@ export class CategoryService {
       });
 
       await Promise.all(migrationPromises);
-      LogService.debug('Successfully migrated categories with isActive field', {
-        service: 'CategoryService',
-        count: categories.length,
-      });
+      console.debug('[CategoryService] Successfully migrated categories with isActive field', categories.length);
     } catch (error) {
-      LogService.error('Failed to migrate categories', error, {
-        service: 'CategoryService',
-      });
+      console.error('[CategoryService] Failed to migrate categories', error);
       // Don't throw - this is a background migration
     }
   }
@@ -374,10 +344,7 @@ export class CategoryService {
         );
         snapshot = await getDocs(q);
       } catch (queryError) {
-        LogService.debug('isActive validation query failed, using fallback', {
-          service: 'CategoryService',
-          error: queryError.message,
-        });
+        console.debug('[CategoryService] isActive validation query failed, using fallback', queryError.message);
 
         // Fallback: Get all categories with this name and filter manually
         q = query(categoriesRef, where('name', '==', categoryName.trim()));
@@ -409,11 +376,7 @@ export class CategoryService {
       if (error.message.includes('already exists')) {
         throw error;
       }
-      LogService.error('Failed to validate unique name', error, {
-        service: 'CategoryService',
-        categoryName,
-        firmId,
-      });
+      console.error('[CategoryService] Failed to validate unique name', error, { categoryName, firmId });
       throw new Error('Failed to validate category name uniqueness');
     }
   }
@@ -426,10 +389,7 @@ export class CategoryService {
       // Check if categories already exist
       const existingCategories = await this.getActiveCategories(firmId);
       if (existingCategories.length > 0) {
-        LogService.debug('Firm already has categories, skipping default creation', {
-          service: 'CategoryService',
-          firmId,
-        });
+        console.debug('[CategoryService] Firm already has categories, skipping default creation', firmId);
         return existingCategories;
       }
 
@@ -475,16 +435,10 @@ export class CategoryService {
         createdCategories.push(category);
       }
 
-      LogService.service('CategoryService', 'createDefaultCategories', {
-        count: createdCategories.length,
-        firmId,
-      });
+      console.info('[CategoryService] createDefaultCategories', { count: createdCategories.length, firmId });
       return createdCategories;
     } catch (error) {
-      LogService.error('Failed to create default categories', error, {
-        service: 'CategoryService',
-        firmId,
-      });
+      console.error('[CategoryService] Failed to create default categories', error, firmId);
       throw error;
     }
   }
@@ -497,10 +451,7 @@ export class CategoryService {
       const categories = await this.getActiveCategories(firmId);
       return categories.length;
     } catch (error) {
-      LogService.error('Failed to get category count', error, {
-        service: 'CategoryService',
-        firmId,
-      });
+      console.error('[CategoryService] Failed to get category count', error, firmId);
       return 0;
     }
   }
@@ -519,10 +470,7 @@ export class CategoryService {
       if (error.message.includes('Cannot create more than')) {
         throw error;
       }
-      LogService.error('Failed to validate category limit', error, {
-        service: 'CategoryService',
-        firmId,
-      });
+      console.error('[CategoryService] Failed to validate category limit', error, firmId);
       throw new Error('Failed to validate category limit');
     }
   }
