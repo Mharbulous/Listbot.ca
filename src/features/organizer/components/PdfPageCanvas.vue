@@ -54,6 +54,9 @@ const pageVisibility = inject('pageVisibility', null);
 // Get canvas preloader from parent (if provided)
 const canvasPreloader = inject('canvasPreloader', null);
 
+// Get performance tracker from parent (if provided)
+const performanceTracker = inject('performanceTracker', null);
+
 /**
  * Display a pre-rendered canvas by drawing the cached ImageBitmap
  * This is much faster than rendering from scratch (5-15ms vs 650-750ms)
@@ -81,17 +84,11 @@ const displayPreRenderedCanvas = (bitmap) => {
 
     const displayTime = performance.now() - startTime;
 
-    // Log success for page 1
-    if (props.pageNumber === 1) {
-      console.info(
-        `⚡ Canvas SWAP complete (pre-rendered): ${displayTime.toFixed(1)}ms`,
-        {
-          documentId: props.documentId.substring(0, 8),
-          pageNumber: props.pageNumber,
-          dimensions: `${bitmap.width}×${bitmap.height}`,
-          displayTime: displayTime.toFixed(1) + 'ms',
-        }
-      );
+    // Track canvas swap for page 1 during navigation
+    if (props.pageNumber === 1 && performanceTracker && performanceTracker.isNavigationActive()) {
+      performanceTracker.recordEvent('canvas_swap', {
+        duration: displayTime,
+      });
     }
 
     return true;
@@ -113,17 +110,12 @@ const renderPageToCanvas = async () => {
     return;
   }
 
-  const startTime = performance.now();
-  let parseTime, drawTime;
-
   try {
     isRendering.value = true;
     renderError.value = null;
 
-    // Stage 1: Parse (get page from document)
-    const parseStart = performance.now();
+    // Get page from document
     const page = await props.pdfDocument.getPage(props.pageNumber);
-    parseTime = performance.now() - parseStart;
 
     // Calculate scale to fit width
     const viewport = page.getViewport({ scale: 1.0 });
@@ -135,8 +127,7 @@ const renderPageToCanvas = async () => {
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
 
-    // Stage 2: Draw (render to canvas)
-    const drawStart = performance.now();
+    // Render to canvas
     const renderContext = {
       canvasContext: canvas.getContext('2d'),
       viewport: scaledViewport,
@@ -144,22 +135,6 @@ const renderPageToCanvas = async () => {
 
     renderTask.value = page.render(renderContext);
     await renderTask.value.promise;
-    drawTime = performance.now() - drawStart;
-
-    const totalTime = performance.now() - startTime;
-
-    // Log pipeline timing for page 1 only (inline in PdfPageCanvas.vue)
-    if (props.pageNumber === 1) {
-      console.log(
-        `🔧 Pipeline timing: parse ${parseTime.toFixed(1)}ms | draw ${drawTime.toFixed(1)}ms | total ${totalTime.toFixed(1)}ms`,
-        {
-          pageNumber: props.pageNumber,
-          parse: parseTime.toFixed(1) + 'ms',
-          draw: drawTime.toFixed(1) + 'ms',
-          total: totalTime.toFixed(1) + 'ms',
-        }
-      );
-    }
 
     // Emit event to notify parent that this page has finished rendering
     emit('page-rendered', props.pageNumber);

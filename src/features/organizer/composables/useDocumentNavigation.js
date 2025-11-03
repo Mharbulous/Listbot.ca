@@ -12,10 +12,12 @@
  * @returns {Object} Navigation state and methods
  */
 import { ref, computed } from 'vue';
+import { useNavigationPerformanceTracker } from './useNavigationPerformanceTracker.js';
 
 export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore) {
-  // Performance timing
+  // Performance tracking
   const navigationStartTime = ref(null);
+  const performanceTracker = useNavigationPerformanceTracker();
 
   // Sorted evidence list from organizer store
   const sortedEvidence = computed(() => organizerStore.sortedEvidenceList || []);
@@ -87,10 +89,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
       const prevDoc = sortedEvidence.value[currentIndex - 1];
       preUpdateBreadcrumb(prevDoc.id);
       navigationStartTime.value = performance.now();
-      console.info('⬅️ Navigation to previous document started', {
-        fromDoc: fileHash.value,
-        toDoc: prevDoc.id,
-      });
+      performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id);
       router.push(`/documents/view/${prevDoc.id}`);
     }
   };
@@ -103,10 +102,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
       const nextDoc = sortedEvidence.value[currentIndex + 1];
       preUpdateBreadcrumb(nextDoc.id);
       navigationStartTime.value = performance.now();
-      console.info('➡️ Navigation to next document started', {
-        fromDoc: fileHash.value,
-        toDoc: nextDoc.id,
-      });
+      performanceTracker.startNavigation('next', fileHash.value, nextDoc.id);
       router.push(`/documents/view/${nextDoc.id}`);
     }
   };
@@ -125,6 +121,9 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     totalDocuments,
     previousDocumentId,
     nextDocumentId,
+
+    // Performance tracking
+    performanceTracker,
 
     // Methods
     goToFirstDocument,

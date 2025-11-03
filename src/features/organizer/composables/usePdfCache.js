@@ -1,6 +1,5 @@
 import { ref, shallowRef } from 'vue';
 import { pdfjsLib } from '@/config/pdfWorker.js';
-import { getMemoryStats, formatMemoryForLog } from '@/utils/memoryTracking.js';
 
 /**
  * Module-level singleton cache shared across all component instances
@@ -115,20 +114,6 @@ export function usePdfCache() {
       if (entry.pdfDocument) {
         cacheHits.value++;
 
-        // Get memory context (inline in usePdfCache.js)
-        const memoryStats = getMemoryStats();
-        const hitRate = `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`;
-
-        console.info(
-          `✅ PDF cache HIT | ${hitRate} | ${formatMemoryForLog(memoryStats, cache.value.size)}`,
-          {
-            documentId: documentId.substring(0, 8),
-            cacheSize: cache.value.size,
-            hitRate,
-            memory: memoryStats,
-          }
-        );
-
         // Update timestamp for LRU tracking
         entry.timestamp = Date.now();
         return entry.pdfDocument;
@@ -141,22 +126,6 @@ export function usePdfCache() {
 
     // Cache miss - load the document
     cacheMisses.value++;
-
-    // Get memory context (inline in usePdfCache.js)
-    const memoryStats = getMemoryStats();
-    const hitRate = cacheHits.value + cacheMisses.value > 0
-      ? `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
-      : 'N/A';
-
-    console.info(
-      `❌ PDF cache MISS | ${hitRate} | ${formatMemoryForLog(memoryStats, cache.value.size)}`,
-      {
-        documentId: documentId.substring(0, 8),
-        cacheSize: cache.value.size,
-        hitRate,
-        memory: memoryStats,
-      }
-    );
 
     // Validate download URL is provided for cache miss
     if (!downloadUrl) {

@@ -6,9 +6,10 @@ import { ref } from 'vue';
  * Generates small preview images of PDF pages optimized for navigation.
  * Uses lower resolution than main viewer for better performance.
  *
+ * @param {Object} performanceTracker - Navigation performance tracker (optional)
  * @returns {Object} Thumbnail rendering state and methods
  */
-export function useThumbnailRenderer() {
+export function useThumbnailRenderer(performanceTracker = null) {
   // State
   const thumbnailCache = ref(new Map()); // Map<pageNumber-maxWidth, blobURL>
   const renderingQueue = ref([]);
@@ -93,6 +94,7 @@ export function useThumbnailRenderer() {
     }
 
     isRendering.value = true;
+    const renderStartTime = performance.now();
 
     try {
       for (let i = 1; i <= totalPages; i += batchSize) {
@@ -110,7 +112,13 @@ export function useThumbnailRenderer() {
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
-      console.info('All thumbnails rendered successfully', { totalPages });
+      // Track thumbnail rendering completion
+      if (performanceTracker && performanceTracker.isNavigationActive()) {
+        performanceTracker.recordEvent('thumbnails_complete', {
+          totalPages,
+          duration: performance.now() - renderStartTime,
+        });
+      }
     } catch (err) {
       console.error('Failed to render thumbnails', err);
       throw err;

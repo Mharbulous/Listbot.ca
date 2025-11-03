@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, inject } from 'vue';
 import { useThumbnailRenderer } from '../composables/useThumbnailRenderer';
 
 const props = defineProps({
@@ -61,9 +61,12 @@ const props = defineProps({
 
 const emit = defineEmits(['page-selected']);
 
+// Get performance tracker from parent (if provided)
+const performanceTracker = inject('performanceTracker', null);
+
 // Thumbnail rendering composable
 const { thumbnailCache: thumbnails, isRendering, renderAllThumbnails, clearCache } =
-  useThumbnailRenderer();
+  useThumbnailRenderer(performanceTracker);
 
 // Refs for thumbnail elements (for auto-scroll)
 const thumbnailGridRef = ref(null);

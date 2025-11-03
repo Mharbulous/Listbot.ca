@@ -1,5 +1,4 @@
 import { ref, shallowRef } from 'vue';
-import { getMemoryStats, formatMemoryForLog } from '@/utils/memoryTracking.js';
 
 /**
  * Module-level singleton cache for pre-rendered canvas content
@@ -88,23 +87,6 @@ export function useCanvasPreloader() {
 
     if (!canvasCache.value.has(key)) {
       cacheMisses.value++;
-
-      const memoryStats = getMemoryStats();
-      const hitRate = cacheHits.value + cacheMisses.value > 0
-        ? `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`
-        : 'N/A';
-
-      console.info(
-        `❌ Canvas cache MISS | ${hitRate} | ${formatMemoryForLog(memoryStats, canvasCache.value.size)}`,
-        {
-          documentId: documentId.substring(0, 8),
-          pageNumber,
-          cacheSize: canvasCache.value.size,
-          hitRate,
-          memory: memoryStats,
-        }
-      );
-
       return null;
     }
 
@@ -119,21 +101,6 @@ export function useCanvasPreloader() {
     }
 
     cacheHits.value++;
-
-    const memoryStats = getMemoryStats();
-    const hitRate = `${((cacheHits.value / (cacheHits.value + cacheMisses.value)) * 100).toFixed(1)}%`;
-
-    console.info(
-      `✅ Canvas cache HIT | ${hitRate} | ${formatMemoryForLog(memoryStats, canvasCache.value.size)}`,
-      {
-        documentId: documentId.substring(0, 8),
-        pageNumber,
-        cacheSize: canvasCache.value.size,
-        hitRate,
-        dimensions: `${entry.width}×${entry.height}`,
-        memory: memoryStats,
-      }
-    );
 
     // Update timestamp for LRU tracking
     entry.timestamp = Date.now();

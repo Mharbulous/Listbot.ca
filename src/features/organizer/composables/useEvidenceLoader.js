@@ -9,6 +9,7 @@
  * @param {Object} documentViewStore - Document view store for breadcrumb
  * @param {Object} pdfViewer - usePdfViewer composable instance
  * @param {Object} pdfMetadataComposable - usePdfMetadata composable instance
+ * @param {Object} performanceTracker - Navigation performance tracker (optional)
  * @returns {Object} Evidence loading state and methods
  */
 import { ref } from 'vue';
@@ -22,7 +23,8 @@ export function useEvidenceLoader(
   matterStore,
   documentViewStore,
   pdfViewer,
-  pdfMetadataComposable
+  pdfMetadataComposable,
+  performanceTracker = null
 ) {
   // State
   const evidence = ref(null);
@@ -57,29 +59,28 @@ export function useEvidenceLoader(
 
       // Load PDF if applicable
       if (displayName?.toLowerCase().endsWith('.pdf')) {
+        const pdfLoadStart = performance.now();
+        const isCached = pdfViewer.isDocumentCached(fileHash);
+
         // Check cache first
-        if (pdfViewer.isDocumentCached(fileHash)) {
+        if (isCached) {
           await pdfViewer.loadPdf(fileHash);
         } else {
           const downloadURL = await getDownloadURL(fileRef);
           await pdfViewer.loadPdf(fileHash, downloadURL);
         }
 
-        // Log PDF load timing
-        if (navigationStartTime?.value !== null) {
-          const elapsedMs = performance.now() - navigationStartTime.value;
-          console.log(`⚡ 📦 PDF document loaded into memory: ${elapsedMs}ms`, {
-            documentId: fileHash,
-            milliseconds: elapsedMs.toFixed(1),
-            seconds: (elapsedMs / 1000).toFixed(3),
-            note: 'First page render timing logged separately',
+        // Track PDF load timing
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('pdf_load', {
+            cacheHit: isCached,
+            duration: performance.now() - pdfLoadStart,
           });
         }
 
         // Extract PDF metadata (check cache first)
         const cachedMetadata = pdfViewer.getCachedMetadata(fileHash);
         if (cachedMetadata?.pdfMetadata) {
-          console.info('📄 PDF metadata cache HIT', { documentId: fileHash });
           Object.assign(pdfMetadataComposable.pdfMetadata, cachedMetadata.pdfMetadata);
         } else {
           // Extract PDF metadata in background
@@ -150,10 +151,10 @@ export function useEvidenceLoader(
       let selectedMetadataHash_local;
       let storageMetadata_cached;
 
+      let metadataLoadStart = performance.now();
+
       if (cachedMetadata) {
         // Cache HIT - instant load
-        console.info('📋 Metadata cache HIT', { documentId: fileHash });
-
         evidenceData = cachedMetadata.evidenceData;
         variants = cachedMetadata.sourceVariants;
         displayName = cachedMetadata.displayName;
@@ -163,9 +164,16 @@ export function useEvidenceLoader(
         sourceMetadataVariants.value = variants;
         selectedMetadataHash.value = selectedMetadataHash_local;
         storageMetadata.value = storageMetadata_cached;
+
+        // Track metadata load from cache
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('metadata_load', {
+            cacheHit: true,
+            duration: performance.now() - metadataLoadStart,
+          });
+        }
       } else {
         // Cache MISS - fetch from Firestore/Storage
-        console.info('📋 Metadata cache MISS', { documentId: fileHash });
 
         // Fetch evidence document
         const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash);
@@ -206,6 +214,14 @@ export function useEvidenceLoader(
         const metadata = await getMetadata(fileRef);
         storageMetadata.value = metadata;
         storageMetadata_cached = metadata;
+
+        // Track metadata load from Firebase
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('metadata_load', {
+            cacheHit: false,
+            duration: performance.now() - metadataLoadStart,
+          });
+        }
       }
 
       // Find createdAt from variants

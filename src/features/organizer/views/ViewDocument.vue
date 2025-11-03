@@ -102,9 +102,6 @@ import { useDocumentNavigation } from '@/features/organizer/composables/useDocum
 import { useEvidenceLoader } from '@/features/organizer/composables/useEvidenceLoader.js';
 import { useDocumentPreloader } from '@/features/organizer/composables/useDocumentPreloader.js';
 import { useRenderTracking } from '@/features/organizer/composables/useRenderTracking.js';
-import { analyzePageComplexity, formatComplexityForLog } from '@/features/organizer/composables/usePageComplexity.js';
-import { verifyWebGLContext, formatWebGLForLog } from '@/utils/webglDetection.js';
-import { getMemoryStats, formatMemoryForLog } from '@/utils/memoryTracking.js';
 import DocumentNavigationBar from '@/components/document/DocumentNavigationBar.vue';
 import PdfThumbnailPanel from '@/components/document/PdfThumbnailPanel.vue';
 import PdfViewerArea from '@/components/document/PdfViewerArea.vue';
@@ -129,7 +126,7 @@ const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
 const navigation = useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore);
-const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata);
+const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata, navigation.performanceTracker);
 const preloader = useDocumentPreloader(
   authStore,
   matterStore,
@@ -142,6 +139,7 @@ const preloader = useDocumentPreloader(
 
 provide('pageVisibility', pageVisibility);
 provide('canvasPreloader', canvasPreloader);
+provide('performanceTracker', navigation.performanceTracker);
 
 // UI State
 const thumbnailsVisible = ref(true);
@@ -196,46 +194,18 @@ const handleFirstPageRendered = async (pageNumber) => {
     isGood = elapsedMs < 50;      // Good: <50ms
   }
 
-  const performanceIcon = isOptimal ? '🚀' : isGood ? '✅' : '⚠️';
-
-  // Gather context information
-  const memoryStats = getMemoryStats();
-  const cacheStats = pdfCache.getCacheStats();
-
-  // Get page complexity (inline)
-  let complexity = null;
-  let complexityStr = 'unknown';
-  if (pdfViewer.pdfDocument.value) {
-    try {
-      const page = await pdfViewer.pdfDocument.value.getPage(1);
-      complexity = await analyzePageComplexity(page);
-      complexityStr = formatComplexityForLog(complexity);
-    } catch (err) {
-      // Non-critical, continue without complexity data
-    }
-  }
-
-  // Get WebGL context info (inline)
-  let webglInfo = { hwaEnabled: false, contextType: 'Unknown' };
-  const canvasElement = document.querySelector('.pdf-page-canvas');
-  if (canvasElement) {
-    webglInfo = verifyWebGLContext(canvasElement);
-  }
-
-  // Log comprehensive performance data (inline in ViewDocument.vue)
-  console.log(
-    `⚡ 🎨 ${performanceIcon} ${renderType} render: ${elapsedMs.toFixed(1)}ms | ${complexityStr} | ${formatWebGLForLog(webglInfo)} | ${formatMemoryForLog(memoryStats, cacheStats.size)}`,
-    {
-      documentId: docId.substring(0, 8),
+  // Track first page render event
+  if (navigation.performanceTracker && navigation.performanceTracker.isNavigationActive()) {
+    navigation.performanceTracker.recordEvent('first_page_render', {
+      duration: elapsedMs,
       renderType,
-      milliseconds: elapsedMs.toFixed(1),
-      performance: isOptimal ? 'OPTIMAL' : isGood ? 'GOOD' : 'SLOW',
-      complexity,
-      webgl: webglInfo,
-      memory: memoryStats,
-      cache: cacheStats,
-    }
-  );
+      isOptimal,
+      isGood,
+    });
+
+    // Complete navigation tracking and output consolidated log
+    navigation.performanceTracker.completeNavigation();
+  }
 
   // Mark as rendered for future tracking
   if (isFirstRender) {
