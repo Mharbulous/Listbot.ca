@@ -2,13 +2,14 @@
  * Document Preloader Composable
  *
  * Manages background pre-loading of adjacent documents for fast navigation.
- * Implements a 3-phase pipeline: PDF loading → Metadata loading → PDF metadata extraction.
+ * Implements a 4-phase pipeline: PDF loading → Metadata loading → PDF metadata extraction → Canvas pre-rendering.
  *
  * @param {Object} authStore - Auth store for firm ID
  * @param {Object} matterStore - Matter store for matter ID
  * @param {Object} pdfViewer - usePdfViewer composable instance
  * @param {Object} pdfMetadataComposable - usePdfMetadata composable instance
  * @param {Object} pdfCache - usePdfCache composable instance
+ * @param {Object} canvasPreloader - useCanvasPreloader composable instance
  * @param {ComputedRef} sortedEvidence - Sorted evidence list
  * @returns {Object} Pre-loading methods
  */
@@ -23,6 +24,7 @@ export function useDocumentPreloader(
   pdfViewer,
   pdfMetadataComposable,
   pdfCache,
+  canvasPreloader,
   sortedEvidence
 ) {
   /**
@@ -175,6 +177,40 @@ export function useDocumentPreloader(
   };
 
   /**
+   * Pre-render first page canvas for a document (Phase 4)
+   * Uses requestIdleCallback for non-blocking background work
+   */
+  const preRenderDocumentCanvas = async (documentId) => {
+    try {
+      if (!documentId) {
+        return;
+      }
+
+      // Check if PDF is cached
+      if (!pdfViewer.isDocumentCached(documentId)) {
+        return;
+      }
+
+      // Skip if already pre-rendered
+      if (canvasPreloader.hasPreRenderedCanvas(documentId, 1)) {
+        return;
+      }
+
+      // Get PDF document from cache (guaranteed to exist after Phase 1)
+      const pdfDoc = await pdfCache.getDocument(documentId, null);
+
+      // Pre-render page 1 in background (non-blocking, uses requestIdleCallback)
+      canvasPreloader.preRenderDocumentFirstPage(pdfDoc, documentId);
+    } catch (err) {
+      // Non-blocking - pre-render failures should not affect UX
+      console.warn('Failed to pre-render canvas (non-blocking)', {
+        documentId,
+        error: err.message,
+      });
+    }
+  };
+
+  /**
    * Start background pre-loading of adjacent documents
    * Called AFTER first page render to avoid race conditions
    *
@@ -182,6 +218,7 @@ export function useDocumentPreloader(
    * 1. Pre-load PDFs (wait for completion)
    * 2. Pre-load metadata (wait for completion)
    * 3. Extract PDF metadata (PDFs guaranteed to be cached)
+   * 4. Pre-render first page canvas (background, non-blocking)
    */
   const startBackgroundPreload = async (currentDocId, prevDocId, nextDocId) => {
     try {
@@ -224,6 +261,25 @@ export function useDocumentPreloader(
       if (nextDocId) {
         await extractAndCachePdfMetadata(nextDocId).catch((err) => {
           console.warn('Failed to extract PDF metadata for next doc', {
+            nextDocId,
+            error: err.message,
+          });
+        });
+      }
+
+      // Step 4: Pre-render first page canvas (non-blocking, uses requestIdleCallback)
+      // This runs in the background and won't block other operations
+      if (prevDocId) {
+        await preRenderDocumentCanvas(prevDocId).catch((err) => {
+          console.warn('Failed to pre-render canvas for previous doc', {
+            prevDocId,
+            error: err.message,
+          });
+        });
+      }
+      if (nextDocId) {
+        await preRenderDocumentCanvas(nextDocId).catch((err) => {
+          console.warn('Failed to pre-render canvas for next doc', {
             nextDocId,
             error: err.message,
           });

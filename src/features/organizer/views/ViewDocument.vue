@@ -45,6 +45,7 @@
         <PdfViewerArea
           :is-pdf-file="isPdfFile"
           :pdf-document="pdfViewer.pdfDocument.value"
+          :document-id="fileHash"
           :total-pages="pdfViewer.totalPages.value"
           :viewer-loading="evidenceLoader.viewerLoading.value"
           :loading-document="pdfViewer.loadingDocument.value"
@@ -91,6 +92,7 @@ import { useOrganizerStore } from '@/features/organizer/stores/organizer.js';
 import { usePdfMetadata } from '@/features/organizer/composables/usePdfMetadata.js';
 import { usePdfViewer } from '@/features/organizer/composables/usePdfViewer.js';
 import { usePdfCache } from '@/features/organizer/composables/usePdfCache.js';
+import { useCanvasPreloader } from '@/features/organizer/composables/useCanvasPreloader.js';
 import { usePageVisibility } from '@/features/organizer/composables/usePageVisibility.js';
 import { useDocumentNavigation } from '@/features/organizer/composables/useDocumentNavigation.js';
 import { useEvidenceLoader } from '@/features/organizer/composables/useEvidenceLoader.js';
@@ -118,6 +120,7 @@ const fileHash = ref(route.params.fileHash);
 // Composables
 const pdfMetadata = usePdfMetadata();
 const pdfCache = usePdfCache();
+const canvasPreloader = useCanvasPreloader();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
@@ -129,10 +132,12 @@ const preloader = useDocumentPreloader(
   pdfViewer,
   pdfMetadata,
   pdfCache,
+  canvasPreloader,
   computed(() => organizerStore.sortedEvidenceList || [])
 );
 
 provide('pageVisibility', pageVisibility);
+provide('canvasPreloader', canvasPreloader);
 
 // UI State
 const thumbnailsVisible = ref(true);

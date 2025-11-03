@@ -27,6 +27,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  documentId: {
+    type: String,
+    required: true,
+  },
   width: {
     type: Number,
     default: 883.2, // 9.2in at 96 DPI
@@ -46,6 +50,60 @@ const renderTask = shallowRef(null);
 
 // Get shared observer from parent (if provided)
 const pageVisibility = inject('pageVisibility', null);
+
+// Get canvas preloader from parent (if provided)
+const canvasPreloader = inject('canvasPreloader', null);
+
+/**
+ * Display a pre-rendered canvas by drawing the cached ImageBitmap
+ * This is much faster than rendering from scratch (5-15ms vs 650-750ms)
+ *
+ * @param {ImageBitmap} bitmap - The pre-rendered ImageBitmap
+ * @returns {boolean} True if successfully displayed, false otherwise
+ */
+const displayPreRenderedCanvas = (bitmap) => {
+  if (!canvasRef.value || !bitmap) {
+    return false;
+  }
+
+  const startTime = performance.now();
+
+  try {
+    const canvas = canvasRef.value;
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas dimensions to match bitmap
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    // Draw the pre-rendered bitmap to canvas (very fast!)
+    ctx.drawImage(bitmap, 0, 0);
+
+    const displayTime = performance.now() - startTime;
+
+    // Log success for page 1
+    if (props.pageNumber === 1) {
+      console.info(
+        `⚡ Canvas SWAP complete (pre-rendered): ${displayTime.toFixed(1)}ms`,
+        {
+          documentId: props.documentId.substring(0, 8),
+          pageNumber: props.pageNumber,
+          dimensions: `${bitmap.width}×${bitmap.height}`,
+          displayTime: displayTime.toFixed(1) + 'ms',
+        }
+      );
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('Failed to display pre-rendered canvas, falling back to normal render', {
+      documentId: props.documentId.substring(0, 8),
+      pageNumber: props.pageNumber,
+      error: err.message,
+    });
+    return false;
+  }
+};
 
 /**
  * Render the PDF page to the canvas
@@ -127,7 +185,17 @@ onMounted(() => {
     pageVisibility.observePage(canvasRef.value);
   }
 
-  // Render page
+  // Check for pre-rendered canvas first
+  if (canvasPreloader && canvasPreloader.hasPreRenderedCanvas(props.documentId, props.pageNumber)) {
+    const bitmap = canvasPreloader.getPreRenderedCanvas(props.documentId, props.pageNumber);
+    if (bitmap && displayPreRenderedCanvas(bitmap)) {
+      // Successfully displayed pre-rendered canvas, emit event immediately
+      emit('page-rendered', props.pageNumber);
+      return;
+    }
+  }
+
+  // Fallback: Render page normally if no pre-rendered canvas available
   renderPageToCanvas();
 });
 

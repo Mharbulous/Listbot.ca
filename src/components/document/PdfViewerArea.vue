@@ -30,6 +30,7 @@
         :key="`page-${pageNum}`"
         :page-number="pageNum"
         :pdf-document="pdfDocument"
+        :document-id="documentId"
         :width="883.2"
         :height="1056"
         class="pdf-page"
@@ -64,6 +65,10 @@ defineProps({
   pdfDocument: {
     type: Object,
     default: null,
+  },
+  documentId: {
+    type: String,
+    required: true,
   },
   totalPages: {
     type: Number,
