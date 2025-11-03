@@ -6,12 +6,12 @@
         icon
         variant="text"
         size="small"
-        :title="visible ? 'Collapse thumbnails' : 'Expand thumbnails'"
+        :title="visible ? 'Hide thumbnails' : 'Show thumbnails'"
         class="thumbnail-toggle-btn"
         :class="{ 'thumbnail-toggle-btn--collapsed': !visible }"
         @click="$emit('toggle-visibility')"
       >
-        <v-icon>{{ visible ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</v-icon>
+        <v-icon>{{ visible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
       </v-btn>
 
       <!-- Expanded content -->
