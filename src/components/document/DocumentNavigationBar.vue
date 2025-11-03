@@ -139,6 +139,8 @@ const handleJumpToPage = () => {
   padding: 8px 16px;
   gap: 8px;
   border-radius: 4px;
+  height: 56px;
+  box-sizing: border-box;
 }
 
 .document-nav-card .v-btn {

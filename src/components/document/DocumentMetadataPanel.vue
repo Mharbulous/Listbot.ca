@@ -369,10 +369,22 @@ const handleSelectVariant = (metadataHash) => {
   overflow-y: hidden;
 }
 
+.metadata-box--collapsed .metadata-card {
+  height: 56px;
+  box-sizing: border-box;
+}
+
+.metadata-box--collapsed .metadata-card-header {
+  padding: 16px;
+  min-height: 56px;
+  border-bottom: none;
+}
+
 .metadata-card {
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .metadata-card-header {
