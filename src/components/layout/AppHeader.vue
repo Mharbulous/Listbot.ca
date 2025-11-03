@@ -157,7 +157,7 @@ const menuLinks = [
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.startsWith('/documents/view/')) {
     const documentName = documentViewStore.documentName || 'Loading...';
-    return `Cloud >> View >> ${documentName}`;
+    return documentName;
   }
   return route.meta.title || 'Home';
 });
