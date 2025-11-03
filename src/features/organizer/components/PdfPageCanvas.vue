@@ -1,5 +1,5 @@
 <template>
-  <div class="pdf-page-container">
+  <div class="pdf-page-container" :data-page-number="pageNumber">
     <canvas ref="canvasRef" class="pdf-page-canvas" :class="{ rendering: isRendering }" />
 
     <!-- Loading indicator -->
@@ -48,11 +48,11 @@ const isRendering = ref(false);
 const renderError = ref(null);
 const renderTask = shallowRef(null);
 
-// Get canvas preloader from parent (if provided) - for adjacent document navigation (Strategy 3)
-const canvasPreloader = inject('canvasPreloader', null);
+// Get shared observer from parent (if provided)
+const pageVisibility = inject('pageVisibility', null);
 
-// Get page preloader from parent (if provided) - for within-document page navigation (Strategy 8)
-const pagePreloader = inject('pagePreloader', null);
+// Get canvas preloader from parent (if provided)
+const canvasPreloader = inject('canvasPreloader', null);
 
 /**
  * Display a pre-rendered canvas by drawing the cached ImageBitmap
@@ -180,20 +180,12 @@ const renderPageToCanvas = async () => {
 
 // Render on mount
 onMounted(() => {
-  // Strategy 7: IntersectionObserver registration moved to PdfViewerArea.vue
-  // The observer now tracks wrapper divs instead of canvas elements
-
-  // Strategy 8: Check for pre-rendered page first (within-document navigation)
-  if (pagePreloader && pagePreloader.hasPreRenderedPage(props.pageNumber)) {
-    const bitmap = pagePreloader.getPreRenderedPage(props.pageNumber);
-    if (bitmap && displayPreRenderedCanvas(bitmap)) {
-      // Successfully displayed pre-rendered page, emit event immediately
-      emit('page-rendered', props.pageNumber);
-      return;
-    }
+  // Register with shared observer if available
+  if (pageVisibility && pageVisibility.observePage) {
+    pageVisibility.observePage(canvasRef.value);
   }
 
-  // Check for pre-rendered canvas from adjacent document navigation (Strategy 3)
+  // Check for pre-rendered canvas first
   if (canvasPreloader && canvasPreloader.hasPreRenderedCanvas(props.documentId, props.pageNumber)) {
     const bitmap = canvasPreloader.getPreRenderedCanvas(props.documentId, props.pageNumber);
     if (bitmap && displayPreRenderedCanvas(bitmap)) {
@@ -223,28 +215,11 @@ watch(
   }
 );
 
-// Cancel any in-progress rendering on unmount and free canvas memory
+// Cancel any in-progress rendering on unmount
 onBeforeUnmount(() => {
-  // Cancel any in-progress render task
   if (renderTask.value) {
     renderTask.value.cancel();
     renderTask.value = null;
-  }
-
-  // Strategy 7: Free canvas memory by clearing pixels and resetting dimensions
-  if (canvasRef.value) {
-    const canvas = canvasRef.value;
-    const ctx = canvas.getContext('2d');
-
-    if (ctx) {
-      // Clear all pixels from the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    // Reset dimensions to 0 to force memory deallocation
-    // This signals to the browser that the canvas buffer can be freed
-    canvas.width = 0;
-    canvas.height = 0;
   }
 });
 </script>
