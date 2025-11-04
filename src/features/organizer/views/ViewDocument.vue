@@ -124,7 +124,7 @@ const pdfCache = usePdfCache();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
-const navigation = useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore);
+const navigation = useDocumentNavigation(fileHash, route.params.matterId, router, organizerStore, pdfViewer, documentViewStore);
 const canvasPreloader = useCanvasPreloader(navigation.performanceTracker);
 const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadataComposable, navigation.performanceTracker);
 const preloader = useDocumentPreloader(
@@ -156,7 +156,7 @@ const isPdfFile = computed(() => {
 const currentVisiblePage = computed(() => pageVisibility.mostVisiblePage.value || 1);
 
 // Event Handlers
-const goBack = () => router.push('/documents');
+const goBack = () => router.push({ name: 'documents', params: { matterId: route.params.matterId } });
 const toggleMetadataVisibility = async () => {
   await preferencesStore.updateMetadataBoxVisible(!metadataVisible.value);
 };

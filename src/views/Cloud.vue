@@ -105,6 +105,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -116,6 +117,9 @@ import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 import DocumentTable from '@/components/base/DocumentTable.vue';
+
+// Get route for accessing params
+const route = useRoute();
 
 // Initialize performance monitor
 const perfMonitor = new PerformanceMonitor('Cloud Table');
@@ -295,10 +299,10 @@ onMounted(async () => {
       return;
     }
 
-    // Check if a matter is selected
-    const matterId = matterViewStore.currentMatterId;
+    // Get matter ID from route params
+    const matterId = route.params.matterId;
     if (!matterId) {
-      error.value = 'Please select a matter to view files';
+      error.value = 'No matter ID in route';
       isLoading.value = false;
       return;
     }

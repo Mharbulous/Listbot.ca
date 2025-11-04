@@ -55,13 +55,13 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Evidence List' },
     },
     {
-      path: '/documents',
+      path: '/matters/:matterId/documents',
       name: 'documents',
       component: () => import('../views/Cloud.vue'),
-      meta: { requiresAuth: true, title: 'Documents' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents' },
     },
     {
-      path: '/documents/view/:fileHash',
+      path: '/matters/:matterId/documents/view/:fileHash',
       name: 'view-document',
       component: () => import('../features/organizer/views/ViewDocument.vue'),
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },

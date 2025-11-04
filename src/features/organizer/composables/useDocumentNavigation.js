@@ -5,6 +5,7 @@
  * Handles navigation between documents in the organizer's sorted evidence list.
  *
  * @param {Ref<string>} fileHash - Current document file hash
+ * @param {string} matterId - Matter ID for routing
  * @param {Router} router - Vue Router instance
  * @param {Object} organizerStore - Pinia organizer store
  * @param {Object} pdfViewer - usePdfViewer composable instance (for cache checks)
@@ -14,7 +15,7 @@
 import { ref, computed } from 'vue';
 import { useNavigationPerformanceTracker } from './useNavigationPerformanceTracker.js';
 
-export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore) {
+export function useDocumentNavigation(fileHash, matterId, router, organizerStore, pdfViewer, documentViewStore) {
   // Performance tracking
   const navigationStartTime = ref(null);
   const performanceTracker = useNavigationPerformanceTracker();
@@ -99,7 +100,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     if (sortedEvidence.value.length === 0) return;
     const firstDoc = sortedEvidence.value[0];
     preUpdateBreadcrumb(firstDoc.id);
-    router.push(`/documents/view/${firstDoc.id}`);
+    router.push({
+      name: 'view-document',
+      params: { matterId, fileHash: firstDoc.id }
+    });
   };
 
   const goToPreviousDocument = () => {
@@ -113,7 +117,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
       preUpdateBreadcrumb(prevDoc.id);
       navigationStartTime.value = performance.now();
       performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id, totalExpectedOperations);
-      router.push(`/documents/view/${prevDoc.id}`);
+      router.push({
+        name: 'view-document',
+        params: { matterId, fileHash: prevDoc.id }
+      });
     }
   };
 
@@ -128,7 +135,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
       preUpdateBreadcrumb(nextDoc.id);
       navigationStartTime.value = performance.now();
       performanceTracker.startNavigation('next', fileHash.value, nextDoc.id, totalExpectedOperations);
-      router.push(`/documents/view/${nextDoc.id}`);
+      router.push({
+        name: 'view-document',
+        params: { matterId, fileHash: nextDoc.id }
+      });
     }
   };
 
@@ -136,7 +146,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     if (sortedEvidence.value.length === 0) return;
     const lastDoc = sortedEvidence.value[sortedEvidence.value.length - 1];
     preUpdateBreadcrumb(lastDoc.id);
-    router.push(`/documents/view/${lastDoc.id}`);
+    router.push({
+      name: 'view-document',
+      params: { matterId, fileHash: lastDoc.id }
+    });
   };
 
   return {

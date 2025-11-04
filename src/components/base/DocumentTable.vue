@@ -205,7 +205,7 @@
 
 <script setup>
 import { ref, nextTick, watch, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
@@ -256,13 +256,20 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 
-// Router for navigation
+// Router and route for navigation
+const route = useRoute();
 const router = useRouter();
 
 // Handle view document button click
 const handleViewDocument = (row) => {
   if (row && row.id) {
-    router.push(`/documents/view/${row.id}`);
+    router.push({
+      name: 'view-document',
+      params: {
+        matterId: route.params.matterId,
+        fileHash: row.id
+      }
+    });
   }
 };
 
