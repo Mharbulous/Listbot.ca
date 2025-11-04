@@ -291,6 +291,42 @@ export function useDocumentPeek() {
   };
 
   /**
+   * Cycle to previous page
+   * Logic: page 1 → "End of Document" → page N → ... → page 2 → page 1
+   */
+  const previousPage = () => {
+    if (!currentPeekDocument.value) {
+      return;
+    }
+
+    const metadata = documentMetadataCache.value.get(currentPeekDocument.value);
+    if (!metadata) {
+      return;
+    }
+
+    // If showing "End of Document", go to last page
+    if (showEndOfDocument.value) {
+      if (metadata.pdfDocument && metadata.pageCount) {
+        currentPeekPage.value = metadata.pageCount;
+        showEndOfDocument.value = false;
+      } else {
+        // Non-PDF or no page count, go to page 1
+        currentPeekPage.value = 1;
+        showEndOfDocument.value = false;
+      }
+      return;
+    }
+
+    // If on page 1, wrap around to "End of Document"
+    if (currentPeekPage.value === 1) {
+      showEndOfDocument.value = true;
+    } else {
+      // Go to previous page
+      currentPeekPage.value--;
+    }
+  };
+
+  /**
    * Close peek and clean up
    */
   const closePeek = () => {
@@ -377,6 +413,7 @@ export function useDocumentPeek() {
     // Methods
     openPeek,
     nextPage,
+    previousPage,
     closePeek,
     generateThumbnail,
     getFileIcon,

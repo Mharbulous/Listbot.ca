@@ -162,7 +162,7 @@
                 @click.stop="handlePeekClick(sortedData[virtualItem.index])"
                 @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
                 @mouseleave="handlePeekMouseLeave"
-                title="Peek document"
+                :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
               >
                 👁️
               </button>
@@ -225,6 +225,8 @@
       @mouseenter="handleTooltipMouseEnter"
       @mouseleave="handleTooltipMouseLeave"
       @thumbnail-needed="handleThumbnailNeeded"
+      @previous-page="handlePreviousPage"
+      @next-page="handleNextPage"
     />
   </div>
 </template>
@@ -399,6 +401,34 @@ const handleTooltipMouseLeave = () => {
 // Handle thumbnail generation request
 const handleThumbnailNeeded = async ({ fileHash, pageNumber }) => {
   await documentPeek.generateThumbnail(fileHash, pageNumber);
+};
+
+// Handle previous page click on thumbnail
+const handlePreviousPage = async () => {
+  if (!documentPeek.currentPeekDocument.value) return;
+
+  const fileHash = documentPeek.currentPeekDocument.value;
+
+  documentPeek.previousPage();
+
+  // Generate thumbnail for new page if not "End of Document"
+  if (!documentPeek.showEndOfDocument.value) {
+    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+  }
+};
+
+// Handle next page click on thumbnail
+const handleNextPage = async () => {
+  if (!documentPeek.currentPeekDocument.value) return;
+
+  const fileHash = documentPeek.currentPeekDocument.value;
+
+  documentPeek.nextPage();
+
+  // Generate thumbnail for new page if not "End of Document"
+  if (!documentPeek.showEndOfDocument.value) {
+    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+  }
 };
 
 // Update tooltip position based on peek button

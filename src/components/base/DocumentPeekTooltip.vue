@@ -37,9 +37,20 @@
 
     <!-- PDF Thumbnail State -->
     <div v-else-if="thumbnailUrl" class="peek-thumbnail">
-      <img :src="thumbnailUrl" alt="Document preview" class="thumbnail-image" />
-      <div class="page-counter">
-        Page {{ currentPeekPage }}{{ pageCountText }}
+      <div
+        class="thumbnail-container"
+        @click="handleThumbnailClick"
+        @mousemove="handleThumbnailHover"
+      >
+        <img
+          :src="thumbnailUrl"
+          alt="Document preview"
+          class="thumbnail-image"
+          :class="cursorClass"
+        />
+        <div class="page-counter">
+          Page {{ currentPeekPage }}{{ pageCountText }}
+        </div>
       </div>
     </div>
 
@@ -52,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 
 const props = defineProps({
   // Visibility and opacity controlled by parent
@@ -114,7 +125,43 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['mouseenter', 'mouseleave', 'thumbnail-needed']);
+const emit = defineEmits(['mouseenter', 'mouseleave', 'thumbnail-needed', 'previous-page', 'next-page']);
+
+// Cursor side tracking for left/right hover detection
+const cursorSide = ref('right'); // 'left' or 'right'
+
+// Computed: Cursor class based on which side user is hovering
+const cursorClass = computed(() => {
+  return cursorSide.value === 'left' ? 'cursor-prev' : 'cursor-next';
+});
+
+// Handle thumbnail hover to detect left/right side
+const handleThumbnailHover = (event) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const width = rect.width;
+
+  // Determine which half of the thumbnail the cursor is over
+  cursorSide.value = x < width / 2 ? 'left' : 'right';
+};
+
+// Handle thumbnail click to navigate pages
+const handleThumbnailClick = (event) => {
+  event.stopPropagation(); // Prevent tooltip from closing
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const width = rect.width;
+
+  // Determine which side was clicked
+  if (x < width / 2) {
+    // Left side - go to previous page
+    emit('previous-page');
+  } else {
+    // Right side - go to next page
+    emit('next-page');
+  }
+};
 
 // Computed: File icon for non-PDF files
 const fileIcon = computed(() => {
@@ -292,12 +339,30 @@ watch(
   align-items: center;
 }
 
+.thumbnail-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .thumbnail-image {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
   display: block;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  user-select: none;
+}
+
+/* Custom cursor for previous page (left side) - single left arrow */
+.thumbnail-image.cursor-prev {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="20,8 12,16 20,24" fill="white" stroke="black" stroke-width="1"/></svg>') 16 16, pointer;
+}
+
+/* Custom cursor for next page (right side) - single right arrow */
+.thumbnail-image.cursor-next {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="12,8 20,16 12,24" fill="white" stroke="black" stroke-width="1"/></svg>') 16 16, pointer;
 }
 
 .page-counter {
