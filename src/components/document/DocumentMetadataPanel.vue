@@ -10,14 +10,14 @@
               :class="{ active: activeTab === 'digital-file' }"
               @click="activeTab = 'digital-file'"
             >
-              ℹ️ Digital File
+              ℹ️ Metadata
             </button>
             <button
               class="tab-button"
               :class="{ active: activeTab === 'document' }"
               @click="activeTab = 'document'"
             >
-              ℹ️ Document
+              ℹ️ Analysis
             </button>
           </div>
           <v-btn
