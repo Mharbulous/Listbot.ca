@@ -81,7 +81,7 @@ export function useEvidenceLoader(
         // Extract PDF metadata (check cache first)
         const cachedMetadata = pdfViewer.getCachedMetadata(fileHash);
         if (cachedMetadata?.pdfMetadata) {
-          Object.assign(pdfMetadataComposable.pdfMetadata, cachedMetadata.pdfMetadata);
+          pdfMetadataComposable.pdfMetadata.value = cachedMetadata.pdfMetadata;
         } else {
           // Extract PDF metadata in background
           setTimeout(async () => {
@@ -99,7 +99,7 @@ export function useEvidenceLoader(
                 storageMetadata: storageMetadata.value,
                 displayName: evidence.value.displayName,
                 selectedMetadataHash: selectedMetadataHash.value,
-                pdfMetadata: { ...pdfMetadataComposable.pdfMetadata },
+                pdfMetadata: { ...pdfMetadataComposable.pdfMetadata.value },
               });
             } catch (err) {
               console.warn('Background PDF metadata extraction failed:', err);

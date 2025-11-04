@@ -206,7 +206,7 @@
 
             <!-- No metadata available for PDF -->
             <div v-else-if="isPdfFile && !metadataLoading" class="metadata-notice">
-              <p>No embedded metadata found in this PDF</p>
+              <p>...getting embedded metadata...</p>
             </div>
 
             <!-- Not a PDF file -->

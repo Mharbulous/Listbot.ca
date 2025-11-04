@@ -67,10 +67,10 @@
         :selected-metadata-hash="evidenceLoader.selectedMetadataHash.value"
         :dropdown-open="dropdownOpen"
         :visible="metadataVisible"
-        :pdf-metadata="pdfMetadata.pdfMetadata"
-        :metadata-loading="pdfMetadata.metadataLoading.value"
-        :metadata-error="pdfMetadata.metadataError.value"
-        :has-metadata="pdfMetadata.hasMetadata.value"
+        :pdf-metadata="pdfMetadata"
+        :metadata-loading="metadataLoading"
+        :metadata-error="metadataError"
+        :has-metadata="hasMetadata"
         :updating-metadata="evidenceLoader.updatingMetadata.value"
         :is-pdf-file="isPdfFile"
         :date-format="dateFormat"
@@ -119,24 +119,27 @@ const { dateFormat, timeFormat, metadataBoxVisible } = storeToRefs(preferencesSt
 const fileHash = ref(route.params.fileHash);
 
 // Composables
-const pdfMetadata = usePdfMetadata();
+const pdfMetadataComposable = usePdfMetadata();
 const pdfCache = usePdfCache();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
 const navigation = useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore);
 const canvasPreloader = useCanvasPreloader(navigation.performanceTracker);
-const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata, navigation.performanceTracker);
+const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadataComposable, navigation.performanceTracker);
 const preloader = useDocumentPreloader(
   authStore,
   matterStore,
   pdfViewer,
-  pdfMetadata,
+  pdfMetadataComposable,
   pdfCache,
   canvasPreloader,
   computed(() => organizerStore.sortedEvidenceList || []),
   navigation.performanceTracker
 );
+
+// Destructure for template use
+const { metadataLoading, metadataError, pdfMetadata, hasMetadata } = pdfMetadataComposable;
 
 provide('pageVisibility', pageVisibility);
 provide('canvasPreloader', canvasPreloader);
