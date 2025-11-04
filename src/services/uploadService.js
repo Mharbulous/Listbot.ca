@@ -71,7 +71,7 @@ export async function fetchFiles(
         date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
         fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
         modifiedDate: data.sourceLastModified || null,
-        sourceFolderPath: data.sourceFolderPath || 'ERROR: Missing metadata',
+        sourceFolderPath: data.sourceFolderPath || '',
 
         // Multiple Source Files indicator (from embedded count, no subcollection query!)
         alternateSources: alternateSources,
