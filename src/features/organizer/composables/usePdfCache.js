@@ -201,7 +201,14 @@ export function usePdfCache() {
         getDownloadUrl(previousId)
           .then(url => loadAndCacheDocument(previousId, url))
           .catch(err => {
-            console.warn('Failed to pre-load previous document', { previousId, error: err.message });
+            // Check if error is due to non-PDF file
+            if (err.message.startsWith('NON_PDF_FILE:')) {
+              const extension = err.message.split(':')[1] || 'unknown';
+              const shortId = previousId.substring(0, 8);
+              console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+            } else {
+              console.warn('Failed to pre-load previous document', { previousId, error: err.message });
+            }
           })
       );
     }
@@ -212,7 +219,14 @@ export function usePdfCache() {
         getDownloadUrl(nextId)
           .then(url => loadAndCacheDocument(nextId, url))
           .catch(err => {
-            console.warn('Failed to pre-load next document', { nextId, error: err.message });
+            // Check if error is due to non-PDF file
+            if (err.message.startsWith('NON_PDF_FILE:')) {
+              const extension = err.message.split(':')[1] || 'unknown';
+              const shortId = nextId.substring(0, 8);
+              console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+            } else {
+              console.warn('Failed to pre-load next document', { nextId, error: err.message });
+            }
           })
       );
     }

@@ -18,6 +18,16 @@ import { ref as storageRef, getMetadata, getDownloadURL, getStorage } from 'fire
 import { db, storage } from '@/services/firebase.js';
 import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
 
+/**
+ * Check if a file is a PDF based on its display name
+ * @param {string} displayName - File name with extension
+ * @returns {boolean} True if file has .pdf extension
+ */
+function isPdfFile(displayName) {
+  if (!displayName) return false;
+  return displayName.toLowerCase().endsWith('.pdf');
+}
+
 export function useDocumentPreloader(
   authStore,
   matterStore,
@@ -42,6 +52,12 @@ export function useDocumentPreloader(
     const doc = sortedEvidence.value.find((ev) => ev.id === documentId);
     if (!doc) {
       throw new Error(`Document ${documentId} not found in evidence list`);
+    }
+
+    // Check if file is a PDF - only PDFs can be pre-loaded
+    if (!isPdfFile(doc.displayName)) {
+      const extension = doc.displayName.split('.').pop() || 'unknown';
+      throw new Error(`NON_PDF_FILE:${extension}`);
     }
 
     // Get file extension and construct storage path
