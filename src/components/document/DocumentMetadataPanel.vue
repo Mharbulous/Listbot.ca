@@ -4,7 +4,22 @@
       <v-card variant="outlined" class="metadata-card">
         <!-- Card header with toggle button -->
         <div class="metadata-card-header">
-          <h3 class="metadata-card-title">ℹ️ Document | ℹ️ Digital File</h3>
+          <div class="tabs-container">
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'digital-file' }"
+              @click="activeTab = 'digital-file'"
+            >
+              ℹ️ Digital File
+            </button>
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'document' }"
+              @click="activeTab = 'document'"
+            >
+              ℹ️ Document
+            </button>
+          </div>
           <v-btn
             icon
             variant="text"
@@ -18,8 +33,10 @@
         </div>
 
         <v-card-text v-if="visible">
-          <!-- Source File Section -->
-          <div class="metadata-section">
+          <!-- Digital File Tab Content -->
+          <div v-if="activeTab === 'digital-file'">
+            <!-- Source File Section -->
+            <div class="metadata-section">
             <h3 class="metadata-section-title">Source File</h3>
 
             <!-- File name dropdown for selecting metadata variants -->
@@ -215,6 +232,34 @@
               <p>{{ mimeType }}</p>
             </div>
           </div>
+          </div>
+
+          <!-- Document Tab Content -->
+          <div v-if="activeTab === 'document'">
+            <!-- System Fields Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">System Fields</h3>
+              <div class="metadata-notice">
+                <p>Coming soon...</p>
+              </div>
+            </div>
+
+            <!-- Firm Fields Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Firm fields</h3>
+              <div class="metadata-notice">
+                <p>Coming soon...</p>
+              </div>
+            </div>
+
+            <!-- Matter Fields Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Matter fields</h3>
+              <div class="metadata-notice">
+                <p>Coming soon...</p>
+              </div>
+            </div>
+          </div>
         </v-card-text>
       </v-card>
     </div>
@@ -222,8 +267,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { formatDateTime } from '@/utils/dateFormatter.js';
+
+// Tab state
+const activeTab = ref('digital-file');
 
 // Props
 const props = defineProps({
@@ -406,6 +454,40 @@ const handleSelectVariant = (metadataHash) => {
   font-weight: 600;
   color: #333;
   margin: 0;
+}
+
+/* Tab Styling */
+.tabs-container {
+  display: flex;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #333;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.tab-button.active {
+  color: #1976d2;
+  font-weight: 600;
+  border-bottom-color: #1976d2;
 }
 
 .toggle-btn {
