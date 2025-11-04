@@ -132,8 +132,11 @@
           <div
             v-for="virtualItem in virtualItems"
             :key="virtualItem.key"
-            class="table-mockup-row"
-            :class="{ even: virtualItem.index % 2 === 0 }"
+            class="table-mockup-row cursor-pointer hover:!bg-blue-50"
+            :class="{
+              even: virtualItem.index % 2 === 0,
+              '!bg-blue-50': isDocumentSelected(sortedData[virtualItem.index])
+            }"
             :style="{
               position: 'absolute',
               top: 0,
@@ -142,6 +145,7 @@
               transform: `translateY(${virtualItem.start}px)`,
               backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
             }"
+            @click="handleViewDocument(sortedData[virtualItem.index])"
           >
             <!-- Action Buttons Cell -->
             <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
@@ -271,6 +275,11 @@ const handleViewDocument = (row) => {
       }
     });
   }
+};
+
+// Check if a document row is currently selected (being viewed)
+const isDocumentSelected = (row) => {
+  return row && row.id && route.params.fileHash === row.id;
 };
 
 // Handle process with AI button click
