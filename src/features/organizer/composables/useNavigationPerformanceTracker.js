@@ -283,30 +283,30 @@ export function useNavigationPerformanceTracker() {
     switch (eventType) {
       case 'metadata_load':
         if (data.cacheHit) {
-          return `→ Metadata loaded from cache in ${data.duration.toFixed(0)}ms`;
+          return `→ Metadata loaded from cache in ${timestamp.toFixed(0)}ms`;
         } else {
-          return `→ Metadata loaded from Firebase in ${data.duration.toFixed(0)}ms`;
+          return `→ Metadata loaded from Firebase in ${timestamp.toFixed(0)}ms`;
         }
 
       case 'pdf_load':
         if (data.cacheHit) {
-          return `→ PDF loaded from cache in ${data.duration.toFixed(0)}ms`;
+          return `→ PDF loaded from cache in ${timestamp.toFixed(0)}ms`;
         } else {
-          return `→ PDF loaded from Firestore in ${data.duration.toFixed(0)}ms`;
+          return `→ PDF loaded from Firestore in ${timestamp.toFixed(0)}ms`;
         }
 
       case 'canvas_swap':
-        return `→ Canvas swap complete in ${data.duration.toFixed(1)}ms (pre-rendered)`;
+        return `→ Canvas swap complete in ${timestamp.toFixed(1)}ms (pre-rendered)`;
 
       case 'first_page_render':
         const performance = data.isOptimal ? '🚀' : data.isGood ? '✅' : '⚠️';
-        return `→ ${performance} First page rendered in ${data.duration.toFixed(0)}ms (${data.renderType})`;
+        return `→ 🖥️ ${performance} First page rendered in ${timestamp.toFixed(0)}ms (${data.renderType})`;
 
       case 'all_pages_render':
-        return `→ All ${data.totalPages} pages rendered in ${data.duration.toFixed(0)}ms`;
+        return `→ All ${data.totalPages} pages rendered in ${timestamp.toFixed(0)}ms`;
 
       case 'thumbnails_complete':
-        return `→ All ${data.totalPages} thumbnails rendered in ${data.duration.toFixed(0)}ms`;
+        return `→ 🖼️ All ${data.totalPages} thumbnails rendered in ${timestamp.toFixed(0)}ms`;
 
       case 'canvas_prerender':
         const docIdShort = data.documentId === 'unknown' ? 'unknown' : data.documentId.substring(0, 8);
