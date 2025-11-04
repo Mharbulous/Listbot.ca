@@ -4,7 +4,9 @@ Last Updated: 2025-09-20
 
 ## Critical Architecture Context
 
-**DO NOT** assume tags are stored in the evidence document. Tags use a subcollection architecture at `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` for scalability.
+**Hybrid Storage**: Tags use BOTH storage locations synchronized via atomic batch writes:
+- **Subcollection** `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}` - Full metadata (alternatives, review history, AIanalysis)
+- **Embedded map** `evidence.tags[categoryId]` - Simplified data (tagName, confidence, status) for fast DocumentTable loading
 
 **ALWAYS** enforce one tag per category through tagCategoryId as document ID.
 
@@ -78,6 +80,8 @@ Each matter has its own categories collection that includes both system categori
 
 ### Tags Subcollection: `/firms/{firmId}/evidence/{evidenceId}/tags/{categoryId}`
 
+**Full metadata storage** accessed by detail views and review workflows. Synchronized with embedded map via `tagSubcollectionService.js`.
+
 ```javascript
 {
   // Core fields - REQUIRED
@@ -107,6 +111,23 @@ Each matter has its own categories collection that includes both system categori
     reviewReason: string | null,
     reviewNote: string | null,
     userNote: string | null
+  }
+}
+```
+
+### Embedded Tags Map: `evidence.tags[categoryId]`
+
+**Simplified storage** for fast DocumentTable loading (10,000+ docs in single query). Synchronized with subcollection via atomic batch writes.
+
+```javascript
+evidence.tags = {
+  'DocumentDate': {
+    tagName: string,
+    confidence: number,            // 0-100 percentage
+    source: 'ai' | 'ai-auto' | 'human',
+    autoApproved: boolean,
+    reviewRequired: boolean,
+    createdAt: Timestamp
   }
 }
 ```
@@ -384,10 +405,10 @@ const CONFIDENCE_THRESHOLD = parseFloat(process.env.VITE_CONFIDENCE_THRESHOLD) |
 
 ## Common Pitfalls
 
-**DO NOT** store tags in the evidence document - use subcollection.
+**DO NOT** manually write tags - use `tagSubcollectionService.js` for atomic batch writes to both subcollection and embedded map.
 **DO NOT** allow multiple tags per category - one tagCategoryId per tag document.
 **DO NOT** compute colors client-side differently than triadic pattern.
 **DO NOT** skip validation assuming Firestore rules will catch errors.
-**DO NOT** query all tags when counters are available on evidence document.
+**DO NOT** query subcollection for table loading - use embedded `evidence.tags` map for performance.
 **DO NOT** hard delete categories - always soft delete.
 **DO NOT** assume `isActive` field exists - handle undefined as true.

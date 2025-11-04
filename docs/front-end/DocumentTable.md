@@ -129,12 +129,10 @@ All columns support:
 
 ## Category Tag Display
 
-Category columns display tag values from the evidence document's tags subcollection:
-
-**Tags Storage Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/tags/{categoryId}`
+Category columns display tag values from the **embedded tags map** (`evidence.tags[categoryId]`) for performance. The subcollection at `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/tags/{categoryId}` contains full metadata and is accessed only in detail views.
 
 **Display Logic**:
-- If tag exists: Display the `tagName` value
+- If tag exists: Display the `tagName` value from `evidence.tags[categoryId].tagName`
 - If no tag exists: Display "t.b.d." in italics (indicating no tag assigned)
 - If error: Display error message prefixed with "ERROR:"
 
@@ -144,7 +142,7 @@ Category columns display tag values from the evidence document's tags subcollect
 
 ✅ **Built-in Data Columns**: All hardcoded columns fully functional
 ✅ **System Categories**: Fetched from `/systemcategories` and displayed as columns
-✅ **Tag Values**: System category tag values loaded from evidence tags subcollection
+✅ **Tag Values**: System category tag values loaded from embedded `evidence.tags` map (not subcollection)
 ✅ **Virtual Scrolling**: High-performance rendering with TanStack Virtual
 ✅ **Column Management**: Reordering, resizing, visibility, sorting all functional
 

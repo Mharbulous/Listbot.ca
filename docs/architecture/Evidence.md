@@ -113,13 +113,15 @@ The sourceMetadata subcollection stores variant metadata for files with identica
 - **Preserves original context**: Each document represents a unique upload context with different name, timestamp, or path
 - **Case preservation**: The ONLY place where source file extension case is preserved
 
-## Tag Subcollection
+## Tag Storage (Hybrid Architecture)
 
-### Path Structure
+Tags use **dual storage** synchronized via atomic batch writes (`tagSubcollectionService.js`):
+- **Subcollection** (below) - Full metadata for detail views and review workflows
+- **Embedded map** `evidence.tags[categoryId]` - Simplified data for DocumentTable performance
 
-```
-/firms/{firmId}/matters/general/evidence/{evidenceId}/tags/{categoryId}
-```
+### Tag Subcollection (Full Metadata)
+
+**Path**: `/firms/{firmId}/matters/general/evidence/{evidenceId}/tags/{categoryId}`
 
 ### Tag Document Schema
 
@@ -145,6 +147,25 @@ The sourceMetadata subcollection stores variant metadata for files with identica
   updatedAt: timestamp           // Server timestamp
 }
 ```
+
+### Embedded Tags Map (Simplified for Performance)
+
+**Location**: `evidence.tags[categoryId]` in evidence document
+
+```javascript
+evidence.tags = {
+  'DocumentDate': {
+    tagName: string,
+    confidence: number,          // 0-100 percentage
+    source: 'ai' | 'human',
+    autoApproved: boolean,
+    reviewRequired: boolean,
+    createdAt: timestamp
+  }
+}
+```
+
+**Accessed by**: DocumentTable for fast loading of 10,000+ documents in single query.
 
 ### Tag Status Rules
 

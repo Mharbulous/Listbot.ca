@@ -39,9 +39,10 @@ File management systems including:
 - Upload event tracking and deduplication architecture
 - File processing and storage optimization
 
-**[Categories and Tags](./architecture/CategoryTags.md)**  
+**[Categories and Tags](./architecture/CategoryTags.md)**
 Document organization systems including:
 
+- Hybrid tag storage: subcollection (full metadata) + embedded map (DocumentTable performance)
 - Categories collection with soft-delete patterns
 - Tag management and color theming
 - Robust query fallback strategies

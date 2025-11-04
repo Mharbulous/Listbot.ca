@@ -291,7 +291,9 @@ Cloud:
   autoApprovedCount: number, // Count of auto-approved tags
   reviewRequiredCount: number, // Count of tags needing review
   updatedAt: timestamp,      // Last modified time
-  tags: subcollection        // Tag documents for categorization
+  tags: {                    // Hybrid: map field (simplified) + subcollection (full metadata)
+    [categoryId]: { tagName, confidence, autoApproved, reviewRequired, ... }
+  }  // Subcollection /tags/{categoryId} has AIanalysis, alternatives, review history
 }
 ```
 
