@@ -2,12 +2,11 @@
  * Document Preloader Composable
  *
  * Manages background pre-loading of adjacent documents for fast navigation.
- * Implements a 4-phase pipeline: PDF loading → Metadata loading → PDF metadata extraction → Canvas pre-rendering.
+ * Implements a 3-phase pipeline: PDF loading → Metadata loading → Canvas pre-rendering.
  *
  * @param {Object} authStore - Auth store for firm ID
  * @param {Object} matterStore - Matter store for matter ID
  * @param {Object} pdfViewer - usePdfViewer composable instance
- * @param {Object} pdfMetadataComposable - usePdfMetadata composable instance
  * @param {Object} pdfCache - usePdfCache composable instance
  * @param {Object} canvasPreloader - useCanvasPreloader composable instance
  * @param {ComputedRef} sortedEvidence - Sorted evidence list
@@ -23,7 +22,6 @@ export function useDocumentPreloader(
   authStore,
   matterStore,
   pdfViewer,
-  pdfMetadataComposable,
   pdfCache,
   canvasPreloader,
   sortedEvidence,
@@ -127,56 +125,6 @@ export function useDocumentPreloader(
     }
   };
 
-  /**
-   * Extract and cache PDF metadata for a pre-loaded document
-   */
-  const extractAndCachePdfMetadata = async (documentId) => {
-    try {
-      const firmId = authStore.currentFirm;
-      const matterId = matterStore.currentMatterId;
-
-      if (!firmId || !matterId || !documentId) {
-        console.warn('Cannot extract PDF metadata: missing firm/matters/document ID', { documentId });
-        return;
-      }
-
-      // Check if PDF is cached
-      if (!pdfViewer.isDocumentCached(documentId)) {
-        return;
-      }
-
-      // Get existing cached metadata
-      const cachedMetadata = pdfViewer.getCachedMetadata(documentId);
-
-      // Skip if PDF metadata already cached
-      if (cachedMetadata?.pdfMetadata) {
-        return;
-      }
-
-      // Skip if basic metadata not available
-      if (!cachedMetadata?.displayName) {
-        return;
-      }
-
-      // Retrieve pre-loaded PDF from cache
-      const pdfDoc = await pdfCache.getDocument(documentId, null);
-
-      // Extract metadata
-      await pdfMetadataComposable.extractMetadata(documentId, cachedMetadata.displayName, pdfDoc);
-
-      // Update cache with extracted metadata
-      pdfViewer.cacheMetadata(documentId, {
-        ...cachedMetadata,
-        pdfMetadata: { ...pdfMetadataComposable.pdfMetadata },
-      });
-    } catch (err) {
-      // Non-blocking - pre-load failures should not affect current navigation
-      console.warn('Failed to pre-load PDF metadata (non-blocking)', {
-        documentId,
-        error: err.message,
-      });
-    }
-  };
 
   /**
    * Pre-render first page canvas for a document (Phase 4)
@@ -290,25 +238,7 @@ export function useDocumentPreloader(
       }
       await Promise.allSettled(metadataPromises);
 
-      // Step 3: Extract PDF metadata (PDFs are guaranteed cached now)
-      if (prevDocId) {
-        await extractAndCachePdfMetadata(prevDocId).catch((err) => {
-          console.warn('Failed to extract PDF metadata for previous doc', {
-            prevDocId,
-            error: err.message,
-          });
-        });
-      }
-      if (nextDocId) {
-        await extractAndCachePdfMetadata(nextDocId).catch((err) => {
-          console.warn('Failed to extract PDF metadata for next doc', {
-            nextDocId,
-            error: err.message,
-          });
-        });
-      }
-
-      // Step 4: Pre-render first page canvas (non-blocking, uses requestIdleCallback)
+      // Step 3: Pre-render first page canvas (non-blocking, uses requestIdleCallback)
       // This runs in the background and won't block other operations
       if (prevDocId) {
         await preRenderDocumentCanvas(prevDocId).catch((err) => {

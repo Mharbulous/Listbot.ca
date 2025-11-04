@@ -131,7 +131,6 @@ const preloader = useDocumentPreloader(
   authStore,
   matterStore,
   pdfViewer,
-  pdfMetadataComposable,
   pdfCache,
   canvasPreloader,
   computed(() => organizerStore.sortedEvidenceList || []),
