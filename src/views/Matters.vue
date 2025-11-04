@@ -306,11 +306,11 @@
           </thead>
           <tbody class="bg-white divide-y divide-slate-200">
             <tr
-              v-for="matter in filteredMatters"
+              v-for="(matter, index) in filteredMatters"
               :key="matter.id"
               :class="[
-                'hover:bg-slate-50 cursor-pointer transition-colors',
-                isSelected(matter) ? 'bg-blue-50 border-l-4 border-l-blue-500' : '',
+                'hover:!bg-slate-200 cursor-pointer transition-colors',
+                isSelected(matter) ? '!bg-blue-50 border-l-4 border-l-blue-500' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50'),
               ]"
               @click="selectMatter(matter)"
             >

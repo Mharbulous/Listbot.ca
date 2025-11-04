@@ -250,13 +250,13 @@
               <!-- Document Date -->
               <div class="metadata-item">
                 <span class="metadata-label">Document Date:</span>
-                <span class="metadata-value metadata-placeholder">Not yet set</span>
+                <span class="metadata-value metadata-placeholder">Not yet analyzed</span>
               </div>
 
               <!-- Document Type -->
               <div class="metadata-item">
                 <span class="metadata-label">Document Type:</span>
-                <span class="metadata-value metadata-placeholder">Not yet set</span>
+                <span class="metadata-value metadata-placeholder">Not yet analyzed</span>
               </div>
             </div>
 
