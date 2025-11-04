@@ -338,7 +338,7 @@ onBeforeUnmount(() => {
 
   /* Default column widths (panels open) */
   --thumbnails-width: 200px;
-  --metadata-width: 350px;
+  --metadata-width: 420px;
 }
 
 /* Dynamic column widths based on panel visibility */

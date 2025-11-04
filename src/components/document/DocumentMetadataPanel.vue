@@ -17,7 +17,14 @@
               :class="{ active: activeTab === 'document' }"
               @click="activeTab = 'document'"
             >
-              ℹ️ Analysis
+              🤖 Analysis
+            </button>
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'review' }"
+              @click="activeTab = 'review'"
+            >
+             👤Review
             </button>
           </div>
           <v-btn
@@ -260,6 +267,33 @@
               </div>
             </div>
           </div>
+
+          <!-- Review Tab Content -->
+          <div v-if="activeTab === 'review'">
+            <!-- Review Status Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Review Status</h3>
+              <div class="metadata-notice">
+                <p>Review functionality coming soon...</p>
+              </div>
+            </div>
+
+            <!-- Review Notes Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Review Notes</h3>
+              <div class="metadata-notice">
+                <p>Notes and comments will appear here...</p>
+              </div>
+            </div>
+
+            <!-- Review History Section -->
+            <div class="metadata-section">
+              <h3 class="metadata-section-title">Review History</h3>
+              <div class="metadata-notice">
+                <p>Review timeline will be displayed here...</p>
+              </div>
+            </div>
+          </div>
         </v-card-text>
       </v-card>
     </div>
@@ -400,7 +434,7 @@ const handleSelectVariant = (metadataHash) => {
 <style scoped>
 /* Right: File metadata panel */
 .metadata-panel {
-  width: 350px;
+  width: 420px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
