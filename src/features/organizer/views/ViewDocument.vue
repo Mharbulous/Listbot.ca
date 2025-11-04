@@ -267,12 +267,6 @@ watch(
   () => route.params.fileHash,
   (newHash, oldHash) => {
     if (newHash && newHash !== oldHash) {
-      console.log(`[ViewDocument] 🔄 Navigation: ${oldHash} → ${newHash}`);
-      console.log(`[ViewDocument] 📊 Metadata State BEFORE navigation:`, {
-        loading: metadataLoading.value,
-        hasMetadata: hasMetadata.value,
-        pdfMetadata: pdfMetadata.value ? 'exists' : 'null'
-      });
       fileHash.value = newHash;
       evidenceLoader.loadEvidence(newHash, navigation.navigationStartTime);
     }
