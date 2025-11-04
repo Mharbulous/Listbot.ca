@@ -134,7 +134,8 @@ const preloader = useDocumentPreloader(
   pdfMetadata,
   pdfCache,
   canvasPreloader,
-  computed(() => organizerStore.sortedEvidenceList || [])
+  computed(() => organizerStore.sortedEvidenceList || []),
+  navigation.performanceTracker
 );
 
 provide('pageVisibility', pageVisibility);
@@ -277,6 +278,12 @@ onMounted(async () => {
       console.error('[NewViewDocument2] Failed to initialize organizer store:', err);
     }
   }
+
+  // Start performance tracking for initial document load
+  const expectedPreRenders = navigation.calculateExpectedPreRenders(fileHash.value);
+  navigation.navigationStartTime.value = performance.now();
+  navigation.performanceTracker.startNavigation('initial', null, fileHash.value, expectedPreRenders);
+
   evidenceLoader.loadEvidence(fileHash.value, navigation.navigationStartTime);
   window.addEventListener('keydown', handleKeydown);
 });

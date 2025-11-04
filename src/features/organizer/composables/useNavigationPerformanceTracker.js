@@ -82,7 +82,8 @@ export function useNavigationPerformanceTracker() {
       data,
     });
 
-    // If this is a canvas pre-render event, increment counter and check completion
+    // If this is a canvas pre-render event (success, skip, or fail), increment counter and check completion
+    // All outcomes count as "complete" for tracking purposes
     if (eventType === 'canvas_prerender') {
       currentNavigation.value.completedPreRenders++;
       checkAndCompleteIfReady();
@@ -308,7 +309,33 @@ export function useNavigationPerformanceTracker() {
         return `→ All ${data.totalPages} thumbnails rendered in ${data.duration.toFixed(0)}ms`;
 
       case 'canvas_prerender':
-        return `→ Background: Canvas pre-render of [${data.documentId.substring(0, 8)}] page ${data.pageNumber} complete (+${(timestamp - (currentNavigation.value?.navigationCoreCompleteTime || 0)).toFixed(0)}ms)`;
+        const docIdShort = data.documentId === 'unknown' ? 'unknown' : data.documentId.substring(0, 8);
+
+        if (data.skipped) {
+          // Skipped pre-render
+          let skipReason = '';
+          switch (data.reason) {
+            case 'already_cached':
+              skipReason = 'already cached';
+              break;
+            case 'pdf_not_cached':
+              skipReason = 'PDF not cached';
+              break;
+            case 'no_document_id':
+              skipReason = 'no document ID';
+              break;
+            default:
+              skipReason = data.reason || 'unknown';
+          }
+          return `→ Background: Canvas pre-render of [${docIdShort}] skipped (${skipReason})`;
+        } else if (data.failed) {
+          // Failed pre-render
+          return `→ Background: Canvas pre-render of [${docIdShort}] failed (${data.error || 'unknown error'})`;
+        } else {
+          // Successful pre-render
+          const delta = timestamp - (currentNavigation.value?.navigationCoreCompleteTime || 0);
+          return `→ Background: Canvas pre-render of [${docIdShort}] page ${data.pageNumber} complete (+${delta.toFixed(0)}ms)`;
+        }
 
       case 'canvas_eviction':
         return `→ Background: Evicted canvas [${data.documentId.substring(0, 8)}] page ${data.pageNumber} from cache (LRU)`;

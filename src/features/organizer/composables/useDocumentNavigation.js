@@ -147,6 +147,7 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
 
     // Performance tracking
     performanceTracker,
+    calculateExpectedPreRenders,
 
     // Methods
     goToFirstDocument,

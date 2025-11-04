@@ -11,6 +11,7 @@
  * @param {Object} pdfCache - usePdfCache composable instance
  * @param {Object} canvasPreloader - useCanvasPreloader composable instance
  * @param {ComputedRef} sortedEvidence - Sorted evidence list
+ * @param {Object} performanceTracker - Navigation performance tracker (optional)
  * @returns {Object} Pre-loading methods
  */
 import { doc, getDoc } from 'firebase/firestore';
@@ -25,7 +26,8 @@ export function useDocumentPreloader(
   pdfMetadataComposable,
   pdfCache,
   canvasPreloader,
-  sortedEvidence
+  sortedEvidence,
+  performanceTracker = null
 ) {
   /**
    * Get download URL for a document by its ID
@@ -179,20 +181,48 @@ export function useDocumentPreloader(
   /**
    * Pre-render first page canvas for a document (Phase 4)
    * Uses requestIdleCallback for non-blocking background work
+   * Reports all outcomes (success, skip, fail) to performance tracker
    */
   const preRenderDocumentCanvas = async (documentId) => {
     try {
       if (!documentId) {
+        // Report skip: no document ID
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('canvas_prerender', {
+            documentId: 'unknown',
+            pageNumber: 1,
+            skipped: true,
+            reason: 'no_document_id',
+          });
+        }
         return;
       }
 
       // Check if PDF is cached
       if (!pdfViewer.isDocumentCached(documentId)) {
+        // Report skip: PDF not cached
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('canvas_prerender', {
+            documentId,
+            pageNumber: 1,
+            skipped: true,
+            reason: 'pdf_not_cached',
+          });
+        }
         return;
       }
 
       // Skip if already pre-rendered
       if (canvasPreloader.hasPreRenderedCanvas(documentId, 1)) {
+        // Report skip: already cached
+        if (performanceTracker && performanceTracker.isNavigationActive()) {
+          performanceTracker.recordEvent('canvas_prerender', {
+            documentId,
+            pageNumber: 1,
+            skipped: true,
+            reason: 'already_cached',
+          });
+        }
         return;
       }
 
@@ -200,8 +230,19 @@ export function useDocumentPreloader(
       const pdfDoc = await pdfCache.getDocument(documentId, null);
 
       // Pre-render page 1 in background (non-blocking, uses requestIdleCallback)
+      // Note: The actual pre-render will report success when it completes via useCanvasPreloader
       canvasPreloader.preRenderDocumentFirstPage(pdfDoc, documentId);
     } catch (err) {
+      // Report failure
+      if (performanceTracker && performanceTracker.isNavigationActive()) {
+        performanceTracker.recordEvent('canvas_prerender', {
+          documentId,
+          pageNumber: 1,
+          failed: true,
+          error: err.message,
+        });
+      }
+
       // Non-blocking - pre-render failures should not affect UX
       console.warn('Failed to pre-render canvas (non-blocking)', {
         documentId,
