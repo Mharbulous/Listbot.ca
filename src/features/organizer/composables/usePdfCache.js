@@ -1,5 +1,5 @@
 import { ref, shallowRef } from 'vue';
-import { pdfjsLib } from '@/config/pdfWorker.js';
+import { pdfjsLib, wasmUrl } from '@/config/pdfWorker.js';
 
 /**
  * Module-level singleton cache shared across all component instances
@@ -154,6 +154,9 @@ export function usePdfCache() {
         // Enable hardware acceleration (GPU rendering) for faster page rendering
         // Falls back to Canvas 2D automatically if HWA is not supported
         enableHWA: true,
+        // WASM directory for image decoders (JPEG2000/JPX, JXL, color management)
+        // PDF.js automatically loads openjpeg.wasm and fallback from this directory
+        wasmUrl,
       });
 
       const pdfDocument = await loadingTask.promise;

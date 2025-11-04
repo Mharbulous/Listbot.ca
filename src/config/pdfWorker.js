@@ -18,4 +18,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
+/**
+ * Configure image decoders for advanced image formats
+ *
+ * PDF.js requires additional WASM modules to decode:
+ * - JPEG2000 (JPX) images - Common in scanned documents and legal PDFs
+ * - JXL (JPEG XL) images - Modern image format
+ *
+ * Without these decoders, PDFs with these image types will:
+ * - Still display text and vector graphics
+ * - Show warnings in console
+ * - Have missing/invisible images
+ *
+ * IMPORTANT: PDF.js expects a DIRECTORY PATH with trailing slash, not individual file URLs.
+ * It will automatically append filenames like 'openjpeg.wasm' and 'openjpeg_nowasm_fallback.js'.
+ *
+ * We copy WASM files to public/pdfjs-wasm/ so they're accessible at '/pdfjs-wasm/' in both
+ * dev and production, and work correctly in the PDF.js worker thread context.
+ */
+export const wasmUrl = '/pdfjs-wasm/';
+
+// Debug: Log the WASM URL to verify configuration
+console.log('[PDF.js Config] WASM directory:', wasmUrl);
+
 export { pdfjsLib };
