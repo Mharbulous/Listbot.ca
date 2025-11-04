@@ -3,7 +3,7 @@
     <v-card variant="outlined" class="thumbnail-card">
       <!-- Card header with toggle button -->
       <div class="thumbnail-card-header">
-        <h3 class="thumbnail-card-title">Thumbnails</h3>
+        <h3 class="thumbnail-card-title">🖼️ Thumbnails</h3>
         <v-btn
           icon
           variant="text"

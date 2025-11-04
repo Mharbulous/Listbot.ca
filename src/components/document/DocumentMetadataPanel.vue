@@ -4,7 +4,7 @@
       <v-card variant="outlined" class="metadata-card">
         <!-- Card header with toggle button -->
         <div class="metadata-card-header">
-          <h3 class="metadata-card-title">File Metadata</h3>
+          <h3 class="metadata-card-title">ℹ️ Document | ℹ️ Digital File</h3>
           <v-btn
             icon
             variant="text"
@@ -20,11 +20,11 @@
         <v-card-text v-if="visible">
           <!-- Source File Section -->
           <div class="metadata-section">
-            <h3 class="metadata-section-title">Source File Information</h3>
+            <h3 class="metadata-section-title">Source File</h3>
 
             <!-- File name dropdown for selecting metadata variants -->
             <div class="metadata-item">
-              <span class="metadata-label">Source File Name:</span>
+              
               <div class="dropdown-container" @click="handleToggleDropdown">
                 <div
                   class="source-file-selector"
@@ -55,7 +55,7 @@
 
             <!-- Date modified display -->
             <div class="metadata-item">
-              <span class="metadata-label">Source Date Modified:</span>
+              <span class="metadata-label">Date Modified (Source):</span>
               <div class="date-with-notification">
                 <span class="metadata-value">{{
                   formatDateTime(evidence.createdAt, dateFormat, timeFormat)
@@ -81,7 +81,7 @@
 
           <!-- Cloud Section -->
           <div class="metadata-section">
-            <h3 class="metadata-section-title">Cloud Storage Information</h3>
+            <h3 class="metadata-section-title">Cloud Storage</h3>
             <div class="metadata-item">
               <span class="metadata-label">Upload Date:</span>
               <span class="metadata-value">{{

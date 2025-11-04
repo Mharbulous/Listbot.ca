@@ -39,7 +39,7 @@ ViewDocument.vue (1,903 lines)
 │   │   ├── PDF viewer area
 │   │   └── Loading/error states
 │   └── Metadata Panel (Right Sidebar) - Lines 196-416
-│       ├── Source File Information
+│       ├── Source File
 │       ├── Cloud Storage Information
 │       └── Embedded Metadata (PDF-specific)
 ├── Script (922 lines)
@@ -258,7 +258,7 @@ ViewDocument.vue (1,903 lines)
 **File Location**: `src/components/document/DocumentMetadataPanel.vue`
 
 **Internal Structure** (single component, may decompose later):
-- Source File Information Section
+- Source File Section
   - File name with variant dropdown
   - Upload date
   - File size
