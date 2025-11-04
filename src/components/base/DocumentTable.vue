@@ -157,11 +157,14 @@
                 🤖
               </button>
               <button
-                class="view-document-button"
-                @click.stop="handleViewDocument(sortedData[virtualItem.index])"
-                title="View document"
+                :ref="(el) => setPeekButtonRef(el, sortedData[virtualItem.index].id)"
+                class="view-document-button peek-button"
+                @click.stop="handlePeekClick(sortedData[virtualItem.index])"
+                @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
+                @mouseleave="handlePeekMouseLeave"
+                title="Peek document"
               >
-                📄
+                👁️
               </button>
             </div>
 
@@ -204,17 +207,40 @@
         </slot>
       </div>
     </div>
+
+    <!-- Document Peek Tooltip -->
+    <DocumentPeekTooltip
+      :isVisible="tooltipTiming.isVisible.value"
+      :opacity="tooltipTiming.opacity.value"
+      :currentPeekDocument="documentPeek.currentPeekDocument.value"
+      :currentPeekPage="documentPeek.currentPeekPage.value"
+      :showEndOfDocument="documentPeek.showEndOfDocument.value"
+      :isLoading="documentPeek.isLoading.value"
+      :error="documentPeek.error.value"
+      :currentDocumentMetadata="documentPeek.currentDocumentMetadata.value"
+      :isCurrentDocumentPdf="documentPeek.isCurrentDocumentPdf.value"
+      :thumbnailUrl="documentPeek.currentThumbnailUrl.value"
+      :position="tooltipPosition"
+      :getFileIcon="documentPeek.getFileIcon"
+      @mouseenter="handleTooltipMouseEnter"
+      @mouseleave="handleTooltipMouseLeave"
+      @thumbnail-needed="handleThumbnailNeeded"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, watch, computed, onMounted } from 'vue';
+import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/core/stores/auth';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { useVirtualTable } from '@/composables/useVirtualTable';
 import { useColumnSort } from '@/composables/useColumnSort';
+import { useDocumentPeek } from '@/composables/useDocumentPeek';
+import { useTooltipTiming } from '@/composables/useTooltipTiming';
+import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
 
 // Props
 const props = defineProps({
@@ -264,8 +290,27 @@ const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 const route = useRoute();
 const router = useRouter();
 
+// Auth store for firm ID
+const authStore = useAuthStore();
+
+// Document peek functionality
+const documentPeek = useDocumentPeek();
+const tooltipTiming = useTooltipTiming();
+
+// Refs for peek button positioning
+const peekButtonRefs = ref(new Map());
+const tooltipPosition = ref({ top: '0px', left: '0px' });
+
 // Handle view document button click
 const handleViewDocument = (row) => {
+  // Don't navigate if peek tooltip is open for a different document
+  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value !== row.id) {
+    // Switch peek to this document instead of navigating
+    handlePeekClick(row);
+    return;
+  }
+
+  // Navigate to document view
   if (row && row.id) {
     router.push({
       name: 'view-document',
@@ -286,6 +331,111 @@ const isDocumentSelected = (row) => {
 const handleProcessWithAI = (row) => {
   // TODO: Implement AI processing logic
   console.log('Process with AI:', row);
+};
+
+// Handle peek button click
+const handlePeekClick = async (row) => {
+  if (!row || !row.id) return;
+
+  const fileHash = row.id;
+  const firmId = authStore.currentFirm;
+  const matterId = route.params.matterId;
+
+  if (!firmId || !matterId) {
+    console.error('[Peek] Missing firmId or matterId');
+    return;
+  }
+
+  // If clicking the same document, cycle to next page
+  if (documentPeek.currentPeekDocument.value === fileHash) {
+    documentPeek.nextPage();
+
+    // If we just advanced to a new page (not "End of Document"), generate thumbnail
+    if (!documentPeek.showEndOfDocument.value) {
+      await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+    }
+  } else {
+    // Different document, open peek at page 1
+    await documentPeek.openPeek(firmId, matterId, fileHash);
+
+    // Show tooltip
+    tooltipTiming.showTooltip();
+
+    // Calculate position
+    updateTooltipPosition(fileHash);
+
+    // Generate thumbnail if it's a PDF
+    if (documentPeek.isCurrentDocumentPdf.value) {
+      await documentPeek.generateThumbnail(fileHash, 1);
+    }
+  }
+};
+
+// Handle peek button mouse enter
+const handlePeekMouseEnter = (row) => {
+  if (!row || !row.id) return;
+
+  // Only show tooltip if this document is already being peeked
+  if (documentPeek.currentPeekDocument.value === row.id) {
+    tooltipTiming.handleMouseEnter();
+  }
+};
+
+// Handle peek button mouse leave
+const handlePeekMouseLeave = () => {
+  tooltipTiming.handleMouseLeave();
+};
+
+// Handle tooltip mouse enter (cancel hide timer)
+const handleTooltipMouseEnter = () => {
+  tooltipTiming.cancelHideTimer();
+};
+
+// Handle tooltip mouse leave (start hide timer)
+const handleTooltipMouseLeave = () => {
+  tooltipTiming.startHideTimer();
+};
+
+// Handle thumbnail generation request
+const handleThumbnailNeeded = async ({ fileHash, pageNumber }) => {
+  await documentPeek.generateThumbnail(fileHash, pageNumber);
+};
+
+// Update tooltip position based on peek button
+const updateTooltipPosition = (fileHash) => {
+  const button = peekButtonRefs.value.get(fileHash);
+  if (!button) return;
+
+  const rect = button.getBoundingClientRect();
+
+  // Position tooltip to the right of the button with some offset
+  tooltipPosition.value = {
+    top: `${rect.top}px`,
+    left: `${rect.right + 10}px`,
+  };
+};
+
+// Handle click outside tooltip (close immediately)
+const handleOutsideClick = (event) => {
+  if (!tooltipTiming.isVisible.value) return;
+
+  // Check if click is on peek button or tooltip
+  const tooltipEl = event.target.closest('.document-peek-tooltip');
+  const peekButtonEl = event.target.closest('.peek-button');
+
+  if (!tooltipEl && !peekButtonEl) {
+    tooltipTiming.closeImmediate();
+    documentPeek.closePeek();
+  }
+};
+
+// Set ref for peek button
+const setPeekButtonRef = (el, fileHash) => {
+  if (el) {
+    peekButtonRefs.value.set(fileHash, el);
+  } else {
+    peekButtonRefs.value.delete(fileHash);
+  }
 };
 
 // Column selector and refs
@@ -407,6 +557,17 @@ const handleFocusOut = (event) => {
     showColumnSelector.value = false;
   }
 };
+
+// Lifecycle: Add outside-click detection on mount
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick);
+});
+
+// Lifecycle: Cleanup on unmount
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick);
+  documentPeek.cleanup();
+});
 
 // Component is ready - no logging needed here as Cloud.vue tracks the overall mount time
 </script>
