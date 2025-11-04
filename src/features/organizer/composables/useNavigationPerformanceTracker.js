@@ -82,9 +82,10 @@ export function useNavigationPerformanceTracker() {
       data,
     });
 
-    // If this is a canvas pre-render event (success, skip, or fail), increment counter and check completion
+    // If this is a canvas pre-render event (success, skip, or fail) OR thumbnails completion,
+    // increment counter and check completion
     // All outcomes count as "complete" for tracking purposes
-    if (eventType === 'canvas_prerender') {
+    if (eventType === 'canvas_prerender' || eventType === 'thumbnails_complete') {
       currentNavigation.value.completedPreRenders++;
       checkAndCompleteIfReady();
     }
@@ -180,18 +181,9 @@ export function useNavigationPerformanceTracker() {
 
     // Build consolidated message
     const lines = [];
-    const directionArrow = nav.direction === 'next' ? '➡️' : '⬅️';
 
-    // Header with timing summary
-    if (preRenderTime > 5) {
-      lines.push(
-        `⚡ ${directionArrow} Navigation to ${nav.direction} document: ${coreTime.toFixed(0)}ms render + ${preRenderTime.toFixed(0)}ms pre-render = ${totalTime.toFixed(0)}ms total`
-      );
-    } else {
-      lines.push(
-        `⚡ ${directionArrow} Navigation to ${nav.direction} document complete (${totalTime.toFixed(0)}ms total):`
-      );
-    }
+    // Header - simple start marker
+    lines.push(`⚡ Navigation to ${nav.direction} document: T = 0ms`);
 
     // Separate events into core navigation and background operations
     const coreEvents = [];
@@ -235,16 +227,7 @@ export function useNavigationPerformanceTracker() {
     }
 
     // Output single consolidated message
-    console.log(lines.join('\n'), {
-      direction: nav.direction,
-      fromDoc: nav.fromDocId,
-      toDoc: nav.toDocId.substring(0, 8),
-      coreMs: coreTime.toFixed(1),
-      totalMs: totalTime.toFixed(1),
-      eventCount: nav.events.length,
-      preRendersCompleted: nav.completedPreRenders,
-      preRendersExpected: nav.expectedPreRenders,
-    });
+    console.log(lines.join('\n'));
 
     // Clear navigation state
     currentNavigation.value = null;
@@ -299,8 +282,8 @@ export function useNavigationPerformanceTracker() {
         return `→ Canvas swap complete in ${timestamp.toFixed(1)}ms (pre-rendered)`;
 
       case 'first_page_render':
-        const performance = data.isOptimal ? '🚀' : data.isGood ? '✅' : '⚠️';
-        return `→ 🖥️ ${performance} First page rendered in ${timestamp.toFixed(0)}ms (${data.renderType})`;
+        const fileName = data.fileName || 'unknown.pdf';
+        return `→ 🖥️ First page of [${fileName}] rendered in ${timestamp.toFixed(0)}ms (${data.renderType})`;
 
       case 'all_pages_render':
         return `→ All ${data.totalPages} pages rendered in ${timestamp.toFixed(0)}ms`;
@@ -333,8 +316,7 @@ export function useNavigationPerformanceTracker() {
           return `→ Background: Canvas pre-render of [${docIdShort}] failed (${data.error || 'unknown error'})`;
         } else {
           // Successful pre-render
-          const delta = timestamp - (currentNavigation.value?.navigationCoreCompleteTime || 0);
-          return `→ Background: Canvas pre-render of [${docIdShort}] page ${data.pageNumber} complete (+${delta.toFixed(0)}ms)`;
+          return `→ Background: Canvas pre-render of [${docIdShort}] page ${data.pageNumber} complete (${timestamp.toFixed(0)}ms)`;
         }
 
       case 'canvas_eviction':

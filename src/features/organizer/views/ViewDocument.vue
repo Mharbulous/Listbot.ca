@@ -202,10 +202,11 @@ const handleFirstPageRendered = async (pageNumber) => {
       renderType,
       isOptimal,
       isGood,
+      fileName: evidenceLoader.evidence.value?.displayName || 'unknown.pdf',
     });
 
-    // Complete navigation tracking and output consolidated log
-    navigation.performanceTracker.completeNavigation();
+    // Mark navigation core as complete (will wait for background operations before outputting)
+    navigation.performanceTracker.markNavigationCoreComplete();
   }
 
   // Mark as rendered for future tracking
@@ -274,6 +275,18 @@ onMounted(async () => {
   if (!organizerStore.isInitialized) {
     try {
       await organizerStore.initialize();
+
+      // Wait for evidenceList to be populated (max 5 seconds)
+      // This ensures calculateExpectedPreRenders() has data to work with
+      const maxWait = 5000;
+      const startWait = performance.now();
+      while (organizerStore.sortedEvidenceList.length === 0 && (performance.now() - startWait) < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      if (organizerStore.sortedEvidenceList.length === 0) {
+        console.warn('[ViewDocument] Evidence list still empty after waiting');
+      }
     } catch (err) {
       console.error('[NewViewDocument2] Failed to initialize organizer store:', err);
     }
@@ -281,8 +294,9 @@ onMounted(async () => {
 
   // Start performance tracking for initial document load
   const expectedPreRenders = navigation.calculateExpectedPreRenders(fileHash.value);
+  const totalExpectedOperations = expectedPreRenders + 1; // +1 for thumbnails
   navigation.navigationStartTime.value = performance.now();
-  navigation.performanceTracker.startNavigation('initial', null, fileHash.value, expectedPreRenders);
+  navigation.performanceTracker.startNavigation('initial', null, fileHash.value, totalExpectedOperations);
 
   evidenceLoader.loadEvidence(fileHash.value, navigation.navigationStartTime);
   window.addEventListener('keydown', handleKeydown);

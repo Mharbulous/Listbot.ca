@@ -109,9 +109,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     if (currentIndex > 0) {
       const prevDoc = sortedEvidence.value[currentIndex - 1];
       const expectedPreRenders = calculateExpectedPreRenders(prevDoc.id);
+      const totalExpectedOperations = expectedPreRenders + 1; // +1 for thumbnails
       preUpdateBreadcrumb(prevDoc.id);
       navigationStartTime.value = performance.now();
-      performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id, expectedPreRenders);
+      performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id, totalExpectedOperations);
       router.push(`/documents/view/${prevDoc.id}`);
     }
   };
@@ -123,9 +124,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     if (currentIndex < sortedEvidence.value.length - 1) {
       const nextDoc = sortedEvidence.value[currentIndex + 1];
       const expectedPreRenders = calculateExpectedPreRenders(nextDoc.id);
+      const totalExpectedOperations = expectedPreRenders + 1; // +1 for thumbnails
       preUpdateBreadcrumb(nextDoc.id);
       navigationStartTime.value = performance.now();
-      performanceTracker.startNavigation('next', fileHash.value, nextDoc.id, expectedPreRenders);
+      performanceTracker.startNavigation('next', fileHash.value, nextDoc.id, totalExpectedOperations);
       router.push(`/documents/view/${nextDoc.id}`);
     }
   };
