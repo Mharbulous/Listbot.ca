@@ -4,7 +4,10 @@ import { ref } from 'vue';
  * Navigation Performance Tracker
  *
  * Tracks all timing events during document navigation and outputs a single
- * consolidated console message when navigation is complete.
+ * consolidated console message when ALL operations complete, including:
+ * - Core navigation (metadata, PDF load, first page render)
+ * - Background canvas pre-rendering of adjacent documents
+ * - Canvas cache evictions
  *
  * This replaces scattered console.log statements across multiple files with
  * a unified performance tracking system.
@@ -14,6 +17,9 @@ import { ref } from 'vue';
  * Module-level singleton to track navigation performance across all component instances
  */
 const currentNavigation = ref(null);
+
+// Timeout duration for pre-render completion (10 seconds)
+const PRERENDER_TIMEOUT_MS = 10000;
 
 /**
  * Composable for tracking document navigation performance
@@ -25,6 +31,7 @@ const currentNavigation = ref(null);
  * - Canvas swap (if pre-rendered)
  * - Thumbnail rendering
  * - Canvas pre-rendering (background)
+ * - Canvas evictions
  *
  * @returns {Object} Navigation tracking methods
  */
@@ -35,14 +42,24 @@ export function useNavigationPerformanceTracker() {
    * @param {string} direction - 'next' or 'previous'
    * @param {string} fromDocId - Source document ID
    * @param {string} toDocId - Target document ID
+   * @param {number} expectedPreRenders - Number of adjacent docs that will be pre-rendered (0-2)
    */
-  const startNavigation = (direction, fromDocId, toDocId) => {
+  const startNavigation = (direction, fromDocId, toDocId, expectedPreRenders = 0) => {
+    // Clear any existing timeout
+    if (currentNavigation.value?.timeoutId) {
+      clearTimeout(currentNavigation.value.timeoutId);
+    }
+
     currentNavigation.value = {
       direction,
       fromDocId,
       toDocId,
       startTime: performance.now(),
       events: [],
+      navigationCoreCompleteTime: null,
+      expectedPreRenders,
+      completedPreRenders: 0,
+      timeoutId: null,
     };
   };
 
@@ -64,6 +81,12 @@ export function useNavigationPerformanceTracker() {
       timestamp: elapsed,
       data,
     });
+
+    // If this is a canvas pre-render event, increment counter and check completion
+    if (eventType === 'canvas_prerender') {
+      currentNavigation.value.completedPreRenders++;
+      checkAndCompleteIfReady();
+    }
   };
 
   /**
@@ -85,39 +108,141 @@ export function useNavigationPerformanceTracker() {
   };
 
   /**
-   * Complete navigation tracking and output consolidated log
+   * Mark navigation core as complete (first page rendered)
+   * This records the user-facing navigation time but doesn't output yet
+   * Waits for background pre-renders to complete before outputting
    */
-  const completeNavigation = () => {
+  const markNavigationCoreComplete = () => {
     if (!currentNavigation.value) {
-      return; // No active navigation
+      return;
+    }
+
+    const elapsed = performance.now() - currentNavigation.value.startTime;
+    currentNavigation.value.navigationCoreCompleteTime = elapsed;
+
+    // Start timeout to ensure we output even if pre-renders don't complete
+    currentNavigation.value.timeoutId = setTimeout(() => {
+      if (currentNavigation.value) {
+        console.warn('Navigation pre-render timeout - outputting incomplete results');
+        outputConsolidatedLog();
+      }
+    }, PRERENDER_TIMEOUT_MS);
+
+    // Check if we can complete immediately (no pre-renders expected)
+    checkAndCompleteIfReady();
+  };
+
+  /**
+   * Check if navigation is ready to complete and output log
+   * Completes when all expected pre-renders are done OR core navigation is done with 0 expected
+   *
+   * @private
+   */
+  const checkAndCompleteIfReady = () => {
+    if (!currentNavigation.value) {
+      return;
     }
 
     const nav = currentNavigation.value;
+
+    // Ready if core is complete AND (no pre-renders expected OR all pre-renders done)
+    const isReady =
+      nav.navigationCoreCompleteTime !== null &&
+      nav.completedPreRenders >= nav.expectedPreRenders;
+
+    if (isReady) {
+      outputConsolidatedLog();
+    }
+  };
+
+  /**
+   * Output the consolidated performance log
+   * Called when all operations complete or timeout expires
+   *
+   * @private
+   */
+  const outputConsolidatedLog = () => {
+    if (!currentNavigation.value) {
+      return;
+    }
+
+    const nav = currentNavigation.value;
+
+    // Clear timeout
+    if (nav.timeoutId) {
+      clearTimeout(nav.timeoutId);
+    }
+
     const totalTime = performance.now() - nav.startTime;
+    const coreTime = nav.navigationCoreCompleteTime || totalTime;
+    const preRenderTime = totalTime - coreTime;
 
     // Build consolidated message
     const lines = [];
     const directionArrow = nav.direction === 'next' ? '➡️' : '⬅️';
 
-    lines.push(
-      `⚡ ${directionArrow} Navigation to ${nav.direction} document complete (${totalTime.toFixed(0)}ms total):`
-    );
+    // Header with timing summary
+    if (preRenderTime > 5) {
+      lines.push(
+        `⚡ ${directionArrow} Navigation to ${nav.direction} document: ${coreTime.toFixed(0)}ms render + ${preRenderTime.toFixed(0)}ms pre-render = ${totalTime.toFixed(0)}ms total`
+      );
+    } else {
+      lines.push(
+        `⚡ ${directionArrow} Navigation to ${nav.direction} document complete (${totalTime.toFixed(0)}ms total):`
+      );
+    }
 
-    // Process events in chronological order
+    // Separate events into core navigation and background operations
+    const coreEvents = [];
+    const backgroundEvents = [];
+
     nav.events.forEach((event) => {
+      if (
+        event.eventType === 'canvas_prerender' ||
+        event.eventType === 'canvas_eviction'
+      ) {
+        backgroundEvents.push(event);
+      } else {
+        coreEvents.push(event);
+      }
+    });
+
+    // Output core navigation events
+    coreEvents.forEach((event) => {
       const line = formatEvent(event);
       if (line) {
         lines.push(`  ${line}`);
       }
     });
 
+    // Add separator if there are background events
+    if (backgroundEvents.length > 0 && coreEvents.length > 0) {
+      lines.push(`  ▸ Navigation core complete in ${coreTime.toFixed(0)}ms`);
+    }
+
+    // Output background events
+    backgroundEvents.forEach((event) => {
+      const line = formatEvent(event, nav.startTime);
+      if (line) {
+        lines.push(`  ${line}`);
+      }
+    });
+
+    // Add total time summary if there were background operations
+    if (backgroundEvents.length > 0) {
+      lines.push(`  ▸ Total time including background operations: ${totalTime.toFixed(0)}ms`);
+    }
+
     // Output single consolidated message
     console.log(lines.join('\n'), {
       direction: nav.direction,
       fromDoc: nav.fromDocId,
       toDoc: nav.toDocId.substring(0, 8),
+      coreMs: coreTime.toFixed(1),
       totalMs: totalTime.toFixed(1),
       eventCount: nav.events.length,
+      preRendersCompleted: nav.completedPreRenders,
+      preRendersExpected: nav.expectedPreRenders,
     });
 
     // Clear navigation state
@@ -125,10 +250,21 @@ export function useNavigationPerformanceTracker() {
   };
 
   /**
+   * Complete navigation tracking immediately (legacy method)
+   * Now delegates to markNavigationCoreComplete
+   */
+  const completeNavigation = () => {
+    markNavigationCoreComplete();
+  };
+
+  /**
    * Cancel current navigation tracking
    * Used when navigation is interrupted or fails
    */
   const cancelNavigation = () => {
+    if (currentNavigation.value?.timeoutId) {
+      clearTimeout(currentNavigation.value.timeoutId);
+    }
     currentNavigation.value = null;
   };
 
@@ -136,11 +272,12 @@ export function useNavigationPerformanceTracker() {
    * Format an event into a human-readable log line
    *
    * @param {Object} event - Event object with eventType and data
+   * @param {number} startTime - Navigation start time for calculating deltas
    * @returns {string} Formatted log line
    * @private
    */
-  const formatEvent = (event) => {
-    const { eventType, data } = event;
+  const formatEvent = (event, startTime = null) => {
+    const { eventType, data, timestamp } = event;
 
     switch (eventType) {
       case 'metadata_load':
@@ -171,7 +308,10 @@ export function useNavigationPerformanceTracker() {
         return `→ All ${data.totalPages} thumbnails rendered in ${data.duration.toFixed(0)}ms`;
 
       case 'canvas_prerender':
-        return `→ Background: Canvas pre-render of [${data.documentId.substring(0, 8)}] page ${data.pageNumber} complete`;
+        return `→ Background: Canvas pre-render of [${data.documentId.substring(0, 8)}] page ${data.pageNumber} complete (+${(timestamp - (currentNavigation.value?.navigationCoreCompleteTime || 0)).toFixed(0)}ms)`;
+
+      case 'canvas_eviction':
+        return `→ Background: Evicted canvas [${data.documentId.substring(0, 8)}] page ${data.pageNumber} from cache (LRU)`;
 
       default:
         return null;
@@ -183,6 +323,7 @@ export function useNavigationPerformanceTracker() {
     recordEvent,
     getStartTime,
     isNavigationActive,
+    markNavigationCoreComplete,
     completeNavigation,
     cancelNavigation,
   };

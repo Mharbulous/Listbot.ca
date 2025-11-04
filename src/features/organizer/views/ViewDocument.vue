@@ -121,11 +121,11 @@ const fileHash = ref(route.params.fileHash);
 // Composables
 const pdfMetadata = usePdfMetadata();
 const pdfCache = usePdfCache();
-const canvasPreloader = useCanvasPreloader();
 const pdfViewer = usePdfViewer();
 const pageVisibility = usePageVisibility();
 const renderTracking = useRenderTracking();
 const navigation = useDocumentNavigation(fileHash, router, organizerStore, pdfViewer, documentViewStore);
+const canvasPreloader = useCanvasPreloader(navigation.performanceTracker);
 const evidenceLoader = useEvidenceLoader(authStore, matterStore, documentViewStore, pdfViewer, pdfMetadata, navigation.performanceTracker);
 const preloader = useDocumentPreloader(
   authStore,

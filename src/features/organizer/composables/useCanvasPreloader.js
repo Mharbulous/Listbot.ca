@@ -40,9 +40,10 @@ const MAX_CACHE_SIZE = 3;
  *
  * NOTE: Cache is a module-level singleton, shared across all calls to useCanvasPreloader()
  *
+ * @param {Object} performanceTracker - Navigation performance tracker (optional)
  * @returns {Object} Canvas preloader state and functions
  */
-export function useCanvasPreloader() {
+export function useCanvasPreloader(performanceTracker = null) {
 
   /**
    * Generate cache key for a document page
@@ -168,12 +169,13 @@ export function useCanvasPreloader() {
 
       preRenderSuccesses.value++;
 
-      console.info('✅ Canvas pre-render complete', {
-        documentId: documentId.substring(0, 8),
-        pageNumber,
-        dimensions: `${viewport.width}×${viewport.height}`,
-        cacheSize: canvasCache.value.size,
-      });
+      // Report to performance tracker if available
+      if (performanceTracker && performanceTracker.isNavigationActive()) {
+        performanceTracker.recordEvent('canvas_prerender', {
+          documentId,
+          pageNumber,
+        });
+      }
 
       // Enforce cache size limit
       enforceCacheLimit();
@@ -207,10 +209,6 @@ export function useCanvasPreloader() {
   const preRenderDocumentFirstPage = (pdfDocument, documentId, scale = 1.5) => {
     // Check if already cached
     if (hasPreRenderedCanvas(documentId, 1)) {
-      console.info('⚡ Canvas already pre-rendered, skipping', {
-        documentId: documentId.substring(0, 8),
-        pageNumber: 1,
-      });
       return;
     }
 
@@ -285,11 +283,15 @@ export function useCanvasPreloader() {
 
     if (oldestKey) {
       const entry = canvasCache.value.get(oldestKey);
-      console.info('🗑️ Evicting oldest canvas from cache (LRU)', {
-        documentId: entry.documentId.substring(0, 8),
-        pageNumber: entry.pageNumber,
-        age: `${((Date.now() - entry.timestamp) / 1000).toFixed(1)}s`,
-      });
+
+      // Report to performance tracker if available
+      if (performanceTracker && performanceTracker.isNavigationActive()) {
+        performanceTracker.recordEvent('canvas_eviction', {
+          documentId: entry.documentId,
+          pageNumber: entry.pageNumber,
+        });
+      }
+
       evictCanvas(entry.documentId, entry.pageNumber);
     }
   };

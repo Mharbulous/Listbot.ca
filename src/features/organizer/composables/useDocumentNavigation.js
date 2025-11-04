@@ -73,6 +73,27 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     return false;
   };
 
+  /**
+   * Calculate how many adjacent documents will be pre-rendered after navigating to target
+   * @param {string} targetDocId - Target document ID
+   * @returns {number} Expected pre-render count (0, 1, or 2)
+   */
+  const calculateExpectedPreRenders = (targetDocId) => {
+    if (sortedEvidence.value.length === 0) return 0;
+
+    const targetIndex = sortedEvidence.value.findIndex((ev) => ev.id === targetDocId);
+    if (targetIndex === -1) return 0;
+
+    const hasPrevious = targetIndex > 0;
+    const hasNext = targetIndex < sortedEvidence.value.length - 1;
+
+    let count = 0;
+    if (hasPrevious) count++;
+    if (hasNext) count++;
+
+    return count;
+  };
+
   // Navigation methods
   const goToFirstDocument = () => {
     if (sortedEvidence.value.length === 0) return;
@@ -87,9 +108,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     const currentIndex = currentDocumentIndex.value - 1;
     if (currentIndex > 0) {
       const prevDoc = sortedEvidence.value[currentIndex - 1];
+      const expectedPreRenders = calculateExpectedPreRenders(prevDoc.id);
       preUpdateBreadcrumb(prevDoc.id);
       navigationStartTime.value = performance.now();
-      performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id);
+      performanceTracker.startNavigation('previous', fileHash.value, prevDoc.id, expectedPreRenders);
       router.push(`/documents/view/${prevDoc.id}`);
     }
   };
@@ -100,9 +122,10 @@ export function useDocumentNavigation(fileHash, router, organizerStore, pdfViewe
     const currentIndex = currentDocumentIndex.value - 1;
     if (currentIndex < sortedEvidence.value.length - 1) {
       const nextDoc = sortedEvidence.value[currentIndex + 1];
+      const expectedPreRenders = calculateExpectedPreRenders(nextDoc.id);
       preUpdateBreadcrumb(nextDoc.id);
       navigationStartTime.value = performance.now();
-      performanceTracker.startNavigation('next', fileHash.value, nextDoc.id);
+      performanceTracker.startNavigation('next', fileHash.value, nextDoc.id, expectedPreRenders);
       router.push(`/documents/view/${nextDoc.id}`);
     }
   };
