@@ -81,10 +81,15 @@ export function useEvidenceLoader(
         // Extract PDF metadata (check cache first)
         const cachedMetadata = pdfViewer.getCachedMetadata(fileHash);
         if (cachedMetadata?.pdfMetadata) {
+          console.log(`[EvidenceLoader] 💾 Cache HIT - Restoring PDF metadata for ${fileHash}`);
           pdfMetadataComposable.pdfMetadata.value = cachedMetadata.pdfMetadata;
         } else {
+          console.log(`[EvidenceLoader] 🔍 Cache MISS - Will extract metadata in background for ${fileHash}`);
           // Extract PDF metadata in background
+          const backgroundTaskId = `${fileHash}-${Date.now()}`;
+          console.log(`[EvidenceLoader] ⏰ Scheduling background metadata extraction - Task: ${backgroundTaskId}, File: ${fileHash}`);
           setTimeout(async () => {
+            console.log(`[EvidenceLoader] ▶️ Starting background metadata extraction - Task: ${backgroundTaskId}, File: ${fileHash}`);
             try {
               await pdfMetadataComposable.extractMetadata(
                 fileHash,
@@ -101,8 +106,9 @@ export function useEvidenceLoader(
                 selectedMetadataHash: selectedMetadataHash.value,
                 pdfMetadata: { ...pdfMetadataComposable.pdfMetadata.value },
               });
+              console.log(`[EvidenceLoader] ✅ Completed background metadata extraction - Task: ${backgroundTaskId}, File: ${fileHash}`);
             } catch (err) {
-              console.warn('Background PDF metadata extraction failed:', err);
+              console.warn(`[EvidenceLoader] ❌ Failed background metadata extraction - Task: ${backgroundTaskId}, File: ${fileHash}`, err);
             }
           }, 0);
         }

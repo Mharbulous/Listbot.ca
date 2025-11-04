@@ -135,6 +135,7 @@ export function usePdfMetadata() {
     }
 
     try {
+      console.log(`[PDFMetadata] 🔵 START extraction - File: ${fileHash}, Loading: ${metadataLoading.value} → true`);
       metadataLoading.value = true;
       metadataError.value = null;
       pdfMetadata.value = null;
@@ -168,6 +169,7 @@ export function usePdfMetadata() {
       console.error('[usePdfMetadata] Failed to extract PDF metadata:', err);
       metadataError.value = err.message || 'Failed to extract PDF metadata';
     } finally {
+      console.log(`[PDFMetadata] ✅ END extraction - File: ${fileHash}, Loading: true → false, Has Metadata: ${pdfMetadata.value?.hasMetadata}`);
       metadataLoading.value = false;
     }
   };

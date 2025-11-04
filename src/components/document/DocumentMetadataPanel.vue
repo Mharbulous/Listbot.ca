@@ -222,7 +222,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 
 // Props
@@ -324,6 +324,21 @@ const mimeType = computed(() => {
     (props.storageMetadata === null ? 'Unknown' : 'Loading...')
   );
 });
+
+// Debug watchers to track metadata state changes
+watch(
+  () => props.metadataLoading,
+  (newVal, oldVal) => {
+    console.log(`[MetadataPanel] 🎨 Loading state change: ${oldVal} → ${newVal}, File: ${props.fileHash}`);
+  }
+);
+
+watch(
+  () => props.hasMetadata,
+  (newVal, oldVal) => {
+    console.log(`[MetadataPanel] 📄 Has metadata change: ${oldVal} → ${newVal}, File: ${props.fileHash}`);
+  }
+);
 
 // Format file size helper
 const formatUploadSize = (bytes) => {
