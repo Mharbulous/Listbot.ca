@@ -17,7 +17,7 @@
               :class="{ active: activeTab === 'document' }"
               @click="activeTab = 'document'"
             >
-              🤖 Analysis
+              🤖 AI
             </button>
             <button
               class="tab-button"
@@ -246,8 +246,17 @@
             <!-- System Fields Section -->
             <div class="metadata-section">
               <h3 class="metadata-section-title">System Fields</h3>
-              <div class="metadata-notice">
-                <p>Coming soon...</p>
+
+              <!-- Document Date -->
+              <div class="metadata-item">
+                <span class="metadata-label">Document Date:</span>
+                <span class="metadata-value metadata-placeholder">Not yet set</span>
+              </div>
+
+              <!-- Document Type -->
+              <div class="metadata-item">
+                <span class="metadata-label">Document Type:</span>
+                <span class="metadata-value metadata-placeholder">Not yet set</span>
               </div>
             </div>
 
@@ -678,6 +687,11 @@ const handleSelectVariant = (metadataHash) => {
   font-size: 0.875rem;
   color: #333;
   word-break: break-all;
+}
+
+.metadata-placeholder {
+  color: #999;
+  font-style: italic;
 }
 
 /* PDF Metadata Styling */
