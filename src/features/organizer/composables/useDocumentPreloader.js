@@ -228,7 +228,7 @@ export function useDocumentPreloader(
   const startBackgroundPreload = async (currentDocId, prevDocId, nextDocId) => {
     try {
       // Step 1: Pre-load PDFs and wait for completion
-      await pdfViewer.preloadAdjacentDocuments(prevDocId, nextDocId, getDocumentDownloadUrl);
+      await pdfViewer.preloadAdjacentDocuments(prevDocId, nextDocId, getDocumentDownloadUrl, performanceTracker);
 
       // Step 2: Pre-load metadata for adjacent documents (parallel)
       const metadataPromises = [];

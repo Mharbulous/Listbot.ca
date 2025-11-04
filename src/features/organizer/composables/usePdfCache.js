@@ -191,8 +191,9 @@ export function usePdfCache() {
    * @param {string|null} previousId - Previous document ID (null if at start)
    * @param {string|null} nextId - Next document ID (null if at end)
    * @param {Function} getDownloadUrl - Async function to get download URL for a document ID
+   * @param {Object|null} performanceTracker - Performance tracker for consolidated logging
    */
-  const preloadAdjacentDocuments = async (previousId, nextId, getDownloadUrl) => {
+  const preloadAdjacentDocuments = async (previousId, nextId, getDownloadUrl, performanceTracker = null) => {
     const preloadPromises = [];
 
     // Pre-load previous document if it exists and isn't cached
@@ -204,8 +205,20 @@ export function usePdfCache() {
             // Check if error is due to non-PDF file
             if (err.message.startsWith('NON_PDF_FILE:')) {
               const extension = err.message.split(':')[1] || 'unknown';
-              const shortId = previousId.substring(0, 8);
-              console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+
+              // Report to performance tracker if available
+              if (performanceTracker && performanceTracker.isNavigationActive()) {
+                performanceTracker.recordEvent('pdf_preload', {
+                  documentId: previousId,
+                  skipped: true,
+                  reason: 'unsupported_format',
+                  extension,
+                });
+              } else {
+                // Fallback to console.log if no tracker
+                const shortId = previousId.substring(0, 8);
+                console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+              }
             } else {
               console.warn('Failed to pre-load previous document', { previousId, error: err.message });
             }
@@ -222,8 +235,20 @@ export function usePdfCache() {
             // Check if error is due to non-PDF file
             if (err.message.startsWith('NON_PDF_FILE:')) {
               const extension = err.message.split(':')[1] || 'unknown';
-              const shortId = nextId.substring(0, 8);
-              console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+
+              // Report to performance tracker if available
+              if (performanceTracker && performanceTracker.isNavigationActive()) {
+                performanceTracker.recordEvent('pdf_preload', {
+                  documentId: nextId,
+                  skipped: true,
+                  reason: 'unsupported_format',
+                  extension,
+                });
+              } else {
+                // Fallback to console.log if no tracker
+                const shortId = nextId.substring(0, 8);
+                console.log(`Background: PDF preload of [${shortId}] skipped (unsupported file format: .${extension})`);
+              }
             } else {
               console.warn('Failed to pre-load next document', { nextId, error: err.message });
             }

@@ -192,7 +192,8 @@ export function useNavigationPerformanceTracker() {
     nav.events.forEach((event) => {
       if (
         event.eventType === 'canvas_prerender' ||
-        event.eventType === 'canvas_eviction'
+        event.eventType === 'canvas_eviction' ||
+        event.eventType === 'pdf_preload'
       ) {
         backgroundEvents.push(event);
       } else {
@@ -321,6 +322,24 @@ export function useNavigationPerformanceTracker() {
 
       case 'canvas_eviction':
         return `→ Background: Evicted canvas [${data.documentId.substring(0, 8)}] page ${data.pageNumber} from cache (LRU)`;
+
+      case 'pdf_preload':
+        const pdfDocIdShort = data.documentId === 'unknown' ? 'unknown' : data.documentId.substring(0, 8);
+
+        if (data.skipped) {
+          // Skipped PDF preload
+          if (data.reason === 'unsupported_format') {
+            return `→ Background: PDF preload of [${pdfDocIdShort}] skipped for unsupported file format: .${data.extension}`;
+          } else {
+            return `→ Background: PDF preload of [${pdfDocIdShort}] skipped (${data.reason})`;
+          }
+        } else if (data.failed) {
+          // Failed PDF preload
+          return `→ Background: PDF preload of [${pdfDocIdShort}] failed (${data.error || 'unknown error'})`;
+        } else {
+          // Successful PDF preload
+          return `→ Background: PDF preload of [${pdfDocIdShort}] complete (${timestamp.toFixed(0)}ms)`;
+        }
 
       default:
         return null;

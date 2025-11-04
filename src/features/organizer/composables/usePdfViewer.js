@@ -87,9 +87,10 @@ export function usePdfViewer() {
    * @param {string|null} previousId - Previous document ID (null if at start)
    * @param {string|null} nextId - Next document ID (null if at end)
    * @param {Function} getDownloadUrl - Async function to get download URL for a document ID
+   * @param {Object|null} performanceTracker - Performance tracker for consolidated logging
    */
-  const preloadAdjacentDocuments = async (previousId, nextId, getDownloadUrl) => {
-    await pdfCache.preloadAdjacentDocuments(previousId, nextId, getDownloadUrl);
+  const preloadAdjacentDocuments = async (previousId, nextId, getDownloadUrl, performanceTracker = null) => {
+    await pdfCache.preloadAdjacentDocuments(previousId, nextId, getDownloadUrl, performanceTracker);
   };
 
   /**
