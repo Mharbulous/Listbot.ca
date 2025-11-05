@@ -57,8 +57,8 @@ export function useTooltipTiming() {
       opacity.value = 1 - easedProgress;
 
       if (progress < 1) {
-        // Continue fading
-        requestAnimationFrame(fade);
+        // Continue fading - STORE the animation frame ID
+        fadeTimer.value = requestAnimationFrame(fade);
       } else {
         // Fade complete, hide tooltip
         opacity.value = 0;
@@ -67,8 +67,8 @@ export function useTooltipTiming() {
       }
     };
 
-    // Start the animation
-    requestAnimationFrame(fade);
+    // Start the animation - STORE the animation frame ID
+    fadeTimer.value = requestAnimationFrame(fade);
   };
 
   /**
@@ -82,7 +82,8 @@ export function useTooltipTiming() {
     }
 
     if (fadeTimer.value) {
-      // Stop the fade animation
+      // Stop the fade animation - ACTUALLY CANCEL IT
+      cancelAnimationFrame(fadeTimer.value);
       fadeTimer.value = null;
       fadeStartTime.value = null;
     }

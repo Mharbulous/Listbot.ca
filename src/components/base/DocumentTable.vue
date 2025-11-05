@@ -132,10 +132,12 @@
           <div
             v-for="virtualItem in virtualItems"
             :key="virtualItem.key"
-            class="table-mockup-row cursor-pointer hover:!bg-blue-50"
+            class="table-mockup-row"
             :class="{
               even: virtualItem.index % 2 === 0,
-              '!bg-blue-50': isDocumentSelected(sortedData[virtualItem.index])
+              '!bg-blue-50': isDocumentSelected(sortedData[virtualItem.index]),
+              'cursor-pointer hover:!bg-blue-50': !isPeekActive || isRowPeeked(sortedData[virtualItem.index]),
+              'cursor-default': isPeekActive && !isRowPeeked(sortedData[virtualItem.index])
             }"
             :style="{
               position: 'absolute',
@@ -145,7 +147,7 @@
               transform: `translateY(${virtualItem.start}px)`,
               backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
             }"
-            @click="handleViewDocument(sortedData[virtualItem.index])"
+            @dblclick="handleViewDocument(sortedData[virtualItem.index])"
           >
             <!-- Action Buttons Cell -->
             <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
@@ -164,7 +166,7 @@
                 @mouseleave="handlePeekMouseLeave"
                 :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
               >
-                🖼️
+                👁️
               </button>
             </div>
 
@@ -302,30 +304,46 @@ const tooltipTiming = useTooltipTiming();
 const peekButtonRefs = ref(new Map());
 const tooltipPosition = ref({ top: '0px', left: '0px' });
 
-// Handle view document button click
+// Handle view document double-click
 const handleViewDocument = (row) => {
-  // Don't navigate if peek tooltip is open for a different document
-  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value !== row.id) {
-    // Switch peek to this document instead of navigating
-    handlePeekClick(row);
+  if (!row || !row.id) return;
+
+  // If peek is active and this is NOT the peeked row, do nothing
+  if (isPeekActive.value && !isRowPeeked(row)) {
     return;
   }
 
-  // Navigate to document view
-  if (row && row.id) {
-    router.push({
-      name: 'view-document',
-      params: {
-        matterId: route.params.matterId,
-        fileHash: row.id
-      }
-    });
-  }
+  // Navigate to document view (works for both peeked row and non-peek scenarios)
+  router.push({
+    name: 'view-document',
+    params: {
+      matterId: route.params.matterId,
+      fileHash: row.id
+    }
+  });
 };
 
-// Check if a document row is currently selected (being viewed)
+// Check if a document row is currently selected (being viewed or peeked)
 const isDocumentSelected = (row) => {
-  return row && row.id && route.params.fileHash === row.id;
+  if (!row || !row.id) return false;
+
+  // Selected if currently viewing this document
+  const isViewing = route.params.fileHash === row.id;
+
+  // Selected if currently peeking this document and tooltip is visible
+  const isPeeking = tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value === row.id;
+
+  return isViewing || isPeeking;
+};
+
+// Check if peek is currently active
+const isPeekActive = computed(() => {
+  return tooltipTiming.isVisible.value;
+});
+
+// Check if a specific row is the currently peeked document
+const isRowPeeked = (row) => {
+  return row && row.id && documentPeek.currentPeekDocument.value === row.id;
 };
 
 // Handle process with AI button click
