@@ -38,7 +38,28 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
  */
 export const wasmUrl = '/pdfjs-wasm/';
 
-// Debug: Log the WASM URL to verify configuration
+/**
+ * Configure standard font data for font substitution
+ *
+ * PDF.js needs substitute fonts when PDFs reference system fonts that aren't embedded.
+ * Common missing fonts: ZapfDingbats, Symbol, Helvetica, Times, Courier, etc.
+ *
+ * Without standardFontDataUrl, PDF.js will:
+ * - Show warnings about missing system fonts
+ * - Show warnings about undefined TrueType functions
+ * - Attempt to use browser's fallback fonts (inconsistent rendering)
+ *
+ * With standardFontDataUrl configured:
+ * - PDF.js loads Foxit font substitutes (shipped with pdfjs-dist)
+ * - Consistent font rendering across all browsers/platforms
+ * - Eliminates font-related console warnings
+ *
+ * Font files are copied from node_modules/pdfjs-dist/standard_fonts/ to public/pdfjs-fonts/
+ */
+export const standardFontDataUrl = '/pdfjs-fonts/';
+
+// Debug: Log configuration URLs to verify setup
 console.log('[PDF.js Config] WASM directory:', wasmUrl);
+console.log('[PDF.js Config] Standard fonts directory:', standardFontDataUrl);
 
 export { pdfjsLib };

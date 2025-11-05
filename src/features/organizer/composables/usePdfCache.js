@@ -1,5 +1,5 @@
 import { ref, shallowRef } from 'vue';
-import { pdfjsLib, wasmUrl } from '@/config/pdfWorker.js';
+import { pdfjsLib, wasmUrl, standardFontDataUrl } from '@/config/pdfWorker.js';
 
 /**
  * Module-level singleton cache shared across all component instances
@@ -157,6 +157,10 @@ export function usePdfCache() {
         // WASM directory for image decoders (JPEG2000/JPX, JXL, color management)
         // PDF.js automatically loads openjpeg.wasm and fallback from this directory
         wasmUrl,
+        // Standard fonts directory for font substitution
+        // PDF.js loads Foxit font substitutes when PDFs reference missing system fonts
+        // Eliminates "undefined TT function" and "Cannot load system font" warnings
+        standardFontDataUrl,
       });
 
       const pdfDocument = await loadingTask.promise;

@@ -186,7 +186,9 @@ export function useCanvasPreloader(performanceTracker = null) {
 
     } catch (err) {
       preRenderFailures.value++;
-      console.warn('Failed to pre-render canvas', {
+      // Use console.debug instead of console.warn because pre-render failures are expected
+      // during rapid navigation (render cancellations) and don't indicate actual errors
+      console.debug('Failed to pre-render canvas', {
         documentId: documentId.substring(0, 8),
         pageNumber,
         error: err.message,
