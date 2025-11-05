@@ -14,6 +14,7 @@ export function useThumbnailRenderer(performanceTracker = null) {
   const thumbnailCache = ref(new Map()); // Map<pageNumber-maxWidth, blobURL>
   const renderingQueue = ref([]);
   const isRendering = ref(false);
+  const activeRenderTasks = ref(new Set()); // Track active render tasks for cancellation
 
   /**
    * Render a single page thumbnail
@@ -54,7 +55,16 @@ export function useThumbnailRenderer(performanceTracker = null) {
         viewport: scaledViewport,
       };
 
-      await page.render(renderContext).promise;
+      // Track render task for cancellation
+      const renderTask = page.render(renderContext);
+      activeRenderTasks.value.add(renderTask);
+
+      try {
+        await renderTask.promise;
+      } finally {
+        // Clean up task from tracking set
+        activeRenderTasks.value.delete(renderTask);
+      }
 
       // Convert to Blob URL (2x more memory efficient than data URLs)
       const blob = await new Promise((resolve, reject) => {
@@ -75,6 +85,13 @@ export function useThumbnailRenderer(performanceTracker = null) {
 
       return blobURL;
     } catch (err) {
+      // Ignore cancelled renders - this is expected when navigating away
+      if (err.name === 'RenderingCancelledException') {
+        console.debug(`Thumbnail render cancelled for page ${pageNumber}`);
+        return null;
+      }
+
+      // Log and re-throw real errors
       console.error(`Failed to render thumbnail for page ${pageNumber}`, err);
       throw err;
     }
@@ -120,11 +137,38 @@ export function useThumbnailRenderer(performanceTracker = null) {
         });
       }
     } catch (err) {
+      // Ignore cancelled renders - this is expected when navigating away
+      if (err.name === 'RenderingCancelledException') {
+        console.debug('Thumbnail rendering cancelled');
+        return;
+      }
+
+      // Log and re-throw real errors
       console.error('Failed to render thumbnails', err);
       throw err;
     } finally {
       isRendering.value = false;
     }
+  };
+
+  /**
+   * Cancel all active thumbnail rendering tasks
+   * Call before unmounting component to stop unnecessary work
+   */
+  const cancelAllRendering = () => {
+    // Cancel all active render tasks
+    activeRenderTasks.value.forEach((task) => {
+      try {
+        task.cancel();
+      } catch (err) {
+        // Ignore errors during cancellation
+        console.debug('Error cancelling render task:', err);
+      }
+    });
+
+    // Clear the set
+    activeRenderTasks.value.clear();
+    isRendering.value = false;
   };
 
   /**
@@ -146,6 +190,7 @@ export function useThumbnailRenderer(performanceTracker = null) {
     isRendering,
     renderThumbnail,
     renderAllThumbnails,
+    cancelAllRendering,
     clearCache,
   };
 }

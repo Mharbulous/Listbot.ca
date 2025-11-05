@@ -65,7 +65,7 @@ const emit = defineEmits(['page-selected']);
 const performanceTracker = inject('performanceTracker', null);
 
 // Thumbnail rendering composable
-const { thumbnailCache: thumbnails, isRendering, renderAllThumbnails, clearCache } =
+const { thumbnailCache: thumbnails, isRendering, renderAllThumbnails, cancelAllRendering, clearCache } =
   useThumbnailRenderer(performanceTracker);
 
 // Refs for thumbnail elements (for auto-scroll)
@@ -139,6 +139,12 @@ watch(
       setTimeout(() => {
         if (newTotal > 0) {
           renderAllThumbnails(newDoc, newTotal).catch(err => {
+            // Ignore cancelled renders - this is expected when navigating away
+            if (err.name === 'RenderingCancelledException') {
+              console.debug('Thumbnail rendering cancelled');
+              return;
+            }
+            // Log real errors
             console.warn('Thumbnail rendering failed:', err);
           });
         }
@@ -150,6 +156,9 @@ watch(
 
 // Cleanup
 onBeforeUnmount(() => {
+  // Cancel any in-progress rendering first to stop unnecessary work
+  cancelAllRendering();
+  // Then clean up cached thumbnails
   clearCache();
 });
 </script>
