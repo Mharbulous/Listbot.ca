@@ -47,6 +47,7 @@ const canvasRef = ref(null);
 const isRendering = ref(false);
 const renderError = ref(null);
 const renderTask = shallowRef(null);
+const isMounted = ref(false); // Track component lifecycle to prevent race conditions
 
 // Get shared observer from parent (if provided)
 const pageVisibility = inject('pageVisibility', null);
@@ -65,7 +66,7 @@ const performanceTracker = inject('performanceTracker', null);
  * @returns {boolean} True if successfully displayed, false otherwise
  */
 const displayPreRenderedCanvas = (bitmap) => {
-  if (!canvasRef.value || !bitmap) {
+  if (!isMounted.value || !canvasRef.value || !bitmap) {
     return false;
   }
 
@@ -106,8 +107,19 @@ const displayPreRenderedCanvas = (bitmap) => {
  * Render the PDF page to the canvas
  */
 const renderPageToCanvas = async () => {
-  if (!canvasRef.value || !props.pdfDocument) {
+  if (!isMounted.value || !canvasRef.value || !props.pdfDocument) {
     return;
+  }
+
+  // Cancel any in-progress render before starting a new one
+  // This prevents PDF.js "Cannot use the same canvas during multiple render() operations" error
+  if (renderTask.value) {
+    try {
+      renderTask.value.cancel();
+    } catch (err) {
+      console.debug('Cancelled previous render task:', err);
+    }
+    renderTask.value = null;
   }
 
   try {
@@ -124,6 +136,12 @@ const renderPageToCanvas = async () => {
 
     // Set canvas dimensions (synchronous DOM update)
     const canvas = canvasRef.value;
+
+    // Check if still mounted before DOM operations
+    if (!isMounted.value || !canvas) {
+      return;
+    }
+
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
 
@@ -155,6 +173,9 @@ const renderPageToCanvas = async () => {
 
 // Render on mount
 onMounted(() => {
+  // Mark component as mounted to enable rendering
+  isMounted.value = true;
+
   // Register with shared observer if available
   if (pageVisibility && pageVisibility.observePage) {
     pageVisibility.observePage(canvasRef.value);
@@ -192,8 +213,17 @@ watch(
 
 // Cancel any in-progress rendering on unmount
 onBeforeUnmount(() => {
+  // Mark as unmounted FIRST to prevent any async operations from continuing
+  isMounted.value = false;
+
+  // Cancel render task with error handling
   if (renderTask.value) {
-    renderTask.value.cancel();
+    try {
+      renderTask.value.cancel();
+    } catch (err) {
+      // Ignore cancellation errors - this is expected during cleanup
+      console.debug('Error cancelling render task:', err);
+    }
     renderTask.value = null;
   }
 });
