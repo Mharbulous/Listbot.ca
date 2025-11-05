@@ -121,10 +121,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['mouseenter', 'mouseleave', 'thumbnail-needed', 'previous-page', 'next-page']);
+const emit = defineEmits(['mouseenter', 'mouseleave', 'thumbnail-needed', 'previous-page', 'next-page', 'view-document']);
 
-// Cursor side tracking for left/right hover detection
-const cursorSide = ref('right'); // 'left' or 'right'
+// Cursor side tracking for left/middle/right hover detection
+const cursorSide = ref('middle'); // 'left', 'middle', or 'right'
 
 // Page counter display tracking
 const isHoveringThumbnail = ref(false);
@@ -153,10 +153,12 @@ const isRightDisabled = computed(() => {
   return isAtLastPage.value;
 });
 
-// Computed: Cursor class based on which side user is hovering and boundary state
+// Computed: Cursor class based on which third user is hovering and boundary state
 const cursorClass = computed(() => {
   if (cursorSide.value === 'left') {
     return isLeftDisabled.value ? 'cursor-disabled' : 'cursor-prev';
+  } else if (cursorSide.value === 'middle') {
+    return 'cursor-middle';
   } else {
     return isRightDisabled.value ? 'cursor-disabled' : 'cursor-next';
   }
@@ -175,8 +177,17 @@ const handleThumbnailHover = (event) => {
   const width = rect.width;
   const height = rect.height;
 
-  // Determine which half of the thumbnail for navigation cursor
-  cursorSide.value = x < width / 2 ? 'left' : 'right';
+  // Determine which third of the thumbnail for navigation cursor
+  const leftThirdBoundary = width / 3;
+  const rightThirdBoundary = width * 2 / 3;
+
+  if (x < leftThirdBoundary) {
+    cursorSide.value = 'left';
+  } else if (x < rightThirdBoundary) {
+    cursorSide.value = 'middle';
+  } else {
+    cursorSide.value = 'right';
+  }
 
   // Determine page counter position based on 3x3 grid corners
   // Only check the 4 corner sections (outer third in both dimensions)
@@ -202,7 +213,7 @@ const handleThumbnailHover = (event) => {
   // If mouse is in center 5 rectangles, don't change position (prevents flickering)
 };
 
-// Handle thumbnail click to navigate pages
+// Handle thumbnail click to navigate pages or view document
 const handleThumbnailClick = (event) => {
   event.stopPropagation(); // Prevent tooltip from closing
 
@@ -210,14 +221,20 @@ const handleThumbnailClick = (event) => {
   const x = event.clientX - rect.left;
   const width = rect.width;
 
-  // Determine which side was clicked
-  if (x < width / 2) {
-    // Left side - go to previous page (only if not disabled)
+  // Determine which third was clicked
+  const leftThirdBoundary = width / 3;
+  const rightThirdBoundary = width * 2 / 3;
+
+  if (x < leftThirdBoundary) {
+    // Left third - go to previous page (only if not disabled)
     if (!isLeftDisabled.value) {
       emit('previous-page');
     }
+  } else if (x < rightThirdBoundary) {
+    // Middle third - navigate to document view
+    emit('view-document');
   } else {
-    // Right side - go to next page (only if not disabled)
+    // Right third - go to next page (only if not disabled)
     if (!isRightDisabled.value) {
       emit('next-page');
     }
@@ -413,6 +430,11 @@ watch(
 /* Custom cursor for next page (right side) - single right arrow */
 .thumbnail-image.cursor-next {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="12,8 20,16 12,24" fill="white" stroke="black" stroke-width="1"/></svg>') 16 16, pointer;
+}
+
+/* Standard pointer cursor for middle third - indicates clickable to view document */
+.thumbnail-image.cursor-middle {
+  cursor: pointer;
 }
 
 /* Disabled cursor when at document boundaries */

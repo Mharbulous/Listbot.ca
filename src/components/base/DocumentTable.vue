@@ -228,6 +228,7 @@
       @thumbnail-needed="handleThumbnailNeeded"
       @previous-page="handlePreviousPage"
       @next-page="handleNextPage"
+      @view-document="handleViewDocumentFromPeek"
     />
   </div>
 </template>
@@ -440,6 +441,20 @@ const handleNextPage = async () => {
 
   // Generate thumbnail for new page
   await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+};
+
+// Handle view document from thumbnail middle-click
+const handleViewDocumentFromPeek = () => {
+  if (!documentPeek.currentPeekDocument.value) return;
+
+  const fileHash = documentPeek.currentPeekDocument.value;
+
+  // Find the row in sortedData that matches the fileHash
+  const row = sortedData.value.find((r) => r.id === fileHash);
+
+  if (row) {
+    handleViewDocument(row);
+  }
 };
 
 // Update tooltip position based on peek button
