@@ -1,4 +1,4 @@
-import { ref, computed, markRaw } from 'vue';
+import { ref, computed, markRaw, watch } from 'vue';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
@@ -20,7 +20,6 @@ export function useDocumentPeek() {
   // State
   const currentPeekDocument = ref(null); // fileHash of currently peeked document
   const currentPeekPage = ref(1); // Current page number (1-based)
-  const showEndOfDocument = ref(false); // Whether to show "End of Document" message
   const isLoading = ref(false); // Thumbnail generation in progress
   const error = ref(null); // Error message if load fails
 
@@ -236,18 +235,55 @@ export function useDocumentPeek() {
   };
 
   /**
+   * Pre-generate thumbnails for adjacent pages
+   * Generates previous and next page thumbnails in background for instant navigation
+   * Respects document boundaries (no generation for invalid pages)
+   */
+  const preGenerateAdjacentThumbnails = async (fileHash, currentPage, pageCount) => {
+    if (!fileHash || !pageCount) return;
+
+    const metadata = documentMetadataCache.value.get(fileHash);
+    if (!metadata?.pdfDocument) return;
+
+    const pagesToGenerate = [];
+
+    // Previous page (if not at first page)
+    if (currentPage > 1) {
+      pagesToGenerate.push(currentPage - 1);
+    }
+
+    // Next page (if not at last page)
+    if (currentPage < pageCount) {
+      pagesToGenerate.push(currentPage + 1);
+    }
+
+    // Generate thumbnails in parallel (non-blocking)
+    Promise.all(
+      pagesToGenerate.map(page => generateThumbnail(fileHash, page))
+    ).catch(err => {
+      console.warn('[Peek] Pre-generation failed:', err);
+      // Silent failure - pre-generation is a performance optimization
+    });
+  };
+
+  /**
    * Open peek for a document
    * Always starts at page 1
    */
   const openPeek = async (firmId, matterId, fileHash) => {
     currentPeekDocument.value = fileHash;
     currentPeekPage.value = 1;
-    showEndOfDocument.value = false;
     error.value = null;
 
     try {
       // Load document metadata (uses cache if available)
       await getOrLoadDocument(firmId, matterId, fileHash);
+
+      // Pre-generate adjacent pages for instant navigation
+      const metadata = documentMetadataCache.value.get(fileHash);
+      if (metadata?.pageCount) {
+        preGenerateAdjacentThumbnails(fileHash, 1, metadata.pageCount);
+      }
     } catch (err) {
       console.error('[Peek] Failed to open peek:', err);
       // Error is already set in getOrLoadDocument
@@ -255,8 +291,8 @@ export function useDocumentPeek() {
   };
 
   /**
-   * Cycle to next page
-   * Logic: page 1 → page 2 → ... → page N → "End of Document" → page 1
+   * Go to next page
+   * Logic: page 1 → page 2 → ... → page N (stops at last page, no wrap-around)
    */
   const nextPage = () => {
     if (!currentPeekDocument.value) {
@@ -264,35 +300,20 @@ export function useDocumentPeek() {
     }
 
     const metadata = documentMetadataCache.value.get(currentPeekDocument.value);
-    if (!metadata) {
+    if (!metadata || !metadata.pageCount) {
       return;
     }
 
-    // If showing "End of Document", cycle back to page 1
-    if (showEndOfDocument.value) {
-      currentPeekPage.value = 1;
-      showEndOfDocument.value = false;
-      return;
+    // Don't go beyond last page
+    if (currentPeekPage.value < metadata.pageCount) {
+      currentPeekPage.value++;
     }
-
-    // If PDF, check page count
-    if (metadata.pdfDocument && metadata.pageCount) {
-      if (currentPeekPage.value < metadata.pageCount) {
-        // Go to next page
-        currentPeekPage.value++;
-      } else {
-        // Reached end, show "End of Document"
-        showEndOfDocument.value = true;
-      }
-    } else {
-      // Non-PDF or single-page document, show "End of Document"
-      showEndOfDocument.value = true;
-    }
+    // If already at last page, do nothing (no wrap-around)
   };
 
   /**
-   * Cycle to previous page
-   * Logic: page 1 → "End of Document" → page N → ... → page 2 → page 1
+   * Go to previous page
+   * Logic: page N → ... → page 2 → page 1 (stops at page 1, no wrap-around)
    */
   const previousPage = () => {
     if (!currentPeekDocument.value) {
@@ -304,26 +325,11 @@ export function useDocumentPeek() {
       return;
     }
 
-    // If showing "End of Document", go to last page
-    if (showEndOfDocument.value) {
-      if (metadata.pdfDocument && metadata.pageCount) {
-        currentPeekPage.value = metadata.pageCount;
-        showEndOfDocument.value = false;
-      } else {
-        // Non-PDF or no page count, go to page 1
-        currentPeekPage.value = 1;
-        showEndOfDocument.value = false;
-      }
-      return;
-    }
-
-    // If on page 1, wrap around to "End of Document"
-    if (currentPeekPage.value === 1) {
-      showEndOfDocument.value = true;
-    } else {
-      // Go to previous page
+    // Don't go before page 1
+    if (currentPeekPage.value > 1) {
       currentPeekPage.value--;
     }
+    // If already at page 1, do nothing (no wrap-around)
   };
 
   /**
@@ -332,7 +338,6 @@ export function useDocumentPeek() {
   const closePeek = () => {
     currentPeekDocument.value = null;
     currentPeekPage.value = 1;
-    showEndOfDocument.value = false;
     error.value = null;
     // Note: We don't clear the cache here, allowing for faster re-peeks
   };
@@ -360,7 +365,7 @@ export function useDocumentPeek() {
    * Returns null if loading, error, or not a PDF
    */
   const currentThumbnailUrl = computed(() => {
-    if (!currentPeekDocument.value || showEndOfDocument.value || !isCurrentDocumentPdf.value) {
+    if (!currentPeekDocument.value || !isCurrentDocumentPdf.value) {
       return null;
     }
 
@@ -397,11 +402,27 @@ export function useDocumentPeek() {
     closePeek();
   };
 
+  /**
+   * Watch for page changes and pre-generate adjacent thumbnails
+   * Ensures instant navigation by caching next/previous pages
+   */
+  watch(
+    () => [currentPeekDocument.value, currentPeekPage.value],
+    ([fileHash, page]) => {
+      if (!fileHash || !page) return;
+
+      const metadata = documentMetadataCache.value.get(fileHash);
+      if (metadata?.pageCount) {
+        // Pre-generate adjacent pages in background
+        preGenerateAdjacentThumbnails(fileHash, page, metadata.pageCount);
+      }
+    }
+  );
+
   return {
     // State
     currentPeekDocument,
     currentPeekPage,
-    showEndOfDocument,
     isLoading,
     error,
 

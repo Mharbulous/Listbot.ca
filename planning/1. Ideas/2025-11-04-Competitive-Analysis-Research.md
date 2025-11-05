@@ -117,6 +117,31 @@ Proprietary benchmarks comparing the leading LLMs—Gemini, ChatGPT (OpenAI), an
 
 However, the reality of the legal technology market is often multi-cloud. Successful, specialized legal solutions may combine the best features from different ecosystems; for example, utilizing AWS Textract for initial OCR and extraction alongside non-Google LLMs.5 The challenge for Google Cloud is to ensure that the integrated efficiency and technical superiority of its full stack (Document AI \+ Gemini \+ BigQuery) outweigh the strategic flexibility and cost benefits of assembling a best-of-breed multi-cloud solution. The high reliability of Gemini in core legal tasks suggests that firms leveraging the Google foundational model may gain a long-term competitive edge in terms of both performance and infrastructure consolidation.
 
+### **C. Critical Assessment of Legal AI Vendor Claims**
+
+**Important Note:** While the preceding sections cite vendor performance claims, independent verification reveals significant concerns about product maturity and actual capabilities:
+
+#### **1. Altumatim Market Position Assessment**
+
+Despite promotional materials highlighting transformative e-discovery capabilities, preliminary investigation suggests **Altumatim appears to be conducting an early-stage smoke test of a concept rather than offering a mature production product**. The company's actual product availability and deployment status require further verification before citing their metrics as established benchmarks. Law firms evaluating Altumatim should request:
+- Verifiable client references with independently confirmed deployment timelines
+- Third-party validation of claimed performance metrics
+- Clear demonstration of production-ready capabilities vs. proof-of-concept demos
+
+#### **2. Harvey AI "Vault" Skepticism**
+
+Harvey's e-Discovery product, marketed as "The Vault," has received mixed reviews from early evaluators:
+- **Product Concerns**: At least one reviewer characterized the interface as appearing to be "a facade slapped on top of ChatGPT" rather than a deeply integrated, purpose-built legal discovery platform
+- **Market Adoption Claims**: Harvey has publicized adoption by several large law firms; however, **these firm partnerships have not been independently verified** to confirm:
+  - Whether the named firms actually exist as legitimate legal practices
+  - The scope and depth of actual deployment (pilot vs. enterprise-wide)
+  - Whether these firms are paying customers or promotional partners
+
+**Due Diligence Recommendation**: Before selecting Harvey as a strategic vendor, law firms should:
+- Request verifiable references from practicing attorneys actually using the Vault in production
+- Conduct independent demos to assess whether the product offers substantive legal-specific functionality beyond general-purpose LLM wrappers
+- Verify the authenticity and scope of claimed large firm deployments through direct contact with those firms' technology leadership
+
 Table Title: Strategic Impact Metrics of AI-Powered Legal Document Review
 
 | Operational Metric | Pre-AI Manual Process | AI-Enabled Benchmark (Example Case Study) | Source |

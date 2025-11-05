@@ -22,12 +22,6 @@
       <p class="error-text">{{ error }}</p>
     </div>
 
-    <!-- End of Document State -->
-    <div v-else-if="showEndOfDocument" class="peek-end">
-      <div class="end-icon">📄</div>
-      <p class="end-text">End of Document</p>
-    </div>
-
     <!-- Non-PDF File State -->
     <div v-else-if="!isCurrentDocumentPdf && currentDocumentMetadata" class="peek-file-icon">
       <div class="file-icon">{{ fileIcon }}</div>
@@ -41,6 +35,8 @@
         class="thumbnail-container"
         @click="handleThumbnailClick"
         @mousemove="handleThumbnailHover"
+        @mouseenter="handleThumbnailMouseEnter"
+        @mouseleave="handleThumbnailMouseLeave"
       >
         <img
           :src="thumbnailUrl"
@@ -48,7 +44,11 @@
           class="thumbnail-image"
           :class="cursorClass"
         />
-        <div class="page-counter">
+        <div
+          v-if="isHoveringThumbnail"
+          class="page-counter"
+          :class="pageCounterPositionClass"
+        >
           Page {{ currentPeekPage }}{{ pageCountText }}
         </div>
       </div>
@@ -84,10 +84,6 @@ const props = defineProps({
   currentPeekPage: {
     type: Number,
     default: 1,
-  },
-  showEndOfDocument: {
-    type: Boolean,
-    default: false,
   },
   isLoading: {
     type: Boolean,
@@ -130,19 +126,80 @@ const emit = defineEmits(['mouseenter', 'mouseleave', 'thumbnail-needed', 'previ
 // Cursor side tracking for left/right hover detection
 const cursorSide = ref('right'); // 'left' or 'right'
 
-// Computed: Cursor class based on which side user is hovering
-const cursorClass = computed(() => {
-  return cursorSide.value === 'left' ? 'cursor-prev' : 'cursor-next';
+// Page counter display tracking
+const isHoveringThumbnail = ref(false);
+const pageCounterPosition = ref('bottom-right'); // 'top-left', 'top-right', 'bottom-left', 'bottom-right'
+
+// Computed: Check if at first page
+const isAtFirstPage = computed(() => {
+  return props.currentPeekPage === 1;
 });
 
-// Handle thumbnail hover to detect left/right side
+// Computed: Check if at last page
+const isAtLastPage = computed(() => {
+  if (!props.currentDocumentMetadata?.pageCount) {
+    return false;
+  }
+  return props.currentPeekPage >= props.currentDocumentMetadata.pageCount;
+});
+
+// Computed: Check if navigation is disabled on left side
+const isLeftDisabled = computed(() => {
+  return isAtFirstPage.value;
+});
+
+// Computed: Check if navigation is disabled on right side
+const isRightDisabled = computed(() => {
+  return isAtLastPage.value;
+});
+
+// Computed: Cursor class based on which side user is hovering and boundary state
+const cursorClass = computed(() => {
+  if (cursorSide.value === 'left') {
+    return isLeftDisabled.value ? 'cursor-disabled' : 'cursor-prev';
+  } else {
+    return isRightDisabled.value ? 'cursor-disabled' : 'cursor-next';
+  }
+});
+
+// Computed: Page counter position class
+const pageCounterPositionClass = computed(() => {
+  return `page-counter-${pageCounterPosition.value}`;
+});
+
+// Handle thumbnail hover to detect left/right side and page counter position
 const handleThumbnailHover = (event) => {
   const rect = event.currentTarget.getBoundingClientRect();
   const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
   const width = rect.width;
+  const height = rect.height;
 
-  // Determine which half of the thumbnail the cursor is over
+  // Determine which half of the thumbnail for navigation cursor
   cursorSide.value = x < width / 2 ? 'left' : 'right';
+
+  // Determine page counter position based on 3x3 grid corners
+  // Only check the 4 corner sections (outer third in both dimensions)
+  const leftThird = width / 3;
+  const rightThird = width * 2 / 3;
+  const topThird = height / 3;
+  const bottomThird = height * 2 / 3;
+
+  // Check if mouse is in one of the 4 corner rectangles
+  if (x < leftThird && y < topThird) {
+    // Top-left corner
+    pageCounterPosition.value = 'top-left';
+  } else if (x > rightThird && y < topThird) {
+    // Top-right corner
+    pageCounterPosition.value = 'top-right';
+  } else if (x < leftThird && y > bottomThird) {
+    // Bottom-left corner
+    pageCounterPosition.value = 'bottom-left';
+  } else if (x > rightThird && y > bottomThird) {
+    // Bottom-right corner
+    pageCounterPosition.value = 'bottom-right';
+  }
+  // If mouse is in center 5 rectangles, don't change position (prevents flickering)
 };
 
 // Handle thumbnail click to navigate pages
@@ -155,12 +212,26 @@ const handleThumbnailClick = (event) => {
 
   // Determine which side was clicked
   if (x < width / 2) {
-    // Left side - go to previous page
-    emit('previous-page');
+    // Left side - go to previous page (only if not disabled)
+    if (!isLeftDisabled.value) {
+      emit('previous-page');
+    }
   } else {
-    // Right side - go to next page
-    emit('next-page');
+    // Right side - go to next page (only if not disabled)
+    if (!isRightDisabled.value) {
+      emit('next-page');
+    }
   }
+};
+
+// Handle thumbnail mouse enter
+const handleThumbnailMouseEnter = () => {
+  isHoveringThumbnail.value = true;
+};
+
+// Handle thumbnail mouse leave
+const handleThumbnailMouseLeave = () => {
+  isHoveringThumbnail.value = false;
 };
 
 // Computed: File icon for non-PDF files
@@ -277,27 +348,6 @@ watch(
   text-align: center;
 }
 
-/* End of Document State */
-.peek-end {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  min-height: 150px;
-}
-
-.end-icon {
-  font-size: 48px;
-  margin-bottom: 8px;
-}
-
-.end-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-}
-
 /* Non-PDF File Icon State */
 .peek-file-icon {
   display: flex;
@@ -365,10 +415,13 @@ watch(
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="12,8 20,16 12,24" fill="white" stroke="black" stroke-width="1"/></svg>') 16 16, pointer;
 }
 
+/* Disabled cursor when at document boundaries */
+.thumbnail-image.cursor-disabled {
+  cursor: default;
+}
+
 .page-counter {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
   background: rgba(0, 0, 0, 0.75);
   color: white;
   padding: 4px 8px;
@@ -376,5 +429,30 @@ watch(
   font-size: 12px;
   font-weight: 500;
   pointer-events: none;
+  transition: all 0.2s ease-out; /* Smooth position transition */
+}
+
+/* Position in bottom-right (default) */
+.page-counter-bottom-right {
+  bottom: 8px;
+  right: 8px;
+}
+
+/* Position in bottom-left */
+.page-counter-bottom-left {
+  bottom: 8px;
+  left: 8px;
+}
+
+/* Position in top-right */
+.page-counter-top-right {
+  top: 8px;
+  right: 8px;
+}
+
+/* Position in top-left */
+.page-counter-top-left {
+  top: 8px;
+  left: 8px;
 }
 </style>

@@ -164,7 +164,7 @@
                 @mouseleave="handlePeekMouseLeave"
                 :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
               >
-                👁️
+                🖼️
               </button>
             </div>
 
@@ -214,7 +214,6 @@
       :opacity="tooltipTiming.opacity.value"
       :currentPeekDocument="documentPeek.currentPeekDocument.value"
       :currentPeekPage="documentPeek.currentPeekPage.value"
-      :showEndOfDocument="documentPeek.showEndOfDocument.value"
       :isLoading="documentPeek.isLoading.value"
       :error="documentPeek.error.value"
       :currentDocumentMetadata="documentPeek.currentDocumentMetadata.value"
@@ -352,10 +351,8 @@ const handlePeekClick = async (row) => {
   if (documentPeek.currentPeekDocument.value === fileHash) {
     documentPeek.nextPage();
 
-    // If we just advanced to a new page (not "End of Document"), generate thumbnail
-    if (!documentPeek.showEndOfDocument.value) {
-      await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-    }
+    // Generate thumbnail for new page
+    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
   } else {
     // Different document, open peek at page 1
     await documentPeek.openPeek(firmId, matterId, fileHash);
@@ -411,10 +408,8 @@ const handlePreviousPage = async () => {
 
   documentPeek.previousPage();
 
-  // Generate thumbnail for new page if not "End of Document"
-  if (!documentPeek.showEndOfDocument.value) {
-    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-  }
+  // Generate thumbnail for new page
+  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
 };
 
 // Handle next page click on thumbnail
@@ -425,10 +420,8 @@ const handleNextPage = async () => {
 
   documentPeek.nextPage();
 
-  // Generate thumbnail for new page if not "End of Document"
-  if (!documentPeek.showEndOfDocument.value) {
-    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-  }
+  // Generate thumbnail for new page
+  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
 };
 
 // Update tooltip position based on peek button
