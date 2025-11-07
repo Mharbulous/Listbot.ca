@@ -123,3 +123,58 @@ Once CORS is properly configured, update the AI service to re-enable full docume
 
 - [Firebase Storage CORS Configuration](https://firebase.google.com/docs/storage/web/download-files#cors_configuration)
 - [Google Cloud Storage CORS](https://cloud.google.com/storage/docs/configuring-cors)
+---
+
+## ✅ Production CORS Update - November 6, 2025
+
+**Status**: **COMPLETED** - Production domains added to CORS configuration
+
+### Issue
+PDF documents were loading successfully on localhost but failing on the production deployment (`https://coryphaeus-ed11a.web.app`) with CORS error:
+```
+Access to fetch at 'https://firebasestorage.googleapis.com/...' from origin 'https://coryphaeus-ed11a.web.app' 
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+### Root Cause
+The original CORS configuration (August 30, 2025) only included localhost development domains. Production domains were not whitelisted, causing PDF.js to fail when fetching documents from Firebase Storage in production.
+
+### Solution Applied
+Updated `cors.json` to include production domains and reapplied CORS configuration:
+
+**Updated cors.json**:
+```json
+[
+  {
+    "origin": [
+      "https://coryphaeus-ed11a.web.app",
+      "https://coryphaeus-ed11a.firebaseapp.com",
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002"
+    ],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]
+```
+
+**Commands Used**:
+```bash
+# Apply updated CORS configuration
+gsutil cors set cors.json gs://coryphaeus-ed11a.firebasestorage.app
+
+# Verify configuration
+gsutil cors get gs://coryphaeus-ed11a.firebasestorage.app
+```
+
+### Verification
+✅ CORS configuration successfully applied  
+✅ All production and development domains now whitelisted  
+✅ PDF documents can now load in production deployment  
+
+### Impact
+- **Document Viewer** now works correctly in production
+- **PDF.js** can fetch and render documents from Firebase Storage
+- **Consistent behavior** across development and production environments
