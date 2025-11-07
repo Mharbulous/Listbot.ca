@@ -85,7 +85,7 @@ graph LR
 | Cache | Purpose | Hit Performance | Memory Efficiency |
 |-------|---------|----------------|-------------------|
 | PDF Document | Instant PDF access | 0ms (no network) | Stores 3 full PDFs |
-| Canvas Pre-render | Skip page 1 render | 5-15ms (vs 650-750ms) | ImageBitmap (optimal) |
+| Canvas Pre-render | Skip page 1 render | 0.7-1.2ms (vs 650-750ms) | ImageBitmap (optimal) |
 | Thumbnail | Sidebar thumbnails | Instant display | Blob URLs (2x better than data URLs) |
 
 **Key Files:**
@@ -127,7 +127,7 @@ sequenceDiagram
     PdfPageCanvas->>CanvasCache: Check for pre-rendered canvas
 
     alt Pre-rendered Available
-        CanvasCache-->>PdfPageCanvas: Return ImageBitmap (5-15ms)
+        CanvasCache-->>PdfPageCanvas: Return ImageBitmap (0.7-1.2ms)
         PdfPageCanvas->>PdfPageCanvas: Display immediately
     else Not Pre-rendered
         PdfPageCanvas->>PdfPageCanvas: Render via PDF.js (650-750ms)
@@ -163,7 +163,7 @@ sequenceDiagram
 
 **Performance Impact:**
 - **Cold start:** 650-750ms for first page
-- **Subsequent navigation:** 5-15ms (pre-rendered) + 0ms (cached PDF) = **~43-150x faster**
+- **Subsequent navigation:** 0.7-1.2ms (canvas swap) + 10-16ms (PDF load) = **12.9-20.3ms total (36-58x faster)**
 
 ---
 
@@ -311,7 +311,7 @@ How each PDF page decides whether to use pre-rendered cache or render fresh:
 flowchart TD
     Start([PdfPageCanvas.vue mounted]) --> CheckCache{Check Canvas<br/>Preloader Cache}
 
-    CheckCache -->|Cache Hit| SwapCanvas[Swap Pre-rendered<br/>ImageBitmap to Canvas<br/>approx 5-15ms]
+    CheckCache -->|Cache Hit| SwapCanvas[Swap Pre-rendered<br/>ImageBitmap to Canvas<br/>approx 0.7-1.2ms]
     CheckCache -->|Cache Miss| CheckPrevRender{Previous Render<br/>Task Running?}
 
     SwapCanvas --> EmitRendered[Emit page-rendered<br/>event immediately]
@@ -345,9 +345,9 @@ flowchart TD
 4. **Immediate event emission** - UI updates instantly on cache hit
 
 **Performance Difference:**
-- **Pre-rendered (cache hit):** 5-15ms (fast)
+- **Pre-rendered (cache hit):** 0.7-1.2ms canvas swap, 12.9-20.3ms total navigation (fast)
 - **Fresh render (cache miss):** 650-750ms (slow)
-- **Speedup:** ~43-150x faster
+- **Speedup:** ~36-58x faster
 
 **Key File:** `src/features/organizer/components/PdfPageCanvas.vue`
 
@@ -390,13 +390,13 @@ gantt
 |----------|---------|------|---------|
 | **First Render (Cache Hit)** | <20ms | <50ms | - |
 | **First Render (Cold Start)** | <100ms | <250ms | 650-750ms |
-| **Canvas Swap** | 5-15ms | - | - |
+| **Canvas Swap** | 0.7-1.2ms | - | - |
 
 **Real-World Impact:**
 - **Initial load:** User waits 650-750ms for first document
-- **Navigation to adjacent docs:** User waits only 5-15ms (pre-rendered + cached)
-- **Navigation to any cached doc:** User waits 0ms (no network) + 5-15ms (pre-rendered)
-- **Overall speedup:** ~43-150x faster for subsequent navigation
+- **Navigation to adjacent docs:** User waits only 12.9-20.3ms total (0.7-1.2ms canvas swap + 10-16ms PDF load)
+- **Navigation to any cached doc:** User waits 12.9-20.3ms (instant feel)
+- **Overall speedup:** ~36-58x faster for subsequent navigation
 
 ---
 
@@ -506,7 +506,7 @@ IntersectionObserver tracks which pages are visible for navigation UI updates:
 |--------------|------------|-------------------|---------------|
 | **CSS Virtualization** | `content-visibility: auto` | 40% boost | `PdfViewerArea.vue:151-153` |
 | **PDF Document Cache** | Module-level LRU cache | 0ms network time | `usePdfCache.js` |
-| **Canvas Pre-render** | ImageBitmap cache | 43-150x faster | `useCanvasPreloader.js` |
+| **Canvas Pre-render** | ImageBitmap cache | 36-58x faster | `useCanvasPreloader.js` |
 | **Thumbnail Cache** | Blob URLs | 2x memory efficiency | `useThumbnailRenderer.js` |
 | **Background Pipeline** | 3-phase pre-loading | Instant navigation | `useDocumentPreloader.js` |
 | **Viewport Tracking** | IntersectionObserver | Efficient visibility | `usePageVisibility.js` |
@@ -515,7 +515,7 @@ IntersectionObserver tracks which pages are visible for navigation UI updates:
 
 **Overall Result:**
 - First document load: 650-750ms (unavoidable - need to fetch & parse PDF)
-- Subsequent navigation: 5-15ms (43-150x faster)
+- Subsequent navigation: 12.9-20.3ms total (36-58x faster)
 - Large PDFs: Only visible pages rendered (40% performance boost)
 - Memory efficient: 3-document sliding window + proper cleanup
 

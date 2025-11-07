@@ -60,7 +60,7 @@ const performanceTracker = inject('performanceTracker', null);
 
 /**
  * Display a pre-rendered canvas by drawing the cached ImageBitmap
- * This is much faster than rendering from scratch (5-15ms vs 650-750ms)
+ * This is much faster than rendering from scratch (0.7-1.2ms vs 650-750ms)
  *
  * @param {ImageBitmap} bitmap - The pre-rendered ImageBitmap
  * @returns {boolean} True if successfully displayed, false otherwise

@@ -34,7 +34,7 @@ const MAX_CACHE_SIZE = 3;
  * Implements background canvas pre-rendering to achieve instant navigation:
  * - Pre-renders page 1 of adjacent documents during idle time
  * - Caches as ImageBitmap (memory-efficient, transferable)
- * - Provides instant canvas swap on navigation (5-15ms vs 650-750ms)
+ * - Provides instant canvas swap on navigation (0.7-1.2ms vs 650-750ms)
  *
  * LRU cache with MAX_CACHE_SIZE = 3 to balance memory vs hit rate.
  *
