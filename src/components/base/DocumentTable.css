@@ -7,13 +7,17 @@
   /* Removed fixed height and overflow:hidden for window scrolling mode */
 }
 
-/* Scroll Container - Container for table content (window scrolling mode) */
+/* Scroll Container - Container for table content (container scrolling mode) */
 .scroll-container {
   position: relative;
-  /* Removed flex: 1 and overflow: auto for window scrolling */
-  /* Table will expand to natural height and window provides scrolling */
-  /* Removed min-width constraint to allow horizontal expansion beyond viewport */
+  /* Fixed height to fill viewport and always show horizontal scrollbar */
+  height: calc(100vh - 80px); /* Account for AppHeader (h-20 = 80px) */
+  width: 100vw; /* Full viewport width */
+  overflow-x: auto; /* Always show horizontal scrollbar */
+  overflow-y: scroll; /* Always show vertical scrollbar track */
 }
+
+
 
 /* Sticky Header - Sticks within scroll container */
 .table-mockup-header {

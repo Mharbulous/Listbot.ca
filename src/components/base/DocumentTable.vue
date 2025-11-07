@@ -126,11 +126,11 @@
 
       <!-- Scrollable Table Body with Virtual Scrolling -->
       <div class="table-mockup-body" :style="{ minWidth: totalFooterWidth + 'px' }">
-        <!-- Virtual container with dynamic height -->
+        <!-- Virtual container with dynamic height - ensure minimum height for scrollbar -->
         <div
           class="virtual-container"
           :style="{
-            height: virtualTotalSize + 'px',
+            height: Math.max(virtualTotalSize, 1000) + 'px', // Minimum 1000px to ensure scrollbar thumb
             position: 'relative',
           }"
         >
@@ -611,7 +611,7 @@ watch([sortColumn, sortDirection], ([column, direction]) => {
   emit('sort-change', { column, direction });
 });
 
-// Initialize virtual table with window scrolling mode
+// Initialize virtual table with container scrolling mode for always-visible horizontal scrollbar
 const {
   rowVirtualizer,
   virtualItems,
@@ -627,8 +627,8 @@ const {
   estimateSize: props.rowHeight,
   overscan: props.overscan,
   enableSmoothScroll: true,
-  useWindowScrolling: true,
-  scrollMargin: 80, // Account for fixed AppHeader (h-20 = 80px)
+  useWindowScrolling: false, // Use container scrolling for always-visible scrollbar
+  scrollMargin: 0, // No scroll margin needed for container scrolling
 });
 
 // Compute visible columns by filtering ordered columns

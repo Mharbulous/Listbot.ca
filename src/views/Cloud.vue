@@ -384,13 +384,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Page Container - Natural height for window scrolling */
+/* Page Container - Fixed height for container scrolling */
 .analyze-mockup-page {
   background: white;
   display: flex;
   flex-direction: column;
-  /* Removed width and height constraints to allow browser scrolling */
-  /* Table will expand to natural dimensions and browser provides scrolling */
-  min-height: calc(100vh - 80px); /* Minimum height to fill viewport */
+  /* Fixed height to fill viewport - DocumentTable handles its own scrolling */
+  height: calc(100vh - 80px); /* Account for AppHeader (h-20 = 80px) */
+  width: 100vw; /* Full viewport width */
 }
 </style>
