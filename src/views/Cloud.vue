@@ -384,13 +384,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Page Container - Full viewport height minus header */
+/* Page Container - Natural height for window scrolling */
 .analyze-mockup-page {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
   width: 100%; /* Full width of parent */
   background: white;
-  overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
+  /* Removed height constraint and overflow:hidden to allow window scrolling */
+  /* Table will expand to natural height and window provides scrolling */
+  min-height: calc(100vh - 80px); /* Minimum height to fill viewport */
 }
 </style>

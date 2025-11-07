@@ -1,19 +1,17 @@
 /* Document Table Container */
 .document-table {
-  height: 100%; /* Fill parent container */
   width: 100%; /* Full width of parent */
   background: white;
-  overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
+  /* Removed fixed height and overflow:hidden for window scrolling mode */
 }
 
-/* Scroll Container - Fills available space, provides scrolling */
+/* Scroll Container - Container for table content (window scrolling mode) */
 .scroll-container {
-  flex: 1; /* Fill available vertical space */
-  overflow: auto; /* Browser's native scrollbars for both directions */
   position: relative;
-  /* Remove width constraint to allow horizontal scrolling */
+  /* Removed flex: 1 and overflow: auto for window scrolling */
+  /* Table will expand to natural height and window provides scrolling */
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
@@ -333,8 +331,8 @@
   /* min-width is set dynamically via inline style */
 }
 
-/* Custom scrollbar styling for scroll container */
-.scroll-container::-webkit-scrollbar {
+/* Custom scrollbar styling removed - using window scrollbar in window scrolling mode */
+/* .scroll-container::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
@@ -354,7 +352,7 @@
 
 .scroll-container::-webkit-scrollbar-corner {
   background: #f3f4f6;
-}
+} */
 
 /* Column Resize Handle */
 .resize-handle {

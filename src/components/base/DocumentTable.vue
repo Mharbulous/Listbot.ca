@@ -27,7 +27,13 @@
       @drop="onDrop"
     >
       <!-- Sticky Table Header -->
-      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
+      <div
+        class="table-mockup-header"
+        :style="{
+          minWidth: totalFooterWidth + 'px',
+          top: useWindowScrolling ? '80px' : '0'
+        }"
+      >
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
           <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
@@ -144,7 +150,7 @@
               top: 0,
               left: 0,
               height: virtualItem.size + 'px',
-              transform: `translateY(${virtualItem.start}px)`,
+              transform: `translateY(${virtualItem.start - (useWindowScrolling ? scrollMargin : 0)}px)`,
               backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
             }"
             @dblclick="handleViewDocument(sortedData[virtualItem.index])"
@@ -605,7 +611,7 @@ watch([sortColumn, sortDirection], ([column, direction]) => {
   emit('sort-change', { column, direction });
 });
 
-// Initialize virtual table
+// Initialize virtual table with window scrolling mode
 const {
   rowVirtualizer,
   virtualItems,
@@ -613,12 +619,16 @@ const {
   scrollOffset,
   virtualRange,
   scrollMetrics,
+  scrollMargin,
+  useWindowScrolling,
 } = useVirtualTable({
   data: sortedData,
   scrollContainer,
   estimateSize: props.rowHeight,
   overscan: props.overscan,
   enableSmoothScroll: true,
+  useWindowScrolling: true,
+  scrollMargin: 80, // Account for fixed AppHeader (h-20 = 80px)
 });
 
 // Compute visible columns by filtering ordered columns
@@ -670,8 +680,10 @@ onMounted(() => {
   document.addEventListener('click', handleOutsideClick);
   window.addEventListener('resize', handleWindowResize);
 
-  // Add scroll listener to the scroll container
-  if (scrollContainer.value) {
+  // Add scroll listener - use window for window scrolling mode, container otherwise
+  if (useWindowScrolling) {
+    window.addEventListener('scroll', handleScroll);
+  } else if (scrollContainer.value) {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
 });
@@ -681,8 +693,10 @@ onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick);
   window.removeEventListener('resize', handleWindowResize);
 
-  // Remove scroll listener
-  if (scrollContainer.value) {
+  // Remove scroll listener - use window for window scrolling mode, container otherwise
+  if (useWindowScrolling) {
+    window.removeEventListener('scroll', handleScroll);
+  } else if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
 
