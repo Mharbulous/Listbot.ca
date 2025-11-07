@@ -38,7 +38,7 @@
   align-items: flex-start;
   position: relative;
   flex-shrink: 0;
-  transition: all 0.2s ease-in-out;
+  transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
   cursor: pointer;
 }
 
@@ -280,6 +280,7 @@
   white-space: nowrap;
   display: flex;
   align-items: center; /* Center content vertically within the cell */
+  transition: background 0.2s ease-in-out, opacity 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
 .column-selector-spacer {
@@ -464,10 +465,7 @@
   display: none;
 }
 
-/* Smooth transitions for row cells during column reordering */
-.row-cell {
-  transition: all 0.2s ease-in-out;
-}
+
 
 /* Prevent text selection during drag */
 .header-cell.dragging,
