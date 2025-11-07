@@ -3,8 +3,24 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow: hidden;
+  }
+
   body {
-    @apply font-sans bg-slate-50 text-slate-700 overflow-x-hidden;
+    @apply font-sans bg-slate-50 text-slate-700 overflow-x-hidden overflow-y-hidden;
+  }
+
+  /* Hide scrollbars completely for webkit browsers */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbars for Firefox */
+  html,
+  body {
+    scrollbar-width: none;
   }
 
   h1,
