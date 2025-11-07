@@ -166,7 +166,7 @@
                 @mouseleave="handlePeekMouseLeave"
                 :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
               >
-                👁️
+                📄
               </button>
             </div>
 
