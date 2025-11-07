@@ -464,10 +464,47 @@ const updateTooltipPosition = (fileHash) => {
 
   const rect = button.getBoundingClientRect();
 
-  // Position tooltip to the right of the button with some offset
+  // Estimate tooltip dimensions (based on DocumentPeekTooltip styles)
+  const TOOLTIP_WIDTH = 350;
+  const TOOLTIP_HEIGHT = 380;
+  const BUFFER = 10;
+
+  // Get viewport dimensions
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Calculate available space in each direction
+  const spaceAbove = rect.top;
+  const spaceBelow = viewportHeight - rect.bottom;
+  const spaceRight = viewportWidth - rect.right;
+  const spaceLeft = rect.left;
+
+  // Determine vertical position
+  let top;
+  if (spaceBelow < TOOLTIP_HEIGHT && spaceAbove > spaceBelow) {
+    // Not enough space below and more space above - position above button
+    top = Math.max(BUFFER, rect.top - TOOLTIP_HEIGHT - BUFFER);
+  } else {
+    // Default: position at button top (aligns with button)
+    top = Math.max(BUFFER, Math.min(rect.top, viewportHeight - TOOLTIP_HEIGHT - BUFFER));
+  }
+
+  // Determine horizontal position
+  let left;
+  if (spaceRight >= TOOLTIP_WIDTH + BUFFER) {
+    // Enough space on right - position to right of button (default)
+    left = rect.right + BUFFER;
+  } else if (spaceLeft >= TOOLTIP_WIDTH + BUFFER) {
+    // Not enough space on right but enough on left - position to left of button
+    left = rect.left - TOOLTIP_WIDTH - BUFFER;
+  } else {
+    // Constrain to viewport with buffer
+    left = Math.max(BUFFER, Math.min(rect.right + BUFFER, viewportWidth - TOOLTIP_WIDTH - BUFFER));
+  }
+
   tooltipPosition.value = {
-    top: `${rect.top}px`,
-    left: `${rect.right + 10}px`,
+    top: `${top}px`,
+    left: `${left}px`,
   };
 };
 
@@ -482,6 +519,20 @@ const handleOutsideClick = (event) => {
   if (!tooltipEl && !peekButtonEl) {
     tooltipTiming.closeImmediate();
     documentPeek.closePeek();
+  }
+};
+
+// Handle window resize - update tooltip position if visible
+const handleWindowResize = () => {
+  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
+    updateTooltipPosition(documentPeek.currentPeekDocument.value);
+  }
+};
+
+// Handle scroll - update tooltip position if visible
+const handleScroll = () => {
+  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
+    updateTooltipPosition(documentPeek.currentPeekDocument.value);
   }
 };
 
@@ -614,14 +665,27 @@ const handleFocusOut = (event) => {
   }
 };
 
-// Lifecycle: Add outside-click detection on mount
+// Lifecycle: Add outside-click detection, resize, and scroll listeners on mount
 onMounted(() => {
   document.addEventListener('click', handleOutsideClick);
+  window.addEventListener('resize', handleWindowResize);
+
+  // Add scroll listener to the scroll container
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('scroll', handleScroll);
+  }
 });
 
 // Lifecycle: Cleanup on unmount
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick);
+  window.removeEventListener('resize', handleWindowResize);
+
+  // Remove scroll listener
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll);
+  }
+
   documentPeek.cleanup();
 });
 
