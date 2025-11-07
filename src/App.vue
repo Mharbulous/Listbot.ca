@@ -21,7 +21,6 @@
           'ml-[60px]': $route.path !== '/login',
           'pt-20': $route.path !== '/login',
         }"
-        style="min-width: 0"
       >
         <router-view />
       </div>

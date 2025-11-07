@@ -1,5 +1,5 @@
 <template>
-  <div class="analyze-mockup-page" style="min-width: 0">
+  <div class="analyze-mockup-page">
     <DocumentTable
       :data="mockData"
       :columns="allColumns"
@@ -386,12 +386,11 @@ onMounted(async () => {
 <style scoped>
 /* Page Container - Natural height for window scrolling */
 .analyze-mockup-page {
-  width: 100%; /* Full width of parent */
   background: white;
   display: flex;
   flex-direction: column;
-  /* Removed height constraint and overflow:hidden to allow window scrolling */
-  /* Table will expand to natural height and window provides scrolling */
+  /* Removed width and height constraints to allow browser scrolling */
+  /* Table will expand to natural dimensions and browser provides scrolling */
   min-height: calc(100vh - 80px); /* Minimum height to fill viewport */
 }
 </style>

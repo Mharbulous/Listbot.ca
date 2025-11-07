@@ -1,9 +1,9 @@
 /* Document Table Container */
 .document-table {
-  width: 100%; /* Full width of parent */
   background: white;
   display: flex;
   flex-direction: column;
+  /* Removed width constraint to allow horizontal expansion beyond viewport */
   /* Removed fixed height and overflow:hidden for window scrolling mode */
 }
 
@@ -12,7 +12,7 @@
   position: relative;
   /* Removed flex: 1 and overflow: auto for window scrolling */
   /* Table will expand to natural height and window provides scrolling */
-  min-width: 0; /* Allow flex child to shrink below content size */
+  /* Removed min-width constraint to allow horizontal expansion beyond viewport */
 }
 
 /* Sticky Header - Sticks within scroll container */

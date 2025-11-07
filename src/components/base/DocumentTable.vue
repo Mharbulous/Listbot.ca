@@ -1,5 +1,5 @@
 <template>
-  <div class="document-table" style="min-width: 0">
+  <div class="document-table">
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <slot name="loading">
