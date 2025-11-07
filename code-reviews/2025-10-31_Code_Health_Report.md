@@ -186,7 +186,7 @@ Score Breakdown:
 
 **Layout Components**:
 - ✅ `AppHeader.vue` - Core layout
-- ✅ `NewSideBar.vue` - Core navigation
+- ✅ `AppSideBar.vue` - Core navigation
 - ✅ `AppSwitcher.vue` - Multi-app SSO navigation
 - ✅ `LoginForm.vue` - /login route
 

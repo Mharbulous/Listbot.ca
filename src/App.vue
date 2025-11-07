@@ -39,7 +39,7 @@
 <script>
 import { onUnmounted } from 'vue';
 import { useAuthStore } from './core/stores/auth';
-import NewSideBar from './components/layout/NewSideBar.vue';
+import NewSideBar from './components/layout/AppSideBar.vue';
 import AppHeader from './components/layout/AppHeader.vue';
 import { useFavicon } from './composables/useFavicon';
 import { useAsyncInspector } from './composables/useAsyncInspector';
