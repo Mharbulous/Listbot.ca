@@ -1,522 +1,291 @@
 # PDF Document Viewer Performance Optimization
 
-This document explains the multi-layered performance optimization strategy used in the Bookkeeper document viewer.
-
 **Route:** `/matters/:matterId/documents/view/:fileHash`
 **Main Component:** `src/features/organizer/views/ViewDocument.vue`
 
 ---
 
-## 1. Component Hierarchy
+## Architecture Overview
 
-The document viewer is composed of several specialized components working together:
-
-```mermaid
-graph TD
-    A[ViewDocument.vue<br/>Main Container] --> B[PdfThumbnailPanel.vue<br/>Left Sidebar]
-    A --> C[DocumentNavigationBar.vue<br/>Top Navigation]
-    A --> D[PdfViewerArea.vue<br/>Main Viewer]
-    A --> E[DocumentMetadataPanel.vue<br/>Right Sidebar]
-
-    B --> F[PdfThumbnailList.vue<br/>Thumbnail Grid]
-    F --> G[useThumbnailRenderer<br/>Blob URL Cache]
-
-    D --> H[PdfPageCanvas.vue<br/>Individual Pages<br/>v-for loop]
-    H --> I[useCanvasPreloader<br/>ImageBitmap Cache]
-
-    classDef mainComponent fill:#e1f5ff,stroke:#333,stroke-width:2px
-    classDef viewComponent fill:#fff4e1,stroke:#333,stroke-width:2px
-    classDef pageComponent fill:#ffe1f5,stroke:#333,stroke-width:2px
-    classDef cacheComposable fill:#e1ffe1,stroke:#333,stroke-width:2px
-
-    class A mainComponent
-    class B,C,D,E,F viewComponent
-    class H pageComponent
-    class G,I cacheComposable
-```
-
-**Key Files:**
-- `src/features/organizer/views/ViewDocument.vue` - Main container
-- `src/components/document/PdfViewerArea.vue` - Implements CSS virtualization
-- `src/features/organizer/components/PdfPageCanvas.vue` - Individual page rendering
-- `src/features/organizer/composables/useCanvasPreloader.js` - Pre-render cache
-- `src/features/organizer/composables/useThumbnailRenderer.js` - Thumbnail cache
+### Key Files
+- `src/features/organizer/views/ViewDocument.vue` - Main orchestrator (304 lines)
+- `src/features/organizer/composables/useDocumentNavigation.js` - Navigation state/methods
+- `src/features/organizer/composables/useEvidenceLoader.js` - Firestore/Storage loading with caching
+- `src/features/organizer/composables/useDocumentPreloader.js` - Background pre-loading pipeline
+- `src/features/organizer/composables/useCanvasPreloader.js` - Canvas pre-rendering cache
+- `src/features/organizer/composables/usePdfCache.js` - PDF document cache (LRU, MAX_SIZE=3)
+- `src/features/organizer/composables/useThumbnailRenderer.js` - Thumbnail cache (Blob URLs)
+- `src/features/organizer/components/PdfPageCanvas.vue` - Individual page rendering with cache swap
+- `src/components/document/PdfViewerArea.vue` - CSS virtualization (`content-visibility: auto`)
 
 ---
 
-## 2. Three-Level Caching System
+## Three-Level Caching System
 
-The viewer implements a sophisticated 3-level caching strategy:
+| Cache | Purpose | Performance | Cache Type | Notes |
+|-------|---------|-------------|------------|-------|
+| **PDF Document** | Avoid network fetches | 0ms (no network) | LRU, MAX_SIZE=3, module-level singleton | Stores PDFDocumentProxy + metadata |
+| **Canvas Pre-render** | Skip page 1 render | 0.7-1.2ms vs 650-750ms | LRU, MAX_SIZE=3, module-level singleton | ImageBitmap (3.3x more efficient than Canvas elements) |
+| **Thumbnail** | Sidebar display | Instant | Map (fileHash → Blob URLs), component-level | 2x more efficient than data URLs |
 
-```mermaid
-graph LR
-    subgraph "Level 1: PDF Document Cache"
-        A1[usePdfCache.js<br/>Module-level Singleton]
-        A2[LRU Cache: MAX_SIZE=3<br/>Previous, Current, Next]
-        A3[Stores: PDFDocumentProxy<br/>+ Metadata]
-        A1 --> A2 --> A3
-    end
-
-    subgraph "Level 2: Canvas Pre-render Cache"
-        B1[useCanvasPreloader.js<br/>Module-level Singleton]
-        B2[LRU Cache: MAX_SIZE=3<br/>Previous, Current, Next]
-        B3[Stores: ImageBitmap<br/>Page 1 only]
-        B1 --> B2 --> B3
-    end
-
-    subgraph "Level 3: Thumbnail Cache"
-        C1[useThumbnailRenderer.js<br/>Component-level]
-        C2[Map: fileHash to Blob URLs]
-        C3[All pages<br/>Low resolution]
-        C1 --> C2 --> C3
-    end
-
-    classDef composable fill:#e1f5ff,stroke:#333,stroke-width:2px
-    classDef cacheStore fill:#fff4e1,stroke:#333,stroke-width:2px
-    classDef dataStore fill:#e1ffe1,stroke:#333,stroke-width:2px
-
-    class A1,B1,C1 composable
-    class A2,B2,C2 cacheStore
-    class A3,B3,C3 dataStore
-```
-
-**Cache Benefits:**
-
-| Cache | Purpose | Hit Performance | Memory Efficiency |
-|-------|---------|----------------|-------------------|
-| PDF Document | Instant PDF access | 0ms (no network) | Stores 3 full PDFs |
-| Canvas Pre-render | Skip page 1 render | 0.7-1.2ms (vs 650-750ms) | ImageBitmap (optimal) |
-| Thumbnail | Sidebar thumbnails | Instant display | Blob URLs (2x better than data URLs) |
-
-**Key Files:**
-- `src/features/organizer/composables/usePdfCache.js` - PDF document cache
-- `src/features/organizer/composables/useCanvasPreloader.js` - Canvas cache
-- `src/features/organizer/composables/useThumbnailRenderer.js` - Thumbnail cache
+**Critical:** All caches are **module-level singletons** to persist across component unmount/remount during navigation.
 
 ---
 
-## 3. Complete Data Flow
+## Performance Optimization Strategy
 
-This sequence diagram shows the entire flow from navigation to display:
+### Primary Optimization: Canvas Pre-rendering
+**Impact:** 36-58x faster navigation (12.9-20.3ms vs 650-750ms)
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Router
-    participant ViewDocument
-    participant PdfCache
-    participant Storage
-    participant PdfPageCanvas
-    participant CanvasCache
-    participant PreloadPipeline
+**How it works:**
+1. User views document (spends 1-3 seconds before navigating)
+2. Background pipeline pre-renders page 1 of adjacent documents during idle time
+3. Stores as ImageBitmap in cache (memory efficient)
+4. On navigation: canvas swap (0.7-1.2ms) instead of fresh render (650-750ms)
 
-    User->>Router: Navigate to /documents/view/:hash
-    Router->>ViewDocument: Mount component
+**Key insight:** Re-renders are 10x faster (74ms vs 757ms) due to PDF.js resource caching. Focus on caching strategy, not algorithm optimization.
 
-    ViewDocument->>PdfCache: Load document
-    alt Cache Hit
-        PdfCache-->>ViewDocument: Return cached PDF (0ms)
-    else Cache Miss
-        PdfCache->>Storage: Fetch PDF from Firebase
-        Storage-->>PdfCache: PDF binary data
-        PdfCache->>PdfCache: Load via PDF.js worker
-        PdfCache-->>ViewDocument: Return loaded PDF
-    end
+### CSS Virtualization
+**Impact:** 40% performance boost for large documents
 
-    ViewDocument->>PdfPageCanvas: Render page 1
-    PdfPageCanvas->>CanvasCache: Check for pre-rendered canvas
-
-    alt Pre-rendered Available
-        CanvasCache-->>PdfPageCanvas: Return ImageBitmap (0.7-1.2ms)
-        PdfPageCanvas->>PdfPageCanvas: Display immediately
-    else Not Pre-rendered
-        PdfPageCanvas->>PdfPageCanvas: Render via PDF.js (650-750ms)
-    end
-
-    PdfPageCanvas-->>ViewDocument: Emit page-rendered event
-
-    Note over ViewDocument,PreloadPipeline: First page rendered - start background work
-
-    ViewDocument->>PreloadPipeline: Start 3-phase pipeline
-
-    rect rgb(225, 245, 255)
-        Note over PreloadPipeline: Phase 1: PDF Loading
-        PreloadPipeline->>PdfCache: Pre-load previous document
-        PreloadPipeline->>PdfCache: Pre-load next document
-    end
-
-    rect rgb(255, 244, 225)
-        Note over PreloadPipeline: Phase 2: Metadata Loading
-        PreloadPipeline->>Storage: Fetch Firestore + Storage metadata
-        Note over PreloadPipeline: Parallel for previous & next
-    end
-
-    rect rgb(225, 255, 225)
-        Note over PreloadPipeline: Phase 3: Canvas Pre-rendering
-        PreloadPipeline->>CanvasCache: requestIdleCallback
-        CanvasCache->>CanvasCache: Pre-render page 1 of adjacent docs
-        CanvasCache->>CanvasCache: Store as ImageBitmap
-    end
-
-    Note over User,PreloadPipeline: User navigation now near-instant!
-```
-
-**Performance Impact:**
-- **Cold start:** 650-750ms for first page
-- **Subsequent navigation:** 0.7-1.2ms (canvas swap) + 10-16ms (PDF load) = **12.9-20.3ms total (36-58x faster)**
-
----
-
-## 4. CSS Virtualization Strategy
-
-The **primary** optimization is browser-native lazy rendering using modern CSS:
-
-```mermaid
-graph TB
-    subgraph "Browser Viewport"
-        V1[Visible Area]
-        V2[200px above viewport<br/>IntersectionObserver rootMargin]
-        V3[200px below viewport<br/>IntersectionObserver rootMargin]
-    end
-
-    subgraph "PDF Pages with CSS Magic"
-        P1[Page 1<br/>content-visibility: auto<br/>RENDERED]
-        P2[Page 2<br/>content-visibility: auto<br/>RENDERED]
-        P3[Page 3<br/>content-visibility: auto<br/>PRE-RENDERED]
-        P4[Page 4<br/>content-visibility: auto<br/>PLACEHOLDER<br/>contain-intrinsic-size: 883px x 1056px]
-        P5[Page 5<br/>content-visibility: auto<br/>PLACEHOLDER]
-        P6[Page 10<br/>content-visibility: auto<br/>PLACEHOLDER]
-    end
-
-    V2 --> P1
-    V1 --> P2
-    V3 --> P3
-
-    classDef viewport fill:#e1f5ff,stroke:#333,stroke-width:2px
-    classDef rendered fill:#e1ffe1,stroke:#333,stroke-width:2px
-    classDef preRendered fill:#fff4e1,stroke:#333,stroke-width:2px
-    classDef placeholder fill:#ffe1e1,stroke:#333,stroke-width:2px
-
-    class V1,V2,V3 viewport
-    class P1,P2 rendered
-    class P3 preRendered
-    class P4,P5,P6 placeholder
-```
-
-**Implementation** (`PdfViewerArea.vue` lines 151-153):
-
+**Implementation** (`PdfViewerArea.vue:151-153`):
 ```css
 .pdf-page {
-  /* Modern CSS lazy rendering - 40% performance boost, zero dependencies */
   content-visibility: auto;
-  contain-intrinsic-size: 883.2px 1056px; /* 9.2in x 11in at 96 DPI */
+  contain-intrinsic-size: 883.2px 1056px; /* Fixed dimensions - critical! */
 }
 ```
 
-**How It Works:**
-1. Browser **skips rendering** pages outside viewport entirely
-2. Off-screen pages get **placeholder size** (883.2px x 1056px)
-3. IntersectionObserver with **200px rootMargin** triggers loading slightly before visible
-4. **Zero JavaScript** virtualization libraries needed
-5. **40% performance boost** according to code comments
+**Critical:** Must use **fixed dimensions**, NOT `auto` keyword (causes first-load scroll jank).
+
+### Background Pre-loading Pipeline
+**Timing:** Starts AFTER first page renders (avoids race conditions)
+
+**Phases** (sequential):
+1. **PDF Loading** - Pre-load previous/next PDFs into cache
+2. **Metadata Loading** - Parallel fetch of Firestore/Storage metadata
+3. **Canvas Pre-rendering** - `requestIdleCallback` to pre-render page 1 as ImageBitmap
+
+**Why sequential:** Eliminates race conditions where metadata loads before PDF, creating invalid cache entries.
+
+### Deferred Rendering
+**Impact:** 15.7x faster (754ms → 48ms best-case)
+
+Thumbnails (500-700ms) and metadata extraction (50-150ms) are deferred with `setTimeout()` to avoid blocking first page render.
+
+---
+
+## Lessons Learned & Pitfalls
+
+### 🚫 Failed Approaches (Do NOT Pursue)
+
+#### 1. WebGL/GPU Rendering Optimization
+**Why:** PDF.js WebGL only accelerates pattern fills/soft masks, NOT text. Our docs are 99% text (200-321 elements/page).
+
+**Test result:** 28.6% success rate, 48x performance variance (19ms-931ms) - unusable.
+
+**Conclusion:** Keep `enableHWA: true` but don't invest further effort.
+
+---
+
+#### 2. JavaScript-based Virtualization (v-show/v-if)
+**Why:** Creates reactive feedback loops → infinite page oscillation.
+
+**Symptoms:**
+- IntersectionObserver fires ~50x per scroll
+- Pages oscillate: 1→2→1→2→1→2 (infinite loop)
+- Scroll position resets to page 1
+
+**Root cause:** Vue reactivity + DOM mutations → observer callbacks → more mutations → infinite loop
+
+**Solution:** Use CSS `content-visibility: auto` instead (zero JavaScript).
+
+---
+
+### ✅ Critical Success Patterns
+
+#### 1. Sequential Pre-loading (After First Page Renders)
+```javascript
+// ❌ WRONG - Race conditions
+onMounted(() => {
+  loadPDF();           // Async
+  loadMetadata();      // Async, may complete before PDF
+  extractPDFMetadata(); // Needs PDF - FAILS if parallel
+});
+
+// ✅ CORRECT - Sequential after first render
+handleFirstPageRendered(async () => {
+  await preloadPDF();           // Wait for completion
+  await preloadMetadata();      // Wait for completion
+  await extractPDFMetadata();   // Safe - PDF guaranteed loaded
+});
+```
+
+**Why:** Users spend 1-3 seconds viewing pages. Use this time for background work without race conditions.
+
+---
+
+#### 2. Preserve Existing Cache Fields
+```javascript
+// ❌ WRONG - Overwrites entire entry, loses metadata
+cache.set(id, { pdfDocument, timestamp });
+
+// ✅ CORRECT - Preserves existing fields
+const existing = cache.get(id);
+cache.set(id, {
+  pdfDocument,
+  timestamp,
+  metadata: existing?.metadata || null  // Preserve!
+});
+```
+
+**Why:** PDF pre-load completing AFTER metadata pre-load would overwrite the entire cache entry.
+
+---
+
+#### 3. Cache Metadata AFTER PDF Loads
+```javascript
+// ❌ WRONG - Creates invalid entry with pdfDocument: null
+async function loadEvidence() {
+  cacheMetadata({ /* no pdfDocument yet */ });
+  await loadPDF();
+}
+
+// ✅ CORRECT - Complete entry
+async function loadEvidence() {
+  const pdf = await loadPDF();
+  cacheMetadata({ pdfDocument: pdf, /* other metadata */ });
+}
+```
+
+**Why:** Invalid entries get evicted by cache invalidation checks, causing re-fetches.
+
+---
+
+### ⚠️ Common Pitfalls
+
+| Pitfall | Symptom | Solution |
+|---------|---------|----------|
+| **Premature caching** | Console: "Invalid cache entry found, evicting" | Cache metadata AFTER PDF loads |
+| **Parallel pre-loading overwrites** | Metadata lost on navigation | Preserve existing cache fields |
+| **`contain-intrinsic-size: auto`** | Scroll jank on first load (perfect on second) | Use fixed dimensions: `883.2px 1056px` |
+
+---
+
+### 📚 Key Research Findings
+
+#### enableHWA ≠ enableWebGL
+- `enableHWA`: Canvas2D hardware acceleration (browser-managed, unpredictable)
+- `enableWebGL`: WebGL rendering (NOT available in PDF.js library mode)
+
+**Source:** PDF.js GitHub Issues #5161, #8880, #18199
+
+---
+
+#### PDF.js Worker Threading
+**What it does:** Offloads PDF parsing (non-blocking)
+**What it doesn't do:** Offload canvas rendering (still blocks main thread)
+
+**Implication:** 650-750ms render time is canvas drawing, not parsing.
+
+---
+
+#### ImageBitmap vs Canvas Element
+- Canvas element: ~3MB per page (full DOM node + context)
+- ImageBitmap: ~900KB per page (transferable pixel buffer)
+- **Result:** 3.3x more memory efficient
+
+---
+
+### 🏗️ Architectural Decisions
+
+#### Composable Architecture (70% Code Reduction)
+**Before:** ViewDocument.vue = 1000 lines (monolithic)
+**After:** ViewDocument.vue = 304 lines (orchestrator)
 
 **Benefits:**
-- Zero dependencies
-- Automatic browser optimization
-- Minimal memory footprint
-- Smooth scrolling
-- Works with native scrolling
+- Single Responsibility Principle
+- Both bugs in Attempt #10 fixed in minutes (vs hours in monolithic)
+- Unit testable in isolation
+- Reusable across views
 
 ---
 
-## 5. Background Pre-loading Pipeline
-
-After the first page renders, a sophisticated 3-phase pipeline runs in the background:
-
-```mermaid
-stateDiagram-v2
-    [*] --> FirstPageRendered: User navigates to document
-
-    FirstPageRendered --> Phase1_PDFLoading: Start pipeline
-
-    state "Phase 1: PDF Document Loading" as Phase1_PDFLoading {
-        [*] --> LoadPrevPDF: Sequential execution
-        LoadPrevPDF --> LoadNextPDF: Wait for completion
-        LoadNextPDF --> [*]
-
-        note right of LoadPrevPDF
-            Store in usePdfCache
-            MAX_SIZE=3 with LRU eviction
-            Skip if non-PDF
-        end note
-    }
-
-    Phase1_PDFLoading --> Phase2_MetadataLoading: PDFs loaded
-
-    state "Phase 2: Metadata Pre-fetch" as Phase2_MetadataLoading {
-        [*] --> ParallelFetch
-
-        state "Parallel Fetching" as ParallelFetch {
-            state "Previous Doc" as PrevMeta {
-                [*] --> FirestorePrev
-                [*] --> SourceMetaPrev
-                [*] --> StorageMetaPrev
-            }
-
-            state "Next Doc" as NextMeta {
-                [*] --> FirestoreNext
-                [*] --> SourceMetaNext
-                [*] --> StorageMetaNext
-            }
-        }
-
-        ParallelFetch --> [*]
-    }
-
-    Phase2_MetadataLoading --> Phase3_CanvasPrerender: Metadata loaded
-
-    state "Phase 3: Canvas Pre-rendering" as Phase3_CanvasPrerender {
-        [*] --> RequestIdleCallback: Use browser idle time
-        RequestIdleCallback --> RenderPrevCanvas
-        RenderPrevCanvas --> RenderNextCanvas
-        RenderNextCanvas --> StoreImageBitmap
-        StoreImageBitmap --> [*]
-
-        note left of RequestIdleCallback
-            Non-blocking execution
-            Stores ImageBitmap in cache
-            Page 1 only - most critical
-        end note
-    }
-
-    Phase3_CanvasPrerender --> Ready: Pre-loading complete
-    Ready --> [*]: Navigation now instant!
-```
-
-**Critical Timing:**
-- Pipeline starts **AFTER** first page renders to prioritize user-visible content
-- Each phase waits for previous phase to complete (sequential)
-- Phase 2 internally uses parallel fetching for efficiency
-- Phase 3 uses `requestIdleCallback` to avoid blocking user interaction
-
-**Key File:** `src/features/organizer/composables/useDocumentPreloader.js`
-
----
-
-## 6. Render Lifecycle Decision Tree
-
-How each PDF page decides whether to use pre-rendered cache or render fresh:
-
-```mermaid
-flowchart TD
-    Start([PdfPageCanvas.vue mounted]) --> CheckCache{Check Canvas<br/>Preloader Cache}
-
-    CheckCache -->|Cache Hit| SwapCanvas[Swap Pre-rendered<br/>ImageBitmap to Canvas<br/>approx 0.7-1.2ms]
-    CheckCache -->|Cache Miss| CheckPrevRender{Previous Render<br/>Task Running?}
-
-    SwapCanvas --> EmitRendered[Emit page-rendered<br/>event immediately]
-    EmitRendered --> Done([Done - Ultra Fast!])
-
-    CheckPrevRender -->|Yes| CancelPrev[Cancel Previous<br/>Render Task]
-    CheckPrevRender -->|No| StartRender
-    CancelPrev --> StartRender[Start Fresh Render]
-
-    StartRender --> GetPage[Get Page from<br/>PDF Document]
-    GetPage --> CalcViewport[Calculate Viewport<br/>Scale & Dimensions]
-    CalcViewport --> RenderToCanvas[Render via PDF.js<br/>approx 650-750ms]
-    RenderToCanvas --> EmitRenderedSlow[Emit page-rendered<br/>event]
-    EmitRenderedSlow --> DoneSlow([Done - Normal Speed])
-
-    classDef fastPath fill:#e1ffe1,stroke:#333,stroke-width:2px
-    classDef slowPath fill:#ffe1e1,stroke:#333,stroke-width:2px
-    classDef decision fill:#fff4e1,stroke:#333,stroke-width:2px
-    classDef terminal fill:#e1f5ff,stroke:#333,stroke-width:2px
-
-    class SwapCanvas,EmitRendered fastPath
-    class RenderToCanvas,EmitRenderedSlow slowPath
-    class CheckCache,CheckPrevRender decision
-    class Start,Done,DoneSlow terminal
-```
-
-**Key Optimizations:**
-1. **Cache check first** - fastest path if pre-rendered
-2. **Render cancellation** - prevents "cannot use same canvas" errors
-3. **Mount state tracking** - prevents race conditions on unmount
-4. **Immediate event emission** - UI updates instantly on cache hit
-
-**Performance Difference:**
-- **Pre-rendered (cache hit):** 0.7-1.2ms canvas swap, 12.9-20.3ms total navigation (fast)
-- **Fresh render (cache miss):** 650-750ms (slow)
-- **Speedup:** ~36-58x faster
-
-**Key File:** `src/features/organizer/components/PdfPageCanvas.vue`
-
----
-
-## 7. Performance Metrics Comparison
-
-Visual comparison of different rendering scenarios:
-
-```mermaid
-gantt
-    title PDF Page Rendering Performance Comparison
-    dateFormat X
-    axisFormat %Lms
-
-    section Cache Hit (Optimal)
-    Pre-rendered ImageBitmap Swap :active, 0, 15
-    Display Complete :milestone, 15, 0
-
-    section Cache Hit (Good)
-    Pre-rendered ImageBitmap Swap :active, 0, 50
-    Display Complete :milestone, 50, 0
-
-    section Cold Start (Optimal)
-    Fresh PDF.js Render :crit, 0, 100
-    Display Complete :milestone, 100, 0
-
-    section Cold Start (Good)
-    Fresh PDF.js Render :crit, 0, 250
-    Display Complete :milestone, 250, 0
-
-    section Typical Fresh Render
-    Fresh PDF.js Render :crit, 0, 700
-    Display Complete :milestone, 700, 0
-```
-
-**Performance Thresholds** (from code):
-
-| Scenario | Optimal | Good | Typical |
-|----------|---------|------|---------|
-| **First Render (Cache Hit)** | <20ms | <50ms | - |
-| **First Render (Cold Start)** | <100ms | <250ms | 650-750ms |
-| **Canvas Swap** | 0.7-1.2ms | - | - |
-
-**Real-World Impact:**
-- **Initial load:** User waits 650-750ms for first document
-- **Navigation to adjacent docs:** User waits only 12.9-20.3ms total (0.7-1.2ms canvas swap + 10-16ms PDF load)
-- **Navigation to any cached doc:** User waits 12.9-20.3ms (instant feel)
-- **Overall speedup:** ~36-58x faster for subsequent navigation
-
----
-
-## 8. Memory Management Strategy
-
-All caches implement proper cleanup to prevent memory leaks:
-
-```mermaid
-graph TD
-    subgraph "PDF Document Cache Cleanup"
-        A1[LRU Eviction Triggered] --> A2[Get Oldest Document]
-        A2 --> A3[loadingTask.destroy]
-        A3 --> A4[Remove from Cache Map]
-    end
-
-    subgraph "Canvas Preloader Cleanup"
-        B1[LRU Eviction Triggered] --> B2[Get Oldest ImageBitmap]
-        B2 --> B3[bitmap.close]
-        B3 --> B4[Release GPU Memory]
-        B4 --> B5[Remove from Cache Map]
-    end
-
-    subgraph "Thumbnail Cache Cleanup"
-        C1[Component Unmount] --> C2[Iterate All Blob URLs]
-        C2 --> C3[URL.revokeObjectURL]
-        C3 --> C4[Release Memory]
-        C4 --> C5[Clear Cache Map]
-    end
-
-    classDef destructiveAction fill:#ffe1e1,stroke:#333,stroke-width:2px
-    classDef completeAction fill:#e1ffe1,stroke:#333,stroke-width:2px
-    classDef processStep fill:#fff4e1,stroke:#333,stroke-width:2px
-
-    class A3,B3,C3 destructiveAction
-    class A4,B5,C5 completeAction
-    class A1,A2,B1,B2,B4,C1,C2,C4 processStep
-```
-
-**Key Principles:**
-1. **LRU Eviction:** Both PDF and canvas caches use Least Recently Used eviction with MAX_SIZE=3
-2. **Proper Disposal:** Each cache type has specific cleanup methods
-   - PDF.js: `loadingTask.destroy()` to release workers
-   - ImageBitmap: `bitmap.close()` to free GPU memory
-   - Blob URLs: `URL.revokeObjectURL()` to prevent memory leaks
-3. **Component Lifecycle:** Thumbnail cache cleans up on component unmount
-4. **Memory Efficiency:** ImageBitmap and Blob URLs are more efficient than alternatives
-
----
-
-## 9. PDF.js Configuration
-
-The viewer uses Mozilla's PDF.js library with performance-optimized settings:
-
-**Key Configuration** (`src/config/pdfWorker.js`):
+#### Module-Level Singleton Caches
+**Why:** Cache must persist across component unmount/remount.
 
 ```javascript
-{
-  // Worker thread for non-blocking PDF processing
-  workerSrc: '/pdf.worker.min.mjs',
+// Module-level (outside composable function)
+const canvasCache = shallowRef(new Map());
 
-  // GPU acceleration for faster rendering
-  enableHWA: true,
-
-  // Progressive loading for faster perceived performance
-  disableStream: false,
-
-  // WASM decoders for JPEG2000/JPX images
-  standardFontDataUrl: '/standard_fonts/',
-
-  // Image decoders
-  imageResourcesPath: '/image_decoders/'
+export function useCanvasPreloader() {
+  return { /* methods operate on shared cache */ };
 }
 ```
 
-**Benefits:**
-- **Web Worker:** PDF parsing doesn't block main thread
-- **Hardware Acceleration:** Uses GPU for rendering (when available)
-- **Streaming:** Start displaying pages before full PDF loads
-- **WASM Decoders:** Faster image decoding than JavaScript
+---
+
+## Performance Metrics
+
+| Scenario | Timing | Notes |
+|----------|--------|-------|
+| **First document load** | 650-750ms | Unavoidable (network + parse + render) |
+| **Subsequent navigation (cache hit)** | 12.9-20.3ms | 0.7-1.2ms canvas swap + 10-16ms PDF load |
+| **Subsequent navigation (cache miss)** | 550-730ms | Normal render path |
+| **Overall speedup** | 36-58x faster | For cached documents |
+| **Cache hit rate** | 80-100% | When canvases pre-rendered |
+
+**Performance thresholds** (from code):
+- Optimal cache hit: <20ms
+- Good cache hit: <50ms
+- Optimal cold start: <100ms
+- Good cold start: <250ms
 
 ---
 
-## 10. Viewport Tracking
+## Debugging Tips
 
-IntersectionObserver tracks which pages are visible for navigation UI updates:
+### Check Performance Tracker Logs
+```
+⚡ 📦 PDF document loaded into memory: 8.5ms
+⚡ 🎨 First page rendered on screen: 717.7ms
+```
+**Gap between logs = actual bottleneck location**
 
-**Configuration** (`usePageVisibility.js`):
+### Inspect Cache State
 ```javascript
-{
-  root: null,                    // Viewport as root
-  rootMargin: '200px',           // Load 200px before visible
-  threshold: [0, 0.1, 0.5, 1.0]  // Track visibility levels
-}
+canvasPreloader.getCacheStats()
+// Returns: { size, hits, misses, hitRate, cachedPages }
 ```
 
-**Benefits:**
-- **Single Observer:** Shared across all pages (efficient)
-- **Pre-loading:** 200px margin starts loading before user sees page
-- **Visibility Tracking:** Knows which page is "most visible" for UI
-- **Efficient:** Modern browser API, much faster than scroll listeners
+### Monitor Cache Invalidation
+```
+"Invalid cache entry found, evicting"
+```
+Indicates cache corruption (premature caching or race conditions).
 
 ---
 
-## Summary: Key Optimizations
+## Quick Reference: When to Apply Each Optimization
 
-| Optimization | Technology | Performance Impact | Code Location |
-|--------------|------------|-------------------|---------------|
-| **CSS Virtualization** | `content-visibility: auto` | 40% boost | `PdfViewerArea.vue:151-153` |
-| **PDF Document Cache** | Module-level LRU cache | 0ms network time | `usePdfCache.js` |
-| **Canvas Pre-render** | ImageBitmap cache | 36-58x faster | `useCanvasPreloader.js` |
-| **Thumbnail Cache** | Blob URLs | 2x memory efficiency | `useThumbnailRenderer.js` |
-| **Background Pipeline** | 3-phase pre-loading | Instant navigation | `useDocumentPreloader.js` |
-| **Viewport Tracking** | IntersectionObserver | Efficient visibility | `usePageVisibility.js` |
-| **Worker Threading** | PDF.js Web Worker | Non-blocking parsing | `pdfWorker.js` |
-| **GPU Acceleration** | PDF.js HWA | Faster rendering | `pdfWorker.js` |
+| Scenario | Apply | Avoid | Reasoning |
+|----------|-------|-------|-----------|
+| **Text-heavy PDFs** | Canvas pre-rendering | WebGL/GPU acceleration | WebGL doesn't accelerate text |
+| **Large documents (50+ pages)** | CSS `content-visibility` | JS virtualization | Native CSS avoids reactive feedback loops |
+| **Pre-loading adjacent docs** | Sequential after render | Parallel on mount | Eliminates race conditions |
+| **Cache structure changes** | Preserve existing fields | Overwrite entire entry | Prevents data loss |
+| **Background work** | `requestIdleCallback` | Immediate execution | Non-blocking |
+| **Memory optimization** | LRU eviction (MAX_SIZE=3) | Unlimited cache | Balances hit rate vs memory |
 
-**Overall Result:**
-- First document load: 650-750ms (unavoidable - need to fetch & parse PDF)
-- Subsequent navigation: 12.9-20.3ms total (36-58x faster)
-- Large PDFs: Only visible pages rendered (40% performance boost)
-- Memory efficient: 3-document sliding window + proper cleanup
+---
 
-This multi-layered optimization strategy combines modern web APIs, intelligent caching, and background pre-loading to deliver near-instant document navigation after the initial load.
+## Related Documentation
+
+**Detailed attempt history:**
+- `planning/3. In progress/Attempts2OptimizePDFRendering.md` - Rendering optimization (4 attempts)
+- `planning/7. Completed/Attempts2OptimizePDFCaching.md` - Caching optimization (10 attempts)
+
+---
+
+**Last Updated:** 2025-11-06
+**Based on:** 14 optimization attempts across 2 phases (caching + rendering)
