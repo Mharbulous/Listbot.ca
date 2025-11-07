@@ -18,7 +18,7 @@
           $route.name === 'Home',
       }"
     >
-      <div class="min-w-[30px] h-[30px] mr-3 flex items-center justify-center">📚</div>
+      <div class="min-w-[30px] h-[30px] flex items-center justify-center">📚</div>
       <span
         class="whitespace-nowrap transition-opacity duration-300 ease-in-out"
         :class="{ 'opacity-100': props.isHovered, 'opacity-0': !props.isHovered }"
@@ -357,7 +357,7 @@ onUnmounted(() => {
 
 <style scoped>
 .app-switcher-trigger {
-  @apply flex items-center w-full py-3 px-3 text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white focus:outline-none;
+  @apply flex items-center justify-center w-[60px] py-3 overflow-hidden text-slate-300 no-underline transition-all duration-200 ease-in-out relative cursor-pointer hover:bg-slate-600 hover:text-white focus:outline-none;
 }
 
 .dropdown-arrow {
