@@ -170,10 +170,23 @@ Return as JSON in this exact format:
         if (!field.value || typeof field.confidence !== 'number') {
           throw new Error(`Invalid ${fieldName} structure in AI response`);
         }
+        if (field.confidence < 0 || field.confidence > 100) {
+          throw new Error(
+            `Invalid confidence value for ${fieldName}: must be 0-100, got ${field.confidence}`
+          );
+        }
       };
 
       validateField(parsed.documentDate, 'documentDate');
       validateField(parsed.documentType, 'documentType');
+
+      // Validate date format (ISO 8601: YYYY-MM-DD)
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (parsed.documentDate.value && !datePattern.test(parsed.documentDate.value)) {
+        console.warn(
+          `Date format validation: expected YYYY-MM-DD, got ${parsed.documentDate.value}`
+        );
+      }
 
       return parsed;
     } catch (error) {

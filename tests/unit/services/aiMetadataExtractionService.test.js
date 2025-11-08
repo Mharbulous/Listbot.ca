@@ -12,6 +12,7 @@ vi.mock('@/services/firebase.js', () => ({
 }));
 
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
+import { getGenerativeModel } from 'firebase/ai';
 
 describe('AIMetadataExtractionService', () => {
   describe('_buildPrompt', () => {
@@ -360,6 +361,108 @@ Here's another code block that should be ignored:
       expect(parsed.documentDate.value).toBe('2024-03-15');
       expect(parsed.documentType.value).toBe('Invoice');
     });
+
+    it('throws error when confidence is below 0', () => {
+      const negativeConfidenceResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: -5,
+          reasoning: 'Invalid confidence',
+          context: 'Test',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(negativeConfidenceResponse);
+      }).toThrow('Invalid confidence value for documentDate: must be 0-100, got -5');
+    });
+
+    it('throws error when confidence is above 100', () => {
+      const highConfidenceResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 150,
+          reasoning: 'Invalid confidence',
+          context: 'Test',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(highConfidenceResponse);
+      }).toThrow('Invalid confidence value for documentDate: must be 0-100, got 150');
+    });
+
+    it('warns when date format is not ISO 8601', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const invalidDateFormatResponse = JSON.stringify({
+        documentDate: {
+          value: '03/15/2024',
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: 03/15/2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(invalidDateFormatResponse);
+      expect(parsed.documentDate.value).toBe('03/15/2024');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Date format validation: expected YYYY-MM-DD, got 03/15/2024')
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('accepts valid ISO 8601 date format without warning', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const validDateFormatResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(validDateFormatResponse);
+      expect(parsed.documentDate.value).toBe('2024-03-15');
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('_getMimeType', () => {
@@ -448,6 +551,155 @@ Here's another code block that should be ignored:
 
     it('maxFileSizeMB is greater than 0', () => {
       expect(aiMetadataExtractionService.maxFileSizeMB).toBeGreaterThan(0);
+    });
+  });
+
+  describe('analyzeDocument (integration)', () => {
+    it('successfully analyzes document with mocked AI response', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf'
+      );
+
+      expect(result.documentDate.value).toBe('2024-03-15');
+      expect(result.documentDate.confidence).toBe(95);
+      expect(result.documentType.value).toBe('Invoice');
+      expect(result.documentType.confidence).toBe(98);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ text: expect.stringContaining('Document Date') }),
+          expect.objectContaining({
+            inlineData: expect.objectContaining({
+              mimeType: 'application/pdf',
+              data: 'base64data',
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('handles AI response with markdown code blocks', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => `\`\`\`json\n${JSON.stringify(mockResponse)}\n\`\`\``,
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'invoice.pdf', fileSize: 2048 },
+        'pdf'
+      );
+
+      expect(result.documentDate.value).toBe('2024-03-15');
+      expect(result.documentType.value).toBe('Invoice');
+    });
+
+    it('throws error when AI returns invalid response', async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => 'invalid json response',
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      await expect(
+        aiMetadataExtractionService.analyzeDocument(
+          'base64data',
+          { displayName: 'test.pdf', fileSize: 1024 },
+          'pdf'
+        )
+      ).rejects.toThrow('Invalid AI response format');
+    });
+
+    it('throws error when AI returns response with out-of-range confidence', async () => {
+      const invalidResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 150, // Invalid: >100
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(invalidResponse),
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      await expect(
+        aiMetadataExtractionService.analyzeDocument(
+          'base64data',
+          { displayName: 'test.pdf', fileSize: 1024 },
+          'pdf'
+        )
+      ).rejects.toThrow('Invalid confidence value for documentDate: must be 0-100, got 150');
     });
   });
 });
