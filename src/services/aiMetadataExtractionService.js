@@ -3,7 +3,9 @@ import { firebaseAI } from './firebase.js';
 
 /**
  * AI Metadata Extraction Service
- * Handles AI-powered extraction of Document Date and Document Type using Firebase Vertex AI
+ * Handles AI-powered extraction of Document Date and Document Type using Firebase AI Logic
+ *
+ * Note: Firebase AI Logic is the current name for what was previously called "Vertex AI in Firebase" (rebranded May 2025)
  *
  * @pattern Singleton Export (Stateless Service)
  * @rationale This service is stateless - all methods are pure functions that take
@@ -45,8 +47,8 @@ class AIMetadataExtractionService {
         throw new Error('Firebase AI Logic not initialized. Ensure VITE_ENABLE_AI_FEATURES is set to true.');
       }
 
-      // Get Gemini model
-      const model = getGenerativeModel(firebaseAI, { model: 'gemini-1.5-flash' });
+      // Get Gemini model (using 2.5 Flash Lite - Gemini 1.5 models retired Sept 2025)
+      const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' });
 
       // Build prompt
       const prompt = this._buildPrompt();

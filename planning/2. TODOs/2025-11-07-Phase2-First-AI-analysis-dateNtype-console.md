@@ -1,4 +1,4 @@
-# Phase 2: Vertex AI Integration (Console Output)
+# Phase 2: Firebase AI Logic Integration (Console Output)
 
 **Date**: 2025-11-07
 **Phase**: 2 of 4
@@ -11,7 +11,9 @@
 
 ## Phase 2 Overview
 
-Integrate Google Gemini via Firebase Vertex AI to make the "Analyze Document" button functional. This phase focuses on **backend AI integration** - calling the Gemini API and logging results to console. UI continues showing mock data until Phase 3.
+Integrate Google Gemini via Firebase AI Logic to make the "Analyze Document" button functional. This phase focuses on **backend AI integration** - calling the Gemini API and logging results to console. UI continues showing mock data until Phase 3.
+
+**Note**: Firebase AI Logic is the current name for what was previously called "Vertex AI in Firebase" (rebranded May 2025).
 
 **Scope**: AI service creation, Gemini API calls, response parsing, console logging.
 
@@ -68,7 +70,7 @@ For full Gemini prompt details, see the main context file: `2025-11-07-First-AI-
 class AIMetadataExtractionService {
   constructor() {
     this.model = getGenerativeModel(firebaseAI, {
-      model: 'gemini-1.5-flash'
+      model: 'gemini-2.5-flash-lite'
     });
   }
 
@@ -186,17 +188,20 @@ const handleAnalyzeClick = async (fieldName) => {
 
 ### Update firebase.js
 
-Ensure Firebase Vertex AI is initialized:
+Ensure Firebase AI Logic is initialized:
 
 ```javascript
 import { initializeApp } from 'firebase/app';
-import { getVertexAI } from 'firebase/vertexai-preview';
+import { getAI, VertexAIBackend } from 'firebase/ai';
 
 // ... existing Firebase initialization ...
 
-// Initialize Vertex AI
-export const firebaseAI = getVertexAI(app);
+// Initialize Firebase AI Logic with Vertex AI backend
+// VertexAIBackend: Production-ready, supports Firebase Storage, uses project authentication
+export const firebaseAI = getAI(app, { backend: new VertexAIBackend() });
 ```
+
+**Note**: The old import was `firebase/vertexai-preview`. The new import is `firebase/ai` and requires explicit backend selection.
 
 ---
 
@@ -351,12 +356,12 @@ VITE_AI_MAX_FILE_SIZE_MB=20
 ## Dependencies
 
 ### External APIs
-- Google Gemini 1.5 Flash via Firebase Vertex AI
-- Requires Firebase project with Vertex AI enabled
+- Google Gemini 2.5 Flash Lite via Firebase AI Logic
+- Requires Firebase project with Firebase AI Logic enabled
 
 ### NPM Packages
 - `firebase` (already installed)
-- `firebase/vertexai-preview` (already available)
+- `firebase/ai` (part of Firebase SDK, replaces old `firebase/vertexai-preview`)
 
 ### Internal Services
 - `FileProcessingService.getFileForProcessing()` - Get file content
@@ -408,10 +413,10 @@ Key prompt features:
 
 ### Completion Summary
 
-Phase 2 successfully implemented real Gemini API integration with comprehensive console logging. The AI service calls Vertex AI backend and processes documents, while the UI continues to display mock results (as designed for Phase 2).
+Phase 2 successfully implemented real Gemini API integration with comprehensive console logging. The AI service calls Firebase AI Logic (with VertexAI backend) and processes documents, while the UI continues to display mock results (as designed for Phase 2).
 
 **What Works**:
-- ✅ Real Gemini API calls via Firebase Vertex AI
+- ✅ Real Gemini API calls via Firebase AI Logic
 - ✅ File retrieval from Firebase Storage
 - ✅ Full console logging with emoji indicators
 - ✅ Error handling with graceful degradation
@@ -427,7 +432,7 @@ Phase 2 successfully implemented real Gemini API integration with comprehensive 
 
 **Primary Implementation**:
 - `4140b35` - Implement Phase 2: Real Gemini AI Integration for Document Analysis
-  - Created `aiMetadataExtractionService.js` with Gemini 1.5 Flash integration
+  - Created `aiMetadataExtractionService.js` with Gemini integration (initially 1.5 Flash, now 2.5 Flash Lite)
   - Updated `DocumentMetadataPanel.vue` with real API calls
   - Added comprehensive console logging with emoji indicators
   - Implemented file content retrieval via `FileProcessingService`
@@ -489,12 +494,16 @@ import { getAI, VertexAIBackend, getGenerativeModel } from 'firebase/ai';
 const firebaseAI = getAI(app, { backend: new VertexAIBackend() });
 
 // Create model
-const model = getGenerativeModel(firebaseAI, { model: 'gemini-1.5-flash' });
+const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' });
 ```
 
 **Backend Options**:
-- `VertexAIBackend()` - No parameters, uses Firebase project auth
-- `GoogleAIBackend({ apiKey: '...' })` - Requires API key
+- `VertexAIBackend()` - No parameters, uses Firebase project auth, supports Storage integration
+- `GoogleAIBackend({ apiKey: '...' })` - Requires API key, has free tier, no Cloud Storage support
+
+**Model Recommendations** (as of 2025):
+- Use `gemini-2.5-flash-lite` or newer
+- All Gemini 1.0 and 1.5 models retired September 2025
 
 ### Next Steps for Phase 3
 

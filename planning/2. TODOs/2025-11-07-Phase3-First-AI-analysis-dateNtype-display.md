@@ -213,7 +213,7 @@ const handleAnalyzeClick = async () => {
         autoApproved: result.documentDate.confidence >= confidenceThreshold,
         reviewRequired: result.documentDate.confidence < confidenceThreshold,
         metadata: {
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.5-flash-lite',
           processingTime: result.processingTime,
           aiReasoning: result.documentDate.reasoning,
           context: result.documentDate.context,
@@ -235,7 +235,7 @@ const handleAnalyzeClick = async () => {
         autoApproved: result.documentType.confidence >= confidenceThreshold,
         reviewRequired: result.documentType.confidence < confidenceThreshold,
         metadata: {
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.5-flash-lite',
           processingTime: result.processingTime,
           aiReasoning: result.documentType.reasoning,
           context: result.documentType.context,

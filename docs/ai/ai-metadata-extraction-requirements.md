@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document defines the requirements for AI-powered automatic extraction of document metadata fields (Document Date and Document Type) when users open the AI tab in the document metadata panel. The system will leverage the existing Firebase Vertex AI (Gemini) infrastructure to analyze document content and populate system category fields with confidence scoring.
+This document defines the requirements for AI-powered automatic extraction of document metadata fields (Document Date and Document Type) when users open the AI tab in the document metadata panel. The system will leverage the existing Firebase AI Logic (Gemini) infrastructure to analyze document content and populate system category fields with confidence scoring.
 
 **Three-Tab Architecture**: The metadata panel uses three tabs with distinct purposes:
 - **ℹ️ Metadata Tab**: Displays source file, storage, and embedded metadata
@@ -299,7 +299,7 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 - Follows existing hybrid tag storage architecture (subcollection + embedded map)
 - Uses existing `tagSubcollectionService.js` for atomic batch writes
 - Compatible with existing category management system
-- Works within Firebase Vertex AI quotas and rate limits
+- Works within Firebase AI Logic quotas and rate limits
 - DocumentTable continues loading tags from embedded map (no performance impact)
 
 ## Technical Architecture
@@ -434,7 +434,7 @@ sequenceDiagram
     participant MetadataPanel
     participant Composable as useAIMetadataExtraction
     participant AIMetadataService
-    participant VertexAI as Firebase Vertex AI
+    participant VertexAI as Firebase AI Logic
     participant TagService as tagSubcollectionService
     participant Firestore
 
@@ -1188,7 +1188,7 @@ Document to analyze:
 
 ## Dependencies
 
-1. Firebase Vertex AI (Gemini) API access and quotas
+1. Firebase AI Logic (Gemini) API access and quotas
 2. **Existing hybrid tag storage architecture** (subcollection + embedded map)
    - `tagSubcollectionService.js` for atomic batch writes
    - Evidence documents with `tags` map field

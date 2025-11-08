@@ -9,11 +9,11 @@
 
 ## Overview
 
-Implement AI-powered extraction of Document Date and Document Type metadata using Google Gemini via Firebase Vertex AI. This feature enables automatic document analysis with confidence-based auto-approval.
+Implement AI-powered extraction of Document Date and Document Type metadata using Google Gemini via Firebase AI Logic. This feature enables automatic document analysis with confidence-based auto-approval.
 
 **Implementation Phases**:
 1. **Phase 1**: Analyze Button UI Frontend - See `2025-11-07-Phase1-First-AI-analysis-dateNtype-button.md`
-2. **Phase 2**: Vertex AI Integration - See `2025-11-07-Phase2-First-AI-analysis-dateNtype-console.md`
+2. **Phase 2**: Firebase AI Logic Integration - See `2025-11-07-Phase2-First-AI-analysis-dateNtype-console.md`
 3. **Phase 3**: AI Results Display & Firestore Storage - See `2025-11-07-Phase3-First-AI-analysis-dateNtype-display.md`
 4. **Phase 4**: Human Review & Editing - See `2025-11-07-Phase4-First-AI-analysis-dateNtype-edit.md`
 
@@ -56,7 +56,7 @@ Implement AI-powered extraction of Document Date and Document Type metadata usin
 ### Technical Design
 - **Service**: `aiMetadataExtractionService.js` (new)
 - **Storage**: Hybrid pattern (subcollection + embedded map) via `tagSubcollectionService`
-- **Model**: Gemini 1.5 Flash via Firebase Vertex AI
+- **Model**: Gemini 2.5 Flash Lite via Firebase AI Logic
 - **File Access**: `FileProcessingService.getFileForProcessing()`
 - **Security**: All queries scoped by `firmId`
 
@@ -134,7 +134,7 @@ Return as JSON.
   autoApproved: true,
   reviewRequired: false,
   metadata: {
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite',
     processingTime: 2345,
     aiReasoning: 'Invoice date found in header',
     context: 'Found "Invoice Date: March 15, 2024"',
@@ -176,7 +176,7 @@ Return as JSON.
 - Uses `tagSubcollectionService.addTagsBatch()` for atomic storage
 - Stores tags in subcollection AND embedded map
 - All queries scoped by `firmId` for security
-- Gemini 1.5 Flash via Firebase Vertex AI
+- Gemini 2.5 Flash Lite via Firebase AI Logic
 - File size validated (20MB max)
 - Dates stored in ISO 8601 format (YYYY-MM-DD)
 
@@ -203,7 +203,7 @@ Return as JSON.
 
 ### Modified Files
 1. **`src/components/document/DocumentMetadataPanel.vue`** - AI tab implementation (all phases)
-2. **`src/services/firebase.js`** - Ensure Firebase Vertex AI initialized (Phase 2)
+2. **`src/services/firebase.js`** - Ensure Firebase AI Logic initialized (Phase 2)
 3. **`src/features/organizer/services/tagSubcollectionService.js`** - Add `updateTag()` method (Phase 4)
 
 ### Leveraged (No Changes)
@@ -216,8 +216,9 @@ Return as JSON.
 ## Dependencies
 
 ### External APIs
-- **Google Gemini 1.5 Flash** via Firebase Vertex AI
+- **Google Gemini 2.5 Flash Lite** via Firebase AI Logic (formerly "Vertex AI in Firebase")
 - Requires: `VITE_FIREBASE_PROJECT_ID` in `.env`
+- SDK: `firebase/ai` (uses VertexAIBackend for production Firebase integration)
 
 ### Environment Variables
 ```env
@@ -229,7 +230,7 @@ VITE_FIREBASE_PROJECT_ID=your-project-id
 ### Firebase Services
 - Firebase Storage (file access)
 - Firestore (tag storage)
-- Firebase Vertex AI (Gemini API)
+- Firebase AI Logic (Gemini API)
 
 ---
 
@@ -237,7 +238,7 @@ VITE_FIREBASE_PROJECT_ID=your-project-id
 
 1. **Team Isolation**: All queries MUST be scoped by `firmId`
 2. **File Access**: Only authenticated users can access files in their firm
-3. **API Keys**: Firebase Vertex AI uses project-scoped authentication (no exposed keys)
+3. **API Keys**: Firebase AI Logic uses project-scoped authentication (no exposed keys)
 4. **Input Validation**: File size limits prevent DoS
 5. **Data Privacy**: AI analysis results stored in user's Firestore (not sent to third parties)
 

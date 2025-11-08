@@ -6,7 +6,7 @@ import { FileProcessingService } from './fileProcessingService.js';
 import tagSubcollectionService from './tagSubcollectionService.js';
 
 /**
- * AI Tag Service - Handles AI-powered document categorization using Firebase Vertex AI
+ * AI Tag Service - Handles AI-powered document categorization using Firebase AI Logic
  * Orchestrates between specialized services for single document processing with confidence-based auto-approval
  * Uses subcollection-based tag storage for improved scalability and performance
  */
@@ -138,7 +138,7 @@ export class AITagService {
   }
 
   /**
-   * Generate tag suggestions using Firebase Vertex AI
+   * Generate tag suggestions using Firebase AI Logic
    * @param {string} base64Data - Base64 encoded file content
    * @param {Array} categories - User's categories
    * @param {Object} evidence - Evidence document
