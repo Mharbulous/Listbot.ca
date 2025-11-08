@@ -20,15 +20,16 @@ export function useThumbnailRenderer(performanceTracker = null) {
    * Render a single page thumbnail
    * Uses the same aspect ratio calculation as the main viewer (8.5:11 for US Letter)
    * but scaled down proportionally.
-   * 
+   *
    * @param {Object} pdfDocument - PDF.js document object
    * @param {Number} pageNumber - Page to render (1-indexed)
    * @param {Number} maxWidth - Maximum thumbnail width in pixels (default: 150)
+   * @param {String} fileHash - Document identifier for cache key (optional but recommended)
    * @returns {Promise<String>} Blob URL of rendered thumbnail
    */
-  const renderThumbnail = async (pdfDocument, pageNumber, maxWidth = 150) => {
-    // Check cache first
-    const cacheKey = `${pageNumber}-${maxWidth}`;
+  const renderThumbnail = async (pdfDocument, pageNumber, maxWidth = 150, fileHash = null) => {
+    // Check cache first - include fileHash to prevent cross-document cache collisions
+    const cacheKey = fileHash ? `${fileHash}-${pageNumber}-${maxWidth}` : `${pageNumber}-${maxWidth}`;
     if (thumbnailCache.value.has(cacheKey)) {
       return thumbnailCache.value.get(cacheKey);
     }

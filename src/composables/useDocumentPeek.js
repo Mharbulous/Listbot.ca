@@ -219,10 +219,12 @@ export function useDocumentPeek() {
     try {
       isLoading.value = true;
       // Generate thumbnail at 300px width for good quality/performance balance
+      // IMPORTANT: Pass fileHash to prevent cross-document cache collisions
       const thumbnailUrl = await thumbnailRenderer.renderThumbnail(
         metadata.pdfDocument,
         pageNumber,
-        300
+        300,
+        fileHash
       );
       return thumbnailUrl;
     } catch (err) {
@@ -375,7 +377,8 @@ export function useDocumentPeek() {
     }
 
     // Check if thumbnail is already cached
-    const cacheKey = `${currentPeekPage.value}-300`;
+    // IMPORTANT: Include fileHash in cache key to prevent cross-document collisions
+    const cacheKey = `${currentPeekDocument.value}-${currentPeekPage.value}-300`;
     return thumbnailRenderer.thumbnailCache.value.get(cacheKey) || null;
   });
 
