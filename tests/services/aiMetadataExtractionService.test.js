@@ -1,0 +1,336 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock Firebase modules before importing the service
+vi.mock('firebase/ai', () => ({
+  getGenerativeModel: vi.fn(),
+  getAI: vi.fn(),
+  VertexAIBackend: vi.fn(),
+}));
+
+vi.mock('@/services/firebase.js', () => ({
+  firebaseAI: {},
+}));
+
+import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
+
+describe('AIMetadataExtractionService', () => {
+  describe('_buildPrompt', () => {
+    it('builds correct prompt with all required elements', () => {
+      const prompt = aiMetadataExtractionService._buildPrompt();
+
+      // Check Document Date instructions
+      expect(prompt).toContain('Document Date');
+      expect(prompt).toContain('IGNORE: Payment stamps, received dates, scanned dates');
+      expect(prompt).toContain('ISO 8601');
+      expect(prompt).toContain('YYYY-MM-DD');
+
+      // Check Document Type instructions
+      expect(prompt).toContain('Document Type');
+      expect(prompt).toContain('Invoice');
+      expect(prompt).toContain('Email');
+      expect(prompt).toContain('Contract');
+
+      // Check required output format
+      expect(prompt).toContain('value');
+      expect(prompt).toContain('confidence');
+      expect(prompt).toContain('reasoning');
+      expect(prompt).toContain('context');
+      expect(prompt).toContain('alternatives');
+
+      // Check JSON format requirement
+      expect(prompt).toContain('JSON');
+      expect(prompt).toContain('documentDate');
+      expect(prompt).toContain('documentType');
+    });
+
+    it('includes invoice-specific guidance', () => {
+      const prompt = aiMetadataExtractionService._buildPrompt();
+      expect(prompt).toContain('For invoices: Extract invoice date');
+      expect(prompt).toContain('NOT payment stamp dates');
+    });
+
+    it('includes confidence threshold guidance', () => {
+      const prompt = aiMetadataExtractionService._buildPrompt();
+      expect(prompt).toContain('confidence < 95%');
+      expect(prompt).toContain('alternatives');
+    });
+  });
+
+  describe('_parseResponse', () => {
+    it('parses valid JSON response', () => {
+      const validResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(validResponse);
+
+      expect(parsed.documentDate.value).toBe('2024-03-15');
+      expect(parsed.documentDate.confidence).toBe(92);
+      expect(parsed.documentType.value).toBe('Invoice');
+      expect(parsed.documentType.confidence).toBe(98);
+    });
+
+    it('handles markdown code blocks with json tag', () => {
+      const responseWithMarkdown = `\`\`\`json
+{
+  "documentDate": {
+    "value": "2024-03-15",
+    "confidence": 92,
+    "reasoning": "Found in header",
+    "context": "Invoice Date: March 15, 2024",
+    "alternatives": []
+  },
+  "documentType": {
+    "value": "Invoice",
+    "confidence": 98,
+    "reasoning": "Contains invoice header",
+    "context": "INVOICE #12345",
+    "alternatives": []
+  }
+}
+\`\`\``;
+
+      const parsed = aiMetadataExtractionService._parseResponse(responseWithMarkdown);
+      expect(parsed.documentDate.value).toBe('2024-03-15');
+      expect(parsed.documentType.value).toBe('Invoice');
+    });
+
+    it('handles markdown code blocks without json tag', () => {
+      const responseWithMarkdown = `\`\`\`
+{
+  "documentDate": {
+    "value": "2024-03-15",
+    "confidence": 92,
+    "reasoning": "Found in header",
+    "context": "Invoice Date: March 15, 2024",
+    "alternatives": []
+  },
+  "documentType": {
+    "value": "Invoice",
+    "confidence": 98,
+    "reasoning": "Contains invoice header",
+    "context": "INVOICE #12345",
+    "alternatives": []
+  }
+}
+\`\`\``;
+
+      const parsed = aiMetadataExtractionService._parseResponse(responseWithMarkdown);
+      expect(parsed.documentDate.value).toBe('2024-03-15');
+      expect(parsed.documentType.value).toBe('Invoice');
+    });
+
+    it('handles response with alternatives', () => {
+      const responseWithAlternatives = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 88,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [
+            {
+              value: '2024-03-14',
+              confidence: 78,
+              reasoning: 'Possible scan date in footer',
+            },
+          ],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(responseWithAlternatives);
+      expect(parsed.documentDate.alternatives).toHaveLength(1);
+      expect(parsed.documentDate.alternatives[0].value).toBe('2024-03-14');
+    });
+
+    it('throws error on invalid JSON', () => {
+      expect(() => {
+        aiMetadataExtractionService._parseResponse('not valid json');
+      }).toThrow('Invalid AI response format');
+    });
+
+    it('throws error when documentDate is missing', () => {
+      const missingDateResponse = JSON.stringify({
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(missingDateResponse);
+      }).toThrow('Missing required fields');
+    });
+
+    it('throws error when documentType is missing', () => {
+      const missingTypeResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(missingTypeResponse);
+      }).toThrow('Missing required fields');
+    });
+
+    it('throws error when value field is missing', () => {
+      const missingValueResponse = JSON.stringify({
+        documentDate: {
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(missingValueResponse);
+      }).toThrow('Invalid documentDate structure');
+    });
+
+    it('throws error when confidence field is missing', () => {
+      const missingConfidenceResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      expect(() => {
+        aiMetadataExtractionService._parseResponse(missingConfidenceResponse);
+      }).toThrow('Invalid documentDate structure');
+    });
+  });
+
+  describe('_getMimeType', () => {
+    it('gets correct MIME type for PDF', () => {
+      expect(aiMetadataExtractionService._getMimeType('pdf')).toBe('application/pdf');
+    });
+
+    it('gets correct MIME type for PNG (lowercase)', () => {
+      expect(aiMetadataExtractionService._getMimeType('png')).toBe('image/png');
+    });
+
+    it('gets correct MIME type for PNG (uppercase)', () => {
+      expect(aiMetadataExtractionService._getMimeType('PNG')).toBe('image/png');
+    });
+
+    it('gets correct MIME type for JPEG', () => {
+      expect(aiMetadataExtractionService._getMimeType('jpeg')).toBe('image/jpeg');
+      expect(aiMetadataExtractionService._getMimeType('jpg')).toBe('image/jpeg');
+    });
+
+    it('gets correct MIME type for Word documents', () => {
+      expect(aiMetadataExtractionService._getMimeType('doc')).toBe('application/msword');
+      expect(aiMetadataExtractionService._getMimeType('docx')).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    });
+
+    it('gets correct MIME type for Excel documents', () => {
+      expect(aiMetadataExtractionService._getMimeType('xls')).toBe('application/vnd.ms-excel');
+      expect(aiMetadataExtractionService._getMimeType('xlsx')).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    });
+
+    it('defaults to PDF for unknown extensions', () => {
+      expect(aiMetadataExtractionService._getMimeType('unknown')).toBe('application/pdf');
+      expect(aiMetadataExtractionService._getMimeType('xyz')).toBe('application/pdf');
+    });
+
+    it('handles case-insensitive extensions', () => {
+      expect(aiMetadataExtractionService._getMimeType('PDF')).toBe('application/pdf');
+      expect(aiMetadataExtractionService._getMimeType('JpEg')).toBe('image/jpeg');
+    });
+  });
+
+  describe('_formatFileSize', () => {
+    it('formats bytes correctly', () => {
+      expect(aiMetadataExtractionService._formatFileSize(500)).toBe('500 B');
+    });
+
+    it('formats kilobytes correctly', () => {
+      expect(aiMetadataExtractionService._formatFileSize(1024)).toBe('1.00 KB');
+      expect(aiMetadataExtractionService._formatFileSize(5120)).toBe('5.00 KB');
+    });
+
+    it('formats megabytes correctly', () => {
+      expect(aiMetadataExtractionService._formatFileSize(1048576)).toBe('1.00 MB');
+      expect(aiMetadataExtractionService._formatFileSize(5242880)).toBe('5.00 MB');
+    });
+
+    it('handles zero bytes', () => {
+      expect(aiMetadataExtractionService._formatFileSize(0)).toBe('Unknown');
+    });
+
+    it('handles null/undefined', () => {
+      expect(aiMetadataExtractionService._formatFileSize(null)).toBe('Unknown');
+      expect(aiMetadataExtractionService._formatFileSize(undefined)).toBe('Unknown');
+    });
+
+    it('rounds to 2 decimal places', () => {
+      expect(aiMetadataExtractionService._formatFileSize(1536)).toBe('1.50 KB');
+      expect(aiMetadataExtractionService._formatFileSize(1572864)).toBe('1.50 MB');
+    });
+  });
+
+  describe('isAIEnabled', () => {
+    it('returns true when AI features are enabled and firebaseAI is available', () => {
+      // This test depends on environment configuration
+      // We'll check that the method exists and returns a boolean
+      const result = aiMetadataExtractionService.isAIEnabled();
+      expect(typeof result).toBe('boolean');
+    });
+  });
+
+  describe('maxFileSizeMB', () => {
+    it('has maxFileSizeMB property', () => {
+      expect(aiMetadataExtractionService.maxFileSizeMB).toBeDefined();
+      expect(typeof aiMetadataExtractionService.maxFileSizeMB).toBe('number');
+    });
+
+    it('maxFileSizeMB is greater than 0', () => {
+      expect(aiMetadataExtractionService.maxFileSizeMB).toBeGreaterThan(0);
+    });
+  });
+});
