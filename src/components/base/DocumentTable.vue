@@ -162,6 +162,7 @@
                 :ref="(el) => setPeekButtonRef(el, sortedData[virtualItem.index].id)"
                 class="view-document-button peek-button"
                 @click.stop="handlePeekClick(sortedData[virtualItem.index])"
+                @dblclick.stop="handlePeekDoubleClick(sortedData[virtualItem.index])"
                 @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
                 @mouseleave="handlePeekMouseLeave"
                 :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
@@ -366,14 +367,15 @@ const handlePeekClick = async (row) => {
     return;
   }
 
-  // If clicking the same document, cycle to next page
-  if (documentPeek.currentPeekDocument.value === fileHash) {
-    documentPeek.nextPage();
+  const isPeekingThisDocument = documentPeek.currentPeekDocument.value === fileHash;
+  const isPeekVisible = tooltipTiming.isVisible.value;
 
-    // Generate thumbnail for new page
-    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+  if (isPeekingThisDocument && isPeekVisible) {
+    // Second click on same document - close the peek
+    tooltipTiming.closeImmediate();
+    documentPeek.closePeek();
   } else {
-    // Different document, open peek at page 1
+    // First click or different document - open peek immediately
     await documentPeek.openPeek(firmId, matterId, fileHash);
 
     // Show tooltip
@@ -387,6 +389,20 @@ const handlePeekClick = async (row) => {
       await documentPeek.generateThumbnail(fileHash, 1);
     }
   }
+};
+
+// Handle peek button double-click (navigate to document view)
+const handlePeekDoubleClick = (row) => {
+  if (!row || !row.id) return;
+
+  // Close any active peek
+  if (tooltipTiming.isVisible.value) {
+    tooltipTiming.closeImmediate();
+    documentPeek.closePeek();
+  }
+
+  // Navigate to document view
+  handleViewDocument(row);
 };
 
 // Handle peek button mouse enter
