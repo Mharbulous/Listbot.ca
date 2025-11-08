@@ -147,12 +147,14 @@ Return as JSON in this exact format:
    */
   _parseResponse(text) {
     try {
-      // Remove markdown code blocks if present
+      // Remove markdown code blocks if present (extract first block only)
       let cleanedText = text.trim();
-      if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/```\n?/g, '');
+
+      // Match first code block with optional 'json' language specifier
+      // This prevents concatenating multiple code blocks
+      const jsonCodeBlockMatch = cleanedText.match(/^```(?:json)?\s*\n?([\s\S]*?)```/);
+      if (jsonCodeBlockMatch) {
+        cleanedText = jsonCodeBlockMatch[1].trim();
       }
 
       // Parse JSON
@@ -168,10 +170,23 @@ Return as JSON in this exact format:
         if (!field.value || typeof field.confidence !== 'number') {
           throw new Error(`Invalid ${fieldName} structure in AI response`);
         }
+        if (field.confidence < 0 || field.confidence > 100) {
+          throw new Error(
+            `Invalid confidence value for ${fieldName}: must be 0-100, got ${field.confidence}`
+          );
+        }
       };
 
       validateField(parsed.documentDate, 'documentDate');
       validateField(parsed.documentType, 'documentType');
+
+      // Validate date format (ISO 8601: YYYY-MM-DD)
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (parsed.documentDate.value && !datePattern.test(parsed.documentDate.value)) {
+        console.warn(
+          `Date format validation: expected YYYY-MM-DD, got ${parsed.documentDate.value}`
+        );
+      }
 
       return parsed;
     } catch (error) {
