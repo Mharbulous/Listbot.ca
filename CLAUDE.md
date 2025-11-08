@@ -103,3 +103,65 @@ This is a brief overview of core concepts. For details, see the `@docs` above.
   2.  Only files with matching sizes are hashed.
   3.  The final BLAKE3 hash is used as the document ID in Firestore, providing automatic, database-level deduplication.
 - **Multi-App SSO**: All apps (Bookkeeper, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
+
+---
+
+## 6. Troubleshooting: File Editing Issues
+
+### Problem: Edit Tool "String to replace not found" Errors
+
+**Symptom**: The `Edit` tool fails with "String to replace not found in file" even though you can see the exact text when reading the file.
+
+**Root Cause**: Character encoding mismatch - the file contains characters (especially emojis like ✅, 🤖, etc.) that display the same but have different byte encodings.
+
+### How to Identify This Issue
+
+1. **Use `cat -A` to reveal hidden characters**:
+   ```bash
+   cat "path/to/file.md" | sed -n '100,110p' | cat -A
+   ```
+
+   **What you'll see**:
+   - Display shows: `- ✅ **Item**: Description`
+   - `cat -A` shows: `- ^E **Item**: Description`
+
+   The `^E` (or other control characters) reveals the actual byte encoding is different from the checkmark emoji you're trying to match.
+
+2. **Check specific line numbers**:
+   ```bash
+   sed -n '750,752p' "path/to/file.md" | cat -A
+   ```
+
+### How to Fix It
+
+**Solution 1: Use `sed` with line number targeting** (Recommended)
+```bash
+# Replace entire line at specific line number
+sed -i '750s/.*/- ✅ **UX4**: New content here/' "path/to/file.md"
+
+# Insert new line after line 750
+sed -i '750a- ✅ **UX5**: Additional content' "path/to/file.md"
+```
+
+**Why this works**: Targets the line number instead of trying to match the encoded characters.
+
+**Solution 2: Rewrite the entire file section**
+If multiple lines need updating, use the `Write` tool to rewrite the entire file with consistent encoding.
+
+**Solution 3: Remove problematic characters**
+If emojis aren't essential, use plain text:
+```markdown
+- [x] **UX4**: Description
+```
+
+### Prevention
+
+- **Be consistent with emojis**: If using emojis in markdown, stick to one method (Edit tool or `sed`)
+- **Test first**: When editing files with emojis, try a small edit first to verify encoding compatibility
+- **Use line numbers**: When you know the exact line to change, prefer `sed` with line numbers over string matching
+
+### Path Format Notes
+
+- **Windows with Git Bash**: Use forward slashes with drive letter: `C:/Users/name/file.md`
+- **Relative paths**: `./planning/file.md` (from project root)
+- **Absolute paths preferred** for reliability in Windows environments
