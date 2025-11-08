@@ -355,7 +355,7 @@ const handleProcessWithAI = (row) => {
   console.log('Process with AI:', row);
 };
 
-// Handle peek button click - opens preview or navigates based on current state
+// Handle peek button click - opens/closes preview or switches documents
 const handlePeekClick = async (row) => {
   if (!row || !row.id) return;
 
@@ -384,9 +384,10 @@ const handlePeekClick = async (row) => {
       await documentPeek.generateThumbnail(fileHash, 1);
     }
   }
-  // If tooltip is visible and showing the same document, navigate to document view
+  // If tooltip is visible and showing the same document, close the preview
   else if (documentPeek.currentPeekDocument.value === fileHash) {
-    handleViewDocument(row);
+    tooltipTiming.closeImmediate();
+    documentPeek.closePeek();
   }
   // If tooltip is visible but showing a different document, switch to the new document
   else {
