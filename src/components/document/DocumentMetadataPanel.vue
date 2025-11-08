@@ -425,7 +425,7 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { formatDateTime } from '@/utils/dateFormatter.js';
-import fileProcessingService from '@/features/organizer/services/fileProcessingService';
+import { FileProcessingService } from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
 import { useAuthStore } from '@/core/stores/auth';
 
@@ -438,6 +438,9 @@ const aiResults = ref({
   documentDate: null,
   documentType: null,
 });
+
+// Instantiate file processing service
+const fileProcessingService = new FileProcessingService();
 
 // Props
 const props = defineProps({
