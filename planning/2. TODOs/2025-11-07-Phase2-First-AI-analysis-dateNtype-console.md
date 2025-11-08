@@ -392,7 +392,7 @@ Key prompt features:
 ## Completion Checklist
 
 - [x] `aiMetadataExtractionService.js` created and functional
-- [x] Unit tests pass for service methods (29/29 tests passing)
+- [x] Unit tests pass for service methods (33/33 tests passing, improved coverage)
 - [x] `handleAnalyzeClick()` updated to call real AI
 - [x] File size validation implemented
 - [x] Console logging comprehensive and clear
@@ -401,6 +401,7 @@ Key prompt features:
 - [ ] File >20MB rejected without API call - Requires manual testing
 - [x] Errors handled gracefully
 - [x] No unexpected console errors (linting clean, implementation verified)
+- [x] Markdown parsing fixed (multiple code blocks edge case)
 - [x] Ready for Phase 3 (UI display integration)
 
 ---
@@ -507,12 +508,13 @@ const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' })
 
 ### Testing Implementation (2025-11-08)
 
-**Test Suite Created**: `tests/services/aiMetadataExtractionService.test.js`
-- **29 unit tests** covering all service methods
+**Test Suite Created**: `tests/unit/services/aiMetadataExtractionService.test.js`
+- **33 unit tests** covering all service methods (increased from 29)
 - Tests for `_buildPrompt()`, `_parseResponse()`, `_getMimeType()`, `_formatFileSize()`
 - Comprehensive error handling tests (invalid JSON, missing fields, validation)
-- Markdown code block handling tests
-- All tests passing (29/29)
+- Markdown code block handling tests (including multiple blocks edge case)
+- Edge case testing (confidence boundaries, optional fields, empty arrays)
+- All tests passing (33/33)
 - Firebase modules properly mocked for test environment
 
 **Test Coverage**:
@@ -522,6 +524,13 @@ const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' })
 - ✅ MIME type mapping for all supported formats
 - ✅ File size formatting
 - ✅ Alternative suggestions handling
+- ✅ Confidence boundary values (0, 100)
+- ✅ Optional field validation (reasoning, context, alternatives)
+- ✅ Multiple code blocks edge case (extracts first only)
+
+**Implementation Improvements**:
+- Fixed markdown parsing to use non-greedy regex (prevents multiple code block concatenation)
+- Test location follows project conventions (`tests/unit/services/`)
 
 **Note**: Manual tests (TC1-TC3) require real Firebase credentials and test documents. These should be run in a development environment with proper .env configuration.
 
