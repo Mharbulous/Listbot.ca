@@ -423,7 +423,11 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { formatDateTime } from '@/utils/dateFormatter.js';
+import fileProcessingService from '@/features/organizer/services/fileProcessingService';
+import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
+import { useAuthStore } from '@/stores/auth';
 
 // Tab state
 const activeTab = ref('digital-file');
@@ -558,7 +562,7 @@ const handleSelectVariant = (metadataHash) => {
   }
 };
 
-// Mock AI analysis data (WILL BE REPLACED IN PHASE 2)
+// Mock AI analysis data (Used for UI display in Phase 2)
 const MOCK_RESULTS = {
   documentDate: {
     value: '2024-03-15',
@@ -580,24 +584,78 @@ const MOCK_RESULTS = {
   },
 };
 
-// Handle analyze button click (WILL BE REPLACED IN PHASE 2 with real Gemini API call)
-const handleAnalyzeClick = (fieldName) => {
+// Get route and auth store
+const route = useRoute();
+const authStore = useAuthStore();
+
+// Handle analyze button click (Real Gemini API integration)
+const handleAnalyzeClick = async (fieldName) => {
   console.log(`Analyze clicked for: ${fieldName}`);
   console.log('Analysis started');
 
   isAnalyzing.value = true;
 
-  // Simulate 3-second analysis
-  setTimeout(() => {
-    isAnalyzing.value = false;
+  try {
+    const firmId = authStore.currentFirm;
+    const matterId = route.params.matterId || 'general';
 
-    // Set mock results for both fields (simulating single API call)
-    aiResults.value.documentDate = MOCK_RESULTS.documentDate;
-    aiResults.value.documentType = MOCK_RESULTS.documentType;
+    // Validate file size
+    const maxSizeMB = parseInt(import.meta.env.VITE_AI_MAX_FILE_SIZE_MB || '20');
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    console.log('Analysis completed');
-    console.log('Mock results:', aiResults.value);
-  }, 3000);
+    if (props.evidence.fileSize > maxSizeBytes) {
+      throw new Error(`File too large for AI analysis (max ${maxSizeMB}MB)`);
+    }
+
+    console.log('📂 Getting file content from Firebase Storage...');
+
+    // Get file content
+    const base64Data = await fileProcessingService.getFileForProcessing(
+      props.evidence,
+      firmId,
+      matterId
+    );
+
+    console.log('✅ File retrieved successfully');
+
+    // Extract file extension
+    const extension = props.evidence.displayName?.split('.').pop()?.toLowerCase() || 'pdf';
+
+    // Call AI service (this logs results internally)
+    const result = await aiMetadataExtractionService.analyzeDocument(
+      base64Data,
+      props.evidence,
+      extension
+    );
+
+    console.log('🎯 FINAL PARSED RESULTS:');
+    console.log('Document Date:', result.documentDate);
+    console.log('Document Type:', result.documentType);
+    console.log('Processing Time:', result.processingTime, 'ms');
+
+    // Phase 2: Keep showing mock UI results
+    // Phase 3 will replace this with real results display
+    setTimeout(() => {
+      isAnalyzing.value = false;
+      aiResults.value.documentDate = MOCK_RESULTS.documentDate;
+      aiResults.value.documentType = MOCK_RESULTS.documentType;
+      console.log('✅ Mock UI results displayed (Phase 2 behavior)');
+    }, 500);
+  } catch (error) {
+    console.error('❌ Analysis failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+    });
+
+    // Phase 2: Still show mock results even on error (for testing)
+    setTimeout(() => {
+      isAnalyzing.value = false;
+      aiResults.value.documentDate = MOCK_RESULTS.documentDate;
+      aiResults.value.documentType = MOCK_RESULTS.documentType;
+      console.log('⚠️ Showing mock results despite error (Phase 2 testing mode)');
+    }, 500);
+  }
 };
 </script>
 
