@@ -427,7 +427,7 @@ import { useRoute } from 'vue-router';
 import { formatDateTime } from '@/utils/dateFormatter.js';
 import fileProcessingService from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/core/stores/auth';
 
 // Tab state
 const activeTab = ref('digital-file');
