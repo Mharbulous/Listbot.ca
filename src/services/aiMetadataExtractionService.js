@@ -147,12 +147,14 @@ Return as JSON in this exact format:
    */
   _parseResponse(text) {
     try {
-      // Remove markdown code blocks if present
+      // Remove markdown code blocks if present (extract first block only)
       let cleanedText = text.trim();
-      if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/```\n?/g, '');
+
+      // Match first code block with optional 'json' language specifier
+      // This prevents concatenating multiple code blocks
+      const jsonCodeBlockMatch = cleanedText.match(/^```(?:json)?\s*\n?([\s\S]*?)```/);
+      if (jsonCodeBlockMatch) {
+        cleanedText = jsonCodeBlockMatch[1].trim();
       }
 
       // Parse JSON

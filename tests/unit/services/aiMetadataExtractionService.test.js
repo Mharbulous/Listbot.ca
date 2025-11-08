@@ -243,6 +243,123 @@ describe('AIMetadataExtractionService', () => {
         aiMetadataExtractionService._parseResponse(missingConfidenceResponse);
       }).toThrow('Invalid documentDate structure');
     });
+
+    it('accepts valid response with all optional fields present', () => {
+      const fullResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 92,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [
+            {
+              value: '2024-03-14',
+              confidence: 78,
+              reasoning: 'Possible scan date',
+            },
+          ],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(fullResponse);
+      expect(parsed.documentDate.reasoning).toBe('Found in header');
+      expect(parsed.documentDate.context).toBe('Invoice Date: March 15, 2024');
+      expect(parsed.documentDate.alternatives).toHaveLength(1);
+      expect(parsed.documentType.reasoning).toBe('Contains invoice header');
+      expect(parsed.documentType.context).toBe('INVOICE #12345');
+    });
+
+    it('handles confidence at boundary values (0 and 100)', () => {
+      const boundaryResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 0,
+          reasoning: 'Very uncertain',
+          context: 'Unclear date',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 100,
+          reasoning: 'Absolutely certain',
+          context: 'Clear invoice header',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(boundaryResponse);
+      expect(parsed.documentDate.confidence).toBe(0);
+      expect(parsed.documentType.confidence).toBe(100);
+    });
+
+    it('handles empty alternatives array', () => {
+      const noAlternativesResponse = JSON.stringify({
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 98,
+          reasoning: 'Clear date',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Clear type',
+          context: 'INVOICE',
+          alternatives: [],
+        },
+      });
+
+      const parsed = aiMetadataExtractionService._parseResponse(noAlternativesResponse);
+      expect(parsed.documentDate.alternatives).toEqual([]);
+      expect(parsed.documentType.alternatives).toEqual([]);
+    });
+
+    it('handles multiple code blocks by extracting first one only', () => {
+      const multipleCodeBlocksResponse = `\`\`\`json
+{
+  "documentDate": {
+    "value": "2024-03-15",
+    "confidence": 92,
+    "reasoning": "Found in header",
+    "context": "Invoice Date: March 15, 2024",
+    "alternatives": []
+  },
+  "documentType": {
+    "value": "Invoice",
+    "confidence": 98,
+    "reasoning": "Contains invoice header",
+    "context": "INVOICE #12345",
+    "alternatives": []
+  }
+}
+\`\`\`
+
+Here's another code block that should be ignored:
+\`\`\`json
+{
+  "documentDate": {
+    "value": "2024-12-31",
+    "confidence": 50,
+    "reasoning": "Wrong date",
+    "context": "Should not use this",
+    "alternatives": []
+  }
+}
+\`\`\``;
+
+      const parsed = aiMetadataExtractionService._parseResponse(multipleCodeBlocksResponse);
+      // Should use the first code block only
+      expect(parsed.documentDate.value).toBe('2024-03-15');
+      expect(parsed.documentType.value).toBe('Invoice');
+    });
   });
 
   describe('_getMimeType', () => {
