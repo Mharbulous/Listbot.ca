@@ -4,6 +4,11 @@ import { storage } from '../../../services/firebase.js';
 /**
  * File Processing Service - Handles file content retrieval from Firebase Storage
  * Provides file access, content processing, and format validation
+ *
+ * @pattern Class Export (Stateful Service)
+ * @rationale This service maintains state (firmId) and must be instantiated
+ *            per usage context. Export as class rather than singleton.
+ * @usage const service = new FileProcessingService(firmId);
  */
 export class FileProcessingService {
   constructor(firmId = null) {
@@ -236,5 +241,3 @@ export class FileProcessingService {
     };
   }
 }
-
-export default FileProcessingService;

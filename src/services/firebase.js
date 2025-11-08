@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAI } from 'firebase/ai';
+import { getAI, VertexAIBackend } from 'firebase/ai';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -40,7 +40,10 @@ const storage = getStorage(app);
 let firebaseAI = null;
 if (import.meta.env.VITE_ENABLE_AI_FEATURES === 'true') {
   try {
-    firebaseAI = getAI(app);
+    // Use VertexAIBackend for production Firebase integration
+    // This backend supports Firebase Storage integration and is better for production
+    firebaseAI = getAI(app, { backend: new VertexAIBackend() });
+    console.log('[Firebase] AI Logic initialized with Vertex AI backend');
   } catch (error) {
     console.warn('[Firebase] Failed to initialize Firebase AI Logic', error);
   }

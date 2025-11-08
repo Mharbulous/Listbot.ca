@@ -4,6 +4,13 @@ import { firebaseAI } from './firebase.js';
 /**
  * AI Metadata Extraction Service
  * Handles AI-powered extraction of Document Date and Document Type using Firebase Vertex AI
+ *
+ * @pattern Singleton Export (Stateless Service)
+ * @rationale This service is stateless - all methods are pure functions that take
+ *            parameters and return results. No instance state needed between calls.
+ *            Exported as singleton to avoid unnecessary instantiation overhead.
+ * @usage import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
+ *        const result = await aiMetadataExtractionService.analyzeDocument(...);
  */
 class AIMetadataExtractionService {
   constructor() {
