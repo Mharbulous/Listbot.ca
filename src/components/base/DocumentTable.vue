@@ -306,10 +306,6 @@ const tooltipTiming = useTooltipTiming();
 const peekButtonRefs = ref(new Map());
 const tooltipPosition = ref({ top: '0px', left: '0px' });
 
-// Click timer for distinguishing single vs double clicks on peek button
-const clickTimer = ref(null);
-const clickDelay = 300; // ms to wait before treating as single click
-
 // Handle view document double-click
 const handleViewDocument = (row) => {
   if (!row || !row.id) return;
@@ -358,15 +354,9 @@ const handleProcessWithAI = (row) => {
   console.log('Process with AI:', row);
 };
 
-// Handle peek button click (with single/double click distinction)
+// Handle peek button click
 const handlePeekClick = async (row) => {
   if (!row || !row.id) return;
-
-  // Clear any existing timer to prevent single-click action if this becomes a double-click
-  if (clickTimer.value) {
-    clearTimeout(clickTimer.value);
-    clickTimer.value = null;
-  }
 
   const fileHash = row.id;
   const firmId = authStore.currentFirm;
@@ -377,45 +367,33 @@ const handlePeekClick = async (row) => {
     return;
   }
 
-  // Set timer to execute single-click action after delay
-  clickTimer.value = setTimeout(async () => {
-    // Single click logic
-    const isPeekingThisDocument = documentPeek.currentPeekDocument.value === fileHash;
-    const isPeekVisible = tooltipTiming.isVisible.value;
+  const isPeekingThisDocument = documentPeek.currentPeekDocument.value === fileHash;
+  const isPeekVisible = tooltipTiming.isVisible.value;
 
-    if (isPeekingThisDocument && isPeekVisible) {
-      // Second click on same document - close the peek
-      tooltipTiming.closeImmediate();
-      documentPeek.closePeek();
-    } else {
-      // First click or different document - open peek
-      await documentPeek.openPeek(firmId, matterId, fileHash);
+  if (isPeekingThisDocument && isPeekVisible) {
+    // Second click on same document - close the peek
+    tooltipTiming.closeImmediate();
+    documentPeek.closePeek();
+  } else {
+    // First click or different document - open peek immediately
+    await documentPeek.openPeek(firmId, matterId, fileHash);
 
-      // Show tooltip
-      tooltipTiming.showTooltip();
+    // Show tooltip
+    tooltipTiming.showTooltip();
 
-      // Calculate position
-      updateTooltipPosition(fileHash);
+    // Calculate position
+    updateTooltipPosition(fileHash);
 
-      // Generate thumbnail if it's a PDF
-      if (documentPeek.isCurrentDocumentPdf.value) {
-        await documentPeek.generateThumbnail(fileHash, 1);
-      }
+    // Generate thumbnail if it's a PDF
+    if (documentPeek.isCurrentDocumentPdf.value) {
+      await documentPeek.generateThumbnail(fileHash, 1);
     }
-
-    clickTimer.value = null;
-  }, clickDelay);
+  }
 };
 
 // Handle peek button double-click (navigate to document view)
 const handlePeekDoubleClick = (row) => {
   if (!row || !row.id) return;
-
-  // Clear the single-click timer
-  if (clickTimer.value) {
-    clearTimeout(clickTimer.value);
-    clickTimer.value = null;
-  }
 
   // Close any active peek
   if (tooltipTiming.isVisible.value) {
@@ -722,12 +700,6 @@ onUnmounted(() => {
   // Remove scroll listener
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
-  }
-
-  // Clear click timer
-  if (clickTimer.value) {
-    clearTimeout(clickTimer.value);
-    clickTimer.value = null;
   }
 
   documentPeek.cleanup();
