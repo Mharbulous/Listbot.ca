@@ -164,7 +164,7 @@
                 @click.stop="handlePeekClick(sortedData[virtualItem.index])"
                 @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
                 @mouseleave="handlePeekMouseLeave"
-                :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
+                :title="tooltipTiming.isVisible.value ? '' : 'View document'"
               >
                 📄
               </button>
@@ -353,8 +353,16 @@ const handleProcessWithAI = (row) => {
   console.log('Process with AI:', row);
 };
 
-// Handle peek button click
-const handlePeekClick = async (row) => {
+// Handle peek button click - now opens the document view
+const handlePeekClick = (row) => {
+  if (!row || !row.id) return;
+
+  // Navigate to document view (same as double-click)
+  handleViewDocument(row);
+};
+
+// Handle peek button mouse enter - now opens the preview on hover
+const handlePeekMouseEnter = async (row) => {
   if (!row || !row.id) return;
 
   const fileHash = row.id;
@@ -366,12 +374,9 @@ const handlePeekClick = async (row) => {
     return;
   }
 
-  // If clicking the same document, cycle to next page
+  // If hovering over the same document that's already peeked, just show tooltip
   if (documentPeek.currentPeekDocument.value === fileHash) {
-    documentPeek.nextPage();
-
-    // Generate thumbnail for new page
-    await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
+    tooltipTiming.handleMouseEnter();
   } else {
     // Different document, open peek at page 1
     await documentPeek.openPeek(firmId, matterId, fileHash);
@@ -386,16 +391,6 @@ const handlePeekClick = async (row) => {
     if (documentPeek.isCurrentDocumentPdf.value) {
       await documentPeek.generateThumbnail(fileHash, 1);
     }
-  }
-};
-
-// Handle peek button mouse enter
-const handlePeekMouseEnter = (row) => {
-  if (!row || !row.id) return;
-
-  // Only show tooltip if this document is already being peeked
-  if (documentPeek.currentPeekDocument.value === row.id) {
-    tooltipTiming.handleMouseEnter();
   }
 };
 
