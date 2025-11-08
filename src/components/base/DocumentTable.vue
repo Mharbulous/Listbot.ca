@@ -161,7 +161,9 @@
               <button
                 :ref="(el) => setPeekButtonRef(el, sortedData[virtualItem.index].id)"
                 class="view-document-button peek-button"
+                :class="{ 'peek-active': isRowPeeked(sortedData[virtualItem.index]) }"
                 @click.stop="handlePeekClick(sortedData[virtualItem.index])"
+                @dblclick.stop="handlePeekDoubleClick(sortedData[virtualItem.index])"
                 @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
                 @mouseleave="handlePeekMouseLeave"
                 :title="tooltipTiming.isVisible.value ? '' : 'View document'"
@@ -353,11 +355,62 @@ const handleProcessWithAI = (row) => {
   console.log('Process with AI:', row);
 };
 
-// Handle peek button click - now opens the document view
-const handlePeekClick = (row) => {
+// Handle peek button click - opens preview or navigates based on current state
+const handlePeekClick = async (row) => {
   if (!row || !row.id) return;
 
-  // Navigate to document view (same as double-click)
+  const fileHash = row.id;
+  const firmId = authStore.currentFirm;
+  const matterId = route.params.matterId;
+
+  if (!firmId || !matterId) {
+    console.error('[Peek] Missing firmId or matterId');
+    return;
+  }
+
+  // If tooltip is not visible, open the preview
+  if (!tooltipTiming.isVisible.value) {
+    // Open peek at page 1
+    await documentPeek.openPeek(firmId, matterId, fileHash);
+
+    // Show tooltip
+    tooltipTiming.showTooltip();
+
+    // Calculate position
+    updateTooltipPosition(fileHash);
+
+    // Generate thumbnail if it's a PDF
+    if (documentPeek.isCurrentDocumentPdf.value) {
+      await documentPeek.generateThumbnail(fileHash, 1);
+    }
+  }
+  // If tooltip is visible and showing the same document, navigate to document view
+  else if (documentPeek.currentPeekDocument.value === fileHash) {
+    handleViewDocument(row);
+  }
+  // If tooltip is visible but showing a different document, switch to the new document
+  else {
+    // Switch to new document
+    await documentPeek.openPeek(firmId, matterId, fileHash);
+
+    // Keep tooltip visible
+    tooltipTiming.cancelHideTimer();
+
+    // Update position
+    updateTooltipPosition(fileHash);
+
+    // Generate thumbnail if it's a PDF
+    if (documentPeek.isCurrentDocumentPdf.value) {
+      await documentPeek.generateThumbnail(fileHash, 1);
+    }
+  }
+};
+
+// Handle peek button double-click - goes directly to document view
+const handlePeekDoubleClick = (row) => {
+  if (!row || !row.id) return;
+
+  // Navigate directly to document view, bypassing preview
   handleViewDocument(row);
 };
 
