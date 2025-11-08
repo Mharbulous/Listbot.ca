@@ -2,7 +2,7 @@ import { ref, computed, markRaw, watch } from 'vue';
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
-import { pdfjsLib } from '@/config/pdfWorker.js';
+import { pdfjsLib, wasmUrl, standardFontDataUrl } from '@/config/pdfWorker.js';
 import { useThumbnailRenderer } from '@/features/organizer/composables/useThumbnailRenderer.js';
 
 /**
@@ -146,8 +146,21 @@ export function useDocumentPeek() {
       // Get download URL
       const downloadURL = await getDownloadURL(fileRef);
 
-      // Load PDF with PDF.js
-      const loadingTask = pdfjsLib.getDocument(downloadURL);
+      // Load PDF with PDF.js with proper configuration
+      // Match configuration from usePdfCache.js to ensure WASM decoders work
+      const loadingTask = pdfjsLib.getDocument({
+        url: downloadURL,
+        // Enable streaming for better performance
+        disableAutoFetch: false,
+        disableStream: false,
+        // Enable hardware acceleration (GPU rendering) for faster page rendering
+        enableHWA: true,
+        // WASM directory for image decoders (JPEG2000/JPX, JXL)
+        // Critical for PDFs with JPEG2000 images (common in scanned legal documents)
+        wasmUrl,
+        // Standard fonts directory for font substitution
+        standardFontDataUrl,
+      });
       const pdfDocument = await loadingTask.promise;
 
       return pdfDocument;
