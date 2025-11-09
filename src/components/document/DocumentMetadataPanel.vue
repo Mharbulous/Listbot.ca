@@ -1,50 +1,51 @@
 <template>
   <div class="metadata-panel" :class="{ 'metadata-panel--collapsed': !visible }">
     <div class="metadata-box" :class="{ 'metadata-box--collapsed': !visible }">
-      <v-card variant="outlined" class="metadata-card">
+      <v-card variant="flat" class="metadata-card">
         <!-- Card header with toggle button -->
         <div class="metadata-card-header">
           <div class="tabs-container">
             <button
               class="tab-button"
               :class="{ active: activeTab === 'document' }"
-              @click="activeTab = 'document'"
+              @click="handleTabClick('document')"
             >
-              ✨ AI
-
+              <span class="tab-icon">✨</span>
+              <span class="tab-label">AI</span>
             </button>
             <button
               class="tab-button"
               :class="{ active: activeTab === 'review' }"
-              @click="activeTab = 'review'"
+              @click="handleTabClick('review')"
             >
-             👤Review
+              <span class="tab-icon">👤</span>
+              <span class="tab-label">Review</span>
             </button>
             <button
               class="tab-button"
               :class="{ active: activeTab === 'doc-metadata' }"
-              @click="activeTab = 'doc-metadata'"
+              @click="handleTabClick('doc-metadata')"
             >
-              📑 Document
+              <span class="tab-icon">📑</span>
+              <span class="tab-label">Document</span>
             </button>
             <button
               class="tab-button"
               :class="{ active: activeTab === 'digital-file' }"
-              @click="activeTab = 'digital-file'"
+              @click="handleTabClick('digital-file')"
             >
-              ☁️ File
+              <span class="tab-icon">☁️</span>
+              <span class="tab-label">File</span>
             </button>
           </div>
-          <v-btn
-            icon
-            variant="text"
-            size="small"
+          <button
             :title="visible ? 'Collapse metadata' : 'Expand metadata'"
             class="toggle-btn"
             @click="$emit('toggle-visibility')"
           >
-            <v-icon>{{ visible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-          </v-btn>
+            <ChevronUp v-if="visible" :size="20" :stroke-width="2" class="chevron-icon" />
+            <ChevronDown v-else :size="20" :stroke-width="2" class="chevron-icon" />
+          </button>
         </div>
 
         <v-card-text v-if="visible">
@@ -101,6 +102,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { ChevronUp, ChevronDown } from 'lucide-vue-next';
 import DigitalFileTab from './tabs/DigitalFileTab.vue';
 import AIAnalysisTab from './tabs/AIAnalysisTab.vue';
 import ReviewTab from './tabs/ReviewTab.vue';
@@ -108,6 +110,15 @@ import DocumentTab from './tabs/DocumentTab.vue';
 
 // Tab state
 const activeTab = ref('document');
+
+// Handle tab click - expand panel if collapsed
+const handleTabClick = (tab) => {
+  activeTab.value = tab;
+  // If panel is collapsed, expand it
+  if (!props.visible) {
+    emit('toggle-visibility');
+  }
+};
 
 // Props
 const props = defineProps({
@@ -218,6 +229,10 @@ const emit = defineEmits(['toggle-visibility', 'variant-selected', 'dropdown-tog
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background-color: #ffffff;
+  border-radius: 0.75rem; /* rounded-xl */
+  box-shadow: 0 25px 50px -12px rgb(59 130 246 / 0.1); /* shadow-2xl with blue tint */
+  border: none !important; /* Override Vuetify's outlined variant */
 }
 
 .metadata-card-header {
@@ -232,43 +247,71 @@ const emit = defineEmits(['toggle-visibility', 'variant-selected', 'dropdown-tog
 /* Tab Styling */
 .tabs-container {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   flex-grow: 1;
 }
 
 .tab-button {
-  padding: 6px 10px;
-  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px 6px;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #666;
+  color: rgb(107 114 128); /* text-gray-500 - muted */
   background-color: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
   transition:
     color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    border-color 0.2s ease;
   white-space: nowrap;
 }
 
-.tab-button:hover {
-  color: #333;
-  background-color: rgba(0, 0, 0, 0.04);
+.tab-button:hover:not(.active) {
+  color: rgb(75 85 99); /* Slightly darker gray on hover */
 }
 
 .tab-button.active {
-  color: #1976d2;
+  color: #1976d2; /* Primary blue */
   font-weight: 600;
   border-bottom-color: #1976d2;
 }
 
+.tab-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.tab-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
 .toggle-btn {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: rgb(107 114 128);
 }
 
 .toggle-btn:hover {
   background-color: rgba(0, 0, 0, 0.04);
+  color: rgb(75 85 99);
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease;
 }
 
 /* Responsive layout for tablets and mobile */

@@ -57,24 +57,20 @@
     <template v-else>
       <!-- System Fields Section -->
       <div class="metadata-section">
-        <h3 class="metadata-section-title">System Fields</h3>
-
         <!-- Document Date -->
         <div class="metadata-item">
-          <span class="metadata-label">Document Date:</span>
+          <span class="metadata-label">Document Date</span>
 
           <div class="field-controls">
-            <!-- Radio Button Group -->
-            <v-radio-group
+            <!-- Segmented Control -->
+            <SegmentedControl
               v-model="fieldPreferences.documentDate"
-              inline
-              hide-details
-              class="field-radio-group"
-            >
-              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
-              <v-radio label="Skip" value="skip" color="primary"></v-radio>
-              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
+              :options="[
+                { label: 'Analyze', value: 'analyze' },
+                { label: 'Skip', value: 'skip' },
+                { label: 'Ignore', value: 'ignore' }
+              ]"
+            />
 
             <!-- State 2: Analyzing Spinner -->
             <div v-if="isAnalyzing" class="analyzing-state">
@@ -124,20 +120,18 @@
 
         <!-- Document Type -->
         <div class="metadata-item">
-          <span class="metadata-label">Document Type:</span>
+          <span class="metadata-label">Document Type</span>
 
           <div class="field-controls">
-            <!-- Radio Button Group -->
-            <v-radio-group
+            <!-- Segmented Control -->
+            <SegmentedControl
               v-model="fieldPreferences.documentType"
-              inline
-              hide-details
-              class="field-radio-group"
-            >
-              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
-              <v-radio label="Skip" value="skip" color="primary"></v-radio>
-              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
+              :options="[
+                { label: 'Analyze', value: 'analyze' },
+                { label: 'Skip', value: 'skip' },
+                { label: 'Ignore', value: 'ignore' }
+              ]"
+            />
 
             <!-- State 2: Analyzing Spinner -->
             <div v-if="isAnalyzing" class="analyzing-state">
@@ -187,18 +181,22 @@
 
         <!-- Analyze Document Button (at bottom of System Fields) -->
         <div class="analyze-document-section">
-          <v-btn
-            color="primary"
-            variant="elevated"
-            prepend-icon="mdi-robot"
+          <button
             @click="handleAnalyzeClick"
-            :loading="isAnalyzing"
             :disabled="isAnalyzing"
-            size="large"
             class="analyze-document-button"
           >
-            Analyze Document
-          </v-btn>
+            <Rocket :size="20" :stroke-width="2" />
+            <span>Analyze Document</span>
+            <v-progress-circular
+              v-if="isAnalyzing"
+              indeterminate
+              size="20"
+              width="2"
+              color="white"
+              class="button-loader"
+            />
+          </button>
         </div>
       </div>
     </template>
@@ -213,6 +211,8 @@ import aiMetadataExtractionService from '@/services/aiMetadataExtractionService'
 import { useAuthStore } from '@/core/stores/auth';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 import { formatDate } from '@/utils/dateFormatter';
+import { Rocket } from 'lucide-vue-next';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
 // AI Analysis state
 const isAnalyzing = ref(false);
@@ -630,7 +630,40 @@ const handleAnalyzeClick = async () => {
 }
 
 .analyze-document-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: white;
+  background-color: #1976d2; /* Primary blue */
+  border: none;
+  border-radius: 0.75rem; /* rounded-xl */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 15px -3px rgb(25 118 210 / 0.3), 0 4px 6px -4px rgb(25 118 210 / 0.3); /* shadow-lg shadow-primary/30 */
   min-width: 200px;
+}
+
+.analyze-document-button:hover:not(:disabled) {
+  background-color: #1565c0; /* Darker blue on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 20px 25px -5px rgb(25 118 210 / 0.3), 0 8px 10px -6px rgb(25 118 210 / 0.3);
+}
+
+.analyze-document-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.analyze-document-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-loader {
+  margin-left: 0.25rem;
 }
 
 /* Analyzing State */
