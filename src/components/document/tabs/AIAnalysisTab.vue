@@ -2,56 +2,59 @@
   <!-- Document Tab Content -->
   <div>
     <!-- Loading State -->
-    <div v-if="loadingAITags" class="ai-loading-state">
-      <v-progress-circular indeterminate size="24" color="primary" />
-      <span class="ai-loading-text">Loading analysis results...</span>
-    </div>
+    <template v-if="loadingAITags">
+      <div class="ai-loading-state">
+        <v-progress-circular indeterminate size="24" color="primary" />
+        <span class="ai-loading-text">Loading analysis results...</span>
+      </div>
+    </template>
 
     <!-- Error Alert -->
-    <v-alert
-      v-else-if="aiError"
-      type="error"
-      variant="tonal"
-      class="ai-error-alert"
-      closable
-      @click:close="aiError = null"
-    >
-      <template v-slot:title>
-        <strong>{{ aiError.title }}</strong>
-      </template>
-      <p class="ai-error-message">{{ aiError.message }}</p>
-      <p v-if="aiError.details" class="ai-error-details">{{ aiError.details }}</p>
-
-      <!-- Retry Button -->
-      <v-btn
-        v-if="!aiError.action"
-        @click="retryAnalysis"
-        color="primary"
-        variant="outlined"
-        size="small"
-        class="ai-error-action"
-        prepend-icon="mdi-refresh"
+    <template v-else-if="aiError">
+      <v-alert
+        type="error"
+        variant="tonal"
+        class="ai-error-alert"
+        closable
+        @click:close="aiError = null"
       >
-        Retry Analysis
-      </v-btn>
+        <template v-slot:title>
+          <strong>{{ aiError.title }}</strong>
+        </template>
+        <p class="ai-error-message">{{ aiError.message }}</p>
+        <p v-if="aiError.details" class="ai-error-details">{{ aiError.details }}</p>
 
-      <!-- Action Button (e.g., Firebase Console link) -->
-      <v-btn
-        v-if="aiError.action"
-        :href="aiError.action.url"
-        target="_blank"
-        color="error"
-        variant="outlined"
-        size="small"
-        class="ai-error-action"
-      >
-        {{ aiError.action.text }}
-        <v-icon right>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-alert>
+        <!-- Retry Button -->
+        <v-btn
+          v-if="!aiError.action"
+          @click="retryAnalysis"
+          color="primary"
+          variant="outlined"
+          size="small"
+          class="ai-error-action"
+          prepend-icon="mdi-refresh"
+        >
+          Retry Analysis
+        </v-btn>
+
+        <!-- Action Button (e.g., Firebase Console link) -->
+        <v-btn
+          v-if="aiError.action"
+          :href="aiError.action.url"
+          target="_blank"
+          color="error"
+          variant="outlined"
+          size="small"
+          class="ai-error-action"
+        >
+          {{ aiError.action.text }}
+          <v-icon right>mdi-open-in-new</v-icon>
+        </v-btn>
+      </v-alert>
+    </template>
 
     <!-- Content Section -->
-    <div v-else>
+    <template v-else>
       <!-- System Fields Section -->
       <div class="metadata-section">
         <h3 class="metadata-section-title">System Fields</h3>
@@ -200,7 +203,7 @@
           <p>Coming soon...</p>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
