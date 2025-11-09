@@ -578,12 +578,12 @@ Here's another code block that should be ignored:
     });
   });
 
-  describe('_getDocumentTypes', () => {
+  describe('_getDocumentTypes (three-tier hierarchy)', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it('fetches document types from Firestore successfully', async () => {
+    it('fetches document types from matter-specific categories (primary)', async () => {
       const mockCategoryData = {
         tags: [
           { id: 'doctype-email', name: 'Email' },
@@ -611,49 +611,130 @@ Here's another code block that should be ignored:
       );
     });
 
-    it('returns default types when category does not exist', async () => {
+    it('falls back to firm-wide categories when matter-specific not found (secondary)', async () => {
+      const firmWideCategoryData = {
+        tags: [
+          { id: 'doctype-memo', name: 'Memo' },
+          { id: 'doctype-letter', name: 'Letter' },
+        ],
+      };
+
+      let callCount = 0;
+      vi.mocked(getDoc).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: matter-specific (not found)
+          return Promise.resolve({ exists: () => false });
+        }
+        if (callCount === 2) {
+          // Second call: firm-wide (found)
+          return Promise.resolve({ exists: () => true, data: () => firmWideCategoryData });
+        }
+        return Promise.resolve({ exists: () => false });
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toEqual(['Memo', 'Letter']);
+      expect(doc).toHaveBeenCalledWith(
+        expect.anything(),
+        'firms',
+        'firm123',
+        'matters',
+        'general',
+        'categories',
+        'DocumentType'
+      );
+    });
+
+    it('falls back to global systemcategories when firm paths not found (tertiary)', async () => {
+      const globalCategoryData = {
+        tags: [
+          { id: 'doctype-report', name: 'Report' },
+          { id: 'doctype-affidavit', name: 'Affidavit' },
+        ],
+      };
+
+      let callCount = 0;
+      vi.mocked(getDoc).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: matter-specific (not found)
+          return Promise.resolve({ exists: () => false });
+        }
+        if (callCount === 2) {
+          // Second call: firm-wide (not found)
+          return Promise.resolve({ exists: () => false });
+        }
+        if (callCount === 3) {
+          // Third call: global systemcategories (found)
+          return Promise.resolve({ exists: () => true, data: () => globalCategoryData });
+        }
+        return Promise.resolve({ exists: () => false });
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toEqual(['Report', 'Affidavit']);
+      expect(doc).toHaveBeenCalledWith(
+        expect.anything(),
+        'systemcategories',
+        'DocumentType'
+      );
+    });
+
+    it('throws error when all three tiers fail', async () => {
       vi.mocked(getDoc).mockResolvedValue({
         exists: () => false,
       });
 
-      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
-
-      expect(types).toBeInstanceOf(Array);
-      expect(types.length).toBeGreaterThan(0);
-      expect(types).toContain('Email');
-      expect(types).toContain('Invoice');
-      expect(types).toContain('Contract');
+      await expect(
+        aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456')
+      ).rejects.toThrow('DocumentType category not found');
     });
 
-    it('returns default types when Firestore fetch fails', async () => {
-      vi.mocked(getDoc).mockRejectedValue(new Error('Firestore error'));
-
-      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
-
-      expect(types).toBeInstanceOf(Array);
-      expect(types.length).toBeGreaterThan(0);
+    it('throws error when firmId is missing', async () => {
+      await expect(
+        aiMetadataExtractionService._getDocumentTypes(null, 'matter456')
+      ).rejects.toThrow('Missing firmId parameter');
     });
 
-    it('returns default types when firmId is missing', async () => {
-      const types = await aiMetadataExtractionService._getDocumentTypes(null, 'matter456');
+    it('skips matter-specific check when matterId is "general"', async () => {
+      const firmWideCategoryData = {
+        tags: [
+          { id: 'doctype-email', name: 'Email' },
+        ],
+      };
 
-      expect(types).toBeInstanceOf(Array);
-      expect(types.length).toBeGreaterThan(0);
-    });
-
-    it('returns default types when category has no tags', async () => {
       vi.mocked(getDoc).mockResolvedValue({
         exists: () => true,
-        data: () => ({ tags: [] }),
+        data: () => firmWideCategoryData,
       });
 
-      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'general');
 
-      expect(types).toBeInstanceOf(Array);
-      expect(types.length).toBeGreaterThan(0);
+      expect(types).toEqual(['Email']);
+      expect(doc).toHaveBeenCalledWith(
+        expect.anything(),
+        'firms',
+        'firm123',
+        'matters',
+        'general',
+        'categories',
+        'DocumentType'
+      );
+      expect(doc).not.toHaveBeenCalledWith(
+        expect.anything(),
+        'firms',
+        'firm123',
+        'matters',
+        'matter456',
+        'categories',
+        'DocumentType'
+      );
     });
 
-    it('filters out invalid tag entries', async () => {
+    it('filters out invalid tag entries from matter-specific', async () => {
       const mockCategoryData = {
         tags: [
           { id: 'doctype-email', name: 'Email' },
@@ -671,6 +752,34 @@ Here's another code block that should be ignored:
       const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
 
       expect(types).toEqual(['Email', 'Invoice']);
+    });
+
+    it('prioritizes matter-specific over firm-wide when both exist', async () => {
+      const matterSpecificData = {
+        tags: [{ id: 'doctype-custom', name: 'CustomType' }],
+      };
+
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => matterSpecificData,
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toEqual(['CustomType']);
+      // Should only call once since matter-specific is found first
+      expect(getDoc).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws error when category exists but has no valid tags', async () => {
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => ({ tags: [] }),
+      });
+
+      await expect(
+        aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456')
+      ).rejects.toThrow('DocumentType category not found');
     });
   });
 
@@ -842,6 +951,351 @@ Here's another code block that should be ignored:
           'matter456'
         )
       ).rejects.toThrow('Invalid confidence value for documentDate: must be 0-100, got 150');
+    });
+  });
+
+  describe('Token Usage Tracking', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Mock Firestore to return default document types
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => ({
+          tags: [
+            { id: 'doctype-email', name: 'Email' },
+            { id: 'doctype-invoice', name: 'Invoice' },
+          ],
+        }),
+      });
+    });
+
+    it('extracts token counts from API response', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+            usageMetadata: {
+              promptTokenCount: 2845,
+              candidatesTokenCount: 156,
+              cachedContentTokenCount: 0,
+              totalTokenCount: 3001,
+            },
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(result.tokenUsage).toBeDefined();
+      expect(result.tokenUsage.inputTokens).toBe(2845);
+      expect(result.tokenUsage.outputTokens).toBe(156);
+      expect(result.tokenUsage.cachedTokens).toBe(0);
+      expect(result.tokenUsage.totalTokens).toBe(3001);
+      expect(result.tokenUsage.aiModel).toBe('gemini-2.5-flash-lite');
+    });
+
+    it('handles cached tokens correctly', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+            usageMetadata: {
+              promptTokenCount: 2845,
+              candidatesTokenCount: 156,
+              cachedContentTokenCount: 2500,
+              totalTokenCount: 3001,
+            },
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(result.tokenUsage.cachedTokens).toBe(2500);
+    });
+
+    it('defaults cachedTokens to 0 if not present', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+            usageMetadata: {
+              promptTokenCount: 2845,
+              candidatesTokenCount: 156,
+              totalTokenCount: 3001,
+            },
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(result.tokenUsage.cachedTokens).toBe(0);
+    });
+
+    it('validates timestamps are ISO 8601 format', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+            usageMetadata: {
+              promptTokenCount: 2845,
+              candidatesTokenCount: 156,
+              cachedContentTokenCount: 0,
+              totalTokenCount: 3001,
+            },
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(result.tokenUsage.aiPromptSent).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(result.tokenUsage.aiResponse).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+      expect(() => new Date(result.tokenUsage.aiPromptSent)).not.toThrow();
+      expect(() => new Date(result.tokenUsage.aiResponse)).not.toThrow();
+    });
+
+    it('calculates response time correctly', async () => {
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+            usageMetadata: {
+              promptTokenCount: 2845,
+              candidatesTokenCount: 156,
+              cachedContentTokenCount: 0,
+              totalTokenCount: 3001,
+            },
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      const promptTime = new Date(result.tokenUsage.aiPromptSent).getTime();
+      const responseTime = new Date(result.tokenUsage.aiResponse).getTime();
+      const expectedDiff = responseTime - promptTime;
+
+      expect(result.tokenUsage.aiResponseTime).toBe(expectedDiff);
+      expect(result.tokenUsage.aiResponseTime).toBeGreaterThanOrEqual(0);
+    });
+
+    it('logs warning when usageMetadata is missing', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('usageMetadata missing or malformed')
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('defaults all token counts to 0 when usageMetadata is missing', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const mockResponse = {
+        documentDate: {
+          value: '2024-03-15',
+          confidence: 95,
+          reasoning: 'Found in header',
+          context: 'Invoice Date: March 15, 2024',
+          alternatives: [],
+        },
+        documentType: {
+          value: 'Invoice',
+          confidence: 98,
+          reasoning: 'Contains invoice header',
+          context: 'INVOICE #12345',
+          alternatives: [],
+        },
+      };
+
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () => JSON.stringify(mockResponse),
+          },
+        }),
+      };
+
+      vi.mocked(getGenerativeModel).mockReturnValue(mockModel);
+
+      const result = await aiMetadataExtractionService.analyzeDocument(
+        'base64data',
+        { displayName: 'test.pdf', fileSize: 1024 },
+        'pdf',
+        'firm123',
+        'matter456'
+      );
+
+      expect(result.tokenUsage.inputTokens).toBe(0);
+      expect(result.tokenUsage.outputTokens).toBe(0);
+      expect(result.tokenUsage.cachedTokens).toBe(0);
+      expect(result.tokenUsage.totalTokens).toBe(0);
+
+      consoleWarnSpy.mockRestore();
     });
   });
 });
