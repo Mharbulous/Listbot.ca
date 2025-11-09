@@ -65,6 +65,14 @@
             <!-- Segmented Control -->
             <SegmentedControl
               v-model="fieldPreferences.documentDate"
+              inline
+              hide-details
+              class="field-radio-group"
+            >
+              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
+              <v-radio label="Skip" value="skip" color="primary"></v-radio>
+              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
+            </v-radio-group>
               :options="[
                 { label: 'Analyze', value: 'analyze' },
                 { label: 'Skip', value: 'skip' },
@@ -126,6 +134,14 @@
             <!-- Segmented Control -->
             <SegmentedControl
               v-model="fieldPreferences.documentType"
+              inline
+              hide-details
+              class="field-radio-group"
+            >
+              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
+              <v-radio label="Skip" value="skip" color="primary"></v-radio>
+              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
+            </v-radio-group>
               :options="[
                 { label: 'Analyze', value: 'analyze' },
                 { label: 'Skip', value: 'skip' },
