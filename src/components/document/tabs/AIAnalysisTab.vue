@@ -225,6 +225,9 @@ const aiResults = ref({
   documentType: null,
 });
 
+// Track the last loaded document to avoid unnecessary reloads
+const lastLoadedFileHash = ref(null);
+
 // Instantiate file processing service
 const fileProcessingService = new FileProcessingService();
 
@@ -289,6 +292,9 @@ const loadAITags = async () => {
       documentType: tags?.find(t => t?.categoryId === 'DocumentType') || null
     };
 
+    // Track that we've loaded this document successfully
+    lastLoadedFileHash.value = props.fileHash;
+
   } catch (error) {
     console.error('❌ Failed to load AI tags:', error);
     // Phase 1.5 Learning: Use defensive error property access
@@ -300,20 +306,19 @@ const loadAITags = async () => {
   }
 };
 
-// Watch for activeTab changes to load AI tags when tab opens
-watch(() => props.activeTab, async (newTab) => {
-  if (newTab === 'document') {
-    await loadAITags();
-  }
-}, { immediate: true }); // Load immediately on mount if already on document tab
-
-// Watch for fileHash changes to reload AI tags when navigating between documents
-// Only reload if the AI tab is currently active
-watch(() => props.fileHash, async (newHash, oldHash) => {
-  if (newHash !== oldHash && props.activeTab === 'document') {
-    await loadAITags();
-  }
-});
+// Watch for activeTab or fileHash changes
+// Only load data when:
+// 1. The AI tab is currently active
+// 2. AND the document has changed since last load (or never loaded)
+watch(
+  [() => props.activeTab, () => props.fileHash],
+  async ([newTab, newFileHash]) => {
+    if (newTab === 'document' && newFileHash !== lastLoadedFileHash.value) {
+      await loadAITags();
+    }
+  },
+  { immediate: true } // Load immediately on mount if already on document tab
+);
 
 // Format date according to user preference using centralized utility
 const formatDateString = (dateString) => {
