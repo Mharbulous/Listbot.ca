@@ -169,9 +169,13 @@ const handleAnalyzeClick = async (fieldName) => {
   } catch (error) {
     console.error('❌ Analysis failed:', error);
     console.error('Error details:', {
-      message: error.message,
-      stack: error.stack
+      message: error?.message || 'Unknown error',
+      code: error?.code || 'unknown',
+      stack: error?.stack
     });
+
+    // Phase 1.5 Learning: Use defensive error access with optional chaining
+    // Firebase errors may not always have consistent structure
 
     // Phase 2: Still show mock results even on error (for testing)
     setTimeout(() => {
@@ -188,20 +192,30 @@ const handleAnalyzeClick = async (fieldName) => {
 
 ### Update firebase.js
 
-Ensure Firebase AI Logic is initialized:
+Ensure Firebase AI Logic is initialized with the **correct backend for client-side web applications**:
 
 ```javascript
 import { initializeApp } from 'firebase/app';
-import { getAI, VertexAIBackend } from 'firebase/ai';
+import { getAI } from 'firebase/ai';
 
 // ... existing Firebase initialization ...
 
-// Initialize Firebase AI Logic with Vertex AI backend
-// VertexAIBackend: Production-ready, supports Firebase Storage, uses project authentication
-export const firebaseAI = getAI(app, { backend: new VertexAIBackend() });
+// Initialize Firebase AI Logic with DEFAULT backend for client-side web apps
+// IMPORTANT: Use default backend (no parameters) for client-side applications
+// VertexAIBackend is ONLY for server-side Node.js applications
+export const firebaseAI = getAI(app);
 ```
 
-**Note**: The old import was `firebase/vertexai-preview`. The new import is `firebase/ai` and requires explicit backend selection.
+**CRITICAL - Backend Selection (from Phase 1.5 Resolution)**:
+- ✅ **Client-side web apps**: Use `getAI(app)` - default backend handles Firebase auth automatically
+- ❌ **Server-side Node.js apps**: Use `getAI(app, { backend: new VertexAIBackend() })` - requires IAM credentials
+
+**Why This Matters**:
+- Using `VertexAIBackend` in a client-side app causes **403 Forbidden errors**
+- Phase 1.5 troubleshooting identified this as the root cause of API failures
+- Default backend is specifically designed for browser-based Firebase applications
+
+**Note**: The old import was `firebase/vertexai-preview`. The new import is `firebase/ai`.
 
 ---
 
@@ -462,20 +476,24 @@ Phase 2 successfully implemented real Gemini API integration with comprehensive 
 - After: `import { FileProcessingService } from '...'` + `new FileProcessingService()` (correct)
 **Lesson**: Check service export pattern - class exports need instantiation
 
-#### 3. Missing Firebase AI Backend Configuration (`9ca13b7`)
-**Issue**: Firebase AI Logic requires backend specification (discovered via RTFM)
-**Root Cause**: Firebase AI Logic SDK (firebase/ai) mandates backend selection at initialization
-**Solution**: Added `VertexAIBackend` configuration to `getAI()` call
+#### 3. Firebase AI Backend Configuration - CORRECTED IN PHASE 1.5
+**Issue**: Initial implementation used `VertexAIBackend` which caused 403 Forbidden errors
+**Root Cause**: `VertexAIBackend` is for server-side Node.js applications, not client-side web apps
+**Solution**: Use default backend for client-side web applications
 ```javascript
-// Before: getAI(app) - WRONG
-// After: getAI(app, { backend: new VertexAIBackend() }) - CORRECT
+// ❌ WRONG (causes 403 errors in client-side apps):
+getAI(app, { backend: new VertexAIBackend() })
+
+// ✅ CORRECT (for client-side web apps like Bookkeeper):
+getAI(app)
 ```
-**Why VertexAIBackend**:
-- Supports Firebase Storage integration
-- Better for production use with Firebase services
-- Uses project authentication automatically (no API key needed)
-**Alternative**: `GoogleAIBackend` - requires API key, has free tier, but no Cloud Storage support
-**Lesson**: RTFM on Firebase AI Logic SDK - backend configuration is mandatory, not optional
+**Why Default Backend**:
+- Designed for browser-based Firebase applications
+- Handles Firebase authentication automatically
+- No Google Cloud IAM credentials required
+- Works with Firebase API keys out of the box
+**When to use VertexAIBackend**: Server-side Node.js applications with service account credentials
+**Lesson**: Backend type must match application architecture (client vs server)
 
 #### 4. Export Inconsistency - Code Review Finding (`f49d6af`)
 **Issue**: `fileProcessingService.js` had dual exports (named + default)
@@ -490,20 +508,23 @@ Phase 2 successfully implemented real Gemini API integration with comprehensive 
 
 **Key Discovery**: Firebase rebranded "Vertex AI in Firebase" to **"Firebase AI Logic"** in May 2025
 
-**Import Pattern**:
+**Import Pattern for Client-Side Web Apps** (CORRECTED):
 ```javascript
-import { getAI, VertexAIBackend, getGenerativeModel } from 'firebase/ai';
+import { getAI, getGenerativeModel } from 'firebase/ai';
 
-// Initialize with backend
-const firebaseAI = getAI(app, { backend: new VertexAIBackend() });
+// Initialize with DEFAULT backend (for client-side web apps)
+const firebaseAI = getAI(app);
 
 // Create model
 const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' });
 ```
 
 **Backend Options**:
-- `VertexAIBackend()` - No parameters, uses Firebase project auth, supports Storage integration
-- `GoogleAIBackend({ apiKey: '...' })` - Requires API key, has free tier, no Cloud Storage support
+- **Default Backend** (`getAI(app)`) - ✅ For client-side web apps, handles Firebase auth automatically
+- **VertexAIBackend** - ❌ For server-side Node.js only, requires Google Cloud IAM credentials
+- **GoogleAIBackend** - For apps using Google AI API key directly (has free tier, no Firebase Storage)
+
+**CRITICAL**: Bookkeeper is a client-side web app → MUST use default backend
 
 **Model Recommendations** (as of 2025):
 - Use `gemini-2.5-flash-lite` or newer

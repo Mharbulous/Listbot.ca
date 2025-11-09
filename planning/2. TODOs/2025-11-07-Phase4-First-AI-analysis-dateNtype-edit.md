@@ -115,6 +115,9 @@ const editErrors = ref({
   documentDate: '',
   documentType: ''
 });
+
+// Phase 1.5 Learning: Add loading state for better UX
+const savingEdit = ref(false);
 ```
 
 ---
@@ -159,19 +162,39 @@ const validateEdit = (fieldName, value) => {
   return null; // Valid
 };
 
+const savingEdit = ref(false);
+
 const saveEdit = async (fieldName) => {
-  const newValue = editValues.value[fieldName];
+  const newValue = editValues.value?.[fieldName];
+
+  // Validate
   const error = validateEdit(fieldName, newValue);
   if (error) {
     editErrors.value[fieldName] = error;
     return;
   }
 
+  savingEdit.value = true;
+
   try {
     const authStore = useAuthStore();
-    const firmId = authStore.currentFirm;
-    const userId = authStore.user.uid;
-    const existingTag = aiResults.value[fieldName];
+    const firmId = authStore?.currentFirm;
+    const userId = authStore?.user?.uid;
+    const existingTag = aiResults.value?.[fieldName];
+
+    // Phase 1.5 Learning: Defensive checks before Firestore operations
+    if (!firmId) {
+      throw new Error('Firm ID not available. Please ensure you are logged in.');
+    }
+
+    if (!userId) {
+      throw new Error('User ID not available. Please log in again.');
+    }
+
+    if (!props.evidence?.id) {
+      throw new Error('Document ID not available.');
+    }
+
     const categoryId = fieldName === 'documentDate' ? 'DocumentDate' : 'DocumentType';
     const categoryName = fieldName === 'documentDate' ? 'Document Date' : 'Document Type';
 
@@ -179,13 +202,13 @@ const saveEdit = async (fieldName) => {
       categoryId,
       categoryName,
       tagName: newValue,
-      confidence: existingTag?.confidence || 100,
+      confidence: existingTag?.confidence ?? 100,
       source: 'human', // Human edit overrides AI
       autoApproved: true,
       reviewRequired: false,
       humanReviewed: true,
       metadata: {
-        ...existingTag?.metadata,
+        ...(existingTag?.metadata || {}),
         originalAI: existingTag?.metadata?.originalAI || {
           value: existingTag?.tagName,
           confidence: existingTag?.confidence,
@@ -212,13 +235,25 @@ const saveEdit = async (fieldName) => {
       firmId
     );
 
+    console.log('✅ Edit saved successfully');
+
+    // Exit edit mode
     editMode.value[fieldName] = false;
     editValues.value[fieldName] = '';
+    editErrors.value[fieldName] = '';
+
+    // Reload to display updated value
     await loadAITags();
 
   } catch (error) {
     console.error('❌ Failed to save edit:', error);
-    editErrors.value[fieldName] = 'Failed to save. Please try again.';
+
+    // Phase 1.5 Learning: Defensive error property access
+    const errorMessage = error?.message || 'Failed to save. Please try again.';
+    editErrors.value[fieldName] = errorMessage;
+
+  } finally {
+    savingEdit.value = false;
   }
 };
 
@@ -251,10 +286,21 @@ const markAsReviewed = async (fieldName) => {
       density="compact"
     />
     <div class="ai-edit-actions">
-      <v-btn size="small" color="success" @click="saveEdit('documentDate')" :disabled="!!editErrors.documentDate">
+      <v-btn
+        size="small"
+        color="success"
+        @click="saveEdit('documentDate')"
+        :disabled="!!editErrors.documentDate"
+        :loading="savingEdit"
+      >
         Save
       </v-btn>
-      <v-btn size="small" variant="outlined" @click="cancelEdit('documentDate')">
+      <v-btn
+        size="small"
+        variant="outlined"
+        @click="cancelEdit('documentDate')"
+        :disabled="savingEdit"
+      >
         Cancel
       </v-btn>
     </div>
@@ -319,12 +365,17 @@ const markAsReviewed = async (fieldName) => {
           <p class="ai-alternatives-note">Click to approve alternative</p>
         </div>
 
-        <!-- Edit History -->
-        <div v-if="aiResults.documentDate.metadata?.editHistory?.length" class="ai-tooltip-section">
+        <!-- Edit History (Phase 1.5: Defensive access with optional chaining) -->
+        <div v-if="aiResults.documentDate?.metadata?.editHistory?.length > 0" class="ai-tooltip-section">
           <strong>Edit History:</strong>
           <p class="ai-edit-history">
-            Edited by {{ getUserName(aiResults.documentDate.metadata.editHistory[0].editedBy) }}
-            on {{ formatDateTime(aiResults.documentDate.metadata.editHistory[0].editedAt) }}
+            Edited by {{ getUserName(aiResults.documentDate.metadata.editHistory[0]?.editedBy) }}
+            on {{ formatDateTime(aiResults.documentDate.metadata.editHistory[0]?.editedAt) }}
+          </p>
+
+          <!-- Show count if multiple edits -->
+          <p v-if="aiResults.documentDate.metadata.editHistory.length > 1" class="text-caption">
+            ({{ aiResults.documentDate.metadata.editHistory.length }} edits total)
           </p>
         </div>
       </div>

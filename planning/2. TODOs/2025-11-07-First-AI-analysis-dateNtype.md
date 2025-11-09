@@ -68,6 +68,183 @@ Implement AI-powered extraction of Document Date and Document Type metadata usin
 
 ---
 
+## Implementation Best Practices (from Phase 1.5 Learnings)
+
+**Context**: Phase 1.5 involved troubleshooting Firebase AI integration issues. The learnings below apply to all implementation phases.
+
+### 1. Firebase AI Backend Configuration (CRITICAL)
+
+**Rule**: Client-side web apps MUST use default backend
+
+```javascript
+// ✅ CORRECT - For client-side web apps (Bookkeeper)
+import { getAI } from 'firebase/ai';
+const firebaseAI = getAI(app);
+
+// ❌ WRONG - Only for server-side Node.js apps
+import { getAI, VertexAIBackend } from 'firebase/ai';
+const firebaseAI = getAI(app, { backend: new VertexAIBackend() });
+```
+
+**Why This Matters**:
+- Using `VertexAIBackend` in client-side apps causes **403 Forbidden errors**
+- `VertexAIBackend` requires Google Cloud IAM service account credentials
+- Default backend handles Firebase authentication automatically
+- This was the root cause of Phase 1.5 troubleshooting
+
+**Reference**: See Phase 2 plan for detailed backend configuration instructions
+
+---
+
+### 2. Defensive Programming Patterns
+
+**Rule**: Always use optional chaining and fallback values
+
+```javascript
+// ❌ Unsafe - May crash if error structure is unexpected
+const message = error.message;
+const confidence = result.documentDate.confidence;
+
+// ✅ Defensive - Handles missing/null/undefined gracefully
+const message = error?.message || 'Unknown error';
+const confidence = result?.documentDate?.confidence ?? 0;
+```
+
+**Apply To**:
+- All error property access (`error?.message`, `error?.code`)
+- All Firestore data access (`tags?.find(...)`, `tag?.categoryId`)
+- All nested object access (`metadata?.editHistory?.[0]?.editedBy`)
+- All user input (`props.evidence?.id`, `authStore?.currentFirm`)
+
+**Why This Matters**:
+- Firebase errors don't always have consistent structure
+- Firestore may return null/undefined or malformed data
+- Third-party errors may have different formats
+- Prevents UI crashes and provides better user experience
+
+---
+
+### 3. Pre-Operation Validation
+
+**Rule**: Validate required data before Firestore/API operations
+
+```javascript
+// Check authentication state
+if (!authStore?.currentFirm) {
+  throw new Error('No firm ID available. Please ensure you are logged in.');
+}
+
+if (!authStore?.user?.uid) {
+  throw new Error('User ID not available. Please log in again.');
+}
+
+// Check document data
+if (!props.evidence?.id) {
+  throw new Error('Document ID not available.');
+}
+
+// Check array data before iteration
+if (!Array.isArray(tags) || tags.length === 0) {
+  console.warn('⚠️ No tags to process');
+  return;
+}
+```
+
+**Apply To**:
+- All Firestore read/write operations
+- All Firebase Storage operations
+- All AI API calls
+- All data transformations
+
+---
+
+### 4. Error Message Awareness
+
+**Rule**: Don't trust Firebase error messages at face value
+
+**Key Learning**: Phase 1.5 encountered a 403 error claiming "API not enabled" when the real issue was using the wrong backend type. The API was actually enabled.
+
+**Best Practice**:
+- Add comprehensive logging to understand actual state
+- Include configuration details in error logs
+- Provide troubleshooting steps beyond error message
+- Categorize errors for user-friendly display
+
+```javascript
+// Categorize errors for better user experience
+const detectErrorType = (error) => {
+  const message = error?.message || '';
+  const code = error?.code || '';
+
+  if (message.includes('too large')) {
+    return 'File exceeds size limit';
+  } else if (message.includes('network') || code === 'unavailable') {
+    return 'Network connection error';
+  } else if (code === 'resource-exhausted') {
+    return 'AI service quota exceeded';
+  } else if (message.includes('firebasevertexai.googleapis.com')) {
+    return 'Firebase AI API configuration error';
+  }
+
+  return 'Unknown error - check logs for details';
+};
+```
+
+---
+
+### 5. Testing Requirements
+
+**Rule**: Manual testing with real data is NOT optional
+
+**Why Unit Tests Aren't Enough**:
+- Unit tests use mocked data and may miss integration issues
+- Real files reveal edge cases (large files, malformed PDFs, unusual formats)
+- Actual API responses may differ from mocked responses
+- Network conditions affect real-world behavior
+- Processing time varies with file size and complexity
+
+**Testing Checklist (All Phases)**:
+- ✅ Test with real PDF files (various sizes and types)
+- ✅ Test with files >20MB (should be rejected)
+- ✅ Test with network offline (should show friendly error)
+- ✅ Test with multiple document types (invoice, cheque, contract, etc.)
+- ✅ Test persistence (close browser, reopen - results should load)
+- ✅ Verify console output matches expected format
+- ✅ Confirm processing times are reasonable
+
+**Phase 1.5 Example**:
+- Tested with real PDF: "2016-12-06 CHQ#282 West Coast.pdf" (493.74 KB)
+- Processing time: 3.525 seconds
+- Confidence: Date 99%, Type 95%
+- Result: Successfully identified cheque with correct date
+
+---
+
+### 6. Console Logging Standards
+
+**Rule**: Use consistent emoji indicators and structured logging
+
+**Console Output Pattern**:
+```javascript
+console.log('🤖 Starting Gemini AI analysis...');
+console.log('📂 Getting file content from Firebase Storage...');
+console.log('✅ File retrieved successfully');
+console.log('📤 Sending request to Gemini API...');
+console.log('📥 Received response from Gemini API');
+console.log('🎯 FINAL PARSED RESULTS:', results);
+console.log('✅ Analysis completed in', processingTime, 'ms');
+console.error('❌ Analysis failed:', error);
+console.warn('⚠️ Invalid date string:', dateString);
+```
+
+**Benefits**:
+- Easy to scan console output
+- Clear operation flow visualization
+- Quick identification of errors/warnings
+- Consistent across all phases
+
+---
+
 ## Gemini Prompt Strategy
 
 ### Prompt Structure
@@ -218,7 +395,8 @@ Return as JSON.
 ### External APIs
 - **Google Gemini 2.5 Flash Lite** via Firebase AI Logic (formerly "Vertex AI in Firebase")
 - Requires: `VITE_FIREBASE_PROJECT_ID` in `.env`
-- SDK: `firebase/ai` (uses VertexAIBackend for production Firebase integration)
+- SDK: `firebase/ai` (uses default backend for client-side web applications)
+- **Backend**: Default backend (NOT VertexAIBackend - see Implementation Best Practices)
 
 ### Environment Variables
 ```env
