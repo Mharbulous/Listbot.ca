@@ -47,40 +47,49 @@ class TagSubcollectionService {
   /**
    * Get reference to tags subcollection for a document
    */
-  getTagsCollection(docId, firmId) {
+  getTagsCollection(docId, firmId, matterId = 'general') {
     if (!firmId) {
       throw new Error('Firm ID is required for tag operations');
     }
-    return collection(db, 'firms', firmId, 'matters', 'general', 'evidence', docId, 'tags');
+    if (!matterId) {
+      throw new Error('Matter ID is required for tag operations');
+    }
+    return collection(db, 'firms', firmId, 'matters', matterId, 'evidence', docId, 'tags');
   }
 
   /**
    * Get reference to a specific tag document
    */
-  getTagDoc(docId, tagId, firmId) {
+  getTagDoc(docId, tagId, firmId, matterId = 'general') {
     if (!firmId) {
       throw new Error('Firm ID is required for tag operations');
     }
-    return doc(db, 'firms', firmId, 'matters', 'general', 'evidence', docId, 'tags', tagId);
+    if (!matterId) {
+      throw new Error('Matter ID is required for tag operations');
+    }
+    return doc(db, 'firms', firmId, 'matters', matterId, 'evidence', docId, 'tags', tagId);
   }
 
   /**
    * Get reference to evidence document (for embedded tags sync)
    */
-  getEvidenceDoc(docId, firmId) {
+  getEvidenceDoc(docId, firmId, matterId = 'general') {
     if (!firmId) {
       throw new Error('Firm ID is required for tag operations');
     }
-    return doc(db, 'firms', firmId, 'matters', 'general', 'evidence', docId);
+    if (!matterId) {
+      throw new Error('Matter ID is required for tag operations');
+    }
+    return doc(db, 'firms', firmId, 'matters', matterId, 'evidence', docId);
   }
 
   /**
    * Add a new tag to a document (using NEW data structure with categoryId as document ID)
    * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
-  async addTag(docId, tagData, firmId) {
+  async addTag(docId, tagData, firmId, matterId = 'general') {
     try {
-      const tagsCollection = this.getTagsCollection(docId, firmId);
+      const tagsCollection = this.getTagsCollection(docId, firmId, matterId);
 
       // Use categoryId as the document ID (per migration plan)
       if (!tagData.categoryId) {
@@ -120,7 +129,7 @@ class TagSubcollectionService {
       batch.set(tagDocRef, tagDoc);
 
       // Write to parent document embedded tags (fast table access)
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
       const embeddedTag = {
         tagName: tagData.tagName,
         confidence: tagData.confidence,
@@ -152,13 +161,13 @@ class TagSubcollectionService {
    * Add multiple tags by calling addTag() for each one
    * This ensures consistency and reduces code duplication
    */
-  async addTagsBatch(docId, tagsArray, firmId) {
+  async addTagsBatch(docId, tagsArray, firmId, matterId = 'general') {
     try {
       const addedTags = [];
 
       // Process each tag individually using the single addTag method
       for (const tagData of tagsArray) {
-        const addedTag = await this.addTag(docId, tagData, firmId);
+        const addedTag = await this.addTag(docId, tagData, firmId, matterId);
         addedTags.push(addedTag);
       }
 
@@ -175,9 +184,9 @@ class TagSubcollectionService {
   /**
    * Get all tags for a document (NEW structure)
    */
-  async getTags(docId, options = {}, firmId) {
+  async getTags(docId, options = {}, firmId, matterId = 'general') {
     try {
-      const tagsCollection = this.getTagsCollection(docId, firmId);
+      const tagsCollection = this.getTagsCollection(docId, firmId, matterId);
       let q = query(tagsCollection, orderBy('createdAt', 'desc'));
 
       // Note: No longer filtering by 'status' field - using new structure with autoApproved/reviewRequired
@@ -205,9 +214,9 @@ class TagSubcollectionService {
   /**
    * Get tags grouped by status (NEW structure using autoApproved/reviewRequired)
    */
-  async getTagsByStatus(docId, firmId) {
+  async getTagsByStatus(docId, firmId, matterId = 'general') {
     try {
-      const allTags = await this.getTags(docId, {}, firmId);
+      const allTags = await this.getTags(docId, {}, firmId, matterId);
 
       return {
         // Pending: AI tags that need review (reviewRequired = true)
@@ -233,16 +242,16 @@ class TagSubcollectionService {
   /**
    * Get only approved tags for a document (NEW structure)
    */
-  async getApprovedTags(docId, firmId) {
-    const tagsByStatus = await this.getTagsByStatus(docId, firmId);
+  async getApprovedTags(docId, firmId, matterId = 'general') {
+    const tagsByStatus = await this.getTagsByStatus(docId, firmId, matterId);
     return tagsByStatus.approved;
   }
 
   /**
    * Get only pending tags for a document (NEW structure)
    */
-  async getPendingTags(docId, firmId) {
-    const tagsByStatus = await this.getTagsByStatus(docId, firmId);
+  async getPendingTags(docId, firmId, matterId = 'general') {
+    const tagsByStatus = await this.getTagsByStatus(docId, firmId, matterId);
     return tagsByStatus.pending;
   }
 
@@ -250,12 +259,12 @@ class TagSubcollectionService {
    * Approve an AI tag (NEW structure)
    * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
-  async approveAITag(docId, categoryId, firmId) {
+  async approveAITag(docId, categoryId, firmId, matterId = 'general') {
     try {
       const batch = writeBatch(db);
 
       // Update subcollection (full metadata, audit trail)
-      const tagRef = this.getTagDoc(docId, categoryId, firmId);
+      const tagRef = this.getTagDoc(docId, categoryId, firmId, matterId);
       const updateData = {
         reviewRequired: false,
         reviewedAt: serverTimestamp(),
@@ -264,7 +273,7 @@ class TagSubcollectionService {
       batch.update(tagRef, updateData);
 
       // Update embedded tag in evidence document (fast table access)
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
       batch.update(evidenceRef, {
         [`tags.${categoryId}.reviewRequired`]: false,
         [`tags.${categoryId}.reviewedAt`]: serverTimestamp(),
@@ -286,12 +295,12 @@ class TagSubcollectionService {
    * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    * Rejected tags are removed from embedded tags (not displayed in table)
    */
-  async rejectAITag(docId, categoryId, firmId) {
+  async rejectAITag(docId, categoryId, firmId, matterId = 'general') {
     try {
       const batch = writeBatch(db);
 
       // Update subcollection (full metadata, audit trail - keeps rejected tags for history)
-      const tagRef = this.getTagDoc(docId, categoryId, firmId);
+      const tagRef = this.getTagDoc(docId, categoryId, firmId, matterId);
       const updateData = {
         reviewRequired: false,
         rejected: true,
@@ -301,7 +310,7 @@ class TagSubcollectionService {
       batch.update(tagRef, updateData);
 
       // Remove from embedded tags (rejected tags should not appear in table)
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
       batch.update(evidenceRef, {
         [`tags.${categoryId}`]: deleteField(),
       });
@@ -320,29 +329,29 @@ class TagSubcollectionService {
   /**
    * Approve a tag (compatibility wrapper for NEW structure)
    */
-  async approveTag(docId, categoryId, firmId) {
-    return await this.approveAITag(docId, categoryId, firmId);
+  async approveTag(docId, categoryId, firmId, matterId = 'general') {
+    return await this.approveAITag(docId, categoryId, firmId, matterId);
   }
 
   /**
    * Reject a tag (compatibility wrapper for NEW structure)
    */
-  async rejectTag(docId, categoryId, firmId) {
-    return await this.rejectAITag(docId, categoryId, firmId);
+  async rejectTag(docId, categoryId, firmId, matterId = 'general') {
+    return await this.rejectAITag(docId, categoryId, firmId, matterId);
   }
 
   /**
    * Bulk approve multiple tags (NEW structure)
    * OPTIMIZED: Syncs both subcollection AND embedded tags map in single batch
    */
-  async approveTagsBatch(docId, categoryIds, firmId) {
+  async approveTagsBatch(docId, categoryIds, firmId, matterId = 'general') {
     try {
       const batch = writeBatch(db);
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
 
       for (const categoryId of categoryIds) {
         // Update subcollection (audit trail, full metadata)
-        const tagRef = this.getTagDoc(docId, categoryId, firmId);
+        const tagRef = this.getTagDoc(docId, categoryId, firmId, matterId);
         batch.update(tagRef, {
           reviewRequired: false,
           reviewedAt: serverTimestamp(),
@@ -372,14 +381,14 @@ class TagSubcollectionService {
    * OPTIMIZED: Syncs both subcollection AND embedded tags map in single batch
    * Rejected tags are removed from embedded tags (not displayed in table)
    */
-  async rejectTagsBatch(docId, categoryIds, firmId) {
+  async rejectTagsBatch(docId, categoryIds, firmId, matterId = 'general') {
     try {
       const batch = writeBatch(db);
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
 
       for (const categoryId of categoryIds) {
         // Update subcollection (audit trail - keeps rejected tags for history)
-        const tagRef = this.getTagDoc(docId, categoryId, firmId);
+        const tagRef = this.getTagDoc(docId, categoryId, firmId, matterId);
         batch.update(tagRef, {
           reviewRequired: false,
           rejected: true,
@@ -408,16 +417,16 @@ class TagSubcollectionService {
    * Delete a tag
    * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
    */
-  async deleteTag(docId, tagId, firmId) {
+  async deleteTag(docId, tagId, firmId, matterId = 'general') {
     try {
       const batch = writeBatch(db);
 
       // Delete from subcollection (removes audit trail)
-      const tagRef = this.getTagDoc(docId, tagId, firmId);
+      const tagRef = this.getTagDoc(docId, tagId, firmId, matterId);
       batch.delete(tagRef);
 
       // Remove from embedded tags (removes from table display)
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
       batch.update(evidenceRef, {
         [`tags.${tagId}`]: deleteField(),
       });
@@ -437,19 +446,19 @@ class TagSubcollectionService {
    * Delete all tags for a document
    * OPTIMIZED: Syncs both subcollection deletion AND embedded tags reset
    */
-  async deleteAllTags(docId, firmId) {
+  async deleteAllTags(docId, firmId, matterId = 'general') {
     try {
-      const tags = await this.getTags(docId, {}, firmId);
+      const tags = await this.getTags(docId, {}, firmId, matterId);
       const batch = writeBatch(db);
 
       // Delete all tag subcollection documents (removes audit trail)
       for (const tag of tags) {
-        const tagRef = this.getTagDoc(docId, tag.id, firmId);
+        const tagRef = this.getTagDoc(docId, tag.id, firmId, matterId);
         batch.delete(tagRef);
       }
 
       // Reset embedded tags map to empty object (clears table display)
-      const evidenceRef = this.getEvidenceDoc(docId, firmId);
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
       batch.update(evidenceRef, {
         tags: {},
       });
@@ -467,9 +476,9 @@ class TagSubcollectionService {
   /**
    * Get tag statistics for a document
    */
-  async getTagStats(docId, firmId) {
+  async getTagStats(docId, firmId, matterId = 'general') {
     try {
-      const tags = await this.getTags(docId, {}, firmId);
+      const tags = await this.getTags(docId, {}, firmId, matterId);
 
       const stats = {
         total: tags.length,
@@ -532,9 +541,9 @@ class TagSubcollectionService {
   /**
    * Check if a tag document exists
    */
-  async tagExists(docId, tagId, firmId) {
+  async tagExists(docId, tagId, firmId, matterId = 'general') {
     try {
-      const tagRef = this.getTagDoc(docId, tagId, firmId);
+      const tagRef = this.getTagDoc(docId, tagId, firmId, matterId);
       const doc = await getDoc(tagRef);
       return doc.exists();
     } catch (error) {
@@ -549,9 +558,9 @@ class TagSubcollectionService {
   /**
    * Find duplicate tags by name
    */
-  async findDuplicateTags(docId, tagName, firmId) {
+  async findDuplicateTags(docId, tagName, firmId, matterId = 'general') {
     try {
-      const tagsCollection = this.getTagsCollection(docId, firmId);
+      const tagsCollection = this.getTagsCollection(docId, firmId, matterId);
       const q = query(tagsCollection, where('tagName', '==', tagName));
       const querySnapshot = await getDocs(q);
 
