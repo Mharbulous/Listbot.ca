@@ -7,13 +7,6 @@
           <div class="tabs-container">
             <button
               class="tab-button"
-              :class="{ active: activeTab === 'digital-file' }"
-              @click="activeTab = 'digital-file'"
-            >
-              ℹ️ Metadata
-            </button>
-            <button
-              class="tab-button"
               :class="{ active: activeTab === 'document' }"
               @click="activeTab = 'document'"
             >
@@ -25,6 +18,13 @@
               @click="activeTab = 'review'"
             >
              👤Review
+            </button>
+            <button
+              class="tab-button"
+              :class="{ active: activeTab === 'digital-file' }"
+              @click="activeTab = 'digital-file'"
+            >
+              ℹ️ Metadata
             </button>
           </div>
           <v-btn
@@ -85,7 +85,7 @@ import AIAnalysisTab from './tabs/AIAnalysisTab.vue';
 import ReviewTab from './tabs/ReviewTab.vue';
 
 // Tab state
-const activeTab = ref('digital-file');
+const activeTab = ref('document');
 
 // Props
 const props = defineProps({
