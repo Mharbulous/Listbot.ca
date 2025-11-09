@@ -10,7 +10,8 @@
               :class="{ active: activeTab === 'document' }"
               @click="activeTab = 'document'"
             >
-              🤖 AI
+              ✨ AI
+
             </button>
             <button
               class="tab-button"
