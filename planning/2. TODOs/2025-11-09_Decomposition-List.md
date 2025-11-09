@@ -15,7 +15,6 @@
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/deprecated/ViewDocument.vue` | 1005 |
 | `/home/user/Bookkeeper/src/views/Home.vue` | 866 |
 | `/home/user/Bookkeeper/src/features/upload/FileUpload.vue` | 853 |
 | `/home/user/Bookkeeper/src/dev-demos/views/CategoryEditViewer.vue` | 760 |
