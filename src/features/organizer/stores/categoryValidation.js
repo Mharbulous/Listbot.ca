@@ -1,4 +1,4 @@
-import { isSystemCategory } from '../constants/systemcategories.js';
+import { isSystemCategory } from '../constants/systemCategories.js';
 
 /**
  * Category Validation Module

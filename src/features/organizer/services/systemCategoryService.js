@@ -13,7 +13,7 @@ import {
   SYSTEM_CATEGORIES,
   isSystemCategory,
   getSystemCategory,
-} from '../constants/systemcategories.js';
+} from '../constants/systemCategories.js';
 
 /**
  * System Category Service
