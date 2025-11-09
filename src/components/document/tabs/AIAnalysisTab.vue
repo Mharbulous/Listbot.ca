@@ -185,19 +185,20 @@
         </div>
       </div>
 
-    <!-- Firm Fields Section -->
-    <div class="metadata-section">
-      <h3 class="metadata-section-title">Firm fields</h3>
-      <div class="metadata-notice">
-        <p>Coming soon...</p>
+      <!-- Firm Fields Section -->
+      <div class="metadata-section">
+        <h3 class="metadata-section-title">Firm fields</h3>
+        <div class="metadata-notice">
+          <p>Coming soon...</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Matter Fields Section -->
-    <div class="metadata-section">
-      <h3 class="metadata-section-title">Matter fields</h3>
-      <div class="metadata-notice">
-        <p>Coming soon...</p>
+      <!-- Matter Fields Section -->
+      <div class="metadata-section">
+        <h3 class="metadata-section-title">Matter fields</h3>
+        <div class="metadata-notice">
+          <p>Coming soon...</p>
+        </div>
       </div>
     </div>
   </div>
