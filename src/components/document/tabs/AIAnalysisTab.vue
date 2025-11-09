@@ -89,14 +89,12 @@
                 <div v-bind="tooltipProps" class="ai-result-content">
                   <span class="ai-result-value">{{ formatDateString(aiResults.documentDate.tagName) }}</span>
                   <v-chip
-                    :color="aiResults.documentDate.autoApproved ? 'success' : 'warning'"
-                    :prepend-icon="aiResults.documentDate.autoApproved ? 'mdi-check-circle' : 'mdi-alert'"
+                    :color="getConfidenceBadgeColor(aiResults.documentDate.confidence)"
                     size="small"
                     variant="flat"
                     class="ai-result-badge"
                   >
                     {{ aiResults.documentDate.confidence }}%
-                    {{ aiResults.documentDate.autoApproved ? 'Auto-approved' : 'Review Required' }}
                   </v-chip>
                 </div>
               </template>
@@ -153,14 +151,12 @@
                 <div v-bind="tooltipProps" class="ai-result-content">
                   <span class="ai-result-value">{{ aiResults.documentType.tagName }}</span>
                   <v-chip
-                    :color="aiResults.documentType.autoApproved ? 'success' : 'warning'"
-                    :prepend-icon="aiResults.documentType.autoApproved ? 'mdi-check-circle' : 'mdi-alert'"
+                    :color="getConfidenceBadgeColor(aiResults.documentType.confidence)"
                     size="small"
                     variant="flat"
                     class="ai-result-badge"
                   >
                     {{ aiResults.documentType.confidence }}%
-                    {{ aiResults.documentType.autoApproved ? 'Auto-approved' : 'Review Required' }}
                   </v-chip>
                 </div>
               </template>
@@ -208,7 +204,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { FileProcessingService } from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
@@ -251,6 +247,13 @@ const props = defineProps({
 // Get route and auth store
 const route = useRoute();
 const authStore = useAuthStore();
+
+// Helper function to get badge color based on confidence level
+const getConfidenceBadgeColor = (confidence) => {
+  if (confidence >= 95) return 'success'; // Green for 95%+
+  if (confidence >= 80) return 'warning'; // Amber for 80-94%
+  return 'error'; // Red for <80%
+};
 
 // Load existing AI tags from Firestore
 const loadAITags = async () => {
