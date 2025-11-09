@@ -111,7 +111,7 @@ Implement the "Analyze Document" button in the AI tab of the DocumentMetadataPan
 ## Implementation Details
 
 ### File to Modify
-**`src/components/document/DocumentMetadataPanel.vue`**
+**`src/components/document/tabs/AIAnalysisTab.vue`**
 
 ### Current State (Lines 244-278)
 ```vue
