@@ -71,7 +71,7 @@
               hide-details
               class="field-radio-group"
             >
-              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
+              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
               <v-radio label="Skip" value="skip" color="primary"></v-radio>
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
             </v-radio-group>
@@ -134,7 +134,7 @@
               hide-details
               class="field-radio-group"
             >
-              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
+              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
               <v-radio label="Skip" value="skip" color="primary"></v-radio>
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
             </v-radio-group>
