@@ -76,11 +76,6 @@
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
             </v-radio-group>
 
-            <!-- State 1: No Result Yet -->
-            <div v-if="!aiResults.documentDate && !isAnalyzing" class="field-status">
-              <span class="field-status-text">No analysis yet</span>
-            </div>
-
             <!-- State 2: Analyzing Spinner -->
             <div v-else-if="isAnalyzing" class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
@@ -144,11 +139,6 @@
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
             </v-radio-group>
 
-            <!-- State 1: No Result Yet -->
-            <div v-if="!aiResults.documentType && !isAnalyzing" class="field-status">
-              <span class="field-status-text">No analysis yet</span>
-            </div>
-
             <!-- State 2: Analyzing Spinner -->
             <div v-else-if="isAnalyzing" class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
@@ -209,22 +199,6 @@
           >
             Analyze Document
           </v-btn>
-        </div>
-      </div>
-
-      <!-- Firm Fields Section -->
-      <div class="metadata-section">
-        <h3 class="metadata-section-title">Firm fields</h3>
-        <div class="metadata-notice">
-          <p>Coming soon...</p>
-        </div>
-      </div>
-
-      <!-- Matter Fields Section -->
-      <div class="metadata-section">
-        <h3 class="metadata-section-title">Matter fields</h3>
-        <div class="metadata-notice">
-          <p>Coming soon...</p>
         </div>
       </div>
     </template>
