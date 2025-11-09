@@ -63,61 +63,67 @@
         <div class="metadata-item">
           <span class="metadata-label">Document Date:</span>
 
-          <!-- State 1: Analyze Button -->
-          <v-btn
-            v-if="!aiResults.documentDate && !isAnalyzing"
-            color="primary"
-            variant="outlined"
-            prepend-icon="mdi-robot"
-            @click="handleAnalyzeClick"
-            class="analyze-button"
-            size="small"
-          >
-            Analyze Document
-          </v-btn>
+          <div class="field-controls">
+            <!-- Radio Button Group -->
+            <v-radio-group
+              v-model="fieldPreferences.documentDate"
+              inline
+              hide-details
+              class="field-radio-group"
+            >
+              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
+              <v-radio label="Skip" value="skip" color="primary"></v-radio>
+              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
+            </v-radio-group>
 
-          <!-- State 2: Analyzing Spinner -->
-          <div v-else-if="isAnalyzing" class="analyzing-state">
-            <v-progress-circular indeterminate size="20" color="primary" />
-            <span class="analyzing-text">Analyzing...</span>
-          </div>
+            <!-- State 1: No Result Yet -->
+            <div v-if="!aiResults.documentDate && !isAnalyzing" class="field-status">
+              <span class="field-status-text">No analysis yet</span>
+            </div>
 
-          <!-- State 3: AI Result with Tooltip -->
-          <div v-else class="ai-result">
-            <v-tooltip location="bottom" max-width="400">
-              <template v-slot:activator="{ props: tooltipProps }">
-                <div v-bind="tooltipProps" class="ai-result-content">
-                  <span class="ai-result-value">{{ formatDateString(aiResults.documentDate.tagName) }}</span>
-                  <v-chip
-                    :color="getConfidenceBadgeColor(aiResults.documentDate.confidence)"
-                    size="small"
-                    variant="flat"
-                    class="ai-result-badge"
+            <!-- State 2: Analyzing Spinner -->
+            <div v-else-if="isAnalyzing" class="analyzing-state">
+              <v-progress-circular indeterminate size="20" color="primary" />
+              <span class="analyzing-text">Analyzing...</span>
+            </div>
+
+            <!-- State 3: AI Result with Tooltip -->
+            <div v-else class="ai-result">
+              <v-tooltip location="bottom" max-width="400">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <div v-bind="tooltipProps" class="ai-result-content">
+                    <span class="ai-result-value">{{ formatDateString(aiResults.documentDate.tagName) }}</span>
+                    <v-chip
+                      :color="getConfidenceBadgeColor(aiResults.documentDate.confidence)"
+                      size="small"
+                      variant="flat"
+                      class="ai-result-badge"
+                    >
+                      {{ aiResults.documentDate.confidence }}%
+                    </v-chip>
+                  </div>
+                </template>
+
+                <!-- Tooltip Content -->
+                <div class="ai-tooltip-content">
+                  <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
+                    <strong>Context:</strong>
+                    <p>{{ aiResults.documentDate.metadata.context }}</p>
+                  </div>
+                  <div
+                    v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
+                    class="ai-tooltip-section"
                   >
-                    {{ aiResults.documentDate.confidence }}%
-                  </v-chip>
+                    <strong>Alternatives:</strong>
+                    <ul>
+                      <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
+                        {{ formatDateString(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-              </template>
-
-              <!-- Tooltip Content -->
-              <div class="ai-tooltip-content">
-                <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
-                  <strong>Context:</strong>
-                  <p>{{ aiResults.documentDate.metadata.context }}</p>
-                </div>
-                <div
-                  v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
-                  class="ai-tooltip-section"
-                >
-                  <strong>Alternatives:</strong>
-                  <ul>
-                    <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
-                      {{ formatDateString(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </v-tooltip>
+              </v-tooltip>
+            </div>
           </div>
         </div>
 
@@ -125,62 +131,84 @@
         <div class="metadata-item">
           <span class="metadata-label">Document Type:</span>
 
-          <!-- State 1: Analyze Button -->
+          <div class="field-controls">
+            <!-- Radio Button Group -->
+            <v-radio-group
+              v-model="fieldPreferences.documentType"
+              inline
+              hide-details
+              class="field-radio-group"
+            >
+              <v-radio label="Analyze" value="analyze" color="primary"></v-radio>
+              <v-radio label="Skip" value="skip" color="primary"></v-radio>
+              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
+            </v-radio-group>
+
+            <!-- State 1: No Result Yet -->
+            <div v-if="!aiResults.documentType && !isAnalyzing" class="field-status">
+              <span class="field-status-text">No analysis yet</span>
+            </div>
+
+            <!-- State 2: Analyzing Spinner -->
+            <div v-else-if="isAnalyzing" class="analyzing-state">
+              <v-progress-circular indeterminate size="20" color="primary" />
+              <span class="analyzing-text">Analyzing...</span>
+            </div>
+
+            <!-- State 3: AI Result with Tooltip -->
+            <div v-else class="ai-result">
+              <v-tooltip location="bottom" max-width="400">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <div v-bind="tooltipProps" class="ai-result-content">
+                    <span class="ai-result-value">{{ aiResults.documentType.tagName }}</span>
+                    <v-chip
+                      :color="getConfidenceBadgeColor(aiResults.documentType.confidence)"
+                      size="small"
+                      variant="flat"
+                      class="ai-result-badge"
+                    >
+                      {{ aiResults.documentType.confidence }}%
+                    </v-chip>
+                  </div>
+                </template>
+
+                <!-- Tooltip Content -->
+                <div class="ai-tooltip-content">
+                  <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
+                    <strong>Context:</strong>
+                    <p>{{ aiResults.documentType.metadata.context }}</p>
+                  </div>
+                  <div
+                    v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
+                    class="ai-tooltip-section"
+                  >
+                    <strong>Alternatives:</strong>
+                    <ul>
+                      <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
+                        {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </v-tooltip>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analyze Document Button (at bottom of System Fields) -->
+        <div class="analyze-document-section">
           <v-btn
-            v-if="!aiResults.documentType && !isAnalyzing"
             color="primary"
-            variant="outlined"
+            variant="elevated"
             prepend-icon="mdi-robot"
             @click="handleAnalyzeClick"
-            class="analyze-button"
-            size="small"
+            :loading="isAnalyzing"
+            :disabled="isAnalyzing"
+            size="large"
+            class="analyze-document-button"
           >
             Analyze Document
           </v-btn>
-
-          <!-- State 2: Analyzing Spinner -->
-          <div v-else-if="isAnalyzing" class="analyzing-state">
-            <v-progress-circular indeterminate size="20" color="primary" />
-            <span class="analyzing-text">Analyzing...</span>
-          </div>
-
-          <!-- State 3: AI Result with Tooltip -->
-          <div v-else class="ai-result">
-            <v-tooltip location="bottom" max-width="400">
-              <template v-slot:activator="{ props: tooltipProps }">
-                <div v-bind="tooltipProps" class="ai-result-content">
-                  <span class="ai-result-value">{{ aiResults.documentType.tagName }}</span>
-                  <v-chip
-                    :color="getConfidenceBadgeColor(aiResults.documentType.confidence)"
-                    size="small"
-                    variant="flat"
-                    class="ai-result-badge"
-                  >
-                    {{ aiResults.documentType.confidence }}%
-                  </v-chip>
-                </div>
-              </template>
-
-              <!-- Tooltip Content -->
-              <div class="ai-tooltip-content">
-                <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
-                  <strong>Context:</strong>
-                  <p>{{ aiResults.documentType.metadata.context }}</p>
-                </div>
-                <div
-                  v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
-                  class="ai-tooltip-section"
-                >
-                  <strong>Alternatives:</strong>
-                  <ul>
-                    <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
-                      {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </v-tooltip>
-          </div>
         </div>
       </div>
 
@@ -220,6 +248,12 @@ const aiError = ref(null);
 const aiResults = ref({
   documentDate: null,
   documentType: null,
+});
+
+// Field analysis preferences (mockup state - not functional yet)
+const fieldPreferences = ref({
+  documentDate: 'analyze',
+  documentType: 'analyze',
 });
 
 // Track the last loaded document to avoid unnecessary reloads
@@ -584,9 +618,45 @@ const handleAnalyzeClick = async () => {
   font-style: italic;
 }
 
-/* Analyze Button */
-.analyze-button {
-  margin: 8px 0;
+/* Field Controls Layout */
+.field-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Radio Button Group */
+.field-radio-group {
+  margin: 0;
+}
+
+.field-radio-group :deep(.v-selection-control-group) {
+  gap: 16px;
+}
+
+/* Field Status (No analysis yet) */
+.field-status {
+  padding: 4px 0;
+}
+
+.field-status-text {
+  font-size: 0.875rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* Analyze Document Section */
+.analyze-document-section {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.analyze-document-button {
+  min-width: 200px;
 }
 
 /* Analyzing State */
