@@ -270,7 +270,9 @@ const handleAnalyzeClick = async (fieldName) => {
     const result = await aiMetadataExtractionService.analyzeDocument(
       base64Data,
       props.evidence,
-      extension
+      extension,
+      firmId,
+      matterId
     );
 
     console.log('🎯 FINAL PARSED RESULTS:');

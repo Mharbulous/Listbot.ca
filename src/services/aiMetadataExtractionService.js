@@ -1,5 +1,6 @@
 import { getGenerativeModel } from 'firebase/ai';
-import { firebaseAI } from './firebase.js';
+import { firebaseAI, db } from './firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * AI Metadata Extraction Service
@@ -32,9 +33,11 @@ class AIMetadataExtractionService {
    * @param {string} base64Data - Base64 encoded file content
    * @param {Object} evidence - Evidence document object
    * @param {string} extension - File extension
+   * @param {string} firmId - The firm ID for fetching document types
+   * @param {string} matterId - The matter ID for fetching document types
    * @returns {Promise<Object>} - Analysis results with documentDate, documentType, and processingTime
    */
-  async analyzeDocument(base64Data, evidence, extension = 'pdf') {
+  async analyzeDocument(base64Data, evidence, extension = 'pdf', firmId, matterId = 'general') {
     const startTime = Date.now();
 
     try {
@@ -50,8 +53,12 @@ class AIMetadataExtractionService {
       // Get Gemini model (using 2.5 Flash Lite - Gemini 1.5 models retired Sept 2025)
       const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' });
 
-      // Build prompt
-      const prompt = this._buildPrompt();
+      // Fetch document types from Firestore
+      const documentTypes = await this._getDocumentTypes(firmId, matterId);
+      console.log('📋 Document types loaded:', documentTypes.length, 'types');
+
+      // Build prompt with dynamic document types
+      const prompt = this._buildPrompt(documentTypes);
 
       // Get MIME type
       const mimeType = this._getMimeType(extension);
@@ -90,9 +97,13 @@ class AIMetadataExtractionService {
 
   /**
    * Build the Gemini prompt for document analysis
+   * @param {Array<string>} documentTypes - Array of valid document type names
    * @returns {string} - Formatted prompt
    */
-  _buildPrompt() {
+  _buildPrompt(documentTypes) {
+    // Format document types as a comma-separated list
+    const typesList = documentTypes.join(', ');
+
     return `Analyze this document and extract:
 
 1. Document Date: The date the ORIGINAL document was created/signed
@@ -103,11 +114,7 @@ class AIMetadataExtractionService {
    - Format: YYYY-MM-DD (ISO 8601)
 
 2. Document Type: Classify from this list ONLY:
-   [Email, Memo, Letter, Contract, Invoice, Report, Affidavit, Audio, Brochure,
-    By-laws, Case law, Certificate, Chart, Change order, Cheque, Cheque stub,
-    Chronology, Court document, Drawing, Envelope, Evidence log, Fax cover,
-    Financial record, Form, Folder, Index, Listing, Medical record, Notes,
-    Pay stub, Photo]
+   [${typesList}]
 
 For each field, provide:
 - value: The extracted value
@@ -193,6 +200,97 @@ Return as JSON in this exact format:
     } catch (error) {
       console.error('Failed to parse AI response:', error);
       throw new Error(`Invalid AI response format: ${error.message}`);
+    }
+  }
+
+  /**
+   * Fetch document types from Firestore DocumentType category
+   * Falls back to default types if category doesn't exist or fetch fails
+   * @param {string} firmId - The firm ID
+   * @param {string} matterId - The matter ID
+   * @returns {Promise<Array<string>>} - Array of document type names
+   */
+  async _getDocumentTypes(firmId, matterId = 'general') {
+    // Default document types as fallback
+    const defaultTypes = [
+      'Email',
+      'Memo',
+      'Letter',
+      'Contract',
+      'Invoice',
+      'Report',
+      'Affidavit',
+      'Audio',
+      'Brochure',
+      'By-laws',
+      'Case law',
+      'Certificate',
+      'Chart',
+      'Change order',
+      'Cheque',
+      'Cheque stub',
+      'Chronology',
+      'Court document',
+      'Drawing',
+      'Envelope',
+      'Evidence log',
+      'Fax cover',
+      'Financial record',
+      'Form',
+      'Folder',
+      'Index',
+      'Listing',
+      'Medical record',
+      'Notes',
+      'Pay stub',
+      'Photo',
+    ];
+
+    try {
+      // Validate parameters
+      if (!firmId || !matterId) {
+        console.warn('[AIMetadataExtractionService] Missing firmId or matterId, using default types');
+        return defaultTypes;
+      }
+
+      // Fetch DocumentType category from Firestore
+      const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', 'DocumentType');
+      const categoryDoc = await getDoc(categoryRef);
+
+      if (!categoryDoc.exists()) {
+        console.warn(
+          '[AIMetadataExtractionService] DocumentType category not found, using default types'
+        );
+        return defaultTypes;
+      }
+
+      const categoryData = categoryDoc.data();
+
+      // Extract tag names from the tags array
+      if (categoryData.tags && Array.isArray(categoryData.tags) && categoryData.tags.length > 0) {
+        const documentTypes = categoryData.tags
+          .map((tag) => tag.name)
+          .filter((name) => name && typeof name === 'string');
+
+        if (documentTypes.length > 0) {
+          console.log(
+            `[AIMetadataExtractionService] Loaded ${documentTypes.length} document types from Firestore`
+          );
+          return documentTypes;
+        }
+      }
+
+      console.warn(
+        '[AIMetadataExtractionService] DocumentType category has no valid tags, using default types'
+      );
+      return defaultTypes;
+    } catch (error) {
+      console.error(
+        '[AIMetadataExtractionService] Failed to fetch document types from Firestore:',
+        error
+      );
+      console.warn('[AIMetadataExtractionService] Using default document types as fallback');
+      return defaultTypes;
     }
   }
 
