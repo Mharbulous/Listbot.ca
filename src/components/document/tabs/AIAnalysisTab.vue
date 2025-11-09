@@ -1,9 +1,15 @@
 <template>
   <!-- Document Tab Content -->
   <div>
+    <!-- Loading State -->
+    <div v-if="loadingAITags" class="ai-loading-state">
+      <v-progress-circular indeterminate size="24" color="primary" />
+      <span class="ai-loading-text">Loading analysis results...</span>
+    </div>
+
     <!-- Error Alert -->
     <v-alert
-      v-if="aiError"
+      v-else-if="aiError"
       type="error"
       variant="tonal"
       class="ai-error-alert"
@@ -15,6 +21,21 @@
       </template>
       <p class="ai-error-message">{{ aiError.message }}</p>
       <p v-if="aiError.details" class="ai-error-details">{{ aiError.details }}</p>
+
+      <!-- Retry Button -->
+      <v-btn
+        v-if="!aiError.action"
+        @click="retryAnalysis"
+        color="primary"
+        variant="outlined"
+        size="small"
+        class="ai-error-action"
+        prepend-icon="mdi-refresh"
+      >
+        Retry Analysis
+      </v-btn>
+
+      <!-- Action Button (e.g., Firebase Console link) -->
       <v-btn
         v-if="aiError.action"
         :href="aiError.action.url"
@@ -29,134 +50,140 @@
       </v-btn>
     </v-alert>
 
-    <!-- System Fields Section -->
-    <div class="metadata-section">
-      <h3 class="metadata-section-title">System Fields</h3>
+    <!-- Content Section -->
+    <div v-else>
+      <!-- System Fields Section -->
+      <div class="metadata-section">
+        <h3 class="metadata-section-title">System Fields</h3>
 
-      <!-- Document Date -->
-      <div class="metadata-item">
-        <span class="metadata-label">Document Date:</span>
+        <!-- Document Date -->
+        <div class="metadata-item">
+          <span class="metadata-label">Document Date:</span>
 
-        <!-- State 1: Analyze Button -->
-        <v-btn
-          v-if="!aiResults.documentDate && !isAnalyzing"
-          color="primary"
-          variant="outlined"
-          prepend-icon="mdi-robot"
-          @click="handleAnalyzeClick('documentDate')"
-          class="analyze-button"
-          size="small"
-        >
-          Analyze Document
-        </v-btn>
+          <!-- State 1: Analyze Button -->
+          <v-btn
+            v-if="!aiResults.documentDate && !isAnalyzing"
+            color="primary"
+            variant="outlined"
+            prepend-icon="mdi-robot"
+            @click="handleAnalyzeClick"
+            class="analyze-button"
+            size="small"
+          >
+            Analyze Document
+          </v-btn>
 
-        <!-- State 2: Analyzing Spinner -->
-        <div v-else-if="isAnalyzing" class="analyzing-state">
-          <v-progress-circular indeterminate size="20" color="primary" />
-          <span class="analyzing-text">Analyzing...</span>
+          <!-- State 2: Analyzing Spinner -->
+          <div v-else-if="isAnalyzing" class="analyzing-state">
+            <v-progress-circular indeterminate size="20" color="primary" />
+            <span class="analyzing-text">Analyzing...</span>
+          </div>
+
+          <!-- State 3: AI Result with Tooltip -->
+          <div v-else class="ai-result">
+            <v-tooltip location="bottom" max-width="400">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <div v-bind="tooltipProps" class="ai-result-content">
+                  <span class="ai-result-value">{{ formatDate(aiResults.documentDate.tagName) }}</span>
+                  <v-chip
+                    :color="aiResults.documentDate.autoApproved ? 'success' : 'warning'"
+                    :prepend-icon="aiResults.documentDate.autoApproved ? 'mdi-check-circle' : 'mdi-alert'"
+                    size="small"
+                    variant="flat"
+                    class="ai-result-badge"
+                  >
+                    {{ aiResults.documentDate.confidence }}%
+                    {{ aiResults.documentDate.autoApproved ? 'Auto-approved' : 'Review Required' }}
+                  </v-chip>
+                </div>
+              </template>
+
+              <!-- Tooltip Content -->
+              <div class="ai-tooltip-content">
+                <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
+                  <strong>Context:</strong>
+                  <p>{{ aiResults.documentDate.metadata.context }}</p>
+                </div>
+                <div
+                  v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
+                  class="ai-tooltip-section"
+                >
+                  <strong>Alternatives:</strong>
+                  <ul>
+                    <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
+                      {{ formatDate(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </v-tooltip>
+          </div>
         </div>
 
-        <!-- State 3: AI Result with Tooltip -->
-        <div v-else class="ai-result">
-          <v-tooltip location="bottom" max-width="400">
-            <template v-slot:activator="{ props: tooltipProps }">
-              <div v-bind="tooltipProps" class="ai-result-content">
-                <span class="ai-result-value">{{ aiResults.documentDate.value }}</span>
-                <v-chip
-                  :color="aiResults.documentDate.confidence >= 85 ? 'success' : 'warning'"
-                  size="small"
-                  variant="flat"
-                  class="ai-result-badge"
-                >
-                  {{ aiResults.documentDate.confidence }}% ✓
-                </v-chip>
-              </div>
-            </template>
+        <!-- Document Type -->
+        <div class="metadata-item">
+          <span class="metadata-label">Document Type:</span>
 
-            <!-- Tooltip Content -->
-            <div class="ai-tooltip-content">
-              <div class="ai-tooltip-section">
-                <strong>Context:</strong>
-                <p>{{ aiResults.documentDate.context }}</p>
+          <!-- State 1: Analyze Button -->
+          <v-btn
+            v-if="!aiResults.documentType && !isAnalyzing"
+            color="primary"
+            variant="outlined"
+            prepend-icon="mdi-robot"
+            @click="handleAnalyzeClick"
+            class="analyze-button"
+            size="small"
+          >
+            Analyze Document
+          </v-btn>
+
+          <!-- State 2: Analyzing Spinner -->
+          <div v-else-if="isAnalyzing" class="analyzing-state">
+            <v-progress-circular indeterminate size="20" color="primary" />
+            <span class="analyzing-text">Analyzing...</span>
+          </div>
+
+          <!-- State 3: AI Result with Tooltip -->
+          <div v-else class="ai-result">
+            <v-tooltip location="bottom" max-width="400">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <div v-bind="tooltipProps" class="ai-result-content">
+                  <span class="ai-result-value">{{ aiResults.documentType.tagName }}</span>
+                  <v-chip
+                    :color="aiResults.documentType.autoApproved ? 'success' : 'warning'"
+                    :prepend-icon="aiResults.documentType.autoApproved ? 'mdi-check-circle' : 'mdi-alert'"
+                    size="small"
+                    variant="flat"
+                    class="ai-result-badge"
+                  >
+                    {{ aiResults.documentType.confidence }}%
+                    {{ aiResults.documentType.autoApproved ? 'Auto-approved' : 'Review Required' }}
+                  </v-chip>
+                </div>
+              </template>
+
+              <!-- Tooltip Content -->
+              <div class="ai-tooltip-content">
+                <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
+                  <strong>Context:</strong>
+                  <p>{{ aiResults.documentType.metadata.context }}</p>
+                </div>
+                <div
+                  v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
+                  class="ai-tooltip-section"
+                >
+                  <strong>Alternatives:</strong>
+                  <ul>
+                    <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
+                      {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <div
-                v-if="aiResults.documentDate.alternatives.length"
-                class="ai-tooltip-section"
-              >
-                <strong>Alternatives:</strong>
-                <ul>
-                  <li v-for="alt in aiResults.documentDate.alternatives" :key="alt.value">
-                    {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </v-tooltip>
+            </v-tooltip>
+          </div>
         </div>
       </div>
-
-      <!-- Document Type -->
-      <div class="metadata-item">
-        <span class="metadata-label">Document Type:</span>
-
-        <!-- State 1: Analyze Button -->
-        <v-btn
-          v-if="!aiResults.documentType && !isAnalyzing"
-          color="primary"
-          variant="outlined"
-          prepend-icon="mdi-robot"
-          @click="handleAnalyzeClick('documentType')"
-          class="analyze-button"
-          size="small"
-        >
-          Analyze Document
-        </v-btn>
-
-        <!-- State 2: Analyzing Spinner -->
-        <div v-else-if="isAnalyzing" class="analyzing-state">
-          <v-progress-circular indeterminate size="20" color="primary" />
-          <span class="analyzing-text">Analyzing...</span>
-        </div>
-
-        <!-- State 3: AI Result with Tooltip -->
-        <div v-else class="ai-result">
-          <v-tooltip location="bottom" max-width="400">
-            <template v-slot:activator="{ props: tooltipProps }">
-              <div v-bind="tooltipProps" class="ai-result-content">
-                <span class="ai-result-value">{{ aiResults.documentType.value }}</span>
-                <v-chip
-                  :color="aiResults.documentType.confidence >= 85 ? 'success' : 'warning'"
-                  size="small"
-                  variant="flat"
-                  class="ai-result-badge"
-                >
-                  {{ aiResults.documentType.confidence }}% ✓
-                </v-chip>
-              </div>
-            </template>
-
-            <!-- Tooltip Content -->
-            <div class="ai-tooltip-content">
-              <div class="ai-tooltip-section">
-                <strong>Context:</strong>
-                <p>{{ aiResults.documentType.context }}</p>
-              </div>
-              <div
-                v-if="aiResults.documentType.alternatives.length"
-                class="ai-tooltip-section"
-              >
-                <strong>Alternatives:</strong>
-                <ul>
-                  <li v-for="alt in aiResults.documentType.alternatives" :key="alt.value">
-                    {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </v-tooltip>
-        </div>
-      </div>
-    </div>
 
     <!-- Firm Fields Section -->
     <div class="metadata-section">
@@ -177,14 +204,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { FileProcessingService } from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
 import { useAuthStore } from '@/core/stores/auth';
+import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 
 // AI Analysis state
 const isAnalyzing = ref(false);
+const loadingAITags = ref(false);
 const aiError = ref(null);
 const aiResults = ref({
   documentDate: null,
@@ -204,45 +233,128 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  activeTab: {
+    type: String,
+    default: 'document',
+  },
+  dateFormat: {
+    type: String,
+    default: 'ISO',
+  },
 });
-
-// Mock AI analysis data (Used for UI display in Phase 2)
-const MOCK_RESULTS = {
-  documentDate: {
-    value: '2024-03-15',
-    confidence: 92,
-    context: "Found 'Invoice Date: March 15, 2024' in document header",
-    alternatives: [
-      {
-        value: '2024-03-14',
-        confidence: 78,
-        reasoning: 'Possible scan date in footer',
-      },
-    ],
-  },
-  documentType: {
-    value: 'Invoice',
-    confidence: 98,
-    context: "Document contains 'INVOICE' header, itemized charges, and total due",
-    alternatives: [],
-  },
-};
 
 // Get route and auth store
 const route = useRoute();
 const authStore = useAuthStore();
 
+// Watch for activeTab changes to load AI tags when tab opens
+watch(() => props.activeTab, async (newTab) => {
+  if (newTab === 'document') {
+    await loadAITags();
+  }
+}, { immediate: true }); // Load immediately on mount if already on document tab
+
+// Load existing AI tags from Firestore
+const loadAITags = async () => {
+  loadingAITags.value = true;
+  aiError.value = null;
+
+  try {
+    const firmId = authStore?.currentFirm;
+
+    // Phase 1.5 Learning: Defensive checks before Firestore operations
+    if (!firmId) {
+      throw new Error('No firm ID available. Please ensure you are logged in.');
+    }
+
+    if (!props.evidence?.id) {
+      throw new Error('Document ID not available.');
+    }
+
+    console.log('📂 Loading AI tags from Firestore...');
+
+    const tags = await tagSubcollectionService.getTags(
+      props.evidence.id, // Document hash (BLAKE3)
+      {},
+      firmId
+    );
+
+    console.log('✅ Tags loaded:', tags?.length || 0, 'tags');
+
+    // Phase 1.5 Learning: Defensive array access with optional chaining
+    // Firestore may return null/undefined or malformed data
+    aiResults.value = {
+      documentDate: tags?.find(t => t?.categoryId === 'DocumentDate') || null,
+      documentType: tags?.find(t => t?.categoryId === 'DocumentType') || null
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to load AI tags:', error);
+    // Phase 1.5 Learning: Use defensive error property access
+    // Don't set error state for loading failures - just log them
+    // This prevents error UI from showing on initial load
+    console.warn('⚠️ Could not load previous analysis results:', error?.message || 'Unknown error');
+  } finally {
+    loadingAITags.value = false;
+  }
+};
+
+// Format date according to user preference
+const formatDate = (dateString) => {
+  // Phase 1.5 Learning: Defensive type checking and validation
+  if (!dateString || typeof dateString !== 'string') {
+    console.warn('⚠️ Invalid date string:', dateString);
+    return 'Unknown';
+  }
+
+  try {
+    // Return as-is for ISO format preference
+    if (props.dateFormat === 'ISO') {
+      return dateString;
+    }
+
+    // Parse and format
+    const date = new Date(dateString);
+
+    // Check for invalid date
+    if (isNaN(date.getTime())) {
+      console.warn('⚠️ Could not parse date:', dateString);
+      return dateString; // Return original if unparseable
+    }
+
+    return date.toLocaleDateString();
+
+  } catch (error) {
+    console.error('❌ Date formatting error:', error);
+    return dateString; // Fallback to original string
+  }
+};
+
+// Retry analysis after error
+const retryAnalysis = () => {
+  aiError.value = null;
+  handleAnalyzeClick();
+};
+
 // Handle analyze button click (Real Gemini API integration)
-const handleAnalyzeClick = async (fieldName) => {
-  console.log(`Analyze clicked for: ${fieldName}`);
-  console.log('Analysis started');
+const handleAnalyzeClick = async () => {
+  console.log('🤖 Analyze Document clicked');
 
   isAnalyzing.value = true;
   aiError.value = null; // Clear previous errors
 
   try {
-    const firmId = authStore.currentFirm;
+    const firmId = authStore?.currentFirm;
     const matterId = route.params.matterId || 'general';
+
+    // Phase 1.5 Learning: Defensive checks before operations
+    if (!firmId) {
+      throw new Error('No firm ID available. Please ensure you are logged in.');
+    }
+
+    if (!props.evidence?.id) {
+      throw new Error('Document ID not available.');
+    }
 
     // Validate file size
     const maxSizeMB = parseInt(import.meta.env.VITE_AI_MAX_FILE_SIZE_MB || '20');
@@ -266,7 +378,7 @@ const handleAnalyzeClick = async (fieldName) => {
     // Extract file extension
     const extension = props.evidence.displayName?.split('.').pop()?.toLowerCase() || 'pdf';
 
-    // Call AI service (this logs results internally)
+    // Call AI service
     const result = await aiMetadataExtractionService.analyzeDocument(
       base64Data,
       props.evidence,
@@ -280,27 +392,85 @@ const handleAnalyzeClick = async (fieldName) => {
     console.log('Document Type:', result.documentType);
     console.log('Processing Time:', result.processingTime, 'ms');
 
-    // TODO: Phase 3 - Replace mock results with real AI results from the API response
-    // Currently displaying mock data in UI while logging real results to console for verification
-    // Phase 2: Keep showing mock UI results
-    // Phase 3 will replace this with real results display
-    setTimeout(() => {
-      isAnalyzing.value = false;
-      aiResults.value.documentDate = MOCK_RESULTS.documentDate;
-      aiResults.value.documentType = MOCK_RESULTS.documentType;
-      console.log('✅ Mock UI results displayed (Phase 2 behavior)');
-    }, 500);
+    // Prepare tags for storage
+    const tagsToStore = [];
+    const confidenceThreshold = 85;
+
+    if (result.documentDate) {
+      tagsToStore.push({
+        categoryId: 'DocumentDate',
+        categoryName: 'Document Date',
+        tagName: result.documentDate.value,
+        confidence: result.documentDate.confidence,
+        source: 'ai',
+        autoApproved: result.documentDate.confidence >= confidenceThreshold,
+        reviewRequired: result.documentDate.confidence < confidenceThreshold,
+        metadata: {
+          model: 'gemini-2.5-flash-lite',
+          processingTime: result.processingTime,
+          aiReasoning: result.documentDate.reasoning,
+          context: result.documentDate.context,
+          aiAlternatives: result.documentDate.alternatives || [],
+          reviewReason: result.documentDate.confidence < confidenceThreshold
+            ? 'Confidence below threshold'
+            : null
+        }
+      });
+    }
+
+    if (result.documentType) {
+      tagsToStore.push({
+        categoryId: 'DocumentType',
+        categoryName: 'Document Type',
+        tagName: result.documentType.value,
+        confidence: result.documentType.confidence,
+        source: 'ai',
+        autoApproved: result.documentType.confidence >= confidenceThreshold,
+        reviewRequired: result.documentType.confidence < confidenceThreshold,
+        metadata: {
+          model: 'gemini-2.5-flash-lite',
+          processingTime: result.processingTime,
+          aiReasoning: result.documentType.reasoning,
+          context: result.documentType.context,
+          aiAlternatives: result.documentType.alternatives || [],
+          reviewReason: result.documentType.confidence < confidenceThreshold
+            ? 'Confidence below threshold'
+            : null
+        }
+      });
+    }
+
+    console.log('💾 Storing tags in Firestore...', tagsToStore?.length || 0, 'tags');
+
+    // Phase 1.5 Learning: Defensive checks before storage
+    if (!Array.isArray(tagsToStore) || tagsToStore.length === 0) {
+      console.warn('⚠️ No tags to store');
+      return;
+    }
+
+    // Store via service (atomic batch write)
+    await tagSubcollectionService.addTagsBatch(
+      props.evidence.id,
+      tagsToStore,
+      firmId
+    );
+
+    console.log('✅ Tags stored successfully');
+
+    // Reload tags to display real results
+    await loadAITags();
+
+    console.log('✅ Analysis complete and displayed');
+
   } catch (error) {
     console.error('❌ Analysis failed:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-    });
 
-    isAnalyzing.value = false;
+    // Phase 1.5 Learning: Defensive error property access
+    const errorMessage = error?.message || 'Unknown error';
+    const errorCode = error?.code || 'unknown';
 
-    // Detect specific error types (using defensive checks with optional chaining)
-    if (error?.code === 'AI/api-not-enabled' || error?.message?.includes('AI/api-not-enabled')) {
+    // User-friendly error messages with defensive checks
+    if (errorCode === 'AI/api-not-enabled' || errorMessage.includes('AI/api-not-enabled')) {
       aiError.value = {
         type: 'api-not-enabled',
         title: 'Firebase AI API Not Enabled',
@@ -313,27 +483,67 @@ const handleAnalyzeClick = async (fieldName) => {
         details:
           'After enabling the API, wait 2-3 minutes for the changes to propagate, then try again.',
       };
-    } else if (error?.message?.includes('File too large')) {
+    } else if (errorMessage.includes('too large')) {
       aiError.value = {
         type: 'file-too-large',
         title: 'File Too Large',
-        message: error?.message || 'File exceeds maximum size',
+        message: errorMessage,
         details: 'Please select a smaller file for AI analysis.',
+      };
+    } else if (errorMessage.includes('network') || errorCode === 'unavailable') {
+      aiError.value = {
+        type: 'network',
+        title: 'Network Error',
+        message: 'Analysis failed. Please check your connection and try again.',
+        details: 'Ensure you have a stable internet connection.',
+      };
+    } else if (errorCode === 'resource-exhausted') {
+      aiError.value = {
+        type: 'quota',
+        title: 'Service Unavailable',
+        message: 'AI service unavailable. Please try again later.',
+        details: 'The AI service may be experiencing high demand or quota limits.',
+      };
+    } else if (errorMessage.includes('firebasevertexai.googleapis.com')) {
+      aiError.value = {
+        type: 'api-config',
+        title: 'API Configuration Error',
+        message: 'Firebase AI API not enabled. Please check Firebase Console.',
+        details: 'Ensure the Firebase Vertex AI API is enabled in your project settings.',
       };
     } else {
       aiError.value = {
         type: 'unknown',
         title: 'Analysis Failed',
-        message: error?.message || 'An unexpected error occurred during AI analysis.',
+        message: errorMessage,
         details: 'Please check the console for more details or try again later.',
       };
     }
+  } finally {
+    isAnalyzing.value = false;
   }
 };
 </script>
 
 <style scoped>
 /* Component-specific AI Analysis styles - shared styles inherited from parent */
+
+/* Loading State */
+.ai-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.ai-loading-text {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
 
 /* Analyze Button */
 .analyze-button {
