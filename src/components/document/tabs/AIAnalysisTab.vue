@@ -265,6 +265,7 @@ const loadAITags = async () => {
 
   try {
     const firmId = authStore?.currentFirm;
+    const matterId = route.params.matterId || 'general';
 
     // Phase 1.5 Learning: Defensive checks before Firestore operations
     if (!firmId) {
@@ -276,11 +277,13 @@ const loadAITags = async () => {
     }
 
     console.log('📂 Loading AI tags from Firestore...');
+    console.log('   Matter ID:', matterId);
 
     const tags = await tagSubcollectionService.getTags(
       props.evidence.id, // Document hash (BLAKE3)
       {},
-      firmId
+      firmId,
+      matterId
     );
 
     console.log('✅ Tags loaded:', tags?.length || 0, 'tags');
@@ -445,6 +448,7 @@ const handleAnalyzeClick = async () => {
     }
 
     console.log('💾 Storing tags in Firestore...', tagsToStore?.length || 0, 'tags');
+    console.log('   Firestore path: firms/' + firmId + '/matters/' + matterId + '/evidence/' + props.evidence.id + '/tags');
 
     // Phase 1.5 Learning: Defensive checks before storage
     if (!Array.isArray(tagsToStore) || tagsToStore.length === 0) {
@@ -456,7 +460,8 @@ const handleAnalyzeClick = async () => {
     await tagSubcollectionService.addTagsBatch(
       props.evidence.id,
       tagsToStore,
-      firmId
+      firmId,
+      matterId
     );
 
     console.log('✅ Tags stored successfully');
