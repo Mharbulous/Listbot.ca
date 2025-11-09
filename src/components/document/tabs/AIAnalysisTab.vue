@@ -87,7 +87,7 @@
             <v-tooltip location="bottom" max-width="400">
               <template v-slot:activator="{ props: tooltipProps }">
                 <div v-bind="tooltipProps" class="ai-result-content">
-                  <span class="ai-result-value">{{ formatDate(aiResults.documentDate.tagName) }}</span>
+                  <span class="ai-result-value">{{ formatDateString(aiResults.documentDate.tagName) }}</span>
                   <v-chip
                     :color="aiResults.documentDate.autoApproved ? 'success' : 'warning'"
                     :prepend-icon="aiResults.documentDate.autoApproved ? 'mdi-check-circle' : 'mdi-alert'"
@@ -114,7 +114,7 @@
                   <strong>Alternatives:</strong>
                   <ul>
                     <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
-                      {{ formatDate(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
+                      {{ formatDateString(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
                     </li>
                   </ul>
                 </div>
@@ -214,6 +214,7 @@ import { FileProcessingService } from '@/features/organizer/services/fileProcess
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
 import { useAuthStore } from '@/core/stores/auth';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
+import { formatDate } from '@/utils/dateFormatter';
 
 // AI Analysis state
 const isAnalyzing = ref(false);
@@ -243,7 +244,7 @@ const props = defineProps({
   },
   dateFormat: {
     type: String,
-    default: 'ISO',
+    default: 'YYYY-MM-DD',
   },
 });
 
@@ -306,8 +307,8 @@ watch(() => props.activeTab, async (newTab) => {
   }
 }, { immediate: true }); // Load immediately on mount if already on document tab
 
-// Format date according to user preference
-const formatDate = (dateString) => {
+// Format date according to user preference using centralized utility
+const formatDateString = (dateString) => {
   // Phase 1.5 Learning: Defensive type checking and validation
   if (!dateString || typeof dateString !== 'string') {
     console.warn('⚠️ Invalid date string:', dateString);
@@ -315,12 +316,7 @@ const formatDate = (dateString) => {
   }
 
   try {
-    // Return as-is for ISO format preference
-    if (props.dateFormat === 'ISO') {
-      return dateString;
-    }
-
-    // Parse and format
+    // Parse the date string
     const date = new Date(dateString);
 
     // Check for invalid date
@@ -329,7 +325,8 @@ const formatDate = (dateString) => {
       return dateString; // Return original if unparseable
     }
 
-    return date.toLocaleDateString();
+    // Use centralized date formatter with user's preferred format
+    return formatDate(date, props.dateFormat);
 
   } catch (error) {
     console.error('❌ Date formatting error:', error);
