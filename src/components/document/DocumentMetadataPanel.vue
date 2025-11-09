@@ -243,6 +243,34 @@
 
           <!-- Document Tab Content -->
           <div v-if="activeTab === 'document'">
+            <!-- Error Alert -->
+            <v-alert
+              v-if="aiError"
+              type="error"
+              variant="tonal"
+              class="ai-error-alert"
+              closable
+              @click:close="aiError = null"
+            >
+              <template v-slot:title>
+                <strong>{{ aiError.title }}</strong>
+              </template>
+              <p class="ai-error-message">{{ aiError.message }}</p>
+              <p v-if="aiError.details" class="ai-error-details">{{ aiError.details }}</p>
+              <v-btn
+                v-if="aiError.action"
+                :href="aiError.action.url"
+                target="_blank"
+                color="error"
+                variant="outlined"
+                size="small"
+                class="ai-error-action"
+              >
+                {{ aiError.action.text }}
+                <v-icon right>mdi-open-in-new</v-icon>
+              </v-btn>
+            </v-alert>
+
             <!-- System Fields Section -->
             <div class="metadata-section">
               <h3 class="metadata-section-title">System Fields</h3>
@@ -434,6 +462,7 @@ const activeTab = ref('digital-file');
 
 // AI Analysis state
 const isAnalyzing = ref(false);
+const aiError = ref(null);
 const aiResults = ref({
   documentDate: null,
   documentType: null,
@@ -597,6 +626,7 @@ const handleAnalyzeClick = async (fieldName) => {
   console.log('Analysis started');
 
   isAnalyzing.value = true;
+  aiError.value = null; // Clear previous errors
 
   try {
     const firmId = authStore.currentFirm;
@@ -651,13 +681,37 @@ const handleAnalyzeClick = async (fieldName) => {
       stack: error.stack,
     });
 
-    // Phase 2: Still show mock results even on error (for testing)
-    setTimeout(() => {
-      isAnalyzing.value = false;
-      aiResults.value.documentDate = MOCK_RESULTS.documentDate;
-      aiResults.value.documentType = MOCK_RESULTS.documentType;
-      console.log('⚠️ Showing mock results despite error (Phase 2 testing mode)');
-    }, 500);
+    isAnalyzing.value = false;
+
+    // Detect specific error types
+    if (error.code === 'AI/api-not-enabled' || error.message?.includes('AI/api-not-enabled')) {
+      aiError.value = {
+        type: 'api-not-enabled',
+        title: 'Firebase AI API Not Enabled',
+        message:
+          'The Firebase AI API needs to be enabled in your Firebase project before you can use AI analysis features.',
+        action: {
+          text: 'Enable API in Firebase Console',
+          url: `https://console.firebase.google.com/project/${import.meta.env.VITE_FIREBASE_PROJECT_ID}/genai/`,
+        },
+        details:
+          'After enabling the API, wait 2-3 minutes for the changes to propagate, then try again.',
+      };
+    } else if (error.message?.includes('File too large')) {
+      aiError.value = {
+        type: 'file-too-large',
+        title: 'File Too Large',
+        message: error.message,
+        details: 'Please select a smaller file for AI analysis.',
+      };
+    } else {
+      aiError.value = {
+        type: 'unknown',
+        title: 'Analysis Failed',
+        message: error.message || 'An unexpected error occurred during AI analysis.',
+        details: 'Please check the console for more details or try again later.',
+      };
+    }
   }
 };
 </script>
@@ -1038,6 +1092,28 @@ const handleAnalyzeClick = async (fieldName) => {
 .ai-result-badge {
   font-size: 0.7rem;
   font-weight: 600;
+}
+
+/* AI Error Alert */
+.ai-error-alert {
+  margin-bottom: 20px;
+}
+
+.ai-error-message {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ai-error-details {
+  margin: 8px 0 12px 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.ai-error-action {
+  margin-top: 8px;
 }
 
 /* Tooltip Content */
