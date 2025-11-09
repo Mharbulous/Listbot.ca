@@ -28,7 +28,46 @@
 </template>
 
 <script setup>
-// No props or logic needed - just placeholder content
+import { ref, watch } from 'vue';
+
+// Props
+const props = defineProps({
+  activeTab: {
+    type: String,
+    default: 'review',
+  },
+  fileHash: {
+    type: String,
+    required: true,
+  },
+});
+
+// Track the last loaded document to avoid unnecessary reloads
+const lastLoadedFileHash = ref(null);
+
+// Placeholder function for loading review data
+// This will be implemented when review functionality is added
+const loadReviewData = async () => {
+  // TODO: Implement review data loading when functionality is added
+  console.log('[ReviewTab] Loading review data for document:', props.fileHash);
+
+  // Track that we've loaded this document successfully
+  lastLoadedFileHash.value = props.fileHash;
+};
+
+// Watch for activeTab or fileHash changes
+// Only load data when:
+// 1. The Review tab is currently active
+// 2. AND the document has changed since last load (or never loaded)
+watch(
+  [() => props.activeTab, () => props.fileHash],
+  async ([newTab, newFileHash]) => {
+    if (newTab === 'review' && newFileHash !== lastLoadedFileHash.value) {
+      await loadReviewData();
+    }
+  },
+  { immediate: true } // Load immediately on mount if already on review tab
+);
 </script>
 
 <!-- All styles inherited from parent DocumentMetadataPanel.vue -->
