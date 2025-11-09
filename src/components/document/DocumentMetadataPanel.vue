@@ -66,6 +66,8 @@
             v-if="activeTab === 'document'"
             :evidence="evidence"
             :file-hash="fileHash"
+            :active-tab="activeTab"
+            :date-format="dateFormat"
           />
 
           <!-- Review Tab -->
