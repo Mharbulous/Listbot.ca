@@ -77,13 +77,13 @@
             </v-radio-group>
 
             <!-- State 2: Analyzing Spinner -->
-            <div v-else-if="isAnalyzing" class="analyzing-state">
+            <div v-if="isAnalyzing" class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
             </div>
 
             <!-- State 3: AI Result with Tooltip -->
-            <div v-else class="ai-result">
+            <div v-else-if="aiResults.documentDate" class="ai-result">
               <v-tooltip location="bottom" max-width="400">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <div v-bind="tooltipProps" class="ai-result-content">
@@ -140,13 +140,13 @@
             </v-radio-group>
 
             <!-- State 2: Analyzing Spinner -->
-            <div v-else-if="isAnalyzing" class="analyzing-state">
+            <div v-if="isAnalyzing" class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
             </div>
 
             <!-- State 3: AI Result with Tooltip -->
-            <div v-else class="ai-result">
+            <div v-else-if="aiResults.documentType" class="ai-result">
               <v-tooltip location="bottom" max-width="400">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <div v-bind="tooltipProps" class="ai-result-content">

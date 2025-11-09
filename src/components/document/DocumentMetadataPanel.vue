@@ -31,7 +31,7 @@
               :class="{ active: activeTab === 'digital-file' }"
               @click="activeTab = 'digital-file'"
             >
-              🖥️ File
+              ☁️ File
             </button>
           </div>
           <v-btn

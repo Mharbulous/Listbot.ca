@@ -30,12 +30,12 @@ flowchart TB
         PhotoOfDoc["📸photograph#1.jpg"]
         PdfUpload["📖PDF Document #1"]
         Bundle["📚3 Bundled Documents"]
-        Incomplete["📑⚠️Incomplete Document PDF"]
+        Incomplete["📋⚠️Incomplete Document PDF"]
     end
 
     subgraph Col2 ["📂 Storage 2: Split Files"]
         DocA["📖Complete Document"]
-        DocC["📑Incomplete PDF"]
+        DocC["📋Incomplete PDF"]
 
     end
 
@@ -50,7 +50,7 @@ flowchart TB
 
     subgraph Col5 ["📁 Storage 4: Merged"]
         CompleteMerged["📖PDF Document #3"]
-        IncompleteFinal["📑⚠️PDF document with missing pages"]
+        IncompleteFinal["📋⚠️PDF document with missing pages"]
 
     end
 
