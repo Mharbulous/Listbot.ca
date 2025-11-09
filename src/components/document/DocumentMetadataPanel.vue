@@ -21,10 +21,17 @@
             </button>
             <button
               class="tab-button"
+              :class="{ active: activeTab === 'doc-metadata' }"
+              @click="activeTab = 'doc-metadata'"
+            >
+              📑 Document
+            </button>
+            <button
+              class="tab-button"
               :class="{ active: activeTab === 'digital-file' }"
               @click="activeTab = 'digital-file'"
             >
-              ℹ️ Metadata
+              🖥️ File
             </button>
           </div>
           <v-btn
@@ -76,6 +83,15 @@
             :active-tab="activeTab"
             :file-hash="fileHash"
           />
+
+          <!-- Document Tab -->
+          <DocumentTab
+            v-if="activeTab === 'doc-metadata'"
+            :evidence="evidence"
+            :file-hash="fileHash"
+            :active-tab="activeTab"
+            :date-format="dateFormat"
+          />
         </v-card-text>
       </v-card>
     </div>
@@ -87,6 +103,7 @@ import { ref } from 'vue';
 import DigitalFileTab from './tabs/DigitalFileTab.vue';
 import AIAnalysisTab from './tabs/AIAnalysisTab.vue';
 import ReviewTab from './tabs/ReviewTab.vue';
+import DocumentTab from './tabs/DocumentTab.vue';
 
 // Tab state
 const activeTab = ref('document');
