@@ -7,17 +7,25 @@ vi.mock('firebase/ai', () => ({
   VertexAIBackend: vi.fn(),
 }));
 
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  getDoc: vi.fn(),
+}));
+
 vi.mock('@/services/firebase.js', () => ({
   firebaseAI: {},
+  db: {},
 }));
 
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
 import { getGenerativeModel } from 'firebase/ai';
+import { doc, getDoc } from 'firebase/firestore';
 
 describe('AIMetadataExtractionService', () => {
   describe('_buildPrompt', () => {
     it('builds correct prompt with all required elements', () => {
-      const prompt = aiMetadataExtractionService._buildPrompt();
+      const documentTypes = ['Email', 'Memo', 'Letter', 'Contract', 'Invoice', 'Report'];
+      const prompt = aiMetadataExtractionService._buildPrompt(documentTypes);
 
       // Check Document Date instructions
       expect(prompt).toContain('Document Date');
@@ -45,15 +53,31 @@ describe('AIMetadataExtractionService', () => {
     });
 
     it('includes invoice-specific guidance', () => {
-      const prompt = aiMetadataExtractionService._buildPrompt();
+      const documentTypes = ['Invoice', 'Contract'];
+      const prompt = aiMetadataExtractionService._buildPrompt(documentTypes);
       expect(prompt).toContain('For invoices: Extract invoice date');
       expect(prompt).toContain('NOT payment stamp dates');
     });
 
     it('includes confidence threshold guidance', () => {
-      const prompt = aiMetadataExtractionService._buildPrompt();
+      const documentTypes = ['Email'];
+      const prompt = aiMetadataExtractionService._buildPrompt(documentTypes);
       expect(prompt).toContain('confidence < 95%');
       expect(prompt).toContain('alternatives');
+    });
+
+    it('uses provided document types in prompt', () => {
+      const customTypes = ['Custom Type 1', 'Custom Type 2', 'Special Document'];
+      const prompt = aiMetadataExtractionService._buildPrompt(customTypes);
+      expect(prompt).toContain('Custom Type 1');
+      expect(prompt).toContain('Custom Type 2');
+      expect(prompt).toContain('Special Document');
+    });
+
+    it('formats document types as comma-separated list', () => {
+      const documentTypes = ['Email', 'Invoice', 'Contract'];
+      const prompt = aiMetadataExtractionService._buildPrompt(documentTypes);
+      expect(prompt).toContain('[Email, Invoice, Contract]');
     });
   });
 
@@ -554,7 +578,117 @@ Here's another code block that should be ignored:
     });
   });
 
+  describe('_getDocumentTypes', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('fetches document types from Firestore successfully', async () => {
+      const mockCategoryData = {
+        tags: [
+          { id: 'doctype-email', name: 'Email' },
+          { id: 'doctype-invoice', name: 'Invoice' },
+          { id: 'doctype-contract', name: 'Contract' },
+        ],
+      };
+
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => mockCategoryData,
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toEqual(['Email', 'Invoice', 'Contract']);
+      expect(doc).toHaveBeenCalledWith(
+        expect.anything(),
+        'firms',
+        'firm123',
+        'matters',
+        'matter456',
+        'categories',
+        'DocumentType'
+      );
+    });
+
+    it('returns default types when category does not exist', async () => {
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => false,
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toBeInstanceOf(Array);
+      expect(types.length).toBeGreaterThan(0);
+      expect(types).toContain('Email');
+      expect(types).toContain('Invoice');
+      expect(types).toContain('Contract');
+    });
+
+    it('returns default types when Firestore fetch fails', async () => {
+      vi.mocked(getDoc).mockRejectedValue(new Error('Firestore error'));
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toBeInstanceOf(Array);
+      expect(types.length).toBeGreaterThan(0);
+    });
+
+    it('returns default types when firmId is missing', async () => {
+      const types = await aiMetadataExtractionService._getDocumentTypes(null, 'matter456');
+
+      expect(types).toBeInstanceOf(Array);
+      expect(types.length).toBeGreaterThan(0);
+    });
+
+    it('returns default types when category has no tags', async () => {
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => ({ tags: [] }),
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toBeInstanceOf(Array);
+      expect(types.length).toBeGreaterThan(0);
+    });
+
+    it('filters out invalid tag entries', async () => {
+      const mockCategoryData = {
+        tags: [
+          { id: 'doctype-email', name: 'Email' },
+          { id: 'doctype-invalid', name: null },
+          { id: 'doctype-invoice', name: 'Invoice' },
+          { id: 'doctype-empty' },
+        ],
+      };
+
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => mockCategoryData,
+      });
+
+      const types = await aiMetadataExtractionService._getDocumentTypes('firm123', 'matter456');
+
+      expect(types).toEqual(['Email', 'Invoice']);
+    });
+  });
+
   describe('analyzeDocument (integration)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Mock Firestore to return default document types
+      vi.mocked(getDoc).mockResolvedValue({
+        exists: () => true,
+        data: () => ({
+          tags: [
+            { id: 'doctype-email', name: 'Email' },
+            { id: 'doctype-invoice', name: 'Invoice' },
+          ],
+        }),
+      });
+    });
+
     it('successfully analyzes document with mocked AI response', async () => {
       const mockResponse = {
         documentDate: {
@@ -586,7 +720,9 @@ Here's another code block that should be ignored:
       const result = await aiMetadataExtractionService.analyzeDocument(
         'base64data',
         { displayName: 'test.pdf', fileSize: 1024 },
-        'pdf'
+        'pdf',
+        'firm123',
+        'matter456'
       );
 
       expect(result.documentDate.value).toBe('2024-03-15');
@@ -638,7 +774,9 @@ Here's another code block that should be ignored:
       const result = await aiMetadataExtractionService.analyzeDocument(
         'base64data',
         { displayName: 'invoice.pdf', fileSize: 2048 },
-        'pdf'
+        'pdf',
+        'firm123',
+        'matter456'
       );
 
       expect(result.documentDate.value).toBe('2024-03-15');
@@ -660,7 +798,9 @@ Here's another code block that should be ignored:
         aiMetadataExtractionService.analyzeDocument(
           'base64data',
           { displayName: 'test.pdf', fileSize: 1024 },
-          'pdf'
+          'pdf',
+          'firm123',
+          'matter456'
         )
       ).rejects.toThrow('Invalid AI response format');
     });
@@ -697,7 +837,9 @@ Here's another code block that should be ignored:
         aiMetadataExtractionService.analyzeDocument(
           'base64data',
           { displayName: 'test.pdf', fileSize: 1024 },
-          'pdf'
+          'pdf',
+          'firm123',
+          'matter456'
         )
       ).rejects.toThrow('Invalid confidence value for documentDate: must be 0-100, got 150');
     });
