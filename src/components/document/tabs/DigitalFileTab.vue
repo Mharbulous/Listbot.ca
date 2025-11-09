@@ -325,37 +325,7 @@ const handleSelectVariant = (metadataHash) => {
 </script>
 
 <style scoped>
-.metadata-section {
-  margin-bottom: 24px;
-  transition: opacity 0.15s ease-in-out;
-}
-
-.metadata-section:last-child {
-  margin-bottom: 0;
-}
-
-.metadata-section-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #444;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.metadata-notice {
-  font-size: 0.8rem;
-  color: #666;
-  font-style: italic;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.metadata-notice p {
-  margin: 0;
-  padding: 0;
-}
+/* Component-specific styles - shared styles inherited from parent */
 
 .date-with-notification {
   display: flex;
@@ -447,26 +417,6 @@ const handleSelectVariant = (metadataHash) => {
   font-size: 0.75rem;
   color: #666;
   font-style: italic;
-}
-
-.metadata-item {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
-}
-
-.metadata-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.metadata-value {
-  font-size: 0.875rem;
-  color: #333;
-  word-break: break-all;
 }
 
 /* PDF Metadata Styling */

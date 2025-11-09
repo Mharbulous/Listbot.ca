@@ -255,4 +255,57 @@ const emit = defineEmits(['toggle-visibility', 'variant-selected', 'dropdown-tog
     order: 2; /* Show second on mobile */
   }
 }
+
+/* Shared styles for all tab components (using :deep() to penetrate child scopes) */
+:deep(.metadata-section) {
+  margin-bottom: 24px;
+  transition: opacity 0.15s ease-in-out;
+}
+
+:deep(.metadata-section:last-child) {
+  margin-bottom: 0;
+}
+
+:deep(.metadata-section-title) {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+:deep(.metadata-notice) {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+:deep(.metadata-notice p) {
+  margin: 0;
+  padding: 0;
+}
+
+:deep(.metadata-item) {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+:deep(.metadata-label) {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+:deep(.metadata-value) {
+  font-size: 0.875rem;
+  color: #333;
+  word-break: break-all;
+}
 </style>

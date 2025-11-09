@@ -331,53 +331,8 @@ const handleAnalyzeClick = async (fieldName) => {
 </script>
 
 <style scoped>
-.metadata-section {
-  margin-bottom: 24px;
-  transition: opacity 0.15s ease-in-out;
-}
+/* Component-specific AI Analysis styles - shared styles inherited from parent */
 
-.metadata-section:last-child {
-  margin-bottom: 0;
-}
-
-.metadata-section-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #444;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.metadata-notice {
-  font-size: 0.8rem;
-  color: #666;
-  font-style: italic;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.metadata-notice p {
-  margin: 0;
-  padding: 0;
-}
-
-.metadata-item {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
-}
-
-.metadata-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-/* AI Analysis Styles */
 /* Analyze Button */
 .analyze-button {
   margin: 8px 0;
