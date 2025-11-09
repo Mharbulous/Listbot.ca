@@ -15,8 +15,6 @@
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/src/features/upload/FileUpload.vue` | 853 |
-| `/home/user/Bookkeeper/src/dev-demos/views/CategoryEditViewer.vue` | 760 |
 | `/home/user/Bookkeeper/src/features/organizer/views/CategoryEditWizard.vue` | 724 |
 | `/home/user/Bookkeeper/src/components/base/DocumentTable.vue` | 711 |
 | `/home/user/Bookkeeper/src/components/document/tabs/AIAnalysisTab.vue` | 701 |
