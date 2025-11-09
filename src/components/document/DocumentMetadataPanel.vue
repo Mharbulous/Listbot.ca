@@ -666,6 +666,8 @@ const handleAnalyzeClick = async (fieldName) => {
     console.log('Document Type:', result.documentType);
     console.log('Processing Time:', result.processingTime, 'ms');
 
+    // TODO: Phase 3 - Replace mock results with real AI results from the API response
+    // Currently displaying mock data in UI while logging real results to console for verification
     // Phase 2: Keep showing mock UI results
     // Phase 3 will replace this with real results display
     setTimeout(() => {
@@ -683,8 +685,8 @@ const handleAnalyzeClick = async (fieldName) => {
 
     isAnalyzing.value = false;
 
-    // Detect specific error types
-    if (error.code === 'AI/api-not-enabled' || error.message?.includes('AI/api-not-enabled')) {
+    // Detect specific error types (using defensive checks with optional chaining)
+    if (error?.code === 'AI/api-not-enabled' || error?.message?.includes('AI/api-not-enabled')) {
       aiError.value = {
         type: 'api-not-enabled',
         title: 'Firebase AI API Not Enabled',
@@ -697,18 +699,18 @@ const handleAnalyzeClick = async (fieldName) => {
         details:
           'After enabling the API, wait 2-3 minutes for the changes to propagate, then try again.',
       };
-    } else if (error.message?.includes('File too large')) {
+    } else if (error?.message?.includes('File too large')) {
       aiError.value = {
         type: 'file-too-large',
         title: 'File Too Large',
-        message: error.message,
+        message: error?.message || 'File exceeds maximum size',
         details: 'Please select a smaller file for AI analysis.',
       };
     } else {
       aiError.value = {
         type: 'unknown',
         title: 'Analysis Failed',
-        message: error.message || 'An unexpected error occurred during AI analysis.',
+        message: error?.message || 'An unexpected error occurred during AI analysis.',
         details: 'Please check the console for more details or try again later.',
       };
     }
