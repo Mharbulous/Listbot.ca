@@ -35,10 +35,14 @@ class AIMetadataExtractionService {
    * @param {string} extension - File extension
    * @param {string} firmId - The firm ID for fetching document types
    * @param {string} matterId - The matter ID for fetching document types
-   * @returns {Promise<Object>} - Analysis results with documentDate, documentType, and processingTime
+   * @returns {Promise<Object>} - Analysis results with documentDate, documentType, processingTime, and tokenUsage
    */
   async analyzeDocument(base64Data, evidence, extension = 'pdf', firmId, matterId = 'general') {
     const startTime = Date.now();
+
+    // Token tracking timestamps
+    let aiPromptSent = null;
+    let aiResponse = null;
 
     try {
       console.log('🤖 Starting Gemini AI analysis...');
@@ -51,7 +55,8 @@ class AIMetadataExtractionService {
       }
 
       // Get Gemini model (using 2.5 Flash Lite - Gemini 1.5 models retired Sept 2025)
-      const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' });
+      const modelName = 'gemini-2.5-flash-lite';
+      const model = getGenerativeModel(firebaseAI, { model: modelName });
 
       // Fetch document types from Firestore
       const documentTypes = await this._getDocumentTypes(firmId, matterId);
@@ -64,7 +69,9 @@ class AIMetadataExtractionService {
       const mimeType = this._getMimeType(extension);
 
       console.log('📤 Sending request to Gemini API...');
-      console.log('📝 Prompt being sent:', prompt);
+
+      // Record timestamp when sending prompt
+      aiPromptSent = Date.now();
 
       // Generate AI response
       const result = await model.generateContent([
@@ -73,21 +80,59 @@ class AIMetadataExtractionService {
       ]);
 
       const response = await result.response;
+
+      // Record timestamp when response received
+      aiResponse = Date.now();
+
       const text = response.text();
 
       console.log('📥 Received response from Gemini API');
       console.log('Raw response:', text);
 
+      // Extract token usage from response
+      const usageMetadata = response.usageMetadata || {};
+      const tokenUsage = {
+        inputTokens: usageMetadata.promptTokenCount || 0,
+        outputTokens: usageMetadata.candidatesTokenCount || 0,
+        cachedTokens: usageMetadata.cachedContentTokenCount || 0,
+        totalTokens: usageMetadata.totalTokenCount || 0,
+        aiModel: modelName,
+        aiPromptSent: new Date(aiPromptSent).toISOString(),
+        aiResponse: new Date(aiResponse).toISOString(),
+        aiResponseTime: aiResponse - aiPromptSent
+      };
+
+      // Validate token data
+      if (!usageMetadata || typeof usageMetadata.promptTokenCount !== 'number') {
+        console.warn('⚠️ usageMetadata missing or malformed in API response');
+        console.warn('Response object:', response);
+      }
+
       // Parse response
       const parsedResults = this._parseResponse(text);
 
       const processingTime = Date.now() - startTime;
+
+      // Log comprehensive token usage
+      console.log('\n💰 ===== TOKEN USAGE REPORT =====');
+      console.log('AI Model:', tokenUsage.aiModel);
+      console.log('Prompt Sent:', tokenUsage.aiPromptSent);
+      console.log('Response Received:', tokenUsage.aiResponse);
+      console.log('AI Response Time:', tokenUsage.aiResponseTime, 'ms');
+      console.log('\n📊 Token Counts:');
+      console.log('  Input Tokens:', tokenUsage.inputTokens);
+      console.log('  Output Tokens:', tokenUsage.outputTokens);
+      console.log('  Cached Tokens:', tokenUsage.cachedTokens);
+      console.log('  Total Tokens:', tokenUsage.totalTokens);
+      console.log('================================\n');
+
       console.log(`✅ Analysis completed in ${processingTime}ms`);
       console.log('Parsed results:', parsedResults);
 
       return {
         ...parsedResults,
         processingTime,
+        tokenUsage
       };
     } catch (error) {
       console.error('❌ AI analysis failed:', error);
@@ -204,93 +249,104 @@ Return as JSON in this exact format:
   }
 
   /**
-   * Fetch document types from Firestore DocumentType category
-   * Falls back to default types if category doesn't exist or fetch fails
+   * Fetch document types from Firestore DocumentType category using three-tier hierarchy
+   * Priority: Matter-specific → Firm-wide → Global systemcategories
    * @param {string} firmId - The firm ID
    * @param {string} matterId - The matter ID
    * @returns {Promise<Array<string>>} - Array of document type names
    */
   async _getDocumentTypes(firmId, matterId = 'general') {
-    // Default document types as fallback
-    const defaultTypes = [
-      'Email',
-      'Memo',
-      'Letter',
-      'Contract',
-      'Invoice',
-      'Report',
-      'Affidavit',
-      'Audio',
-      'Brochure',
-      'By-laws',
-      'Case law',
-      'Certificate',
-      'Chart',
-      'Change order',
-      'Cheque',
-      'Cheque stub',
-      'Chronology',
-      'Court document',
-      'Drawing',
-      'Envelope',
-      'Evidence log',
-      'Fax cover',
-      'Financial record',
-      'Form',
-      'Folder',
-      'Index',
-      'Listing',
-      'Medical record',
-      'Notes',
-      'Pay stub',
-      'Photo',
-    ];
-
     try {
       // Validate parameters
-      if (!firmId || !matterId) {
-        console.warn('[AIMetadataExtractionService] Missing firmId or matterId, using default types');
-        return defaultTypes;
+      if (!firmId) {
+        throw new Error('Missing firmId parameter - cannot fetch document types');
       }
 
-      // Fetch DocumentType category from Firestore
-      const categoryRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', 'DocumentType');
-      const categoryDoc = await getDoc(categoryRef);
+      // 1. PRIMARY: Try matter-specific categories first
+      if (matterId && matterId !== 'general') {
+        try {
+          const matterRef = doc(db, 'firms', firmId, 'matters', matterId, 'categories', 'DocumentType');
+          const matterDoc = await getDoc(matterRef);
 
-      if (!categoryDoc.exists()) {
-        console.warn(
-          '[AIMetadataExtractionService] DocumentType category not found, using default types'
-        );
-        return defaultTypes;
-      }
+          if (matterDoc.exists()) {
+            const categoryData = matterDoc.data();
+            if (categoryData.tags && Array.isArray(categoryData.tags) && categoryData.tags.length > 0) {
+              const documentTypes = categoryData.tags
+                .map((tag) => tag.name)
+                .filter((name) => name && typeof name === 'string');
 
-      const categoryData = categoryDoc.data();
-
-      // Extract tag names from the tags array
-      if (categoryData.tags && Array.isArray(categoryData.tags) && categoryData.tags.length > 0) {
-        const documentTypes = categoryData.tags
-          .map((tag) => tag.name)
-          .filter((name) => name && typeof name === 'string');
-
-        if (documentTypes.length > 0) {
-          console.log(
-            `[AIMetadataExtractionService] Loaded ${documentTypes.length} document types from Firestore`
-          );
-          return documentTypes;
+              if (documentTypes.length > 0) {
+                console.log(
+                  `[AIMetadataExtractionService] Loaded ${documentTypes.length} document types from matter-specific categories (${matterId})`
+                );
+                return documentTypes;
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('[AIMetadataExtractionService] Failed to fetch matter-specific DocumentType:', error.message);
         }
       }
 
-      console.warn(
-        '[AIMetadataExtractionService] DocumentType category has no valid tags, using default types'
+      // 2. SECONDARY: Try firm-wide categories (/matters/general)
+      try {
+        const firmWideRef = doc(db, 'firms', firmId, 'matters', 'general', 'categories', 'DocumentType');
+        const firmWideDoc = await getDoc(firmWideRef);
+
+        if (firmWideDoc.exists()) {
+          const categoryData = firmWideDoc.data();
+          if (categoryData.tags && Array.isArray(categoryData.tags) && categoryData.tags.length > 0) {
+            const documentTypes = categoryData.tags
+              .map((tag) => tag.name)
+              .filter((name) => name && typeof name === 'string');
+
+            if (documentTypes.length > 0) {
+              console.log(
+                `[AIMetadataExtractionService] Loaded ${documentTypes.length} document types from firm-wide categories`
+              );
+              return documentTypes;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('[AIMetadataExtractionService] Failed to fetch firm-wide DocumentType:', error.message);
+      }
+
+      // 3. TERTIARY: Try global systemcategories
+      try {
+        const globalRef = doc(db, 'systemcategories', 'DocumentType');
+        const globalDoc = await getDoc(globalRef);
+
+        if (globalDoc.exists()) {
+          const categoryData = globalDoc.data();
+          if (categoryData.tags && Array.isArray(categoryData.tags) && categoryData.tags.length > 0) {
+            const documentTypes = categoryData.tags
+              .map((tag) => tag.name)
+              .filter((name) => name && typeof name === 'string');
+
+            if (documentTypes.length > 0) {
+              console.log(
+                `[AIMetadataExtractionService] Loaded ${documentTypes.length} document types from global systemcategories`
+              );
+              return documentTypes;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('[AIMetadataExtractionService] Failed to fetch global systemcategories DocumentType:', error.message);
+      }
+
+      // If all three tiers failed, throw error
+      throw new Error(
+        'DocumentType category not found in matter-specific, firm-wide, or global systemcategories'
       );
-      return defaultTypes;
+
     } catch (error) {
       console.error(
-        '[AIMetadataExtractionService] Failed to fetch document types from Firestore:',
-        error
+        '[AIMetadataExtractionService] Failed to fetch document types:',
+        error.message
       );
-      console.warn('[AIMetadataExtractionService] Using default document types as fallback');
-      return defaultTypes;
+      throw error;
     }
   }
 
