@@ -8,8 +8,6 @@
 
 **IMPORTANT**: Document ID is the BLAKE3 hash of the file content (32 hex characters). This provides automatic deduplication - identical files cannot create duplicate evidence records.
 
-**Note**: All collections are hardcoded to use `/matters/general/` as a testing ground for feature development. In the future, 'general' will become the default matter when no specific matter is selected, and the system will support dynamic matter IDs for organizing files by legal matter, client, or project.
-
 ## Document Schema
 
 ### Required Fields
@@ -121,7 +119,7 @@ Tags use **dual storage** synchronized via atomic batch writes (`tagSubcollectio
 
 ### Tag Subcollection (Full Metadata)
 
-**Path**: `/firms/{firmId}/matters/general/evidence/{evidenceId}/tags/{categoryId}`
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{evidenceId}/tags/{categoryId}`
 
 ### Tag Document Schema
 
@@ -184,7 +182,7 @@ evidence.tags = {
 ## Firestore Security Rules
 
 ```javascript
-match /firms/{firmId}/matters/general/evidence/{fileHash} {
+match /firms/{firmId}/matters/{matterId}}/evidence/{fileHash} {
   // Evidence document access
   // Note: fileHash is the document ID (BLAKE3, 32 hex chars)
   allow read: if request.auth != null &&
@@ -417,7 +415,7 @@ Collection: tags
 
 - **ALWAYS** verify file exists in Firebase Storage before creating evidence
 - **NEVER** store file content in Firestore
-- **USE** fileHash (document ID) to locate files in Storage: `firms/{firmId}/matters/general/uploads/{fileHash}.{extension}`
+- **USE** fileHash (document ID) to locate files in Storage: `firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{extension}`
 - **ALWAYS** verify metadata hash exists in sourceMetadata collection
 - **ACCESS** file using: `evidence.id` (which is the fileHash)
 
