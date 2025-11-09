@@ -32,6 +32,7 @@
       @start-upload="onStartUpload"
       @pause-upload="onPauseUpload"
       @resume-upload="onResumeUpload"
+      @retry-failed="onRetryFailed"
       @clear-queue="clearQueue"
     />
 
@@ -346,6 +347,24 @@ const onStartUpload = async () =>
     fileUploadHandlers.continueUpload,
     showNotification
   );
+
+const onRetryFailed = () => {
+  // Reset network error files back to ready status
+  uploadQueue.value.forEach((file) => {
+    if (file.status === 'network_error') {
+      file.status = 'ready';
+    }
+  });
+
+  // Reset upload status counters
+  resetUploadStatus();
+
+  // Show notification
+  showNotification('Retrying failed uploads. Please ensure you have a stable connection.', 'info');
+
+  // Start upload
+  onStartUpload();
+};
 </script>
 
 <style scoped>

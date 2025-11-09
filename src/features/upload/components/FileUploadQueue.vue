@@ -56,6 +56,17 @@
         >
           Resume Upload
         </v-btn>
+
+        <!-- Retry Failed Button (shown when upload is complete and there are network errors) -->
+        <v-btn
+          v-if="!isUploading && !isPaused && hasNetworkErrors"
+          color="warning"
+          variant="elevated"
+          prepend-icon="mdi-refresh"
+          @click="$emit('retry-failed')"
+        >
+          Retry Failed ({{ networkErrorCount }})
+        </v-btn>
       </div>
     </v-card-title>
 
@@ -275,6 +286,7 @@ const emit = defineEmits([
   'start-upload',
   'pause-upload',
   'resume-upload',
+  'retry-failed',
   'clear-queue',
 ]);
 
@@ -404,7 +416,15 @@ const totalSize = computed(() => {
 });
 
 const hasErrors = computed(() => {
-  return props.files.some((file) => file.status === 'error');
+  return props.files.some((file) => file.status === 'error' || file.status === 'network_error');
+});
+
+const hasNetworkErrors = computed(() => {
+  return props.files.some((file) => file.status === 'network_error');
+});
+
+const networkErrorCount = computed(() => {
+  return props.files.filter((file) => file.status === 'network_error').length;
 });
 
 const hasUploadStarted = computed(() => {
@@ -437,6 +457,8 @@ const getCurrentActionText = () => {
       return 'Checking if file exists...';
     case 'uploading':
       return 'Uploading file...';
+    case 'retrying':
+      return 'Retrying upload...';
     default:
       return 'Processing file...';
   }
