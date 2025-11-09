@@ -68,7 +68,7 @@ class AIMetadataExtractionService {
       // Get MIME type
       const mimeType = this._getMimeType(extension);
 
-      console.log('📤 Sending request to Gemini API...');
+      console.log('📤 Sending request to Gemini API:\n', prompt);
 
       // Record timestamp when sending prompt
       aiPromptSent = Date.now();
