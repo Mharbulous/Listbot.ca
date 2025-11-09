@@ -133,7 +133,16 @@ const loadAITags = async () => {
 
   try {
     const authStore = useAuthStore();
-    const firmId = authStore.currentFirm;
+    const firmId = authStore?.currentFirm;
+
+    // Phase 1.5 Learning: Defensive checks before Firestore operations
+    if (!firmId) {
+      throw new Error('No firm ID available. Please ensure you are logged in.');
+    }
+
+    if (!props.evidence?.id) {
+      throw new Error('Document ID not available.');
+    }
 
     console.log('📂 Loading AI tags from Firestore...');
 
@@ -143,17 +152,19 @@ const loadAITags = async () => {
       firmId
     );
 
-    console.log('✅ Tags loaded:', tags);
+    console.log('✅ Tags loaded:', tags?.length || 0, 'tags');
 
-    // Convert array to object
+    // Phase 1.5 Learning: Defensive array access with optional chaining
+    // Firestore may return null/undefined or malformed data
     aiResults.value = {
-      documentDate: tags.find(t => t.categoryId === 'DocumentDate') || null,
-      documentType: tags.find(t => t.categoryId === 'DocumentType') || null
+      documentDate: tags?.find(t => t?.categoryId === 'DocumentDate') || null,
+      documentType: tags?.find(t => t?.categoryId === 'DocumentType') || null
     };
 
   } catch (error) {
     console.error('❌ Failed to load AI tags:', error);
-    analysisError.value = 'Failed to load previous analysis results.';
+    // Phase 1.5 Learning: Use defensive error property access
+    analysisError.value = error?.message || 'Failed to load previous analysis results.';
   } finally {
     loadingAITags.value = false;
   }
@@ -247,7 +258,21 @@ const handleAnalyzeClick = async () => {
       });
     }
 
-    console.log('💾 Storing tags in Firestore...', tagsToStore);
+    console.log('💾 Storing tags in Firestore...', tagsToStore?.length || 0, 'tags');
+
+    // Phase 1.5 Learning: Defensive checks before storage
+    if (!props.evidence?.id) {
+      throw new Error('Document ID is missing');
+    }
+
+    if (!Array.isArray(tagsToStore) || tagsToStore.length === 0) {
+      console.warn('⚠️ No tags to store');
+      return;
+    }
+
+    if (!firmId) {
+      throw new Error('Firm ID is missing');
+    }
 
     // Store via service (atomic batch write)
     await tagSubcollectionService.addTagsBatch(
@@ -266,18 +291,25 @@ const handleAnalyzeClick = async () => {
   } catch (error) {
     console.error('❌ Analysis failed:', error);
 
-    // User-friendly error messages
-    let errorMessage = 'Analysis failed. Please try again.';
+    // Phase 1.5 Learning: Defensive error property access
+    // Firebase errors may not have consistent structure
+    const errorMessage = error?.message || 'Unknown error';
+    const errorCode = error?.code || 'unknown';
 
-    if (error.message?.includes('too large')) {
-      errorMessage = error.message;
-    } else if (error.message?.includes('network') || error.code === 'unavailable') {
-      errorMessage = 'Analysis failed. Please check your connection and try again.';
-    } else if (error.code === 'resource-exhausted') {
-      errorMessage = 'AI service unavailable. Please try again later.';
+    // User-friendly error messages with defensive checks
+    let userMessage = 'Analysis failed. Please try again.';
+
+    if (errorMessage.includes('too large')) {
+      userMessage = errorMessage;
+    } else if (errorMessage.includes('network') || errorCode === 'unavailable') {
+      userMessage = 'Analysis failed. Please check your connection and try again.';
+    } else if (errorCode === 'resource-exhausted') {
+      userMessage = 'AI service unavailable. Please try again later.';
+    } else if (errorMessage.includes('firebasevertexai.googleapis.com')) {
+      userMessage = 'Firebase AI API not enabled. Please check Firebase Console.';
     }
 
-    analysisError.value = errorMessage;
+    analysisError.value = userMessage;
 
   } finally {
     isAnalyzing.value = false;
@@ -290,13 +322,32 @@ const retryAnalysis = () => {
 };
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Unknown';
+  // Phase 1.5 Learning: Defensive type checking and validation
+  if (!dateString || typeof dateString !== 'string') {
+    console.warn('⚠️ Invalid date string:', dateString);
+    return 'Unknown';
+  }
+
   try {
+    // Return as-is for ISO format preference
+    if (props.dateFormat === 'ISO') {
+      return dateString;
+    }
+
+    // Parse and format
     const date = new Date(dateString);
-    if (props.dateFormat === 'ISO') return dateString;
+
+    // Check for invalid date
+    if (isNaN(date.getTime())) {
+      console.warn('⚠️ Could not parse date:', dateString);
+      return dateString; // Return original if unparseable
+    }
+
     return date.toLocaleDateString();
+
   } catch (error) {
-    return dateString;
+    console.error('❌ Date formatting error:', error);
+    return dateString; // Fallback to original string
   }
 };
 ```
