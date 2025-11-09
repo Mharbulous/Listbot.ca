@@ -30,8 +30,8 @@
 
   // Tag Counters - REQUIRED
   tagCount: number,              // Default: 0, increment on tag add
-  autoApprovedCount: number,     // Default: 0, tags with confidence >= 85%
-  reviewRequiredCount: number,   // Default: 0, tags with confidence < 85%
+  autoApprovedCount: number,     // Default: 0, tags with confidence >= 95%
+  reviewRequiredCount: number,   // Default: 0, tags with confidence < 95%
 
   // Timestamps - REQUIRED
   fileCreated: timestamp         // Firebase Storage creation timestamp (from timeCreated metadata)
@@ -169,8 +169,8 @@ evidence.tags = {
 
 **ALWAYS** set status based on confidence:
 
-- confidence >= 85: status = 'auto_approved'
-- confidence < 85: status = 'pending_review'
+- confidence >= 95: status = 'auto_approved'
+- confidence < 95: status = 'pending_review'
 
 **NEVER** allow:
 
@@ -229,8 +229,8 @@ function validateTagDocument(data) {
          data.confidence <= 100 &&
          data.tags.size() > 0 &&
          data.status in ['auto_approved', 'pending_review', 'human_approved', 'rejected'] &&
-         (data.confidence >= 85 ? data.status == 'auto_approved' : true) &&
-         (data.confidence < 85 ? data.status == 'pending_review' : true);
+         (data.confidence >= 95 ? data.status == 'auto_approved' : true) &&
+         (data.confidence < 95 ? data.status == 'pending_review' : true);
 }
 ```
 
@@ -315,7 +315,7 @@ await db.runTransaction(async (transaction) => {
   const tagRef = evidenceRef.collection('tags').doc(categoryId);
 
   // Determine status based on confidence
-  const status = confidence >= 85 ? 'auto_approved' : 'pending_review';
+  const status = confidence >= 95 ? 'auto_approved' : 'pending_review';
 
   // Create tag document
   transaction.set(tagRef, {
@@ -430,7 +430,7 @@ Collection: tags
 
 ### Tag Management
 
-- **ENFORCE** confidence thresholds: 85% for auto-approval
+- **ENFORCE** confidence thresholds: 95% for auto-approval
 - **NEVER** allow confidence values outside 0-100 range
 - **ALWAYS** track reviewer identity for manual approvals
 - **MAINTAIN** accurate counts through atomic transactions

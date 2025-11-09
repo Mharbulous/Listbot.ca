@@ -89,8 +89,8 @@ Each matter has its own categories collection that includes both system categori
   tagName: string,
   source: 'ai' | 'ai-auto' | 'human',
   confidence: number,              // 0.0-1.0, 1.0 for human
-  autoApproved: boolean,           // true if confidence >= 0.85
-  reviewRequired: boolean,         // true if confidence < 0.85
+  autoApproved: boolean,           // true if confidence >= 0.95
+  reviewRequired: boolean,         // true if confidence < 0.95
 
   // Review tracking - OPTIONAL
   reviewedAt: Timestamp | null,
@@ -211,10 +211,10 @@ All categories (system and custom) are stored at the matter level:
 
 ### Auto-Approval Rules
 
-**ALWAYS** auto-approve when confidence >= 0.85
-**NEVER** auto-approve when confidence < 0.85
-**ALWAYS** set `reviewRequired: true` for confidence < 0.85
-**ALWAYS** set `autoApproved: true` for confidence >= 0.85
+**ALWAYS** auto-approve when confidence >= 0.95
+**NEVER** auto-approve when confidence < 0.95
+**ALWAYS** set `reviewRequired: true` for confidence < 0.95
+**ALWAYS** set `autoApproved: true` for confidence >= 0.95
 **ALWAYS** set confidence to 1.0 for human-created tags
 
 ### Soft Delete Pattern
@@ -400,7 +400,7 @@ For AI processing pipeline and confidence scoring, see AI Integration documentat
 ```javascript
 // Feature flags - NEVER hardcode these values
 const ENABLE_AUTO_APPROVAL = process.env.VITE_ENABLE_AUTO_APPROVAL !== 'false';
-const CONFIDENCE_THRESHOLD = parseFloat(process.env.VITE_CONFIDENCE_THRESHOLD) || 0.85;
+const CONFIDENCE_THRESHOLD = parseFloat(process.env.VITE_CONFIDENCE_THRESHOLD) || 0.95;
 ```
 
 ## Common Pitfalls

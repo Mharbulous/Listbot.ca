@@ -401,7 +401,7 @@ const handleAnalyzeClick = async () => {
 
     // Prepare tags for storage
     const tagsToStore = [];
-    const confidenceThreshold = 85;
+    const confidenceThreshold = 95;
 
     if (result.documentDate) {
       tagsToStore.push({
