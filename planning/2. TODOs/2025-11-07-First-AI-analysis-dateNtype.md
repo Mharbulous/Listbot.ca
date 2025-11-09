@@ -379,7 +379,7 @@ Return as JSON.
 1. **`src/services/aiMetadataExtractionService.js`** - Core AI service for date/type extraction
 
 ### Modified Files
-1. **`src/components/document/DocumentMetadataPanel.vue`** - AI tab implementation (all phases)
+1. **`src/components/document/tabs/AIAnalysisTab.vue`** - AI tab implementation (all phases)
 2. **`src/services/firebase.js`** - Ensure Firebase AI Logic initialized (Phase 2)
 3. **`src/features/organizer/services/tagSubcollectionService.js`** - Add `updateTag()` method (Phase 4)
 
