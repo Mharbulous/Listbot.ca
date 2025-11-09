@@ -39,11 +39,11 @@
             icon
             variant="text"
             size="small"
-            :title="visible ? 'Hide metadata' : 'Show metadata'"
+            :title="visible ? 'Collapse metadata' : 'Expand metadata'"
             class="toggle-btn"
             @click="$emit('toggle-visibility')"
           >
-            <v-icon>{{ visible ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
+            <v-icon>{{ visible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
           </v-btn>
         </div>
 
@@ -237,8 +237,8 @@ const emit = defineEmits(['toggle-visibility', 'variant-selected', 'dropdown-tog
 }
 
 .tab-button {
-  padding: 8px 16px;
-  font-size: 0.9rem;
+  padding: 6px 10px;
+  font-size: 0.85rem;
   font-weight: 500;
   color: #666;
   background-color: transparent;
