@@ -71,7 +71,11 @@
           />
 
           <!-- Review Tab -->
-          <ReviewTab v-if="activeTab === 'review'" />
+          <ReviewTab
+            v-if="activeTab === 'review'"
+            :active-tab="activeTab"
+            :file-hash="fileHash"
+          />
         </v-card-text>
       </v-card>
     </div>

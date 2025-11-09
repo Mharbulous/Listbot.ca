@@ -307,6 +307,14 @@ watch(() => props.activeTab, async (newTab) => {
   }
 }, { immediate: true }); // Load immediately on mount if already on document tab
 
+// Watch for fileHash changes to reload AI tags when navigating between documents
+// Only reload if the AI tab is currently active
+watch(() => props.fileHash, async (newHash, oldHash) => {
+  if (newHash !== oldHash && props.activeTab === 'document') {
+    await loadAITags();
+  }
+});
+
 // Format date according to user preference using centralized utility
 const formatDateString = (dateString) => {
   // Phase 1.5 Learning: Defensive type checking and validation
