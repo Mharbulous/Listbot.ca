@@ -1,15 +1,19 @@
 # AI Metadata Extraction - Product Requirements Document
 
-**Status**: Planning Phase
-**Last Updated**: 2025-11-04
+**Status**: Phases 1-3 Implemented (Phase 4 Review Workflow Pending)
+**Last Updated**: 2025-11-09
+**Implementation Completion**: November 2025
 **Related Documentation**:
-- `docs/ai/aiAnalysis.md` - AI analysis system overview
+- `docs/ai/aiAnalysis.md` - AI analysis system overview (implementation details)
 - `docs/architecture/CategoryTags.md` - Tag system architecture
 - `src/components/document/DocumentMetadataPanel.vue` - Metadata panel UI
+- `planning/2. TODOs/2025-11-07-First-AI-analysis-dateNtype.md` - Implementation plan
 
 ## Executive Summary
 
-This document defines the requirements for AI-powered automatic extraction of document metadata fields (Document Date and Document Type) when users open the AI tab in the document metadata panel. The system will leverage the existing Firebase AI Logic (Gemini) infrastructure to analyze document content and populate system category fields with confidence scoring.
+This document defines the requirements for AI-powered extraction of document metadata fields (Document Date and Document Type). The system leverages Firebase AI Logic (Gemini 2.5 Flash Lite) to analyze document content and populate system category fields with confidence scoring.
+
+**Implementation Status**: Core extraction features (Phases 1-3) are complete. Users manually trigger analysis via "Analyze Document" button in the AI tab. Results are displayed with confidence badges and stored in Firestore via the hybrid tag storage architecture. Review workflow (Phase 4) is planned for future implementation.
 
 **Three-Tab Architecture**: The metadata panel uses three tabs with distinct purposes:
 - **ℹ️ Metadata Tab**: Displays source file, storage, and embedded metadata
@@ -51,59 +55,81 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 
 ### Functional Requirements
 
-#### FR-1: Automatic Trigger Detection
+#### FR-1: Manual Analysis Trigger
 - **Priority**: P0 (Critical)
-- **Description**: When user opens the AI tab in the metadata panel, system checks if Document Date and/or Document Type tags exist using the embedded tags map
+- **Status**: ✅ IMPLEMENTED
+- **Description**: User manually triggers AI analysis by clicking "Analyze Document" button in the AI tab
 - **Acceptance Criteria**:
-  - System reads `evidence.tags['DocumentDate']` from already-loaded evidence document
-  - System reads `evidence.tags['DocumentType']` from already-loaded evidence document
-  - No additional Firestore queries needed (tags already loaded with evidence document)
-  - If either tag is missing or has `reviewRequired: true`, trigger AI analysis
-  - Analysis triggers automatically without user interaction
-  - Loading state displayed during analysis
+  - ✅ "Analyze Document" button displayed when no analysis results exist
+  - ✅ Button disabled during analysis with spinner state
+  - ✅ Loading state shows "Analyzing..." with progress indicator
+  - ✅ Analysis processes Document Date and Document Type in single API call
+  - ✅ Results stored in Firestore via tagSubcollectionService
+  - ✅ Results persist across sessions (loaded from Firestore on tab open)
+- **Implementation**: `src/components/document/tabs/AIAnalysisTab.vue` lines 67-77, 374-503
 
 #### FR-2: Document Date Extraction
 - **Priority**: P0 (Critical)
+- **Status**: ✅ IMPLEMENTED
 - **Description**: AI analyzes document content to determine the date the document was created or signed
 - **Acceptance Criteria**:
-  - AI extracts dates from document content (headers, footers, signatures, letterhead)
-  - Prioritizes document creation/signature dates over embedded metadata dates
-  - Returns date in ISO 8601 format (YYYY-MM-DD)
-  - Provides confidence score (0-100%)
-  - For confidence <95%, provides up to 2 alternative date suggestions
-  - Handles common date formats (MM/DD/YYYY, DD/MM/YYYY, Month DD, YYYY, etc.)
-  - Distinguishes between document date vs. received date vs. metadata date
+  - ✅ AI extracts dates from document content (headers, footers, signatures, letterhead)
+  - ✅ Prioritizes document creation/signature dates over payment stamps and received dates
+  - ✅ Returns date in ISO 8601 format (YYYY-MM-DD)
+  - ✅ Provides confidence score (0-100%)
+  - ✅ For confidence <95%, provides up to 2 alternative date suggestions
+  - ✅ Handles common date formats (MM/DD/YYYY, DD/MM/YYYY, Month DD, YYYY, etc.)
+  - ✅ Prompt explicitly instructs AI to ignore payment stamps, received dates, scanned dates
+- **Implementation**:
+  - Service: `src/services/aiMetadataExtractionService.js` lines 32-141 (analyzeDocument method)
+  - Prompt: Lines 148-194 (_buildPrompt method with date extraction rules)
+  - Parser: Lines 201-249 (_parseResponse method)
 
 #### FR-3: Document Type Classification
 - **Priority**: P0 (Critical)
-- **Description**: AI classifies document into predefined or suggested types from the DocumentType system category
+- **Status**: ✅ IMPLEMENTED
+- **Description**: AI classifies document into predefined or suggested types from the DocumentType system category using 3-tier hierarchy
 - **Acceptance Criteria**:
-  - AI selects from existing DocumentType tags: Email, Memo, Letter, Contract, Invoice, Report
-  - Can suggest new document types not in the predefined list (Open List behavior)
-  - Returns primary classification with confidence score (0-100%)
-  - For confidence <95%, provides up to 2 alternative type suggestions with confidence scores
-  - Considers document structure, formatting, headers, and content
-  - Maintains cumulative confidence of alternatives until 95% threshold or 2 alternatives reached
+  - ✅ AI uses **3-tier document type hierarchy** (Matter-specific → Firm-wide → Global systemcategories)
+  - ✅ Dynamically fetches document types from Firestore before analysis
+  - ✅ Can suggest new document types not in the predefined list (Open List behavior)
+  - ✅ Returns primary classification with confidence score (0-100%)
+  - ✅ For confidence <95%, provides up to 2 alternative type suggestions
+  - ✅ Considers document structure, formatting, headers, and content
+  - ✅ Includes reasoning and context for each suggestion
+- **Implementation**:
+  - Service: `src/services/aiMetadataExtractionService.js` lines 258-351 (_getDocumentTypes method)
+  - 3-Tier Hierarchy Logic: Matter (firmId/matterId/categories) → Firm (firmId/general/categories) → Global (systemcategories)
+  - Prompt Building: Lines 148-194 (dynamically injects available types into prompt)
 
 #### FR-4: Confidence Scoring
 - **Priority**: P0 (Critical)
+- **Status**: ✅ IMPLEMENTED
 - **Description**: Each extracted field includes a confidence score that determines auto-approval and alternative suggestions
 - **Acceptance Criteria**:
-  - Confidence expressed as percentage (0-100%)
-  - Primary suggestion confidence ≥95% → auto-approve, no alternatives needed
-  - Primary suggestion confidence <95% → generate up to 2 alternative suggestions
-  - Alternative suggestions ranked by confidence
-  - Sum of all confidences (primary + alternatives) should approach or exceed 95%
-  - Confidence calculation considers: content clarity, format consistency, contextual clues
+  - ✅ Confidence expressed as percentage (0-100%)
+  - ✅ **Threshold: ≥95% for auto-approval** (implemented in AIAnalysisTab.vue:432)
+  - ✅ Primary suggestion confidence ≥95% → auto-approve (autoApproved: true, reviewRequired: false)
+  - ✅ Primary suggestion confidence <95% → mark for review (reviewRequired: true)
+  - ✅ Alternative suggestions provided with confidence scores and reasoning
+  - ✅ Alternatives displayed in tooltips on hover (AIAnalysisTab.vue:103-120)
+- **Implementation**:
+  - Threshold constant: `AIAnalysisTab.vue` line 432: `const confidenceThreshold = 95`
+  - Badge colors: ≥95% green (success), 80-94% amber (warning), <80% red (error)
+  - Badge computation: Lines 257-261 (getConfidenceBadgeColor method)
 
 #### FR-5: Hybrid Tag Storage (Subcollection + Embedded Map)
 - **Priority**: P0 (Critical)
-- **Description**: Extracted metadata stored using a hybrid architecture: **subcollections for full metadata/audit trail**, and **embedded map field for fast table loading**
+- **Status**: ✅ IMPLEMENTED
+- **Description**: Extracted metadata stored using hybrid architecture via tagSubcollectionService: **subcollections for full metadata/audit trail**, and **embedded map field for fast table loading**
 - **Architecture Rationale**:
   - **Performance**: Embedded map enables loading 10,000+ documents in a single query (no N+1 subcollection queries)
   - **Rich Metadata**: Subcollection stores full AI metadata (alternatives, confidence, review history)
   - **Audit Trail**: Subcollection preserves complete review history and AI analysis details
   - **Atomic Writes**: Batch writes keep both locations synchronized
+- **Implementation Service**: `src/features/organizer/services/tagSubcollectionService.js`
+  - Method: `addTagsBatch()` - Atomic batch write to both subcollection and embedded map
+  - Usage: `AIAnalysisTab.vue` lines 490-495
 - **Acceptance Criteria**:
 
   **Subcollection Storage** (Full metadata, audit trail, alternatives):
@@ -125,7 +151,7 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
       createdAt: Timestamp,
       createdBy: string,
       metadata: {
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash-lite', // Current AI model for metadata extraction
         processingTime: number,
         context: string,
         aiAlternatives: [
@@ -175,40 +201,52 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 
 #### FR-6: UI Display in 🤖 AI Tab
 - **Priority**: P0 (Critical)
-- **Description**: AI-extracted metadata displayed cleanly in the AI tab with status indicators, keeping the interface simple and uncluttered
+- **Status**: ✅ IMPLEMENTED
+- **Description**: AI-extracted metadata displayed cleanly in the AI tab with confidence badges and tooltips
 - **Acceptance Criteria**:
-  - **System Fields Section**:
-    - Document Date field displays extracted date or "Not yet analyzed"
-    - Document Type field displays extracted type or "Not yet analyzed"
-  - **Status Indicators**:
-    - Auto-approved items (≥95% confidence): Green checkmark (✓) next to value
-    - Review-required items (<95% confidence): Yellow warning icon (⚠️) next to value
-    - No extraction: No icon, shows "Not yet analyzed"
-  - **Loading State**: Shows "Analyzing document..." with spinner during AI processing
-  - **Error State**: Shows "Analysis failed" with brief error reason and [Retry] button
-  - **Success State**: Shows extracted values with appropriate status icons
-  - **Review Prompt**: If any items need review, displays alert box: "Some AI suggestions need your review. [Go to Review tab →]"
-  - **No Detailed Review UI**: AI tab does NOT show alternatives, approve/reject buttons, or detailed review controls
-  - **Manual Entry**: Simple "Edit" button for each field allows manual override at any time
+  - ✅ **System Fields Section**:
+    - Document Date: Shows extracted date or "Analyze Document" button
+    - Document Type: Shows extracted type or "Analyze Document" button
+  - ✅ **Status Indicators** (Confidence Badges):
+    - ≥95% confidence: Green badge (success color)
+    - 80-94% confidence: Amber badge (warning color)
+    - <80% confidence: Red badge (error color)
+    - Badge displays confidence percentage (e.g., "97%")
+  - ✅ **Tooltip on Hover**: Shows AI reasoning, context, and alternatives
+    - Context: Excerpt showing where info was found
+    - Alternatives: Up to 2 alternative suggestions with confidence and reasoning
+  - ✅ **Three States**: Analyze button → Analyzing spinner → Results with badge
+  - ✅ **Loading State**: "Analyzing..." with spinner (lines 80-84)
+  - ✅ **Error State**: Error alert with reason and [Retry] button (lines 13-53)
+  - ✅ **Success State**: Extracted values with confidence badges and tooltips (lines 86-183)
+  - ✅ **Firm/Matter Fields**: Placeholder sections for future implementation (lines 188-201)
+- **Implementation**: `src/components/document/tabs/AIAnalysisTab.vue`
+  - State management: Lines 215-250
+  - Badge computation: Lines 257-261
+  - Results display: Lines 86-183
+  - Tooltip content: Lines 103-120, 165-181
 
 #### FR-7: Tab Navigation and Badge Counts
-- **Priority**: P0 (Critical)
-- **Description**: Review tab displays badge count when items need review, providing clear navigation
-- **Acceptance Criteria**:
-  - **Badge Display**:
-    - When reviewRequiredCount > 0, Review tab shows badge: "👤Review (2)"
-    - Badge count updates in real-time as items are reviewed
-    - Badge disappears when reviewRequiredCount = 0
-  - **Navigation Hints**:
-    - AI tab shows clickable prompt linking to Review tab when items need review
-    - Clicking prompt automatically switches to Review tab
-  - **Active Tab Highlighting**: Currently active tab is visually highlighted
-  - **Persistent Badge**: Badge remains visible even when viewing other tabs
+- **Priority**: P1 (High)
+- **Status**: ⏸️ NOT YET IMPLEMENTED (Phase 4)
+- **Description**: Review tab will display badge count when items need review, providing clear navigation
+- **Current State**:
+  - ReviewTab.vue exists as minimal placeholder (`src/components/document/tabs/ReviewTab.vue`, 78 lines)
+  - Shows basic structure: "Review tag: [tag name]"
+  - No badge count implementation
+  - No review queue functionality
+- **Planned Acceptance Criteria** (Future):
+  - Badge Display: "👤Review (2)" when reviewRequiredCount > 0
+  - Badge updates in real-time as items are reviewed
+  - Navigation hints from AI tab to Review tab
+  - Active tab highlighting
 
 #### FR-8: 👤Review Tab - Full Review Workflow
-- **Priority**: P0 (Critical)
-- **Description**: Dedicated Review tab provides comprehensive workflow for reviewing and correcting low-confidence AI extractions
-- **Acceptance Criteria**:
+- **Priority**: P1 (High - Future Enhancement)
+- **Status**: ⏸️ NOT YET IMPLEMENTED (Phase 4)
+- **Description**: Dedicated Review tab will provide comprehensive workflow for reviewing and correcting low-confidence AI extractions
+- **Current Workaround**: Users can view alternatives in AI tab tooltips; manual editing via category management
+- **Planned Acceptance Criteria** (Future Phase 4):
   - **Tab Sections**:
     1. **Review Queue** (items needing review)
     2. **Approved Items** (auto-approved and human-approved)
@@ -1318,7 +1356,7 @@ Stored at: `/firms/{firmId}/matters/{matterId}/evidence/{evidenceId}/tags/{categ
   createdAt: Timestamp,
   createdBy: 'ai-system',
   metadata: {
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite', // Metadata extraction model
     processingTime: 3200, // milliseconds
     context: 'Analyzed document headers and signature blocks',
     aiAlternatives: [], // Empty for high confidence (≥95%)
@@ -1342,7 +1380,7 @@ Stored at: `/firms/{firmId}/matters/{matterId}/evidence/{evidenceId}/tags/{categ
   createdAt: Timestamp,
   createdBy: 'ai-system',
   metadata: {
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash-lite', // Metadata extraction model
     processingTime: 4100,
     context: 'Document structure analysis with multiple format indicators',
     aiAlternatives: [
@@ -1399,12 +1437,30 @@ Stored at: `evidence.tags[categoryId]` (denormalized in evidence document)
 
 ---
 
-**Document Version**: 1.1
-**Last Updated**: 2025-11-04
+**Document Version**: 1.2
+**Last Updated**: 2025-11-09
 **Change Log**:
+- v1.2 (2025-11-09): Updated to reflect Phases 1-3 implementation completion
+  - Changed status from "Planning" to "Phases 1-3 Implemented"
+  - Updated FR-1 from auto-trigger to manual button trigger
+  - Confirmed 95% confidence threshold throughout
+  - Updated AI model references to gemini-2.5-flash-lite
+  - Marked Review Tab (FR-7, FR-8) as Phase 4 (not yet implemented)
+  - Added implementation file references and line numbers
+  - Documented 3-tier document type hierarchy
 - v1.1 (2025-11-04): Updated to reflect actual hybrid storage architecture (subcollection + embedded map)
 - v1.0 (2025-11-04): Initial requirements document
 
 **Authors**: Product Team + AI Assistant
-**Reviewers**: TBD
-**Approval**: Pending
+**Reviewers**: Implementation Team
+**Status**: Living Document (reflects actual implementation)
+
+---
+
+## Implementation Reference
+
+For actual implementation details, see:
+- **`docs/ai/aiAnalysis.md`** - Complete implementation guide with architecture and extension patterns
+- **`src/services/aiMetadataExtractionService.js`** - Core AI metadata extraction service
+- **`src/components/document/tabs/AIAnalysisTab.vue`** - UI implementation
+- **`planning/2. TODOs/2025-11-07-First-AI-analysis-dateNtype.md`** - Implementation plan and learnings
