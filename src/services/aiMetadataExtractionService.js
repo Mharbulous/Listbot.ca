@@ -57,6 +57,7 @@ class AIMetadataExtractionService {
       const mimeType = this._getMimeType(extension);
 
       console.log('📤 Sending request to Gemini API...');
+      console.log('📝 Prompt being sent:', prompt);
 
       // Generate AI response
       const result = await model.generateContent([
