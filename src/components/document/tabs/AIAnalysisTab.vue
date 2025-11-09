@@ -251,13 +251,6 @@ const props = defineProps({
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Watch for activeTab changes to load AI tags when tab opens
-watch(() => props.activeTab, async (newTab) => {
-  if (newTab === 'document') {
-    await loadAITags();
-  }
-}, { immediate: true }); // Load immediately on mount if already on document tab
-
 // Load existing AI tags from Firestore
 const loadAITags = async () => {
   loadingAITags.value = true;
@@ -305,6 +298,13 @@ const loadAITags = async () => {
     loadingAITags.value = false;
   }
 };
+
+// Watch for activeTab changes to load AI tags when tab opens
+watch(() => props.activeTab, async (newTab) => {
+  if (newTab === 'document') {
+    await loadAITags();
+  }
+}, { immediate: true }); // Load immediately on mount if already on document tab
 
 // Format date according to user preference
 const formatDate = (dateString) => {
