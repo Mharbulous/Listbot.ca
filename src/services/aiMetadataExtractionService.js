@@ -166,7 +166,7 @@ For each field, provide:
 - confidence: 0-100 percentage
 - reasoning: Brief explanation
 - context: Excerpt from document showing where you found this
-- alternatives: If confidence < 95%, suggest up to 2 alternatives with reasoning
+- alternative: suggest 1 alternative unconstrained by the Document Type list with reasoning.
 
 Return as JSON in this exact format:
 {
