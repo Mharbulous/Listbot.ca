@@ -412,6 +412,7 @@ const handleAnalyzeClick = async () => {
         source: 'ai',
         autoApproved: result.documentDate.confidence >= confidenceThreshold,
         reviewRequired: result.documentDate.confidence < confidenceThreshold,
+        createdBy: authStore.user?.uid || 'system', // Add createdBy field
         metadata: {
           model: 'gemini-2.5-flash-lite',
           processingTime: result.processingTime,
@@ -434,6 +435,7 @@ const handleAnalyzeClick = async () => {
         source: 'ai',
         autoApproved: result.documentType.confidence >= confidenceThreshold,
         reviewRequired: result.documentType.confidence < confidenceThreshold,
+        createdBy: authStore.user?.uid || 'system', // Add createdBy field
         metadata: {
           model: 'gemini-2.5-flash-lite',
           processingTime: result.processingTime,
