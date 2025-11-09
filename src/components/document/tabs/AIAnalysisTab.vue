@@ -1,8 +1,8 @@
 <template>
   <!-- Document Tab Content -->
   <div>
-    <!-- Loading State -->
-    <template v-if="loadingAITags">
+    <!-- Loading State (only shown after 200ms delay to prevent flash) -->
+    <template v-if="showLoadingUI">
       <div class="ai-loading-state">
         <v-progress-circular indeterminate size="24" color="primary" />
         <span class="ai-loading-text">Loading analysis results...</span>
@@ -215,6 +215,7 @@ import { formatDate } from '@/utils/dateFormatter';
 // AI Analysis state
 const isAnalyzing = ref(false);
 const loadingAITags = ref(false);
+const showLoadingUI = ref(false); // Delayed loading UI to prevent flash
 const aiError = ref(null);
 const aiResults = ref({
   documentDate: null,
@@ -223,6 +224,7 @@ const aiResults = ref({
 
 // Track the last loaded document to avoid unnecessary reloads
 const lastLoadedFileHash = ref(null);
+let loadingDelayTimeout = null;
 
 // Instantiate file processing service
 const fileProcessingService = new FileProcessingService();
@@ -262,6 +264,13 @@ const getConfidenceBadgeColor = (confidence) => {
 const loadAITags = async () => {
   loadingAITags.value = true;
   aiError.value = null;
+
+  // Only show loading UI if loading takes longer than 200ms (prevents flash)
+  loadingDelayTimeout = setTimeout(() => {
+    if (loadingAITags.value) {
+      showLoadingUI.value = true;
+    }
+  }, 200);
 
   try {
     const firmId = authStore?.currentFirm;
@@ -306,6 +315,12 @@ const loadAITags = async () => {
     console.warn('⚠️ Could not load previous analysis results:', error?.message || 'Unknown error');
   } finally {
     loadingAITags.value = false;
+    // Clear timeout and hide loading UI
+    if (loadingDelayTimeout) {
+      clearTimeout(loadingDelayTimeout);
+      loadingDelayTimeout = null;
+    }
+    showLoadingUI.value = false;
   }
 };
 
