@@ -92,6 +92,15 @@
               <span v-bind="props">🟢</span>
             </template>
           </v-tooltip>
+          <v-tooltip
+            v-else-if="file.status === 'network_error'"
+            text="Network error - check connection and retry"
+            location="bottom"
+          >
+            <template #activator="{ props }">
+              <span v-bind="props">🔴</span>
+            </template>
+          </v-tooltip>
           <v-tooltip v-else-if="file.status === 'error'" text="Failed upload" location="bottom">
             <template #activator="{ props }">
               <span v-bind="props">🔴</span>
@@ -217,9 +226,11 @@ const getStatusColor = (status, file) => {
     uploading: 'primary',
     completed: 'success',
     error: 'error',
+    network_error: 'error',
     skipped: 'orange',
     uploadMetadataOnly: 'purple',
     existing: 'blue',
+    retrying: 'warning',
   };
 
   // Handle special cases based on file properties
@@ -236,9 +247,11 @@ const getStatusText = (status, file) => {
     uploading: 'Uploading',
     completed: 'Completed',
     error: 'Error',
+    network_error: 'Network Error',
     skipped: 'Skipped',
     uploadMetadataOnly: 'Upload metadata only',
     existing: 'Existing',
+    retrying: 'Retrying',
   };
 
   // Handle special cases based on file properties

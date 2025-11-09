@@ -3,7 +3,13 @@
  * Handles individual file upload workflows and the main upload loop
  */
 
-import { safeLog, safeMetadata, createFileMetadataRecord, logFileEvent } from '../utils/uploadHelpers.js';
+import {
+  safeLog,
+  safeMetadata,
+  createFileMetadataRecord,
+  logFileEvent,
+} from '../utils/uploadHelpers.js';
+import { isNetworkError, getNetworkErrorMessage, getRetryDelay } from '../utils/networkUtils.js';
 
 /**
  * File Upload Handlers Composable
@@ -94,6 +100,7 @@ export const useFileUploadHandlers = ({
   /**
    * Process new file upload (consolidated logic)
    * Uploads file to storage and records metadata
+   * Includes network error handling and retry logic
    */
   const processNewFileUpload = async (queueFile, fileHash) => {
     updateUploadStatus('currentFile', queueFile.sourceName, 'uploading');
@@ -113,11 +120,24 @@ export const useFileUploadHandlers = ({
     }
 
     const uploadAbortController = getUploadAbortController();
+
+    // Create retry callback to update user on retry attempts
+    const retryCallback = async (attempt, delayMs) => {
+      const retryNum = attempt + 1;
+      const delaySec = Math.round(delayMs / 1000);
+      updateUploadStatus('currentFile', queueFile.sourceName, 'retrying');
+      showNotification(
+        `Network error detected. Retrying upload (${retryNum}/4) in ${delaySec}s...`,
+        'warning'
+      );
+    };
+
     const uploadResult = await uploadSingleFile(
       queueFile.sourceFile,
       fileHash,
       queueFile.sourceName,
-      uploadAbortController.signal
+      uploadAbortController.signal,
+      retryCallback
     );
 
     updateUploadStatus('successful');
@@ -196,18 +216,45 @@ export const useFileUploadHandlers = ({
           if (queueFile.hash) {
             fileHash = queueFile.hash;
           } else {
-            fileHash = await calculateFileHash(queueFile.sourceFile);
-            queueFile.hash = fileHash;
-            populateExistingHash(queueFile.id || queueFile.sourceName, fileHash);
+            try {
+              fileHash = await calculateFileHash(queueFile.sourceFile);
+              queueFile.hash = fileHash;
+              populateExistingHash(queueFile.id || queueFile.sourceName, fileHash);
+            } catch (error) {
+              // Handle network errors during hash calculation
+              if (isNetworkError(error)) {
+                throw error; // Propagate network errors to outer catch
+              }
+              throw error;
+            }
           }
 
           if (uploadAbortController.signal.aborted) {
             break;
           }
 
-          // Check if file exists
+          // Check if file exists with retry callback
           updateUploadStatus('currentFile', queueFile.sourceName, 'checking_existing');
-          const fileExists = await checkFileExists(fileHash);
+          const retryCallback = async (attempt, delayMs) => {
+            const retryNum = attempt + 1;
+            const delaySec = Math.round(delayMs / 1000);
+            showNotification(
+              `Network error checking file. Retrying (${retryNum}/4) in ${delaySec}s...`,
+              'warning'
+            );
+          };
+
+          let fileExists;
+          try {
+            fileExists = await checkFileExists(fileHash, retryCallback);
+          } catch (error) {
+            // Handle network errors during existence check
+            if (isNetworkError(error)) {
+              throw error; // Propagate network errors to outer catch
+            }
+            // For non-network errors, assume file doesn't exist and continue
+            fileExists = false;
+          }
 
           if (fileExists) {
             await processExistingFile(queueFile, fileHash);
@@ -221,27 +268,52 @@ export const useFileUploadHandlers = ({
           if (error.name === 'AbortError') {
             break;
           }
-          updateUploadStatus('failed');
-          updateFileStatus(queueFile, 'error');
 
-          // Log failure
-          await safeLog(async () => {
-            let currentFileHash = queueFile.hash || 'unknown_hash';
-            if (currentFileHash === 'unknown_hash') {
-              try {
-                currentFileHash = await calculateFileHash(queueFile.sourceFile);
-              } catch {
-                // Silently catch hash calculation errors
-              }
-            }
-            await logFileEvent(
-              logUploadEvent,
-              generateMetadataHash,
-              'upload_failed',
-              queueFile,
-              currentFileHash
+          // Handle network errors with specific messaging
+          if (isNetworkError(error)) {
+            updateFileStatus(queueFile, 'network_error');
+            const errorMessage = getNetworkErrorMessage(error, 'upload');
+            showNotification(`${queueFile.sourceName}: ${errorMessage}`, 'error');
+
+            // Log network failure
+            await safeLog(async () => {
+              await logFileEvent(
+                logUploadEvent,
+                generateMetadataHash,
+                'upload_failed_network',
+                queueFile,
+                queueFile.hash || 'unknown_hash'
+              );
+            });
+          } else {
+            // Handle non-network errors
+            updateFileStatus(queueFile, 'error');
+            showNotification(
+              `Failed to upload ${queueFile.sourceName}: ${error.message || 'Unknown error'}`,
+              'error'
             );
-          });
+
+            // Log general failure
+            await safeLog(async () => {
+              let currentFileHash = queueFile.hash || 'unknown_hash';
+              if (currentFileHash === 'unknown_hash') {
+                try {
+                  currentFileHash = await calculateFileHash(queueFile.sourceFile);
+                } catch {
+                  // Silently catch hash calculation errors
+                }
+              }
+              await logFileEvent(
+                logUploadEvent,
+                generateMetadataHash,
+                'upload_failed',
+                queueFile,
+                currentFileHash
+              );
+            });
+          }
+
+          updateUploadStatus('failed');
         } finally {
           setUploadAbortController(null);
         }
@@ -252,13 +324,19 @@ export const useFileUploadHandlers = ({
         updateUploadStatus('complete');
 
         const totalProcessed = uploadStatus.value.successful + uploadStatus.value.skipped;
+        const networkErrors = uploadQueue.value.filter(
+          (f) => f.status === 'network_error'
+        ).length;
+        const otherErrors = uploadStatus.value.failed - networkErrors;
+
         if (uploadStatus.value.failed === 0) {
           showNotification(`All ${totalProcessed} files processed successfully!`, 'success');
         } else {
-          showNotification(
-            `${totalProcessed} files processed, ${uploadStatus.value.failed} failed`,
-            'warning'
-          );
+          let message = `${totalProcessed} files processed, ${uploadStatus.value.failed} failed`;
+          if (networkErrors > 0) {
+            message += ` (${networkErrors} due to network issues)`;
+          }
+          showNotification(message, 'warning');
         }
 
         return { completed: true };
@@ -266,7 +344,13 @@ export const useFileUploadHandlers = ({
 
       return { completed: false };
     } catch (error) {
-      showNotification('Upload failed: ' + (error.message || 'Unknown error'), 'error');
+      // Distinguish network errors in catch-all handler
+      if (isNetworkError(error)) {
+        const errorMessage = getNetworkErrorMessage(error, 'upload');
+        showNotification(`Upload interrupted: ${errorMessage}`, 'error');
+      } else {
+        showNotification('Upload failed: ' + (error.message || 'Unknown error'), 'error');
+      }
       updateUploadStatus('complete');
       isPaused.value = false;
       throw error;

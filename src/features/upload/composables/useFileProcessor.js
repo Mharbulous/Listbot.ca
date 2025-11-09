@@ -17,6 +17,11 @@ import {
   getStoredHardwarePerformanceFactor,
 } from '../utils/hardwareCalibration.js';
 import { startProcessingTimer, resetProcessingTimer } from '../utils/processingTimer.js';
+import {
+  isNetworkError,
+  retryOnNetworkError,
+  isOnline,
+} from '../utils/networkUtils.js';
 
 /**
  * File Processor Composable
@@ -38,9 +43,17 @@ export const useFileProcessor = ({
   /**
    * Calculate BLAKE3 hash for a file
    * Uses 128-bit output (32 hex characters)
+   * Wrapped with network error detection
    */
   const calculateFileHash = async (file) => {
     try {
+      // Check network connectivity before starting
+      if (!isOnline()) {
+        const error = new Error('No internet connection available');
+        error.isNetworkError = true;
+        throw error;
+      }
+
       const buffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
@@ -50,6 +63,10 @@ export const useFileProcessor = ({
       // Return BLAKE3 hash of file content (32 hex characters)
       return hash;
     } catch (error) {
+      // Tag network errors for special handling
+      if (isNetworkError(error)) {
+        error.isNetworkError = true;
+      }
       throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);
     }
   };
@@ -70,27 +87,49 @@ export const useFileProcessor = ({
   /**
    * Check if file already exists in Firestore
    * Uses direct document lookup with fileHash as document ID
+   * Wrapped with network error detection and retry logic
    */
-  const checkFileExists = async (fileHash) => {
+  const checkFileExists = async (fileHash, retryCallback = null) => {
     try {
+      // Check network connectivity before starting
+      if (!isOnline()) {
+        const error = new Error('No internet connection available');
+        error.isNetworkError = true;
+        throw error;
+      }
+
       const matterId = matterStore.currentMatterId;
       if (!matterId) {
         throw new Error('No matter selected. Please select a matter before checking files.');
       }
 
-      // Direct document lookup using fileHash as document ID
-      const evidenceRef = doc(
-        db,
-        'firms',
-        authStore.currentFirm,
-        'matters',
-        matterId,
-        'evidence',
-        fileHash
+      // Wrap in retry logic for network errors
+      return await retryOnNetworkError(
+        async () => {
+          const evidenceRef = doc(
+            db,
+            'firms',
+            authStore.currentFirm,
+            'matters',
+            matterId,
+            'evidence',
+            fileHash
+          );
+          const docSnap = await getDoc(evidenceRef);
+          return docSnap.exists();
+        },
+        {
+          maxRetries: 4,
+          onRetry: retryCallback,
+        }
       );
-      const docSnap = await getDoc(evidenceRef);
-      return docSnap.exists();
-    } catch {
+    } catch (error) {
+      // Tag network errors for special handling
+      if (isNetworkError(error)) {
+        error.isNetworkError = true;
+        throw error;
+      }
+      // For non-network errors, return false to continue processing
       return false;
     }
   };
@@ -98,50 +137,91 @@ export const useFileProcessor = ({
   /**
    * Upload single file to Firebase Storage
    * Returns download URL and storage created timestamp on success
+   * Includes network error detection and retry logic
    */
-  const uploadSingleFile = async (file, fileHash, originalFileName, abortSignal = null) => {
-    const storagePath = generateStoragePath(fileHash, originalFileName);
-    const storageReference = storageRef(storage, storagePath);
+  const uploadSingleFile = async (
+    file,
+    fileHash,
+    originalFileName,
+    abortSignal = null,
+    retryCallback = null
+  ) => {
+    // Check network connectivity before starting
+    if (!isOnline()) {
+      const error = new Error('No internet connection available');
+      error.isNetworkError = true;
+      throw error;
+    }
 
-    const uploadTask = uploadBytesResumable(storageReference, file, {
-      customMetadata: {
-        firmId: authStore.currentFirm,
-        userId: authStore.user.uid,
-        originalName: originalFileName,
-        hash: fileHash,
-      },
-    });
+    // Core upload function that will be retried
+    const performUpload = async () => {
+      const storagePath = generateStoragePath(fileHash, originalFileName);
+      const storageReference = storageRef(storage, storagePath);
 
-    return new Promise((resolve, reject) => {
-      // Handle abort signal
-      if (abortSignal) {
-        abortSignal.addEventListener('abort', () => {
-          uploadTask.cancel();
-          reject(new Error('AbortError'));
-        });
-      }
+      const uploadTask = uploadBytesResumable(storageReference, file, {
+        customMetadata: {
+          firmId: authStore.currentFirm,
+          userId: authStore.user.uid,
+          originalName: originalFileName,
+          hash: fileHash,
+        },
+      });
 
-      uploadTask.on(
-        'state_changed',
-        () => {
-          if (abortSignal && abortSignal.aborted) {
+      return new Promise((resolve, reject) => {
+        // Handle abort signal
+        if (abortSignal) {
+          abortSignal.addEventListener('abort', () => {
             uploadTask.cancel();
             reject(new Error('AbortError'));
-          }
-        },
-        (error) => reject(error),
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            const metadata = await getMetadata(uploadTask.snapshot.ref);
-            const storageCreatedTimestamp = metadata.timeCreated;
-            resolve({ success: true, downloadURL, storageCreatedTimestamp });
-          } catch (error) {
-            reject(error);
-          }
+          });
         }
-      );
-    });
+
+        uploadTask.on(
+          'state_changed',
+          () => {
+            if (abortSignal && abortSignal.aborted) {
+              uploadTask.cancel();
+              reject(new Error('AbortError'));
+            }
+          },
+          (error) => {
+            // Tag network errors for special handling
+            if (isNetworkError(error)) {
+              error.isNetworkError = true;
+            }
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              const metadata = await getMetadata(uploadTask.snapshot.ref);
+              const storageCreatedTimestamp = metadata.timeCreated;
+              resolve({ success: true, downloadURL, storageCreatedTimestamp });
+            } catch (error) {
+              // Tag network errors for special handling
+              if (isNetworkError(error)) {
+                error.isNetworkError = true;
+              }
+              reject(error);
+            }
+          }
+        );
+      });
+    };
+
+    // Wrap upload with retry logic
+    try {
+      return await retryOnNetworkError(performUpload, {
+        maxRetries: 4,
+        onRetry: retryCallback,
+      });
+    } catch (error) {
+      // Tag network errors for special handling
+      if (isNetworkError(error)) {
+        error.isNetworkError = true;
+      }
+      throw error;
+    }
   };
 
   /**
