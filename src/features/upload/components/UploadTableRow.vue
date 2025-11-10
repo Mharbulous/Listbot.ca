@@ -1,14 +1,9 @@
 <template>
   <div class="upload-table-row">
-    <!-- Actions Column (100px - matches CLEAR column) -->
+    <!-- Actions Column (100px - matches Skip column) -->
     <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
       <button class="action-btn" title="Preview file" disabled>👁️</button>
       <button class="action-btn" title="Upload now" disabled>⬆️</button>
-    </div>
-
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
-      {{ file.name }}
     </div>
 
     <!-- Size Column (100px) -->
@@ -16,9 +11,9 @@
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Status Column (100px) -->
-    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
-      <StatusCell :status="file.status" />
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
+      {{ file.name }}
     </div>
 
     <!-- Folder Path Column (130px) -->
@@ -26,18 +21,22 @@
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Cancel/Undo Column (adjusted for scrollbar width) -->
+    <!-- Status Column (100px) -->
+    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
+      <StatusCell :status="file.status" />
+    </div>
+
+    <!-- Skip Column (adjusted for scrollbar width) -->
     <div
-      class="row-cell cancel-cell"
-      :style="{ width: `${cancelColumnWidth}px`, flexShrink: 0 }"
-    >
+      class="row-cell skip-cell"
+      :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }"
       <button
-        class="cancel-btn"
+        class="skip-btn"
         :disabled="file.status === 'completed'"
-        @click="handleCancelOrUndo"
-        :title="getButtonTitle"
+        @click="handleCancel"
+        :title="file.status === 'completed' ? 'Already uploaded' : 'Skip this file'"
       >
-        {{ getButtonIcon }}
+        ⏭️
       </button>
     </div>
   </div>
@@ -67,8 +66,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo']);
 
-// Compute adjusted cancel column width to account for scrollbar
-const cancelColumnWidth = computed(() => {
+// Compute adjusted skip column width to account for scrollbar
+const skipColumnWidth = computed(() => {
   // Base width is 100px, reduce by scrollbar width
   return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
 });
@@ -184,12 +183,12 @@ const handleCancelOrUndo = () => {
   font-family: 'Courier New', monospace;
 }
 
-/* Cancel Cell */
-.cancel-cell {
+/* Skip Cell */
+.skip-cell {
   justify-content: center;
 }
 
-.cancel-btn {
+.skip-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -198,11 +197,11 @@ const handleCancelOrUndo = () => {
   transition: transform 0.2s ease;
 }
 
-.cancel-btn:not(:disabled):hover {
+.skip-btn:not(:disabled):hover {
   transform: scale(1.2);
 }
 
-.cancel-btn:disabled {
+.skip-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
