@@ -262,9 +262,8 @@ const authStore = useAuthStore();
 
 // Helper function to get badge color based on confidence level
 const getConfidenceBadgeColor = (confidence) => {
-  if (confidence >= 95) return 'success'; // Green for 95%+
-  if (confidence >= 80) return 'warning'; // Amber for 80-94%
-  return 'error'; // Red for <80%
+  if (confidence >= 85) return 'success'; // Green for 85%+ (auto-approved)
+  return 'warning'; // Yellow for <85% (review required)
 };
 
 // Load existing AI tags from Firestore
@@ -436,7 +435,7 @@ const handleAnalyzeClick = async () => {
 
     // Prepare tags for storage
     const tagsToStore = [];
-    const confidenceThreshold = 95;
+    const confidenceThreshold = 85;
 
     if (result.documentDate) {
       tagsToStore.push({
