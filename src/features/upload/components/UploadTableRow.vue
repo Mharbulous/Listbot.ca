@@ -30,6 +30,7 @@
     <div
       class="row-cell cancel-cell"
       :style="{ width: `${cancelColumnWidth}px`, flexShrink: 0 }"
+    >
       <button
         class="cancel-btn"
         :disabled="file.status === 'completed'"
