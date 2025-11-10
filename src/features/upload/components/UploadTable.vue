@@ -105,8 +105,6 @@ const handleUpload = () => {
 .upload-table-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 400px);
-  min-height: 400px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -117,7 +115,6 @@ const handleUpload = () => {
 
 .scroll-container {
   flex: 1;
-  overflow-y: auto;
   position: relative;
 }
 
