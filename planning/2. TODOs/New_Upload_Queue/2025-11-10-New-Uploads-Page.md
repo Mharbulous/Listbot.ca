@@ -14,6 +14,8 @@ Transform the upload queue from a card-based list into a high-performance table-
 
 ## Core Design Principles
 
+These principles apply across all 8 phases:
+
 1. **Visual Consistency:** Match DocumentTable design language exactly
 2. **Performance First:** Virtual scrolling, batch updates, worker parallelization
 3. **Incremental Delivery:** Each phase is shippable and testable
@@ -35,698 +37,202 @@ Transform the upload queue from a card-based list into a high-performance table-
 
 ---
 
-## Phase Breakdown
+## Phase Overview & Detailed Documents
 
 ### **Phase 1: Foundation - Table Structure with Virtual Scrolling**
-**Goal:** Replace card-based list with performant table layout
-**Deliverable:** Working table with basic columns and virtual scrolling
-**User Impact:** Dramatically faster queue display, smoother scrolling
+**Duration:** 3-4 days | **Priority:** Critical | **Dependencies:** None
 
-#### 1.1 Core Table Structure
-- Implement DocumentTable-based component structure
-- TanStack Vue Virtual integration for row virtualization
-- Sticky header with consistent styling
-- Footer status bar
+**Deliverable:** Working table with 6 columns, virtual scrolling, status indicators, and footer bar.
 
-#### 1.2 Column Definitions
-```
-┌──────────────┬───────────────────┬──────────┬─────────────────┬──────────────┬────────┐
-│ Actions      │ File Name         │ Size     │ Status          │ Folder Path  │ Cancel │
-├──────────────┼───────────────────┼──────────┼─────────────────┼──────────────┼────────┤
-│ [👁️] [⬆️]   │ invoice.pdf       │ 2.4 MB   │ 🔵 Ready        │ /2024/Tax    │  [❌]  │
-│ [👁️] [⬆️]   │ report.docx       │ 890 KB   │ 🟡 Uploading... │ /Reports     │  [❌]  │
-│ [—] [—]     │ form.pdf          │ 1.2 MB   │ 🟢 Uploaded     │ /Forms       │  [🗑️]  │
-│ [—] [—]     │ contract.pdf      │ 1.2 MB   │ 🟠 Duplicate    │ /Forms       │  [❌]  │
-└──────────────┴───────────────────┴──────────┴─────────────────┴──────────────┴────────┘
-```
+**Key Features:**
+- DocumentTable-based component structure with TanStack Vue Virtual
+- 7-color status system (Ready, Uploading, Uploaded, Duplicate, Failed, Metadata Only, Unknown)
+- Sticky header and reactive footer status bar
+- Handle 100,000+ files with <100ms load time
 
-**Columns:**
-1. **Actions** (100px) - Functional actions (Peek, Upload Now)
-2. **File Name** (300px) - Primary identifier
-3. **Size** (100px) - File size formatted
-4. **Status** (180px) - Colored dot + text label
-5. **Folder Path** (300px) - Source folder from webkitRelativePath
-6. **Cancel** (80px) - Destructive action isolated on far right
-
-#### 1.3 Status System
-**7-Color Status Indicators** (dot + text):
-- 🔵 **Ready** - Queued, ready for upload
-- 🟡 **Uploading...** - Currently being uploaded
-- 🟢 **Uploaded** - Successfully uploaded to storage
-- 🟠 **Duplicate** - Detected as duplicate, will be skipped
-- 🔴 **Failed** - Upload failed with error
-- ⚪ **Metadata Only** - Upload metadata only (no storage)
-- ⚫ **Unknown** - Unknown status (fallback)
-
-#### 1.4 Footer Status Bar
-Replace badge system with compact footer:
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│ Total: 720 files (380.3 MB) • Ready: 715 • Duplicates: 5 • Failed: 0  │
-│ • Uploaded: 0/715                                                       │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-Updates in real-time without DOM thrashing.
-
-#### 1.5 Virtual Scrolling Implementation
-- Only render visible rows + 5 overscan
-- Constant memory usage O(1)
-- Smooth 60 FPS scrolling
-- Handle 100,000+ files
-
-**Success Criteria:**
-- ✅ Table displays with all columns
-- ✅ Virtual scrolling works smoothly (60 FPS)
-- ✅ Status footer shows live counts
-- ✅ Basic styling matches DocumentTable
-- ✅ 1000+ files load in <100ms
+**📄 Detailed Implementation:** See `2025-11-10-Phase1-VirtualUploadQueue.md`
+- Column specifications and widths
+- Status system implementation (colors, dots, text)
+- Footer reactive counts calculation
+- Virtual scrolling setup with TanStack Virtual
+- Component structure and file organization
 
 ---
 
 ### **Phase 2: Core Actions - Cancel, Undo, Immediate Upload**
-**Goal:** Implement essential file management actions
-**Deliverable:** Full file control with cancel/undo and immediate uploads
-**User Impact:** Users can manage individual files in queue
+**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phase 1
 
-#### 2.1 Cancel Action (Far Right Column)
-**Behavior:**
-1. User clicks ❌ Cancel button in far right column
-2. Row displays with crossed-out faded text
-3. All action buttons disabled (—)
-4. Cancel button replaced with 🔄 Undo button
-5. Status changes to "Cancelled" (grayed out dot)
-6. File excluded from upload count in footer
+**Deliverable:** Working cancel/undo functionality, duplicate promotion, and immediate upload button.
 
-**Visual State:**
-```
-┌──────────────┬───────────────────┬──────────┬─────────────────┬──────────────┬────────┐
-│ [—] [—]     │ ~~invoice.pdf~~   │ 2.4 MB   │ ⚪ Cancelled    │ /2024/Tax    │  [🔄]  │
-└──────────────┴───────────────────┴──────────┴─────────────────┴──────────────┴────────┘
-```
+**Key Features:**
+- Cancel button with visual crossed-out state and undo capability
+- Duplicate promotion algorithm (promotes next oldest when original cancelled)
+- Immediate upload button (⬆️) to bypass batch queue
+- All actions update footer counts in real-time
 
-**CSS Implementation:**
-```css
-.cancelled-row {
-  opacity: 0.5;
-  text-decoration: line-through;
-}
-.cancelled-row .action-button {
-  cursor: not-allowed;
-  pointer-events: none;
-}
-```
-
-#### 2.2 Undo Action
-**Behavior:**
-1. User clicks 🔄 Undo button
-2. Row returns to normal state
-3. Action buttons re-enabled
-4. Status returns to previous state
-5. Undo button replaced with ❌ Cancel button
-6. File re-included in upload count
-
-#### 2.3 Duplicate Promotion on Cancel
-**Algorithm:**
-When a file is cancelled:
-1. Check if file has duplicates (same hash)
-2. If duplicates exist, find next oldest (earliest sourceLastModified)
-3. Promote oldest duplicate to "original" status
-4. Update status from 🟠 Duplicate → 🔵 Ready
-5. Move promoted file to position where cancelled file was
-6. Update footer counts accordingly
-
-**Example:**
-```
-Before Cancel:
-Row 5: original.pdf    [Status: Ready]     ← User cancels this
-Row 6: original (1).pdf [Status: Duplicate]
-Row 7: original (2).pdf [Status: Duplicate]
-
-After Cancel:
-Row 5: ~~original.pdf~~     [Status: Cancelled]  [Undo]
-Row 6: original (1).pdf      [Status: Ready]      ← Promoted
-Row 7: original (2).pdf      [Status: Duplicate]
-```
-
-#### 2.4 Immediate Upload Action (⬆️ Button)
-**Behavior:**
-1. User clicks ⬆️ Upload Now button in Actions column
-2. File immediately begins upload (jumps queue)
-3. Status changes to 🟡 Uploading...
-4. Upload Now button disabled during upload
-5. On completion: Status → 🟢 Uploaded
-6. On failure: Status → 🔴 Failed (can retry)
-
-**Use Case:** Upload critical documents first without waiting for full queue.
-
-**Implementation Notes:**
-- Uses same upload logic as batch upload
-- Respects pause state (if paused, queues for next resume)
-- Updates footer counts in real-time
-
-**Success Criteria:**
-- ✅ Cancel button works, shows crossed-out row
-- ✅ Undo button restores row to original state
-- ✅ Cancelling original promotes next duplicate
-- ✅ Upload Now button uploads single file immediately
-- ✅ Footer counts update correctly for all actions
+**📄 Detailed Implementation:** See `2025-11-10-Phase2-UploadActions.md`
+- Cancel/undo state management and CSS styling
+- Duplicate promotion algorithm (by sourceLastModified)
+- Immediate upload logic and error handling
+- Integration with upload orchestration
 
 ---
 
 ### **Phase 3: Duplicate Management - Smart Display & Swapping**
-**Goal:** Intelligent duplicate handling with "Use this file" functionality
-**Deliverable:** Duplicates grouped below originals with swap capability
-**User Impact:** Users can choose which version of duplicate files to upload
+**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phases 1, 2
 
-#### 3.1 Duplicate Grouping
-**Display Logic:**
-- Duplicates displayed immediately below their original
-- Indentation or visual indicator shows grouping
-- Original marked with 🔵 Ready, duplicates with 🟠 Duplicate
+**Deliverable:** Visual grouping of duplicates with "Use this file" swap functionality.
 
-**Example:**
-```
-┌──────────────┬───────────────────┬──────────┬─────────────────┬──────────────┬────────┐
-│ [👁️] [⬆️]   │ invoice.pdf       │ 2.4 MB   │ 🔵 Ready        │ /2024/Tax    │  [❌]  │
-│ [👁️] [↔️]   │   ↳ invoice (1).pdf│ 2.4 MB   │ 🟠 Duplicate    │ /2024/Backup │  [❌]  │
-│ [👁️] [↔️]   │   ↳ invoice (2).pdf│ 2.4 MB   │ 🟠 Duplicate    │ /Archive     │  [❌]  │
-└──────────────┴───────────────────┴──────────┴─────────────────┴──────────────┴────────┘
-```
+**Key Features:**
+- Duplicates displayed immediately below originals with indentation
+- "Use This File" button (↔️) swaps original/duplicate roles
+- Visual hierarchy with purple tint and arrow prefix
+- Smooth swap animation with row position changes
 
-#### 3.2 "Use This File" Action (↔️ Button)
-**Behavior:**
-1. Duplicate has ↔️ "Use this file" button in Actions column
-2. User clicks ↔️ button on duplicate
-3. Files swap roles:
-   - Clicked duplicate becomes 🔵 Ready (new original)
-   - Previous original becomes 🟠 Duplicate
-4. Rows swap positions in table
-5. Smooth animation for swap transition
-
-**Swap Algorithm:**
-```javascript
-function swapOriginalWithDuplicate(duplicateFile, originalFile) {
-  // 1. Swap statuses
-  originalFile.status = 'duplicate';
-  duplicateFile.status = 'ready';
-
-  // 2. Swap positions in array
-  const originalIndex = files.indexOf(originalFile);
-  const duplicateIndex = files.indexOf(duplicateFile);
-  [files[originalIndex], files[duplicateIndex]] =
-    [files[duplicateIndex], files[originalIndex]];
-
-  // 3. Update footer counts (no change, just swapped roles)
-
-  // 4. Trigger re-render with animation
-}
-```
-
-**Use Case:** User realizes the "duplicate" has a better folder path or more recent modified date than the original.
-
-#### 3.3 Visual Hierarchy
-- Original file: Standard row styling
-- Duplicate file: Slightly indented with "↳" prefix or subtle background color
-- Group border: Light border around duplicate group
-
-**Success Criteria:**
-- ✅ Duplicates display immediately below original
-- ✅ Visual grouping is clear and intuitive
-- ✅ "Use this file" button swaps original/duplicate roles
-- ✅ Rows swap positions smoothly with animation
-- ✅ Footer counts remain accurate after swap
+**📄 Detailed Implementation:** See `2025-11-10-Phase3-DuplicateManagement.md`
+- Grouping algorithm (by hash) and display order
+- Swap logic with position reordering
+- Visual styling (indentation, colors, animations)
+- Integration with Phase 2 cancel/promotion
 
 ---
 
 ### **Phase 4: Simplified Upload Initiation - Three-Button System**
-**Goal:** Remove folder options modal, streamline upload initiation
-**Deliverable:** Direct upload actions with no blocking dialogs
-**User Impact:** Faster workflow, fewer clicks to start uploads
+**Duration:** 2-3 days | **Priority:** High | **Dependencies:** Phase 1
 
-#### 4.1 Replace Folder Options Modal
-**Current:** Drag folder → Modal appears → Select option → Click Continue → Queue loads
+**Deliverable:** Three distinct upload buttons, folder options modal removed.
 
-**New:** Direct initiation with three buttons
+**Key Features:**
+- Upload Files: Multi-select file picker
+- Upload Folder: Root folder only (no recursion)
+- Upload Folder + Subfolders: Full recursive upload
+- Non-blocking queue progress indicator for large batches (>500 files)
+- Drag-and-drop with inline choice (not modal)
 
-**UI Changes:**
-```
-Current Buttons:
-┌─────────────────┬─────────────────┐
-│  Browse Files   │  Browse Folder  │
-└─────────────────┴─────────────────┘
-
-New Buttons:
-┌──────────────┬───────────────┬─────────────────────────────┐
-│ Upload Files │ Upload Folder │ Upload Folder + Subfolders  │
-└──────────────┴───────────────┴─────────────────────────────┘
-```
-
-**Button Behaviors:**
-
-**1. Upload Files**
-- Opens file picker (multi-select enabled)
-- User selects multiple individual files
-- Files immediately added to queue
-- No modal, no confirmation
-
-**2. Upload Folder**
-- Opens folder picker (webkitdirectory)
-- Processes **root folder only** (no recursion)
-- Files immediately added to queue
-- No modal, no confirmation
-
-**3. Upload Folder + Subfolders**
-- Opens folder picker (webkitdirectory)
-- Processes **all subfolders recursively**
-- Files immediately added to queue
-- No modal, no confirmation
-
-#### 4.2 Remove Time Estimate from UI
-- Time estimates calculated for performance monitoring
-- Log to console: `console.log('[PERFORMANCE] Estimated queue time: 1.6s')`
-- User sees instant queue population instead of estimate
-- Focus on speed rather than prediction
-
-#### 4.3 Queueing Progress Indicator
-**For large folders (>500 files):**
-Show non-blocking progress at top of table:
-```
-┌────────────────────────────────────────────────────────────┐
-│  Queueing files... (324/720 analyzed)                      │
-│  ━━━━━━━━━━━━━━░░░░░░░░░░░░░░░░░                          │
-└────────────────────────────────────────────────────────────┘
-```
-
-- Does not block interaction
-- Can scroll through already-queued files
-- Disappears when complete
-
-#### 4.4 Drag-and-Drop Simplification
-- Detect if dropped item is folder structure
-- If single file or flat files → add to queue
-- If folder structure detected:
-  - Show inline choice: "○ Folder only  ● Include subfolders"
-  - Default to "Include subfolders" (pre-selected)
-  - User can change before continuing
-  - Non-modal, appears above table
-
-**Success Criteria:**
-- ✅ Three distinct upload buttons work correctly
-- ✅ No modal blocks user workflow
-- ✅ Time estimate logged to console only
-- ✅ Queueing progress shown for large batches
-- ✅ Drag-and-drop simplified with inline option
+**📄 Detailed Implementation:** See `2025-11-10-Phase4-SimplifiedUploadInitiation.md`
+- Three-button HTML implementation with file input types
+- Root-only filtering logic for folder uploads
+- Queue progress indicator component
+- Drag-and-drop folder detection and inline choice panel
+- Removal of folder options modal
 
 ---
 
-### **Phase 5: Column Management - Sort & Reorder**
-**Goal:** Add DocumentTable column management features
-**Deliverable:** Sortable, reorderable, resizable columns
-**User Impact:** Users can organize queue view to their preference
+### **Phase 5: Column Management - Sort, Reorder, Resize**
+**Duration:** 3-4 days | **Priority:** Medium | **Dependencies:** Phase 1
 
-#### 5.1 Column Sorting
-**Behavior:**
-- Click column header to sort
-- First click: Ascending (↑)
-- Second click: Descending (↓)
-- Third click: Clear sort (return to original order)
-- Visual indicator shows sort direction
+**Deliverable:** Sortable, reorderable, resizable columns matching DocumentTable.
 
-**Sortable Columns:**
-- File Name (alphabetical)
-- Size (numerical)
-- Status (by status priority)
-- Folder Path (alphabetical)
+**Key Features:**
+- Click column headers to sort (asc → desc → clear)
+- Drag-and-drop column reordering (except Actions and Cancel columns)
+- Resize columns with mouse drag (min width 80px)
+- Files upload in currently sorted order
+- Column state persisted to localStorage
 
-**Upload Order Consideration:**
-When user starts upload, files upload **in currently displayed order** (respecting sort).
-
-**Algorithm:**
-```javascript
-// On "Start Upload" button click:
-function startUpload() {
-  // 1. Get current displayed order (after sort applied)
-  const uploadOrder = getVisibleRowOrder();
-
-  // 2. Upload files in this order
-  for (const file of uploadOrder) {
-    if (file.status === 'ready') {
-      await uploadFile(file);
-    }
-  }
-}
-```
-
-**Edge Case:** User changes sort mid-upload
-- Maintain current upload sequence
-- Show warning: "Sort order change will apply to remaining files"
-- Files already uploaded/uploading continue unchanged
-- Remaining files reorder per new sort
-
-#### 5.2 Column Drag-and-Drop Reordering
-**Implementation:**
-- Drag handle icon in column headers (like DocumentTable)
-- Drag column header to new position
-- Visual feedback during drag (placeholder, drag ghost)
-- Drop to reorder columns
-- Persist order in localStorage
-
-**Restrictions:**
-- Actions column: Fixed left position (cannot move)
-- Cancel column: Fixed right position (cannot move)
-- Other columns: Freely reorderable
-
-#### 5.3 Column Resizing
-**Implementation:**
-- Resize handle on column borders
-- Drag to resize column width
-- Minimum width: 80px
-- Persist widths in localStorage
-
-#### 5.4 Column Visibility Toggle
-**Deferred to Future Phase** (YAGNI for upload queue with only 6 columns)
-- All columns always visible
-- No "Cols" button needed (unlike DocumentTable with 50+ columns)
-
-**Success Criteria:**
-- ✅ Clicking column headers sorts table
-- ✅ Sort indicator shows direction
-- ✅ Files upload in currently sorted order
-- ✅ Columns can be reordered via drag-and-drop
-- ✅ Column widths resizable and persisted
-- ✅ Actions and Cancel columns stay fixed
+**📄 Detailed Implementation:** See `2025-11-10-Phase5-ColumnManagement.md`
+- Sort algorithm for alphabetical, numerical, and status types
+- Drag-and-drop reordering with restrictions
+- Resize implementation with mouse handlers
+- Upload order respects current sort
+- Mid-upload sort change handling
 
 ---
 
 ### **Phase 6: Performance Optimizations - Speed & Scale**
-**Goal:** Maximize performance for large batches
-**Deliverable:** Sub-second queue loads, parallel processing
-**User Impact:** Handle 10,000+ files smoothly
+**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phases 1-5
 
-#### 6.1 Batch Status Updates
-**Problem:** Individual status changes cause layout thrashing
+**Deliverable:** Optimized performance infrastructure for large batches.
 
-**Solution:** Group updates in animation frames
-```javascript
-// Instead of updating each file immediately
-const pendingUpdates = [];
+**Key Features:**
+- Batch status updates using requestAnimationFrame (60 FPS maintenance)
+- Web worker hash parallelization (2-4x speedup on multi-core)
+- Smart deduplication cache (1 bulk query vs N queries)
+- Progressive queue loading for 5000+ files (<100ms perceived load)
 
-function updateFileStatus(file, newStatus) {
-  file.status = newStatus;
-  pendingUpdates.push(file);
-}
-
-// Batch apply in next frame
-requestAnimationFrame(() => {
-  if (pendingUpdates.length > 0) {
-    // Trigger single re-render for all changes
-    updateTable(pendingUpdates);
-    pendingUpdates.length = 0;
-  }
-});
-```
-
-**Impact:** Maintain 60 FPS during active uploads
-
-#### 6.2 Web Worker Hash Parallelization
-**Current:** Single worker hashes files sequentially
-
-**New:** Worker pool matching CPU cores
-```javascript
-const workerCount = navigator.hardwareConcurrency || 4;
-const workerPool = Array.from(
-  { length: workerCount },
-  () => new Worker('fileHashWorker.js')
-);
-
-// Round-robin distribution
-files.forEach((file, i) => {
-  const worker = workerPool[i % workerCount];
-  worker.postMessage({ file });
-});
-```
-
-**Impact:** 2-4x faster hash calculation on multi-core systems
-
-#### 6.3 Smart Deduplication Cache
-**Current:** Query database for each file's hash individually (N queries)
-
-**New:** Bulk prefetch all hashes for matter (1 query)
-```javascript
-// On page load or queue initialization:
-const existingHashes = await fetchAllHashesForMatter(firmId, matterId);
-const hashSet = new Set(existingHashes);
-
-// O(1) lookups during processing:
-files.forEach(file => {
-  file.isDuplicate = hashSet.has(file.hash);
-});
-```
-
-**Impact:** 10-50x faster duplicate detection
-
-#### 6.4 Progressive Queue Loading
-**For very large batches (>5000 files):**
-
-**Strategy:**
-1. Display first 100 files instantly (<50ms)
-2. Load remaining files in background (chunks of 500)
-3. Update table progressively as chunks complete
-4. User can start reviewing while loading continues
-
-**Implementation:**
-```javascript
-async function loadLargeQueue(files) {
-  // Phase 1: Instant display
-  const firstBatch = files.slice(0, 100);
-  displayFiles(firstBatch);
-
-  // Phase 2: Background chunks
-  for (let i = 100; i < files.length; i += 500) {
-    const chunk = files.slice(i, i + 500);
-    await processChunk(chunk);
-    appendFiles(chunk);
-    await nextTick(); // Allow UI to breathe
-  }
-}
-```
-
-**Success Criteria:**
-- ✅ Status updates batched in animation frames
-- ✅ Multiple web workers hash files in parallel
-- ✅ Duplicate detection uses single bulk query
-- ✅ Large queues (5000+ files) load progressively
-- ✅ 60 FPS maintained during all operations
-- ✅ Memory usage stays constant O(1)
+**📄 Detailed Implementation:** See `2025-11-10-Phase6-PerformanceOptimizations.md`
+- Batch update queue with requestAnimationFrame
+- Worker pool implementation matching CPU cores
+- Deduplication cache with O(1) lookups
+- Progressive loading strategy (instant + chunks)
+- Performance benchmarks and logging
 
 ---
 
 ### **Phase 7: Real-Time Dashboard - Queue & Upload Progress**
-**Goal:** Unified progress display for queueing and uploading
-**Deliverable:** Live dashboard showing current operation status
-**User Impact:** Always know what's happening and how long it will take
+**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phases 1-6
 
-#### 7.1 Dashboard Header Component
-**Persistent header above table showing current operation:**
+**Deliverable:** Unified progress dashboard with real-time metrics.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  Queueing files... (45% complete)                                      │
-│  ━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░░░░░░░░░                            │
-│  324/720 files • 5.2 files/s • 1m 23s remaining                        │
-│  [Cancel]                                                               │
-└────────────────────────────────────────────────────────────────────────┘
-```
+**Key Features:**
+- Persistent header showing current operation (queueing/uploading/paused/complete)
+- Real-time metrics: files/s or MB/s, time remaining, progress percentage
+- Non-blocking design (sticky at top, allows table interaction)
+- Four states with distinct visuals and action buttons
+- Auto-hide on completion after 5 seconds
 
-**States:**
-
-**1. Queueing State** (during file analysis & hashing)
-```
-Queueing files... (45% complete)
-━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░░░░░░░░░
-324/720 files • 5.2 files/s • 1m 23s remaining
-[Cancel Queue]
-```
-
-**2. Uploading State** (during file upload)
-```
-Uploading... (62% complete)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░
-446/720 files • 2.3 MB/s • 3m 45s remaining
-[Pause Upload]
-```
-
-**3. Paused State**
-```
-Upload paused (62% complete)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░
-446/720 files uploaded • 274 remaining
-[Resume Upload]
-```
-
-**4. Complete State** (auto-hide after 5 seconds)
-```
-Upload complete! ✓
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-720/720 files • 715 uploaded, 5 duplicates skipped
-[Clear Queue]
-```
-
-#### 7.2 Real-Time Metrics
-**Calculations:**
-
-**Queueing:**
-- Files/second: Rolling average over last 10 files
-- Time remaining: (remaining files) / (files/second)
-- Progress: (processed files) / (total files)
-
-**Uploading:**
-- MB/second: Rolling average over last 5 uploads
-- Time remaining: (remaining MB) / (MB/second)
-- Progress: (uploaded files) / (uploadable files)
-
-**Update Frequency:**
-- Progress bar: Every 100ms
-- Text metrics: Every 500ms
-- Use debouncing to prevent excessive re-renders
-
-#### 7.3 Non-Blocking Design
-**Key Principles:**
-- Dashboard does not block interaction with table
-- Can scroll, sort, cancel files while operations run
-- Dashboard sticks to top of viewport
-- Collapsible option for more screen space
-
-#### 7.4 Error Handling Display
-**If errors occur during queue/upload:**
-```
-Upload in progress... (45% complete) — 3 errors
-━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░░░░░░░░░
-324/720 files • 2.1 MB/s • 3 failed uploads
-[Pause] [View Errors]
-```
-
-**Success Criteria:**
-- ✅ Dashboard shows during queueing operations
-- ✅ Dashboard shows during upload operations
-- ✅ Real-time metrics update smoothly
-- ✅ Progress bar accurately reflects completion
-- ✅ Non-blocking, user can interact with table
-- ✅ Auto-hides on completion after 5 seconds
+**📄 Detailed Implementation:** See `2025-11-10-Phase7-RealTimeDashboard.md`
+- Dashboard component with four state designs
+- Metrics calculation (rolling averages for speed)
+- Time remaining estimation algorithms
+- State transition management
+- Update frequency optimization (500ms intervals)
 
 ---
 
-### **Phase 8: File Preview Integration (Low Priority)**
-**Goal:** Add document peek functionality from DocumentTable
-**Deliverable:** Hover/click preview of files before upload
-**User Impact:** Verify file contents before committing to upload
+### **Phase 8: File Preview Integration** *(Low Priority - Optional)*
+**Duration:** 3-4 days | **Priority:** Low | **Dependencies:** Phases 1-7
 
-#### 8.1 Peek Button Implementation
-**Add 👁️ Eye button to Actions column:**
-```
-┌──────────────┬───────────────────┬──────────┬─────────────────┬──────────────┬────────┐
-│ [👁️] [⬆️]   │ invoice.pdf       │ 2.4 MB   │ 🔵 Ready        │ /2024/Tax    │  [❌]  │
-└──────────────┴───────────────────┴──────────┴─────────────────┴──────────────┴────────┘
-```
+**Deliverable:** Preview modal with PDF thumbnails, image previews, and metadata.
 
-**Behavior:**
-- Click 👁️ button → Preview modal opens
-- Shows thumbnail/first page for PDFs
-- Shows preview for images
-- Shows metadata for other file types
-- Uses DocumentTable's DocumentPeekTooltip component
+**Key Features:**
+- Eye button (👁️) in Actions column
+- PDF preview with page navigation (using PDF.js)
+- Image preview with optional zoom controls
+- Metadata display for unsupported file types
+- Reuses DocumentTable peek modal design
 
-#### 8.2 Preview Modal Features
-**For PDFs:**
-- First page thumbnail
-- Page navigation arrows
-- Page count display
-- "View Full Document" button
-
-**For Images:**
-- Full image preview
-- Zoom controls
-- Image metadata (dimensions, format)
-
-**For Other Files:**
-- File icon
-- Metadata: Size, type, modified date
-- "Cannot preview this file type" message
-
-#### 8.3 Performance Considerations
-**Lazy Loading:**
-- Generate thumbnails only when requested
-- Cache thumbnails in memory during session
-- Use FileReader API for local file access
-- No server upload needed for preview
-
-**Implementation:**
-```javascript
-async function generateThumbnail(file) {
-  if (file.type === 'application/pdf') {
-    // Use PDF.js to render first page
-    return await renderPDFThumbnail(file);
-  } else if (file.type.startsWith('image/')) {
-    // Use FileReader to load image
-    return await loadImagePreview(file);
-  } else {
-    // Return file icon
-    return getFileIcon(file.type);
-  }
-}
-```
-
-#### 8.4 Reuse DocumentTable Components
-- Import DocumentPeekTooltip component
-- Adapt for local File objects (not Firestore documents)
-- Reuse all styling and interactions
-- Maintain visual consistency
-
-**Success Criteria:**
-- ✅ Eye button appears in Actions column
-- ✅ Clicking eye button opens preview modal
-- ✅ PDFs show first page thumbnail
-- ✅ Images show full preview
-- ✅ Other files show metadata
-- ✅ Previews load quickly (<500ms)
-- ✅ Modal design matches DocumentTable peek
+**📄 Detailed Implementation:** See `2025-11-10-Phase8-FilePreview.md`
+- Preview modal component structure
+- PDF thumbnail generation with PDF.js
+- Image loading with FileReader API
+- Metadata display for unsupported types
+- Performance optimization (lazy loading, caching)
 
 ---
 
-## Implementation Guidelines
+## Code Organization
 
-### Code Organization
+All phases follow this structure:
+
 ```
 src/features/upload/
 ├── components/
-│   ├── UploadTable.vue              (Main table component)
-│   ├── UploadTableRow.vue           (Individual row)
-│   ├── UploadDashboard.vue          (Progress header)
-│   ├── UploadFooter.vue             (Status footer)
+│   ├── UploadTable.vue              (Phase 1)
+│   ├── UploadTableRow.vue           (Phase 1)
+│   ├── UploadDashboard.vue          (Phase 7)
+│   ├── UploadFooter.vue             (Phase 1)
 │   ├── FilePreviewModal.vue         (Phase 8)
-│   └── UploadButtons.vue            (Three-button system)
+│   └── UploadButtons.vue            (Phase 4)
 ├── composables/
-│   ├── useUploadTable.js            (Table state & logic)
-│   ├── useFileActions.js            (Cancel, undo, swap, upload now)
-│   ├── useDuplicateManagement.js    (Grouping, promotion)
-│   ├── useColumnManagement.js       (Sort, reorder, resize)
-│   ├── useUploadProgress.js         (Dashboard metrics)
+│   ├── useUploadTable.js            (Phase 1)
+│   ├── useFileActions.js            (Phase 2)
+│   ├── useDuplicateManagement.js    (Phase 3)
+│   ├── useColumnManagement.js       (Phase 5)
+│   ├── useUploadProgress.js         (Phase 7)
 │   └── useFilePreview.js            (Phase 8)
 └── utils/
-    ├── fileProcessing.js            (Hash, analyze)
-    ├── duplicateDetection.js        (Cache, grouping)
-    └── uploadHelpers.js             (Formatting, validation)
+    ├── fileProcessing.js            (Phase 6)
+    ├── duplicateDetection.js        (Phase 6)
+    └── uploadHelpers.js             (All phases)
 ```
 
-### Styling Consistency
-- **Reuse DocumentTable.css** as base
-- Create UploadTable.css for upload-specific styles
-- Maintain same color palette, spacing, typography
-- Match header, footer, row styling exactly
+---
 
-### Testing Strategy
+## Testing Strategy
+
 Each phase must include:
+
 1. **Unit Tests:** Individual functions and composables
 2. **Component Tests:** Vue component interactions
 3. **Integration Tests:** Full workflow end-to-end
@@ -734,6 +240,7 @@ Each phase must include:
 5. **Manual Testing:** Real-world usage with test files
 
 ### Performance Monitoring
+
 Log performance metrics for each operation:
 ```javascript
 console.log('[PERFORMANCE] Queue initialization: 87ms');
@@ -742,31 +249,34 @@ console.log('[PERFORMANCE] Duplicate detection: 43ms (1 query, 720 files)');
 console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 ```
 
-### Backwards Compatibility
-- Old upload page remains at `/upload` route
-- New upload page at `/testing` route
-- Both pages functional during development
-- Migration strategy defined before deprecating old page
+---
+
+## Styling Consistency
+
+- **Reuse DocumentTable.css** as base
+- Create UploadTable.css for upload-specific styles
+- Maintain same color palette, spacing, typography
+- Match header, footer, row styling exactly
 
 ---
 
 ## Phase Delivery Schedule
 
-### Week 1: Foundation
-- **Phase 1:** Table structure with virtual scrolling
-- **Phase 2:** Core actions (cancel, undo, upload now)
+### Week 1: Foundation & Actions
+- **Phase 1:** Table structure with virtual scrolling (3-4 days)
+- **Phase 2:** Core actions (cancel, undo, upload now) (3-4 days)
 
 ### Week 2: Duplicate Management & Simplification
-- **Phase 3:** Duplicate grouping and swapping
-- **Phase 4:** Simplified upload initiation (three buttons)
+- **Phase 3:** Duplicate grouping and swapping (3-4 days)
+- **Phase 4:** Simplified upload initiation (2-3 days)
 
-### Week 3: Polish & Performance
-- **Phase 5:** Column management (sort, reorder, resize)
-- **Phase 6:** Performance optimizations (workers, cache, batching)
-- **Phase 7:** Real-time dashboard
+### Week 3: Column Management & Performance
+- **Phase 5:** Column management (3-4 days)
+- **Phase 6:** Performance optimizations (3-4 days)
 
-### Week 4: Preview (Optional)
-- **Phase 8:** File preview integration
+### Week 4: Polish & Optional Features
+- **Phase 7:** Real-time dashboard (3-4 days)
+- **Phase 8:** File preview integration (optional, 3-4 days)
 
 ---
 
@@ -814,32 +324,22 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 
 ---
 
-## Open Questions
+## Backwards Compatibility
 
-1. **Column Persistence:** Should column order/widths persist globally or per-user?
-   - **Decision:** Per-user (same as DocumentTable)
-
-2. **Upload Order:** Should we allow manual row drag-to-reorder?
-   - **Decision:** No (YAGNI), rely on column sort instead
-
-3. **Duplicate Threshold:** What constitutes "oldest" for promotion?
-   - **Decision:** Earliest sourceLastModified timestamp
-
-4. **Preview Scope:** Include video/audio preview?
-   - **Decision:** Phase 8 (low priority), start with PDFs and images only
-
-5. **Cancel Persistence:** Should cancelled files stay in view or be hidden?
-   - **Decision:** Stay in view with visual state, removable via "Clear Queue"
+- Old upload page remains at `/upload` route
+- New upload page at `/testing` route
+- Both pages functional during development
+- Migration strategy defined before deprecating old page
 
 ---
 
 ## Related Documentation
 
 - **Old Upload Page:** `/docs/2025-11-10-Old-Upload-Page.md`
-- **New Upload Page Plan:** `/docs/2025-11-10-New-Upload-Page.md`
 - **DocumentTable Architecture:** `/docs/front-end/DocumentTable.md`
 - **File Lifecycle:** `/docs/architecture/file-lifecycle.md`
 - **File Processing:** `/docs/architecture/file-processing.md`
+- **Performance Analysis:** `/docs/testing/performance-analysis.md`
 
 ---
 
@@ -848,11 +348,12 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 1.0 | 2025-11-10 | Initial planning document | Claude |
+| 1.1 | 2025-11-10 | Restructured with phase references | Claude |
 
 ---
 
 **Next Steps:**
-1. Review and approve this overview
-2. Break down each phase into individual implementation files
+1. ✅ Review and approve this overview
+2. Review individual phase documents for implementation details
 3. Set up development branch: `claude/new-upload-queue`
 4. Begin Phase 1 implementation
