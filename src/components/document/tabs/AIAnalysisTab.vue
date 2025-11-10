@@ -107,12 +107,16 @@
 
         <!-- 🚀Analyze Document Button (at bottom of System Fields) -->
         <div class="analyze-document-section">
+          <!-- Message when no fields remain to be filled -->
+          <div v-if="!hasEmptyFields" class="no-fields-message">
+            There are no empty fields to be filled out.
+          </div>
+
           <button
             @click="handleAnalyzeClick"
-            :disabled="isAnalyzing"
+            :disabled="isAnalyzing || !hasEmptyFields"
             class="analyze-document-button"
           >
-            <Rocket :size="20" :stroke-width="2" />
             <span>🚀Analyze Document</span>
             <v-progress-circular
               v-if="isAnalyzing"
@@ -191,6 +195,11 @@ const getConfidenceBadgeColor = (confidence) => {
   if (confidence >= 85) return 'success'; // Green for 85%+ (auto-approved)
   return 'warning'; // Yellow for <85% (review required)
 };
+
+// Computed property to check if there are any empty fields
+const hasEmptyFields = computed(() => {
+  return !aiResults.value.documentDate || !aiResults.value.documentType;
+});
 
 // Load existing AI tags from Firestore
 const loadAITags = async () => {
@@ -550,7 +559,20 @@ const handleAnalyzeClick = async () => {
   padding-top: 16px;
   border-top: 1px solid #e0e0e0;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-fields-message {
+  font-size: 0.875rem;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  width: 100%;
 }
 
 .analyze-document-button {
