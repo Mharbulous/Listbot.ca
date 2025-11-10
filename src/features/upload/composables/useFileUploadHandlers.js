@@ -193,7 +193,15 @@ export const useFileUploadHandlers = ({
         const queueFile = filesToProcess[i];
         updateUploadStatus('setUploadIndex', i);
 
-        // Skip files marked as skipped (e.g., Windows shortcut files)
+        // Skip files with skipReason (e.g., Windows shortcut files)
+        // Mark them as skipped and update UI
+        if (queueFile.skipReason === 'shortcut') {
+          updateFileStatus(queueFile, 'skipped');
+          updateUploadStatus('skipped');
+          continue;
+        }
+
+        // Skip files already marked as skipped
         if (queueFile.status === 'skipped') {
           updateUploadStatus('skipped');
           continue;

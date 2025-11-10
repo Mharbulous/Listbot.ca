@@ -129,32 +129,10 @@ export function useQueueCore() {
       console.log(`Excluded ${skippedFiles.length} files from skipped cloud folders`);
     }
 
-    // Filter out Windows shortcut files (.lnk) early - they should never be uploaded
-    const shortcutFiles = [];
-    const nonShortcutFiles = [];
-
-    processableFiles.forEach((file) => {
-      if (isShortcutFile(file.name)) {
-        shortcutFiles.push({
-          file,
-          path: getFilePath(file),
-          metadata: {
-            sourceFileName: file.name,
-            sourceFileSize: file.size,
-            sourceFileType: file.type,
-            lastModified: file.lastModified,
-          },
-          status: 'skipped',
-          skipReason: 'shortcut',
-        });
-      } else {
-        nonShortcutFiles.push(file);
-      }
-    });
-
     // Track progress for main thread processing
+    // Note: Shortcut files (.lnk) go through normal deduplication but are marked for skipping later
     let processedCount = 0;
-    const totalUploads = nonShortcutFiles.length; // Use non-shortcut files count for progress
+    const totalUploads = processableFiles.length;
 
     const sendProgress = () => {
       if (onProgress) {
@@ -162,7 +140,7 @@ export function useQueueCore() {
           current: processedCount,
           total: totalUploads,
           percentage: Math.round((processedCount / totalUploads) * 100),
-          currentFile: processedCount < totalUploads ? nonShortcutFiles[processedCount]?.name : '',
+          currentFile: processedCount < totalUploads ? processableFiles[processedCount]?.name : '',
         });
       }
     };
@@ -173,7 +151,7 @@ export function useQueueCore() {
     // Step 1: Group files by size to identify unique-sized files
     const fileSizeGroups = new Map(); // file_size -> [file_references]
 
-    nonShortcutFiles.forEach((file, index) => {
+    processableFiles.forEach((file, index) => {
       const fileSize = file.size;
       const fileRef = {
         file,
@@ -238,7 +216,7 @@ export function useQueueCore() {
       }
     }
 
-    return { uniqueFiles, hashGroups, skippedFiles, shortcutFiles };
+    return { uniqueFiles, hashGroups, skippedFiles };
   };
 
   // Process hash groups to identify true duplicates
