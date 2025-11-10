@@ -1,1 +1,3 @@
 I noticed a problem drag and drop columns when dragging the last column from the right and dragging it left.  It seems that the more you start from the right, the more the issue.  It might also have something to do with dragging matter categories rather than firm categories, built in categories or system categories.  Test them all.
+
+CORRECTION:  It does seem to matter what direction the dragging happens.  It might have something to do with trying to drag onto matter category columns.
