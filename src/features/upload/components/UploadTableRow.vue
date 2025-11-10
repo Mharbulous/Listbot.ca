@@ -1,33 +1,33 @@
 <template>
   <div class="upload-table-row">
-    <!-- Actions Column (100px) -->
-    <div class="row-cell actions-cell" style="width: 100px">
+    <!-- Actions Column (100px - matches CLEAR column) -->
+    <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
       <button class="action-btn" title="Preview file" disabled>👁️</button>
       <button class="action-btn" title="Upload now" disabled>⬆️</button>
     </div>
 
-    <!-- File Name Column (300px) -->
-    <div class="row-cell filename-cell" style="width: 300px" :title="file.name">
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
       {{ file.name }}
     </div>
 
     <!-- Size Column (100px) -->
-    <div class="row-cell size-cell" style="width: 100px">
+    <div class="row-cell size-cell" style="width: 100px; flex-shrink: 0">
       {{ formatFileSize(file.size) }}
     </div>
 
     <!-- Status Column (100px) -->
-    <div class="row-cell status-cell-wrapper" style="width: 100px">
+    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
       <StatusCell :status="file.status" />
     </div>
 
-    <!-- Folder Path Column (300px) -->
-    <div class="row-cell path-cell" style="width: 300px" :title="file.folderPath">
+    <!-- Folder Path Column (min-width to fit text without wrapping) -->
+    <div class="row-cell path-cell" style="min-width: 130px; width: 130px; flex-shrink: 0" :title="file.folderPath">
       {{ file.folderPath || '/' }}
     </div>
 
     <!-- Cancel Column (100px) -->
-    <div class="row-cell cancel-cell" style="width: 100px">
+    <div class="row-cell cancel-cell" style="width: 100px; flex-shrink: 0">
       <button
         class="cancel-btn"
         :disabled="file.status === 'completed'"
@@ -90,7 +90,6 @@ const handleCancel = () => {
   border-right: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

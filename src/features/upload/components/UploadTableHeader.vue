@@ -1,23 +1,31 @@
 <template>
   <div class="upload-table-header">
-    <!-- Actions Column (100px) -->
-    <div class="header-cell" style="width: 100px">Actions</div>
+    <!-- Actions Column (100px - matches CLEAR column) -->
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
 
-    <!-- File Name Column (300px) -->
-    <div class="header-cell" style="width: 300px">File Name</div>
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
 
     <!-- Size Column (100px) -->
-    <div class="header-cell" style="width: 100px">Size</div>
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">Size</div>
 
     <!-- Status Column (100px) -->
-    <div class="header-cell" style="width: 100px">Status</div>
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
 
-    <!-- Folder Path Column (300px) -->
-    <div class="header-cell" style="width: 300px">Folder Path</div>
+    <!-- Folder Path Column (min-width to fit text without wrapping) -->
+    <div class="header-cell" style="min-width: 130px; width: 130px; flex-shrink: 0">Folder Path</div>
 
-    <!-- Cancel Column (100px) - CLEAR Button -->
-    <div class="header-cell clear-queue-cell" style="width: 100px">
-      <v-btn color="error" variant="outlined" size="x-small" @click="handleClearQueue"> CLEAR </v-btn>
+    <!-- Cancel Column (100px - CLEAR button) -->
+    <div class="header-cell clear-queue-cell" style="width: 100px; flex-shrink: 0">
+      <v-btn
+        color="error"
+        variant="outlined"
+        size="small"
+        class="clear-btn"
+        @click="handleClearQueue"
+      >
+        CLEAR
+      </v-btn>
     </div>
   </div>
 </template>
@@ -58,7 +66,6 @@ const handleClearQueue = () => {
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  flex-shrink: 0;
 }
 
 .header-cell:last-child {
@@ -67,5 +74,13 @@ const handleClearQueue = () => {
 
 .clear-queue-cell {
   justify-content: center;
+}
+
+.clear-btn {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
 }
 </style>
