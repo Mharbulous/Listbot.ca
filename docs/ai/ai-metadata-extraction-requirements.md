@@ -840,7 +840,7 @@ Document to analyze:
 ├─────────────────────────────────────────┤
 │                                         │
 │                                         │
-│     No data ready for review.           │
+│     Use AI to extract data for human review           │
 │                                         │
 │                                         │
 └─────────────────────────────────────────┘

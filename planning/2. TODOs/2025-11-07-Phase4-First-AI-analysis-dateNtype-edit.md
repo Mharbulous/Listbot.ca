@@ -90,7 +90,7 @@ Implement a two-tab workflow that separates **extraction configuration** (AI Tab
 
 **Acceptance Criteria**:
 - If **no fields extracted** AND **no fields set to Manual**
-- Display message: _"No data ready for review."_ (in italics)
+- Display message: _"Use AI to extract data for human review"_ (in italics)
 - Once AI extracts a field or user sets a field to Manual, message disappears
 
 ---
@@ -366,7 +366,7 @@ const isAcceptEnabled = (fieldName) => {
       v-if="!shouldShowOnReviewTab('documentDate') && !shouldShowOnReviewTab('documentType')"
       class="review-empty-state"
     >
-      <em>No data ready for review.</em>
+      <em>Use AI to extract data for human review</em>
     </div>
 
     <!-- Document Date Review -->
@@ -807,7 +807,7 @@ async updateTag(documentHash, categoryId, updatedTag, firmId) {
 2. Switch to Review Tab
 
 **Expected**:
-- Review Tab shows: _"No data ready for review."_ (in italics)
+- Review Tab shows: _"Use AI to extract data for human review"_ (in italics)
 
 #### TC9: Field Appears on Both Tabs
 **Steps**:

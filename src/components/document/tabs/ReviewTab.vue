@@ -12,7 +12,7 @@
     <!-- Empty State: No fields to review -->
     <template v-else-if="!hasFieldsToReview">
       <div class="review-empty-state">
-        <em>No data ready for review.</em>
+        <em>Use AI to extract data for human review</em>
       </div>
     </template>
 
