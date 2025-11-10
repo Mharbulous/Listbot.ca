@@ -616,9 +616,7 @@ const handleAnalyzeClick = async () => {
   color: #666;
   font-style: italic;
   text-align: center;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 6px;
+  padding: 24px;
   width: 100%;
 }
 
