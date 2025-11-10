@@ -70,17 +70,15 @@ const scrollContainer = ref(null);
 // Virtual scrolling configuration
 const ROW_HEIGHT = 48;
 
-const rowVirtualizer = computed(() =>
-  useVirtualizer({
-    count: props.files.length,
-    getScrollElement: () => scrollContainer.value,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 5,
-  })
-);
+const rowVirtualizer = useVirtualizer({
+  count: computed(() => props.files.length),
+  getScrollElement: () => scrollContainer.value,
+  estimateSize: () => ROW_HEIGHT,
+  overscan: 5,
+});
 
-const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
-const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+const virtualItems = computed(() => rowVirtualizer.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.getTotalSize());
 
 // Footer stats
 const footerStats = computed(() => {
