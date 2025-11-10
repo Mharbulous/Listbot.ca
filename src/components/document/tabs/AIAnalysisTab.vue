@@ -211,7 +211,6 @@ import aiMetadataExtractionService from '@/services/aiMetadataExtractionService'
 import { useAuthStore } from '@/core/stores/auth';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 import { formatDate } from '@/utils/dateFormatter';
-import { Rocket } from 'lucide-vue-next';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
 // AI Analysis state
