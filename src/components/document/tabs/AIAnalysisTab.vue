@@ -179,7 +179,7 @@
           </div>
         </div>
 
-        <!-- Get Document Data Button (at bottom of System Fields) -->
+        <!-- 🚀Analyze Document Button (at bottom of System Fields) -->
         <div class="analyze-document-section">
           <button
             @click="handleAnalyzeClick"
@@ -187,7 +187,7 @@
             class="analyze-document-button"
           >
             <Rocket :size="20" :stroke-width="2" />
-            <span>Get Document Data</span>
+            <span>🚀Analyze Document</span>
             <v-progress-circular
               v-if="isAnalyzing"
               indeterminate
@@ -380,7 +380,7 @@ const retryAnalysis = () => {
 
 // Handle analyze button click (Real Gemini API integration)
 const handleAnalyzeClick = async () => {
-  console.log('🤖 Get Document Data clicked');
+  console.log('🤖 🚀Analyze Document clicked');
 
   isAnalyzing.value = true;
   aiError.value = null; // Clear previous errors
@@ -619,7 +619,7 @@ const handleAnalyzeClick = async () => {
   font-style: italic;
 }
 
-/* Get Document Data Section */
+/* 🚀Analyze Document Section */
 .analyze-document-section {
   margin-top: 24px;
   padding-top: 16px;
