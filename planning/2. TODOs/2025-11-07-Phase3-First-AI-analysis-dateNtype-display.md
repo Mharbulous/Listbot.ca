@@ -50,7 +50,7 @@ Connect real AI results to the UI and store them in Firestore. This phase transi
 - Document Date displays in user's preferred format (from props.dateFormat)
 - Document Type displays exactly as returned by AI
 - Confidence badge shows actual percentage from API
-- Badge color based on confidence: green (≥85%), yellow (<85%)
+- Badge color based on confidence: green (≥95%), amber (80-94%), red (<80%)
 - Tooltip shows real context and alternatives
 
 ---
@@ -212,7 +212,7 @@ const handleAnalyzeClick = async () => {
 
     // Prepare tags for storage
     const tagsToStore = [];
-    const confidenceThreshold = 85;
+    const confidenceThreshold = 95;
 
     if (result.documentDate) {
       tagsToStore.push({
@@ -484,11 +484,11 @@ const formatDate = (dateString) => {
 
 #### TC3: High Confidence Auto-Approval
 **File**: Clear invoice
-**Expected**: Green badge "✓ Auto-approved", confidence ≥85%, Firestore `autoApproved: true`
+**Expected**: Green badge "✓ Auto-approved", confidence ≥95%, Firestore `autoApproved: true`
 
 #### TC4: Low Confidence Review Required
 **File**: Blurry document
-**Expected**: Yellow badge "⚠ Review Required", confidence <85%, Firestore `reviewRequired: true`
+**Expected**: Amber badge "⚠ Review Required", confidence 80-94%, Firestore `reviewRequired: true`
 
 For additional common test cases, see the main context file section "Common Test Cases".
 

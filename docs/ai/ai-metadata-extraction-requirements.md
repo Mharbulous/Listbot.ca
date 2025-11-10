@@ -199,32 +199,35 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
   - Evidence document counters updated (tagCount, autoApprovedCount, reviewRequiredCount)
   - Service: `tagSubcollectionService.js` handles synchronization automatically
 
-#### FR-6: UI Display in 🤖 AI Tab
+#### FR-6: UI Display in 🤖 AI Tab (Configuration Panel)
 - **Priority**: P0 (Critical)
-- **Status**: ✅ IMPLEMENTED
-- **Description**: AI-extracted metadata displayed cleanly in the AI tab with confidence badges and tooltips
+- **Status**: 🚧 PHASE 4 IN PROGRESS
+- **Description**: AI Tab serves as configuration panel for metadata extraction, with Get/Skip/Manual options for pending fields
 - **Acceptance Criteria**:
-  - ✅ **System Fields Section**:
-    - Document Date: Shows extracted date or "Analyze Document" button
-    - Document Type: Shows extracted type or "Analyze Document" button
-  - ✅ **Status Indicators** (Confidence Badges):
+  - **Configuration Panel**:
+    - Shows only fields that have NOT been determined (no AI result and not manually accepted)
+    - Each pending field displays Get | Skip | Manual radio buttons
+    - **Get**: Include this field in AI extraction prompt
+    - **Skip**: Don't ask AI about this field
+    - **Manual**: User will enter manually (field appears on Review Tab with empty input)
+  - **Dynamic Field Visibility**:
+    - Fields disappear from AI Tab once determined (AI-extracted or manually accepted)
+    - Fields set to "Manual" remain on AI Tab until accepted on Review Tab
+  - **Analysis Trigger**:
+    - "Analyze Document" button includes only fields marked "Get"
+    - Button disabled during analysis with spinner state
+    - Loading state shows "Analyzing..." with progress indicator
+  - **Status Indicators** (Confidence Badges on Review Tab):
     - ≥95% confidence: Green badge (success color)
     - 80-94% confidence: Amber badge (warning color)
     - <80% confidence: Red badge (error color)
-    - Badge displays confidence percentage (e.g., "97%")
-  - ✅ **Tooltip on Hover**: Shows AI reasoning, context, and alternatives
-    - Context: Excerpt showing where info was found
-    - Alternatives: Up to 2 alternative suggestions with confidence and reasoning
-  - ✅ **Three States**: Analyze button → Analyzing spinner → Results with badge
-  - ✅ **Loading State**: "Analyzing..." with spinner (lines 80-84)
-  - ✅ **Error State**: Error alert with reason and [Retry] button (lines 13-53)
-  - ✅ **Success State**: Extracted values with confidence badges and tooltips (lines 86-183)
-  - ✅ **Firm/Matter Fields**: Placeholder sections for future implementation (lines 188-201)
+  - **Error Handling**:
+    - Error alert with reason and [Retry] button
+    - Failed fields remain on AI Tab for retry
 - **Implementation**: `src/components/document/tabs/AIAnalysisTab.vue`
-  - State management: Lines 215-250
-  - Badge computation: Lines 257-261
-  - Results display: Lines 86-183
-  - Tooltip content: Lines 103-120, 165-181
+  - Configuration state: `extractionMode` ref
+  - Field visibility: `shouldShowOnAITab()` method
+  - Mode selection: `setExtractionMode()` method
 
 #### FR-7: Tab Navigation and Badge Counts
 - **Priority**: P1 (High)
@@ -241,55 +244,65 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
   - Navigation hints from AI tab to Review tab
   - Active tab highlighting
 
-#### FR-8: 👤Review Tab - Full Review Workflow
-- **Priority**: P1 (High - Future Enhancement)
-- **Status**: ⏸️ NOT YET IMPLEMENTED (Phase 4)
-- **Description**: Dedicated Review tab will provide comprehensive workflow for reviewing and correcting low-confidence AI extractions
-- **Current Workaround**: Users can view alternatives in AI tab tooltips; manual editing via category management
-- **Planned Acceptance Criteria** (Future Phase 4):
-  - **Tab Sections**:
-    1. **Review Queue** (items needing review)
-    2. **Approved Items** (auto-approved and human-approved)
-    3. **Review History** (timeline of review actions)
+#### FR-8: 👤Review Tab - Review & Accept Workflow
+- **Priority**: P1 (High - Phase 4)
+- **Status**: 🚧 PHASE 4 IN PROGRESS
+- **Description**: Review Tab provides streamlined workflow for reviewing AI-extracted values and manual entry, with Accept/Reject actions
+- **Acceptance Criteria**:
+  - **Display Logic**:
+    - Shows fields that are AI-extracted OR set to "Manual" on AI Tab
+    - Empty state: "No data ready for review" when no fields to display
+    - Fields disappear after acceptance
 
-  - **Review Queue Display**:
-    - Shows only items with `reviewRequired: true`
-    - Each item displays as a card/section:
-      ```
-      Document Date (72% confidence) ⚠️
-      ├─ AI Suggestion: March 15, 2024 (72%)
-      │  └─ Found in: "Date: March 15, 2024 [from page 1, top right]"
-      ├─ Alternative 1: March 1, 2024 (45%)
-      │  └─ Found in: "Received: March 1, 2024 [from header]"
-      ├─ Alternative 2: February 28, 2024 (18%)
-      │  └─ Found in: "Period ending: February 28, 2024 [from content]"
-      └─ Actions: [✓ Approve] [✗ Reject] [✎ Custom Entry]
-      ```
-    - Shows `AIanalysis.contentMatch` for context
-    - Displays all alternatives with confidence scores
-    - Provides three action buttons per item
+  - **AI-Extracted Fields Display**:
+    - Field name (e.g., "Document Date")
+    - Editable input field pre-filled with AI value
+    - Confidence badge (e.g., "85%") with color coding:
+      - ≥95% confidence: Green badge
+      - 80-94% confidence: Amber badge
+      - <80% confidence: Red badge
+    - Tooltip on badge hover showing AI reasoning and context
+    - ✓ Accept button (enabled when input is valid)
+    - ✗ Reject button (mockup for Phase 4)
 
-  - **Review Actions**:
-    - **Approve**: Accepts AI suggestion, updates tag with `humanApproved: true`, `reviewedAt`, `reviewedBy`
-    - **Select Alternative**: Click alternative to replace current value, marks as human-reviewed
-    - **Custom Entry**: Opens input field, user enters value, sets `source: 'human'`, `confidence: 1.0`
-    - **Reject**: Marks as rejected, prompts for custom entry
+  - **Manual Entry Fields Display**:
+    - Field name
+    - Empty editable input field
+    - No confidence badge (manual entry has no AI confidence)
+    - ✓ Accept button (disabled until value entered)
+    - ✗ Reject button (mockup for Phase 4)
+    - Field appears on BOTH AI Tab and Review Tab until accepted
 
-  - **Approved Items Section**:
-    - Lists auto-approved items (confidence ≥95%) in collapsed view
-    - Lists human-approved items with approval details
-    - Shows approval timestamp and reviewer
-    - Allows re-opening for re-review if needed
+  - **Accept Action**:
+    - Validates input (date format, not in future, non-empty, etc.)
+    - Saves to Firestore with metadata:
+      - `source: 'human-reviewed'` (if AI-extracted) or `source: 'human'` (if manual)
+      - `humanReviewed: true`
+      - `autoApproved: true`
+      - `acceptedBy: userId`
+      - `acceptedAt: timestamp`
+      - `wasEdited: true/false` (tracks if user changed AI value)
+      - `originalAI` (preserves original AI data if edited)
+    - Field disappears from AI Tab
+    - Reloads data to update UI state
 
-  - **Review History Section**:
-    - Timeline of all review actions
-    - Shows: timestamp, reviewer, action taken, old value → new value
-    - Helps with audit trail and quality control
+  - **Reject Action** (Future):
+    - Logs rejection to Firestore
+    - Clears AI result for that field
+    - Sends field back to AI Tab
+    - Sets extraction mode back to 'get'
 
-  - **Empty States**:
-    - Review Queue empty: "No items need review ✓"
-    - Approved Items empty: "No approved items yet"
-    - History empty: "No review history yet"
+  - **Validation**:
+    - Document Date: YYYY-MM-DD format, cannot be in future
+    - Document Type: Must be from predefined list
+    - Empty values prevent Accept button from enabling
+    - Inline error messages display below input field
+
+  - **Field Lifecycle on Review Tab**:
+    - AI-extracted with confidence ≥95%: Pre-filled, ready to accept
+    - AI-extracted with confidence <95%: Pre-filled, review recommended
+    - Set to "Manual": Empty input, user must enter value
+    - User can edit any pre-filled value before accepting
 
 #### FR-9: Alternative Suggestions Management
 - **Priority**: P1 (High)
@@ -322,14 +335,15 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 - Handles documents with poor formatting or degraded quality
 
 #### NFR-4: Usability
-- Manual analysis trigger via "Analyze Document" button
-- Clear separation of concerns across three tabs
-- AI tab remains clean and simple (display only)
-- Review tab provides focused review workflow
-- Badge count provides at-a-glance status
-- One-click navigation from AI tab to Review tab
-- One-click acceptance of suggestions in Review tab
-- Two-click override with custom value
+- Manual analysis trigger via "Analyze Document" button for fields marked "Get"
+- Clear separation of concerns: AI Tab (configuration) vs Review Tab (results)
+- Get/Skip/Manual workflow provides user control over extraction
+- Fields dynamically move between tabs based on determination status
+- Manual fields appear on both tabs until accepted
+- Review tab provides focused Accept/Reject workflow
+- One-click acceptance of AI suggestions or manual entries
+- Editable fields allow corrections before accepting
+- Validation prevents invalid data entry
 - Helpful error messages with recovery options
 
 #### NFR-5: Integration
@@ -679,9 +693,9 @@ Document to analyze:
 
 ## UI Mockups (Text Format)
 
-### 🤖 AI Tab - Simple Display
+### 🤖 AI Tab - Configuration Panel (Phase 4)
 
-#### Scenario 1: Auto-Approved Items (High Confidence)
+#### Scenario 1: Pending Fields (Not Yet Analyzed)
 ```
 ┌─────────────────────────────────────────┐
 │ 🤖 AI Tab                               │
@@ -691,217 +705,167 @@ Document to analyze:
 │ ─────────────────                       │
 │                                         │
 │ DOCUMENT DATE:                          │
-│ March 15, 2024 [97%]                    │
+│ ◉ Get  ○ Skip  ○ Manual                │
 │                                         │
 │ DOCUMENT TYPE:                          │
-│ Invoice [98%]                           │
+│ ◉ Get  ○ Skip  ○ Manual                │
+│                                         │
+│ [Analyze Document]                      │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+#### Scenario 2: After AI Analysis (Fields Determined)
+```
+┌─────────────────────────────────────────┐
+│ 🤖 AI Tab                               │
+├─────────────────────────────────────────┤
+│                                         │
+│ System Fields                           │
+│ ─────────────────                       │
+│                                         │
+│ (All fields determined - nothing to     │
+│  configure)                             │
+│                                         │
+│ Switch to Review Tab to see results.    │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+#### Scenario 3: Manual Entry Mode Selected
+```
+┌─────────────────────────────────────────┐
+│ 🤖 AI Tab                               │
+├─────────────────────────────────────────┤
+│                                         │
+│ System Fields                           │
+│ ─────────────────                       │
+│                                         │
+│ DOCUMENT DATE:                          │
+│ ○ Get  ○ Skip  ◉ Manual                │
+│                                         │
+│ DOCUMENT TYPE:                          │
+│ ◉ Get  ○ Skip  ○ Manual                │
+│                                         │
+│ [Analyze Document]                      │
+│                                         │
+│ Note: Document Date set to Manual.      │
+│ Enter value on Review Tab.              │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### 👤 Review Tab - Accept/Reject Workflow (Phase 4)
+
+#### Scenario 1: AI-Extracted Field (High Confidence)
+```
+┌─────────────────────────────────────────┐
+│ 👤 Review Tab                           │
+├─────────────────────────────────────────┤
+│                                         │
+│ Document Date                           │
+│ ─────────────                           │
+│                                         │
+│ [2024-03-15____] (editable text field) │
+│ [97% ✓] ← confidence badge (green)     │
+│                                         │
+│ [✓ Accept] [✗ Reject]                  │
 │                                         │
 │ ────────────────────────────────────    │
 │                                         │
-│ Firm Fields                             │
-│ Coming soon...                          │
+│ Document Type                           │
+│ ─────────────                           │
 │                                         │
-│ Matter Fields                           │
-│ Coming soon...                          │
+│ [Invoice ▼] (editable dropdown)        │
+│ [98% ✓] ← confidence badge (green)     │
+│                                         │
+│ [✓ Accept] [✗ Reject]                  │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-#### Scenario 2: Items Need Review (Low Confidence)
+#### Scenario 2: AI-Extracted Field (Low Confidence)
 ```
 ┌─────────────────────────────────────────┐
-│ 🤖 AI Tab                               │
+│ 👤 Review Tab                           │
 ├─────────────────────────────────────────┤
 │                                         │
-│ ⚠️ Review Required                      │
-│ ┌─────────────────────────────────────┐ │
-│ │ Some AI suggestions need your       │ │
-│ │ review.                             │ │
-│ │                                     │ │
-│ │        [Go to Review tab →]        │ │
-│ └─────────────────────────────────────┘ │
+│ Document Date                           │
+│ ─────────────                           │
 │                                         │
-│ System Fields                           │
-│ ─────────────────                       │
+│ [2024-03-15____] (editable text field) │
+│ [82% ⚠️] ← confidence badge (amber)     │
 │                                         │
-│ DOCUMENT DATE:                          │
-│ March 15, 2024 [72%]                    │
-│ [Edit]                                  │
+│ Hover on badge shows:                   │
+│ "Found: Invoice Date: March 15, 2024"   │
+│ "Alternative: 2024-03-01 (45%)"         │
 │                                         │
-│ DOCUMENT TYPE:                          │
-│ Memo [78%]                              │
-│ [Edit]                                  │
+│ [✓ Accept] [✗ Reject]                  │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-#### Scenario 3: Analysis in Progress
+#### Scenario 3: Manual Entry Field
 ```
 ┌─────────────────────────────────────────┐
-│ 🤖 AI Tab                               │
+│ 👤 Review Tab                           │
 ├─────────────────────────────────────────┤
 │                                         │
-│ ⏳ Analyzing document...                │
+│ Document Date (Manual Entry)            │
+│ ────────────────────────────            │
 │                                         │
-│ [Spinner animation]                     │
+│ [____________] (empty text field)       │
+│ (no confidence badge - manual entry)    │
 │                                         │
-│ System Fields                           │
-│ ─────────────────                       │
+│ [✓ Accept] [✗ Reject]                  │
+│ (Accept disabled until value entered)   │
 │                                         │
-│ DOCUMENT DATE:                          │
-│ Not yet analyzed                             │
+│ ────────────────────────────────────    │
 │                                         │
-│ DOCUMENT TYPE:                          │
-│ Not yet analyzed                             │
+│ Document Type                           │
+│ ─────────────                           │
+│                                         │
+│ [Invoice ▼] (AI-extracted, editable)   │
+│ [97% ✓] (green badge)                  │
+│                                         │
+│ [✓ Accept] [✗ Reject]                  │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-### 👤 Review Tab - Full Workflow
-
-#### Review Queue Section
+#### Scenario 4: Empty State (Nothing to Review)
 ```
 ┌─────────────────────────────────────────┐
-│ 👤 Review (2)                           │
+│ 👤 Review Tab                           │
 ├─────────────────────────────────────────┤
 │                                         │
-│ Review Queue (2 items)                  │
-│ ═══════════════════════════════════     │
 │                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ Document Date (72% confidence) ⚠️   │ │
-│ │                                     │ │
-│ │ AI Suggestion: March 15, 2024 (72%) │ │
-│ │ Found in: "Date: March 15, 2024     │ │
-│ │            [from page 1, top right]"│ │
-│ │                                     │ │
-│ │ Alternative 1: March 1, 2024 (45%)  │ │
-│ │ Found in: "Received: March 1, 2024  │ │
-│ │            [from header]"           │ │
-│ │                                     │ │
-│ │ Alternative 2: Feb 28, 2024 (18%)   │ │
-│ │ Found in: "Period ending: Feb 28"   │ │
-│ │                                     │ │
-│ │ [✓ Approve] [✗ Reject] [✎ Custom]  │ │
-│ └─────────────────────────────────────┘ │
+│     No data ready for review.           │
 │                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ Document Type (78% confidence) ⚠️   │ │
-│ │                                     │ │
-│ │ AI Suggestion: Memo (78%)           │ │
-│ │ Found in: "MEMORANDUM [header] +    │ │
-│ │            TO/FROM fields"          │ │
-│ │                                     │ │
-│ │ Alternative 1: Letter (35%)         │ │
-│ │ Alternative 2: Email (12%)          │ │
-│ │                                     │ │
-│ │ [✓ Approve] [✗ Reject] [✎ Custom]  │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ Approved Items                          │
-│ ───────────────                         │
-│                                         │
-│ Auto-Approved (0) ▼                     │
-│                                         │
-│ Human-Approved (0)                      │
-│ (none yet)                              │
-│                                         │
-│ Review History                          │
-│ ──────────────                          │
-│                                         │
-│ (no history yet)                        │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-#### After Approving First Item
+#### Scenario 5: After Accepting a Field
 ```
 ┌─────────────────────────────────────────┐
-│ 👤 Review (1)                           │
+│ 👤 Review Tab                           │
 ├─────────────────────────────────────────┤
 │                                         │
-│ Review Queue (1 item)                   │
-│ ═══════════════════════════════════     │
+│ Document Type                           │
+│ ─────────────                           │
 │                                         │
-│ ┌─────────────────────────────────────┐ │
-│ │ Document Type (78% confidence) ⚠️   │ │
-│ │ ... (same as above)                 │ │
-│ └─────────────────────────────────────┘ │
+│ [Invoice ▼] (editable dropdown)        │
+│ [98% ✓] (green badge)                  │
 │                                         │
-│ Approved Items                          │
-│ ───────────────                         │
+│ [✓ Accept] [✗ Reject]                  │
 │                                         │
-│ Auto-Approved (0) ▼                     │
+│ ────────────────────────────────────    │
 │                                         │
-│ Human-Approved (1) ▼                    │
-│ ┌─────────────────────────────────────┐ │
-│ │ ✓ Document Date: March 15, 2024     │ │
-│ │   Approved by: John Smith           │ │
-│ │   At: 2024-11-04 14:23:15           │ │
-│ │   Original confidence: 72%          │ │
-│ │   [Re-open for review]              │ │
-│ └─────────────────────────────────────┘ │
-│                                         │
-│ Review History                          │
-│ ──────────────                          │
-│                                         │
-│ 📅 2024-11-04 14:23:15                  │
-│    John Smith approved AI suggestion   │
-│    Document Date: March 15, 2024        │
+│ (Document Date has been accepted and    │
+│  no longer appears here or on AI Tab)   │
 │                                         │
 └─────────────────────────────────────────┘
-```
-
-#### All Items Reviewed
-```
-┌─────────────────────────────────────────┐
-│ 👤 Review                               │
-├─────────────────────────────────────────┤
-│                                         │
-│ Review Queue                            │
-│ ═══════════════════════════════════     │
-│                                         │
-│ ✓ No items need review                  │
-│                                         │
-│ Approved Items                          │
-│ ───────────────                         │
-│                                         │
-│ Auto-Approved (0) ▼                     │
-│                                         │
-│ Human-Approved (2) ▼                    │
-│ • Document Date: March 15, 2024         │
-│ • Document Type: Memo                   │
-│                                         │
-│ Review History                          │
-│ ──────────────                          │
-│                                         │
-│ 📅 2024-11-04 14:25:42                  │
-│    John Smith selected alternative     │
-│    Document Type: Letter → Memo         │
-│                                         │
-│ 📅 2024-11-04 14:23:15                  │
-│    John Smith approved AI suggestion   │
-│    Document Date: March 15, 2024        │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-### Tab Navigation with Badge
-
-```
-┌───────────────────────────────────────────────────┐
-│ [ℹ️ Metadata] [🤖 AI] [👤Review (2)]    [👁️]    │
-│ ─────────────  ─────                              │
-│    (active)                                       │
-└───────────────────────────────────────────────────┘
-        ↓
-   (User clicks Review tab)
-        ↓
-┌───────────────────────────────────────────────────┐
-│ [ℹ️ Metadata] [🤖 AI] [👤Review (2)]    [👁️]    │
-│                        ─────────────              │
-│                          (active)                 │
-└───────────────────────────────────────────────────┘
 ```
 
 ## User Stories
