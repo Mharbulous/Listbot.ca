@@ -385,9 +385,6 @@ watch(() => props.columns, (newColumns, oldColumns) => {
   }
 }, { immediate: false });
 
-// Use column visibility composable
-const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
-
 // Snackbar state for max columns notification
 const snackbar = ref({
   show: false,
@@ -415,12 +412,21 @@ const {
   getSortClass,
   isSorted,
   getSortInfo,
+  removeColumnFromSort,
   MAX_SORT_COLUMNS
 } = useColumnSort(
   computed(() => props.data),
   columnOrder,
   handleMaxColumnsExceeded
 );
+
+// Handler for when a column is hidden - removes it from sort
+const handleColumnHidden = (columnKey) => {
+  removeColumnFromSort(columnKey);
+};
+
+// Use column visibility composable with callback for hidden columns
+const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility(handleColumnHidden);
 
 // Watch sort changes and emit event
 watch([sortColumn, sortDirection], ([column, direction]) => {

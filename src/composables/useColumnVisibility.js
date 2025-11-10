@@ -15,8 +15,10 @@ const DEFAULT_VISIBLE_COLUMNS = [
 /**
  * Composable for managing column visibility in the Analyze table
  * Handles showing/hiding columns via checkbox toggles with localStorage persistence
+ *
+ * @param {Function} onColumnHidden - Optional callback called when a column is hidden with columnKey
  */
-export function useColumnVisibility() {
+export function useColumnVisibility(onColumnHidden = null) {
   // Track which column keys are currently visible
   const visibleColumnKeys = ref([...DEFAULT_VISIBLE_COLUMNS]);
 
@@ -66,6 +68,11 @@ export function useColumnVisibility() {
     if (index > -1) {
       // Column is visible, hide it
       visibleColumnKeys.value = visibleColumnKeys.value.filter(key => key !== columnKey);
+
+      // Notify callback that column was hidden
+      if (onColumnHidden) {
+        onColumnHidden(columnKey);
+      }
     } else {
       // Column is hidden, show it
       visibleColumnKeys.value = [...visibleColumnKeys.value, columnKey];

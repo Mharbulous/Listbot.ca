@@ -299,6 +299,19 @@ export function useColumnSort(data, columnOrder = ref([]), onMaxColumnsExceeded 
   };
 
   /**
+   * Remove a specific column from the sort state
+   * Used when a column is hidden to clear its sort
+   * @param {string} columnKey - The column key to remove from sort
+   */
+  const removeColumnFromSort = (columnKey) => {
+    const index = sortColumns.value.findIndex(s => s.key === columnKey);
+    if (index !== -1) {
+      sortColumns.value.splice(index, 1);
+      saveSortState();
+    }
+  };
+
+  /**
    * Reset sort to default (no sorting)
    */
   const resetSort = () => {
@@ -326,6 +339,7 @@ export function useColumnSort(data, columnOrder = ref([]), onMaxColumnsExceeded 
     // Actions
     toggleSort,
     resetSort,
+    removeColumnFromSort,
 
     // Getters
     getSortClass,
