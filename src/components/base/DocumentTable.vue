@@ -182,8 +182,9 @@
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
+              @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
               @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
-              @mouseleave="cellTooltip.handleCellMouseLeave"
+              @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
               <!-- Cell content via slot -->
               <slot
@@ -542,15 +543,27 @@ const updateTooltipPosition = (fileHash) => {
 
 // Handle click outside tooltip (close immediately)
 const handleOutsideClick = (event) => {
-  if (!tooltipTiming.isVisible.value) return;
+  // Handle document peek tooltip
+  if (tooltipTiming.isVisible.value) {
+    // Check if click is on peek button or tooltip
+    const tooltipEl = event.target.closest('.document-peek-tooltip');
+    const peekButtonEl = event.target.closest('.peek-button');
 
-  // Check if click is on peek button or tooltip
-  const tooltipEl = event.target.closest('.document-peek-tooltip');
-  const peekButtonEl = event.target.closest('.peek-button');
+    if (!tooltipEl && !peekButtonEl) {
+      tooltipTiming.closeImmediate();
+      documentPeek.closePeek();
+    }
+  }
 
-  if (!tooltipEl && !peekButtonEl) {
-    tooltipTiming.closeImmediate();
-    documentPeek.closePeek();
+  // Handle cell content tooltip
+  if (cellTooltip.isVisible.value) {
+    // Check if click is on a table cell
+    const cellEl = event.target.closest('.row-cell');
+
+    if (!cellEl) {
+      // Click was outside any cell, hide the tooltip
+      cellTooltip.cleanup();
+    }
   }
 };
 
@@ -563,8 +576,14 @@ const handleWindowResize = () => {
 
 // Handle scroll - update tooltip position if visible
 const handleScroll = () => {
+  // Update document peek tooltip position
   if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
     updateTooltipPosition(documentPeek.currentPeekDocument.value);
+  }
+
+  // Hide cell content tooltip on scroll (cell may scroll out of view)
+  if (cellTooltip.isVisible.value) {
+    cellTooltip.cleanup();
   }
 };
 
