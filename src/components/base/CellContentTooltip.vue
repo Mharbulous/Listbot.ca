@@ -7,6 +7,7 @@
         top: position.top,
         left: position.left,
         opacity: opacity,
+        backgroundColor: backgroundColor,
       }"
     >
       {{ content }}
@@ -33,24 +34,41 @@ defineProps({
     type: Number,
     default: 1,
   },
+  backgroundColor: {
+    type: String,
+    default: 'white',
+  },
 });
 </script>
 
 <style scoped>
 .cell-content-tooltip {
   position: fixed;
-  z-index: 9999;
-  background-color: #1f2937;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
+  z-index: 100; /* Above table content but below popups */
+
+  /* Match cell text styling exactly */
+  color: #374151;
   font-size: 13px;
   line-height: 1.4;
-  max-width: 400px;
+
+  /* Match cell padding to align text */
+  padding: 12px 16px;
+
+  /* Allow content to wrap and extend beyond cell width */
+  max-width: 600px;
   word-wrap: break-word;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  white-space: normal;
+
+  /* Subtle shadow to distinguish from background */
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+
+  /* Prevent interaction */
   pointer-events: none;
-  white-space: pre-wrap;
+
+  /* Slight border radius to soften edges */
+  border-radius: 4px;
 }
 
 /* Fade transition */

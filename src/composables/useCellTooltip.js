@@ -12,6 +12,7 @@ export function useCellTooltip() {
   const content = ref('');
   const position = ref({ top: '0px', left: '0px' });
   const opacity = ref(0);
+  const backgroundColor = ref('white');
 
   // Timing
   const HOVER_DELAY = 1000; // 1 second
@@ -21,9 +22,8 @@ export function useCellTooltip() {
   let showTimer = null;
   let fadeTimer = null;
 
-  // Current mouse position
-  let mouseX = 0;
-  let mouseY = 0;
+  // Current cell element
+  let currentCellElement = null;
 
   /**
    * Check if an element's content is truncated
@@ -56,23 +56,26 @@ export function useCellTooltip() {
   };
 
   /**
-   * Calculate tooltip position (above and to the left of cursor)
-   * @param {number} x - Mouse X position
-   * @param {number} y - Mouse Y position
+   * Calculate tooltip position (aligned with cell, extending down and to the left)
+   * @param {HTMLElement} cellElement - The cell element
    * @returns {Object} Position object with top and left
    */
-  const calculatePosition = (x, y) => {
-    const OFFSET_X = 15; // pixels to the left of cursor
-    const OFFSET_Y = 15; // pixels above cursor
-    const BUFFER = 10; // minimum distance from viewport edge
+  const calculatePosition = (cellElement) => {
+    if (!cellElement) {
+      return { top: '0px', left: '0px' };
+    }
 
-    // Calculate position above and to the left
-    let left = x - OFFSET_X;
-    let top = y - OFFSET_Y;
+    const rect = cellElement.getBoundingClientRect();
 
-    // Ensure tooltip stays within viewport bounds
-    left = Math.max(BUFFER, left);
-    top = Math.max(BUFFER, top);
+    // Get the computed style to match padding
+    const computedStyle = window.getComputedStyle(cellElement);
+    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+
+    // Position tooltip to align with the cell's text content
+    // This accounts for the cell's padding to align text perfectly
+    const left = rect.left + paddingLeft;
+    const top = rect.top + paddingTop;
 
     return {
       top: `${top}px`,
@@ -84,8 +87,9 @@ export function useCellTooltip() {
    * Handle mouse enter on cell
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
+   * @param {string} bgColor - The background color of the row
    */
-  const handleCellMouseEnter = (event, cellElement) => {
+  const handleCellMouseEnter = (event, cellElement, bgColor = 'white') => {
     // Clear any existing timers
     clearTimers();
 
@@ -100,17 +104,17 @@ export function useCellTooltip() {
       return;
     }
 
-    // Store initial mouse position
-    mouseX = event.clientX;
-    mouseY = event.clientY;
+    // Store cell element and background color
+    currentCellElement = cellElement;
+    backgroundColor.value = bgColor;
 
     // Set content
     content.value = text;
 
     // Start timer to show tooltip after delay
     showTimer = setTimeout(() => {
-      // Calculate position based on mouse position
-      position.value = calculatePosition(mouseX, mouseY);
+      // Calculate position based on cell element
+      position.value = calculatePosition(currentCellElement);
 
       // Show tooltip
       isVisible.value = true;
@@ -121,21 +125,6 @@ export function useCellTooltip() {
         opacity.value = 1;
       }, 10);
     }, HOVER_DELAY);
-  };
-
-  /**
-   * Handle mouse move on cell (update cursor position)
-   * @param {MouseEvent} event - The mouse event
-   */
-  const handleCellMouseMove = (event) => {
-    // Update mouse position
-    mouseX = event.clientX;
-    mouseY = event.clientY;
-
-    // If tooltip is visible, update its position
-    if (isVisible.value) {
-      position.value = calculatePosition(mouseX, mouseY);
-    }
   };
 
   /**
@@ -153,6 +142,8 @@ export function useCellTooltip() {
     isVisible.value = false;
     opacity.value = 0;
     content.value = '';
+    backgroundColor.value = 'white';
+    currentCellElement = null;
   };
 
   /**
@@ -183,10 +174,10 @@ export function useCellTooltip() {
     content,
     position,
     opacity,
+    backgroundColor,
 
     // Methods
     handleCellMouseEnter,
-    handleCellMouseMove,
     handleCellMouseLeave,
     cleanup,
   };

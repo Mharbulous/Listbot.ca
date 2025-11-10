@@ -182,8 +182,7 @@
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
-              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget)"
-              @mousemove="cellTooltip.handleCellMouseMove"
+              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
               @mouseleave="cellTooltip.handleCellMouseLeave"
             >
               <!-- Cell content via slot -->
@@ -241,6 +240,7 @@
       :content="cellTooltip.content.value"
       :position="cellTooltip.position.value"
       :opacity="cellTooltip.opacity.value"
+      :backgroundColor="cellTooltip.backgroundColor.value"
     />
   </div>
 </template>
