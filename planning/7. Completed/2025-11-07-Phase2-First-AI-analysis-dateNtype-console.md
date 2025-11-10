@@ -576,8 +576,8 @@ const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' })
 Phase 3 will:
 1. Display **real AI results** in UI (remove mock data)
 2. Store results in Firestore (hybrid storage pattern)
-3. Implement auto-approval logic (≥85% confidence)
-4. Add "review required" badges for low confidence (<85%)
+3. Implement auto-approval logic (≥95% confidence)
+4. Add "review required" badges for low confidence (<95%)
 5. Persist results to avoid re-analysis
 
 **No code changes needed for AI service** - Phase 2 integration is complete and ready.

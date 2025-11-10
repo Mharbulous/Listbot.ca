@@ -56,10 +56,10 @@ Implement the "Analyze Document" button in the AI tab of the DocumentMetadataPan
 
 **Acceptance Criteria**:
 - After spinner completes, display mock value + confidence badge
-- Mock Document Date: "2024-03-15" with "92% ✓" badge
-- Mock Document Type: "Invoice" with "98% ✓" badge
+- Mock Document Date: "2024-03-15" with "92%" badge
+- Mock Document Type: "Invoice" with "98%" badge
 - Values replace spinner in the **same location** (no layout shift)
-- Green badge indicates high confidence (≥85%)
+- Green badge indicates high confidence (≥95%)
 
 ---
 
@@ -92,7 +92,7 @@ Implement the "Analyze Document" button in the AI tab of the DocumentMetadataPan
 └─────────────────────────────────────────┘
          ↓ (complete)
 ┌─ Document Date ─────────────────────────┐
-│ Date: 2024-03-15  [92% ✓]             │  ← State 3: Mock Result
+│ Date: 2024-03-15  [92%]                │  ← State 3: Mock Result
 └─────────────────────────────────────────┘
          │ (hover)
          ↓
@@ -158,12 +158,12 @@ Implement the "Analyze Document" button in the AI tab of the DocumentMetadataPan
           <div v-bind="props" class="ai-result-content">
             <span class="ai-result-value">{{ aiResults.documentDate.value }}</span>
             <v-chip
-              :color="aiResults.documentDate.confidence >= 85 ? 'success' : 'warning'"
+              :color="aiResults.documentDate.confidence >= 95 ? 'success' : 'warning'"
               size="small"
               variant="flat"
               class="ai-result-badge"
             >
-              {{ aiResults.documentDate.confidence }}% ✓
+              {{ aiResults.documentDate.confidence }}%
             </v-chip>
           </div>
         </template>
@@ -362,7 +362,7 @@ const handleAnalyzeClick = (fieldName) => {
 - **V1**: Button styled with Vuetify design system
 - **V2**: Spinner centered and clearly visible
 - **V3**: Mock values easy to read (font size, weight, color)
-- **V4**: Confidence badge color-coded (green ≥85%, yellow <85%)
+- **V4**: Confidence badge color-coded (green ≥95%, yellow/amber <95%)
 - **V5**: Tooltip formatted for readability
 - **V6**: No layout shift during state transitions
 
@@ -399,8 +399,8 @@ const handleAnalyzeClick = (fieldName) => {
 - Console logs: "Analysis completed"
 - Console logs mock results object
 - Spinner disappears
-- Mock value "2024-03-15" displays with "92% ✓" badge
-- Mock type "Invoice" displays with "98% ✓" badge
+- Mock value "2024-03-15" displays with "92%" badge
+- Mock type "Invoice" displays with "98%" badge
 
 #### TC4: Tooltip Display
 **Steps**: Complete analysis, then hover over Document Date result
