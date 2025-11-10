@@ -52,7 +52,7 @@ const router = createRouter({
       path: '/testing',
       name: 'testing',
       component: () => import('../views/Testing.vue'),
-      meta: { requiresAuth: true, title: 'Testing' },
+      meta: { requiresAuth: true, title: 'Upload Queue' },
     },
     {
       path: '/list',
