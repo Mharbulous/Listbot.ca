@@ -26,185 +26,56 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
-      <!-- Sticky Table Header -->
-      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
-        <!-- Column Selector Button (always at far left) -->
-        <div class="header-cell column-selector-cell">
-          <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
-            <span>{{ columnSelectorLabel }}</span>
-            <span class="dropdown-icon">▼</span>
-          </button>
-        </div>
+      <!-- Header -->
+      <DocumentTableHeader
+        :visibleColumns="visibleColumns"
+        :orderedColumns="orderedColumns"
+        :columnWidths="columnWidths"
+        :totalFooterWidth="totalFooterWidth"
+        :columnSelectorLabel="columnSelectorLabel"
+        :sortDirection="sortDirection"
+        :isSorted="isSorted"
+        :toggleSort="toggleSort"
+        :isColumnDragging="isColumnDragging"
+        :isDragGap="isDragGap"
+        :onDragStart="onDragStart"
+        :onDragEnd="onDragEnd"
+        :startResize="startResize"
+        :isColumnVisible="isColumnVisible"
+        :toggleColumnVisibility="toggleColumnVisibility"
+        :resetToDefaults="resetToDefaults"
+      />
 
-        <!-- Dynamic Column Headers with Drag-and-Drop -->
-        <div
-          v-for="(column, index) in visibleColumns"
-          :key="column.key"
-          class="header-cell"
-          :class="{
-            dragging: isColumnDragging(column.key),
-            'drag-gap': isDragGap(column.key),
-            'sorted-asc': isSorted(column.key) && sortDirection === 'asc',
-            'sorted-desc': isSorted(column.key) && sortDirection === 'desc',
-          }"
-          :style="{ width: columnWidths[column.key] + 'px' }"
-          :data-column-key="column.key"
-        >
-          <!-- Drag Handle Icon (shown on hover) -->
-          <div
-            class="drag-handle"
-            title="Drag to reorder"
-            draggable="true"
-            @dragstart="onDragStart(column.key, $event)"
-            @dragend="onDragEnd"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
-              <!-- Top row - 6 dots -->
-              <circle cx="3" cy="4" r="1" />
-              <circle cx="9" cy="4" r="1" />
-              <circle cx="15" cy="4" r="1" />
-              <circle cx="21" cy="4" r="1" />
-              <circle cx="27" cy="4" r="1" />
-              <circle cx="33" cy="4" r="1" />
-
-              <!-- Bottom row - 6 dots -->
-              <circle cx="3" cy="8" r="1" />
-              <circle cx="9" cy="8" r="1" />
-              <circle cx="15" cy="8" r="1" />
-              <circle cx="21" cy="8" r="1" />
-              <circle cx="27" cy="8" r="1" />
-              <circle cx="33" cy="8" r="1" />
-            </svg>
-          </div>
-
-          <!-- Sort Indicator - positioned relative to header cell for proper centering -->
-          <span class="sort-indicator" v-if="isSorted(column.key)">
-            {{ sortDirection === 'asc' ? '↑' : '↓' }}
-          </span>
-
-          <!-- Sortable Column Label (Clickable Button) -->
-          <button
-            class="header-label-button"
-            @click="toggleSort(column.key)"
-            :title="`Click to sort by ${column.label}`"
-          >
-            {{ column.label }}
-          </button>
-
-          <!-- Resize Handle -->
-          <div class="resize-handle" @mousedown="startResize(column.key, $event)"></div>
-        </div>
-
-        <!-- Column Selector Popover -->
-        <div
-          v-if="showColumnSelector"
-          ref="columnSelectorPopover"
-          class="column-selector-popover"
-          tabindex="0"
-          @focusout="handleFocusOut"
-        >
-          <div class="popover-header">Show/Hide Columns</div>
-          <label v-for="column in orderedColumns" :key="column.key" class="column-option">
-            <input
-              type="checkbox"
-              :checked="isColumnVisible(column.key)"
-              @change="toggleColumnVisibility(column.key)"
-            />
-            {{ column.label }}
-          </label>
-          <div class="popover-footer">
-            <button class="reset-btn" @click="resetToDefaults">Reset to Defaults</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scrollable Table Body with Virtual Scrolling -->
-      <div class="table-mockup-body" :style="{ minWidth: totalFooterWidth + 'px' }">
-        <!-- Virtual container with dynamic height -->
-        <div
-          class="virtual-container"
-          :style="{
-            height: virtualTotalSize + 'px',
-            position: 'relative',
-          }"
-        >
-          <!-- Virtual rows (only visible + overscan rendered) -->
-          <div
-            v-for="virtualItem in virtualItems"
-            :key="virtualItem.key"
-            class="table-mockup-row"
-            :class="{
-              even: virtualItem.index % 2 === 0,
-              '!bg-blue-50': isDocumentSelected(sortedData[virtualItem.index]),
-              'cursor-pointer hover:!bg-blue-50': !isPeekActive || isRowPeeked(sortedData[virtualItem.index]),
-              'cursor-default': isPeekActive && !isRowPeeked(sortedData[virtualItem.index])
-            }"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              height: virtualItem.size + 'px',
-              transform: `translateY(${virtualItem.start}px)`,
-              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
-            }"
-            @dblclick="handleViewDocument(sortedData[virtualItem.index])"
-          >
-            <!-- Action Buttons Cell -->
-            <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
-              <button
-                class="process-ai-button"
-                @click.stop="handleProcessWithAI(sortedData[virtualItem.index])"
-                title="Process with AI"
-              >
-                🤖
-              </button>
-              <button
-                :ref="(el) => setPeekButtonRef(el, sortedData[virtualItem.index].id)"
-                class="view-document-button peek-button"
-                @click.stop="handlePeekClick(sortedData[virtualItem.index])"
-                @dblclick.stop="handlePeekDoubleClick(sortedData[virtualItem.index])"
-                @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
-                @mouseleave="handlePeekMouseLeave"
-                :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
-              >
-                📄
-              </button>
-            </div>
-
-            <!-- Dynamic cells matching column order -->
-            <div
-              v-for="column in visibleColumns"
-              :key="column.key"
-              class="row-cell"
-              :class="{
-                'drag-gap': isDragGap(column.key),
-                'emoji-cell': !sortedData[virtualItem.index][column.key],
-              }"
-              :style="{ width: columnWidths[column.key] + 'px' }"
-              :data-column-key="column.key"
-              @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
-              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
-              @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
-            >
-              <!-- Cell content via slot -->
-              <slot
-                :name="`cell-${column.key}`"
-                :row="sortedData[virtualItem.index]"
-                :column="column"
-                :value="sortedData[virtualItem.index][column.key]"
-              >
-                <!-- Default cell rendering -->
-                <template v-if="!sortedData[virtualItem.index][column.key]">
-                  <span class="tbd-text">t.b.d.</span>
-                </template>
-                <template v-else>
-                  <span>{{ sortedData[virtualItem.index][column.key] }}</span>
-                </template>
-              </slot>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Body -->
+      <DocumentTableBody
+        :virtualItems="virtualItems"
+        :virtualTotalSize="virtualTotalSize"
+        :sortedData="sortedData"
+        :visibleColumns="visibleColumns"
+        :columnWidths="columnWidths"
+        :totalFooterWidth="totalFooterWidth"
+        :columnSelectorWidth="COLUMN_SELECTOR_WIDTH"
+        :isDocumentSelected="actions.isDocumentSelected"
+        :isPeekActive="actions.isPeekActive.value"
+        :isRowPeeked="actions.isRowPeeked"
+        :handleViewDocument="actions.handleViewDocument"
+        :handleProcessWithAI="actions.handleProcessWithAI"
+        :handlePeekClick="actions.handlePeekClick"
+        :handlePeekDoubleClick="actions.handlePeekDoubleClick"
+        :handlePeekMouseEnter="actions.handlePeekMouseEnter"
+        :handlePeekMouseLeave="actions.handlePeekMouseLeave"
+        :setPeekButtonRef="actions.setPeekButtonRef"
+        :tooltipTiming="actions.tooltipTiming"
+        :handleCellClick="cellTooltip.handleCellClick"
+        :handleCellMouseEnter="cellTooltip.handleCellMouseEnter"
+        :handleCellMouseLeave="cellTooltip.handleCellMouseLeave"
+        :isDragGap="isDragGap"
+      >
+        <!-- Forward all cell slots to body/row -->
+        <template v-for="column in visibleColumns" v-slot:[`cell-${column.key}`]="slotProps">
+          <slot :name="`cell-${column.key}`" v-bind="slotProps"></slot>
+        </template>
+      </DocumentTableBody>
 
       <!-- Footer with document count -->
       <div class="table-footer" :style="{ minWidth: totalFooterWidth + 'px' }">
@@ -216,23 +87,23 @@
 
     <!-- Document Peek Tooltip -->
     <DocumentPeekTooltip
-      :isVisible="tooltipTiming.isVisible.value"
-      :opacity="tooltipTiming.opacity.value"
-      :currentPeekDocument="documentPeek.currentPeekDocument.value"
-      :currentPeekPage="documentPeek.currentPeekPage.value"
-      :isLoading="documentPeek.isLoading.value"
-      :error="documentPeek.error.value"
-      :currentDocumentMetadata="documentPeek.currentDocumentMetadata.value"
-      :isCurrentDocumentPdf="documentPeek.isCurrentDocumentPdf.value"
-      :thumbnailUrl="documentPeek.currentThumbnailUrl.value"
-      :position="tooltipPosition"
-      :getFileIcon="documentPeek.getFileIcon"
-      @mouseenter="handleTooltipMouseEnter"
-      @mouseleave="handleTooltipMouseLeave"
-      @thumbnail-needed="handleThumbnailNeeded"
-      @previous-page="handlePreviousPage"
-      @next-page="handleNextPage"
-      @view-document="handleViewDocumentFromPeek"
+      :isVisible="actions.tooltipTiming.isVisible.value"
+      :opacity="actions.tooltipTiming.opacity.value"
+      :currentPeekDocument="actions.documentPeek.currentPeekDocument.value"
+      :currentPeekPage="actions.documentPeek.currentPeekPage.value"
+      :isLoading="actions.documentPeek.isLoading.value"
+      :error="actions.documentPeek.error.value"
+      :currentDocumentMetadata="actions.documentPeek.currentDocumentMetadata.value"
+      :isCurrentDocumentPdf="actions.documentPeek.isCurrentDocumentPdf.value"
+      :thumbnailUrl="actions.documentPeek.currentThumbnailUrl.value"
+      :position="actions.tooltipPosition.value"
+      :getFileIcon="actions.documentPeek.getFileIcon"
+      @mouseenter="actions.handleTooltipMouseEnter"
+      @mouseleave="actions.handleTooltipMouseLeave"
+      @thumbnail-needed="actions.handleThumbnailNeeded"
+      @previous-page="actions.handlePreviousPage"
+      @next-page="actions.handleNextPage"
+      @view-document="() => actions.handleViewDocumentFromPeek(sortedData)"
     />
 
     <!-- Cell Content Tooltip -->
@@ -247,17 +118,16 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/core/stores/auth';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useColumnResize } from '@/composables/useColumnResize';
 import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { useVirtualTable } from '@/composables/useVirtualTable';
 import { useColumnSort } from '@/composables/useColumnSort';
-import { useDocumentPeek } from '@/composables/useDocumentPeek';
-import { useTooltipTiming } from '@/composables/useTooltipTiming';
 import { useCellTooltip } from '@/composables/useCellTooltip';
+import { useDocumentTableActions } from '@/composables/useDocumentTableActions';
+import DocumentTableHeader from '@/components/base/DocumentTableHeader.vue';
+import DocumentTableBody from '@/components/base/DocumentTableBody.vue';
 import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
 import CellContentTooltip from '@/components/base/CellContentTooltip.vue';
 
@@ -305,302 +175,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 
-// Router and route for navigation
-const route = useRoute();
-const router = useRouter();
-
-// Auth store for firm ID
-const authStore = useAuthStore();
-
-// Document peek functionality
-const documentPeek = useDocumentPeek();
-const tooltipTiming = useTooltipTiming();
-
-// Cell content tooltip functionality
-const cellTooltip = useCellTooltip();
-
-// Refs for peek button positioning
-const peekButtonRefs = ref(new Map());
-const tooltipPosition = ref({ top: '0px', left: '0px' });
-
-// Handle view document double-click
-const handleViewDocument = (row) => {
-  if (!row || !row.id) return;
-
-  // If peek is active and this is NOT the peeked row, do nothing
-  if (isPeekActive.value && !isRowPeeked(row)) {
-    return;
-  }
-
-  // Navigate to document view (works for both peeked row and non-peek scenarios)
-  router.push({
-    name: 'view-document',
-    params: {
-      matterId: route.params.matterId,
-      fileHash: row.id
-    }
-  });
-};
-
-// Check if a document row is currently selected (being viewed or peeked)
-const isDocumentSelected = (row) => {
-  if (!row || !row.id) return false;
-
-  // Selected if currently viewing this document
-  const isViewing = route.params.fileHash === row.id;
-
-  // Selected if currently peeking this document and tooltip is visible
-  const isPeeking = tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value === row.id;
-
-  return isViewing || isPeeking;
-};
-
-// Check if peek is currently active
-const isPeekActive = computed(() => {
-  return tooltipTiming.isVisible.value;
-});
-
-// Check if a specific row is the currently peeked document
-const isRowPeeked = (row) => {
-  return row && row.id && documentPeek.currentPeekDocument.value === row.id;
-};
-
-// Handle process with AI button click
-const handleProcessWithAI = (row) => {
-  // TODO: Implement AI processing logic
-  console.log('Process with AI:', row);
-};
-
-// Handle peek button click
-const handlePeekClick = async (row) => {
-  if (!row || !row.id) return;
-
-  const fileHash = row.id;
-  const firmId = authStore.currentFirm;
-  const matterId = route.params.matterId;
-
-  if (!firmId || !matterId) {
-    console.error('[Peek] Missing firmId or matterId');
-    return;
-  }
-
-  const isPeekingThisDocument = documentPeek.currentPeekDocument.value === fileHash;
-  const isPeekVisible = tooltipTiming.isVisible.value;
-
-  if (isPeekingThisDocument && isPeekVisible) {
-    // Second click on same document - close the peek
-    tooltipTiming.closeImmediate();
-    documentPeek.closePeek();
-  } else {
-    // First click or different document - open peek immediately
-    await documentPeek.openPeek(firmId, matterId, fileHash);
-
-    // Show tooltip
-    tooltipTiming.showTooltip();
-
-    // Calculate position
-    updateTooltipPosition(fileHash);
-
-    // Generate thumbnail if it's a PDF
-    if (documentPeek.isCurrentDocumentPdf.value) {
-      await documentPeek.generateThumbnail(fileHash, 1);
-    }
-  }
-};
-
-// Handle peek button double-click (navigate to document view)
-const handlePeekDoubleClick = (row) => {
-  if (!row || !row.id) return;
-
-  // Close any active peek
-  if (tooltipTiming.isVisible.value) {
-    tooltipTiming.closeImmediate();
-    documentPeek.closePeek();
-  }
-
-  // Navigate to document view
-  handleViewDocument(row);
-};
-
-// Handle peek button mouse enter
-const handlePeekMouseEnter = (row) => {
-  if (!row || !row.id) return;
-
-  // Only show tooltip if this document is already being peeked
-  if (documentPeek.currentPeekDocument.value === row.id) {
-    tooltipTiming.handleMouseEnter();
-  }
-};
-
-// Handle peek button mouse leave
-const handlePeekMouseLeave = () => {
-  tooltipTiming.handleMouseLeave();
-};
-
-// Handle tooltip mouse enter (cancel hide timer)
-const handleTooltipMouseEnter = () => {
-  tooltipTiming.cancelHideTimer();
-};
-
-// Handle tooltip mouse leave (start hide timer)
-const handleTooltipMouseLeave = () => {
-  tooltipTiming.startHideTimer();
-};
-
-// Handle thumbnail generation request
-const handleThumbnailNeeded = async ({ fileHash, pageNumber }) => {
-  await documentPeek.generateThumbnail(fileHash, pageNumber);
-};
-
-// Handle previous page click on thumbnail
-const handlePreviousPage = async () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  documentPeek.previousPage();
-
-  // Generate thumbnail for new page
-  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-};
-
-// Handle next page click on thumbnail
-const handleNextPage = async () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  documentPeek.nextPage();
-
-  // Generate thumbnail for new page
-  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-};
-
-// Handle view document from thumbnail middle-click
-const handleViewDocumentFromPeek = () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  // Find the row in sortedData that matches the fileHash
-  const row = sortedData.value.find((r) => r.id === fileHash);
-
-  if (row) {
-    handleViewDocument(row);
-  }
-};
-
-// Update tooltip position based on peek button
-const updateTooltipPosition = (fileHash) => {
-  const button = peekButtonRefs.value.get(fileHash);
-  if (!button) return;
-
-  const rect = button.getBoundingClientRect();
-
-  // Estimate tooltip dimensions (based on DocumentPeekTooltip styles)
-  const TOOLTIP_WIDTH = 350;
-  const TOOLTIP_HEIGHT = 380;
-  const BUFFER = 10;
-
-  // Get viewport dimensions
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-
-  // Calculate available space in each direction
-  const spaceAbove = rect.top;
-  const spaceBelow = viewportHeight - rect.bottom;
-  const spaceRight = viewportWidth - rect.right;
-  const spaceLeft = rect.left;
-
-  // Determine vertical position
-  let top;
-  if (spaceBelow < TOOLTIP_HEIGHT && spaceAbove > spaceBelow) {
-    // Not enough space below and more space above - position above button
-    top = Math.max(BUFFER, rect.top - TOOLTIP_HEIGHT - BUFFER);
-  } else {
-    // Default: position at button top (aligns with button)
-    top = Math.max(BUFFER, Math.min(rect.top, viewportHeight - TOOLTIP_HEIGHT - BUFFER));
-  }
-
-  // Determine horizontal position
-  let left;
-  if (spaceRight >= TOOLTIP_WIDTH + BUFFER) {
-    // Enough space on right - position to right of button (default)
-    left = rect.right + BUFFER;
-  } else if (spaceLeft >= TOOLTIP_WIDTH + BUFFER) {
-    // Not enough space on right but enough on left - position to left of button
-    left = rect.left - TOOLTIP_WIDTH - BUFFER;
-  } else {
-    // Constrain to viewport with buffer
-    left = Math.max(BUFFER, Math.min(rect.right + BUFFER, viewportWidth - TOOLTIP_WIDTH - BUFFER));
-  }
-
-  tooltipPosition.value = {
-    top: `${top}px`,
-    left: `${left}px`,
-  };
-};
-
-// Handle click outside tooltip (close immediately)
-const handleOutsideClick = (event) => {
-  // Handle document peek tooltip
-  if (tooltipTiming.isVisible.value) {
-    // Check if click is on peek button or tooltip
-    const tooltipEl = event.target.closest('.document-peek-tooltip');
-    const peekButtonEl = event.target.closest('.peek-button');
-
-    if (!tooltipEl && !peekButtonEl) {
-      tooltipTiming.closeImmediate();
-      documentPeek.closePeek();
-    }
-  }
-
-  // Handle cell content tooltip
-  if (cellTooltip.isVisible.value) {
-    // Check if click is on a table cell
-    const cellEl = event.target.closest('.row-cell');
-
-    if (!cellEl) {
-      // Click was outside any cell, hide the tooltip
-      cellTooltip.cleanup();
-    }
-  }
-};
-
-// Handle window resize - update tooltip position if visible
-const handleWindowResize = () => {
-  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
-    updateTooltipPosition(documentPeek.currentPeekDocument.value);
-  }
-};
-
-// Handle scroll - update tooltip position if visible
-const handleScroll = () => {
-  // Update document peek tooltip position
-  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
-    updateTooltipPosition(documentPeek.currentPeekDocument.value);
-  }
-
-  // Hide cell content tooltip on scroll (cell may scroll out of view)
-  if (cellTooltip.isVisible.value) {
-    cellTooltip.cleanup();
-  }
-};
-
-// Set ref for peek button
-const setPeekButtonRef = (el, fileHash) => {
-  if (el) {
-    peekButtonRefs.value.set(fileHash, el);
-  } else {
-    peekButtonRefs.value.delete(fileHash);
-  }
-};
-
-// Column selector and refs
-const showColumnSelector = ref(false);
+// Scroll container ref
 const scrollContainer = ref(null);
-const columnSelectorPopover = ref(null);
-const columnSelectorBtn = ref(null);
 
 // Build default column widths object from columns prop
 const defaultColumnWidths = computed(() => {
@@ -613,8 +189,6 @@ const defaultColumnWidths = computed(() => {
 // Use column drag-drop composable
 const {
   columnOrder,
-  orderedColumns: composableOrderedColumns,
-  dragState,
   onDragStart,
   onDragOver,
   onDrop,
@@ -648,7 +222,7 @@ watch(() => props.columns, (newColumns, oldColumns) => {
 const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
 
 // Use column sort composable
-const { sortColumn, sortDirection, sortedData, toggleSort, getSortClass, isSorted } =
+const { sortColumn, sortDirection, sortedData, toggleSort, isSorted } =
   useColumnSort(computed(() => props.data));
 
 // Watch sort changes and emit event
@@ -658,12 +232,8 @@ watch([sortColumn, sortDirection], ([column, direction]) => {
 
 // Initialize virtual table
 const {
-  rowVirtualizer,
   virtualItems,
   virtualTotalSize,
-  scrollOffset,
-  virtualRange,
-  scrollMetrics,
 } = useVirtualTable({
   data: sortedData,
   scrollContainer,
@@ -700,26 +270,53 @@ const totalFooterWidth = computed(() => {
   return totalTableWidth.value + COLUMN_SELECTOR_WIDTH;
 });
 
-// Auto-focus popover when it opens
-watch(showColumnSelector, async (isOpen) => {
-  if (isOpen) {
-    await nextTick();
-    columnSelectorPopover.value?.focus();
-  }
-});
+// Cell content tooltip functionality
+const cellTooltip = useCellTooltip();
 
-// Handle focus leaving the popover
-const handleFocusOut = (event) => {
-  const clickedButton = event.relatedTarget === columnSelectorBtn.value;
-  if (!clickedButton && (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))) {
-    showColumnSelector.value = false;
+// Document table actions (peek, navigation, etc.)
+const actions = useDocumentTableActions();
+
+// Handle click outside tooltip (close immediately)
+const handleOutsideClick = (event) => {
+  // Handle document peek tooltip
+  if (actions.tooltipTiming.isVisible.value) {
+    // Check if click is on peek button or tooltip
+    const tooltipEl = event.target.closest('.document-peek-tooltip');
+    const peekButtonEl = event.target.closest('.peek-button');
+
+    if (!tooltipEl && !peekButtonEl) {
+      actions.tooltipTiming.closeImmediate();
+      actions.documentPeek.closePeek();
+    }
+  }
+
+  // Handle cell content tooltip
+  if (cellTooltip.isVisible.value) {
+    // Check if click is on a table cell
+    const cellEl = event.target.closest('.row-cell');
+
+    if (!cellEl) {
+      // Click was outside any cell, hide the tooltip
+      cellTooltip.cleanup();
+    }
+  }
+};
+
+// Handle scroll - update tooltip position and hide cell tooltip
+const handleScroll = () => {
+  // Update document peek tooltip position
+  actions.handleScrollForPeek();
+
+  // Hide cell content tooltip on scroll (cell may scroll out of view)
+  if (cellTooltip.isVisible.value) {
+    cellTooltip.cleanup();
   }
 };
 
 // Lifecycle: Add outside-click detection, resize, and scroll listeners on mount
 onMounted(() => {
   document.addEventListener('click', handleOutsideClick);
-  window.addEventListener('resize', handleWindowResize);
+  window.addEventListener('resize', actions.handleWindowResize);
 
   // Add scroll listener to the scroll container
   if (scrollContainer.value) {
@@ -730,18 +327,19 @@ onMounted(() => {
 // Lifecycle: Cleanup on unmount
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick);
-  window.removeEventListener('resize', handleWindowResize);
+  window.removeEventListener('resize', actions.handleWindowResize);
 
   // Remove scroll listener
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
 
-  documentPeek.cleanup();
+  actions.documentPeek.cleanup();
   cellTooltip.cleanup();
 });
 
-// Component is ready - no logging needed here as Cloud.vue tracks the overall mount time
+// Define slots
+defineSlots();
 </script>
 
 <style scoped src="./DocumentTable.css"></style>
