@@ -56,7 +56,7 @@ export function useCellTooltip() {
   };
 
   /**
-   * Calculate tooltip position (aligned with cell, extending down and to the left)
+   * Calculate tooltip position (aligned with cell text, extending down and to the left)
    * @param {HTMLElement} cellElement - The cell element
    * @returns {Object} Position object with top and left
    */
@@ -65,24 +65,31 @@ export function useCellTooltip() {
       return { top: '0px', left: '0px' };
     }
 
-    const rect = cellElement.getBoundingClientRect();
+    // Get the actual text element inside the cell (span)
+    const textElement = cellElement.querySelector('span') || cellElement;
+    const textRect = textElement.getBoundingClientRect();
+    const cellRect = cellElement.getBoundingClientRect();
 
-    // Get the computed style to match padding
+    // Get cell padding for horizontal alignment
     const computedStyle = window.getComputedStyle(cellElement);
     const cellPaddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-    const cellPaddingTop = parseFloat(computedStyle.paddingTop) || 0;
 
     // Tooltip padding (must match CSS padding in CellContentTooltip.vue)
     const TOOLTIP_PADDING_LEFT = 16; // px
     const TOOLTIP_PADDING_TOP = 12; // px
 
-    // Position tooltip so its text aligns perfectly with the cell's text
-    // Cell text starts at: rect.left + cellPaddingLeft
+    // Horizontal alignment: align tooltip text with cell text
+    // Cell text starts at: cellRect.left + cellPaddingLeft
     // Tooltip text starts at: tooltip.left + TOOLTIP_PADDING_LEFT
-    // To align: rect.left + cellPaddingLeft = tooltip.left + TOOLTIP_PADDING_LEFT
-    // Therefore: tooltip.left = rect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT
-    const left = rect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT;
-    const top = rect.top + cellPaddingTop - TOOLTIP_PADDING_TOP;
+    // Therefore: tooltip.left = cellRect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT
+    const left = cellRect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT;
+
+    // Vertical alignment: align tooltip text with the actual text element position
+    // The text element is vertically centered in the cell due to flex
+    // Tooltip text starts at: tooltip.top + TOOLTIP_PADDING_TOP
+    // Text element is at: textRect.top
+    // Therefore: tooltip.top = textRect.top - TOOLTIP_PADDING_TOP
+    const top = textRect.top - TOOLTIP_PADDING_TOP;
 
     return {
       top: `${top}px`,
