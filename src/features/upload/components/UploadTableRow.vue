@@ -26,7 +26,7 @@
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Cancel Column (adjusted for scrollbar width) -->
+    <!-- Cancel/Undo Column (adjusted for scrollbar width) -->
     <div
       class="row-cell cancel-cell"
       :style="{ width: `${cancelColumnWidth}px`, flexShrink: 0 }"
@@ -34,10 +34,10 @@
       <button
         class="cancel-btn"
         :disabled="file.status === 'completed'"
-        @click="handleCancel"
-        :title="file.status === 'completed' ? 'Already uploaded' : 'Cancel upload'"
+        @click="handleCancelOrUndo"
+        :title="getButtonTitle"
       >
-        {{ file.status === 'completed' ? '🗑️' : '❌' }}
+        {{ getButtonIcon }}
       </button>
     </div>
   </div>
@@ -65,12 +65,34 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel']);
+const emit = defineEmits(['cancel', 'undo']);
 
 // Compute adjusted cancel column width to account for scrollbar
 const cancelColumnWidth = computed(() => {
   // Base width is 100px, reduce by scrollbar width
   return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
+});
+
+// Compute button icon based on file status
+const getButtonIcon = computed(() => {
+  if (props.file.status === 'completed') {
+    return '🗑️';
+  } else if (props.file.status === 'skip') {
+    return '↩️';
+  } else {
+    return '❌';
+  }
+});
+
+// Compute button title based on file status
+const getButtonTitle = computed(() => {
+  if (props.file.status === 'completed') {
+    return 'Already uploaded';
+  } else if (props.file.status === 'skip') {
+    return 'Undo skip';
+  } else {
+    return 'Cancel upload';
+  }
 });
 
 // Format file size
@@ -82,9 +104,13 @@ const formatFileSize = (bytes) => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
-// Handle cancel
-const handleCancel = () => {
-  emit('cancel', props.file.id);
+// Handle cancel or undo based on current status
+const handleCancelOrUndo = () => {
+  if (props.file.status === 'skip') {
+    emit('undo', props.file.id);
+  } else {
+    emit('cancel', props.file.id);
+  }
 };
 </script>
 
