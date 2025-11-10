@@ -135,9 +135,9 @@
             class="table-mockup-row"
             :class="{
               even: virtualItem.index % 2 === 0,
-              '!bg-blue-50': isDocumentSelected(sortedData[virtualItem.index]),
-              'cursor-pointer hover:!bg-blue-50': !isPeekActive || isRowPeeked(sortedData[virtualItem.index]),
-              'cursor-default': isPeekActive && !isRowPeeked(sortedData[virtualItem.index])
+              '!bg-blue-50': peek.isDocumentSelected(sortedData[virtualItem.index]),
+              'cursor-pointer hover:!bg-blue-50': !peek.isPeekActive || peek.isRowPeeked(sortedData[virtualItem.index]),
+              'cursor-default': peek.isPeekActive && !peek.isRowPeeked(sortedData[virtualItem.index])
             }"
             :style="{
               position: 'absolute',
@@ -145,9 +145,9 @@
               left: 0,
               height: virtualItem.size + 'px',
               transform: `translateY(${virtualItem.start}px)`,
-              backgroundColor: virtualItem.index % 2 === 0 ? '#f9fafb' : 'white',
+              backgroundColor: getRowBackgroundColor(virtualItem.index),
             }"
-            @dblclick="handleViewDocument(sortedData[virtualItem.index])"
+            @dblclick="peek.handleViewDocument(sortedData[virtualItem.index])"
           >
             <!-- Action Buttons Cell -->
             <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
@@ -159,13 +159,13 @@
                 🤖
               </button>
               <button
-                :ref="(el) => setPeekButtonRef(el, sortedData[virtualItem.index].id)"
+                :ref="(el) => peek.setPeekButtonRef(el, sortedData[virtualItem.index].id)"
                 class="view-document-button peek-button"
-                @click.stop="handlePeekClick(sortedData[virtualItem.index])"
-                @dblclick.stop="handlePeekDoubleClick(sortedData[virtualItem.index])"
-                @mouseenter="handlePeekMouseEnter(sortedData[virtualItem.index])"
-                @mouseleave="handlePeekMouseLeave"
-                :title="tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
+                @click.stop="peek.handlePeekClick(sortedData[virtualItem.index])"
+                @dblclick.stop="peek.handlePeekDoubleClick(sortedData[virtualItem.index])"
+                @mouseenter="peek.handlePeekMouseEnter(sortedData[virtualItem.index])"
+                @mouseleave="peek.handlePeekMouseLeave"
+                :title="peek.tooltipTiming.isVisible.value ? '' : 'View thumbnail'"
               >
                 📄
               </button>
@@ -182,8 +182,8 @@
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
-              @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
-              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
+              @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
+              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
               @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
               <!-- Cell content via slot -->
@@ -216,23 +216,23 @@
 
     <!-- Document Peek Tooltip -->
     <DocumentPeekTooltip
-      :isVisible="tooltipTiming.isVisible.value"
-      :opacity="tooltipTiming.opacity.value"
-      :currentPeekDocument="documentPeek.currentPeekDocument.value"
-      :currentPeekPage="documentPeek.currentPeekPage.value"
-      :isLoading="documentPeek.isLoading.value"
-      :error="documentPeek.error.value"
-      :currentDocumentMetadata="documentPeek.currentDocumentMetadata.value"
-      :isCurrentDocumentPdf="documentPeek.isCurrentDocumentPdf.value"
-      :thumbnailUrl="documentPeek.currentThumbnailUrl.value"
-      :position="tooltipPosition"
-      :getFileIcon="documentPeek.getFileIcon"
-      @mouseenter="handleTooltipMouseEnter"
-      @mouseleave="handleTooltipMouseLeave"
-      @thumbnail-needed="handleThumbnailNeeded"
-      @previous-page="handlePreviousPage"
-      @next-page="handleNextPage"
-      @view-document="handleViewDocumentFromPeek"
+      :isVisible="peek.tooltipTiming.isVisible.value"
+      :opacity="peek.tooltipTiming.opacity.value"
+      :currentPeekDocument="peek.documentPeek.currentPeekDocument.value"
+      :currentPeekPage="peek.documentPeek.currentPeekPage.value"
+      :isLoading="peek.documentPeek.isLoading.value"
+      :error="peek.documentPeek.error.value"
+      :currentDocumentMetadata="peek.documentPeek.currentDocumentMetadata.value"
+      :isCurrentDocumentPdf="peek.documentPeek.isCurrentDocumentPdf.value"
+      :thumbnailUrl="peek.documentPeek.currentThumbnailUrl.value"
+      :position="peek.tooltipPosition"
+      :getFileIcon="peek.documentPeek.getFileIcon"
+      @mouseenter="peek.tooltipTiming.cancelHideTimer"
+      @mouseleave="peek.tooltipTiming.startHideTimer"
+      @thumbnail-needed="peek.handleThumbnailNeeded"
+      @previous-page="peek.handlePreviousPage"
+      @next-page="peek.handleNextPage"
+      @view-document="peek.handleViewDocumentFromPeek"
     />
 
     <!-- Cell Content Tooltip -->
@@ -255,8 +255,7 @@ import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/composables/useColumnVisibility';
 import { useVirtualTable } from '@/composables/useVirtualTable';
 import { useColumnSort } from '@/composables/useColumnSort';
-import { useDocumentPeek } from '@/composables/useDocumentPeek';
-import { useTooltipTiming } from '@/composables/useTooltipTiming';
+import { useDocumentTablePeek, getRowBackgroundColor } from '@/composables/useDocumentTablePeek';
 import { useCellTooltip } from '@/composables/useCellTooltip';
 import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
 import CellContentTooltip from '@/components/base/CellContentTooltip.vue';
@@ -312,58 +311,8 @@ const router = useRouter();
 // Auth store for firm ID
 const authStore = useAuthStore();
 
-// Document peek functionality
-const documentPeek = useDocumentPeek();
-const tooltipTiming = useTooltipTiming();
-
 // Cell content tooltip functionality
 const cellTooltip = useCellTooltip();
-
-// Refs for peek button positioning
-const peekButtonRefs = ref(new Map());
-const tooltipPosition = ref({ top: '0px', left: '0px' });
-
-// Handle view document double-click
-const handleViewDocument = (row) => {
-  if (!row || !row.id) return;
-
-  // If peek is active and this is NOT the peeked row, do nothing
-  if (isPeekActive.value && !isRowPeeked(row)) {
-    return;
-  }
-
-  // Navigate to document view (works for both peeked row and non-peek scenarios)
-  router.push({
-    name: 'view-document',
-    params: {
-      matterId: route.params.matterId,
-      fileHash: row.id
-    }
-  });
-};
-
-// Check if a document row is currently selected (being viewed or peeked)
-const isDocumentSelected = (row) => {
-  if (!row || !row.id) return false;
-
-  // Selected if currently viewing this document
-  const isViewing = route.params.fileHash === row.id;
-
-  // Selected if currently peeking this document and tooltip is visible
-  const isPeeking = tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value === row.id;
-
-  return isViewing || isPeeking;
-};
-
-// Check if peek is currently active
-const isPeekActive = computed(() => {
-  return tooltipTiming.isVisible.value;
-});
-
-// Check if a specific row is the currently peeked document
-const isRowPeeked = (row) => {
-  return row && row.id && documentPeek.currentPeekDocument.value === row.id;
-};
 
 // Handle process with AI button click
 const handleProcessWithAI = (row) => {
@@ -371,190 +320,8 @@ const handleProcessWithAI = (row) => {
   console.log('Process with AI:', row);
 };
 
-// Handle peek button click
-const handlePeekClick = async (row) => {
-  if (!row || !row.id) return;
-
-  const fileHash = row.id;
-  const firmId = authStore.currentFirm;
-  const matterId = route.params.matterId;
-
-  if (!firmId || !matterId) {
-    console.error('[Peek] Missing firmId or matterId');
-    return;
-  }
-
-  const isPeekingThisDocument = documentPeek.currentPeekDocument.value === fileHash;
-  const isPeekVisible = tooltipTiming.isVisible.value;
-
-  if (isPeekingThisDocument && isPeekVisible) {
-    // Second click on same document - close the peek
-    tooltipTiming.closeImmediate();
-    documentPeek.closePeek();
-  } else {
-    // First click or different document - open peek immediately
-    await documentPeek.openPeek(firmId, matterId, fileHash);
-
-    // Show tooltip
-    tooltipTiming.showTooltip();
-
-    // Calculate position
-    updateTooltipPosition(fileHash);
-
-    // Generate thumbnail if it's a PDF
-    if (documentPeek.isCurrentDocumentPdf.value) {
-      await documentPeek.generateThumbnail(fileHash, 1);
-    }
-  }
-};
-
-// Handle peek button double-click (navigate to document view)
-const handlePeekDoubleClick = (row) => {
-  if (!row || !row.id) return;
-
-  // Close any active peek
-  if (tooltipTiming.isVisible.value) {
-    tooltipTiming.closeImmediate();
-    documentPeek.closePeek();
-  }
-
-  // Navigate to document view
-  handleViewDocument(row);
-};
-
-// Handle peek button mouse enter
-const handlePeekMouseEnter = (row) => {
-  if (!row || !row.id) return;
-
-  // Only show tooltip if this document is already being peeked
-  if (documentPeek.currentPeekDocument.value === row.id) {
-    tooltipTiming.handleMouseEnter();
-  }
-};
-
-// Handle peek button mouse leave
-const handlePeekMouseLeave = () => {
-  tooltipTiming.handleMouseLeave();
-};
-
-// Handle tooltip mouse enter (cancel hide timer)
-const handleTooltipMouseEnter = () => {
-  tooltipTiming.cancelHideTimer();
-};
-
-// Handle tooltip mouse leave (start hide timer)
-const handleTooltipMouseLeave = () => {
-  tooltipTiming.startHideTimer();
-};
-
-// Handle thumbnail generation request
-const handleThumbnailNeeded = async ({ fileHash, pageNumber }) => {
-  await documentPeek.generateThumbnail(fileHash, pageNumber);
-};
-
-// Handle previous page click on thumbnail
-const handlePreviousPage = async () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  documentPeek.previousPage();
-
-  // Generate thumbnail for new page
-  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-};
-
-// Handle next page click on thumbnail
-const handleNextPage = async () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  documentPeek.nextPage();
-
-  // Generate thumbnail for new page
-  await documentPeek.generateThumbnail(fileHash, documentPeek.currentPeekPage.value);
-};
-
-// Handle view document from thumbnail middle-click
-const handleViewDocumentFromPeek = () => {
-  if (!documentPeek.currentPeekDocument.value) return;
-
-  const fileHash = documentPeek.currentPeekDocument.value;
-
-  // Find the row in sortedData that matches the fileHash
-  const row = sortedData.value.find((r) => r.id === fileHash);
-
-  if (row) {
-    handleViewDocument(row);
-  }
-};
-
-// Update tooltip position based on peek button
-const updateTooltipPosition = (fileHash) => {
-  const button = peekButtonRefs.value.get(fileHash);
-  if (!button) return;
-
-  const rect = button.getBoundingClientRect();
-
-  // Estimate tooltip dimensions (based on DocumentPeekTooltip styles)
-  const TOOLTIP_WIDTH = 350;
-  const TOOLTIP_HEIGHT = 380;
-  const BUFFER = 10;
-
-  // Get viewport dimensions
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-
-  // Calculate available space in each direction
-  const spaceAbove = rect.top;
-  const spaceBelow = viewportHeight - rect.bottom;
-  const spaceRight = viewportWidth - rect.right;
-  const spaceLeft = rect.left;
-
-  // Determine vertical position
-  let top;
-  if (spaceBelow < TOOLTIP_HEIGHT && spaceAbove > spaceBelow) {
-    // Not enough space below and more space above - position above button
-    top = Math.max(BUFFER, rect.top - TOOLTIP_HEIGHT - BUFFER);
-  } else {
-    // Default: position at button top (aligns with button)
-    top = Math.max(BUFFER, Math.min(rect.top, viewportHeight - TOOLTIP_HEIGHT - BUFFER));
-  }
-
-  // Determine horizontal position
-  let left;
-  if (spaceRight >= TOOLTIP_WIDTH + BUFFER) {
-    // Enough space on right - position to right of button (default)
-    left = rect.right + BUFFER;
-  } else if (spaceLeft >= TOOLTIP_WIDTH + BUFFER) {
-    // Not enough space on right but enough on left - position to left of button
-    left = rect.left - TOOLTIP_WIDTH - BUFFER;
-  } else {
-    // Constrain to viewport with buffer
-    left = Math.max(BUFFER, Math.min(rect.right + BUFFER, viewportWidth - TOOLTIP_WIDTH - BUFFER));
-  }
-
-  tooltipPosition.value = {
-    top: `${top}px`,
-    left: `${left}px`,
-  };
-};
-
-// Handle click outside tooltip (close immediately)
+// Handle click outside cell tooltip (close immediately)
 const handleOutsideClick = (event) => {
-  // Handle document peek tooltip
-  if (tooltipTiming.isVisible.value) {
-    // Check if click is on peek button or tooltip
-    const tooltipEl = event.target.closest('.document-peek-tooltip');
-    const peekButtonEl = event.target.closest('.peek-button');
-
-    if (!tooltipEl && !peekButtonEl) {
-      tooltipTiming.closeImmediate();
-      documentPeek.closePeek();
-    }
-  }
-
   // Handle cell content tooltip
   if (cellTooltip.isVisible.value) {
     // Check if click is on a table cell
@@ -567,32 +334,14 @@ const handleOutsideClick = (event) => {
   }
 };
 
-// Handle window resize - update tooltip position if visible
-const handleWindowResize = () => {
-  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
-    updateTooltipPosition(documentPeek.currentPeekDocument.value);
-  }
-};
-
-// Handle scroll - update tooltip position if visible
-const handleScroll = () => {
+// Handle scroll - hide cell tooltip when scrolling and update peek position
+const handleScrollContainer = () => {
   // Update document peek tooltip position
-  if (tooltipTiming.isVisible.value && documentPeek.currentPeekDocument.value) {
-    updateTooltipPosition(documentPeek.currentPeekDocument.value);
-  }
+  peek.handleScroll();
 
   // Hide cell content tooltip on scroll (cell may scroll out of view)
   if (cellTooltip.isVisible.value) {
     cellTooltip.cleanup();
-  }
-};
-
-// Set ref for peek button
-const setPeekButtonRef = (el, fileHash) => {
-  if (el) {
-    peekButtonRefs.value.set(fileHash, el);
-  } else {
-    peekButtonRefs.value.delete(fileHash);
   }
 };
 
@@ -656,6 +405,9 @@ watch([sortColumn, sortDirection], ([column, direction]) => {
   emit('sort-change', { column, direction });
 });
 
+// Initialize document peek functionality
+const peek = useDocumentTablePeek(route, router, authStore, sortedData);
+
 // Initialize virtual table
 const {
   rowVirtualizer,
@@ -716,28 +468,34 @@ const handleFocusOut = (event) => {
   }
 };
 
-// Lifecycle: Add outside-click detection, resize, and scroll listeners on mount
+// Lifecycle: Add outside-click detection and scroll listeners on mount
 onMounted(() => {
+  // Initialize document peek event listeners
+  peek.mount();
+
+  // Add cell tooltip click detection
   document.addEventListener('click', handleOutsideClick);
-  window.addEventListener('resize', handleWindowResize);
 
   // Add scroll listener to the scroll container
   if (scrollContainer.value) {
-    scrollContainer.value.addEventListener('scroll', handleScroll);
+    scrollContainer.value.addEventListener('scroll', handleScrollContainer);
   }
 });
 
 // Lifecycle: Cleanup on unmount
 onUnmounted(() => {
+  // Cleanup document peek
+  peek.unmount();
+
+  // Remove cell tooltip listeners
   document.removeEventListener('click', handleOutsideClick);
-  window.removeEventListener('resize', handleWindowResize);
 
   // Remove scroll listener
   if (scrollContainer.value) {
-    scrollContainer.value.removeEventListener('scroll', handleScroll);
+    scrollContainer.value.removeEventListener('scroll', handleScrollContainer);
   }
 
-  documentPeek.cleanup();
+  // Cleanup cell tooltip
   cellTooltip.cleanup();
 });
 
