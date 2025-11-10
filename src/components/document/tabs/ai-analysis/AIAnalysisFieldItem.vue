@@ -1,6 +1,6 @@
 <template>
   <div class="metadata-item">
-    <div class="label-wrapper">
+    <div v-if="label" class="label-wrapper">
       <span
         ref="labelRef"
         class="metadata-label"
@@ -39,7 +39,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 const props = defineProps({
   label: {
     type: String,
-    required: true,
+    default: '',
   },
   fieldPreference: {
     type: String,
