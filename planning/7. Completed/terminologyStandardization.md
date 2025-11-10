@@ -28,7 +28,7 @@ When reviewing files, update:
 
 ### Priority 1: Core File System Documentation
 
-- [x] `docs/uploading.md` ✅ **COMPLETED**
+- [x] `docs/2025-11-10-Old-Upload-Page.md` ✅ **COMPLETED**
 
   - **Focus**: Update references to "original files" vs "storage files"
   - **Key sections**: Upload Process Flow, Metadata Management, API Reference
@@ -450,7 +450,7 @@ Documentation updates are pure text changes with zero breaking changes. Completi
 
 1. **CLAUDE.md** ✅ (already completed)
 2. **Phase 1, Priority 1** ✅ (already completed)
-   - Core file system docs (uploading.md, FileMetadata.md, firebase-storage.md, Document-Processing-Workflow.md, data-structures.md)
+   - Core file system docs (2025-11-10-Old-Upload-Page.md, FileMetadata.md, firebase-storage.md, Document-Processing-Workflow.md, data-structures.md)
 3. **Phase 1, Priority 2**: Architecture Documentation
    - Evidence.md, MetadataSpecs.md, Settings.md, SoloFirmMatters.md, CategoryTags.md, security-rules.md
 4. **Phase 1, Priority 3**: Process Documentation
@@ -577,7 +577,7 @@ Use checkboxes above to track completion. Update this document as you work throu
 **Phase 1: Documentation Files** ✅ **COMPLETE**
 
 - ✅ Priority 1: Core File System Documentation (5/5 files - 100% complete)
-  - Updated 4 files with terminology changes (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
+  - Updated 4 files with terminology changes (FileMetadata.md, firebase-storage.md, 2025-11-10-Old-Upload-Page.md, Document-Processing-Workflow.md)
   - Verified 1 file as compliant (data-structures.md)
   - All core file system documentation now uses consistent Source/File terminology
 - ✅ Priority 2: Architecture Documentation (6/6 files - 100% complete)
@@ -615,7 +615,7 @@ Use checkboxes above to track completion. Update this document as you work throu
 - **Phase 1 Complete**: All documentation reviewed and standardized ✅
 - **Phase 2 In Progress**: Layers 1-8 complete (27/76 code files - 35.5%)
 - Documentation changes: 6 files updated
-  - Priority 1: 4 files (FileMetadata.md, firebase-storage.md, uploading.md, Document-Processing-Workflow.md)
+  - Priority 1: 4 files (FileMetadata.md, firebase-storage.md, 2025-11-10-Old-Upload-Page.md, Document-Processing-Workflow.md)
   - Priority 2: 1 file (Evidence.md)
   - Priority 3: 1 file (firebase-storage-plan.md)
 - Documentation verified as compliant: 13 files
@@ -646,7 +646,7 @@ Use checkboxes above to track completion. Update this document as you work throu
 
 - Updated `docs/architecture/FileMetadata.md` - Changed "Original Files vs Storage Files" section heading, updated ~8 instances
 - Updated `docs/architecture/firebase-storage.md` - Changed "Original file extensions" to "source file extensions" (2 locations)
-- Updated `docs/uploading.md` - Updated metadata hash field and API examples (3 changes)
+- Updated `docs/2025-11-10-Old-Upload-Page.md` - Updated metadata hash field and API examples (3 changes)
 - Updated `docs/Document-Processing-Workflow.md` - Added comprehensive three-tier file lifecycle section
 - Verified `docs/data-structures.md` - No changes needed (hub document with cross-references)
 

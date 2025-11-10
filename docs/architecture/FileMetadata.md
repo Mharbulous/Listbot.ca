@@ -265,7 +265,7 @@ Cloud:
 
 **Important**: The `sourceFileName` field is the ONLY place where the source file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
 
-**Metadata Capture Implementation**: For detailed information about how source file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../uploading.md#metadata-management)**.
+**Metadata Capture Implementation**: For detailed information about how source file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../2025-11-10-Old-Upload-Page.md#metadata-management)**.
 
 ### 2. evidence Collection
 
@@ -426,7 +426,7 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 
 **Need to find where files are processed?**
 
-- **Upload workflow and implementation details**: See **[uploading.md](../uploading.md)** for complete upload process flow, smart folder path pattern recognition, and metadata capture algorithms
+- **Upload workflow and implementation details**: See **[2025-11-10-Old-Upload-Page.md](../2025-11-10-Old-Upload-Page.md)** for complete upload process flow, smart folder path pattern recognition, and metadata capture algorithms
 - **Code locations**:
   - Upload logic: `src/features/upload/FileUpload.vue`
   - Hash calculation: `src/workers/fileHashWorker.js`
