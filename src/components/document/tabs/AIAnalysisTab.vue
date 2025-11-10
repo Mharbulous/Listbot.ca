@@ -72,13 +72,7 @@
               <v-radio label="Extract" value="analyze" color="primary"></v-radio>
               <v-radio label="Skip" value="skip" color="primary"></v-radio>
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
-              :options="[
-                { label: 'Analyze', value: 'analyze' },
-                { label: 'Skip', value: 'skip' },
-                { label: 'Ignore', value: 'ignore' }
-              ]"
-            />
+            </SegmentedControl>
 
             <!-- State 2: Analyzing Spinner -->
             <div v-if="isAnalyzing" class="analyzing-state">
@@ -141,13 +135,7 @@
               <v-radio label="Extract" value="analyze" color="primary"></v-radio>
               <v-radio label="Skip" value="skip" color="primary"></v-radio>
               <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
-              :options="[
-                { label: 'Analyze', value: 'analyze' },
-                { label: 'Skip', value: 'skip' },
-                { label: 'Ignore', value: 'ignore' }
-              ]"
-            />
+            </SegmentedControl>
 
             <!-- State 2: Analyzing Spinner -->
             <div v-if="isAnalyzing" class="analyzing-state">
@@ -202,7 +190,7 @@
             :disabled="isAnalyzing"
             class="analyze-document-button"
           >
-            <Rocket :size="20" :stroke-width="2" />
+            🚀
             <span>Analyze Document</span>
             <v-progress-circular
               v-if="isAnalyzing"
@@ -227,7 +215,6 @@ import aiMetadataExtractionService from '@/services/aiMetadataExtractionService'
 import { useAuthStore } from '@/core/stores/auth';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 import { formatDate } from '@/utils/dateFormatter';
-import { Rocket } from 'lucide-vue-next';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
 // AI Analysis state

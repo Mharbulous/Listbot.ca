@@ -43,8 +43,8 @@
             class="toggle-btn"
             @click="$emit('toggle-visibility')"
           >
-            <ChevronUp v-if="visible" :size="20" :stroke-width="2" class="chevron-icon" />
-            <ChevronDown v-else :size="20" :stroke-width="2" class="chevron-icon" />
+            <span v-if="visible" class="chevron-icon">▲</span>
+            <span v-else class="chevron-icon">▼</span>
           </button>
         </div>
 
@@ -102,7 +102,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import { ChevronUp, ChevronDown } from 'lucide-vue-next';
 import DigitalFileTab from './tabs/DigitalFileTab.vue';
 import AIAnalysisTab from './tabs/AIAnalysisTab.vue';
 import ReviewTab from './tabs/ReviewTab.vue';
