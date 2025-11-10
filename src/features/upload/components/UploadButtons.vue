@@ -31,7 +31,7 @@
         class="upload-btn"
         @click="triggerFileSelect"
       >
-        📄 Upload Files
+        Upload Files
       </v-btn>
 
       <v-btn
@@ -42,7 +42,7 @@
         class="upload-btn"
         @click="triggerFolderSelect"
       >
-        📁 Upload Folder
+        Upload Folder
       </v-btn>
 
       <v-btn
@@ -53,7 +53,7 @@
         class="upload-btn"
         @click="triggerFolderRecursiveSelect"
       >
-        📂 Upload Folder + Subfolders
+        Upload Folder + Subfolders
       </v-btn>
     </div>
 
