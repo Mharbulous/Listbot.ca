@@ -1,25 +1,36 @@
 <template>
   <div class="upload-table-footer">
     <div class="footer-content">
-      <span class="footer-stat">
-        <strong>Total:</strong> {{ stats.total }} files ({{ stats.totalSize }})
-      </span>
-      <span class="footer-separator">•</span>
-      <span class="footer-stat">
-        <strong>Ready:</strong> {{ stats.ready }}
-      </span>
-      <span class="footer-separator">•</span>
-      <span class="footer-stat">
-        <strong>Duplicates:</strong> {{ stats.duplicates }}
-      </span>
-      <span class="footer-separator">•</span>
-      <span class="footer-stat">
-        <strong>Failed:</strong> {{ stats.failed }}
-      </span>
-      <span class="footer-separator">•</span>
-      <span class="footer-stat">
-        <strong>Uploaded:</strong> {{ stats.uploaded }}/{{ stats.uploadable }}
-      </span>
+      <!-- Upload Button (Left) -->
+      <div class="footer-left">
+        <v-btn color="primary" variant="elevated" size="default" class="upload-btn" @click="handleUpload">
+          <v-icon start>mdi-cloud-upload</v-icon>
+          UPLOAD
+        </v-btn>
+      </div>
+
+      <!-- File Counts (Right) -->
+      <div class="footer-right">
+        <span class="footer-stat">
+          <strong>Total:</strong> {{ stats.total }} files ({{ stats.totalSize }})
+        </span>
+        <span class="footer-separator">•</span>
+        <span class="footer-stat">
+          <strong>Ready:</strong> {{ stats.ready }}
+        </span>
+        <span class="footer-separator">•</span>
+        <span class="footer-stat">
+          <strong>Duplicates:</strong> {{ stats.duplicates }}
+        </span>
+        <span class="footer-separator">•</span>
+        <span class="footer-stat">
+          <strong>Failed:</strong> {{ stats.failed }}
+        </span>
+        <span class="footer-separator">•</span>
+        <span class="footer-stat">
+          <strong>Uploaded:</strong> {{ stats.uploaded }}/{{ stats.uploadable }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -48,6 +59,14 @@ defineProps({
     },
   },
 });
+
+// Emits
+const emit = defineEmits(['upload']);
+
+// Handle upload
+const handleUpload = () => {
+  emit('upload');
+};
 </script>
 
 <style scoped>
@@ -64,10 +83,28 @@ defineProps({
 .footer-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
   font-size: 0.875rem;
   color: #374151;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-btn {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
 }
 
 .footer-stat {
@@ -93,6 +130,12 @@ defineProps({
 
   .footer-content {
     font-size: 0.75rem;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-right {
     gap: 0.5rem;
   }
 

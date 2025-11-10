@@ -21,7 +21,7 @@
         <h2 class="table-title">Upload Queue ({{ uploadQueue.length }} files)</h2>
       </div>
 
-      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @clear-queue="handleClearQueue" />
+      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
     </div>
   </div>
 </template>
@@ -65,6 +65,11 @@ const handleCancelFile = (fileId) => {
 const handleClearQueue = () => {
   console.log('[TESTING] Clear queue');
   clearQueue();
+};
+
+const handleUpload = () => {
+  console.log('[TESTING] Upload clicked');
+  // TODO: Implement upload logic
 };
 </script>
 

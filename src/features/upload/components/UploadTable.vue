@@ -16,7 +16,7 @@
     </div>
 
     <!-- Footer -->
-    <UploadTableFooter :stats="footerStats" />
+    <UploadTableFooter :stats="footerStats" @upload="handleUpload" />
   </div>
 </template>
 
@@ -41,7 +41,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'clear-queue']);
+const emit = defineEmits(['cancel', 'clear-queue', 'upload']);
 
 // Debug: Watch files prop
 watch(
@@ -93,6 +93,11 @@ const handleCancel = (fileId) => {
 // Handle clear queue
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+// Handle upload
+const handleUpload = () => {
+  emit('upload');
 };
 </script>
 
