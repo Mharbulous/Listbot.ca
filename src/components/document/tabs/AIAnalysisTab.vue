@@ -5,7 +5,7 @@
     <template v-if="showLoadingUI">
       <div class="ai-loading-state">
         <v-progress-circular indeterminate size="24" color="primary" />
-        <span class="ai-loading-text">Loading analysis results...</span>
+        <span class="ai-loading-text">Loading results...</span>
       </div>
     </template>
 
@@ -34,7 +34,7 @@
           class="ai-error-action"
           prepend-icon="mdi-refresh"
         >
-          Retry Analysis
+          Retry
         </v-btn>
 
         <!-- Action Button (e.g., Firebase Console link) -->
@@ -65,16 +65,8 @@
             <!-- Segmented Control -->
             <SegmentedControl
               v-model="fieldPreferences.documentDate"
-              inline
-              hide-details
-              class="field-radio-group"
-            >
-              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
-              <v-radio label="Skip" value="skip" color="primary"></v-radio>
-              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
               :options="[
-                { label: 'Analyze', value: 'analyze' },
+                { label: 'Get', value: 'get' },
                 { label: 'Skip', value: 'skip' },
                 { label: 'Ignore', value: 'ignore' }
               ]"
@@ -134,16 +126,8 @@
             <!-- Segmented Control -->
             <SegmentedControl
               v-model="fieldPreferences.documentType"
-              inline
-              hide-details
-              class="field-radio-group"
-            >
-              <v-radio label="Extract" value="analyze" color="primary"></v-radio>
-              <v-radio label="Skip" value="skip" color="primary"></v-radio>
-              <v-radio label="Ignore" value="ignore" color="primary"></v-radio>
-            </v-radio-group>
               :options="[
-                { label: 'Analyze', value: 'analyze' },
+                { label: 'Get', value: 'get' },
                 { label: 'Skip', value: 'skip' },
                 { label: 'Ignore', value: 'ignore' }
               ]"
@@ -195,7 +179,7 @@
           </div>
         </div>
 
-        <!-- Analyze Document Button (at bottom of System Fields) -->
+        <!-- Get Document Data Button (at bottom of System Fields) -->
         <div class="analyze-document-section">
           <button
             @click="handleAnalyzeClick"
@@ -203,7 +187,7 @@
             class="analyze-document-button"
           >
             <Rocket :size="20" :stroke-width="2" />
-            <span>Analyze Document</span>
+            <span>Get Document Data</span>
             <v-progress-circular
               v-if="isAnalyzing"
               indeterminate
@@ -242,8 +226,8 @@ const aiResults = ref({
 
 // Field analysis preferences (mockup state - not functional yet)
 const fieldPreferences = ref({
-  documentDate: 'analyze',
-  documentType: 'analyze',
+  documentDate: 'get',
+  documentType: 'get',
 });
 
 // Track the last loaded document to avoid unnecessary reloads
@@ -336,7 +320,7 @@ const loadAITags = async () => {
     // Phase 1.5 Learning: Use defensive error property access
     // Don't set error state for loading failures - just log them
     // This prevents error UI from showing on initial load
-    console.warn('⚠️ Could not load previous analysis results:', error?.message || 'Unknown error');
+    console.warn('⚠️ Could not load previous results:', error?.message || 'Unknown error');
   } finally {
     loadingAITags.value = false;
     // Clear timeout and hide loading UI
@@ -397,7 +381,7 @@ const retryAnalysis = () => {
 
 // Handle analyze button click (Real Gemini API integration)
 const handleAnalyzeClick = async () => {
-  console.log('🤖 Analyze Document clicked');
+  console.log('🤖 Get Document Data clicked');
 
   isAnalyzing.value = true;
   aiError.value = null; // Clear previous errors
@@ -420,7 +404,7 @@ const handleAnalyzeClick = async () => {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (props.evidence.fileSize > maxSizeBytes) {
-      throw new Error(`File too large for AI analysis (max ${maxSizeMB}MB)`);
+      throw new Error(`File too large for AI extraction (max ${maxSizeMB}MB)`);
     }
 
     console.log('📂 Getting file content from Firebase Storage...');
@@ -523,10 +507,10 @@ const handleAnalyzeClick = async () => {
     // Reload tags to display real results
     await loadAITags();
 
-    console.log('✅ Analysis complete and displayed');
+    console.log('✅ Data extraction complete and displayed');
 
   } catch (error) {
-    console.error('❌ Analysis failed:', error);
+    console.error('❌ Data extraction failed:', error);
 
     // Phase 1.5 Learning: Defensive error property access
     const errorMessage = error?.message || 'Unknown error';
@@ -538,7 +522,7 @@ const handleAnalyzeClick = async () => {
         type: 'api-not-enabled',
         title: 'Firebase AI API Not Enabled',
         message:
-          'The Firebase AI API needs to be enabled in your Firebase project before you can use AI analysis features.',
+          'The Firebase AI API needs to be enabled in your Firebase project before you can use AI extraction features.',
         action: {
           text: 'Enable API in Firebase Console',
           url: `https://console.firebase.google.com/project/${import.meta.env.VITE_FIREBASE_PROJECT_ID}/genai/`,
@@ -551,13 +535,13 @@ const handleAnalyzeClick = async () => {
         type: 'file-too-large',
         title: 'File Too Large',
         message: errorMessage,
-        details: 'Please select a smaller file for AI analysis.',
+        details: 'Please select a smaller file for AI extraction.',
       };
     } else if (errorMessage.includes('network') || errorCode === 'unavailable') {
       aiError.value = {
         type: 'network',
         title: 'Network Error',
-        message: 'Analysis failed. Please check your connection and try again.',
+        message: 'Data extraction failed. Please check your connection and try again.',
         details: 'Ensure you have a stable internet connection.',
       };
     } else if (errorCode === 'resource-exhausted') {
@@ -577,7 +561,7 @@ const handleAnalyzeClick = async () => {
     } else {
       aiError.value = {
         type: 'unknown',
-        title: 'Analysis Failed',
+        title: 'Data Extraction Failed',
         message: errorMessage,
         details: 'Please check the console for more details or try again later.',
       };
@@ -636,7 +620,7 @@ const handleAnalyzeClick = async () => {
   font-style: italic;
 }
 
-/* Analyze Document Section */
+/* Get Document Data Section */
 .analyze-document-section {
   margin-top: 24px;
   padding-top: 16px;
