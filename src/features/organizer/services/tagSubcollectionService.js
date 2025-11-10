@@ -581,6 +581,53 @@ class TagSubcollectionService {
       throw error;
     }
   }
+
+  /**
+   * Update an existing tag with new data (e.g., human review updates)
+   * OPTIMIZED: Uses batch writes to sync both subcollection AND embedded tags map
+   * Used by Phase 4 Review Tab for accepting AI-extracted or manual values
+   */
+  async updateTag(docId, categoryId, updatedTag, firmId, matterId = 'general') {
+    try {
+      const batch = writeBatch(db);
+      const tagRef = this.getTagDoc(docId, categoryId, firmId, matterId);
+
+      // Check if tag exists
+      const tagDoc = await getDoc(tagRef);
+      if (!tagDoc.exists()) {
+        throw new Error(`Tag with categoryId '${categoryId}' not found`);
+      }
+
+      // Update subcollection with full tag data
+      batch.update(tagRef, {
+        ...updatedTag,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update embedded map with essential fields for table display
+      const evidenceRef = this.getEvidenceDoc(docId, firmId, matterId);
+      batch.update(evidenceRef, {
+        [`tags.${categoryId}`]: {
+          tagName: updatedTag.tagName,
+          confidence: updatedTag.confidence,
+          autoApproved: updatedTag.autoApproved,
+          humanReviewed: updatedTag.humanReviewed || false,
+          source: updatedTag.source,
+        },
+        updatedAt: serverTimestamp(),
+      });
+
+      await batch.commit();
+      console.log('✅ Tag updated atomically');
+      return { id: categoryId, ...updatedTag };
+    } catch (error) {
+      console.error('[TagSubcollectionService] Error updating tag', error, {
+        docId,
+        categoryId,
+      });
+      throw error;
+    }
+  }
 }
 
 export default new TagSubcollectionService();

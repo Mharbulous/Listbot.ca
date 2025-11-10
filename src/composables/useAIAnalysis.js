@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { FileProcessingService } from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
@@ -29,6 +29,17 @@ export function useAIAnalysis(props) {
     documentType: 'get',
   });
   const lastLoadedFileHash = ref(null);
+
+  // Review Tab state (Phase 4)
+  const reviewValues = ref({
+    documentDate: '',
+    documentType: '',
+  });
+  const reviewErrors = ref({
+    documentDate: '',
+    documentType: '',
+  });
+  const savingReview = ref(false);
 
   let loadingDelayTimeout = null;
 
@@ -308,6 +319,224 @@ export function useAIAnalysis(props) {
     handleAnalyzeClick();
   };
 
+  // ===== PHASE 4: Review Tab Methods =====
+
+  // Document Type options for dropdown
+  const documentTypeOptions = [
+    'Statement',
+    'Invoice',
+    'Receipt',
+    'Contract',
+    'Letter',
+    'Email',
+    'Report',
+    'Affidavit',
+    'Audio',
+    'Brochure',
+    'By-laws',
+    'Case law',
+    'Certificate',
+    'Chart',
+    'Change order',
+    'Cheque',
+    'Cheque stub',
+    'Chronology',
+    'Court document',
+    'Drawing',
+    'Envelope',
+    'Evidence log',
+    'Fax cover',
+    'Financial record',
+    'Form',
+    'Folder',
+    'Index',
+    'Listing',
+    'Medical record',
+    'Notes',
+    'Pay stub',
+    'Photo',
+    'Other',
+  ];
+
+  // Update extraction mode (Get/Skip/Manual)
+  const setExtractionMode = (fieldName, mode) => {
+    fieldPreferences.value[fieldName] = mode;
+
+    // If switching to Manual, prepare Review Tab entry with empty value
+    if (mode === 'manual') {
+      reviewValues.value[fieldName] = '';
+    }
+
+    // If switching away from Manual, clear Review Tab entry (unless AI has extracted)
+    if (mode !== 'manual' && !aiResults.value[fieldName]) {
+      reviewValues.value[fieldName] = '';
+    }
+  };
+
+  // Determine if field should show on AI Tab
+  const shouldShowOnAITab = (fieldName) => {
+    // Show if field has NOT been determined (no AI result and not manually accepted)
+    return !aiResults.value[fieldName];
+  };
+
+  // Determine if field should show on Review Tab
+  const shouldShowOnReviewTab = (fieldName) => {
+    // Show if AI-extracted OR set to Manual
+    return aiResults.value[fieldName] || fieldPreferences.value[fieldName] === 'manual';
+  };
+
+  // Validate review input
+  const validateReviewValue = (fieldName, value) => {
+    if (!value || value.trim() === '') {
+      return 'Value cannot be empty';
+    }
+
+    if (fieldName === 'documentDate') {
+      const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!isoRegex.test(value)) {
+        return 'Date must be in YYYY-MM-DD format';
+      }
+
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+
+      if (date > new Date()) {
+        return 'Date cannot be in the future';
+      }
+    }
+
+    return null; // Valid
+  };
+
+  // Accept button clicked (AI-extracted or Manual)
+  const acceptReviewValue = async (fieldName) => {
+    const value = reviewValues.value[fieldName];
+
+    // Validate
+    const error = validateReviewValue(fieldName, value);
+    if (error) {
+      reviewErrors.value[fieldName] = error;
+      return;
+    }
+
+    savingReview.value = true;
+
+    try {
+      const firmId = authStore?.currentFirm;
+      const userId = authStore?.user?.uid;
+      const matterId = route.params.matterId || 'general';
+      const existingAITag = aiResults.value[fieldName];
+
+      // Defensive checks
+      if (!firmId) throw new Error('Firm ID not available. Please ensure you are logged in.');
+      if (!userId) throw new Error('User ID not available. Please log in again.');
+      if (!props.evidence?.id) throw new Error('Document ID not available.');
+
+      const categoryId = fieldName === 'documentDate' ? 'DocumentDate' : 'DocumentType';
+      const categoryName = fieldName === 'documentDate' ? 'Document Date' : 'Document Type';
+
+      const acceptedTag = {
+        categoryId,
+        categoryName,
+        tagName: value,
+        confidence: existingAITag?.confidence ?? 100, // Keep AI confidence if exists, otherwise 100 for manual
+        source: existingAITag ? 'human-reviewed' : 'human', // human-reviewed if AI-extracted, human if manual
+        autoApproved: true,
+        reviewRequired: false,
+        humanReviewed: true,
+        createdBy: userId,
+        metadata: {
+          ...(existingAITag?.metadata || {}),
+          // Preserve original AI data if it exists
+          originalAI: existingAITag
+            ? {
+                value: existingAITag.tagName,
+                confidence: existingAITag.confidence,
+                reasoning: existingAITag.metadata?.aiReasoning,
+                context: existingAITag.metadata?.context,
+              }
+            : undefined,
+          // Track acceptance
+          acceptedBy: userId,
+          acceptedAt: new Date().toISOString(),
+          wasEdited: existingAITag ? value !== existingAITag.tagName : false,
+        },
+      };
+
+      // Use updateTag if AI-extracted, addTag if manual entry
+      if (existingAITag) {
+        await tagSubcollectionService.updateTag(
+          props.evidence.id,
+          categoryId,
+          acceptedTag,
+          firmId,
+          matterId
+        );
+      } else {
+        await tagSubcollectionService.addTag(
+          props.evidence.id,
+          acceptedTag,
+          firmId,
+          matterId
+        );
+      }
+
+      console.log('✅ Review accepted and saved');
+
+      // Clear review state
+      reviewValues.value[fieldName] = '';
+      reviewErrors.value[fieldName] = '';
+
+      // Reload to update state (field will disappear from AI Tab)
+      await loadAITags();
+    } catch (error) {
+      console.error('❌ Failed to accept review:', error);
+      reviewErrors.value[fieldName] = error?.message || 'Failed to save. Please try again.';
+    } finally {
+      savingReview.value = false;
+    }
+  };
+
+  // Reject button clicked (MOCKUP - future implementation)
+  const rejectReviewValue = async (fieldName) => {
+    // TODO: Future implementation
+    // 1. Log rejection to Firestore
+    // 2. Clear aiResults[fieldName] (send back to AI Tab)
+    // 3. Set fieldPreferences[fieldName] back to 'get'
+    console.log('🚧 Reject button clicked (mockup):', fieldName);
+  };
+
+  // Check if Accept button should be enabled
+  const isAcceptEnabled = (fieldName) => {
+    const value = reviewValues.value[fieldName];
+    return value && value.trim() !== '' && !reviewErrors.value[fieldName];
+  };
+
+  // Confidence badge color (for Review Tab)
+  const getConfidenceColor = (confidence) => {
+    if (confidence >= 85) return 'success'; // Green for high confidence
+    if (confidence >= 70) return 'warning'; // Yellow for medium confidence
+    return 'error'; // Red for low confidence
+  };
+
+  // Initialize review values when AI extraction completes
+  const initializeReviewValues = () => {
+    // Pre-fill AI-extracted values
+    if (aiResults.value.documentDate) {
+      reviewValues.value.documentDate = aiResults.value.documentDate.tagName;
+    }
+    if (aiResults.value.documentType) {
+      reviewValues.value.documentType = aiResults.value.documentType.tagName;
+    }
+  };
+
+  // Watch for AI results and initialize review values
+  watch(aiResults, () => {
+    initializeReviewValues();
+  }, { deep: true });
+
   return {
     // State
     isAnalyzing,
@@ -318,6 +547,11 @@ export function useAIAnalysis(props) {
     fieldPreferences,
     lastLoadedFileHash,
 
+    // Review Tab state (Phase 4)
+    reviewValues,
+    reviewErrors,
+    savingReview,
+
     // Computed
     hasEmptyFields,
 
@@ -326,5 +560,17 @@ export function useAIAnalysis(props) {
     handleAnalyzeClick,
     retryAnalysis,
     formatDateString,
+
+    // Review Tab methods (Phase 4)
+    documentTypeOptions,
+    setExtractionMode,
+    shouldShowOnAITab,
+    shouldShowOnReviewTab,
+    validateReviewValue,
+    acceptReviewValue,
+    rejectReviewValue,
+    isAcceptEnabled,
+    getConfidenceColor,
+    initializeReviewValues,
   };
 }

@@ -16,43 +16,105 @@
       @retry="retryAnalysis"
     />
 
-    <!-- Content Section -->
+    <!-- Two-Tab Interface (Phase 4) -->
     <template v-else>
-      <!-- System Fields Section -->
-      <div class="metadata-section">
-        <!-- Document Date - Only show if NOT yet extracted -->
-        <AIAnalysisFieldItem
-          v-if="!aiResults.documentDate"
-          label="Document Date"
-          v-model:field-preference="fieldPreferences.documentDate"
-          :is-analyzing="isAnalyzing"
-        />
+      <v-tabs v-model="activeInternalTab" color="primary" class="ai-tabs">
+        <v-tab value="ai">AI</v-tab>
+        <v-tab value="review">Review</v-tab>
+      </v-tabs>
 
-        <!-- Document Type - Only show if NOT yet extracted -->
-        <AIAnalysisFieldItem
-          v-if="!aiResults.documentType"
-          label="Document Type"
-          v-model:field-preference="fieldPreferences.documentType"
-          :is-analyzing="isAnalyzing"
-        />
+      <v-window v-model="activeInternalTab" class="ai-tab-window">
+        <!-- AI Tab: Configuration Panel -->
+        <v-window-item value="ai">
+          <div class="ai-config-panel">
+            <!-- Document Date - Show only if not determined -->
+            <AIAnalysisFieldItem
+              v-if="shouldShowOnAITab('documentDate')"
+              label="Document Date"
+              :field-preference="fieldPreferences.documentDate"
+              :is-analyzing="isAnalyzing"
+              @update:field-preference="setExtractionMode('documentDate', $event)"
+            />
 
-        <!-- 🚀Analyze Document Button -->
-        <AIAnalysisButton
-          :has-empty-fields="hasEmptyFields"
-          :is-analyzing="isAnalyzing"
-          @analyze="handleAnalyzeClick"
-        />
-      </div>
+            <!-- Document Type - Show only if not determined -->
+            <AIAnalysisFieldItem
+              v-if="shouldShowOnAITab('documentType')"
+              label="Document Type"
+              :field-preference="fieldPreferences.documentType"
+              :is-analyzing="isAnalyzing"
+              @update:field-preference="setExtractionMode('documentType', $event)"
+            />
+
+            <!-- Analyze Documents Button -->
+            <AIAnalysisButton
+              :has-empty-fields="hasEmptyFields"
+              :is-analyzing="isAnalyzing"
+              @analyze="handleAnalyzeClick"
+            />
+          </div>
+        </v-window-item>
+
+        <!-- Review Tab: Results + Manual Entry -->
+        <v-window-item value="review">
+          <div class="review-panel">
+            <!-- Empty State -->
+            <div
+              v-if="!shouldShowOnReviewTab('documentDate') && !shouldShowOnReviewTab('documentType')"
+              class="review-empty-state"
+            >
+              <em>Use AI to extract data for human review</em>
+            </div>
+
+            <!-- Document Date Review -->
+            <AIReviewFieldItem
+              v-if="shouldShowOnReviewTab('documentDate')"
+              field-name="documentDate"
+              label="Document Date"
+              field-type="date"
+              :ai-result="aiResults.documentDate"
+              :review-value="reviewValues.documentDate"
+              :review-error="reviewErrors.documentDate"
+              :saving="savingReview"
+              :is-accept-enabled="isAcceptEnabled('documentDate')"
+              :get-confidence-color="getConfidenceColor"
+              @update:review-value="reviewValues.documentDate = $event"
+              @clear-error="reviewErrors.documentDate = ''"
+              @accept="acceptReviewValue('documentDate')"
+              @reject="rejectReviewValue('documentDate')"
+            />
+
+            <!-- Document Type Review -->
+            <AIReviewFieldItem
+              v-if="shouldShowOnReviewTab('documentType')"
+              field-name="documentType"
+              label="Document Type"
+              field-type="select"
+              :select-options="documentTypeOptions"
+              :ai-result="aiResults.documentType"
+              :review-value="reviewValues.documentType"
+              :review-error="reviewErrors.documentType"
+              :saving="savingReview"
+              :is-accept-enabled="isAcceptEnabled('documentType')"
+              :get-confidence-color="getConfidenceColor"
+              @update:review-value="reviewValues.documentType = $event"
+              @clear-error="reviewErrors.documentType = ''"
+              @accept="acceptReviewValue('documentType')"
+              @reject="rejectReviewValue('documentType')"
+            />
+          </div>
+        </v-window-item>
+      </v-window>
     </template>
   </div>
 </template>
 
 <script setup>
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useAIAnalysis } from '@/composables/useAIAnalysis';
 import AIAnalysisError from './ai-analysis/AIAnalysisError.vue';
 import AIAnalysisFieldItem from './ai-analysis/AIAnalysisFieldItem.vue';
 import AIAnalysisButton from './ai-analysis/AIAnalysisButton.vue';
+import AIReviewFieldItem from './ai-analysis/AIReviewFieldItem.vue';
 
 // Props
 const props = defineProps({
@@ -74,6 +136,9 @@ const props = defineProps({
   },
 });
 
+// Internal tab state (AI vs Review)
+const activeInternalTab = ref('ai');
+
 // Use AI Analysis composable
 const {
   isAnalyzing,
@@ -86,6 +151,19 @@ const {
   loadAITags,
   handleAnalyzeClick,
   retryAnalysis,
+
+  // Phase 4: Review Tab
+  reviewValues,
+  reviewErrors,
+  savingReview,
+  documentTypeOptions,
+  setExtractionMode,
+  shouldShowOnAITab,
+  shouldShowOnReviewTab,
+  acceptReviewValue,
+  rejectReviewValue,
+  isAcceptEnabled,
+  getConfidenceColor,
 } = useAIAnalysis(props);
 
 // Watch for activeTab or fileHash changes
@@ -121,8 +199,35 @@ watch(
   font-style: italic;
 }
 
-/* Metadata Section */
-.metadata-section {
+/* Two-Tab Interface (Phase 4) */
+.ai-tabs {
+  margin-bottom: 16px;
+}
+
+.ai-tab-window {
+  margin-top: 16px;
+}
+
+/* AI Tab: Configuration Panel */
+.ai-config-panel {
   padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Review Tab: Results Panel */
+.review-panel {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review-empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
 }
 </style>
