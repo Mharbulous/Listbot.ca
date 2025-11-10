@@ -183,7 +183,7 @@
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
               @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, virtualItem.index % 2 === 0 ? '#f9fafb' : 'white')"
-              @mouseleave="cellTooltip.handleCellMouseLeave"
+              @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
               <!-- Cell content via slot -->
               <slot

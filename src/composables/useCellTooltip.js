@@ -109,8 +109,13 @@ export function useCellTooltip() {
 
     // Check if content is truncated
     if (!isTruncated(cellElement)) {
+      // Reset cursor for non-truncated cells
+      cellElement.style.cursor = '';
       return;
     }
+
+    // Set eye cursor to indicate truncated content can be viewed
+    cellElement.style.cursor = 'help';
 
     // Get the text content
     const text = getTextContent(cellElement);
@@ -144,7 +149,12 @@ export function useCellTooltip() {
   /**
    * Handle mouse leave from cell
    */
-  const handleCellMouseLeave = () => {
+  const handleCellMouseLeave = (cellElement) => {
+    // Reset cursor
+    if (cellElement) {
+      cellElement.style.cursor = '';
+    }
+
     clearTimers();
     hideTooltip();
   };
