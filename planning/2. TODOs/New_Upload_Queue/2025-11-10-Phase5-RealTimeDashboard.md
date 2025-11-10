@@ -1,10 +1,12 @@
-# Phase 7: Real-Time Dashboard - Queue & Upload Progress
+# Phase 5: Real-Time Dashboard - Queue & Upload Progress
 
-**Phase:** 7 of 8
+**Phase:** 5 of 7
 **Status:** Not Started
 **Priority:** High
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phases 1-6
+**Dependencies:** Phase 1 (Foundation)
+
+**NOTE:** This phase was moved UP from Phase 7 to Phase 5 to create a measurement baseline before performance optimizations in Phase 6. Users will see "before" metrics (e.g., "47 files/s"), making the "after" improvements in Phase 6 quantifiable (e.g., "183 files/s with 4 workers").
 
 ---
 
@@ -503,5 +505,5 @@ describe('Metrics Calculation', () => {
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 - moved UP from Phase 7 to Phase 5)
 **Assignee:** TBD

@@ -1,10 +1,12 @@
 # Phase 6: Performance Optimizations - Speed & Scale
 
-**Phase:** 6 of 8
+**Phase:** 6 of 7
 **Status:** Not Started
 **Priority:** High
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phases 1-5
+**Dependencies:** Phases 1-5 (especially Phase 5: Dashboard)
+
+**NOTE:** This phase was moved AFTER the Real-Time Dashboard (Phase 5) so users can SEE the performance improvements. Dashboard shows "before" metrics (e.g., "47 files/s with single worker"), then after this phase shows "after" metrics (e.g., "183 files/s with 4 workers active"). This creates a compelling before/after narrative with concrete numbers.
 
 ---
 
@@ -475,5 +477,5 @@ describe('Progressive Loading', () => {
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 - moved AFTER Dashboard for measurable improvements)
 **Assignee:** TBD

@@ -1,10 +1,10 @@
 # Phase 3: Duplicate Management - Smart Display & Swapping
 
-**Phase:** 3 of 8
+**Phase:** 3 of 7
 **Status:** Not Started
 **Priority:** High
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phase 1 (Virtual Upload Queue), Phase 2 (Upload Actions)
+**Dependencies:** Phase 1 (Foundation), Phase 2 (Upload Actions)
 
 ---
 
@@ -590,15 +590,16 @@ console.log('[PERFORMANCE] Phase 3 - Swap action: Xms');
 
 ## Next Phase Preview
 
-**Phase 4:** Simplified Upload Initiation (three-button system)
-- Remove folder options modal
-- Add three distinct upload buttons
-- Streamline workflow for faster uploads
+**Phase 4:** Column Management (sort, reorder, resize)
+- Sortable columns (click header to sort)
+- Drag-and-drop column reordering
+- Column resizing with mouse drag
+- Upload order respects current sort
 
-This phase simplifies the upload start process.
+This phase adds table customization capabilities.
 
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 phase reordering)
 **Assignee:** TBD
