@@ -117,12 +117,7 @@
             v-for="virtualItem in virtualItems"
             :key="virtualItem.key"
             class="table-mockup-row"
-            :class="{
-              even: virtualItem.index % 2 === 0,
-              '!bg-blue-50': peek.isDocumentSelected(sortedData[virtualItem.index]),
-              'cursor-pointer hover:!bg-blue-50': !peek.isPeekActive || peek.isRowPeeked(sortedData[virtualItem.index]),
-              'cursor-default': peek.isPeekActive && !peek.isRowPeeked(sortedData[virtualItem.index])
-            }"
+            :class="getRowClasses(virtualItem.index, sortedData[virtualItem.index])"
             :style="{
               position: 'absolute',
               top: 0,
@@ -289,19 +284,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 
-// ============================================================================
 // Constants
-// ============================================================================
-
-/**
- * Width of the column selector cell (action buttons column)
- * Contains the AI process button and peek button
- */
-const COLUMN_SELECTOR_WIDTH = 100;
-
-// ============================================================================
-// Core Initialization
-// ============================================================================
+const COLUMN_SELECTOR_WIDTH = 100; // Action buttons column (AI + peek)
 
 // Router and route for navigation
 const route = useRoute();
@@ -313,65 +297,39 @@ const authStore = useAuthStore();
 // Cell content tooltip functionality
 const cellTooltip = useCellTooltip();
 
-// ============================================================================
 // Event Handlers
-// ============================================================================
-
-/**
- * Handle AI processing button click
- * @param {Object} row - Document row data to process
- * @todo Implement AI processing logic
- */
 const handleProcessWithAI = (row) => {
   // TODO: Implement AI processing logic
   console.log('Process with AI:', row);
 };
 
-/**
- * Handle clicks outside the cell tooltip to close it
- * @param {MouseEvent} event - Click event
- */
 const handleOutsideClick = (event) => {
-  // Handle cell content tooltip
   if (cellTooltip.isVisible.value) {
-    // Check if click is on a table cell
     const cellEl = event.target.closest('.row-cell');
-
-    if (!cellEl) {
-      // Click was outside any cell, hide the tooltip
-      cellTooltip.cleanup();
-    }
+    if (!cellEl) cellTooltip.cleanup();
   }
 };
 
-/**
- * Handle scroll container scroll events
- * Updates document peek tooltip position and hides cell tooltip
- */
 const handleScrollContainer = () => {
-  // Update document peek tooltip position
   peek.handleScroll();
-
-  // Hide cell content tooltip on scroll (cell may scroll out of view)
-  if (cellTooltip.isVisible.value) {
-    cellTooltip.cleanup();
-  }
+  if (cellTooltip.isVisible.value) cellTooltip.cleanup();
 };
 
-// ============================================================================
-// Column Management
-// ============================================================================
+// Compute row classes based on state (selection, peek, hover)
+const getRowClasses = (index, row) => ({
+  even: index % 2 === 0,
+  '!bg-blue-50': peek.isDocumentSelected(row),
+  'cursor-pointer hover:!bg-blue-50': !peek.isPeekActive || peek.isRowPeeked(row),
+  'cursor-default': peek.isPeekActive && !peek.isRowPeeked(row)
+});
 
+// Column Management
 // Column selector and refs
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 const columnSelectorBtn = ref(null);
 
-/**
- * Build default column widths object from columns prop
- * Converts array of columns to a map of {columnKey: defaultWidth}
- */
 const defaultColumnWidths = computed(() => {
   return props.columns.reduce((acc, col) => {
     acc[col.key] = col.defaultWidth;
@@ -382,7 +340,7 @@ const defaultColumnWidths = computed(() => {
 // Use column drag-drop composable
 const {
   columnOrder,
-  orderedColumns: composableOrderedColumns,
+  orderedColumns,
   dragState,
   onDragStart,
   onDragOver,
@@ -392,24 +350,12 @@ const {
   isDragGap,
 } = useColumnDragDrop(props.columns);
 
-// Create reactive orderedColumns that syncs with columns prop
-const orderedColumns = computed(() => {
-  return columnOrder.value
-    .map(key => props.columns.find(col => col.key === key))
-    .filter(Boolean);
-});
-
-// Watch for columns changes and add new columns to columnOrder
+// Watch for new columns and add to order
 watch(() => props.columns, (newColumns, oldColumns) => {
   if (newColumns.length > oldColumns.length) {
     const currentOrderKeys = new Set(columnOrder.value);
-    const newColumnKeys = newColumns
-      .map(col => col.key)
-      .filter(key => !currentOrderKeys.has(key));
-
-    if (newColumnKeys.length > 0) {
-      columnOrder.value = [...columnOrder.value, ...newColumnKeys];
-    }
+    const newColumnKeys = newColumns.map(col => col.key).filter(key => !currentOrderKeys.has(key));
+    if (newColumnKeys.length > 0) columnOrder.value = [...columnOrder.value, ...newColumnKeys];
   }
 }, { immediate: false });
 
@@ -477,11 +423,6 @@ watch(showColumnSelector, async (isOpen) => {
   }
 });
 
-/**
- * Handle focus leaving the column selector popover
- * Closes the popover when focus moves outside (unless clicking the button)
- * @param {FocusEvent} event - Focus event
- */
 const handleFocusOut = (event) => {
   const clickedButton = event.relatedTarget === columnSelectorBtn.value;
   if (!clickedButton && (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))) {
@@ -489,36 +430,21 @@ const handleFocusOut = (event) => {
   }
 };
 
-// ============================================================================
 // Lifecycle Hooks
-// ============================================================================
 onMounted(() => {
-  // Initialize document peek event listeners
   peek.mount();
-
-  // Add cell tooltip click detection
   document.addEventListener('click', handleOutsideClick);
-
-  // Add scroll listener to the scroll container
   if (scrollContainer.value) {
     scrollContainer.value.addEventListener('scroll', handleScrollContainer);
   }
 });
 
-// Lifecycle: Cleanup on unmount
 onUnmounted(() => {
-  // Cleanup document peek
   peek.unmount();
-
-  // Remove cell tooltip listeners
   document.removeEventListener('click', handleOutsideClick);
-
-  // Remove scroll listener
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScrollContainer);
   }
-
-  // Cleanup cell tooltip
   cellTooltip.cleanup();
 });
 
