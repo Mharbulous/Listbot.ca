@@ -16,6 +16,10 @@
         </span>
         <span class="footer-separator">•</span>
         <span class="footer-stat">
+          <strong>Removed:</strong> {{ stats.removed }}
+        </span>
+        <span class="footer-separator">•</span>
+        <span class="footer-stat">
           <strong>Duplicates:</strong> {{ stats.duplicates }}
         </span>
         <span class="footer-separator">•</span>
@@ -47,6 +51,7 @@ defineProps({
         typeof value.total === 'number' &&
         typeof value.totalSize === 'string' &&
         typeof value.ready === 'number' &&
+        typeof value.removed === 'number' &&
         typeof value.duplicates === 'number' &&
         typeof value.failed === 'number' &&
         typeof value.uploaded === 'number' &&

@@ -19,7 +19,7 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) =>
-      ['ready', 'uploading', 'completed', 'skipped', 'error', 'uploadMetadataOnly', 'unknown'].includes(value),
+      ['ready', 'uploading', 'completed', 'skipped', 'skip', 'error', 'uploadMetadataOnly', 'unknown'].includes(value),
   },
 });
 
@@ -29,6 +29,7 @@ const statusTextMap = {
   uploading: 'Uploading...',
   completed: 'Uploaded',
   skipped: 'Duplicate',
+  skip: 'Skip',
   error: 'Failed',
   uploadMetadataOnly: 'Metadata Only',
   unknown: 'Unknown',
@@ -51,7 +52,7 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
   flex-shrink: 0;
 }
 
-/* 7-Color Status System */
+/* 8-Color Status System */
 .status-ready {
   background-color: #2196f3; /* Blue */
 }
@@ -67,6 +68,10 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
 .status-skipped {
   background-color: #9c27b0; /* Purple */
+}
+
+.status-skip {
+  background-color: #ff9800; /* Orange */
 }
 
 .status-error {

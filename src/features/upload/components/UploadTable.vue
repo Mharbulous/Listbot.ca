@@ -12,6 +12,7 @@
           :file="file"
           :scrollbar-width="scrollbarWidth"
           @cancel="handleCancel"
+          @undo="handleUndo"
         />
       </div>
     </div>
@@ -42,7 +43,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'clear-queue', 'upload']);
+const emit = defineEmits(['cancel', 'undo', 'clear-queue', 'upload']);
 
 // Scrollbar width detection
 const scrollContainerRef = ref(null);
@@ -85,15 +86,17 @@ const footerStats = computed(() => {
   const total = props.files.length;
   const totalSize = props.files.reduce((sum, f) => sum + (f.size || 0), 0);
   const ready = props.files.filter((f) => f.status === 'ready').length;
+  const removed = props.files.filter((f) => f.status === 'skip').length;
   const duplicates = props.files.filter((f) => f.status === 'skipped').length;
   const failed = props.files.filter((f) => f.status === 'error').length;
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
-  const uploadable = total - duplicates;
+  const uploadable = total - duplicates - removed;
 
   return {
     total,
     totalSize: formatBytes(totalSize),
     ready,
+    removed,
     duplicates,
     failed,
     uploaded,
@@ -113,6 +116,11 @@ const formatBytes = (bytes) => {
 // Handle cancel
 const handleCancel = (fileId) => {
   emit('cancel', fileId);
+};
+
+// Handle undo
+const handleUndo = (fileId) => {
+  emit('undo', fileId);
 };
 
 // Handle clear queue

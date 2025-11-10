@@ -106,6 +106,30 @@ export function useUploadTable() {
     }
   };
 
+  /**
+   * Skip file (mark as 'skip' instead of removing)
+   * @param {string} fileId - File ID to skip
+   */
+  const skipFile = (fileId) => {
+    const file = uploadQueue.value.find((f) => f.id === fileId);
+    if (file) {
+      file.status = 'skip';
+      console.log(`[QUEUE] Skipped file: ${fileId}`);
+    }
+  };
+
+  /**
+   * Undo skip (restore to 'ready' status)
+   * @param {string} fileId - File ID to restore
+   */
+  const undoSkip = (fileId) => {
+    const file = uploadQueue.value.find((f) => f.id === fileId);
+    if (file && file.status === 'skip') {
+      file.status = 'ready';
+      console.log(`[QUEUE] Restored file: ${fileId}`);
+    }
+  };
+
   return {
     uploadQueue,
     queueProgress,
@@ -113,5 +137,7 @@ export function useUploadTable() {
     removeFromQueue,
     clearQueue,
     updateFileStatus,
+    skipFile,
+    undoSkip,
   };
 }
