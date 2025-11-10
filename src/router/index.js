@@ -49,6 +49,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Analyze' },
     },
     {
+      path: '/testing',
+      name: 'testing',
+      component: () => import('../views/Testing.vue'),
+      meta: { requiresAuth: true, title: 'Testing' },
+    },
+    {
       path: '/list',
       name: 'list',
       component: () => import('../views/defaults/UnderConstruction.vue'),
