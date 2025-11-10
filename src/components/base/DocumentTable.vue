@@ -182,6 +182,9 @@
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
+              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget)"
+              @mousemove="cellTooltip.handleCellMouseMove"
+              @mouseleave="cellTooltip.handleCellMouseLeave"
             >
               <!-- Cell content via slot -->
               <slot
@@ -231,6 +234,14 @@
       @next-page="handleNextPage"
       @view-document="handleViewDocumentFromPeek"
     />
+
+    <!-- Cell Content Tooltip -->
+    <CellContentTooltip
+      :isVisible="cellTooltip.isVisible.value"
+      :content="cellTooltip.content.value"
+      :position="cellTooltip.position.value"
+      :opacity="cellTooltip.opacity.value"
+    />
   </div>
 </template>
 
@@ -245,7 +256,9 @@ import { useVirtualTable } from '@/composables/useVirtualTable';
 import { useColumnSort } from '@/composables/useColumnSort';
 import { useDocumentPeek } from '@/composables/useDocumentPeek';
 import { useTooltipTiming } from '@/composables/useTooltipTiming';
+import { useCellTooltip } from '@/composables/useCellTooltip';
 import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
+import CellContentTooltip from '@/components/base/CellContentTooltip.vue';
 
 // Props
 const props = defineProps({
@@ -301,6 +314,9 @@ const authStore = useAuthStore();
 // Document peek functionality
 const documentPeek = useDocumentPeek();
 const tooltipTiming = useTooltipTiming();
+
+// Cell content tooltip functionality
+const cellTooltip = useCellTooltip();
 
 // Refs for peek button positioning
 const peekButtonRefs = ref(new Map());
@@ -703,6 +719,7 @@ onUnmounted(() => {
   }
 
   documentPeek.cleanup();
+  cellTooltip.cleanup();
 });
 
 // Component is ready - no logging needed here as Cloud.vue tracks the overall mount time
