@@ -12,7 +12,7 @@
       <!-- File Counts (Right) -->
       <div class="footer-right">
         <span class="footer-stat">
-          <strong>Ready:</strong> {{ stats.total }}
+          <strong>TOTAL:</strong> {{ stats.total }}
         </span>
         <span class="footer-separator">•</span>
         <span class="footer-stat">

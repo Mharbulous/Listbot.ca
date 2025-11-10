@@ -182,7 +182,7 @@ const addFilesToQueue = async (files) => {
 **Layout:**
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ Total: 720 files (380.3 MB) • Ready: 715 • Duplicates: 5 • Failed: 0  │
+│ Total: 720 files (380.3 MB) • TOTAL: 715 • Duplicates: 5 • Failed: 0  │
 │ • Uploaded: 0/715                                                       │
 └────────────────────────────────────────────────────────────────────────┘
 ```
