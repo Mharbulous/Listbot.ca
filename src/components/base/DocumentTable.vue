@@ -58,23 +58,7 @@
             @dragstart="onDragStart(column.key, $event)"
             @dragend="onDragEnd"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="12" viewBox="0 0 36 12">
-              <!-- Top row - 6 dots -->
-              <circle cx="3" cy="4" r="1" />
-              <circle cx="9" cy="4" r="1" />
-              <circle cx="15" cy="4" r="1" />
-              <circle cx="21" cy="4" r="1" />
-              <circle cx="27" cy="4" r="1" />
-              <circle cx="33" cy="4" r="1" />
-
-              <!-- Bottom row - 6 dots -->
-              <circle cx="3" cy="8" r="1" />
-              <circle cx="9" cy="8" r="1" />
-              <circle cx="15" cy="8" r="1" />
-              <circle cx="21" cy="8" r="1" />
-              <circle cx="27" cy="8" r="1" />
-              <circle cx="33" cy="8" r="1" />
-            </svg>
+            <DragHandle />
           </div>
 
           <!-- Sort Indicator - positioned relative to header cell for proper centering -->
@@ -259,6 +243,7 @@ import { useDocumentTablePeek, getRowBackgroundColor } from '@/composables/useDo
 import { useCellTooltip } from '@/composables/useCellTooltip';
 import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
 import CellContentTooltip from '@/components/base/CellContentTooltip.vue';
+import DragHandle from '@/components/base/DragHandle.vue';
 
 // Props
 const props = defineProps({
@@ -304,6 +289,20 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['sort-change', 'column-reorder', 'retry']);
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Width of the column selector cell (action buttons column)
+ * Contains the AI process button and peek button
+ */
+const COLUMN_SELECTOR_WIDTH = 100;
+
+// ============================================================================
+// Core Initialization
+// ============================================================================
+
 // Router and route for navigation
 const route = useRoute();
 const router = useRouter();
@@ -314,13 +313,24 @@ const authStore = useAuthStore();
 // Cell content tooltip functionality
 const cellTooltip = useCellTooltip();
 
-// Handle process with AI button click
+// ============================================================================
+// Event Handlers
+// ============================================================================
+
+/**
+ * Handle AI processing button click
+ * @param {Object} row - Document row data to process
+ * @todo Implement AI processing logic
+ */
 const handleProcessWithAI = (row) => {
   // TODO: Implement AI processing logic
   console.log('Process with AI:', row);
 };
 
-// Handle click outside cell tooltip (close immediately)
+/**
+ * Handle clicks outside the cell tooltip to close it
+ * @param {MouseEvent} event - Click event
+ */
 const handleOutsideClick = (event) => {
   // Handle cell content tooltip
   if (cellTooltip.isVisible.value) {
@@ -334,7 +344,10 @@ const handleOutsideClick = (event) => {
   }
 };
 
-// Handle scroll - hide cell tooltip when scrolling and update peek position
+/**
+ * Handle scroll container scroll events
+ * Updates document peek tooltip position and hides cell tooltip
+ */
 const handleScrollContainer = () => {
   // Update document peek tooltip position
   peek.handleScroll();
@@ -345,13 +358,20 @@ const handleScrollContainer = () => {
   }
 };
 
+// ============================================================================
+// Column Management
+// ============================================================================
+
 // Column selector and refs
 const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 const columnSelectorBtn = ref(null);
 
-// Build default column widths object from columns prop
+/**
+ * Build default column widths object from columns prop
+ * Converts array of columns to a map of {columnKey: defaultWidth}
+ */
 const defaultColumnWidths = computed(() => {
   return props.columns.reduce((acc, col) => {
     acc[col.key] = col.defaultWidth;
@@ -444,9 +464,6 @@ watch(defaultColumnWidths, (newWidths) => {
   });
 }, { immediate: false });
 
-// Column selector cell width constant
-const COLUMN_SELECTOR_WIDTH = 100;
-
 // Compute total footer width (includes column selector width)
 const totalFooterWidth = computed(() => {
   return totalTableWidth.value + COLUMN_SELECTOR_WIDTH;
@@ -460,7 +477,11 @@ watch(showColumnSelector, async (isOpen) => {
   }
 });
 
-// Handle focus leaving the popover
+/**
+ * Handle focus leaving the column selector popover
+ * Closes the popover when focus moves outside (unless clicking the button)
+ * @param {FocusEvent} event - Focus event
+ */
 const handleFocusOut = (event) => {
   const clickedButton = event.relatedTarget === columnSelectorBtn.value;
   if (!clickedButton && (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))) {
@@ -468,7 +489,9 @@ const handleFocusOut = (event) => {
   }
 };
 
-// Lifecycle: Add outside-click detection and scroll listeners on mount
+// ============================================================================
+// Lifecycle Hooks
+// ============================================================================
 onMounted(() => {
   // Initialize document peek event listeners
   peek.mount();
