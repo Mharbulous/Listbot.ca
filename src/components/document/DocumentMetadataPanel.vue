@@ -34,7 +34,7 @@
               :class="{ active: activeTab === 'digital-file' }"
               @click="handleTabClick('digital-file')"
             >
-              <span class="tab-icon">☁️</span>
+              <span class="tab-icon">💾</span>
               <span class="tab-label">File</span>
             </button>
           </div>
