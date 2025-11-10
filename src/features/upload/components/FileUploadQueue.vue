@@ -364,11 +364,11 @@ const handleClearQueue = () => {
 
 // Computed properties
 const uploadableFiles = computed(() => {
-  return props.files.filter((file) => !file.isDuplicate);
+  return props.files.filter((file) => !file.isDuplicate && file.status !== 'skipped');
 });
 
 const skippableFiles = computed(() => {
-  return props.files.filter((file) => file.isDuplicate);
+  return props.files.filter((file) => file.isDuplicate || file.status === 'skipped');
 });
 
 // Group files for better duplicate visualization

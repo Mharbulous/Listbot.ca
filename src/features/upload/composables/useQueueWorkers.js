@@ -164,9 +164,18 @@ export function useQueueWorkers() {
           status: 'uploadMetadataOnly',
         }));
 
+        // Map shortcut files (Windows .lnk files that should be skipped)
+        const shortcutFiles = (workerResult.shortcutFiles || []).map((fileRef) => ({
+          ...fileRef,
+          file: fileMapping.get(fileRef.id), // Restore source File object
+          path: fileRef.path, // Preserve path from worker result
+          status: 'skipped',
+          skipReason: 'shortcut',
+        }));
+
         return {
           success: true,
-          result: { readyFiles, duplicateFiles },
+          result: { readyFiles, duplicateFiles, shortcutFiles },
         };
       } finally {
         // Clean up progress listener

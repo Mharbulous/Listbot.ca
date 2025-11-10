@@ -108,7 +108,7 @@
           </v-tooltip>
           <v-tooltip
             v-else-if="file.status === 'skipped'"
-            :text="file.isDuplicate ? 'Duplicate file - skipped' : 'Skipped'"
+            :text="getSkippedTooltip(file)"
             location="bottom"
           >
             <template #activator="{ props }">
@@ -294,5 +294,16 @@ const getRelativePath = (file) => {
   // Join path parts and ensure single leading slash
   const folderPath = pathParts.join('/');
   return folderPath.startsWith('/') ? folderPath : '/' + folderPath;
+};
+
+// Get appropriate tooltip text for skipped files
+const getSkippedTooltip = (file) => {
+  if (file.skipReason === 'shortcut') {
+    return 'Shortcut files will be skipped';
+  }
+  if (file.isDuplicate) {
+    return 'Duplicate file - skipped';
+  }
+  return 'Skipped';
 };
 </script>

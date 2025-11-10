@@ -193,6 +193,12 @@ export const useFileUploadHandlers = ({
         const queueFile = filesToProcess[i];
         updateUploadStatus('setUploadIndex', i);
 
+        // Skip files marked as skipped (e.g., Windows shortcut files)
+        if (queueFile.status === 'skipped') {
+          updateUploadStatus('skipped');
+          continue;
+        }
+
         // Handle duplicate files
         if (queueFile.isDuplicate) {
           try {

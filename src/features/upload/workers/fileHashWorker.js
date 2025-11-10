@@ -48,6 +48,13 @@ function getFilePath(file) {
   return file.path || file.webkitRelativePath || file.name;
 }
 
+// Helper function to detect Windows shortcut files (.lnk)
+// These files should be skipped as they contain no useful document content
+function isShortcutFile(fileName) {
+  if (!fileName) return false;
+  return fileName.toLowerCase().endsWith('.lnk');
+}
+
 // Main source file processing logic
 async function processFiles(files, batchId) {
   const totalUploads = files.length;
@@ -78,10 +85,41 @@ async function processFiles(files, batchId) {
       processingStartTime = Date.now();
     }
 
+    // Step 0: Filter out Windows shortcut files (.lnk) early - they should never be uploaded
+    const shortcutFiles = [];
+    const processableFiles = [];
+
+    files.forEach((fileData) => {
+      const { id, file, originalIndex, customPath } = fileData;
+      const path = customPath || getFilePath(file);
+
+      // Check if this is a shortcut file
+      if (isShortcutFile(file.name)) {
+        shortcutFiles.push({
+          id,
+          originalIndex,
+          path,
+          metadata: {
+            sourceFileName: file.name,
+            sourceFileSize: file.size,
+            sourceFileType: file.type,
+            lastModified: file.lastModified,
+          },
+          status: 'skipped',
+          skipReason: 'shortcut',
+        });
+        // Count as processed for progress tracking
+        processedCount++;
+        sendProgressUpdate();
+      } else {
+        processableFiles.push(fileData);
+      }
+    });
+
     // Step 1: Group source files by size to identify unique-sized files
     const fileSizeGroups = new Map(); // file_size -> [file_references]
 
-    files.forEach((fileData) => {
+    processableFiles.forEach((fileData) => {
       const { id, file, originalIndex, customPath } = fileData;
       const fileSize = file.size;
       const fileRef = {
@@ -224,13 +262,14 @@ async function processFiles(files, batchId) {
       status: 'uploadMetadataOnly',
     }));
 
-    // Send completion message
+    // Send completion message with all file categories
     self.postMessage({
       type: MESSAGE_TYPES.PROCESSING_COMPLETE,
       batchId,
       result: {
         readyFiles,
         duplicateFiles: duplicatesForQueue,
+        shortcutFiles, // Include skipped shortcut files
       },
     });
   } catch (error) {
