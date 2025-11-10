@@ -15,7 +15,6 @@
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/src/features/organizer/views/CategoryEditWizard.vue` | 724 |
 | `/home/user/Bookkeeper/src/components/base/DocumentTable.vue` | 711 |
 | `/home/user/Bookkeeper/src/views/MatterDetail.vue` | 682 |
 | `/home/user/Bookkeeper/src/features/organizer/components/FolderHierarchySelector.vue` | 651 |
