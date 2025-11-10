@@ -457,5 +457,4 @@ onUnmounted(() => {
 
 // Component is ready - no logging needed here as Documents.vue tracks the overall mount time
 </script>
-
 <style scoped src="./DocumentTable.css"></style>
