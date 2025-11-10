@@ -1,13 +1,16 @@
 <template>
   <div class="metadata-item">
-    <span
-      class="metadata-label"
-      :class="{ 'align-right': fieldPreference !== 'get' }"
-    >
-      {{ label }}
-    </span>
+    <div class="label-wrapper">
+      <span
+        ref="labelRef"
+        class="metadata-label"
+        :style="labelStyle"
+      >
+        {{ label }}
+      </span>
+    </div>
 
-    <div class="field-controls">
+    <div class="field-controls" ref="controlsRef">
       <!-- Segmented Control (shown when NOT analyzing) -->
       <SegmentedControl
         v-if="!isAnalyzing"
@@ -30,9 +33,10 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
-defineProps({
+const props = defineProps({
   label: {
     type: String,
     required: true,
@@ -48,6 +52,55 @@ defineProps({
 });
 
 defineEmits(['update:fieldPreference']);
+
+const labelRef = ref(null);
+const controlsRef = ref(null);
+const slideDistance = ref(0);
+
+// Calculate the distance the label needs to slide
+const calculateSlideDistance = () => {
+  if (!labelRef.value || !controlsRef.value) return;
+
+  const controlsWidth = controlsRef.value.offsetWidth;
+  const labelWidth = labelRef.value.offsetWidth;
+
+  // Distance to slide from left edge to right edge
+  slideDistance.value = controlsWidth - labelWidth;
+};
+
+// Computed style for the label
+const labelStyle = computed(() => {
+  const isRightAligned = props.fieldPreference !== 'get';
+  const translateX = isRightAligned ? slideDistance.value : 0;
+
+  return {
+    transform: `translateX(${translateX}px)`,
+  };
+});
+
+// Watch for preference changes and recalculate if needed
+watch(() => props.fieldPreference, () => {
+  nextTick(() => {
+    calculateSlideDistance();
+  });
+});
+
+// Watch for analyzing state changes (control visibility)
+watch(() => props.isAnalyzing, () => {
+  nextTick(() => {
+    calculateSlideDistance();
+  });
+});
+
+// Initialize on mount
+onMounted(() => {
+  nextTick(() => {
+    // Add a small delay to ensure SegmentedControl is fully rendered
+    setTimeout(() => {
+      calculateSlideDistance();
+    }, 50);
+  });
+});
 </script>
 
 <style scoped>
@@ -55,20 +108,20 @@ defineEmits(['update:fieldPreference']);
   margin-bottom: 16px;
 }
 
-/* Metadata Label Alignment Animation */
-.metadata-label {
-  position: relative;
-  display: inline-block;
-  left: 0;
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
-  color: #333;
+/* Label Wrapper - constrains label width to match controls */
+.label-wrapper {
+  width: 100%;
+  margin-bottom: 8px;
+  overflow: visible; /* Ensure label is visible during animation */
 }
 
-.metadata-label.align-right {
-  /* Move to right side of container, then adjust back by label width */
-  left: 100%;
-  transform: translateX(-100%);
+/* Metadata Label - Clean sliding animation */
+.metadata-label {
+  display: inline-block;
+  font-weight: 500;
+  color: #333;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform; /* Optimize for smooth animations */
 }
 
 /* Field Controls Layout */
@@ -76,7 +129,6 @@ defineEmits(['update:fieldPreference']);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 8px;
 }
 
 /* Analyzing State */
