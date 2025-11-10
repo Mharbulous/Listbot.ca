@@ -1,19 +1,6 @@
 <template>
   <div class="upload-container">
     <div class="upload-wrapper">
-      <!-- Header Section -->
-      <div class="upload-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <v-icon icon="mdi-cloud-upload" size="40" color="primary" />
-          </div>
-          <h1 class="header-title">Upload Files</h1>
-          <p class="header-subtitle">
-            Securely upload your documents to the current matter
-          </p>
-        </div>
-      </div>
-
       <!-- Main Dropzone -->
       <div
         class="dropzone-card"
@@ -101,37 +88,6 @@
             <div class="info-item">
               <v-icon icon="mdi-lightning-bolt" size="18" color="success" />
               <span>Automatic duplicate detection</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Tips Section -->
-      <div class="tips-section">
-        <h3 class="tips-title">
-          <v-icon icon="mdi-lightbulb-outline" size="20" color="amber" class="mr-2" />
-          Quick Tips
-        </h3>
-        <div class="tips-grid">
-          <div class="tip-card">
-            <v-icon icon="mdi-folder-multiple" size="24" color="primary" class="tip-icon" />
-            <div class="tip-content">
-              <h4>Upload Folders</h4>
-              <p>Drag entire folders to preserve your file structure</p>
-            </div>
-          </div>
-          <div class="tip-card">
-            <v-icon icon="mdi-file-multiple" size="24" color="primary" class="tip-icon" />
-            <div class="tip-content">
-              <h4>Multiple Files</h4>
-              <p>Select or drag multiple files at once for batch upload</p>
-            </div>
-          </div>
-          <div class="tip-card">
-            <v-icon icon="mdi-content-duplicate" size="24" color="primary" class="tip-icon" />
-            <div class="tip-content">
-              <h4>Smart Deduplication</h4>
-              <p>Duplicate files are automatically detected and skipped</p>
             </div>
           </div>
         </div>
@@ -247,36 +203,6 @@ const handleFolderSelect = (event) => {
 .upload-wrapper {
   max-width: 1000px;
   margin: 0 auto;
-}
-
-/* Header Section */
-.upload-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.header-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.header-icon {
-  margin-bottom: 1rem;
-}
-
-.header-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.header-subtitle {
-  font-size: 1.125rem;
-  color: #64748b;
-  margin: 0;
 }
 
 /* Main Dropzone */
@@ -458,64 +384,6 @@ const handleFolderSelect = (event) => {
   color: #475569;
 }
 
-/* Tips Section */
-.tips-section {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.tips-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-}
-
-.tips-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.tip-card {
-  display: flex;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.tip-card:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.tip-icon {
-  flex-shrink: 0;
-}
-
-.tip-content h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.tip-content p {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.5;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .upload-container {
@@ -537,10 +405,6 @@ const handleFolderSelect = (event) => {
   .info-section {
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .tips-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>
