@@ -99,39 +99,68 @@ Handles file retrieval and processing for AI analysis.
 
 **Location**: `src/components/document/tabs/AIAnalysisTab.vue`
 
-Main user interface for AI analysis results.
+**Purpose**: Configuration panel for metadata extraction (Phase 4 design)
+
+**Two-Tab Workflow**:
+- **AI Tab**: Configuration - What to extract (Get/Skip/Manual for pending fields)
+- **Review Tab**: Results - What was extracted (Accept/Reject workflow)
 
 **Features**:
-- Manual trigger via "Analyze Document" button
-- Three-state display: Button → Analyzing spinner → Results
-- Confidence badges (≥95% green, 80-94% amber, <80% red)
-- Hover tooltips showing context and alternatives
-- Error handling with retry capability
-- Placeholder sections for future Firm/Matter fields
+- **Get/Skip/Manual Configuration**: Radio buttons for each pending field
+  - **Get**: Include field in AI extraction
+  - **Skip**: Don't extract this field
+  - **Manual**: User will enter manually (field appears on Review Tab with empty input)
+- **Manual Trigger**: "Analyze Document" button for fields marked "Get"
+- **Dynamic Field Visibility**: Fields disappear from AI Tab once determined (AI-extracted or manually accepted)
+- **Confidence Badges**: (≥95% green, 80-94% amber, <80% red)
+- **Error Handling**: Retry capability for failed analysis
 
 **Key Methods**:
-- `handleAnalyzeClick()` - Triggers analysis workflow (lines 374-503)
-- `loadAITags()` - Loads existing results from Firestore (lines 264-325)
-- `getConfidenceBadgeColor(confidence)` - Determines badge color (lines 257-261)
-- `formatDateString(dateString)` - Formats dates per user preference (lines 342-366)
+- `handleAnalyzeClick()` - Triggers analysis for fields marked "Get"
+- `loadAITags()` - Loads existing results from Firestore
+- `setExtractionMode(fieldName, mode)` - Updates Get/Skip/Manual selection
+- `shouldShowOnAITab(fieldName)` - Determines if field is pending (not yet determined)
+- `getConfidenceBadgeColor(confidence)` - Badge colors based on confidence thresholds
+- `formatDateString(dateString)` - Formats dates per user preference
 
 **State Management**:
 - `isAnalyzing` - Analysis in progress flag
+- `extractionMode` - Get/Skip/Manual settings per field
 - `aiResults` - Stores documentDate and documentType results
 - `aiError` - Error state with user-friendly messages
-- `showLoadingUI` - Delayed loading indicator (prevents flash)
 
-#### Review Tab (Placeholder)
+#### Review Tab
 
 **Location**: `src/components/document/tabs/ReviewTab.vue`
 
-Minimal placeholder for future Phase 4 implementation. Currently shows basic structure only.
+**Purpose**: Results panel for reviewing and accepting AI-extracted values (Phase 4 design)
 
-**Planned Features** (Not Yet Implemented):
-- Review queue for low-confidence suggestions
-- Approve/reject/custom entry workflows
-- Review history timeline
-- Badge count notifications
+**Features**:
+- **AI-Extracted Values**: Pre-filled editable input fields with confidence badges
+- **Manual Entry Fields**: Empty input fields for fields set to "Manual" on AI Tab
+- **Accept/Reject Workflow**:
+  - ✓ **Accept**: Saves value to Firestore, removes field from AI Tab
+  - ✗ **Reject**: (Future) Sends field back to AI Tab with rejection logged
+- **Editable Before Accept**: User can modify AI values before accepting
+- **Confidence Display**: Badges and tooltips showing AI reasoning (AI-extracted only)
+- **Empty State**: "No data ready for review" when no fields to review
+
+**Field Lifecycle**:
+- **AI-Extracted Fields**: Appear on Review Tab with pre-filled values
+- **Manual Fields**: Appear on BOTH tabs until accepted
+- **Accepted Fields**: Disappear from AI Tab (determined state)
+
+**Key Methods**:
+- `acceptReviewValue(fieldName)` - Validates and saves accepted value
+- `rejectReviewValue(fieldName)` - (Future) Logs rejection and returns to AI Tab
+- `validateReviewValue(fieldName, value)` - Validation rules per field type
+- `shouldShowOnReviewTab(fieldName)` - Shows if AI-extracted OR set to Manual
+- `isAcceptEnabled(fieldName)` - Enables Accept button when input is valid
+
+**Validation**:
+- Document Date: YYYY-MM-DD format, not in future
+- Document Type: Must be from predefined list
+- Empty values prevent Accept button from enabling
 
 ### Data Storage
 
