@@ -4,12 +4,13 @@
     <UploadTableHeader @clear-queue="handleClearQueue" />
 
     <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
-    <div class="scroll-container">
+    <div ref="scrollContainerRef" class="scroll-container">
       <div class="table-body">
         <UploadTableRow
           v-for="file in props.files"
           :key="file.id"
           :file="file"
+          :scrollbar-width="scrollbarWidth"
           @cancel="handleCancel"
         />
       </div>
@@ -21,7 +22,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, watch, ref, onMounted, onUnmounted } from 'vue';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
@@ -43,6 +44,28 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'clear-queue', 'upload']);
 
+// Scrollbar width detection
+const scrollContainerRef = ref(null);
+const scrollbarWidth = ref(0);
+
+const calculateScrollbarWidth = () => {
+  if (!scrollContainerRef.value) return;
+  // Calculate scrollbar width as the difference between offsetWidth and clientWidth
+  scrollbarWidth.value = scrollContainerRef.value.offsetWidth - scrollContainerRef.value.clientWidth;
+  console.log('[UploadTable] Scrollbar width detected:', scrollbarWidth.value, 'px');
+};
+
+onMounted(() => {
+  // Calculate scrollbar width on mount
+  calculateScrollbarWidth();
+  // Recalculate on window resize
+  window.addEventListener('resize', calculateScrollbarWidth);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', calculateScrollbarWidth);
+});
+
 // Debug: Watch files prop
 watch(
   () => props.files,
@@ -51,6 +74,8 @@ watch(
     if (newFiles.length > 0 && newFiles.length <= 3) {
       console.log('[UploadTable] First file:', newFiles[0]);
     }
+    // Recalculate scrollbar width when files change (scrollbar may appear/disappear)
+    setTimeout(calculateScrollbarWidth, 0);
   },
   { immediate: true }
 );
@@ -116,6 +141,8 @@ const handleUpload = () => {
 .scroll-container {
   flex: 1;
   position: relative;
+  overflow-y: auto;
+  max-height: 600px; /* Limit height to ensure scrollbar appears with many files */
 }
 
 .table-body {

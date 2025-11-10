@@ -21,8 +21,12 @@
       <StatusCell :status="file.status" />
     </div>
 
-    <!-- Folder Path Column (min-width to fit text without wrapping) -->
-    <div class="row-cell path-cell" style="min-width: 130px; width: 130px; flex-shrink: 0" :title="file.folderPath">
+    <!-- Folder Path Column (adjusted for scrollbar width) -->
+    <div
+      class="row-cell path-cell"
+      :style="{ minWidth: `${folderPathWidth}px`, width: `${folderPathWidth}px`, flexShrink: 0 }"
+      :title="file.folderPath"
+    >
       {{ file.folderPath || '/' }}
     </div>
 
@@ -41,6 +45,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import StatusCell from './StatusCell.vue';
 
 // Component configuration
@@ -54,10 +59,20 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  scrollbarWidth: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // Emits
 const emit = defineEmits(['cancel']);
+
+// Compute adjusted folder path width to account for scrollbar
+const folderPathWidth = computed(() => {
+  // Base width is 130px, reduce by scrollbar width
+  return Math.max(130 - props.scrollbarWidth, 50); // Minimum 50px
+});
 
 // Format file size
 const formatFileSize = (bytes) => {
