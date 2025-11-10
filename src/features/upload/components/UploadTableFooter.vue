@@ -12,11 +12,11 @@
       <!-- File Counts (Right) -->
       <div class="footer-right">
         <span class="footer-stat">
-          <strong>Total:</strong> {{ stats.total }}
+          <strong>Ready:</strong> {{ stats.total }}
         </span>
         <span class="footer-separator">•</span>
         <span class="footer-stat">
-          <strong>Removed:</strong> {{ stats.removed }}
+          <strong>Skipped:</strong> {{ stats.removed }}
         </span>
         <span class="footer-separator">•</span>
         <span class="footer-stat">
