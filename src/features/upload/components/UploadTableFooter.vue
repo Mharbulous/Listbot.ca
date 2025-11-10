@@ -5,18 +5,14 @@
       <div class="footer-left">
         <v-btn color="primary" variant="elevated" size="default" class="upload-btn" @click="handleUpload">
           <v-icon start>mdi-cloud-upload</v-icon>
-          UPLOAD
+          UPLOAD {{ stats.total }} files ({{ stats.totalSize }})
         </v-btn>
       </div>
 
       <!-- File Counts (Right) -->
       <div class="footer-right">
         <span class="footer-stat">
-          <strong>Total:</strong> {{ stats.total }} files ({{ stats.totalSize }})
-        </span>
-        <span class="footer-separator">•</span>
-        <span class="footer-stat">
-          <strong>Ready:</strong> {{ stats.ready }}
+          <strong>Total:</strong> {{ stats.total }}
         </span>
         <span class="footer-separator">•</span>
         <span class="footer-stat">
