@@ -259,9 +259,13 @@ export function useFileQueue() {
   };
 
   // Simple 2-chunk UI updates for optimal user feedback
-  // Receives processed source file results from worker (ready and duplicate source files)
-  const updateFromWorkerResults = async (readySourceFiles, duplicateSourceFiles) => {
-    const allSourceFiles = [...readySourceFiles, ...duplicateSourceFiles];
+  // Receives processed source file results from worker (ready, duplicate, and shortcut source files)
+  const updateFromWorkerResults = async (
+    readySourceFiles,
+    duplicateSourceFiles,
+    shortcutSourceFiles = []
+  ) => {
+    const allSourceFiles = [...readySourceFiles, ...duplicateSourceFiles, ...shortcutSourceFiles];
     const totalUploads = allSourceFiles.length;
 
     // Start UI update process (if not already started by initializeQueueInstantly)
@@ -372,8 +376,12 @@ export function useFileQueue() {
   };
 
   // Legacy method - maintains backward compatibility
-  const updateUploadQueue = async (readySourceFiles, duplicateSourceFiles) => {
-    await updateFromWorkerResults(readySourceFiles, duplicateSourceFiles);
+  const updateUploadQueue = async (
+    readySourceFiles,
+    duplicateSourceFiles,
+    shortcutSourceFiles = []
+  ) => {
+    await updateFromWorkerResults(readySourceFiles, duplicateSourceFiles, shortcutSourceFiles);
   };
 
   // Time monitoring integration

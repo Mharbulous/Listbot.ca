@@ -29,6 +29,13 @@ export function useQueueCore() {
     );
   };
 
+  // Helper function to detect Windows shortcut files (.lnk)
+  // These files should be skipped as they contain no useful document content
+  const isShortcutFile = (fileName) => {
+    if (!fileName) return false;
+    return fileName.toLowerCase().endsWith('.lnk');
+  };
+
   // Legacy hash generation (kept for fallback compatibility)
   const generateFileHash = async (file) => {
     const buffer = await file.arrayBuffer();
@@ -121,9 +128,33 @@ export function useQueueCore() {
     if (skippedFiles.length > 0) {
       console.log(`Excluded ${skippedFiles.length} files from skipped cloud folders`);
     }
+
+    // Filter out Windows shortcut files (.lnk) early - they should never be uploaded
+    const shortcutFiles = [];
+    const nonShortcutFiles = [];
+
+    processableFiles.forEach((file) => {
+      if (isShortcutFile(file.name)) {
+        shortcutFiles.push({
+          file,
+          path: getFilePath(file),
+          metadata: {
+            sourceFileName: file.name,
+            sourceFileSize: file.size,
+            sourceFileType: file.type,
+            lastModified: file.lastModified,
+          },
+          status: 'skipped',
+          skipReason: 'shortcut',
+        });
+      } else {
+        nonShortcutFiles.push(file);
+      }
+    });
+
     // Track progress for main thread processing
     let processedCount = 0;
-    const totalUploads = processableFiles.length; // Use processable files count for progress
+    const totalUploads = nonShortcutFiles.length; // Use non-shortcut files count for progress
 
     const sendProgress = () => {
       if (onProgress) {
@@ -131,7 +162,7 @@ export function useQueueCore() {
           current: processedCount,
           total: totalUploads,
           percentage: Math.round((processedCount / totalUploads) * 100),
-          currentFile: processedCount < totalUploads ? processableFiles[processedCount]?.name : '',
+          currentFile: processedCount < totalUploads ? nonShortcutFiles[processedCount]?.name : '',
         });
       }
     };
@@ -142,7 +173,7 @@ export function useQueueCore() {
     // Step 1: Group files by size to identify unique-sized files
     const fileSizeGroups = new Map(); // file_size -> [file_references]
 
-    processableFiles.forEach((file, index) => {
+    nonShortcutFiles.forEach((file, index) => {
       const fileSize = file.size;
       const fileRef = {
         file,
@@ -207,7 +238,7 @@ export function useQueueCore() {
       }
     }
 
-    return { uniqueFiles, hashGroups, skippedFiles };
+    return { uniqueFiles, hashGroups, skippedFiles, shortcutFiles };
   };
 
   // Process hash groups to identify true duplicates
