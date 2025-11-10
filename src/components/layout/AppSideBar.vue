@@ -67,6 +67,7 @@ const navItems = [
   { key: 'list', path: '/list', icon: '📃', label: 'List' },
   { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
+  { key: 'testing', path: '/testing', icon: '🧪', label: 'Testing' },
 ]
 
 // Tooltip state
