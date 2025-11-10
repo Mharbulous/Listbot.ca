@@ -41,7 +41,7 @@ Implement AI-powered extraction of Document Date and Document Type metadata usin
 **I want to** high-confidence AI suggestions to be automatically approved
 **So that** I only need to review uncertain classifications
 
-**Threshold**: 85% confidence for auto-approval (consistent with existing tags)
+**Threshold**: 95% confidence for auto-approval
 
 ---
 
@@ -50,7 +50,7 @@ Implement AI-powered extraction of Document Date and Document Type metadata usin
 ### User Interaction Flow
 - **Trigger**: Manual "Analyze Document" button in AI tab
 - **API Strategy**: Single Gemini API call analyzing both fields together
-- **Confidence Threshold**: 85% for auto-approval
+- **Confidence Threshold**: 95% for auto-approval
 - **File Size Limit**: 20MB maximum
 
 ### Technical Design
@@ -343,8 +343,8 @@ Return as JSON.
 - Single Gemini API call extracts both Document Date and Type
 - Document Date correctly identifies original document date (ignores stamps)
 - Document Type classifies using predefined system category list
-- Confidence ≥85% auto-approves tags (green badge)
-- Confidence <85% marks tags as review-required (yellow badge)
+- Confidence ≥95% auto-approves tags (green badge)
+- Confidence <95% marks tags as review-required (yellow badge)
 - Confidence <95% displays alternative suggestions
 - Results persist in Firestore (hybrid storage pattern)
 
@@ -430,11 +430,11 @@ VITE_FIREBASE_PROJECT_ID=your-project-id
 
 ### TC: High Confidence Auto-Approval
 **File**: Clear invoice with obvious date/type
-**Expected**: Green badge "✓ Auto-approved", both fields confidence ≥85%
+**Expected**: Green badge showing percentage (e.g., "97%"), both fields confidence ≥95%
 
 ### TC: Low Confidence Review Required
 **File**: Blurry or ambiguous document
-**Expected**: Yellow badge "⚠ Review Required", alternatives displayed
+**Expected**: Yellow/amber badge showing percentage (e.g., "72%"), alternatives displayed
 
 ### TC: File Too Large
 **File**: 25MB PDF
@@ -456,7 +456,7 @@ VITE_FIREBASE_PROJECT_ID=your-project-id
 
 ### Design Rationale
 - **Single API call**: More efficient, provides better context for AI
-- **85% threshold**: Consistent with existing tag auto-approval
+- **95% threshold**: High confidence standard for auto-approval of AI-extracted metadata
 - **Manual trigger**: Gives users control, avoids unexpected API costs
 - **Hybrid storage**: Optimizes both table performance and detail views
 

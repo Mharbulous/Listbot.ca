@@ -28,7 +28,7 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 
 ## Goals
 
-1. **Automatic Analysis**: When a user opens the AI tab, automatically trigger AI analysis if Document Date or Document Type fields are "Not yet analyzed"
+1. **Manual Analysis Trigger**: User manually triggers AI analysis via "Analyze Document" button; AI tab loads existing results from Firestore when opened
 2. **Structured Extraction**: Extract specific metadata fields (Document Date and Document Type) from document content
 3. **Confidence Scoring**: Provide confidence scores for each extracted field
 4. **Multiple Alternatives**: For low-confidence extractions (<95%), provide alternative suggestions
@@ -322,7 +322,7 @@ The metadata panel already has a dedicated **👤Review tab** for human review w
 - Handles documents with poor formatting or degraded quality
 
 #### NFR-4: Usability
-- Zero-click analysis (automatic on tab open)
+- Manual analysis trigger via "Analyze Document" button
 - Clear separation of concerns across three tabs
 - AI tab remains clean and simple (display only)
 - Review tab provides focused review workflow
@@ -691,10 +691,10 @@ Document to analyze:
 │ ─────────────────                       │
 │                                         │
 │ DOCUMENT DATE:                          │
-│ March 15, 2024 ✓                        │
+│ March 15, 2024 [97%]                    │
 │                                         │
 │ DOCUMENT TYPE:                          │
-│ Invoice ✓                               │
+│ Invoice [98%]                           │
 │                                         │
 │ ────────────────────────────────────    │
 │                                         │
@@ -725,11 +725,11 @@ Document to analyze:
 │ ─────────────────                       │
 │                                         │
 │ DOCUMENT DATE:                          │
-│ March 15, 2024 ⚠️                       │
+│ March 15, 2024 [72%]                    │
 │ [Edit]                                  │
 │                                         │
 │ DOCUMENT TYPE:                          │
-│ Memo ⚠️                                 │
+│ Memo [78%]                              │
 │ [Edit]                                  │
 │                                         │
 └─────────────────────────────────────────┘
@@ -906,30 +906,32 @@ Document to analyze:
 
 ## User Stories
 
-### Epic 1: Automatic Analysis Trigger
+### Epic 1: Manual Analysis Trigger
 
-#### US-1.1: Auto-Trigger on Tab Open
+#### US-1.1: Load Existing Results on Tab Open
 **As a** document reviewer
-**I want** AI analysis to start automatically when I open the AI tab
-**So that** I don't have to manually trigger analysis for every document
+**I want** the AI tab to load existing analysis results from Firestore when I open it
+**So that** I can quickly see previously analyzed metadata without re-analysis
 
 **Acceptance Criteria:**
 - Given I open a document's metadata panel
 - When I click on the "🤖 AI" tab
-- Then the system checks if DocumentDate and DocumentType tags exist
-- And if either is missing or needs review, AI analysis starts automatically
-- And I see a loading indicator showing "Analyzing document..."
+- Then the system loads existing DocumentDate and DocumentType tags from Firestore
+- And if tags exist, they display immediately with confidence badges
+- And if tags don't exist, I see an "Analyze Document" button
 
-#### US-1.2: Skip Analysis for Complete Documents
+#### US-1.2: Manual Analysis Trigger
 **As a** document reviewer
-**I want** the system to skip AI analysis if metadata is already complete and approved
-**So that** I don't waste processing time or see unnecessary loading states
+**I want** to manually trigger AI analysis via a button
+**So that** I have control over when analysis happens and API costs are predictable
 
 **Acceptance Criteria:**
-- Given I open the AI tab
-- When both DocumentDate and DocumentType tags exist with `autoApproved: true`
-- Then no AI analysis is triggered
-- And I immediately see the existing metadata values
+- Given I open the AI tab and no analysis results exist
+- When I see the "Analyze Document" button
+- And I click the button
+- Then AI analysis begins for both DocumentDate and DocumentType
+- And I see a loading indicator showing "Analyzing..."
+- And results are stored in Firestore after completion
 
 ### Epic 2: Document Date Extraction
 
@@ -942,8 +944,7 @@ Document to analyze:
 - Given a document with a clear date (e.g., letterhead date, signature date)
 - When AI analysis completes
 - Then Document Date field shows the extracted date (e.g., "March 15, 2024")
-- And confidence score shows ≥95%
-- And a green checkmark (✓) indicates auto-approval
+- And confidence badge shows percentage ≥95% (e.g., "97%") in green color
 - And the tag is stored with `autoApproved: true`
 
 #### US-2.2: Flag Low-Confidence Date for Review
@@ -983,8 +984,7 @@ Document to analyze:
 - Given a clearly formatted document (e.g., email with headers, invoice with line items)
 - When AI analysis completes
 - Then Document Type field shows the classification (e.g., "Invoice")
-- And confidence score shows ≥95%
-- And a green checkmark (✓) indicates auto-approval
+- And confidence badge shows percentage ≥95% (e.g., "98%") in green color
 - And the tag is stored with `autoApproved: true`
 
 #### US-3.2: Flag Low-Confidence Type for Review
