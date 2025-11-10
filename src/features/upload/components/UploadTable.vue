@@ -77,8 +77,15 @@ const rowVirtualizer = useVirtualizer({
   overscan: 5,
 });
 
-const virtualItems = computed(() => rowVirtualizer.getVirtualItems());
-const totalSize = computed(() => rowVirtualizer.getTotalSize());
+const virtualItems = computed(() => {
+  if (!rowVirtualizer || !rowVirtualizer.getVirtualItems) return [];
+  return rowVirtualizer.getVirtualItems();
+});
+
+const totalSize = computed(() => {
+  if (!rowVirtualizer || !rowVirtualizer.getTotalSize) return 0;
+  return rowVirtualizer.getTotalSize();
+});
 
 // Footer stats
 const footerStats = computed(() => {
