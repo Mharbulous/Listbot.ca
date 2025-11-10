@@ -1,8 +1,24 @@
 Review the file at path: `$ARGUMENTS`
 
+## Exception List - Do NOT Decompose
+
+The following files are **EXEMPT** from the 300-line limit and should **NEVER** be decomposed:
+
+- `src/components/base/DocumentTable.vue` - Virtual scrolling implementation (tight coupling required)
+
+**If the file is on the exception list:**
+- Inform the user that this file is exempt from streamlining
+- Explain why it's on the exception list
+- Do NOT proceed with decomposition
+
 ## File Analysis
 
 First, read the file and count its lines of code.
+
+**Virtual Scrolling Detection:**
+- Check if the file contains virtual scrolling implementation (e.g., `virtual-scroller`, `virtual-scroll`, Vuetify's `v-virtual-scroll`)
+- Virtual scrolling requires tight coupling between template, logic, and state that CANNOT be safely decomposed
+- If virtual scrolling is detected, **WARN the user** before proceeding
 
 ## Decomposition Decision
 
