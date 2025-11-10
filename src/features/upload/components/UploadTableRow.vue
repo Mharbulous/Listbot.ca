@@ -29,14 +29,14 @@
     <!-- Skip Column (adjusted for scrollbar width) -->
     <div
       class="row-cell skip-cell"
-      :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }"
+      :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }" >
       <button
         class="skip-btn"
         :disabled="file.status === 'completed'"
-        @click="handleCancel"
-        :title="file.status === 'completed' ? 'Already uploaded' : 'Skip this file'"
+        @click="handleCancelOrUndo"
+        :title="getButtonTitle"
       >
-        ⏭️
+        {{ getButtonIcon }}
       </button>
     </div>
   </div>
