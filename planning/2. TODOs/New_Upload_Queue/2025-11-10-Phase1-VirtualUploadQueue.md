@@ -28,7 +28,7 @@ Transform the upload queue from a card-based list layout into a high-performance
 ├──────────────┼───────────────────┼──────────┼─────────────────┼──────────────┼────────┤
 │ [👁️] [⬆️]   │ invoice.pdf       │ 2.4 MB   │ 🔵 Ready        │ /2024/Tax    │  [❌]  │
 │ [👁️] [⬆️]   │ report.docx       │ 890 KB   │ 🟡 Uploading... │ /Reports     │  [❌]  │
-│ [—] [—]     │ form.pdf          │ 1.2 MB   │ 🟢 Uploaded     │ /Forms       │  [—]  │
+│ [—] [—]     │ form.pdf          │ 1.2 MB   │ 🟢 Uploaded     │ /Forms       │  [🗑️]  │
 │ [—] [—]     │ contract.pdf      │ 1.2 MB   │ 🟠 Duplicate    │ /Forms       │  [❌]  │
 └──────────────┴───────────────────┴──────────┴─────────────────┴──────────────┴────────┘
 ```
@@ -59,7 +59,7 @@ Each status displays as: `[dot] [text]`
 | 🟢 | Green | `completed` | Uploaded | Successfully uploaded |
 | 🟠 | Orange | `skipped` | Duplicate | Detected as duplicate |
 | 🔴 | Red | `error` | Failed | Upload failed with error |
-| ⚪ | White | `uploadMetadataOnly` | Metadata Only | Upload metadata only |
+| ⚪ | White | `uploadMetadataOnly` | Metadata Only | Uploaded metadata only |
 | ⚫ | Gray | `unknown` | Unknown | Unknown status (fallback) |
 
 ### Status Component
