@@ -351,9 +351,14 @@ const {
 } = useColumnDragDrop(props.columns);
 
 // Sync orderedColumns with props.columns (required for dynamic column loading)
+// Uses Map for O(n) lookup instead of O(n²) find operation
 const orderedColumns = computed(() => {
+  // Create O(n) lookup map once per computation
+  const columnMap = new Map(props.columns.map(col => [col.key, col]));
+
+  // Then O(1) lookup for each key = O(n) total
   return columnOrder.value
-    .map(key => props.columns.find(col => col.key === key))
+    .map(key => columnMap.get(key))
     .filter(Boolean);
 });
 
