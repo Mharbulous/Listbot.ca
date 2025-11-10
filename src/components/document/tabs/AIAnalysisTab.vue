@@ -68,7 +68,7 @@
               :options="[
                 { label: 'Get', value: 'get' },
                 { label: 'Skip', value: 'skip' },
-                { label: 'Ignore', value: 'ignore' }
+                { label: 'Manual', value: 'manual' }
               ]"
             />
 
@@ -129,7 +129,7 @@
               :options="[
                 { label: 'Get', value: 'get' },
                 { label: 'Skip', value: 'skip' },
-                { label: 'Ignore', value: 'ignore' }
+                { label: 'Manual', value: 'manual' }
               ]"
             />
 
