@@ -116,12 +116,50 @@ const handleDragLeave = (event) => {
   }
 };
 
-const handleDrop = (event) => {
+const handleDrop = async (event) => {
   isDragOver.value = false;
 
-  const files = Array.from(event.dataTransfer.files);
-  if (files.length > 0) {
-    emit('files-selected', files);
+  // Get all dropped items
+  const items = Array.from(event.dataTransfer.items);
+  const allFiles = [];
+
+  // Process each dropped item
+  for (const item of items) {
+    if (item.kind === 'file') {
+      const entry = item.webkitGetAsEntry();
+      if (entry) {
+        await traverseFileTree(entry, allFiles);
+      }
+    }
+  }
+
+  if (allFiles.length > 0) {
+    console.log(`[DROP] Collected ${allFiles.length} files`);
+    emit('folder-recursive-selected', allFiles);
+  }
+};
+
+// Recursive function to traverse folder tree
+const traverseFileTree = async (entry, filesList) => {
+  if (entry.isFile) {
+    // It's a file - get the File object
+    return new Promise((resolve) => {
+      entry.file((file) => {
+        filesList.push(file);
+        resolve();
+      });
+    });
+  } else if (entry.isDirectory) {
+    // It's a directory - read its contents
+    const dirReader = entry.createReader();
+    return new Promise((resolve) => {
+      dirReader.readEntries(async (entries) => {
+        for (const childEntry of entries) {
+          await traverseFileTree(childEntry, filesList);
+        }
+        resolve();
+      });
+    });
   }
 };
 
