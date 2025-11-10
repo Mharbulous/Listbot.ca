@@ -11,9 +11,11 @@
 
 ## Phase 4 Overview
 
-Implement a two-tab workflow that separates **extraction configuration** (AI Tab) from **results review** (Review Tab). This phase creates a clean separation between "what to extract" and "what was extracted", with full human review and editing capabilities.
+Implement the **AI Tab** and **Review Tab** within the four-tab metadata panel (AI, Review, Document, File). This phase focuses on the first two tabs, creating a clean separation between **extraction configuration** (AI Tab) and **results review** (Review Tab), with full human review and editing capabilities.
 
-**Scope**: Two-tab workflow, Get/Skip/Manual configuration, review UI with Accept/Reject, manual entry, confidence badges, validation.
+**Important Context**: The metadata panel has four tabs total. Phase 4 implements the AI and Review tabs. The Document and File tabs exist separately and are out of scope for this phase.
+
+**Scope**: AI Tab and Review Tab implementation, Get/Skip/Manual configuration, review UI with Accept/Reject, manual entry, confidence badges, validation.
 
 **What Phase 3 Gave Us**: Real AI results displayed with Firestore persistence on the AI tab.
 
@@ -112,7 +114,7 @@ Implement a two-tab workflow that separates **extraction configuration** (AI Tab
 
 ## Implementation Details
 
-### Add Two-Tab State Management
+### Add AI Tab and Review Tab State Management
 
 ```javascript
 // Field extraction configuration (AI Tab)
@@ -300,7 +302,7 @@ const isAcceptEnabled = (fieldName) => {
 
 ---
 
-### Update Template with Two-Tab UI
+### Update Template with AI Tab and Review Tab UI
 
 **AI Tab Template:**
 
@@ -540,7 +542,7 @@ const formatDate = (dateString) => {
 
 ---
 
-### Add Two-Tab Styles
+### Add AI Tab and Review Tab Styles
 
 ```css
 /* AI Tab: Configuration Panel */
@@ -945,7 +947,7 @@ source === 'human' → No badge shown (manual entry, no AI confidence)
 
 ### Key Workflow Principles
 
-1. **Two-Tab Separation**: AI Tab = configuration (what to extract), Review Tab = results (what was extracted)
+1. **AI and Review Tab Separation**: Within the four-tab metadata panel (AI, Review, Document, File), the AI Tab handles configuration (what to extract) while the Review Tab handles results (what was extracted)
 2. **Field Lifecycle**: Fields move from AI Tab → Review Tab → approved/saved
 3. **Manual Mode Special Case**: Field appears on BOTH tabs until accepted
 4. **Confidence Preservation**: Even if user edits AI value, original confidence badge remains
@@ -1020,7 +1022,7 @@ source === 'human' → No badge shown (manual entry, no AI confidence)
 - [ ] Empty state displays correctly
 
 ### Documentation
-- [ ] Code comments explain two-tab workflow
+- [ ] Code comments explain AI Tab and Review Tab workflow
 - [ ] Complex logic has inline documentation
 - [ ] Firestore data structure documented
 - [ ] Feature ready for Phase 5 (Document Tab integration)
