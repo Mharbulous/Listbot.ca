@@ -16,114 +16,130 @@
       @retry="retryAnalysis"
     />
 
-    <!-- Unified AI Interface -->
+    <!-- Two-Tab Interface -->
     <template v-else>
-      <div class="ai-panel">
-        <!-- Document Date Field -->
-        <div class="ai-field-section">
-          <!-- Label with inline confidence badge -->
-          <div class="field-header">
-            <span class="field-label">Document Date</span>
-            <v-chip
-              v-if="aiResults.documentDate"
-              :color="getConfidenceColor(aiResults.documentDate.confidence)"
-              size="small"
-              variant="flat"
-              class="confidence-badge-inline"
-            >
-              {{ aiResults.documentDate.confidence }}%
-            </v-chip>
-          </div>
+      <v-tabs v-model="activeInternalTab" color="primary" class="ai-tabs">
+        <v-tab value="ai">AI</v-tab>
+        <v-tab value="review">Review</v-tab>
+      </v-tabs>
 
-          <!-- Configuration or Review UI -->
-          <template v-if="!aiResults.documentDate">
-            <!-- Get/Skip/Manual Controls -->
+      <v-window v-model="activeInternalTab" class="ai-tab-window">
+        <!-- AI Tab: Configuration Panel with Get/Skip/Manual -->
+        <v-window-item value="ai">
+          <div class="ai-config-panel">
+            <!-- Document Date - Show only if not determined -->
             <AIAnalysisFieldItem
-              label=""
+              v-if="shouldShowOnAITab('documentDate')"
+              label="Document Date"
               :field-preference="fieldPreferences.documentDate"
               :is-analyzing="isAnalyzing"
               @update:field-preference="setExtractionMode('documentDate', $event)"
             />
-          </template>
-          <template v-else>
-            <!-- Review/Edit UI -->
-            <AIReviewFieldItem
-              field-name="documentDate"
-              label=""
-              field-type="date"
-              :ai-result="aiResults.documentDate"
-              :review-value="reviewValues.documentDate"
-              :review-error="reviewErrors.documentDate"
-              :saving="savingReview"
-              :is-accept-enabled="isAcceptEnabled('documentDate')"
-              :get-confidence-color="getConfidenceColor"
-              :hide-label="true"
-              :hide-confidence-badge="true"
-              @update:review-value="reviewValues.documentDate = $event"
-              @clear-error="reviewErrors.documentDate = ''"
-              @accept="acceptReviewValue('documentDate')"
-              @reject="rejectReviewValue('documentDate')"
-            />
-          </template>
-        </div>
 
-        <!-- Document Type Field -->
-        <div class="ai-field-section">
-          <!-- Label with inline confidence badge -->
-          <div class="field-header">
-            <span class="field-label">Document Type</span>
-            <v-chip
-              v-if="aiResults.documentType"
-              :color="getConfidenceColor(aiResults.documentType.confidence)"
-              size="small"
-              variant="flat"
-              class="confidence-badge-inline"
-            >
-              {{ aiResults.documentType.confidence }}%
-            </v-chip>
-          </div>
-
-          <!-- Configuration or Review UI -->
-          <template v-if="!aiResults.documentType">
-            <!-- Get/Skip/Manual Controls -->
+            <!-- Document Type - Show only if not determined -->
             <AIAnalysisFieldItem
-              label=""
+              v-if="shouldShowOnAITab('documentType')"
+              label="Document Type"
               :field-preference="fieldPreferences.documentType"
               :is-analyzing="isAnalyzing"
               @update:field-preference="setExtractionMode('documentType', $event)"
             />
-          </template>
-          <template v-else>
-            <!-- Review/Edit UI -->
-            <AIReviewFieldItem
-              field-name="documentType"
-              label=""
-              field-type="select"
-              :select-options="documentTypeOptions"
-              :ai-result="aiResults.documentType"
-              :review-value="reviewValues.documentType"
-              :review-error="reviewErrors.documentType"
-              :saving="savingReview"
-              :is-accept-enabled="isAcceptEnabled('documentType')"
-              :get-confidence-color="getConfidenceColor"
-              :hide-label="true"
-              :hide-confidence-badge="true"
-              @update:review-value="reviewValues.documentType = $event"
-              @clear-error="reviewErrors.documentType = ''"
-              @accept="acceptReviewValue('documentType')"
-              @reject="rejectReviewValue('documentType')"
-            />
-          </template>
-        </div>
 
-        <!-- Analyze Documents Button (only show if fields need analysis) -->
-        <AIAnalysisButton
-          v-if="!aiResults.documentDate || !aiResults.documentType"
-          :has-empty-fields="hasEmptyFields"
-          :is-analyzing="isAnalyzing"
-          @analyze="handleAnalyzeClick"
-        />
-      </div>
+            <!-- Analyze Documents Button -->
+            <AIAnalysisButton
+              :has-empty-fields="hasEmptyFields"
+              :is-analyzing="isAnalyzing"
+              @analyze="handleAnalyzeClick"
+            />
+          </div>
+        </v-window-item>
+
+        <!-- Review Tab: Results + Manual Entry -->
+        <v-window-item value="review">
+          <div class="review-panel">
+            <!-- Empty State -->
+            <div
+              v-if="!shouldShowOnReviewTab('documentDate') && !shouldShowOnReviewTab('documentType')"
+              class="review-empty-state"
+            >
+              <em>Use AI to extract data for human review</em>
+            </div>
+
+            <!-- Document Date Review -->
+            <div v-if="shouldShowOnReviewTab('documentDate')" class="review-field-section">
+              <!-- Label with inline confidence badge -->
+              <div class="field-header">
+                <span class="field-label">Document Date</span>
+                <v-chip
+                  v-if="aiResults.documentDate"
+                  :color="getConfidenceColor(aiResults.documentDate.confidence)"
+                  size="small"
+                  variant="flat"
+                  class="confidence-badge-inline"
+                >
+                  {{ aiResults.documentDate.confidence }}%
+                </v-chip>
+              </div>
+
+              <!-- Review/Edit UI -->
+              <AIReviewFieldItem
+                field-name="documentDate"
+                label=""
+                field-type="date"
+                :ai-result="aiResults.documentDate"
+                :review-value="reviewValues.documentDate"
+                :review-error="reviewErrors.documentDate"
+                :saving="savingReview"
+                :is-accept-enabled="isAcceptEnabled('documentDate')"
+                :get-confidence-color="getConfidenceColor"
+                :hide-label="true"
+                :hide-confidence-badge="true"
+                @update:review-value="reviewValues.documentDate = $event"
+                @clear-error="reviewErrors.documentDate = ''"
+                @accept="acceptReviewValue('documentDate')"
+                @reject="rejectReviewValue('documentDate')"
+              />
+            </div>
+
+            <!-- Document Type Review -->
+            <div v-if="shouldShowOnReviewTab('documentType')" class="review-field-section">
+              <!-- Label with inline confidence badge -->
+              <div class="field-header">
+                <span class="field-label">Document Type</span>
+                <v-chip
+                  v-if="aiResults.documentType"
+                  :color="getConfidenceColor(aiResults.documentType.confidence)"
+                  size="small"
+                  variant="flat"
+                  class="confidence-badge-inline"
+                >
+                  {{ aiResults.documentType.confidence }}%
+                </v-chip>
+              </div>
+
+              <!-- Review/Edit UI -->
+              <AIReviewFieldItem
+                field-name="documentType"
+                label=""
+                field-type="select"
+                :select-options="documentTypeOptions"
+                :ai-result="aiResults.documentType"
+                :review-value="reviewValues.documentType"
+                :review-error="reviewErrors.documentType"
+                :saving="savingReview"
+                :is-accept-enabled="isAcceptEnabled('documentType')"
+                :get-confidence-color="getConfidenceColor"
+                :hide-label="true"
+                :hide-confidence-badge="true"
+                @update:review-value="reviewValues.documentType = $event"
+                @clear-error="reviewErrors.documentType = ''"
+                @accept="acceptReviewValue('documentType')"
+                @reject="rejectReviewValue('documentType')"
+              />
+            </div>
+          </div>
+        </v-window-item>
+      </v-window>
     </template>
   </div>
 </template>
@@ -155,6 +171,9 @@ const props = defineProps({
     default: 'YYYY-MM-DD',
   },
 });
+
+// Internal tab state (AI vs Review)
+const activeInternalTab = ref('ai');
 
 // Use AI Analysis composable
 const {
@@ -216,22 +235,46 @@ watch(
   font-style: italic;
 }
 
-/* Unified AI Panel */
-.ai-panel {
+/* Two-Tab Interface */
+.ai-tabs {
+  margin-bottom: 16px;
+}
+
+.ai-tab-window {
+  margin-top: 16px;
+}
+
+/* AI Tab: Configuration Panel */
+.ai-config-panel {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Review Tab: Results Panel */
+.review-panel {
   padding: 16px 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Field Section */
-.ai-field-section {
+.review-empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* Review Field Section */
+.review-field-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* Field Header with inline confidence */
+/* Field Header with inline confidence badge */
 .field-header {
   display: flex;
   align-items: center;

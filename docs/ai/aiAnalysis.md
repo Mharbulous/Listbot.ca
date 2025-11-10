@@ -101,9 +101,12 @@ Handles file retrieval and processing for AI analysis.
 
 **Purpose**: Configuration panel for metadata extraction (Phase 4 design)
 
-**Two-Tab Workflow**:
+**Four-Tab Metadata Panel**:
+The metadata panel contains four tabs: **AI**, **Review**, **Document**, and **File**. Phase 4 implements the first two:
 - **AI Tab**: Configuration - What to extract (Get/Skip/Manual for pending fields)
 - **Review Tab**: Results - What was extracted (Accept/Reject workflow)
+- **Document Tab**: (Out of scope for Phase 4)
+- **File Tab**: (Out of scope for Phase 4)
 
 **Features**:
 - **Get/Skip/Manual Configuration**: Radio buttons for each pending field
