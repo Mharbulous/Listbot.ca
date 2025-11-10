@@ -340,7 +340,7 @@ const defaultColumnWidths = computed(() => {
 // Use column drag-drop composable
 const {
   columnOrder,
-  orderedColumns,
+  orderedColumns: composableOrderedColumns,
   dragState,
   onDragStart,
   onDragOver,
@@ -349,6 +349,13 @@ const {
   isColumnDragging,
   isDragGap,
 } = useColumnDragDrop(props.columns);
+
+// Sync orderedColumns with props.columns (required for dynamic column loading)
+const orderedColumns = computed(() => {
+  return columnOrder.value
+    .map(key => props.columns.find(col => col.key === key))
+    .filter(Boolean);
+});
 
 // Watch for new columns and add to order
 watch(() => props.columns, (newColumns, oldColumns) => {
