@@ -84,6 +84,8 @@
             v-if="activeTab === 'review'"
             :active-tab="activeTab"
             :file-hash="fileHash"
+            :evidence="evidence"
+            :date-format="dateFormat"
           />
 
           <!-- Document Tab -->

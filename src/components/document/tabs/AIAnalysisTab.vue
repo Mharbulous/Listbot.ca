@@ -57,8 +57,8 @@
     <template v-else>
       <!-- System Fields Section -->
       <div class="metadata-section">
-        <!-- Document Date -->
-        <div class="metadata-item">
+        <!-- Document Date - Only show if NOT yet extracted -->
+        <div v-if="!aiResults.documentDate" class="metadata-item">
           <span class="metadata-label">Document Date</span>
 
           <div class="field-controls">
@@ -77,49 +77,11 @@
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
             </div>
-
-            <!-- State 3: AI Result with Tooltip -->
-            <div v-else-if="aiResults.documentDate" class="ai-result">
-              <v-tooltip location="bottom" max-width="400">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <div v-bind="tooltipProps" class="ai-result-content">
-                    <span class="ai-result-value">{{ formatDateString(aiResults.documentDate.tagName) }}</span>
-                    <v-chip
-                      :color="getConfidenceBadgeColor(aiResults.documentDate.confidence)"
-                      size="small"
-                      variant="flat"
-                      class="ai-result-badge"
-                    >
-                      {{ aiResults.documentDate.confidence }}%
-                    </v-chip>
-                  </div>
-                </template>
-
-                <!-- Tooltip Content -->
-                <div class="ai-tooltip-content">
-                  <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
-                    <strong>Context:</strong>
-                    <p>{{ aiResults.documentDate.metadata.context }}</p>
-                  </div>
-                  <div
-                    v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
-                    class="ai-tooltip-section"
-                  >
-                    <strong>Alternatives:</strong>
-                    <ul>
-                      <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
-                        {{ formatDateString(alt.value) }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </v-tooltip>
-            </div>
           </div>
         </div>
 
-        <!-- Document Type -->
-        <div class="metadata-item">
+        <!-- Document Type - Only show if NOT yet extracted -->
+        <div v-if="!aiResults.documentType" class="metadata-item">
           <span class="metadata-label">Document Type</span>
 
           <div class="field-controls">
@@ -137,44 +99,6 @@
             <div v-if="isAnalyzing" class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
-            </div>
-
-            <!-- State 3: AI Result with Tooltip -->
-            <div v-else-if="aiResults.documentType" class="ai-result">
-              <v-tooltip location="bottom" max-width="400">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <div v-bind="tooltipProps" class="ai-result-content">
-                    <span class="ai-result-value">{{ aiResults.documentType.tagName }}</span>
-                    <v-chip
-                      :color="getConfidenceBadgeColor(aiResults.documentType.confidence)"
-                      size="small"
-                      variant="flat"
-                      class="ai-result-badge"
-                    >
-                      {{ aiResults.documentType.confidence }}%
-                    </v-chip>
-                  </div>
-                </template>
-
-                <!-- Tooltip Content -->
-                <div class="ai-tooltip-content">
-                  <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
-                    <strong>Context:</strong>
-                    <p>{{ aiResults.documentType.metadata.context }}</p>
-                  </div>
-                  <div
-                    v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
-                    class="ai-tooltip-section"
-                  >
-                    <strong>Alternatives:</strong>
-                    <ul>
-                      <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
-                        {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </v-tooltip>
             </div>
           </div>
         </div>
