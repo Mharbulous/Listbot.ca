@@ -19,10 +19,9 @@
     <div v-if="uploadQueue.length > 0" class="table-section">
       <div class="table-header-actions">
         <h2 class="table-title">Upload Queue ({{ uploadQueue.length }} files)</h2>
-        <v-btn color="error" variant="outlined" size="small" @click="handleClearQueue"> Clear Queue </v-btn>
       </div>
 
-      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" />
+      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @clear-queue="handleClearQueue" />
     </div>
   </div>
 </template>

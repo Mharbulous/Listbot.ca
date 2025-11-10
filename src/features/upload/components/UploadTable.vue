@@ -1,7 +1,7 @@
 <template>
   <div class="upload-table-container">
     <!-- Sticky Header -->
-    <UploadTableHeader />
+    <UploadTableHeader @clear-queue="handleClearQueue" />
 
     <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
     <div class="scroll-container">
@@ -41,7 +41,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel']);
+const emit = defineEmits(['cancel', 'clear-queue']);
 
 // Debug: Watch files prop
 watch(
@@ -88,6 +88,11 @@ const formatBytes = (bytes) => {
 // Handle cancel
 const handleCancel = (fileId) => {
   emit('cancel', fileId);
+};
+
+// Handle clear queue
+const handleClearQueue = () => {
+  emit('clear-queue');
 };
 </script>
 

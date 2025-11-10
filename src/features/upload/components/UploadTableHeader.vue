@@ -9,14 +9,16 @@
     <!-- Size Column (100px) -->
     <div class="header-cell" style="width: 100px">Size</div>
 
-    <!-- Status Column (180px) -->
-    <div class="header-cell" style="width: 180px">Status</div>
+    <!-- Status Column (100px) -->
+    <div class="header-cell" style="width: 100px">Status</div>
 
     <!-- Folder Path Column (300px) -->
     <div class="header-cell" style="width: 300px">Folder Path</div>
 
-    <!-- Cancel Column (80px) -->
-    <div class="header-cell" style="width: 80px">Cancel</div>
+    <!-- Cancel Column (100px) - Clear Queue Button -->
+    <div class="header-cell clear-queue-cell" style="width: 100px">
+      <v-btn color="error" variant="outlined" size="x-small" @click="handleClearQueue"> Clear Queue </v-btn>
+    </div>
   </div>
 </template>
 
@@ -25,6 +27,14 @@
 defineOptions({
   name: 'UploadTableHeader',
 });
+
+// Emits
+const emit = defineEmits(['clear-queue']);
+
+// Handle clear queue
+const handleClearQueue = () => {
+  emit('clear-queue');
+};
 </script>
 
 <style scoped>
@@ -53,5 +63,9 @@ defineOptions({
 
 .header-cell:last-child {
   border-right: none;
+}
+
+.clear-queue-cell {
+  justify-content: center;
 }
 </style>

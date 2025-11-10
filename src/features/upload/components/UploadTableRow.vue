@@ -16,8 +16,8 @@
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Status Column (180px) -->
-    <div class="row-cell status-cell-wrapper" style="width: 180px">
+    <!-- Status Column (100px) -->
+    <div class="row-cell status-cell-wrapper" style="width: 100px">
       <StatusCell :status="file.status" />
     </div>
 
@@ -26,8 +26,8 @@
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Cancel Column (80px) -->
-    <div class="row-cell cancel-cell" style="width: 80px">
+    <!-- Cancel Column (100px) -->
+    <div class="row-cell cancel-cell" style="width: 100px">
       <button
         class="cancel-btn"
         :disabled="file.status === 'completed'"
