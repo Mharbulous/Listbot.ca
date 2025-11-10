@@ -46,90 +46,6 @@
             @analyze="handleAnalyzeClick"
           />
         </div>
-
-        <!-- Review Panel -->
-        <div class="review-panel">
-          <!-- Empty State -->
-          <div
-            v-if="!shouldShowOnReviewTab('documentDate') && !shouldShowOnReviewTab('documentType')"
-            class="review-empty-state"
-          >
-            <em>Use AI to extract data for human review</em>
-          </div>
-
-          <!-- Document Date Review -->
-          <div v-if="shouldShowOnReviewTab('documentDate')" class="review-field-section">
-            <!-- Label with inline confidence badge -->
-            <div class="field-header">
-              <span class="field-label">Document Date</span>
-              <v-chip
-                v-if="aiResults.documentDate"
-                :color="getConfidenceColor(aiResults.documentDate.confidence)"
-                size="small"
-                variant="flat"
-                class="confidence-badge-inline"
-              >
-                {{ aiResults.documentDate.confidence }}%
-              </v-chip>
-            </div>
-
-            <!-- Review/Edit UI -->
-            <AIReviewFieldItem
-              field-name="documentDate"
-              label=""
-              field-type="date"
-              :ai-result="aiResults.documentDate"
-              :review-value="reviewValues.documentDate"
-              :review-error="reviewErrors.documentDate"
-              :saving="savingReview"
-              :is-accept-enabled="isAcceptEnabled('documentDate')"
-              :get-confidence-color="getConfidenceColor"
-              :hide-label="true"
-              :hide-confidence-badge="true"
-              @update:review-value="reviewValues.documentDate = $event"
-              @clear-error="reviewErrors.documentDate = ''"
-              @accept="acceptReviewValue('documentDate')"
-              @reject="rejectReviewValue('documentDate')"
-            />
-          </div>
-
-          <!-- Document Type Review -->
-          <div v-if="shouldShowOnReviewTab('documentType')" class="review-field-section">
-            <!-- Label with inline confidence badge -->
-            <div class="field-header">
-              <span class="field-label">Document Type</span>
-              <v-chip
-                v-if="aiResults.documentType"
-                :color="getConfidenceColor(aiResults.documentType.confidence)"
-                size="small"
-                variant="flat"
-                class="confidence-badge-inline"
-              >
-                {{ aiResults.documentType.confidence }}%
-              </v-chip>
-            </div>
-
-            <!-- Review/Edit UI -->
-            <AIReviewFieldItem
-              field-name="documentType"
-              label=""
-              field-type="select"
-              :select-options="documentTypeOptions"
-              :ai-result="aiResults.documentType"
-              :review-value="reviewValues.documentType"
-              :review-error="reviewErrors.documentType"
-              :saving="savingReview"
-              :is-accept-enabled="isAcceptEnabled('documentType')"
-              :get-confidence-color="getConfidenceColor"
-              :hide-label="true"
-              :hide-confidence-badge="true"
-              @update:review-value="reviewValues.documentType = $event"
-              @clear-error="reviewErrors.documentType = ''"
-              @accept="acceptReviewValue('documentType')"
-              @reject="rejectReviewValue('documentType')"
-            />
-          </div>
-        </div>
       </div>
     </template>
   </div>
@@ -141,7 +57,6 @@ import { useAIAnalysis } from '@/composables/useAIAnalysis';
 import AIAnalysisError from './ai-analysis/AIAnalysisError.vue';
 import AIAnalysisFieldItem from './ai-analysis/AIAnalysisFieldItem.vue';
 import AIAnalysisButton from './ai-analysis/AIAnalysisButton.vue';
-import AIReviewFieldItem from './ai-analysis/AIReviewFieldItem.vue';
 
 // Props
 const props = defineProps({
@@ -236,46 +151,5 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-/* Review Panel */
-.review-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.review-empty-state {
-  padding: 24px;
-  text-align: center;
-  color: #666;
-  font-style: italic;
-}
-
-/* Review Field Section */
-.review-field-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Field Header with inline confidence badge */
-.field-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.field-label {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: #333;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.confidence-badge-inline {
-  margin-left: auto;
 }
 </style>
