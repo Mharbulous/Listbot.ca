@@ -153,7 +153,7 @@ The right-side status dots provide at-a-glance file state information:
 
 #### Interactive Features:
 - **Pause/Resume**: Users can pause long-running uploads and resume later
-- **Clear Queue**: Remove all files and start over
+- **CLEAR**: Remove all files and start over
 - **Individual File Removal**: Remove specific files before upload (future enhancement)
 - **Real-Time Feedback**: Every status change immediately visible
 - **Error Recovery**: Failed uploads show clearly, can be retried

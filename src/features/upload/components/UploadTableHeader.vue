@@ -15,9 +15,9 @@
     <!-- Folder Path Column (300px) -->
     <div class="header-cell" style="width: 300px">Folder Path</div>
 
-    <!-- Cancel Column (100px) - Clear Queue Button -->
+    <!-- Cancel Column (100px) - CLEAR Button -->
     <div class="header-cell clear-queue-cell" style="width: 100px">
-      <v-btn color="error" variant="outlined" size="x-small" @click="handleClearQueue"> Clear Queue </v-btn>
+      <v-btn color="error" variant="outlined" size="x-small" @click="handleClearQueue"> CLEAR </v-btn>
     </div>
   </div>
 </template>
@@ -31,7 +31,7 @@ defineOptions({
 // Emits
 const emit = defineEmits(['clear-queue']);
 
-// Handle clear queue
+// Handle CLEAR
 const handleClearQueue = () => {
   emit('clear-queue');
 };
