@@ -3,17 +3,17 @@
     <!-- Actions Column (100px - matches CLEAR column) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
 
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
-
     <!-- Size Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Size</div>
 
-    <!-- Status Column (100px) -->
-    <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
 
     <!-- Folder Path Column (min-width to fit text without wrapping) -->
     <div class="header-cell" style="min-width: 130px; width: 130px; flex-shrink: 0">Folder Path</div>
+
+    <!-- Status Column (100px) -->
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
 
     <!-- Cancel Column (100px - CLEAR button) -->
     <div class="header-cell clear-queue-cell" style="width: 100px; flex-shrink: 0">

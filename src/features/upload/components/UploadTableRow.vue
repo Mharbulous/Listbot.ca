@@ -6,24 +6,24 @@
       <button class="action-btn" title="Upload now" disabled>⬆️</button>
     </div>
 
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
-      {{ file.name }}
-    </div>
-
     <!-- Size Column (100px) -->
     <div class="row-cell size-cell" style="width: 100px; flex-shrink: 0">
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Status Column (100px) -->
-    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
-      <StatusCell :status="file.status" />
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
+      {{ file.name }}
     </div>
 
     <!-- Folder Path Column (130px) -->
     <div class="row-cell path-cell" style="width: 130px; flex-shrink: 0" :title="file.folderPath">
       {{ file.folderPath || '/' }}
+    </div>
+
+    <!-- Status Column (100px) -->
+    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
+      <StatusCell :status="file.status" />
     </div>
 
     <!-- Cancel Column (adjusted for scrollbar width) -->
