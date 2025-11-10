@@ -147,6 +147,48 @@ export function useCellTooltip() {
   };
 
   /**
+   * Handle click on cell (show tooltip immediately)
+   * @param {MouseEvent} event - The mouse event
+   * @param {HTMLElement} cellElement - The cell element
+   * @param {string} bgColor - The background color of the row
+   */
+  const handleCellClick = (event, cellElement, bgColor = 'white') => {
+    // Check if content is truncated
+    if (!isTruncated(cellElement)) {
+      return;
+    }
+
+    // Get the text content
+    const text = getTextContent(cellElement);
+    if (!text || text.trim() === '') {
+      return;
+    }
+
+    // If tooltip is already visible for this cell, hide it (toggle behavior)
+    if (isVisible.value && currentCellElement === cellElement) {
+      hideTooltip();
+      return;
+    }
+
+    // Clear any pending timers
+    clearTimers();
+
+    // Store cell element and background color
+    currentCellElement = cellElement;
+    backgroundColor.value = bgColor;
+
+    // Set content
+    content.value = text;
+
+    // Calculate position based on cell element
+    position.value = calculatePosition(currentCellElement);
+
+    // Show tooltip immediately (no delay)
+    isVisible.value = true;
+    opacity.value = 1;
+  };
+
+  /**
    * Handle mouse leave from cell
    */
   const handleCellMouseLeave = (cellElement) => {
@@ -155,8 +197,12 @@ export function useCellTooltip() {
       cellElement.style.cursor = '';
     }
 
+    // Only clear timers and hide if tooltip was triggered by hover (not click)
+    // If user clicked to show tooltip, keep it visible until they click again or click elsewhere
     clearTimers();
-    hideTooltip();
+
+    // Don't auto-hide tooltip on mouse leave if it was shown by click
+    // The tooltip will only hide on: another click, clicking elsewhere, or scrolling
   };
 
   /**
@@ -203,6 +249,7 @@ export function useCellTooltip() {
     // Methods
     handleCellMouseEnter,
     handleCellMouseLeave,
+    handleCellClick,
     cleanup,
   };
 }
