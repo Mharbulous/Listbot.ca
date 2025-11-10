@@ -17,7 +17,15 @@
 
     <!-- Cancel Column (100px) - Clear Queue Button -->
     <div class="header-cell clear-queue-cell" style="width: 100px">
-      <v-btn color="error" variant="outlined" size="x-small" @click="handleClearQueue"> Clear Queue </v-btn>
+      <v-btn
+        color="error"
+        variant="outlined"
+        size="small"
+        class="clear-btn"
+        @click="handleClearQueue"
+      >
+        CLEAR
+      </v-btn>
     </div>
   </div>
 </template>
@@ -67,5 +75,13 @@ const handleClearQueue = () => {
 
 .clear-queue-cell {
   justify-content: center;
+}
+
+.clear-btn {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
 }
 </style>
