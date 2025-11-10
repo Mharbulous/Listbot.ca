@@ -61,16 +61,17 @@
             <DragHandle />
           </div>
 
-          <!-- Sort Indicator - positioned relative to header cell for proper centering -->
+          <!-- Sort Indicator with priority - positioned relative to header cell for proper centering -->
           <span class="sort-indicator" v-if="isSorted(column.key)">
-            {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            <span class="sort-arrow">{{ getSortInfo(column.key)?.direction === 'asc' ? '↑' : '↓' }}</span>
+            <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo(column.key)?.priority }}</span>
           </span>
 
           <!-- Sortable Column Label (Clickable Button) -->
           <button
             class="header-label-button"
             @click="toggleSort(column.key)"
-            :title="`Click to sort by ${column.label}`"
+            :title="`Click to sort by ${column.label}${isSorted(column.key) ? ' (sorted)' : ''}`"
           >
             {{ column.label }}
           </button>
@@ -222,6 +223,19 @@
       :opacity="cellTooltip.opacity.value"
       :backgroundColor="cellTooltip.backgroundColor.value"
     />
+
+    <!-- Snackbar for notifications -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="5000"
+      location="bottom"
+    >
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">Close</v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -371,12 +385,48 @@ watch(() => props.columns, (newColumns, oldColumns) => {
   }
 }, { immediate: false });
 
-// Use column visibility composable
-const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility();
+// Snackbar state for max columns notification
+const snackbar = ref({
+  show: false,
+  message: '',
+  color: 'warning'
+});
 
-// Use column sort composable
-const { sortColumn, sortDirection, sortedData, toggleSort, getSortClass, isSorted } =
-  useColumnSort(computed(() => props.data));
+// Handler for when max sort columns is exceeded
+const handleMaxColumnsExceeded = () => {
+  snackbar.value = {
+    show: true,
+    message: `Sorting is limited to a maximum of 5 columns at a time. Disable sorting for one of the existing columns before selecting this column for sorting.`,
+    color: 'warning'
+  };
+};
+
+// Use column sort composable with multi-column support
+const {
+  sortColumn,
+  sortDirection,
+  sortColumns,
+  orderedSortColumns,
+  sortedData,
+  toggleSort,
+  getSortClass,
+  isSorted,
+  getSortInfo,
+  removeColumnFromSort,
+  MAX_SORT_COLUMNS
+} = useColumnSort(
+  computed(() => props.data),
+  columnOrder,
+  handleMaxColumnsExceeded
+);
+
+// Handler for when a column is hidden - removes it from sort
+const handleColumnHidden = (columnKey) => {
+  removeColumnFromSort(columnKey);
+};
+
+// Use column visibility composable with callback for hidden columns
+const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility(handleColumnHidden);
 
 // Watch sort changes and emit event
 watch([sortColumn, sortDirection], ([column, direction]) => {

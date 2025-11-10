@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from 'vue';
 
 const STORAGE_KEY = 'analyze-column-sort';
+const MAX_SORT_COLUMNS = 5; // Maximum number of columns that can be sorted simultaneously
 
 /**
  * Column metadata for type-aware sorting
@@ -26,15 +27,23 @@ const COLUMN_TYPES = {
 };
 
 /**
- * Composable for managing table column sorting
+ * Composable for managing multi-column table sorting
  * Provides type-aware sorting for different data types (strings, numbers, dates)
- * Implements 3-state sorting cycle: null → ascending → descending → null
+ * Supports sorting by multiple columns with priority based on visual left-to-right order
+ * Implements 3-state sorting cycle per column: unsorted → ascending → descending → unsorted
  * Persists sort state to localStorage
+ *
+ * @param {Ref<Array>} data - Reactive array of table data
+ * @param {Ref<Array>} columnOrder - Reactive array of column keys in visual left-to-right order
+ * @param {Function} onMaxColumnsExceeded - Callback when user tries to sort more than MAX_SORT_COLUMNS
  */
-export function useColumnSort(data) {
-  // Sort state
-  const sortColumn = ref(null);
-  const sortDirection = ref(null); // null | 'asc' | 'desc'
+export function useColumnSort(data, columnOrder = ref([]), onMaxColumnsExceeded = null) {
+  // Sort state - array of {key: string, direction: 'asc'|'desc'}
+  const sortColumns = ref([]);
+
+  // Legacy refs for backward compatibility (deprecated)
+  const sortColumn = computed(() => sortColumns.value[0]?.key || null);
+  const sortDirection = computed(() => sortColumns.value[0]?.direction || null);
 
   /**
    * Parse size string to bytes for numeric comparison
@@ -100,12 +109,42 @@ export function useColumnSort(data) {
   };
 
   /**
-   * Sort data array by the current sort column and direction
+   * Get ordered sort columns based on visual left-to-right column order
+   * This ensures sort priority matches column position, not click order
+   */
+  const orderedSortColumns = computed(() => {
+    if (sortColumns.value.length === 0) return [];
+
+    // Create lookup map of sorted columns
+    const sortMap = new Map(sortColumns.value.map(s => [s.key, s.direction]));
+
+    // Filter column order to only include sorted columns, maintaining visual order
+    return columnOrder.value
+      .filter(key => sortMap.has(key))
+      .map(key => ({ key, direction: sortMap.get(key) }));
+  });
+
+  /**
+   * Compare two values based on their type
+   */
+  const compareValues = (aValue, bValue) => {
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return aValue - bValue;
+    } else if (aValue instanceof Date && bValue instanceof Date) {
+      return aValue.getTime() - bValue.getTime();
+    } else {
+      // String comparison (already lowercased in getComparisonValue)
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    }
+  };
+
+  /**
+   * Sort data array by multiple columns in order of visual priority
    * Returns a new sorted array (does not mutate original)
    */
   const sortedData = computed(() => {
     // No sorting applied
-    if (!sortColumn.value || !sortDirection.value) {
+    if (sortColumns.value.length === 0) {
       return data.value;
     }
 
@@ -114,34 +153,37 @@ export function useColumnSort(data) {
     // Create a shallow copy to avoid mutating the original array
     const sorted = [...data.value];
 
+    // Get columns in visual order for multi-column sorting
+    const columnsToSort = orderedSortColumns.value;
+
     sorted.sort((a, b) => {
-      const aValue = getComparisonValue(a, sortColumn.value);
-      const bValue = getComparisonValue(b, sortColumn.value);
+      // Compare by each column in priority order
+      for (const { key: columnKey, direction } of columnsToSort) {
+        const aValue = getComparisonValue(a, columnKey);
+        const bValue = getComparisonValue(b, columnKey);
 
-      let comparison = 0;
+        const comparison = compareValues(aValue, bValue);
 
-      // Handle different data types
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        comparison = aValue - bValue;
-      } else if (aValue instanceof Date && bValue instanceof Date) {
-        comparison = aValue.getTime() - bValue.getTime();
-      } else {
-        // String comparison (already lowercased in getComparisonValue)
-        comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        // If values are different, return the comparison result
+        if (comparison !== 0) {
+          return direction === 'asc' ? comparison : -comparison;
+        }
+
+        // Values are equal, continue to next sort column
       }
 
-      // Apply sort direction
-      return sortDirection.value === 'asc' ? comparison : -comparison;
+      // All sort columns had equal values
+      return 0;
     });
 
     const sortDuration = performance.now() - sortStart;
-    const columnType = COLUMN_TYPES[sortColumn.value] || 'string';
 
     // Only log if sort takes a noticeable amount of time (>50ms)
     if (sortDuration > 50) {
+      const columnNames = columnsToSort.map(s => `${s.key}:${s.direction}`).join(', ');
       console.log(
-        `⚡ Sorted ${data.value.length} rows by ${sortColumn.value} (${columnType}): ${sortDuration.toFixed(2)}ms`,
-        { rowCount: data.value.length, column: sortColumn.value, type: columnType }
+        `⚡ Multi-column sorted ${data.value.length} rows by [${columnNames}]: ${sortDuration.toFixed(2)}ms`,
+        { rowCount: data.value.length, columns: columnsToSort }
       );
     }
 
@@ -149,23 +191,54 @@ export function useColumnSort(data) {
   });
 
   /**
+   * Get sort info for a column
+   * @returns {{direction: 'asc'|'desc', priority: number} | null}
+   */
+  const getSortInfo = (columnKey) => {
+    const sortIndex = sortColumns.value.findIndex(s => s.key === columnKey);
+    if (sortIndex === -1) return null;
+
+    // Calculate priority based on visual column order
+    const visualOrder = orderedSortColumns.value;
+    const visualIndex = visualOrder.findIndex(s => s.key === columnKey);
+
+    return {
+      direction: sortColumns.value[sortIndex].direction,
+      priority: visualIndex + 1 // 1-indexed for display
+    };
+  };
+
+  /**
    * Toggle sort state for a column
-   * Implements 3-state cycle: null → asc → desc → null
+   * Implements 3-state cycle per column: unsorted → asc → desc → unsorted
+   * Supports multi-column sorting with max limit
    */
   const toggleSort = (columnKey) => {
-    if (sortColumn.value === columnKey) {
-      // Same column - cycle through states
-      if (sortDirection.value === 'asc') {
-        sortDirection.value = 'desc';
-      } else if (sortDirection.value === 'desc') {
-        // Return to default (no sort)
-        sortColumn.value = null;
-        sortDirection.value = null;
+    const existingIndex = sortColumns.value.findIndex(s => s.key === columnKey);
+
+    if (existingIndex !== -1) {
+      // Column already sorted - cycle through states
+      const currentDirection = sortColumns.value[existingIndex].direction;
+
+      if (currentDirection === 'asc') {
+        // Change to descending
+        sortColumns.value[existingIndex].direction = 'desc';
+      } else {
+        // Remove from sort (desc → unsorted)
+        sortColumns.value.splice(existingIndex, 1);
       }
     } else {
-      // Different column - start with ascending
-      sortColumn.value = columnKey;
-      sortDirection.value = 'asc';
+      // Column not sorted - add to sort array
+      if (sortColumns.value.length >= MAX_SORT_COLUMNS) {
+        // Max columns reached - notify user
+        if (onMaxColumnsExceeded) {
+          onMaxColumnsExceeded();
+        }
+        return; // Don't add the column
+      }
+
+      // Add new column with ascending sort
+      sortColumns.value.push({ key: columnKey, direction: 'asc' });
     }
 
     saveSortState();
@@ -175,16 +248,17 @@ export function useColumnSort(data) {
    * Get CSS classes for a column header based on sort state
    */
   const getSortClass = (columnKey) => {
-    if (sortColumn.value !== columnKey) return '';
+    const sortInfo = getSortInfo(columnKey);
+    if (!sortInfo) return '';
 
-    return sortDirection.value === 'asc' ? 'sorted-asc' : 'sorted-desc';
+    return sortInfo.direction === 'asc' ? 'sorted-asc' : 'sorted-desc';
   };
 
   /**
    * Check if a column is currently sorted
    */
   const isSorted = (columnKey) => {
-    return sortColumn.value === columnKey;
+    return sortColumns.value.some(s => s.key === columnKey);
   };
 
   /**
@@ -193,8 +267,7 @@ export function useColumnSort(data) {
   const saveSortState = () => {
     try {
       const state = {
-        column: sortColumn.value,
-        direction: sortDirection.value
+        columns: sortColumns.value
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
@@ -210,8 +283,15 @@ export function useColumnSort(data) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const state = JSON.parse(saved);
-        sortColumn.value = state.column;
-        sortDirection.value = state.direction;
+
+        // Handle legacy single-column format
+        if (state.column && state.direction) {
+          sortColumns.value = [{ key: state.column, direction: state.direction }];
+        }
+        // Handle new multi-column format
+        else if (state.columns && Array.isArray(state.columns)) {
+          sortColumns.value = state.columns;
+        }
       }
     } catch (error) {
       console.error('Error loading sort state', error, { storageKey: STORAGE_KEY });
@@ -219,11 +299,23 @@ export function useColumnSort(data) {
   };
 
   /**
+   * Remove a specific column from the sort state
+   * Used when a column is hidden to clear its sort
+   * @param {string} columnKey - The column key to remove from sort
+   */
+  const removeColumnFromSort = (columnKey) => {
+    const index = sortColumns.value.findIndex(s => s.key === columnKey);
+    if (index !== -1) {
+      sortColumns.value.splice(index, 1);
+      saveSortState();
+    }
+  };
+
+  /**
    * Reset sort to default (no sorting)
    */
   const resetSort = () => {
-    sortColumn.value = null;
-    sortDirection.value = null;
+    sortColumns.value = [];
     saveSortState();
   };
 
@@ -233,12 +325,28 @@ export function useColumnSort(data) {
   });
 
   return {
+    // Multi-column sort state
+    sortColumns,
+    orderedSortColumns,
+
+    // Legacy single-column compatibility
     sortColumn,
     sortDirection,
+
+    // Data
     sortedData,
+
+    // Actions
     toggleSort,
+    resetSort,
+    removeColumnFromSort,
+
+    // Getters
     getSortClass,
     isSorted,
-    resetSort
+    getSortInfo,
+
+    // Constants
+    MAX_SORT_COLUMNS
   };
 }
