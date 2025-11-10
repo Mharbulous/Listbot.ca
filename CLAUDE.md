@@ -88,6 +88,10 @@ This `CLAUDE.md` is lean. You MUST reference the files below using `@path/to/fil
   - Details on the H-Factor (Hardware Calibration) system.
 - `@docs/front-end/DocumentTable.md`
   - DocumentTable architecture and the 4 column data sources (Built-in, System, Firm, Matter categories).
+- `@docs/2025-11-10-New-Upload-Page.md`
+  - **NEW UPLOAD PAGE**: Development plan for the new upload page at `/testing` route.
+  - Both old (`/upload`) and new (`/testing`) pages will coexist during development.
+  - **For any coding tasks on the new upload page, consult this document.**
 
 ---
 
