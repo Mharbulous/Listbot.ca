@@ -69,13 +69,20 @@ export function useCellTooltip() {
 
     // Get the computed style to match padding
     const computedStyle = window.getComputedStyle(cellElement);
-    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-    const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+    const cellPaddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+    const cellPaddingTop = parseFloat(computedStyle.paddingTop) || 0;
 
-    // Position tooltip to align with the cell's text content
-    // This accounts for the cell's padding to align text perfectly
-    const left = rect.left + paddingLeft;
-    const top = rect.top + paddingTop;
+    // Tooltip padding (must match CSS padding in CellContentTooltip.vue)
+    const TOOLTIP_PADDING_LEFT = 16; // px
+    const TOOLTIP_PADDING_TOP = 12; // px
+
+    // Position tooltip so its text aligns perfectly with the cell's text
+    // Cell text starts at: rect.left + cellPaddingLeft
+    // Tooltip text starts at: tooltip.left + TOOLTIP_PADDING_LEFT
+    // To align: rect.left + cellPaddingLeft = tooltip.left + TOOLTIP_PADDING_LEFT
+    // Therefore: tooltip.left = rect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT
+    const left = rect.left + cellPaddingLeft - TOOLTIP_PADDING_LEFT;
+    const top = rect.top + cellPaddingTop - TOOLTIP_PADDING_TOP;
 
     return {
       top: `${top}px`,
