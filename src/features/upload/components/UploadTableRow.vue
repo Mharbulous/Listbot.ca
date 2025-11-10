@@ -21,17 +21,15 @@
       <StatusCell :status="file.status" />
     </div>
 
-    <!-- Folder Path Column (adjusted for scrollbar width) -->
-    <div
-      class="row-cell path-cell"
-      :style="{ minWidth: `${folderPathWidth}px`, width: `${folderPathWidth}px`, flexShrink: 0 }"
-      :title="file.folderPath"
-    >
+    <!-- Folder Path Column (130px) -->
+    <div class="row-cell path-cell" style="width: 130px; flex-shrink: 0" :title="file.folderPath">
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Cancel Column (100px) -->
-    <div class="row-cell cancel-cell" style="width: 100px; flex-shrink: 0">
+    <!-- Cancel Column (adjusted for scrollbar width) -->
+    <div
+      class="row-cell cancel-cell"
+      :style="{ width: `${cancelColumnWidth}px`, flexShrink: 0 }"
       <button
         class="cancel-btn"
         :disabled="file.status === 'completed'"
@@ -68,10 +66,10 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel']);
 
-// Compute adjusted folder path width to account for scrollbar
-const folderPathWidth = computed(() => {
-  // Base width is 130px, reduce by scrollbar width
-  return Math.max(130 - props.scrollbarWidth, 50); // Minimum 50px
+// Compute adjusted cancel column width to account for scrollbar
+const cancelColumnWidth = computed(() => {
+  // Base width is 100px, reduce by scrollbar width
+  return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
 });
 
 // Format file size
