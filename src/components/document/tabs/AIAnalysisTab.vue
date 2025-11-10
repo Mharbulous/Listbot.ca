@@ -59,7 +59,12 @@
       <div class="metadata-section">
         <!-- Document Date - Only show if NOT yet extracted -->
         <div v-if="!aiResults.documentDate" class="metadata-item">
-          <span class="metadata-label">Document Date</span>
+          <span
+            class="metadata-label"
+            :class="{ 'align-right': fieldPreferences.documentDate !== 'get' }"
+          >
+            Document Date
+          </span>
 
           <div class="field-controls">
             <!-- Segmented Control (shown when NOT analyzing) -->
@@ -83,7 +88,12 @@
 
         <!-- Document Type - Only show if NOT yet extracted -->
         <div v-if="!aiResults.documentType" class="metadata-item">
-          <span class="metadata-label">Document Type</span>
+          <span
+            class="metadata-label"
+            :class="{ 'align-right': fieldPreferences.documentType !== 'get' }"
+          >
+            Document Type
+          </span>
 
           <div class="field-controls">
             <!-- Segmented Control (shown when NOT analyzing) -->
@@ -507,6 +517,43 @@ const handleAnalyzeClick = async () => {
 
 <style scoped>
 /* Component-specific AI Analysis styles - shared styles inherited from parent */
+
+/* Metadata Label Alignment Animation */
+.metadata-label {
+  text-align: left;
+  transition: text-align 0.3s ease;
+  /* Add sliding animation using transform for smoother effect */
+  display: block;
+  position: relative;
+  animation: slideToLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metadata-label.align-right {
+  text-align: right;
+  animation: slideToRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideToRight {
+  from {
+    transform: translateX(-10px);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideToLeft {
+  from {
+    transform: translateX(10px);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 /* Loading State */
 .ai-loading-state {
