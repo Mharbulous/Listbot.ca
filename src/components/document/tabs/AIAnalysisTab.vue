@@ -62,8 +62,9 @@
           <span class="metadata-label">Document Date</span>
 
           <div class="field-controls">
-            <!-- Segmented Control -->
+            <!-- Segmented Control (shown when NOT analyzing) -->
             <SegmentedControl
+              v-if="!isAnalyzing"
               v-model="fieldPreferences.documentDate"
               :options="[
                 { label: 'Get', value: 'get' },
@@ -72,8 +73,8 @@
               ]"
             />
 
-            <!-- State 2: Analyzing Spinner -->
-            <div v-if="isAnalyzing" class="analyzing-state">
+            <!-- Analyzing Spinner (shown when analyzing, replaces control) -->
+            <div v-else class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
             </div>
@@ -85,8 +86,9 @@
           <span class="metadata-label">Document Type</span>
 
           <div class="field-controls">
-            <!-- Segmented Control -->
+            <!-- Segmented Control (shown when NOT analyzing) -->
             <SegmentedControl
+              v-if="!isAnalyzing"
               v-model="fieldPreferences.documentType"
               :options="[
                 { label: 'Get', value: 'get' },
@@ -95,8 +97,8 @@
               ]"
             />
 
-            <!-- State 2: Analyzing Spinner -->
-            <div v-if="isAnalyzing" class="analyzing-state">
+            <!-- Analyzing Spinner (shown when analyzing, replaces control) -->
+            <div v-else class="analyzing-state">
               <v-progress-circular indeterminate size="20" color="primary" />
               <span class="analyzing-text">Analyzing...</span>
             </div>
@@ -593,7 +595,10 @@ const handleAnalyzeClick = async () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  min-height: 40px; /* Match approximate height of SegmentedControl */
 }
 
 .analyzing-text {
