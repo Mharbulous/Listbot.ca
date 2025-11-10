@@ -1,10 +1,10 @@
 # Phase 2: Upload Actions - Cancel, Undo, Immediate Upload
 
-**Phase:** 2 of 8
+**Phase:** 2 of 7
 **Status:** Not Started
 **Priority:** High
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phase 1 (Virtual Upload Queue)
+**Dependencies:** Phase 1 (Foundation: Upload + Table)
 
 ---
 
@@ -664,10 +664,10 @@ console.log('[PERFORMANCE] Phase 2 - Immediate upload start: Xms');
 - "Use this file" button to swap original/duplicate
 - Indentation and visual hierarchy
 
-This phase builds on Phase 2's cancel/undo foundation.
+This phase builds on Phase 2's cancel/undo foundation and adds intelligent duplicate handling.
 
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 phase reordering)
 **Assignee:** TBD

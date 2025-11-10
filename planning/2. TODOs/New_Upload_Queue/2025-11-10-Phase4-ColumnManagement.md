@@ -1,10 +1,10 @@
-# Phase 5: Column Management - Sort, Reorder, Resize
+# Phase 4: Column Management - Sort, Reorder, Resize
 
-**Phase:** 5 of 8
+**Phase:** 4 of 7
 **Status:** Not Started
 **Priority:** Medium
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phase 1 (Virtual Upload Queue)
+**Dependencies:** Phase 1 (Foundation)
 
 ---
 
@@ -521,5 +521,5 @@ describe('Column Resizing', () => {
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 phase reordering)
 **Assignee:** TBD

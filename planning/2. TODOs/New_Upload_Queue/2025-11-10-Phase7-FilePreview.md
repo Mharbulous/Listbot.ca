@@ -1,10 +1,10 @@
-# Phase 8: File Preview Integration (Low Priority)
+# Phase 7: File Preview Integration (Low Priority)
 
-**Phase:** 8 of 8
+**Phase:** 7 of 7
 **Status:** Not Started
 **Priority:** Low (Optional Enhancement)
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phases 1-7
+**Dependencies:** Phase 1 (Foundation)
 
 ---
 
@@ -559,5 +559,5 @@ npm install pdfjs-dist
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-10 (Updated for v2.0 phase reordering - was Phase 8, now Phase 7)
 **Assignee:** TBD

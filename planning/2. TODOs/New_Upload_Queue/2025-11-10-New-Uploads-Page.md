@@ -39,18 +39,38 @@ These principles apply across all 8 phases:
 
 ## Phase Overview & Detailed Documents
 
-### **Phase 1: Foundation - Table Structure with Virtual Scrolling**
-**Duration:** 3-4 days | **Priority:** Critical | **Dependencies:** None
+### **Incremental Value Delivery**
 
-**Deliverable:** Working table with 6 columns, virtual scrolling, status indicators, and footer bar.
+Each phase delivers a demonstrable improvement to users:
+
+1. **"Look, I can upload files and see them in a table!"**
+2. **"Now I can cancel uploads and undo mistakes!"**
+3. **"Now duplicates are grouped together intelligently!"**
+4. **"Now I can sort and organize my columns!"**
+5. **"Now I can see real-time progress metrics!"**
+6. **"Look how much faster it is now - watch the dashboard metrics!"**
+7. **"Now I can preview files before they finish uploading!"**
+
+---
+
+### **Phase 1: Foundation - Upload + Table (MERGED)**
+**Duration:** 5-6 days | **Priority:** Critical | **Dependencies:** None
+
+**Deliverable:** Complete upload-to-display pipeline with three upload buttons, virtual scrolling table, status system, and footer.
+
+**Why merged:** Creates immediately functional system with complete feature loop. Users can upload files and see them in the table without needing the old upload system.
 
 **Key Features:**
+- Three upload buttons (Files, Folder, Folder + Subfolders)
 - DocumentTable-based component structure with TanStack Vue Virtual
 - 7-color status system (Ready, Uploading, Uploaded, Duplicate, Failed, Metadata Only, Unknown)
 - Sticky header and reactive footer status bar
+- Non-blocking queue progress indicator for large batches (>500 files)
 - Handle 100,000+ files with <100ms load time
 
-**📄 Detailed Implementation:** See `2025-11-10-Phase1-VirtualUploadQueue.md`
+**📄 Detailed Implementation:** See `2025-11-10-Phase1-Foundation.md`
+- Three-button upload system with file input types
+- Root-only filtering logic for folder uploads
 - Column specifications and widths
 - Status system implementation (colors, dots, text)
 - Footer reactive counts calculation
@@ -97,28 +117,7 @@ These principles apply across all 8 phases:
 
 ---
 
-### **Phase 4: Simplified Upload Initiation - Three-Button System**
-**Duration:** 2-3 days | **Priority:** High | **Dependencies:** Phase 1
-
-**Deliverable:** Three distinct upload buttons, folder options modal removed.
-
-**Key Features:**
-- Upload Files: Multi-select file picker
-- Upload Folder: Root folder only (no recursion)
-- Upload Folder + Subfolders: Full recursive upload
-- Non-blocking queue progress indicator for large batches (>500 files)
-- Drag-and-drop with inline choice (not modal)
-
-**📄 Detailed Implementation:** See `2025-11-10-Phase4-SimplifiedUploadInitiation.md`
-- Three-button HTML implementation with file input types
-- Root-only filtering logic for folder uploads
-- Queue progress indicator component
-- Drag-and-drop folder detection and inline choice panel
-- Removal of folder options modal
-
----
-
-### **Phase 5: Column Management - Sort, Reorder, Resize**
+### **Phase 4: Column Management - Sort, Reorder, Resize**
 **Duration:** 3-4 days | **Priority:** Medium | **Dependencies:** Phase 1
 
 **Deliverable:** Sortable, reorderable, resizable columns matching DocumentTable.
@@ -130,7 +129,7 @@ These principles apply across all 8 phases:
 - Files upload in currently sorted order
 - Column state persisted to localStorage
 
-**📄 Detailed Implementation:** See `2025-11-10-Phase5-ColumnManagement.md`
+**📄 Detailed Implementation:** See `2025-11-10-Phase4-ColumnManagement.md`
 - Sort algorithm for alphabetical, numerical, and status types
 - Drag-and-drop reordering with restrictions
 - Resize implementation with mouse handlers
@@ -139,8 +138,33 @@ These principles apply across all 8 phases:
 
 ---
 
-### **Phase 6: Performance Optimizations - Speed & Scale**
+### **Phase 5: Real-Time Dashboard - Queue & Upload Progress** ⬆️ **MOVED UP**
+**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phase 1
+
+**Why moved earlier:** Creates measurement baseline for Phase 6 optimizations. Users can see "before" performance metrics, making the "after" improvements in Phase 6 quantifiable and dramatic.
+
+**Deliverable:** Unified progress dashboard with real-time metrics.
+
+**Key Features:**
+- Persistent header showing current operation (queueing/uploading/paused/complete)
+- Real-time metrics: files/s or MB/s, time remaining, progress percentage
+- Non-blocking design (sticky at top, allows table interaction)
+- Four states with distinct visuals and action buttons
+- Auto-hide on completion after 5 seconds
+
+**📄 Detailed Implementation:** See `2025-11-10-Phase5-RealTimeDashboard.md`
+- Dashboard component with four state designs
+- Metrics calculation (rolling averages for speed)
+- Time remaining estimation algorithms
+- State transition management
+- Update frequency optimization (500ms intervals)
+
+---
+
+### **Phase 6: Performance Optimizations - Speed & Scale** ⬇️ **MOVED DOWN**
 **Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phases 1-5
+
+**Why moved after dashboard:** Users can now SEE the performance improvement. Dashboard shows "47 files/s" before optimization, then "183 files/s (4 workers active)" after - creating a compelling before/after narrative.
 
 **Deliverable:** Optimized performance infrastructure for large batches.
 
@@ -159,29 +183,8 @@ These principles apply across all 8 phases:
 
 ---
 
-### **Phase 7: Real-Time Dashboard - Queue & Upload Progress**
-**Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phases 1-6
-
-**Deliverable:** Unified progress dashboard with real-time metrics.
-
-**Key Features:**
-- Persistent header showing current operation (queueing/uploading/paused/complete)
-- Real-time metrics: files/s or MB/s, time remaining, progress percentage
-- Non-blocking design (sticky at top, allows table interaction)
-- Four states with distinct visuals and action buttons
-- Auto-hide on completion after 5 seconds
-
-**📄 Detailed Implementation:** See `2025-11-10-Phase7-RealTimeDashboard.md`
-- Dashboard component with four state designs
-- Metrics calculation (rolling averages for speed)
-- Time remaining estimation algorithms
-- State transition management
-- Update frequency optimization (500ms intervals)
-
----
-
-### **Phase 8: File Preview Integration** *(Low Priority - Optional)*
-**Duration:** 3-4 days | **Priority:** Low | **Dependencies:** Phases 1-7
+### **Phase 7: File Preview Integration** *(Low Priority - Optional)*
+**Duration:** 3-4 days | **Priority:** Low | **Dependencies:** Phase 1
 
 **Deliverable:** Preview modal with PDF thumbnails, image previews, and metadata.
 
@@ -192,7 +195,7 @@ These principles apply across all 8 phases:
 - Metadata display for unsupported file types
 - Reuses DocumentTable peek modal design
 
-**📄 Detailed Implementation:** See `2025-11-10-Phase8-FilePreview.md`
+**📄 Detailed Implementation:** See `2025-11-10-Phase7-FilePreview.md`
 - Preview modal component structure
 - PDF thumbnail generation with PDF.js
 - Image loading with FileReader API
@@ -210,17 +213,17 @@ src/features/upload/
 ├── components/
 │   ├── UploadTable.vue              (Phase 1)
 │   ├── UploadTableRow.vue           (Phase 1)
-│   ├── UploadDashboard.vue          (Phase 7)
+│   ├── UploadButtons.vue            (Phase 1)
 │   ├── UploadFooter.vue             (Phase 1)
-│   ├── FilePreviewModal.vue         (Phase 8)
-│   └── UploadButtons.vue            (Phase 4)
+│   ├── UploadDashboard.vue          (Phase 5)
+│   └── FilePreviewModal.vue         (Phase 7)
 ├── composables/
 │   ├── useUploadTable.js            (Phase 1)
 │   ├── useFileActions.js            (Phase 2)
 │   ├── useDuplicateManagement.js    (Phase 3)
-│   ├── useColumnManagement.js       (Phase 5)
-│   ├── useUploadProgress.js         (Phase 7)
-│   └── useFilePreview.js            (Phase 8)
+│   ├── useColumnManagement.js       (Phase 4)
+│   ├── useUploadProgress.js         (Phase 5)
+│   └── useFilePreview.js            (Phase 7)
 └── utils/
     ├── fileProcessing.js            (Phase 6)
     ├── duplicateDetection.js        (Phase 6)
@@ -263,20 +266,19 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 ## Phase Delivery Schedule
 
 ### Week 1: Foundation & Actions
-- **Phase 1:** Table structure with virtual scrolling (3-4 days)
+- **Phase 1:** Foundation (Upload + Table) (5-6 days)
+
+### Week 2: Core Actions & Duplicate Management
 - **Phase 2:** Core actions (cancel, undo, upload now) (3-4 days)
-
-### Week 2: Duplicate Management & Simplification
 - **Phase 3:** Duplicate grouping and swapping (3-4 days)
-- **Phase 4:** Simplified upload initiation (2-3 days)
 
-### Week 3: Column Management & Performance
-- **Phase 5:** Column management (3-4 days)
+### Week 3: Column Management & Dashboard
+- **Phase 4:** Column management (3-4 days)
+- **Phase 5:** Real-time dashboard (3-4 days)
+
+### Week 4: Performance & Optional Features
 - **Phase 6:** Performance optimizations (3-4 days)
-
-### Week 4: Polish & Optional Features
-- **Phase 7:** Real-time dashboard (3-4 days)
-- **Phase 8:** File preview integration (optional, 3-4 days)
+- **Phase 7:** File preview integration (optional, 3-4 days)
 
 ---
 
@@ -349,6 +351,15 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 |---------|------|---------|--------|
 | 1.0 | 2025-11-10 | Initial planning document | Claude |
 | 1.1 | 2025-11-10 | Restructured with phase references | Claude |
+| 2.0 | 2025-11-10 | Reordered phases for optimal demonstrability | Claude |
+
+**Version 2.0 Changes:**
+- **Phase 1:** Merged old Phase 1 + Phase 4 into "Foundation (Upload + Table)"
+- **Phase 4:** Column Management moved from Phase 5
+- **Phase 5:** Real-Time Dashboard moved UP from Phase 7 (before optimizations)
+- **Phase 6:** Performance Optimizations moved DOWN (after dashboard)
+- **Phase 7:** File Preview (was Phase 8)
+- **Rationale:** Each phase now demonstrates immediate value. Dashboard creates measurement baseline before optimizations, making performance improvements quantifiable.
 
 ---
 
