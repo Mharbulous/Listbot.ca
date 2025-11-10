@@ -1,6 +1,6 @@
 <template>
   <div class="upload-table-header">
-    <!-- Actions Column (100px - matches CLEAR column) -->
+    <!-- Actions Column (100px - matches Skip column) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
 
     <!-- Size Column (100px) -->
@@ -15,7 +15,7 @@
     <!-- Status Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
 
-    <!-- Cancel Column (100px - CLEAR button) -->
+    <!-- Skip Column (100px - CLEAR button) -->
     <div class="header-cell clear-queue-cell" style="width: 100px; flex-shrink: 0">
       <v-btn
         color="error"

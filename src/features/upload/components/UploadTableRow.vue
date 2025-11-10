@@ -1,6 +1,6 @@
 <template>
   <div class="upload-table-row">
-    <!-- Actions Column (100px - matches CLEAR column) -->
+    <!-- Actions Column (100px - matches Skip column) -->
     <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
       <button class="action-btn" title="Preview file" disabled>👁️</button>
       <button class="action-btn" title="Upload now" disabled>⬆️</button>
@@ -26,17 +26,17 @@
       <StatusCell :status="file.status" />
     </div>
 
-    <!-- Cancel Column (adjusted for scrollbar width) -->
+    <!-- Skip Column (adjusted for scrollbar width) -->
     <div
-      class="row-cell cancel-cell"
-      :style="{ width: `${cancelColumnWidth}px`, flexShrink: 0 }"
+      class="row-cell skip-cell"
+      :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }"
       <button
-        class="cancel-btn"
+        class="skip-btn"
         :disabled="file.status === 'completed'"
         @click="handleCancel"
-        :title="file.status === 'completed' ? 'Already uploaded' : 'Cancel upload'"
+        :title="file.status === 'completed' ? 'Already uploaded' : 'Skip this file'"
       >
-        {{ file.status === 'completed' ? '🗑️' : '❌' }}
+        ⏭️
       </button>
     </div>
   </div>
@@ -66,8 +66,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel']);
 
-// Compute adjusted cancel column width to account for scrollbar
-const cancelColumnWidth = computed(() => {
+// Compute adjusted skip column width to account for scrollbar
+const skipColumnWidth = computed(() => {
   // Base width is 100px, reduce by scrollbar width
   return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
 });
@@ -157,12 +157,12 @@ const handleCancel = () => {
   font-family: 'Courier New', monospace;
 }
 
-/* Cancel Cell */
-.cancel-cell {
+/* Skip Cell */
+.skip-cell {
   justify-content: center;
 }
 
-.cancel-btn {
+.skip-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -171,11 +171,11 @@ const handleCancel = () => {
   transition: transform 0.2s ease;
 }
 
-.cancel-btn:not(:disabled):hover {
+.skip-btn:not(:disabled):hover {
   transform: scale(1.2);
 }
 
-.cancel-btn:disabled {
+.skip-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
