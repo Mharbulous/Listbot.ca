@@ -21,7 +21,46 @@
       <div class="review-panel">
         <!-- Document Date Review -->
         <div v-if="shouldShowField('documentDate')" class="review-field">
-          <div class="field-label">Document Date</div>
+          <div class="field-label-with-badge">
+            <span class="field-label">Document Date</span>
+            <!-- Confidence Badge (only if AI-extracted) -->
+            <v-tooltip v-if="aiResults.documentDate" location="bottom" max-width="400">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <v-chip
+                  v-bind="tooltipProps"
+                  :color="getConfidenceColor(aiResults.documentDate.confidence)"
+                  size="small"
+                  variant="flat"
+                  class="confidence-badge"
+                >
+                  {{ aiResults.documentDate.confidence }}%
+                </v-chip>
+              </template>
+
+              <!-- Tooltip Content -->
+              <div class="ai-tooltip-content">
+                <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
+                  <strong>Context:</strong>
+                  <p>{{ aiResults.documentDate.metadata.context }}</p>
+                </div>
+                <div v-if="aiResults.documentDate.metadata?.aiReasoning" class="ai-tooltip-section">
+                  <strong>AI Reasoning:</strong>
+                  <p>{{ aiResults.documentDate.metadata.aiReasoning }}</p>
+                </div>
+                <div
+                  v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
+                  class="ai-tooltip-section"
+                >
+                  <strong>Alternatives:</strong>
+                  <ul>
+                    <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
+                      {{ formatDateString(alt.value) }} ({{ alt.confidence }}%)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </v-tooltip>
+          </div>
 
           <!-- Editable Input (pre-filled with AI value) -->
           <v-text-field
@@ -33,44 +72,6 @@
             @input="reviewErrors.documentDate = ''"
             class="review-input"
           />
-
-          <!-- Confidence Badge (only if AI-extracted) -->
-          <v-tooltip v-if="aiResults.documentDate" location="bottom" max-width="400">
-            <template v-slot:activator="{ props: tooltipProps }">
-              <v-chip
-                v-bind="tooltipProps"
-                :color="getConfidenceColor(aiResults.documentDate.confidence)"
-                size="small"
-                variant="flat"
-                class="confidence-badge"
-              >
-                {{ aiResults.documentDate.confidence }}%
-              </v-chip>
-            </template>
-
-            <!-- Tooltip Content -->
-            <div class="ai-tooltip-content">
-              <div v-if="aiResults.documentDate.metadata?.context" class="ai-tooltip-section">
-                <strong>Context:</strong>
-                <p>{{ aiResults.documentDate.metadata.context }}</p>
-              </div>
-              <div v-if="aiResults.documentDate.metadata?.aiReasoning" class="ai-tooltip-section">
-                <strong>AI Reasoning:</strong>
-                <p>{{ aiResults.documentDate.metadata.aiReasoning }}</p>
-              </div>
-              <div
-                v-if="aiResults.documentDate.metadata?.aiAlternatives?.length"
-                class="ai-tooltip-section"
-              >
-                <strong>Alternatives:</strong>
-                <ul>
-                  <li v-for="alt in aiResults.documentDate.metadata.aiAlternatives" :key="alt.value">
-                    {{ formatDateString(alt.value) }} ({{ alt.confidence }}%)
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </v-tooltip>
 
           <!-- Accept/Reject Buttons -->
           <div class="review-actions">
@@ -99,7 +100,46 @@
 
         <!-- Document Type Review -->
         <div v-if="shouldShowField('documentType')" class="review-field">
-          <div class="field-label">Document Type</div>
+          <div class="field-label-with-badge">
+            <span class="field-label">Document Type</span>
+            <!-- Confidence Badge (only if AI-extracted) -->
+            <v-tooltip v-if="aiResults.documentType" location="bottom" max-width="400">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <v-chip
+                  v-bind="tooltipProps"
+                  :color="getConfidenceColor(aiResults.documentType.confidence)"
+                  size="small"
+                  variant="flat"
+                  class="confidence-badge"
+                >
+                  {{ aiResults.documentType.confidence }}%
+                </v-chip>
+              </template>
+
+              <!-- Tooltip Content -->
+              <div class="ai-tooltip-content">
+                <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
+                  <strong>Context:</strong>
+                  <p>{{ aiResults.documentType.metadata.context }}</p>
+                </div>
+                <div v-if="aiResults.documentType.metadata?.aiReasoning" class="ai-tooltip-section">
+                  <strong>AI Reasoning:</strong>
+                  <p>{{ aiResults.documentType.metadata.aiReasoning }}</p>
+                </div>
+                <div
+                  v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
+                  class="ai-tooltip-section"
+                >
+                  <strong>Alternatives:</strong>
+                  <ul>
+                    <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
+                      {{ alt.value }} ({{ alt.confidence }}%)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </v-tooltip>
+          </div>
 
           <!-- Editable Input (pre-filled with AI value) -->
           <v-text-field
@@ -110,44 +150,6 @@
             @input="reviewErrors.documentType = ''"
             class="review-input"
           />
-
-          <!-- Confidence Badge (only if AI-extracted) -->
-          <v-tooltip v-if="aiResults.documentType" location="bottom" max-width="400">
-            <template v-slot:activator="{ props: tooltipProps }">
-              <v-chip
-                v-bind="tooltipProps"
-                :color="getConfidenceColor(aiResults.documentType.confidence)"
-                size="small"
-                variant="flat"
-                class="confidence-badge"
-              >
-                {{ aiResults.documentType.confidence }}%
-              </v-chip>
-            </template>
-
-            <!-- Tooltip Content -->
-            <div class="ai-tooltip-content">
-              <div v-if="aiResults.documentType.metadata?.context" class="ai-tooltip-section">
-                <strong>Context:</strong>
-                <p>{{ aiResults.documentType.metadata.context }}</p>
-              </div>
-              <div v-if="aiResults.documentType.metadata?.aiReasoning" class="ai-tooltip-section">
-                <strong>AI Reasoning:</strong>
-                <p>{{ aiResults.documentType.metadata.aiReasoning }}</p>
-              </div>
-              <div
-                v-if="aiResults.documentType.metadata?.aiAlternatives?.length"
-                class="ai-tooltip-section"
-              >
-                <strong>Alternatives:</strong>
-                <ul>
-                  <li v-for="alt in aiResults.documentType.metadata.aiAlternatives" :key="alt.value">
-                    {{ alt.value }} ({{ alt.confidence }}%)
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </v-tooltip>
 
           <!-- Accept/Reject Buttons -->
           <div class="review-actions">
@@ -245,8 +247,8 @@ const shouldShowField = (fieldName) => {
 
 // Get confidence badge color
 const getConfidenceColor = (confidence) => {
-  if (confidence >= 85) return 'success'; // Green for high confidence
-  if (confidence >= 70) return 'warning'; // Yellow for medium confidence
+  if (confidence >= 95) return 'success'; // Green for very high confidence
+  if (confidence >= 80) return 'warning'; // Amber for medium-high confidence
   return 'error'; // Red for low confidence
 };
 
@@ -511,6 +513,12 @@ watch(
   background-color: #fff;
 }
 
+.field-label-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .field-label {
   font-weight: 600;
   font-size: 0.875rem;
@@ -523,8 +531,6 @@ watch(
 }
 
 .confidence-badge {
-  align-self: flex-start;
-  margin-top: 4px;
   font-weight: 600;
 }
 
