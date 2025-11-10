@@ -43,8 +43,8 @@
             class="toggle-btn"
             @click="$emit('toggle-visibility')"
           >
-            <span v-if="visible" class="chevron-icon">▲</span>
-            <span v-else class="chevron-icon">▼</span>
+            <v-icon v-if="visible" size="small" class="chevron-icon">mdi-chevron-up</v-icon>
+            <v-icon v-else size="small" class="chevron-icon">mdi-chevron-down</v-icon>
           </button>
         </div>
 
@@ -211,7 +211,8 @@ const emit = defineEmits(['toggle-visibility', 'variant-selected', 'dropdown-tog
 }
 
 .metadata-panel--collapsed {
-  width: auto;
+  /* Maintain fixed width when collapsed to prevent layout shifts */
+  width: 420px;
 }
 
 .metadata-box--collapsed .metadata-card {
