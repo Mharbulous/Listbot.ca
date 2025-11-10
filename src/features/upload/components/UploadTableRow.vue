@@ -64,12 +64,34 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel']);
+const emit = defineEmits(['cancel', 'undo']);
 
 // Compute adjusted skip column width to account for scrollbar
 const skipColumnWidth = computed(() => {
   // Base width is 100px, reduce by scrollbar width
   return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
+});
+
+// Compute button icon based on file status
+const getButtonIcon = computed(() => {
+  if (props.file.status === 'completed') {
+    return '🗑️';
+  } else if (props.file.status === 'skip') {
+    return '↩️';
+  } else {
+    return '❌';
+  }
+});
+
+// Compute button title based on file status
+const getButtonTitle = computed(() => {
+  if (props.file.status === 'completed') {
+    return 'Already uploaded';
+  } else if (props.file.status === 'skip') {
+    return 'Undo skip';
+  } else {
+    return 'Cancel upload';
+  }
 });
 
 // Format file size
@@ -81,9 +103,13 @@ const formatFileSize = (bytes) => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
-// Handle cancel
-const handleCancel = () => {
-  emit('cancel', props.file.id);
+// Handle cancel or undo based on current status
+const handleCancelOrUndo = () => {
+  if (props.file.status === 'skip') {
+    emit('undo', props.file.id);
+  } else {
+    emit('cancel', props.file.id);
+  }
 };
 </script>
 

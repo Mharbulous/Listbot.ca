@@ -21,7 +21,7 @@
         <h2 class="table-title">Upload Queue ({{ uploadQueue.length }} files)</h2>
       </div>
 
-      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
+      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @undo="handleUndoFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
     </div>
   </div>
 </template>
@@ -38,7 +38,7 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, removeFromQueue, clearQueue } = useUploadTable();
+const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue } = useUploadTable();
 
 // File selection handlers
 const handleFilesSelected = async (files) => {
@@ -58,8 +58,13 @@ const handleFolderRecursiveSelected = async (files) => {
 
 // File management handlers
 const handleCancelFile = (fileId) => {
-  console.log('[TESTING] Cancel file:', fileId);
-  removeFromQueue(fileId);
+  console.log('[TESTING] Skip file:', fileId);
+  skipFile(fileId);
+};
+
+const handleUndoFile = (fileId) => {
+  console.log('[TESTING] Undo skip file:', fileId);
+  undoSkip(fileId);
 };
 
 const handleClearQueue = () => {
