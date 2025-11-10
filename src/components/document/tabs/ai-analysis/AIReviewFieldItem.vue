@@ -1,6 +1,6 @@
 <template>
   <div class="review-field">
-    <div class="field-label">{{ label }}</div>
+    <div v-if="!hideLabel && label" class="field-label">{{ label }}</div>
 
     <!-- Editable Input Field -->
     <div class="input-wrapper">
@@ -27,8 +27,8 @@
         @update:model-value="handleSelectUpdate"
       />
 
-      <!-- Confidence Badge (only if AI-extracted) -->
-      <v-tooltip v-if="aiResult" location="bottom">
+      <!-- Confidence Badge (only if AI-extracted and not hidden) -->
+      <v-tooltip v-if="aiResult && !hideConfidenceBadge" location="bottom">
         <template v-slot:activator="{ props: tooltipProps }">
           <v-chip
             v-bind="tooltipProps"
@@ -91,7 +91,7 @@ const props = defineProps({
   },
   label: {
     type: String,
-    required: true,
+    default: '',
   },
   fieldType: {
     type: String,
@@ -126,6 +126,14 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  hideLabel: {
+    type: Boolean,
+    default: false,
+  },
+  hideConfidenceBadge: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:reviewValue', 'clearError', 'accept', 'reject']);
@@ -142,10 +150,6 @@ const handleSelectUpdate = (value) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background-color: #fff;
 }
 
 .field-label {
