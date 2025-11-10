@@ -521,16 +521,16 @@ const handleAnalyzeClick = async () => {
 /* Metadata Label Alignment Animation */
 .metadata-label {
   text-align: left;
-  transition: text-align 0.3s ease;
+  transition: text-align 0.6s ease;
   /* Add sliding animation using transform for smoother effect */
   display: block;
   position: relative;
-  animation: slideToLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideToLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .metadata-label.align-right {
   text-align: right;
-  animation: slideToRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideToRight 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes slideToRight {
