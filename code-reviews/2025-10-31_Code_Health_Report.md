@@ -170,8 +170,8 @@ Score Breakdown:
 |------|--------|---------|---------|
 | `seedMatters.js` | ✅ ACTIVE | Dev data seeding | SeedMatterData.vue |
 | `analyzeMockData.js` | ✅ ACTIVE | Mock data analysis | Analyze.vue, cloudMockData.js |
-| `cloudMockData.js` | ✅ ACTIVE | Cloud mock data | Cloud.vue |
-| `performanceMonitor.js` | ✅ ACTIVE | Performance tracking | Cloud.vue |
+| `cloudMockData.js` | ✅ ACTIVE | Cloud mock data | Documents.vue |
+| `performanceMonitor.js` | ✅ ACTIVE | Performance tracking | Documents.vue |
 | `dateFormatter.js` | ✅ ACTIVE | Date/time formatting | Multiple files |
 | `errorMessages.js` | ✅ ACTIVE | Error handling | Error flows |
 | `mimeTypeFormatter.js` | ✅ ACTIVE | MIME type display | File operations |

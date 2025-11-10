@@ -63,8 +63,8 @@ This plan outlines an incremental approach to building a high-performance virtua
 ```
 
 **Files Created**:
-- ✅ `src/views/Cloud.vue` - Main view component
-- ✅ `src/views/Cloud.css` - Styling (copied from Analyze.css)
+- ✅ `src/views/Documents.vue` - Main view component
+- ✅ `src/views/Documents.css` - Styling (copied from Analyze.css)
 - ✅ `src/utils/performanceMonitor.js` - Performance tracking utility
 - ✅ Updated `src/router/index.js` - Route configuration
 - ✅ Installed `@tanstack/vue-virtual` package
@@ -79,7 +79,7 @@ This plan outlines an incremental approach to building a high-performance virtua
 
 **Files Created/Modified**:
 - ✅ `src/utils/cloudMockData.js` - Mock data generator with 100 realistic file records
-- ✅ `src/views/Cloud.vue` - Complete static table implementation with all features
+- ✅ `src/views/Documents.vue` - Complete static table implementation with all features
 
 **Features Implemented**:
 - ✅ Static table rendering with 100 rows of mock data
@@ -182,7 +182,7 @@ This plan outlines an incremental approach to building a high-performance virtua
 ### Phase 2 Completion Notes
 
 **Files Modified**:
-- ✅ `src/views/Cloud.vue` - Implemented TanStack Virtual row virtualization
+- ✅ `src/views/Documents.vue` - Implemented TanStack Virtual row virtualization
 - ✅ `src/utils/cloudMockData.js` - Upgraded to generate 1,000 rows
 
 **Features Implemented**:
@@ -222,7 +222,7 @@ This plan outlines an incremental approach to building a high-performance virtua
 ### Phase 3 Completion Notes
 
 **Files Modified**:
-- ✅ `src/views/Cloud.vue` - Integrated column drag-drop with virtual rows
+- ✅ `src/views/Documents.vue` - Integrated column drag-drop with virtual rows
 
 **Features Implemented**:
 - ✅ Column drag-and-drop reordering with 1,000 virtualized rows
@@ -261,7 +261,7 @@ This plan outlines an incremental approach to building a high-performance virtua
 ### Phase 4 Completion Notes
 
 **Files Modified**:
-- ✅ `src/views/Cloud.vue` - Column resizing already integrated
+- ✅ `src/views/Documents.vue` - Column resizing already integrated
 
 **Features Implemented**:
 - ✅ Column resizing with 1,000 virtualized rows
@@ -300,7 +300,7 @@ This plan outlines an incremental approach to building a high-performance virtua
 
 **Files Modified**:
 - ✅ `src/utils/cloudMockData.js` - Updated default row count from 1,000 to 10,000
-- ✅ `src/views/Cloud.vue` - Added comprehensive performance monitoring
+- ✅ `src/views/Documents.vue` - Added comprehensive performance monitoring
 - ✅ `src/composables/useColumnDragDrop.js` - Removed debug console messages
 
 **Features Implemented**:
@@ -375,9 +375,9 @@ The virtual scrolling implementation delivers exceptional performance:
 
 #### Tasks
 1. Install `@tanstack/vue-virtual` package
-2. Create new `Cloud.vue` view component
-3. Update router to use Cloud.vue instead of UnderConstruction.vue
-4. Copy `Analyze.css` to `Cloud.css` (will adapt later)
+2. Create new `Documents.vue` view component
+3. Update router to use Documents.vue instead of UnderConstruction.vue
+4. Copy `Analyze.css` to `Documents.css` (will adapt later)
 5. Create performance monitoring utility (`src/utils/performanceMonitor.js`)
 
 #### Console Debug Messages
@@ -409,7 +409,7 @@ console.log('[Cloud Table] Browser:', navigator.userAgent);
    - Generate 100 test file records
    - Include all 12 columns from COLUMNS config
    - Realistic file names, sizes, dates, etc.
-2. Implement basic table structure in `Cloud.vue`
+2. Implement basic table structure in `Documents.vue`
    - Sticky header row
    - Static body rows (no virtualization yet)
    - Footer with count
@@ -417,7 +417,7 @@ console.log('[Cloud Table] Browser:', navigator.userAgent);
    - `useColumnResize`
    - `useColumnVisibility`
    - Column selector popover
-4. Apply CSS styling from `Cloud.css`
+4. Apply CSS styling from `Documents.css`
 
 #### Console Debug Messages
 ```javascript
@@ -464,7 +464,7 @@ console.log('[Cloud Table] DOM nodes created:', document.querySelectorAll('.tabl
    - Configure for vertical (row) virtualization
    - Set overscan to 5 rows
    - Enable smooth scrolling
-3. Update `Cloud.vue` template:
+3. Update `Documents.vue` template:
    - Replace `v-for` loop with virtual items
    - Use absolute positioning for rows
    - Set container height and scrollable wrapper
@@ -1150,7 +1150,7 @@ Before marking a phase complete:
 ```
 src/
 ├── views/
-│   └── Cloud.vue                       # Main cloud file table page
+│   └── Documents.vue                       # Main cloud file table page
 ├── composables/
 │   ├── useColumnResize.js              # Existing - reuse as-is
 │   ├── useColumnDragDrop.js            # Existing - reuse as-is
@@ -1164,7 +1164,7 @@ src/
 ├── services/
 │   └── fileService.js                  # NEW - Firestore integration (Phase 7)
 ├── styles/
-│   └── Cloud.css                       # Adapted from Analyze.css
+│   └── Documents.css                       # Adapted from Analyze.css
 └── router/
     └── index.js                        # Update /cloud route
 

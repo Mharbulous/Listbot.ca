@@ -181,7 +181,7 @@ The router applies two global `beforeEach` guards:
 src/views/
 ├── About.vue .......................... /about
 ├── Analyze.vue ........................ /analyze
-├── Cloud.vue .......................... /matters/:matterId/documents
+├── Documents.vue .......................... /matters/:matterId/documents
 ├── EditMatter.vue ..................... /matters/edit/:matterId
 ├── Home.vue ........................... / and /home
 ├── MatterDetail.vue ................... /matters/:id

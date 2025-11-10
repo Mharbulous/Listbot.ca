@@ -68,7 +68,7 @@ export async function fetchFiles(
         // File properties from evidence document (no subcollection queries!)
         fileName: data.sourceFileName || 'ERROR: Missing metadata',
         size: data.fileSize ? formatUploadSize(data.fileSize) : 'ERROR: Missing file size',
-        date: data.uploadDate, // Preserve raw Firestore timestamp for display in Cloud.vue
+        date: data.uploadDate, // Preserve raw Firestore timestamp for display in Documents.vue
         fileType: data.fileType || 'ERROR: Missing file type', // MIME type from evidence document
         modifiedDate: data.sourceLastModified || null,
         sourceFolderPath: data.sourceFolderPath || '',

@@ -741,7 +741,7 @@ onUnmounted(() => {
   cellTooltip.cleanup();
 });
 
-// Component is ready - no logging needed here as Cloud.vue tracks the overall mount time
+// Component is ready - no logging needed here as Documents.vue tracks the overall mount time
 </script>
 
 <style scoped src="./DocumentTable.css"></style>

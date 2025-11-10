@@ -515,7 +515,7 @@ Improvement factor: 43x DOM node reduction
 
 ## Complete Working Example
 
-See `src/composables/useVirtualTable.js` and `src/views/Cloud.vue` for the full implementation that powers a production-ready virtual table with:
+See `src/composables/useVirtualTable.js` and `src/views/Documents.vue` for the full implementation that powers a production-ready virtual table with:
 - 1,000 rows rendered with only ~23 DOM nodes
 - Column resize with composable pattern
 - Column drag-and-drop reordering
@@ -541,4 +541,4 @@ See `src/composables/useVirtualTable.js` and `src/views/Cloud.vue` for the full 
 - [TanStack Virtual Documentation](https://tanstack.com/virtual/latest)
 - [TanStack Vue Virtual Examples](https://tanstack.com/virtual/latest/docs/framework/vue/vue-virtual)
 - Project Implementation: `src/composables/useVirtualTable.js`
-- Example Usage: `src/views/Cloud.vue`
+- Example Usage: `src/views/Documents.vue`

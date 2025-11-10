@@ -6,7 +6,7 @@ Last Updated: 2025-10-27
 
 The DocumentTable is the primary data display component shown on the Cloud view (`/#/cloud`). It presents evidence documents with columns from four distinct data sources, all rendered with a unified, consistent appearance.
 
-**Component Location**: `src/views/Cloud.vue`
+**Component Location**: `src/views/Documents.vue`
 
 ## Table Architecture
 
@@ -50,7 +50,7 @@ Global categories defined by developers and used across all firms and matters.
 - `Author` - Open List for document authors
 - `Custodian` - Open List for document custodians
 
-**Implementation Status**: ✅ Fully implemented in Cloud.vue (lines 531-549)
+**Implementation Status**: ✅ Fully implemented in Documents.vue (lines 531-549)
 
 #### 3. Firm Categories
 
@@ -65,7 +65,7 @@ Categories common to all matters within a firm. These are stored in the special 
 - Can be created, edited, and soft-deleted by authorized users
 - Include both system categories (copied during initialization) and custom firm categories
 
-**Implementation Status**: ⚠️ Planned but not yet implemented in Cloud.vue
+**Implementation Status**: ⚠️ Planned but not yet implemented in Documents.vue
 
 #### 4. Matter Categories
 
@@ -80,7 +80,7 @@ Categories specific to a single matter.
 - Can be created, edited, and soft-deleted by authorized users
 - Include both system categories (copied during initialization) and custom matter categories
 
-**Implementation Status**: ⚠️ Planned but not yet implemented in Cloud.vue
+**Implementation Status**: ⚠️ Planned but not yet implemented in Documents.vue
 
 ### Category Hierarchy and Data Model
 
@@ -138,7 +138,7 @@ Category columns display tag values from the **embedded tags map** (`evidence.ta
 
 ## Current Implementation
 
-### What's Implemented (Cloud.vue)
+### What's Implemented (Documents.vue)
 
 ✅ **Built-in Data Columns**: All hardcoded columns fully functional
 ✅ **System Categories**: Fetched from `/systemcategories` and displayed as columns
@@ -157,7 +157,7 @@ Category columns display tag values from the **embedded tags map** (`evidence.ta
 ### Current Flow (Implemented)
 
 1. User navigates to `/#/cloud`
-2. `Cloud.vue` checks authentication (authStore) and matter selection (matterViewStore)
+2. `Documents.vue` checks authentication (authStore) and matter selection (matterViewStore)
 3. System categories fetched from `/systemcategories` (sorted alphabetically by name)
 4. Evidence documents fetched from `/firms/{firmId}/matters/{matterId}/evidence`
 5. For each evidence document:

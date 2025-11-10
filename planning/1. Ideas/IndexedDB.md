@@ -95,7 +95,7 @@ Older matters evicted automatically, re-fetch from Firestore when needed
 
 ```
 ┌─────────────┐
-│  Cloud.vue  │
+│  Documents.vue  │
 │  (View)     │
 └──────┬──────┘
        │
@@ -364,9 +364,9 @@ export const matterCache = new MatterCacheService();
 
 ### Phase 2: Integration (Days 3-4)
 
-#### Step 2.1: Update Cloud.vue
+#### Step 2.1: Update Documents.vue
 
-**File:** `src/views/Cloud.vue`
+**File:** `src/views/Documents.vue`
 
 ```javascript
 import { matterCache } from '@/services/matterCacheService';
@@ -437,7 +437,7 @@ onMounted(async () => {
 
 #### Step 2.2: Add Manual Refresh Button
 
-**Template addition in Cloud.vue:**
+**Template addition in Documents.vue:**
 
 ```vue
 <DocumentTable
@@ -609,11 +609,11 @@ describe('MatterCacheService', () => {
 
 ### Integration Tests
 
-**Scenario:** Load Cloud.vue with cached data
+**Scenario:** Load Documents.vue with cached data
 
 ```javascript
 import { mount } from '@vue/test-utils';
-import Cloud from '@/views/Cloud.vue';
+import Cloud from '@/views/Documents.vue';
 import { matterCache } from '@/services/matterCacheService';
 
 it('should load cached data without Firestore fetch', async () => {
@@ -811,7 +811,7 @@ Track these metrics:
 ### Related Files
 
 - `src/services/uploadService.js` - Current Firestore fetching logic
-- `src/views/Cloud.vue` - Main table view
+- `src/views/Documents.vue` - Main table view
 - `src/components/base/DocumentTable.vue` - Table component
 - `docs/architecture/file-lifecycle.md` - File terminology reference
 
@@ -833,7 +833,7 @@ Current metrics (from console log):
 
 ### Files to Modify
 
-- [ ] `src/views/Cloud.vue` - Add cache integration
+- [ ] `src/views/Documents.vue` - Add cache integration
 - [ ] `src/core/stores/auth.js` - Clear cache on logout
 - [ ] `src/services/uploadService.js` - Invalidate cache on upload
 - [ ] `package.json` - Add Dexie dependency

@@ -31,7 +31,7 @@
 | `/home/user/Bookkeeper/src/components/AppSwitcher.vue` | 421 |
 | `/home/user/Bookkeeper/src/features/upload/components/ProcessingProgressModal.vue` | 413 |
 | `/home/user/Bookkeeper/src/features/organizer/views/CategoryManager.vue` | 397 |
-| `/home/user/Bookkeeper/src/views/Cloud.vue` | 396 |
+| `/home/user/Bookkeeper/src/views/Documents.vue` | 396 |
 | `/home/user/Bookkeeper/src/views/NewMatter.vue` | 353 |
 | `/home/user/Bookkeeper/src/dev-demos/views/LazyLoadingDemo.vue` | 327 |
 | `/home/user/Bookkeeper/src/features/organizer/components/AITagChip.vue` | 326 |

@@ -57,7 +57,7 @@ const router = createRouter({
     {
       path: '/matters/:matterId/documents',
       name: 'documents',
-      component: () => import('../views/Cloud.vue'),
+      component: () => import('../views/Documents.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Documents' },
     },
     {

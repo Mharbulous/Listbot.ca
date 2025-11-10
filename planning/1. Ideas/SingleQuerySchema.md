@@ -71,7 +71,7 @@ For 223 documents, the current implementation requires **2,230 Firestore reads**
 
 ### What the Table Displays
 
-Based on analysis of `DocumentTable.vue` and `Cloud.vue`, each row needs:
+Based on analysis of `DocumentTable.vue` and `Documents.vue`, each row needs:
 
 #### Built-in Columns (from Evidence + SourceMetadata)
 1. **fileName**: `sourceMetadata.sourceFileName` ❌ (subcollection)
