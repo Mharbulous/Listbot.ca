@@ -85,41 +85,11 @@ async function processFiles(files, batchId) {
       processingStartTime = Date.now();
     }
 
-    // Step 0: Filter out Windows shortcut files (.lnk) early - they should never be uploaded
-    const shortcutFiles = [];
-    const processableFiles = [];
-
-    files.forEach((fileData) => {
-      const { id, file, originalIndex, customPath } = fileData;
-      const path = customPath || getFilePath(file);
-
-      // Check if this is a shortcut file
-      if (isShortcutFile(file.name)) {
-        shortcutFiles.push({
-          id,
-          originalIndex,
-          path,
-          metadata: {
-            sourceFileName: file.name,
-            sourceFileSize: file.size,
-            sourceFileType: file.type,
-            lastModified: file.lastModified,
-          },
-          status: 'skipped',
-          skipReason: 'shortcut',
-        });
-        // Count as processed for progress tracking
-        processedCount++;
-        sendProgressUpdate();
-      } else {
-        processableFiles.push(fileData);
-      }
-    });
-
     // Step 1: Group source files by size to identify unique-sized files
+    // Note: Shortcut files (.lnk) go through normal deduplication but are marked for skipping
     const fileSizeGroups = new Map(); // file_size -> [file_references]
 
-    processableFiles.forEach((fileData) => {
+    files.forEach((fileData) => {
       const { id, file, originalIndex, customPath } = fileData;
       const fileSize = file.size;
       const fileRef = {
@@ -243,33 +213,47 @@ async function processFiles(files, batchId) {
     const allFinalFiles = [...uniqueFiles, ...finalFiles];
 
     // Prepare result - remove File objects since they can't be transferred back
-    const readyFiles = allFinalFiles.map((fileRef) => ({
-      id: fileRef.id,
-      originalIndex: fileRef.originalIndex,
-      path: fileRef.path,
-      metadata: fileRef.metadata,
-      hash: fileRef.hash,
-      status: 'ready',
-    }));
+    // Mark shortcut files with skipReason for UI handling
+    const readyFiles = allFinalFiles.map((fileRef) => {
+      const result = {
+        id: fileRef.id,
+        originalIndex: fileRef.originalIndex,
+        path: fileRef.path,
+        metadata: fileRef.metadata,
+        hash: fileRef.hash,
+        status: 'ready',
+      };
+      // Mark shortcut files so they can be skipped during upload
+      if (isShortcutFile(fileRef.metadata.sourceFileName)) {
+        result.skipReason = 'shortcut';
+      }
+      return result;
+    });
 
-    const duplicatesForQueue = duplicateFiles.map((fileRef) => ({
-      id: fileRef.id,
-      originalIndex: fileRef.originalIndex,
-      path: fileRef.path,
-      metadata: fileRef.metadata,
-      hash: fileRef.hash,
-      isDuplicate: fileRef.isDuplicate,
-      status: 'uploadMetadataOnly',
-    }));
+    const duplicatesForQueue = duplicateFiles.map((fileRef) => {
+      const result = {
+        id: fileRef.id,
+        originalIndex: fileRef.originalIndex,
+        path: fileRef.path,
+        metadata: fileRef.metadata,
+        hash: fileRef.hash,
+        isDuplicate: fileRef.isDuplicate,
+        status: 'uploadMetadataOnly',
+      };
+      // Mark shortcut files so they can be skipped during upload
+      if (isShortcutFile(fileRef.metadata.sourceFileName)) {
+        result.skipReason = 'shortcut';
+      }
+      return result;
+    });
 
-    // Send completion message with all file categories
+    // Send completion message
     self.postMessage({
       type: MESSAGE_TYPES.PROCESSING_COMPLETE,
       batchId,
       result: {
         readyFiles,
         duplicateFiles: duplicatesForQueue,
-        shortcutFiles, // Include skipped shortcut files
       },
     });
   } catch (error) {

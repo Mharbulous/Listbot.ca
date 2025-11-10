@@ -150,6 +150,7 @@ export function useQueueWorkers() {
         );
 
         // Map worker results back to source File objects (from user's device)
+        // Note: shortcut files are included in readyFiles/duplicateFiles with skipReason='shortcut'
         const readyFiles = workerResult.readyFiles.map((fileRef) => ({
           ...fileRef,
           file: fileMapping.get(fileRef.id), // Restore source File object
@@ -164,18 +165,9 @@ export function useQueueWorkers() {
           status: 'uploadMetadataOnly',
         }));
 
-        // Map shortcut files (Windows .lnk files that should be skipped)
-        const shortcutFiles = (workerResult.shortcutFiles || []).map((fileRef) => ({
-          ...fileRef,
-          file: fileMapping.get(fileRef.id), // Restore source File object
-          path: fileRef.path, // Preserve path from worker result
-          status: 'skipped',
-          skipReason: 'shortcut',
-        }));
-
         return {
           success: true,
-          result: { readyFiles, duplicateFiles, shortcutFiles },
+          result: { readyFiles, duplicateFiles },
         };
       } finally {
         // Clean up progress listener
