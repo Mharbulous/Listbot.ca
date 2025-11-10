@@ -17,7 +17,7 @@
         :model-value="fieldPreference"
         @update:model-value="$emit('update:fieldPreference', $event)"
         :options="[
-          { label: 'Get', value: 'get' },
+          { label: 'Process', value: 'get' },
           { label: 'Skip', value: 'skip' },
           { label: 'Manual', value: 'manual' }
         ]"
