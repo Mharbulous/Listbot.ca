@@ -1,37 +1,17 @@
 <template>
   <div class="upload-table-container">
-    <!-- Scrollable container -->
-    <div ref="scrollContainer" class="scroll-container">
-      <!-- Sticky Header -->
-      <UploadTableHeader />
+    <!-- Sticky Header -->
+    <UploadTableHeader />
 
-      <!-- Virtual Scrolling Body -->
+    <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
+    <div class="scroll-container">
       <div class="table-body">
-        <!-- Virtual container with dynamic height -->
-        <div
-          class="virtual-container"
-          :style="{
-            height: totalSize + 'px',
-            position: 'relative',
-          }"
-        >
-          <!-- Virtual rows (only visible + overscan rendered) -->
-          <div
-            v-for="virtualItem in virtualItems"
-            :key="virtualItem.key"
-            class="virtual-row"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: virtualItem.size + 'px',
-              transform: `translateY(${virtualItem.start}px)`,
-            }"
-          >
-            <UploadTableRow :file="files[virtualItem.index]" @cancel="handleCancel" />
-          </div>
-        </div>
+        <UploadTableRow
+          v-for="file in props.files"
+          :key="file.id"
+          :file="file"
+          @cancel="handleCancel"
+        />
       </div>
     </div>
 
@@ -41,8 +21,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useVirtualizer } from '@tanstack/vue-virtual';
+import { computed, watch } from 'vue';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
@@ -64,28 +43,17 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel']);
 
-// Refs
-const scrollContainer = ref(null);
-
-// Virtual scrolling configuration
-const ROW_HEIGHT = 48;
-
-const rowVirtualizer = useVirtualizer({
-  count: computed(() => props.files.length),
-  getScrollElement: () => scrollContainer.value,
-  estimateSize: () => ROW_HEIGHT,
-  overscan: 5,
-});
-
-const virtualItems = computed(() => {
-  if (!rowVirtualizer || !rowVirtualizer.getVirtualItems) return [];
-  return rowVirtualizer.getVirtualItems();
-});
-
-const totalSize = computed(() => {
-  if (!rowVirtualizer || !rowVirtualizer.getTotalSize) return 0;
-  return rowVirtualizer.getTotalSize();
-});
+// Debug: Watch files prop
+watch(
+  () => props.files,
+  (newFiles) => {
+    console.log('[UploadTable] Files updated:', newFiles.length, 'files');
+    if (newFiles.length > 0 && newFiles.length <= 3) {
+      console.log('[UploadTable] First file:', newFiles[0]);
+    }
+  },
+  { immediate: true }
+);
 
 // Footer stats
 const footerStats = computed(() => {
@@ -127,7 +95,7 @@ const handleCancel = (fileId) => {
 .upload-table-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 400px); /* Adjust based on layout */
+  height: calc(100vh - 400px);
   min-height: 400px;
   background: white;
   border: 1px solid #e5e7eb;
@@ -139,19 +107,12 @@ const handleCancel = (fileId) => {
 
 .scroll-container {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
   position: relative;
 }
 
 .table-body {
-  position: relative;
-}
-
-.virtual-container {
-  width: 100%;
-}
-
-.virtual-row {
-  will-change: transform;
+  display: flex;
+  flex-direction: column;
 }
 </style>
