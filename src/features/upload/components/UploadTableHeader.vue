@@ -39,7 +39,7 @@ defineOptions({
 // Emits
 const emit = defineEmits(['clear-queue']);
 
-// Handle clear queue
+// Handle CLEAR
 const handleClearQueue = () => {
   emit('clear-queue');
 };

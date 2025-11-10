@@ -142,7 +142,7 @@ const actionLabel = computed(() => {
     queueing: 'Cancel Queue',
     uploading: 'Pause Upload',
     paused: 'Resume Upload',
-    complete: 'Clear Queue'
+    complete: 'CLEAR'
   };
   return labels[props.state] || '';
 });
@@ -377,7 +377,7 @@ Upload paused (62% complete)
 Upload complete! ✓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 720/720 files • 715 uploaded, 5 duplicates skipped
-[Clear Queue]
+[CLEAR]
 ```
 
 **Auto-hide after 5 seconds**

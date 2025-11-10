@@ -53,29 +53,51 @@ Each phase delivers a demonstrable improvement to users:
 
 ---
 
-### **Phase 1: Foundation - Upload + Table (MERGED)**
-**Duration:** 5-6 days | **Priority:** Critical | **Dependencies:** None
+### **Phase 1.0: Foundation - Upload + Basic Table**
+**Duration:** 3-4 days | **Priority:** Critical | **Dependencies:** None
 
-**Deliverable:** Complete upload-to-display pipeline with three upload buttons, virtual scrolling table, status system, and footer.
-
-**Why merged:** Creates immediately functional system with complete feature loop. Users can upload files and see them in the table without needing the old upload system.
+**Deliverable:** Complete upload-to-display pipeline with three upload buttons, drag-and-drop, standard table rendering, status system, and footer.
 
 **Key Features:**
 - Three upload buttons (Files, Folder, Folder + Subfolders)
-- DocumentTable-based component structure with TanStack Vue Virtual
+- Drag-and-drop zone with recursive folder traversal
+- DocumentTable-based component structure with standard rendering
 - 7-color status system (Ready, Uploading, Uploaded, Duplicate, Failed, Metadata Only, Unknown)
 - Sticky header and reactive footer status bar
 - Non-blocking queue progress indicator for large batches (>500 files)
-- Handle 100,000+ files with <100ms load time
+- Works well for <500 files (performance optimization in Phase 1.5)
 
-**📄 Detailed Implementation:** See `2025-11-10-Phase1-Foundation.md`
+**📄 Detailed Implementation:** See `2025-11-10-Phase1.0-Foundation.md`
 - Three-button upload system with file input types
-- Root-only filtering logic for folder uploads
+- Drag-and-drop with recursive folder extraction (matches "Folder + Subfolders" behavior)
+- Root-only filtering logic for "Upload Folder" button
 - Column specifications and widths
 - Status system implementation (colors, dots, text)
 - Footer reactive counts calculation
-- Virtual scrolling setup with TanStack Virtual
+- Standard table rendering (no virtualization yet)
 - Component structure and file organization
+
+---
+
+### **Phase 1.5: Virtualization with TanStack**
+**Duration:** 2-3 days | **Priority:** High | **Dependencies:** Phase 1.0 complete and bug-free
+
+**Deliverable:** Virtualized table with constant O(1) memory usage and 60 FPS scrolling for 1000+ files.
+
+**Why separate:** Ensures core functionality works before adding virtualization complexity. Provides clear before/after performance metrics.
+
+**Key Features:**
+- TanStack Vue Virtual integration
+- Handle 100,000+ files with <100ms load time
+- Constant memory usage regardless of file count
+- Smooth 60 FPS scrolling
+- All Phase 1.0 functionality preserved
+
+**📄 Detailed Implementation:** See `2025-11-10-Phase1.5-Virtualization.md`
+- Virtual scrolling setup with TanStack Virtual
+- useVirtualScroll composable
+- Performance benchmarks and comparisons
+- Regression testing requirements
 
 ---
 
@@ -265,8 +287,9 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 
 ## Phase Delivery Schedule
 
-### Week 1: Foundation & Actions
-- **Phase 1:** Foundation (Upload + Table) (5-6 days)
+### Week 1: Foundation
+- **Phase 1.0:** Foundation - Upload + Basic Table (3-4 days)
+- **Phase 1.5:** Virtualization with TanStack (2-3 days)
 
 ### Week 2: Core Actions & Duplicate Management
 - **Phase 2:** Core actions (cancel, undo, upload now) (3-4 days)
@@ -352,6 +375,13 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 | 1.0 | 2025-11-10 | Initial planning document | Claude |
 | 1.1 | 2025-11-10 | Restructured with phase references | Claude |
 | 2.0 | 2025-11-10 | Reordered phases for optimal demonstrability | Claude |
+| 2.1 | 2025-11-10 | Split Phase 1 into 1.0 and 1.5, added drag-and-drop documentation | Claude |
+
+**Version 2.1 Changes:**
+- **Phase 1.0:** Foundation with standard table rendering (new split from Phase 1)
+- **Phase 1.5:** Virtualization layer added separately (new)
+- **Drag-and-Drop:** Documented recursive folder traversal behavior (matches "Folder + Subfolders")
+- **Rationale:** Splitting Phase 1 ensures core functionality works before virtualization complexity. Provides clear performance baseline for comparison.
 
 **Version 2.0 Changes:**
 - **Phase 1:** Merged old Phase 1 + Phase 4 into "Foundation (Upload + Table)"
