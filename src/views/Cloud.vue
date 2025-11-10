@@ -1,6 +1,6 @@
 <template>
   <div class="analyze-mockup-page" style="min-width: 0">
-    <DocumentTable
+    <VirtualDocumentTable
       :data="mockData"
       :columns="allColumns"
       :loading="isLoading"
@@ -99,7 +99,7 @@
           {{ value }}
         </span>
       </template>
-    </DocumentTable>
+    </VirtualDocumentTable>
   </div>
 </template>
 
@@ -116,7 +116,7 @@ import { useUserPreferencesStore } from '@/core/stores/userPreferences';
 import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
-import DocumentTable from '@/components/base/DocumentTable.vue';
+import VirtualDocumentTable from '@/components/base/VirtualDocumentTable.vue';
 
 // Get route for accessing params
 const route = useRoute();
