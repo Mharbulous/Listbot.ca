@@ -201,23 +201,23 @@ const handleMouseLeave = () => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #059669; /* Dark green checkmark */
-  font-size: 16px;
-  font-weight: bold;
+  color: #2196f3; /* Blue checkmark to match ready status */
+  font-size: 18px;
+  font-weight: 900;
   line-height: 1;
 }
 
 /* Modern hover effect: subtle glow and border color change */
 @media (hover: hover) {
   .file-checkbox:hover:not(:disabled) {
-    border-color: #059669;
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1), 0 0 8px rgba(5, 150, 105, 0.15);
+    border-color: #2196f3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1), 0 0 8px rgba(33, 150, 243, 0.15);
   }
 }
 
 /* Focus state for keyboard navigation */
 .file-checkbox:focus-visible {
-  outline: 2px solid #059669;
+  outline: 2px solid #2196f3;
   outline-offset: 2px;
 }
 
