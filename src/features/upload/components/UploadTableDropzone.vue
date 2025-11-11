@@ -94,12 +94,11 @@ const traverseFileTree = async (entry, filesList) => {
 .dropzone-spacer {
   flex: 1; /* Fill remaining space */
   min-height: 100px; /* Minimum height to show dropzone */
+  width: 100%; /* Ensure full width */
   display: flex;
   align-items: center;
   justify-content: center;
   border: 3px dashed #cbd5e1;
-  border-left: none;
-  border-right: none;
   background: white;
   transition: all 0.3s ease;
   position: relative;
