@@ -66,6 +66,9 @@ export function useUploadTable() {
         totalFiles,
         averageTimePerFile: `${(elapsed / totalFiles).toFixed(2)}ms`,
       });
+
+      // Signal that queue addition is complete (for virtualizer to detect)
+      window.queueAdditionComplete = true;
     }
   };
 
