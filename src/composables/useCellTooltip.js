@@ -17,13 +17,22 @@ export function useCellTooltip() {
   // Timing
   const HOVER_DELAY = 1000; // 1 second
   const FADE_DURATION = 150; // milliseconds
+  const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
 
   // Timers
   let showTimer = null;
   let fadeTimer = null;
+  let hideTimer = null;
 
   // Current cell element
   let currentCellElement = null;
+
+  // Track if tooltip is being hovered
+  let isTooltipHovered = false;
+  let isCellHovered = false;
+
+  // Track how tooltip was opened (hover vs click)
+  let openedByClick = false;
 
   /**
    * Check if an element's content is truncated
@@ -104,8 +113,14 @@ export function useCellTooltip() {
    * @param {string} bgColor - The background color of the row
    */
   const handleCellMouseEnter = (event, cellElement, bgColor = 'white') => {
-    // Clear any existing timers
-    clearTimers();
+    // Mark that cell is being hovered
+    isCellHovered = true;
+
+    // Clear hide timer if it exists
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
 
     // Check if content is truncated
     if (!isTruncated(cellElement)) {
@@ -114,13 +129,24 @@ export function useCellTooltip() {
       return;
     }
 
-    // Set eye cursor to indicate truncated content can be viewed
+    // Set help cursor to indicate truncated content can be viewed
     cellElement.style.cursor = 'help';
 
     // Get the text content
     const text = getTextContent(cellElement);
     if (!text || text.trim() === '') {
       return;
+    }
+
+    // If tooltip is already visible for this cell, just update hover state
+    if (isVisible.value && currentCellElement === cellElement) {
+      return;
+    }
+
+    // Clear any existing show timers
+    if (showTimer) {
+      clearTimeout(showTimer);
+      showTimer = null;
     }
 
     // Store cell element and background color
@@ -137,6 +163,7 @@ export function useCellTooltip() {
 
       // Show tooltip
       isVisible.value = true;
+      openedByClick = false;
 
       // Fade in
       opacity.value = 0;
@@ -186,23 +213,43 @@ export function useCellTooltip() {
     // Show tooltip immediately (no delay)
     isVisible.value = true;
     opacity.value = 1;
+    openedByClick = true;
   };
 
   /**
    * Handle mouse leave from cell
    */
   const handleCellMouseLeave = (cellElement) => {
+    // Mark that cell is no longer being hovered
+    isCellHovered = false;
+
     // Reset cursor
     if (cellElement) {
       cellElement.style.cursor = '';
     }
 
-    // Only clear timers and hide if tooltip was triggered by hover (not click)
-    // If user clicked to show tooltip, keep it visible until they click again or click elsewhere
-    clearTimers();
+    // Clear any pending show timers
+    if (showTimer) {
+      clearTimeout(showTimer);
+      showTimer = null;
+    }
 
-    // Don't auto-hide tooltip on mouse leave if it was shown by click
-    // The tooltip will only hide on: another click, clicking elsewhere, or scrolling
+    // If tooltip is visible, start the hide timer (1 second delay)
+    // But only if neither the cell nor the tooltip is being hovered
+    if (isVisible.value && !isTooltipHovered) {
+      // Clear any existing hide timer
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+
+      // Start new hide timer
+      hideTimer = setTimeout(() => {
+        // Only hide if still not hovering over cell or tooltip
+        if (!isCellHovered && !isTooltipHovered) {
+          hideTooltip();
+        }
+      }, HOVER_AWAY_DELAY);
+    }
   };
 
   /**
@@ -214,6 +261,79 @@ export function useCellTooltip() {
     content.value = '';
     backgroundColor.value = 'white';
     currentCellElement = null;
+    isTooltipHovered = false;
+    isCellHovered = false;
+    openedByClick = false;
+  };
+
+  /**
+   * Handle mouse enter on tooltip
+   */
+  const handleTooltipMouseEnter = () => {
+    isTooltipHovered = true;
+
+    // Clear hide timer if it exists
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  };
+
+  /**
+   * Handle mouse leave from tooltip
+   */
+  const handleTooltipMouseLeave = () => {
+    isTooltipHovered = false;
+
+    // Start hide timer if not hovering over cell either
+    if (!isCellHovered) {
+      // Clear any existing hide timer
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+
+      // Start new hide timer
+      hideTimer = setTimeout(() => {
+        // Only hide if still not hovering over cell or tooltip
+        if (!isCellHovered && !isTooltipHovered) {
+          hideTooltip();
+        }
+      }, HOVER_AWAY_DELAY);
+    }
+  };
+
+  /**
+   * Handle click on tooltip
+   * This allows text selection without closing the tooltip
+   */
+  const handleTooltipClick = (event) => {
+    // Don't do anything - allow text selection
+    // The tooltip should stay open for text selection
+  };
+
+  /**
+   * Handle clicks outside tooltip and cells
+   * Used to close tooltip when clicking elsewhere
+   */
+  const handleOutsideClick = (event) => {
+    // Only close if tooltip is visible
+    if (!isVisible.value) {
+      return;
+    }
+
+    // Check if click is outside both the tooltip and the current cell
+    const clickedElement = event.target;
+
+    // Don't close if clicking on the current cell
+    if (currentCellElement && currentCellElement.contains(clickedElement)) {
+      return;
+    }
+
+    // Don't close if clicking on the tooltip
+    // (This is handled by the tooltip component's @click.stop)
+
+    // Close the tooltip
+    hideTooltip();
   };
 
   /**
@@ -227,6 +347,10 @@ export function useCellTooltip() {
     if (fadeTimer) {
       clearTimeout(fadeTimer);
       fadeTimer = null;
+    }
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
     }
   };
 
@@ -246,10 +370,20 @@ export function useCellTooltip() {
     opacity,
     backgroundColor,
 
-    // Methods
+    // Cell event handlers
     handleCellMouseEnter,
     handleCellMouseLeave,
     handleCellClick,
+
+    // Tooltip event handlers
+    handleTooltipMouseEnter,
+    handleTooltipMouseLeave,
+    handleTooltipClick,
+
+    // Global handlers
+    handleOutsideClick,
+
+    // Cleanup
     cleanup,
   };
 }

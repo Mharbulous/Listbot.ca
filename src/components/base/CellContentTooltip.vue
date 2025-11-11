@@ -2,6 +2,7 @@
   <Transition name="fade">
     <div
       v-if="isVisible"
+      ref="tooltipElement"
       class="cell-content-tooltip"
       :style="{
         top: position.top,
@@ -9,6 +10,9 @@
         opacity: opacity,
         backgroundColor: backgroundColor,
       }"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
+      @click.stop="handleClick"
     >
       {{ content }}
     </div>
@@ -16,6 +20,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 defineProps({
   isVisible: {
     type: Boolean,
@@ -39,6 +45,24 @@ defineProps({
     default: 'white',
   },
 });
+
+const emit = defineEmits(['mouseenter', 'mouseleave', 'click']);
+
+const tooltipElement = ref(null);
+
+const handleMouseEnter = () => {
+  emit('mouseenter');
+};
+
+const handleMouseLeave = () => {
+  emit('mouseleave');
+};
+
+const handleClick = (event) => {
+  // Allow text selection - don't close tooltip when clicking on it
+  event.stopPropagation();
+  emit('click', event);
+};
 </script>
 
 <style scoped>
@@ -64,8 +88,10 @@ defineProps({
     0 2px 8px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05);
 
-  /* Prevent interaction */
-  pointer-events: none;
+  /* Allow interaction for text selection */
+  pointer-events: auto;
+  user-select: text;
+  cursor: text;
 
   /* Slight border radius to soften edges */
   border-radius: 4px;
