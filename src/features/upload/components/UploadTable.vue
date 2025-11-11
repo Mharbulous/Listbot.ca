@@ -14,6 +14,7 @@
       @deselect-all="handleDeselectAll"
       @upload="handleUpload"
       @clear-queue="handleClearQueue"
+      @files-dropped="handleFilesDropped"
     />
 
     <!-- EMPTY STATE (shown when isEmpty === true) -->
@@ -288,6 +289,11 @@ const handleUpload = () => {
 // Handle clear queue
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+// Handle files dropped (from dropzone in virtualizer)
+const handleFilesDropped = (files) => {
+  emit('files-dropped', files);
 };
 </script>
 
