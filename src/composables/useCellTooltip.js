@@ -2,7 +2,7 @@ import { ref, computed } from 'vue';
 
 /**
  * Composable for managing cell content tooltips
- * Shows tooltip for truncated cell content after 1-second hover
+ * Shows tooltip for all cells with content after 1-second hover or immediate on click
  *
  * @returns {Object} Tooltip state and methods
  */
@@ -122,21 +122,16 @@ export function useCellTooltip() {
       hideTimer = null;
     }
 
-    // Check if content is truncated
-    if (!isTruncated(cellElement)) {
-      // Reset cursor for non-truncated cells
+    // Get the text content
+    const text = getTextContent(cellElement);
+    if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
+      // Reset cursor for empty cells or t.b.d. cells
       cellElement.style.cursor = '';
       return;
     }
 
-    // Set help cursor to indicate truncated content can be viewed
+    // Set help cursor to indicate content can be viewed in tooltip
     cellElement.style.cursor = 'help';
-
-    // Get the text content
-    const text = getTextContent(cellElement);
-    if (!text || text.trim() === '') {
-      return;
-    }
 
     // If tooltip is already visible for this cell, just update hover state
     if (isVisible.value && currentCellElement === cellElement) {
@@ -180,14 +175,9 @@ export function useCellTooltip() {
    * @param {string} bgColor - The background color of the row
    */
   const handleCellClick = (event, cellElement, bgColor = 'white') => {
-    // Check if content is truncated
-    if (!isTruncated(cellElement)) {
-      return;
-    }
-
     // Get the text content
     const text = getTextContent(cellElement);
-    if (!text || text.trim() === '') {
+    if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
       return;
     }
 
