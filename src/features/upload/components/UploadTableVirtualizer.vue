@@ -170,15 +170,6 @@ watch(
     if (newLength > (oldLength || 0)) {
       // Reset first render flag when new files are added
       firstRenderLogged = false;
-
-      // Use global queueT0 if available
-      if (window.queueT0) {
-        const elapsed = performance.now() - window.queueT0;
-        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Files ready for table render`, {
-          filesAdded: newLength - (oldLength || 0),
-          totalFiles: newLength,
-        });
-      }
     }
   }
 );
@@ -191,8 +182,8 @@ watch(
   () => {
     // Track render completion relative to current active T=0
     nextTick(() => {
-      // Track first render after queue addition (only once per queue operation)
-      if (window.queueT0 && !firstRenderLogged && !isScrolling) {
+      // Track first render ONLY after ALL files have been added to queue
+      if (window.queueT0 && window.queueAdditionComplete && !firstRenderLogged && !isScrolling) {
         const elapsed = performance.now() - window.queueT0;
         console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - First table render finished`, {
           renderedRows: virtualItems.value.length,
@@ -202,8 +193,9 @@ watch(
         });
         firstRenderLogged = true; // Mark as logged
 
-        // Clear queueT0 after first render is complete
+        // Clear queue metrics flags after first render is complete
         window.queueT0 = null;
+        window.queueAdditionComplete = false;
       } else if (scrollT0 && isScrolling) {
         // Rendering during/after scroll
         const elapsed = performance.now() - scrollT0;
