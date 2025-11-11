@@ -136,9 +136,9 @@ watch(
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #059669; /* Dark green checkmark */
-  font-size: 16px;
-  font-weight: bold;
+  color: #2196f3; /* Blue checkmark to match ready status */
+  font-size: 18px;
+  font-weight: 900;
   line-height: 1;
 }
 
@@ -153,9 +153,9 @@ watch(
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #059669; /* Dark green dash for indeterminate */
-  font-size: 16px;
-  font-weight: bold;
+  color: #2196f3; /* Blue dash for indeterminate to match ready status */
+  font-size: 18px;
+  font-weight: 900;
   line-height: 1;
 }
 
