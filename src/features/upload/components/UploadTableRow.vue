@@ -149,6 +149,7 @@ const handleMouseLeave = () => {
 <style scoped>
 .upload-table-row {
   display: flex;
+  height: 48px; /* Must match ROW_HEIGHT in UploadTableVirtualizer.vue */
   border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.15s ease;
   cursor: default;
