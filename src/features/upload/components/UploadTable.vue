@@ -221,20 +221,30 @@ const handleDrop = async (event) => {
 
   // Get all dropped items
   const items = Array.from(event.dataTransfer.items);
+  console.log(`[UploadTable] Drop event - ${items.length} items in dataTransfer`);
+
   const allFiles = [];
 
   // Process each dropped item
-  for (const item of items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    console.log(`[UploadTable] Processing item ${i + 1}/${items.length} - kind: ${item.kind}, type: ${item.type}`);
+
     if (item.kind === 'file') {
       const entry = item.webkitGetAsEntry();
       if (entry) {
+        console.log(`[UploadTable] Got entry for item ${i + 1}: isFile=${entry.isFile}, isDirectory=${entry.isDirectory}, name=${entry.name}`);
         await traverseFileTree(entry, allFiles);
+        console.log(`[UploadTable] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+      } else {
+        console.warn(`[UploadTable] webkitGetAsEntry returned null for item ${i + 1}`);
       }
     }
   }
 
+  console.log(`[UploadTable] Finished processing - ${allFiles.length} files collected`);
   if (allFiles.length > 0) {
-    console.log(`[UploadTable] Dropped ${allFiles.length} files`);
+    console.log(`[UploadTable] Emitting files-dropped event with ${allFiles.length} files`);
     emit('files-dropped', allFiles);
   }
 };
