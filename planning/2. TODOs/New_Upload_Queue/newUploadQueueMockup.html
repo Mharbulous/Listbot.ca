@@ -74,9 +74,10 @@
             </div>
 
             <!-- Right-side control: Clear Queue (Destructive) -->
+            <!-- This button now clears items that are *unchecked* or performs bulk removal of *selected* items, depending on the app logic -->
             <button type="button" class="inline-flex items-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                 <ion-icon name="trash-outline" class="w-5 h-5 mr-2 -ml-1 text-red-500"></ion-icon>
-                Clear queue
+                Clear selected (0)
             </button>
         </div>
 
@@ -91,21 +92,27 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
+                                <!-- Checkbox/Select All Column -->
+                                <th scope="col" class="w-12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input id="select-all" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="select-all" class="sr-only">Select All</label>
+                                </th>
                                 <!-- Note: All headers are Sentence case -->
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File name</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folder path</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                <!-- Added a visually hidden header for the remove column for accessibility -->
-                                <th scope="col" class="relative px-6 py-3">
-                                    <span class="sr-only">Remove</span>
-                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <!-- Data rows -->
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-1" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-1" class="sr-only">Select file 1</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-02-25 LF IMPARK re CC expiry.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">42.16 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -128,14 +135,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-2" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-2" class="sr-only">Select file 2</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-04 RBC STMT BSNS ACC $713.00.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">118.75 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -158,14 +164,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-3" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-3" class="sr-only">Select file 3</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-06 IMPARK CC renewal notice.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">89.64 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -188,14 +193,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-4" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-4" class="sr-only">Select file 4</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-06 Lf Impark re CC expiry notice .pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">33.29 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -218,14 +222,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-5" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-5" class="sr-only">Select file 5</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-13 New RBC CC PKG.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">321.35 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -248,14 +251,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-6" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-6" class="sr-only">Select file 6</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-21 RBC CC package.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">183.28 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -278,14 +280,13 @@
                                         </button>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
-                                </td>
                             </tr>
                             <tr>
+                                <!-- Checkbox Column -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <input id="file-7" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                    <label for="file-7" class="sr-only">Select file 7</label>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-21 RBC SLIP.pdf</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">44.57 KB</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
@@ -307,12 +308,6 @@
                                             <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <!-- Destructive action -->
-                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
-                                    </button>
                                 </td>
                             </tr>
                             <!-- Add more rows as needed -->
@@ -347,7 +342,7 @@
             -->
             <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-green-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                 <ion-icon name="arrow-up-circle-outline" class="w-5 h-5 mr-2 -ml-1"></ion-icon>
-                Upload 32 files (5.97 MB)
+                Upload 32 selected files (5.97 MB)
             </button>
         </footer>
 
