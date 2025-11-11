@@ -52,30 +52,36 @@
       @deselect-all="handleDeselectAll"
     />
 
-    <!-- Virtual container with dynamic height based on total content size -->
-    <div class="virtual-container" :style="{ height: totalSize + 'px' }">
-      <!-- Only render visible rows + overscan buffer -->
-      <div
-        v-for="virtualRow in virtualItems"
-        :key="virtualRow.key"
-        class="virtual-row"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: virtualRow.size + 'px',
-          transform: `translateY(${virtualRow.start}px)`,
-        }"
-      >
-        <UploadTableRow
-          :file="props.files[virtualRow.index]"
-          :scrollbar-width="0"
-          @cancel="handleCancel"
-          @undo="handleUndo"
-        />
+    <!-- Content wrapper for rows (no flex properties) -->
+    <div class="content-wrapper">
+      <!-- Virtual container with dynamic height based on total content size -->
+      <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+        <!-- Only render visible rows + overscan buffer -->
+        <div
+          v-for="virtualRow in virtualItems"
+          :key="virtualRow.key"
+          class="virtual-row"
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: virtualRow.size + 'px',
+            transform: `translateY(${virtualRow.start}px)`,
+          }"
+        >
+          <UploadTableRow
+            :file="props.files[virtualRow.index]"
+            :scrollbar-width="0"
+            @cancel="handleCancel"
+            @undo="handleUndo"
+          />
+        </div>
       </div>
     </div>
+
+    <!-- Dropzone Spacer (fills gap between last row and footer) -->
+    <UploadTableDropzone @files-dropped="handleFilesDropped" />
 
     <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
     <UploadTableFooter
@@ -92,6 +98,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
+import UploadTableDropzone from './UploadTableDropzone.vue';
 
 // Component configuration
 defineOptions({
@@ -121,7 +128,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue']);
+const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'files-dropped']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
@@ -236,6 +243,10 @@ const handleClearQueue = () => {
   emit('clear-queue');
 };
 
+const handleFilesDropped = (files) => {
+  emit('files-dropped', files);
+};
+
 // ============================================================================
 // SCROLL METRICS: Track scroll start, stop, and rendering
 // ============================================================================
@@ -282,6 +293,13 @@ defineExpose({
   position: relative;
   overflow-y: auto;
   min-height: 0; /* Allow flex shrinking and enable scrolling */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content wrapper for virtual rows (no flex properties) */
+.content-wrapper {
+  width: 100%;
 }
 
 /* Virtual scrolling container - contains all virtualized rows */
