@@ -31,7 +31,7 @@
       class="row-cell skip-cell"
       :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }" >
       <button
-        class="skip-btn"
+        :class="['skip-btn', getButtonClass]"
         :disabled="file.status === 'completed'"
         @click="handleCancelOrUndo"
         :title="getButtonTitle"
@@ -91,6 +91,17 @@ const getButtonTitle = computed(() => {
     return 'Undo skip';
   } else {
     return 'Cancel upload';
+  }
+});
+
+// Compute button class based on file status
+const getButtonClass = computed(() => {
+  if (props.file.status === 'completed') {
+    return 'icon-trash';
+  } else if (props.file.status === 'skip') {
+    return 'icon-undo';
+  } else {
+    return 'icon-cancel';
   }
 });
 
@@ -204,5 +215,14 @@ const handleCancelOrUndo = () => {
 .skip-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* Emoji size adjustments */
+.skip-btn.icon-cancel {
+  font-size: 0.625rem; /* 50% smaller than 1.25rem */
+}
+
+.skip-btn.icon-undo {
+  font-size: 1rem; /* 20% smaller than 1.25rem */
 }
 </style>

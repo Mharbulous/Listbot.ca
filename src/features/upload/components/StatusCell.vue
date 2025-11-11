@@ -46,8 +46,8 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   flex-shrink: 0;
 }
