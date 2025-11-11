@@ -133,22 +133,48 @@ const handleCheckboxToggle = (event) => {
   padding: 12px 8px;
 }
 
-/* Checkbox Styling with Green Checkmark */
+/* Checkbox Styling with Dark Green Checkmark in White Box with Black Border */
 .file-checkbox {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #10b981; /* Green color for checkmark */
-  transition: transform 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.file-checkbox:checked {
+  background-color: white;
+  border-color: #000000;
+}
+
+.file-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #059669; /* Dark green checkmark */
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .file-checkbox:hover:not(:disabled) {
   transform: scale(1.1);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .file-checkbox:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  background-color: #f3f4f6;
 }
 
 /* Actions Cell */
