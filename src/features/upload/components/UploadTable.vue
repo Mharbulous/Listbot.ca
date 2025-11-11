@@ -239,7 +239,7 @@ const handleDrop = async (event) => {
   }
 };
 
-// Recursive function to traverse folder tree
+// Recursive function to traverse folder tree (including subfolders)
 const traverseFileTree = async (entry, filesList) => {
   if (entry.isFile) {
     // It's a file - get the File object
@@ -251,15 +251,25 @@ const traverseFileTree = async (entry, filesList) => {
     });
   } else if (entry.isDirectory) {
     // It's a directory - read its contents
+    // IMPORTANT: readEntries() may not return all entries in one call
+    // We must call it repeatedly until it returns an empty array
     const dirReader = entry.createReader();
-    return new Promise((resolve) => {
-      dirReader.readEntries(async (entries) => {
+    const readAllEntries = async () => {
+      const entries = await new Promise((resolve) => {
+        dirReader.readEntries(resolve);
+      });
+
+      if (entries.length > 0) {
+        // Process these entries
         for (const childEntry of entries) {
           await traverseFileTree(childEntry, filesList);
         }
-        resolve();
-      });
-    });
+        // Read more entries (recursive call until empty)
+        await readAllEntries();
+      }
+    };
+
+    await readAllEntries();
   }
 };
 
