@@ -298,7 +298,16 @@ const handleDrop = async (event) => {
       await traverseFileTree(entry, allFiles);
       console.log(`[UploadTableVirtualizer] After processing item ${i + 1}: ${allFiles.length} total files collected`);
     } else {
-      console.warn(`[UploadTableVirtualizer] webkitGetAsEntry returned null for item ${i + 1}`);
+      // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
+      console.log(`[UploadTableVirtualizer] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
+      const file = item.getAsFile();
+      if (file) {
+        console.log(`[UploadTableVirtualizer] Got file via getAsFile(): ${file.name}`);
+        allFiles.push(file);
+        console.log(`[UploadTableVirtualizer] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+      } else {
+        console.warn(`[UploadTableVirtualizer] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
+      }
     }
   }
 

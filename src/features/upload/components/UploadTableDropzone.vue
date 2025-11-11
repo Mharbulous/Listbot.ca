@@ -65,7 +65,16 @@ const handleDrop = async (event) => {
       await traverseFileTree(entry, allFiles);
       console.log(`[UploadTableDropzone] After processing item ${i + 1}: ${allFiles.length} total files collected`);
     } else {
-      console.warn(`[UploadTableDropzone] webkitGetAsEntry returned null for item ${i + 1}`);
+      // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
+      console.log(`[UploadTableDropzone] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
+      const file = item.getAsFile();
+      if (file) {
+        console.log(`[UploadTableDropzone] Got file via getAsFile(): ${file.name}`);
+        allFiles.push(file);
+        console.log(`[UploadTableDropzone] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+      } else {
+        console.warn(`[UploadTableDropzone] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
+      }
     }
   }
 
