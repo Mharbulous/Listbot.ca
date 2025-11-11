@@ -19,7 +19,7 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) =>
-      ['ready', 'uploading', 'completed', 'skipped', 'skip', 'error', 'uploadMetadataOnly', 'unknown'].includes(value),
+      ['ready', 'uploading', 'completed', 'skipped', 'skip', 'error', 'uploadMetadataOnly', 'unknown', 'n/a'].includes(value),
   },
 });
 
@@ -33,6 +33,7 @@ const statusTextMap = {
   error: 'Failed',
   uploadMetadataOnly: 'Metadata Only',
   unknown: 'Unknown',
+  'n/a': 'N/A',
 };
 
 const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
@@ -86,6 +87,10 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
 .status-unknown {
   background-color: #9e9e9e; /* Gray */
+}
+
+.status-n\/a {
+  background-color: #ff9800; /* Orange */
 }
 
 .status-text {

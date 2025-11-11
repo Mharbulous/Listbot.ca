@@ -2,7 +2,11 @@
   <div class="upload-table-row" @dblclick="handleRowDoubleClick">
     <!-- Select Column (60px) - FIRST COLUMN -->
     <div class="row-cell select-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
+      <!-- Show ⛔ emoji for unsupported files (n/a status) -->
+      <span v-if="file.status === 'n/a'" class="not-uploadable-icon" title="File type not supported">⛔</span>
+      <!-- Show checkbox for all other files -->
       <input
+        v-else
         type="checkbox"
         class="file-checkbox"
         :checked="isSelected"
@@ -173,6 +177,13 @@ const handleMouseLeave = () => {
 .select-cell {
   justify-content: center;
   padding: 9px 8px;
+}
+
+/* Not uploadable icon (⛔ emoji for unsupported files) */
+.not-uploadable-icon {
+  font-size: 20px;
+  user-select: none;
+  cursor: not-allowed;
 }
 
 /* Checkbox Styling with Dark Green Checkmark in White Box with Black Border */
