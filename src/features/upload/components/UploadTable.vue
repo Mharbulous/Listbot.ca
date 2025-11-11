@@ -1,7 +1,12 @@
 <template>
   <div class="upload-table-container">
     <!-- Sticky Header -->
-    <UploadTableHeader />
+    <UploadTableHeader
+      :all-selected="allFilesSelected"
+      :some-selected="someFilesSelected"
+      @select-all="handleSelectAll"
+      @deselect-all="handleDeselectAll"
+    />
 
     <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
     <div ref="scrollContainerRef" class="scroll-container">
@@ -86,7 +91,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'upload', 'files-dropped']);
+const emit = defineEmits(['cancel', 'undo', 'upload', 'files-dropped', 'select-all', 'deselect-all']);
 
 // Scrollbar width detection
 const scrollContainerRef = ref(null);
@@ -94,6 +99,35 @@ const scrollbarWidth = ref(0);
 
 // Drag-drop state for empty state
 const isDragOver = ref(false);
+
+// Selection state for Select All checkbox
+const allFilesSelected = computed(() => {
+  if (props.files.length === 0) return false;
+  // Filter out completed files (can't be toggled)
+  const selectableFiles = props.files.filter((f) => f.status !== 'completed');
+  if (selectableFiles.length === 0) return false;
+  // All selectable files must NOT be skipped
+  return selectableFiles.every((f) => f.status !== 'skip');
+});
+
+const someFilesSelected = computed(() => {
+  if (props.files.length === 0) return false;
+  const selectableFiles = props.files.filter((f) => f.status !== 'completed');
+  if (selectableFiles.length === 0) return false;
+  const selectedCount = selectableFiles.filter((f) => f.status !== 'skip').length;
+  // Some (but not all) files are selected
+  return selectedCount > 0 && selectedCount < selectableFiles.length;
+});
+
+// Handle Select All
+const handleSelectAll = () => {
+  emit('select-all');
+};
+
+// Handle Deselect All
+const handleDeselectAll = () => {
+  emit('deselect-all');
+};
 
 const calculateScrollbarWidth = () => {
   if (!scrollContainerRef.value) return;
