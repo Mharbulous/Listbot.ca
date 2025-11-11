@@ -57,7 +57,7 @@
     </div>
 
     <!-- Footer -->
-    <UploadTableFooter :stats="footerStats" @upload="handleUpload" />
+    <UploadTableFooter :stats="footerStats" @upload="handleUpload" @clear-queue="handleClearQueue" />
 
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
@@ -91,7 +91,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'upload', 'files-dropped', 'select-all', 'deselect-all']);
+const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all']);
 
 // Scrollbar width detection
 const scrollContainerRef = ref(null);
@@ -281,6 +281,11 @@ const handleUndo = (fileId) => {
 // Handle upload
 const handleUpload = () => {
   emit('upload');
+};
+
+// Handle clear queue
+const handleClearQueue = () => {
+  emit('clear-queue');
 };
 </script>
 

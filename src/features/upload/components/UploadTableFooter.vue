@@ -26,6 +26,16 @@
 
       <!-- Upload Button (Right) -->
       <div class="footer-right">
+        <v-btn
+          color="white"
+          variant="elevated"
+          size="large"
+          class="clear-queue-btn text-black"
+          @click="handleClearQueue"
+        >
+          <v-icon start>mdi-broom</v-icon>
+          Clear {{ stats.total }} files
+        </v-btn>
         <v-btn color="success" variant="elevated" size="large" class="upload-btn" @click="handleUpload">
           <v-icon start>mdi-arrow-up-circle-outline</v-icon>
           Upload {{ stats.total }} files ({{ stats.totalSize }})
@@ -62,11 +72,16 @@ defineProps({
 });
 
 // Emits
-const emit = defineEmits(['upload']);
+const emit = defineEmits(['upload', 'clear-queue']);
 
 // Handle upload
 const handleUpload = () => {
   emit('upload');
+};
+
+// Handle clear queue
+const handleClearQueue = () => {
+  emit('clear-queue');
 };
 </script>
 
@@ -100,6 +115,14 @@ const handleUpload = () => {
 .footer-right {
   display: flex;
   align-items: center;
+  gap: 1rem;
+}
+
+.clear-queue-btn {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
 }
 
 .upload-btn {
