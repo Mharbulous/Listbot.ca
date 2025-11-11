@@ -134,8 +134,8 @@ const calculateScrollbarWidth = () => {
   let container = null;
   if (props.isEmpty && scrollContainerRef.value) {
     container = scrollContainerRef.value;
-  } else if (!props.isEmpty && virtualizerRef.value?.scrollContainerRef) {
-    container = virtualizerRef.value.scrollContainerRef;
+  } else if (!props.isEmpty && virtualizerRef.value?.scrollContainerRef?.value) {
+    container = virtualizerRef.value.scrollContainerRef.value;
   }
 
   if (!container) return;
