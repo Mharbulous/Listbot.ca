@@ -42,8 +42,7 @@
 -->
 
 <template>
-  <!-- Simple Scrollable Body (NO VIRTUALIZATION - Phase 1.0) -->
-  <!-- Phase 1.5 will replace this with TanStack Virtual scrolling -->
+  <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
   <div ref="scrollContainerRef" class="scroll-container">
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
     <UploadTableHeader
@@ -53,16 +52,29 @@
       @deselect-all="handleDeselectAll"
     />
 
-    <div class="table-body">
-      <!-- Standard rendering: Render ALL rows -->
-      <UploadTableRow
-        v-for="file in props.files"
-        :key="file.id"
-        :file="file"
-        :scrollbar-width="0"
-        @cancel="handleCancel"
-        @undo="handleUndo"
-      />
+    <!-- Virtual container with dynamic height based on total content size -->
+    <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+      <!-- Only render visible rows + overscan buffer -->
+      <div
+        v-for="virtualRow in virtualItems"
+        :key="virtualRow.key"
+        class="virtual-row"
+        :style="{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: virtualRow.size + 'px',
+          transform: `translateY(${virtualRow.start}px)`,
+        }"
+      >
+        <UploadTableRow
+          :file="props.files[virtualRow.index]"
+          :scrollbar-width="0"
+          @cancel="handleCancel"
+          @undo="handleUndo"
+        />
+      </div>
     </div>
 
     <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
@@ -75,7 +87,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
@@ -110,8 +123,24 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue']);
 
-// Scroll container ref (will be used by TanStack Virtual in Phase 1.5)
+// Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
+
+// Row height configuration (48px matches UploadTableRow height)
+const ROW_HEIGHT = 48;
+
+// Create virtualizer instance
+const rowVirtualizer = useVirtualizer({
+  count: computed(() => props.files.length),
+  getScrollElement: () => scrollContainerRef.value,
+  estimateSize: () => ROW_HEIGHT,
+  overscan: 5, // Render 5 extra rows above/below viewport for smooth scrolling
+  enableSmoothScroll: true,
+});
+
+// Computed properties for virtual items and total size
+const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
 
 // Event handlers
 const handleCancel = (fileId) => {
@@ -138,42 +167,10 @@ const handleClearQueue = () => {
   emit('clear-queue');
 };
 
-// Expose scroll container ref (kept for compatibility, but no longer used for scrollbar width)
+// Expose scroll container ref for parent component
 defineExpose({
   scrollContainerRef,
 });
-
-// ============================================================================
-// PHASE 1.5 PREVIEW: Virtual Scrolling Integration
-// ============================================================================
-// When Phase 1.5 begins, this file will be modified to add:
-//
-// 1. Import TanStack Virtual:
-//    import { useVirtualizer } from '@tanstack/vue-virtual';
-//
-// 2. Create virtualizer instance:
-//    const rowVirtualizer = useVirtualizer({
-//      count: computed(() => props.files.length),
-//      getScrollElement: () => scrollContainerRef.value,
-//      estimateSize: () => ROW_HEIGHT,
-//      overscan: 5,
-//    });
-//
-// 3. Replace v-for with virtual items loop:
-//    <div
-//      v-for="virtualRow in rowVirtualizer.getVirtualItems()"
-//      :key="virtualRow.key"
-//      :style="{
-//        position: 'absolute',
-//        transform: `translateY(${virtualRow.start}px)`,
-//        height: `${virtualRow.size}px`
-//      }"
-//    >
-//      <UploadTableRow :file="props.files[virtualRow.index]" />
-//    </div>
-//
-// Expected file size after Phase 1.5: ~300-400 lines
-// ============================================================================
 </script>
 
 <style scoped>
@@ -184,23 +181,18 @@ defineExpose({
   min-height: 0; /* Allow flex shrinking and enable scrolling */
 }
 
-.table-body {
-  display: flex;
-  flex-direction: column;
-  /* Phase 1.5 will add: position: relative; for absolute positioned rows */
-}
-
-/* Phase 1.5 will add styles for virtual scrolling:
+/* Virtual scrolling container - contains all virtualized rows */
 .virtual-container {
   position: relative;
   width: 100%;
 }
 
+/* Virtual row wrapper - absolutely positioned using CSS transform */
 .virtual-row {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
+  will-change: transform; /* Optimize for GPU-accelerated transforms */
 }
-*/
 </style>
