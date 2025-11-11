@@ -348,10 +348,13 @@ const handleClearQueue = () => {
 .empty-state-container {
   padding: 2rem;
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .dropzone-empty {
-  min-height: 350px;
+  flex: 1; /* Fill all available space */
   border: 3px dashed #cbd5e1;
   border-radius: 12px;
   background: white;
@@ -413,10 +416,6 @@ const handleClearQueue = () => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .dropzone-empty {
-    min-height: 300px;
-  }
-
   .dropzone-text-primary {
     font-size: 1rem;
   }
@@ -428,7 +427,6 @@ const handleClearQueue = () => {
   }
 
   .dropzone-empty {
-    min-height: 250px;
     padding: 1.5rem 1rem;
   }
 
