@@ -64,6 +64,13 @@
         @undo="handleUndo"
       />
     </div>
+
+    <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
+    <UploadTableFooter
+      :stats="props.footerStats"
+      @upload="handleUpload"
+      @clear-queue="handleClearQueue"
+    />
   </div>
 </template>
 
@@ -71,6 +78,7 @@
 import { ref } from 'vue';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
+import UploadTableFooter from './UploadTableFooter.vue';
 
 // Component configuration
 defineOptions({
@@ -92,10 +100,15 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  footerStats: {
+    type: Object,
+    required: true,
+    default: () => ({}),
+  },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all']);
+const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue']);
 
 // Scroll container ref (will be used by TanStack Virtual in Phase 1.5)
 const scrollContainerRef = ref(null);
@@ -115,6 +128,14 @@ const handleSelectAll = () => {
 
 const handleDeselectAll = () => {
   emit('deselect-all');
+};
+
+const handleUpload = () => {
+  emit('upload');
+};
+
+const handleClearQueue = () => {
+  emit('clear-queue');
 };
 
 // Expose scroll container ref (kept for compatibility, but no longer used for scrollbar width)

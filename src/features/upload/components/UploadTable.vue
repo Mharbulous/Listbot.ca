@@ -7,10 +7,13 @@
       :files="props.files"
       :all-selected="allFilesSelected"
       :some-selected="someFilesSelected"
+      :footer-stats="footerStats"
       @cancel="handleCancel"
       @undo="handleUndo"
       @select-all="handleSelectAll"
       @deselect-all="handleDeselectAll"
+      @upload="handleUpload"
+      @clear-queue="handleClearQueue"
     />
 
     <!-- EMPTY STATE (shown when isEmpty === true) -->
@@ -49,9 +52,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <UploadTableFooter :stats="footerStats" :scrollbar-width="scrollbarWidth" @upload="handleUpload" @clear-queue="handleClearQueue" />
-
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
       {{ props.isEmpty ? 'Upload queue is empty. Drag and drop files or use the + Add to Queue button in the top left of the header to add files.' : `${props.files.length} files in upload queue` }}
@@ -60,9 +60,8 @@
 </template>
 
 <script setup>
-import { computed, watch, ref, onMounted, onUnmounted } from 'vue';
+import { computed, watch, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
-import UploadTableFooter from './UploadTableFooter.vue';
 
 // Component configuration
 defineOptions({
@@ -85,10 +84,9 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all']);
 
-// Scrollbar width detection
+// Refs
 const scrollContainerRef = ref(null); // For empty state
 const virtualizerRef = ref(null); // For virtualized content
-const scrollbarWidth = ref(0);
 
 // Drag-drop state for empty state
 const isDragOver = ref(false);
@@ -122,35 +120,6 @@ const handleDeselectAll = () => {
   emit('deselect-all');
 };
 
-const calculateScrollbarWidth = () => {
-  // Get scroll container (only needed for footer alignment in empty state)
-  // When files are present, the header is inside the virtualizer's scroll container,
-  // so it automatically aligns. Footer still needs scrollbar width in both cases.
-  let container = null;
-  if (props.isEmpty && scrollContainerRef.value) {
-    container = scrollContainerRef.value;
-  } else if (!props.isEmpty && virtualizerRef.value?.scrollContainerRef?.value) {
-    container = virtualizerRef.value.scrollContainerRef.value;
-  }
-
-  if (!container) return;
-
-  // Calculate scrollbar width as the difference between offsetWidth and clientWidth
-  scrollbarWidth.value = container.offsetWidth - container.clientWidth;
-  console.log('[UploadTable] Scrollbar width detected:', scrollbarWidth.value, 'px');
-};
-
-onMounted(() => {
-  // Calculate scrollbar width on mount
-  calculateScrollbarWidth();
-  // Recalculate on window resize
-  window.addEventListener('resize', calculateScrollbarWidth);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calculateScrollbarWidth);
-});
-
 // Debug: Watch files prop
 watch(
   () => props.files,
@@ -159,8 +128,6 @@ watch(
     if (newFiles.length > 0 && newFiles.length <= 3) {
       console.log('[UploadTable] First file:', newFiles[0]);
     }
-    // Recalculate scrollbar width when files change (scrollbar may appear/disappear)
-    setTimeout(calculateScrollbarWidth, 0);
   },
   { immediate: true }
 );
