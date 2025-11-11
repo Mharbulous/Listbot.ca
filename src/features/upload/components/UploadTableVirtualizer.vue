@@ -45,13 +45,21 @@
   <!-- Simple Scrollable Body (NO VIRTUALIZATION - Phase 1.0) -->
   <!-- Phase 1.5 will replace this with TanStack Virtual scrolling -->
   <div ref="scrollContainerRef" class="scroll-container">
+    <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
+    <UploadTableHeader
+      :all-selected="props.allSelected"
+      :some-selected="props.someSelected"
+      @select-all="handleSelectAll"
+      @deselect-all="handleDeselectAll"
+    />
+
     <div class="table-body">
       <!-- Standard rendering: Render ALL rows -->
       <UploadTableRow
         v-for="file in props.files"
         :key="file.id"
         :file="file"
-        :scrollbar-width="props.scrollbarWidth"
+        :scrollbar-width="0"
         @cancel="handleCancel"
         @undo="handleUndo"
       />
@@ -61,6 +69,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 
 // Component configuration
@@ -75,15 +84,18 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
-  scrollbarWidth: {
-    type: Number,
-    required: true,
-    default: 0,
+  allSelected: {
+    type: Boolean,
+    default: false,
+  },
+  someSelected: {
+    type: Boolean,
+    default: false,
   },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo']);
+const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all']);
 
 // Scroll container ref (will be used by TanStack Virtual in Phase 1.5)
 const scrollContainerRef = ref(null);
@@ -97,7 +109,15 @@ const handleUndo = (fileId) => {
   emit('undo', fileId);
 };
 
-// Expose scroll container ref for parent to calculate scrollbar width
+const handleSelectAll = () => {
+  emit('select-all');
+};
+
+const handleDeselectAll = () => {
+  emit('deselect-all');
+};
+
+// Expose scroll container ref (kept for compatibility, but no longer used for scrollbar width)
 defineExpose({
   scrollContainerRef,
 });
