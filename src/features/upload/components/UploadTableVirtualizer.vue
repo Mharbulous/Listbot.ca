@@ -81,7 +81,9 @@
     </div>
 
     <!-- Dropzone Spacer (fills gap between last row and footer) -->
-    <UploadTableDropzone @files-dropped="handleFilesDropped" />
+    <div class="dropzone-cell">
+      <UploadTableDropzone @files-dropped="handleFilesDropped" />
+    </div>
 
     <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
     <UploadTableFooter
@@ -315,5 +317,10 @@ defineExpose({
   left: 0;
   width: 100%;
   will-change: transform; /* Optimize for GPU-accelerated transforms */
+}
+
+/* Dropzone cell wrapper - adds padding around the dropzone */
+.dropzone-cell {
+  padding: 0 1rem; /* Horizontal padding around dropzone */
 }
 </style>
