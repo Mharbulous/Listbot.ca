@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-table-header">
+  <div class="upload-table-header" :style="{ paddingRight: scrollbarWidth + 'px' }">
     <!-- Select Column (60px) - FIRST COLUMN with Select All checkbox -->
     <div class="header-cell select-header-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
       <input
@@ -44,6 +44,10 @@ const props = defineProps({
   someSelected: {
     type: Boolean,
     default: false,
+  },
+  scrollbarWidth: {
+    type: Number,
+    default: 0,
   },
 });
 
