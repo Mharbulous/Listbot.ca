@@ -36,11 +36,6 @@
               @click="triggerFileSelect"
             />
             <v-list-item
-              prepend-icon="mdi-folder-open"
-              title="Folder"
-              @click="triggerFolderSelect"
-            />
-            <v-list-item
               prepend-icon="mdi-folder-multiple"
               title="Folder w. Subfolders"
               @click="triggerFolderRecursiveSelect"
@@ -232,10 +227,6 @@ function navigateToMatter() {
 // File selection triggers for Testing page
 function triggerFileSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-file-select'));
-}
-
-function triggerFolderSelect() {
-  window.dispatchEvent(new CustomEvent('testing-trigger-folder-select'));
 }
 
 function triggerFolderRecursiveSelect() {
