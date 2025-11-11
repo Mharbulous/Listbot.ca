@@ -1,13 +1,10 @@
 <template>
   <div class="upload-table-header">
-    <!-- Actions Column (100px - matches Skip column) -->
-    <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
 
     <!-- Size Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Size</div>
-
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
 
     <!-- Folder Path Column (min-width to fit text without wrapping) -->
     <div class="header-cell" style="min-width: 130px; width: 130px; flex-shrink: 0">Folder Path</div>
@@ -15,17 +12,12 @@
     <!-- Status Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
 
-    <!-- Skip Column (100px - CLEAR button) -->
-    <div class="header-cell clear-queue-cell" style="width: 100px; flex-shrink: 0">
-      <v-btn
-        color="error"
-        variant="outlined"
-        size="small"
-        class="clear-btn"
-        @click="handleClearQueue"
-      >
-        CLEAR
-      </v-btn>
+    <!-- Actions Column (100px) -->
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
+
+    <!-- Remove Column (100px) -->
+    <div class="header-cell" style="width: 100px; flex-shrink: 0">
+      <span class="sr-only">Remove</span>
     </div>
   </div>
 </template>
@@ -35,14 +27,6 @@
 defineOptions({
   name: 'UploadTableHeader',
 });
-
-// Emits
-const emit = defineEmits(['clear-queue']);
-
-// Handle CLEAR
-const handleClearQueue = () => {
-  emit('clear-queue');
-};
 </script>
 
 <style scoped>
@@ -72,15 +56,16 @@ const handleClearQueue = () => {
   border-right: none;
 }
 
-.clear-queue-cell {
-  justify-content: center;
-}
-
-.clear-btn {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
+/* Screen reader only class for accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 </style>

@@ -1,19 +1,13 @@
 <template>
   <div class="upload-table-row">
-    <!-- Actions Column (100px - matches Skip column) -->
-    <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
-      <button class="action-btn" title="Preview file" disabled>👁️</button>
-      <button class="action-btn" title="Upload now" disabled>⬆️</button>
+    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
+      {{ file.name }}
     </div>
 
     <!-- Size Column (100px) -->
     <div class="row-cell size-cell" style="width: 100px; flex-shrink: 0">
       {{ formatFileSize(file.size) }}
-    </div>
-
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
-      {{ file.name }}
     </div>
 
     <!-- Folder Path Column (130px) -->
@@ -26,12 +20,18 @@
       <StatusCell :status="file.status" />
     </div>
 
-    <!-- Skip Column (adjusted for scrollbar width) -->
+    <!-- Actions Column (100px) -->
+    <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
+      <button class="action-btn" title="Preview file" disabled>👁️</button>
+      <button class="action-btn" title="Upload now" disabled>⬆️</button>
+    </div>
+
+    <!-- Remove Column (adjusted for scrollbar width) -->
     <div
-      class="row-cell skip-cell"
-      :style="{ width: `${skipColumnWidth}px`, flexShrink: 0 }" >
+      class="row-cell remove-cell"
+      :style="{ width: `${removeColumnWidth}px`, flexShrink: 0 }" >
       <button
-        :class="['skip-btn', getButtonClass]"
+        :class="['remove-btn', getButtonClass]"
         :disabled="file.status === 'completed'"
         @click="handleCancelOrUndo"
         :title="getButtonTitle"
@@ -66,8 +66,8 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo']);
 
-// Compute adjusted skip column width to account for scrollbar
-const skipColumnWidth = computed(() => {
+// Compute adjusted remove column width to account for scrollbar
+const removeColumnWidth = computed(() => {
   // Base width is 100px, reduce by scrollbar width
   return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
 });
@@ -194,12 +194,12 @@ const handleCancelOrUndo = () => {
   font-family: 'Courier New', monospace;
 }
 
-/* Skip Cell */
-.skip-cell {
+/* Remove Cell */
+.remove-cell {
   justify-content: center;
 }
 
-.skip-btn {
+.remove-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -208,21 +208,21 @@ const handleCancelOrUndo = () => {
   transition: transform 0.2s ease;
 }
 
-.skip-btn:not(:disabled):hover {
+.remove-btn:not(:disabled):hover {
   transform: scale(1.2);
 }
 
-.skip-btn:disabled {
+.remove-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
 /* Emoji size adjustments */
-.skip-btn.icon-cancel {
+.remove-btn.icon-cancel {
   font-size: 0.625rem; /* 50% smaller than 1.25rem */
 }
 
-.skip-btn.icon-undo {
+.remove-btn.icon-undo {
   font-size: 1rem; /* 20% smaller than 1.25rem */
 }
 </style>

@@ -11,6 +11,7 @@
     <div class="table-section">
       <!-- Upload Buttons (shown above table) -->
       <div class="table-header-actions">
+        <!-- Left: Add to Queue dropdown -->
         <v-menu location="bottom">
           <template v-slot:activator="{ props: menuProps }">
             <v-btn
@@ -45,6 +46,19 @@
             />
           </v-list>
         </v-menu>
+
+        <!-- Right: Clear Queue button -->
+        <v-btn
+          color="error"
+          size="large"
+          variant="outlined"
+          prepend-icon="mdi-trash-can-outline"
+          class="clear-queue-btn"
+          aria-label="Clear upload queue"
+          @click="handleClearQueue"
+        >
+          Clear Queue
+        </v-btn>
       </div>
 
       <!-- Upload Table with integrated empty state -->
@@ -53,7 +67,6 @@
         :is-empty="uploadQueue.length === 0"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
-        @clear-queue="handleClearQueue"
         @upload="handleUpload"
         @files-dropped="handleFolderRecursiveSelected"
       />
@@ -214,14 +227,21 @@ const handleFolderRecursiveSelect = (event) => {
 
 .table-header-actions {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  padding: 0 0.5rem;
+  padding: 0 1.5rem;
 }
 
 .add-queue-btn {
   min-width: 200px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.025em;
+}
+
+.clear-queue-btn {
+  min-width: 180px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
