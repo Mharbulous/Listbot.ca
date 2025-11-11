@@ -87,11 +87,13 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear entire queue
+   * Clear skipped files from queue (files with status 'skip')
    */
   const clearQueue = () => {
-    uploadQueue.value = [];
-    console.log('[QUEUE] Cleared all files');
+    const beforeCount = uploadQueue.value.length;
+    uploadQueue.value = uploadQueue.value.filter((file) => file.status !== 'skip');
+    const removedCount = beforeCount - uploadQueue.value.length;
+    console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
   };
 
   /**
