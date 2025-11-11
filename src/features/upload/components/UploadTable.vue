@@ -324,10 +324,10 @@ const handleClearQueue = () => {
   flex-direction: column;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 0; /* No border radius for full viewport fill */
   overflow: hidden;
-  margin: 0 auto;
-  max-width: 1200px;
+  margin: 0;
+  width: 100%; /* Fill entire viewport width */
   height: 100%; /* Fill parent container */
   min-height: 0; /* Allow flex shrinking */
 }
