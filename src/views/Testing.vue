@@ -1,13 +1,5 @@
 <template>
   <div class="testing-page">
-    <!-- Upload Buttons Section (shown when queue is empty) -->
-    <UploadButtons
-      v-if="uploadQueue.length === 0"
-      @files-selected="handleFilesSelected"
-      @folder-selected="handleFolderSelected"
-      @folder-recursive-selected="handleFolderRecursiveSelected"
-    />
-
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
       v-if="queueProgress.isQueueing"
@@ -15,8 +7,9 @@
       :total="queueProgress.total"
     />
 
-    <!-- Upload Table (shown when queue has files) -->
-    <div v-if="uploadQueue.length > 0" class="table-section">
+    <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
+    <div class="table-section">
+      <!-- Upload Buttons (shown above table) -->
       <div class="table-header-actions">
         <div class="button-group">
           <v-btn
@@ -54,7 +47,16 @@
         </div>
       </div>
 
-      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @undo="handleUndoFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
+      <!-- Upload Table with integrated empty state -->
+      <UploadTable
+        :files="uploadQueue"
+        :is-empty="uploadQueue.length === 0"
+        @cancel="handleCancelFile"
+        @undo="handleUndoFile"
+        @clear-queue="handleClearQueue"
+        @upload="handleUpload"
+        @files-dropped="handleFolderRecursiveSelected"
+      />
 
       <!-- Hidden file inputs -->
       <input
@@ -89,7 +91,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import UploadButtons from '../features/upload/components/UploadButtons.vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';

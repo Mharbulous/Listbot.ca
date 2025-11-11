@@ -6,8 +6,42 @@
     <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
     <div ref="scrollContainerRef" class="scroll-container">
       <div class="table-body">
+        <!-- EMPTY STATE (shown when isEmpty === true) -->
+        <div v-if="props.isEmpty" class="empty-state-container">
+          <div
+            class="dropzone-empty"
+            :class="{ 'dropzone-active': isDragOver }"
+            @dragover.prevent="handleDragOver"
+            @dragleave.prevent="handleDragLeave"
+            @drop.prevent="handleDrop"
+            @click="handleDropzoneClick"
+            tabindex="0"
+            role="button"
+            :aria-label="
+              isDragOver
+                ? 'Drop files here to add them to the upload queue'
+                : 'Drag and drop files or folders here, or click to select files'
+            "
+            @keydown.enter.prevent="handleDropzoneClick"
+            @keydown.space.prevent="handleDropzoneClick"
+          >
+            <v-icon
+              :icon="isDragOver ? 'mdi-download' : 'mdi-cloud-upload-outline'"
+              size="64"
+              :color="isDragOver ? 'primary' : 'grey-lighten-1'"
+              class="dropzone-icon"
+            />
+            <p class="dropzone-text-primary">
+              {{ isDragOver ? 'Drop files here!' : 'Drag and drop files or folders here' }}
+            </p>
+            <p class="dropzone-text-secondary">or use the buttons above</p>
+          </div>
+        </div>
+
+        <!-- FILE ROWS (shown when isEmpty === false) -->
         <UploadTableRow
           v-for="file in props.files"
+          v-show="!props.isEmpty"
           :key="file.id"
           :file="file"
           :scrollbar-width="scrollbarWidth"
@@ -19,6 +53,11 @@
 
     <!-- Footer -->
     <UploadTableFooter :stats="footerStats" @upload="handleUpload" />
+
+    <!-- Accessibility: Live region for state changes -->
+    <div aria-live="polite" aria-atomic="true" class="sr-only">
+      {{ props.isEmpty ? 'Upload queue is empty. Drag and drop files or use the buttons above to add files.' : `${props.files.length} files in upload queue` }}
+    </div>
   </div>
 </template>
 
@@ -40,14 +79,21 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  isEmpty: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'clear-queue', 'upload']);
+const emit = defineEmits(['cancel', 'undo', 'clear-queue', 'upload', 'files-dropped']);
 
 // Scrollbar width detection
 const scrollContainerRef = ref(null);
 const scrollbarWidth = ref(0);
+
+// Drag-drop state for empty state
+const isDragOver = ref(false);
 
 const calculateScrollbarWidth = () => {
   if (!scrollContainerRef.value) return;
@@ -113,6 +159,81 @@ const formatBytes = (bytes) => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
+// Drag-drop handlers for empty state
+const handleDragOver = () => {
+  if (props.isEmpty) {
+    isDragOver.value = true;
+  }
+};
+
+const handleDragLeave = (event) => {
+  if (props.isEmpty) {
+    // Only reset if leaving the dropzone entirely, not child elements
+    const dropzone = event.currentTarget;
+    const relatedTarget = event.relatedTarget;
+    if (!dropzone.contains(relatedTarget)) {
+      isDragOver.value = false;
+    }
+  }
+};
+
+const handleDrop = async (event) => {
+  if (!props.isEmpty) return;
+
+  isDragOver.value = false;
+
+  // Get all dropped items
+  const items = Array.from(event.dataTransfer.items);
+  const allFiles = [];
+
+  // Process each dropped item
+  for (const item of items) {
+    if (item.kind === 'file') {
+      const entry = item.webkitGetAsEntry();
+      if (entry) {
+        await traverseFileTree(entry, allFiles);
+      }
+    }
+  }
+
+  if (allFiles.length > 0) {
+    console.log(`[UploadTable] Dropped ${allFiles.length} files`);
+    emit('files-dropped', allFiles);
+  }
+};
+
+// Recursive function to traverse folder tree
+const traverseFileTree = async (entry, filesList) => {
+  if (entry.isFile) {
+    // It's a file - get the File object
+    return new Promise((resolve) => {
+      entry.file((file) => {
+        filesList.push(file);
+        resolve();
+      });
+    });
+  } else if (entry.isDirectory) {
+    // It's a directory - read its contents
+    const dirReader = entry.createReader();
+    return new Promise((resolve) => {
+      dirReader.readEntries(async (entries) => {
+        for (const childEntry of entries) {
+          await traverseFileTree(childEntry, filesList);
+        }
+        resolve();
+      });
+    });
+  }
+};
+
+// Handle dropzone click (for keyboard accessibility)
+const handleDropzoneClick = () => {
+  // Note: This click handler is for the dropzone itself
+  // The parent component (Testing.vue) should listen to this and trigger file selection
+  // For now, we just log it - the parent already has buttons for file selection
+  console.log('[UploadTable] Dropzone clicked - user should use buttons above');
+};
+
 // Handle cancel
 const handleCancel = (fileId) => {
   emit('cancel', fileId);
@@ -156,5 +277,119 @@ const handleUpload = () => {
 .table-body {
   display: flex;
   flex-direction: column;
+}
+
+/* Empty State Styling */
+.empty-state-container {
+  padding: 2rem;
+  width: 100%;
+}
+
+.dropzone-empty {
+  min-height: 350px;
+  border: 3px dashed #cbd5e1;
+  border-radius: 12px;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+}
+
+.dropzone-empty:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.dropzone-empty:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.dropzone-empty.dropzone-active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  transform: scale(1.01);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+}
+
+.dropzone-icon {
+  margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.dropzone-active .dropzone-icon {
+  transform: scale(1.15) translateY(-8px);
+}
+
+.dropzone-text-primary {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #334155;
+  margin: 0;
+  text-align: center;
+}
+
+.dropzone-text-secondary {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.5rem 0 0 0;
+  text-align: center;
+}
+
+/* Transitions */
+.empty-state-container {
+  transition: opacity 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dropzone-empty {
+    min-height: 300px;
+  }
+
+  .dropzone-text-primary {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .empty-state-container {
+    padding: 1rem;
+  }
+
+  .dropzone-empty {
+    min-height: 250px;
+    padding: 1.5rem 1rem;
+  }
+
+  .dropzone-icon {
+    font-size: 48px !important;
+  }
+
+  .dropzone-text-primary {
+    font-size: 0.9375rem;
+  }
+
+  .dropzone-text-secondary {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Screen reader only class for accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 </style>
