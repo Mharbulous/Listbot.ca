@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-table-row">
+  <div class="upload-table-row" @dblclick="handleRowDoubleClick">
     <!-- Select Column (60px) - FIRST COLUMN -->
     <div class="row-cell select-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
       <input
@@ -14,8 +14,15 @@
     </div>
 
     <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
-      {{ file.name }}
+    <div
+      class="row-cell filename-cell"
+      style="flex: 1; min-width: 150px"
+      :title="file.name"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
+    >
+      <span class="filename-text">{{ file.name }}</span>
+      <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
     </div>
 
     <!-- Size Column (100px) -->
@@ -42,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import StatusCell from './StatusCell.vue';
 
 // Component configuration
@@ -64,6 +71,9 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['cancel', 'undo']);
+
+// Hover state tracking
+const isHovering = ref(false);
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
 const isSelected = computed(() => {
@@ -104,6 +114,42 @@ const handleCheckboxToggle = (event) => {
     emit('cancel', props.file.id);
   }
 };
+
+// Open file locally on user's computer
+const openFile = (event) => {
+  event.stopPropagation(); // Prevent triggering row double-click
+
+  if (props.file.sourceFile) {
+    // Create a URL for the file object
+    const fileUrl = URL.createObjectURL(props.file.sourceFile);
+
+    // Open in new tab/window (browser will handle based on file type)
+    const newWindow = window.open(fileUrl, '_blank');
+
+    // Revoke the URL after a delay to free up memory
+    setTimeout(() => {
+      URL.revokeObjectURL(fileUrl);
+    }, 100);
+
+    console.log('[UploadTableRow] Opening file:', props.file.name);
+  } else {
+    console.warn('[UploadTableRow] No source file available for:', props.file.name);
+  }
+};
+
+// Handle row double-click to open file
+const handleRowDoubleClick = () => {
+  openFile({ stopPropagation: () => {} }); // Create mock event object
+};
+
+// Handle mouse enter/leave for hover state
+const handleMouseEnter = () => {
+  isHovering.value = true;
+};
+
+const handleMouseLeave = () => {
+  isHovering.value = false;
+};
 </script>
 
 <style scoped>
@@ -111,6 +157,7 @@ const handleCheckboxToggle = (event) => {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.15s ease;
+  cursor: default;
 }
 
 .upload-table-row:hover {
@@ -215,6 +262,29 @@ const handleCheckboxToggle = (event) => {
 .filename-cell {
   font-weight: 500;
   color: #1f2937;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+}
+
+.filename-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eyeball-icon {
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.eyeball-icon:hover {
+  transform: scale(1.2);
 }
 
 /* Size Cell */
