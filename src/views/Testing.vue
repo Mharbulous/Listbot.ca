@@ -1,5 +1,5 @@
 <template>
-  <div class="testing-page">
+  <div class="main-viewport">
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
       v-if="queueProgress.isQueueing"
@@ -188,11 +188,11 @@ const handleFolderRecursiveSelect = (event) => {
 </script>
 
 <style scoped>
-.testing-page {
+.main-viewport {
   height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
   width: 100%; /* Full width of parent */
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-  padding: 2rem;
+  padding: 0; /* No padding - table fills entire viewport */
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
@@ -200,18 +200,9 @@ const handleFolderRecursiveSelect = (event) => {
 
 .table-section {
   flex: 1; /* Take up remaining space */
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0; /* Allow flex shrinking */
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .testing-page {
-    padding: 1rem;
-  }
 }
 </style>
