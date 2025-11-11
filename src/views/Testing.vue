@@ -18,40 +18,53 @@
     <!-- Upload Table (shown when queue has files) -->
     <div v-if="uploadQueue.length > 0" class="table-section">
       <div class="table-header-actions">
-        <div class="button-group">
-          <v-btn
-            color="primary"
-            size="large"
-            variant="elevated"
-            prepend-icon="mdi-file-multiple"
-            class="upload-btn"
-            @click="triggerFileSelect"
-          >
-            Upload Files
-          </v-btn>
+        <v-menu location="bottom">
+          <template v-slot:activator="{ props: menuProps }">
+            <div class="split-button">
+              <!-- Main action button -->
+              <v-btn
+                color="primary"
+                size="large"
+                variant="elevated"
+                prepend-icon="mdi-plus"
+                class="split-button-main"
+                aria-label="Add files to upload queue"
+                @click="triggerFileSelect"
+              >
+                Add to Queue
+              </v-btn>
 
-          <v-btn
-            color="secondary"
-            size="large"
-            variant="elevated"
-            prepend-icon="mdi-folder-open"
-            class="upload-btn"
-            @click="triggerFolderSelect"
-          >
-            Upload Folder
-          </v-btn>
+              <!-- Dropdown trigger -->
+              <v-btn
+                color="primary"
+                size="large"
+                variant="elevated"
+                icon="mdi-menu-down"
+                class="split-button-dropdown"
+                aria-label="Show more upload options"
+                v-bind="menuProps"
+              />
+            </div>
+          </template>
 
-          <v-btn
-            color="info"
-            size="large"
-            variant="elevated"
-            prepend-icon="mdi-folder-multiple"
-            class="upload-btn"
-            @click="triggerFolderRecursiveSelect"
-          >
-            Upload Folder + Subfolders
-          </v-btn>
-        </div>
+          <v-list density="compact">
+            <v-list-item
+              prepend-icon="mdi-file-multiple"
+              title="Queue Files"
+              @click="triggerFileSelect"
+            />
+            <v-list-item
+              prepend-icon="mdi-folder-open"
+              title="Queue Folder"
+              @click="triggerFolderSelect"
+            />
+            <v-list-item
+              prepend-icon="mdi-folder-multiple"
+              title="Queue Folder with Subfolders"
+              @click="triggerFolderRecursiveSelect"
+            />
+          </v-list>
+        </v-menu>
       </div>
 
       <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @undo="handleUndoFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
@@ -219,18 +232,27 @@ const handleFolderRecursiveSelect = (event) => {
   padding: 0 0.5rem;
 }
 
-.button-group {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
+.split-button {
+  display: inline-flex;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 
-.upload-btn {
-  min-width: 220px;
+.split-button-main {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  min-width: 180px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
+}
+
+.split-button-dropdown {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  min-width: 48px !important;
+  padding: 0 8px !important;
 }
 
 /* Responsive Design */
@@ -240,17 +262,15 @@ const handleFolderRecursiveSelect = (event) => {
   }
 
   .table-header-actions {
-    flex-direction: column;
-    align-items: center;
+    padding: 0 1rem;
   }
 
-  .button-group {
-    flex-direction: column;
+  .split-button {
     width: 100%;
   }
 
-  .upload-btn {
-    width: 100%;
+  .split-button-main {
+    flex: 1;
   }
 }
 </style>
