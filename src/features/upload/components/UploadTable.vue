@@ -172,6 +172,16 @@ const footerStats = computed(() => {
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
   const uploadable = total - duplicates - removed;
 
+  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates)
+  const checkedFiles = props.files.filter(
+    (f) => f.status !== 'skip' && f.status !== 'completed' && f.status !== 'skipped'
+  );
+  const checkedCount = checkedFiles.length;
+  const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
+
+  // Unchecked files = files that have been skipped
+  const uncheckedCount = removed;
+
   return {
     total,
     totalSize: formatBytes(totalSize),
@@ -181,6 +191,9 @@ const footerStats = computed(() => {
     failed,
     uploaded,
     uploadable,
+    checkedCount,
+    checkedSize: formatBytes(checkedSize),
+    uncheckedCount,
   };
 });
 

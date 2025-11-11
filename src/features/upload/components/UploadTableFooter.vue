@@ -31,14 +31,22 @@
           variant="elevated"
           size="large"
           class="clear-queue-btn text-black"
+          :disabled="stats.uncheckedCount === 0"
           @click="handleClearQueue"
         >
           <v-icon start>mdi-broom</v-icon>
-          Clear {{ stats.total }} files
+          Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
         </v-btn>
-        <v-btn color="success" variant="elevated" size="large" class="upload-btn" @click="handleUpload">
+        <v-btn
+          color="success"
+          variant="elevated"
+          size="large"
+          class="upload-btn"
+          :disabled="stats.checkedCount === 0"
+          @click="handleUpload"
+        >
           <v-icon start>mdi-arrow-up-circle-outline</v-icon>
-          Upload {{ stats.total }} files ({{ stats.totalSize }})
+          Upload {{ stats.checkedCount }} {{ stats.checkedCount === 1 ? 'file' : 'files' }} ({{ stats.checkedSize }})
         </v-btn>
       </div>
     </div>
@@ -65,7 +73,10 @@ defineProps({
         typeof value.duplicates === 'number' &&
         typeof value.failed === 'number' &&
         typeof value.uploaded === 'number' &&
-        typeof value.uploadable === 'number'
+        typeof value.uploadable === 'number' &&
+        typeof value.checkedCount === 'number' &&
+        typeof value.checkedSize === 'string' &&
+        typeof value.uncheckedCount === 'number'
       );
     },
   },
