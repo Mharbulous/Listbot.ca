@@ -45,7 +45,7 @@
           :disabled="stats.checkedCount === 0"
           @click="handleUpload"
         >
-          <v-icon start>mdi-arrow-up-circle-outline</v-icon>
+          <v-icon start>mdi-cloud-upload-outline</v-icon>
           Upload {{ stats.checkedCount }} {{ stats.checkedCount === 1 ? 'file' : 'files' }} ({{ stats.checkedSize }})
         </v-btn>
       </div>
@@ -154,6 +154,7 @@ const handleClearQueue = () => {
   letter-spacing: 0.025em !important;
   text-transform: none !important;
   transition: all 0.3s ease !important;
+  width: 220px !important;
 }
 
 .upload-btn:disabled {
