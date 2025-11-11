@@ -359,11 +359,27 @@ const handleFolderRecursiveSelect = (event) => {
   flex-wrap: wrap;
 }
 
-.add-queue-btn {
-  min-width: 200px;
+.split-button {
+  display: inline-flex;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.split-button-main {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  min-width: 180px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
+}
+
+.split-button-dropdown {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  min-width: 48px !important;
+  padding: 0 8px !important;
 }
 
 /* Responsive Design */
@@ -376,8 +392,12 @@ const handleFolderRecursiveSelect = (event) => {
     padding: 2rem 1.5rem;
   }
 
-  .add-queue-btn {
+  .split-button {
     width: 100%;
+  }
+
+  .split-button-main {
+    flex: 1;
   }
 }
 </style>

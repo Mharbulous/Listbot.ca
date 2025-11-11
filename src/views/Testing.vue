@@ -1,13 +1,5 @@
 <template>
   <div class="testing-page">
-    <!-- Upload Buttons Section (shown when queue is empty) -->
-    <UploadButtons
-      v-if="uploadQueue.length === 0"
-      @files-selected="handleFilesSelected"
-      @folder-selected="handleFolderSelected"
-      @folder-recursive-selected="handleFolderRecursiveSelected"
-    />
-
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
       v-if="queueProgress.isQueueing"
@@ -15,23 +7,37 @@
       :total="queueProgress.total"
     />
 
-    <!-- Upload Table (shown when queue has files) -->
-    <div v-if="uploadQueue.length > 0" class="table-section">
+    <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
+    <div class="table-section">
+      <!-- Upload Buttons (shown above table) -->
       <div class="table-header-actions">
         <v-menu location="bottom">
           <template v-slot:activator="{ props: menuProps }">
-            <v-btn
-              color="primary"
-              size="large"
-              variant="elevated"
-              prepend-icon="mdi-plus"
-              append-icon="mdi-chevron-down"
-              class="add-queue-btn"
-              aria-label="Add files to upload queue"
-              v-bind="menuProps"
-            >
-              Add to Queue
-            </v-btn>
+            <div class="split-button">
+              <!-- Main action button -->
+              <v-btn
+                color="primary"
+                size="large"
+                variant="elevated"
+                prepend-icon="mdi-plus"
+                class="split-button-main"
+                aria-label="Add files to upload queue"
+                @click="triggerFileSelect"
+              >
+                Add to Queue
+              </v-btn>
+
+              <!-- Dropdown trigger -->
+              <v-btn
+                color="primary"
+                size="large"
+                variant="elevated"
+                icon="mdi-menu-down"
+                class="split-button-dropdown"
+                aria-label="Show more upload options"
+                v-bind="menuProps"
+              />
+            </div>
           </template>
 
           <v-list density="compact">
@@ -54,7 +60,16 @@
         </v-menu>
       </div>
 
-      <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @undo="handleUndoFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
+      <!-- Upload Table with integrated empty state -->
+      <UploadTable
+        :files="uploadQueue"
+        :is-empty="uploadQueue.length === 0"
+        @cancel="handleCancelFile"
+        @undo="handleUndoFile"
+        @clear-queue="handleClearQueue"
+        @upload="handleUpload"
+        @files-dropped="handleFolderRecursiveSelected"
+      />
 
       <!-- Hidden file inputs -->
       <input
@@ -89,7 +104,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import UploadButtons from '../features/upload/components/UploadButtons.vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
@@ -219,11 +233,27 @@ const handleFolderRecursiveSelect = (event) => {
   padding: 0 0.5rem;
 }
 
-.add-queue-btn {
-  min-width: 200px;
+.split-button {
+  display: inline-flex;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.split-button-main {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  min-width: 180px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
+}
+
+.split-button-dropdown {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  min-width: 48px !important;
+  padding: 0 8px !important;
 }
 
 /* Responsive Design */
@@ -236,8 +266,12 @@ const handleFolderRecursiveSelect = (event) => {
     padding: 0 1rem;
   }
 
-  .add-queue-btn {
+  .split-button {
     width: 100%;
+  }
+
+  .split-button-main {
+    flex: 1;
   }
 }
 </style>
