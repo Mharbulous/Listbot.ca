@@ -135,6 +135,7 @@ const handleClearQueue = () => {
   letter-spacing: 0.025em !important;
   text-transform: none !important;
   transition: all 0.3s ease !important;
+  width: 200px !important;
 }
 
 .clear-queue-btn:disabled {
