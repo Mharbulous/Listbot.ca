@@ -18,15 +18,77 @@
     <!-- Upload Table (shown when queue has files) -->
     <div v-if="uploadQueue.length > 0" class="table-section">
       <div class="table-header-actions">
-        <h2 class="table-title">Upload Queue ({{ uploadQueue.length }} files)</h2>
+        <div class="button-group">
+          <v-btn
+            color="primary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-file-multiple"
+            class="upload-btn"
+            @click="triggerFileSelect"
+          >
+            Upload Files
+          </v-btn>
+
+          <v-btn
+            color="secondary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-folder-open"
+            class="upload-btn"
+            @click="triggerFolderSelect"
+          >
+            Upload Folder
+          </v-btn>
+
+          <v-btn
+            color="info"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-folder-multiple"
+            class="upload-btn"
+            @click="triggerFolderRecursiveSelect"
+          >
+            Upload Folder + Subfolders
+          </v-btn>
+        </div>
       </div>
 
       <UploadTable :files="uploadQueue" @cancel="handleCancelFile" @undo="handleUndoFile" @clear-queue="handleClearQueue" @upload="handleUpload" />
+
+      <!-- Hidden file inputs -->
+      <input
+        ref="fileInput"
+        type="file"
+        multiple
+        accept="*/*"
+        style="display: none"
+        @change="handleFileSelect"
+      />
+
+      <input
+        ref="folderInput"
+        type="file"
+        webkitdirectory
+        multiple
+        style="display: none"
+        @change="handleFolderSelect"
+      />
+
+      <input
+        ref="folderRecursiveInput"
+        type="file"
+        webkitdirectory
+        multiple
+        style="display: none"
+        @change="handleFolderRecursiveSelect"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import UploadButtons from '../features/upload/components/UploadButtons.vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
@@ -39,6 +101,11 @@ defineOptions({
 
 // Composables
 const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue } = useUploadTable();
+
+// Refs for file inputs
+const fileInput = ref(null);
+const folderInput = ref(null);
+const folderRecursiveInput = ref(null);
 
 // File selection handlers
 const handleFilesSelected = async (files) => {
@@ -76,6 +143,59 @@ const handleUpload = () => {
   console.log('[TESTING] Upload clicked');
   // TODO: Implement upload logic
 };
+
+// Trigger file/folder selection for buttons in table header
+const triggerFileSelect = () => {
+  fileInput.value?.click();
+};
+
+const triggerFolderSelect = () => {
+  folderInput.value?.click();
+};
+
+const triggerFolderRecursiveSelect = () => {
+  folderRecursiveInput.value?.click();
+};
+
+// File input change handlers for table header buttons
+const handleFileSelect = (event) => {
+  const files = Array.from(event.target.files);
+  if (files.length > 0) {
+    handleFilesSelected(files);
+  }
+  // Reset input
+  event.target.value = '';
+};
+
+const handleFolderSelect = (event) => {
+  const allFiles = Array.from(event.target.files);
+  if (allFiles.length === 0) return;
+
+  // Filter for root-only files
+  const rootPath = allFiles[0].webkitRelativePath.split('/')[0];
+  const rootFiles = allFiles.filter((file) => {
+    const parts = file.webkitRelativePath.split('/');
+    return parts.length === 2 && parts[0] === rootPath;
+  });
+
+  console.log(`[FOLDER] Root only: ${rootFiles.length} files from ${rootPath}`);
+  handleFolderSelected(rootFiles);
+
+  // Reset input
+  event.target.value = '';
+};
+
+const handleFolderRecursiveSelect = (event) => {
+  const allFiles = Array.from(event.target.files);
+  if (allFiles.length === 0) return;
+
+  const folderName = allFiles[0].webkitRelativePath.split('/')[0];
+  console.log(`[FOLDER+] Recursive: ${allFiles.length} files from ${folderName}`);
+  handleFolderRecursiveSelected(allFiles);
+
+  // Reset input
+  event.target.value = '';
+};
 </script>
 
 <style scoped>
@@ -93,17 +213,24 @@ const handleUpload = () => {
 
 .table-header-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   padding: 0 0.5rem;
 }
 
-.table-title {
-  font-size: 1.5rem;
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.upload-btn {
+  min-width: 220px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+  text-transform: none;
+  letter-spacing: 0.025em;
 }
 
 /* Responsive Design */
@@ -114,12 +241,16 @@ const handleUpload = () => {
 
   .table-header-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    align-items: center;
   }
 
-  .table-title {
-    font-size: 1.25rem;
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .upload-btn {
+    width: 100%;
   }
 }
 </style>
