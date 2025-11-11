@@ -153,6 +153,18 @@ const handleClearQueue = () => {
   font-weight: 600 !important;
   letter-spacing: 0.025em !important;
   text-transform: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.upload-btn:disabled {
+  opacity: 1 !important;
+  box-shadow: none !important;
+  transform: translateY(3px) !important;
+  color: #d1d5db !important;
+}
+
+.upload-btn:disabled :deep(.v-icon) {
+  color: #d1d5db !important;
 }
 
 .footer-stat {
