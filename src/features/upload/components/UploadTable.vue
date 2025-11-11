@@ -342,6 +342,7 @@ const handleClearQueue = () => {
 .table-body {
   display: flex;
   flex-direction: column;
+  height: 100%; /* Fill the scroll-container */
 }
 
 /* Empty State Styling */
