@@ -43,7 +43,14 @@
 
 <template>
   <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
-  <div ref="scrollContainerRef" class="scroll-container">
+  <div
+    ref="scrollContainerRef"
+    class="scroll-container"
+    :class="{ 'drag-over': isDragOver }"
+    @dragover.prevent="handleDragOver"
+    @dragleave.prevent="handleDragLeave"
+    @drop.prevent="handleDrop"
+  >
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
     <UploadTableHeader
       :all-selected="props.allSelected"
@@ -134,6 +141,9 @@ const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'uploa
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
+
+// Drag-drop state
+const isDragOver = ref(false);
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -250,6 +260,69 @@ const handleFilesDropped = (files) => {
 };
 
 // ============================================================================
+// DRAG AND DROP HANDLERS
+// ============================================================================
+const handleDragOver = () => {
+  isDragOver.value = true;
+};
+
+const handleDragLeave = (event) => {
+  // Only reset if leaving the scroll container entirely, not child elements
+  const container = event.currentTarget;
+  const relatedTarget = event.relatedTarget;
+  if (!container.contains(relatedTarget)) {
+    isDragOver.value = false;
+  }
+};
+
+const handleDrop = async (event) => {
+  isDragOver.value = false;
+
+  // Get all dropped items
+  const items = Array.from(event.dataTransfer.items);
+  const allFiles = [];
+
+  // Process each dropped item
+  for (const item of items) {
+    if (item.kind === 'file') {
+      const entry = item.webkitGetAsEntry();
+      if (entry) {
+        await traverseFileTree(entry, allFiles);
+      }
+    }
+  }
+
+  if (allFiles.length > 0) {
+    console.log(`[UploadTableVirtualizer] Dropped ${allFiles.length} files`);
+    emit('files-dropped', allFiles);
+  }
+};
+
+// Recursive function to traverse folder tree (including subfolders)
+const traverseFileTree = async (entry, filesList) => {
+  if (entry.isFile) {
+    // It's a file - get the File object
+    return new Promise((resolve) => {
+      entry.file((file) => {
+        filesList.push(file);
+        resolve();
+      });
+    });
+  } else if (entry.isDirectory) {
+    // It's a directory - read its contents
+    const dirReader = entry.createReader();
+    return new Promise((resolve) => {
+      dirReader.readEntries(async (entries) => {
+        for (const childEntry of entries) {
+          await traverseFileTree(childEntry, filesList);
+        }
+        resolve();
+      });
+    });
+  }
+};
+
+// ============================================================================
 // SCROLL METRICS: Track scroll start, stop, and rendering
 // ============================================================================
 const handleScroll = () => {
@@ -297,6 +370,14 @@ defineExpose({
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
+  transition: background-color 0.2s ease;
+}
+
+/* Visual feedback when dragging over the table */
+.scroll-container.drag-over {
+  background-color: #eff6ff; /* Light blue background */
+  outline: 2px dashed #3b82f6; /* Blue dashed border */
+  outline-offset: -2px;
 }
 
 /* Content wrapper for virtual rows (no flex properties) */
