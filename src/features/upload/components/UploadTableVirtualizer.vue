@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
@@ -126,6 +126,15 @@ const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'uploa
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
 
+// ============================================================================
+// PERFORMANCE METRICS TRACKING
+// ============================================================================
+let uploadT0 = null; // T=0 for upload events
+let scrollT0 = null; // T=0 for scroll events
+let isScrolling = false;
+let scrollTimeout = null;
+const SCROLL_STOP_DELAY = 150; // ms to wait before considering scroll stopped
+
 // Row height configuration (48px matches UploadTableRow height)
 const ROW_HEIGHT = 48;
 
@@ -149,18 +158,57 @@ const rowVirtualizer = useVirtualizer(virtualizerOptions);
 const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
 
-// Debug logging to verify virtualization is working
+// ============================================================================
+// UPLOAD METRICS: Track files being added to queue
+// ============================================================================
 watch(
-  () => props.files,
-  (newFiles) => {
-    console.log('[UploadTableVirtualizer] Files changed:', {
-      fileCount: newFiles.length,
-      virtualTotalSize: totalSize.value,
-      virtualItemsCount: virtualItems.value.length,
-      firstVirtualItem: virtualItems.value[0],
+  () => props.files.length,
+  (newLength, oldLength) => {
+    // Only track when files are ADDED (not removed/cleared)
+    if (newLength > (oldLength || 0)) {
+      // Set T=0 for upload event
+      uploadT0 = performance.now();
+      console.log('📊 [UPLOAD METRICS] T=0.00ms - Files added to queue:', {
+        filesAdded: newLength - (oldLength || 0),
+        totalFiles: newLength,
+      });
+
+      // Track when queue processing finishes (next tick after DOM update)
+      nextTick(() => {
+        const elapsed = performance.now() - uploadT0;
+        console.log(`📊 [UPLOAD METRICS] T=${elapsed.toFixed(2)}ms - Queue processing finished`);
+      });
+    }
+  }
+);
+
+// ============================================================================
+// RENDER METRICS: Track rendering after upload or scroll
+// ============================================================================
+watch(
+  virtualItems,
+  () => {
+    // Track render completion relative to current active T=0
+    nextTick(() => {
+      if (uploadT0 && !isScrolling) {
+        // Rendering after upload
+        const elapsed = performance.now() - uploadT0;
+        console.log(`📊 [UPLOAD METRICS] T=${elapsed.toFixed(2)}ms - Table render finished`, {
+          renderedRows: virtualItems.value.length,
+          totalFiles: props.files.length,
+        });
+      } else if (scrollT0 && isScrolling) {
+        // Rendering during/after scroll
+        const elapsed = performance.now() - scrollT0;
+        console.log(`📊 [SCROLL METRICS] T=${elapsed.toFixed(2)}ms - Table render finished`, {
+          renderedRows: virtualItems.value.length,
+          firstVisible: virtualItems.value[0]?.index ?? 'none',
+          lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
+        });
+      }
     });
   },
-  { immediate: true }
+  { flush: 'post' } // Run after DOM updates
 );
 
 // Event handlers
@@ -187,6 +235,40 @@ const handleUpload = () => {
 const handleClearQueue = () => {
   emit('clear-queue');
 };
+
+// ============================================================================
+// SCROLL METRICS: Track scroll start, stop, and rendering
+// ============================================================================
+const handleScroll = () => {
+  // First scroll event = T=0 for scroll
+  if (!isScrolling) {
+    scrollT0 = performance.now();
+    isScrolling = true;
+    console.log('📊 [SCROLL METRICS] T=0.00ms - Scroll started');
+  }
+
+  // Clear previous timeout and set new one to detect scroll stop
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+
+  scrollTimeout = setTimeout(() => {
+    if (isScrolling && scrollT0) {
+      const elapsed = performance.now() - scrollT0;
+      console.log(`📊 [SCROLL METRICS] T=${elapsed.toFixed(2)}ms - Scroll stopped`);
+      isScrolling = false;
+      scrollT0 = null;
+    }
+  }, SCROLL_STOP_DELAY);
+};
+
+// Setup scroll listener when component mounts
+onMounted(() => {
+  if (scrollContainerRef.value) {
+    scrollContainerRef.value.addEventListener('scroll', handleScroll, { passive: true });
+    console.log('📊 [METRICS] Performance tracking initialized');
+  }
+});
 
 // Expose scroll container ref for parent component
 defineExpose({
