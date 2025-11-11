@@ -48,13 +48,9 @@
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
-    <!-- Main container with max-width for better layout on large screens -->
+    <!-- Main container with max-w for better layout on large screens -->
     <div class="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
         
-        <!-- Header Section -->
-        <header class="p-6 border-b border-gray-200">
-            <h1 class="text-2xl font-semibold text-gray-800">Upload queue</h1>
-        </header>
 
         <!-- Controls Section -->
         <div class="p-6 flex justify-between items-center">
@@ -101,6 +97,10 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folder path</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <!-- Added a visually hidden header for the remove column for accessibility -->
+                                <th scope="col" class="relative px-6 py-3">
+                                    <span class="sr-only">Remove</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -118,17 +118,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -144,17 +148,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -170,17 +178,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -196,17 +208,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -222,17 +238,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -248,17 +268,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <tr>
@@ -274,17 +298,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <!-- Non-destructive actions: Peek (View) then Upload Now -->
                                     <div class="flex items-center space-x-3">
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
-                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Peek/View thumbnail">
+                                            <ion-icon name="eye-outline" class="w-5 h-5"></ion-icon>
                                         </button>
-                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
-                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
-                                        </button>
-                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
-                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="Upload this file now">
+                                            <ion-icon name="arrow-up-outline" class="w-5 h-5"></ion-icon>
                                         </button>
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <!-- Destructive action -->
+                                    <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                        <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                    </button>
                                 </td>
                             </tr>
                             <!-- Add more rows as needed -->
