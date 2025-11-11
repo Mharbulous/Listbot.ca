@@ -239,7 +239,16 @@ const handleDrop = async (event) => {
       await traverseFileTree(entry, allFiles);
       console.log(`[UploadTable] After processing item ${i + 1}: ${allFiles.length} total files collected`);
     } else {
-      console.warn(`[UploadTable] webkitGetAsEntry returned null for item ${i + 1}`);
+      // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
+      console.log(`[UploadTable] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
+      const file = item.getAsFile();
+      if (file) {
+        console.log(`[UploadTable] Got file via getAsFile(): ${file.name}`);
+        allFiles.push(file);
+        console.log(`[UploadTable] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+      } else {
+        console.warn(`[UploadTable] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
+      }
     }
   }
 
