@@ -57,14 +57,17 @@ const handleDragLeave = (event) => {
   }
 };
 
-const handleDrop = async (event) => {
+// Non-async handler - extracts synchronously following research doc pattern
+const handleDrop = (event) => {
   isDragOver.value = false;
 
-  // Get all dropped items
+  // ========================================================================
+  // PHASE 1: SYNCHRONOUS EXTRACTION (CRITICAL - must happen in same tick)
+  // ========================================================================
   const items = Array.from(event.dataTransfer.items);
   console.log(`[UploadTableDropzone] Drop event - ${items.length} items in dataTransfer`);
 
-  // First pass: Identify item types to detect multiple folders
+  // Extract entries synchronously BEFORE any async operations
   const entries = [];
   const directories = [];
 
@@ -72,23 +75,22 @@ const handleDrop = async (event) => {
     const item = items[i];
     console.log(`[UploadTableDropzone] Analyzing item ${i + 1}/${items.length} - kind: '${item.kind}', type: '${item.type}'`);
 
-    // Try to get entry regardless of kind (handles browsers that leave kind empty)
-    const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-    if (entry) {
-      console.log(`[UploadTableDropzone] Got entry for item ${i + 1}: isFile=${entry.isFile}, isDirectory=${entry.isDirectory}, name=${entry.name}`);
-      entries.push(entry);
-      if (entry.isDirectory) {
-        directories.push(entry);
-      }
-    } else {
-      // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
-      console.log(`[UploadTableDropzone] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
-      const file = item.getAsFile();
-      if (file) {
-        console.log(`[UploadTableDropzone] Got file via getAsFile(): ${file.name}`);
-        entries.push({ file, isFile: true });
+    if (item.kind === 'file') {
+      const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+      if (entry) {
+        console.log(`[UploadTableDropzone] Got entry for item ${i + 1}: isFile=${entry.isFile}, isDirectory=${entry.isDirectory}, name=${entry.name}`);
+        entries.push(entry);
+        if (entry.isDirectory) {
+          directories.push(entry);
+        }
       } else {
-        console.warn(`[UploadTableDropzone] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
+        // Fall back to getAsFile() for browsers without webkitGetAsEntry
+        console.log(`[UploadTableDropzone] webkitGetAsEntry not supported, falling back to getAsFile()`);
+        const file = item.getAsFile();
+        if (file) {
+          console.log(`[UploadTableDropzone] Got file via getAsFile(): ${file.name}`);
+          entries.push({ file, isFile: true });
+        }
       }
     }
   }
@@ -100,23 +102,46 @@ const handleDrop = async (event) => {
     return; // Don't process multiple folders
   }
 
-  // Process all entries (multiple files allowed, single folder allowed)
+  // ========================================================================
+  // PHASE 2: ASYNCHRONOUS PROCESSING (safe to use await now)
+  // ========================================================================
+  processDroppedEntries(entries);
+};
+
+// Async function to process extracted entries
+const processDroppedEntries = async (entries) => {
   const allFiles = [];
 
-  for (const entry of entries) {
-    if (entry.file) {
-      // Direct file (from fallback path)
-      allFiles.push(entry.file);
-    } else {
-      // Entry from webkitGetAsEntry (file or directory)
-      await traverseFileTree(entry, allFiles);
+  try {
+    for (const entry of entries) {
+      if (entry.file) {
+        // Direct file (from fallback path)
+        console.log(`[UploadTableDropzone] Processing direct file: ${entry.file.name}`);
+        allFiles.push(entry.file);
+      } else {
+        // Entry from webkitGetAsEntry (file or directory)
+        await traverseFileTree(entry, allFiles);
+      }
     }
-  }
 
-  console.log(`[UploadTableDropzone] Finished processing - ${allFiles.length} files collected`);
-  if (allFiles.length > 0) {
-    console.log(`[UploadTableDropzone] Emitting files-dropped event with ${allFiles.length} files`);
-    emit('files-dropped', allFiles);
+    console.log(`[UploadTableDropzone] Finished processing - ${allFiles.length} files collected`);
+
+    // Log each file's properties for debugging
+    allFiles.forEach((file, index) => {
+      console.log(`[UploadTableDropzone] File ${index + 1}:`, {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+      });
+    });
+
+    if (allFiles.length > 0) {
+      console.log(`[UploadTableDropzone] Emitting files-dropped event with ${allFiles.length} files`);
+      emit('files-dropped', allFiles);
+    }
+  } catch (error) {
+    console.error('[UploadTableDropzone] Error processing dropped files:', error);
   }
 };
 
@@ -124,10 +149,14 @@ const handleDrop = async (event) => {
 const traverseFileTree = async (entry, filesList) => {
   if (entry.isFile) {
     // It's a file - get the File object
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       entry.file((file) => {
+        console.log(`[UploadTableDropzone] Extracted file from entry: ${file.name}, size: ${file.size}, path: ${entry.fullPath}`);
         filesList.push(file);
         resolve();
+      }, (error) => {
+        console.error(`[UploadTableDropzone] Error extracting file from entry ${entry.name}:`, error);
+        reject(error);
       });
     });
   } else if (entry.isDirectory) {
