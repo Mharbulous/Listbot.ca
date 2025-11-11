@@ -200,7 +200,7 @@ const handleFolderRecursiveSelect = (event) => {
 
 .table-section {
   flex: 1; /* Take up remaining space */
-  width: 100%;
+  /* Removed width: 100% to allow table to size based on content, not viewport */
   display: flex;
   flex-direction: column;
   min-height: 0; /* Allow flex shrinking */
