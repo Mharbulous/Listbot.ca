@@ -16,45 +16,47 @@
           class="dropzone-icon"
         />
         <p class="dropzone-text">
-          {{ isDragOver ? 'Drop files here!' : 'Drag and drop files or folders here, or:' }}
+          {{ isDragOver ? 'Drop files here!' : 'Drag and drop files or folders here, or use the button below' }}
         </p>
       </div>
     </div>
 
-    <!-- Three Upload Buttons -->
+    <!-- Add to Queue Button with Dropdown -->
     <div class="button-group">
-      <v-btn
-        color="primary"
-        size="large"
-        variant="elevated"
-        prepend-icon="mdi-file-multiple"
-        class="upload-btn"
-        @click="triggerFileSelect"
-      >
-        Upload Files
-      </v-btn>
+      <v-menu location="bottom">
+        <template v-slot:activator="{ props: menuProps }">
+          <v-btn
+            color="primary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-plus"
+            append-icon="mdi-chevron-down"
+            class="add-queue-btn"
+            aria-label="Add files to upload queue"
+            v-bind="menuProps"
+          >
+            Add to Queue
+          </v-btn>
+        </template>
 
-      <v-btn
-        color="secondary"
-        size="large"
-        variant="elevated"
-        prepend-icon="mdi-folder-open"
-        class="upload-btn"
-        @click="triggerFolderSelect"
-      >
-        Upload Folder
-      </v-btn>
-
-      <v-btn
-        color="info"
-        size="large"
-        variant="elevated"
-        prepend-icon="mdi-folder-multiple"
-        class="upload-btn"
-        @click="triggerFolderRecursiveSelect"
-      >
-        Upload Folder + Subfolders
-      </v-btn>
+        <v-list density="compact">
+          <v-list-item
+            prepend-icon="mdi-file-multiple"
+            title="Queue Files"
+            @click="triggerFileSelect"
+          />
+          <v-list-item
+            prepend-icon="mdi-folder-open"
+            title="Queue Folder"
+            @click="triggerFolderSelect"
+          />
+          <v-list-item
+            prepend-icon="mdi-folder-multiple"
+            title="Queue Folder with Subfolders"
+            @click="triggerFolderRecursiveSelect"
+          />
+        </v-list>
+      </v-menu>
     </div>
 
     <!-- Hidden file inputs -->
@@ -353,13 +355,12 @@ const handleFolderRecursiveSelect = (event) => {
 
 .button-group {
   display: flex;
-  gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.upload-btn {
-  min-width: 220px;
+.add-queue-btn {
+  min-width: 200px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
@@ -375,11 +376,7 @@ const handleFolderRecursiveSelect = (event) => {
     padding: 2rem 1.5rem;
   }
 
-  .button-group {
-    flex-direction: column;
-  }
-
-  .upload-btn {
+  .add-queue-btn {
     width: 100%;
   }
 }
