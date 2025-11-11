@@ -154,7 +154,7 @@ const handleClearQueue = () => {
   letter-spacing: 0.025em !important;
   text-transform: none !important;
   transition: all 0.3s ease !important;
-  width: 220px !important;
+  width: 260px !important;
 }
 
 .upload-btn:disabled {
