@@ -1,22 +1,16 @@
 <template>
   <div class="upload-table-container">
-    <!-- Sticky Header -->
-    <UploadTableHeader
-      :all-selected="allFilesSelected"
-      :some-selected="someFilesSelected"
-      :scrollbar-width="scrollbarWidth"
-      @select-all="handleSelectAll"
-      @deselect-all="handleDeselectAll"
-    />
-
     <!-- VIRTUALIZED CONTENT (shown when isEmpty === false) -->
     <UploadTableVirtualizer
       v-if="!props.isEmpty"
       ref="virtualizerRef"
       :files="props.files"
-      :scrollbar-width="scrollbarWidth"
+      :all-selected="allFilesSelected"
+      :some-selected="someFilesSelected"
       @cancel="handleCancel"
       @undo="handleUndo"
+      @select-all="handleSelectAll"
+      @deselect-all="handleDeselectAll"
     />
 
     <!-- EMPTY STATE (shown when isEmpty === true) -->
@@ -67,7 +61,6 @@
 
 <script setup>
 import { computed, watch, ref, onMounted, onUnmounted } from 'vue';
-import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
 
@@ -130,7 +123,9 @@ const handleDeselectAll = () => {
 };
 
 const calculateScrollbarWidth = () => {
-  // Get scroll container from either empty state or virtualizer
+  // Get scroll container (only needed for footer alignment in empty state)
+  // When files are present, the header is inside the virtualizer's scroll container,
+  // so it automatically aligns. Footer still needs scrollbar width in both cases.
   let container = null;
   if (props.isEmpty && scrollContainerRef.value) {
     container = scrollContainerRef.value;
