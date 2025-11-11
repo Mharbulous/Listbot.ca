@@ -129,7 +129,7 @@ const scrollContainerRef = ref(null);
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
 // ============================================================================
-let uploadT0 = null; // T=0 for upload events
+// NOTE: queueT0 is stored in window.queueT0 (set in Testing.vue when user selects files)
 let scrollT0 = null; // T=0 for scroll events
 let isScrolling = false;
 let scrollTimeout = null;
@@ -159,44 +159,51 @@ const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
 
 // ============================================================================
-// UPLOAD METRICS: Track files being added to queue
+// QUEUE METRICS: Track when files are ready for rendering
 // ============================================================================
+let firstRenderLogged = false; // Track if we've logged the first render
+
 watch(
   () => props.files.length,
   (newLength, oldLength) => {
     // Only track when files are ADDED (not removed/cleared)
     if (newLength > (oldLength || 0)) {
-      // Set T=0 for upload event
-      uploadT0 = performance.now();
-      console.log('📊 [UPLOAD METRICS] T=0.00ms - Files added to queue:', {
-        filesAdded: newLength - (oldLength || 0),
-        totalFiles: newLength,
-      });
+      // Reset first render flag when new files are added
+      firstRenderLogged = false;
 
-      // Track when queue processing finishes (next tick after DOM update)
-      nextTick(() => {
-        const elapsed = performance.now() - uploadT0;
-        console.log(`📊 [UPLOAD METRICS] T=${elapsed.toFixed(2)}ms - Queue processing finished`);
-      });
+      // Use global queueT0 if available
+      if (window.queueT0) {
+        const elapsed = performance.now() - window.queueT0;
+        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Files ready for table render`, {
+          filesAdded: newLength - (oldLength || 0),
+          totalFiles: newLength,
+        });
+      }
     }
   }
 );
 
 // ============================================================================
-// RENDER METRICS: Track rendering after upload or scroll
+// RENDER METRICS: Track rendering after queue addition or scroll
 // ============================================================================
 watch(
   virtualItems,
   () => {
     // Track render completion relative to current active T=0
     nextTick(() => {
-      if (uploadT0 && !isScrolling) {
-        // Rendering after upload
-        const elapsed = performance.now() - uploadT0;
-        console.log(`📊 [UPLOAD METRICS] T=${elapsed.toFixed(2)}ms - Table render finished`, {
+      // Track first render after queue addition (only once per queue operation)
+      if (window.queueT0 && !firstRenderLogged && !isScrolling) {
+        const elapsed = performance.now() - window.queueT0;
+        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - First table render finished`, {
           renderedRows: virtualItems.value.length,
           totalFiles: props.files.length,
+          firstVisible: virtualItems.value[0]?.index ?? 'none',
+          lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
         });
+        firstRenderLogged = true; // Mark as logged
+
+        // Clear queueT0 after first render is complete
+        window.queueT0 = null;
       } else if (scrollT0 && isScrolling) {
         // Rendering during/after scroll
         const elapsed = performance.now() - scrollT0;
