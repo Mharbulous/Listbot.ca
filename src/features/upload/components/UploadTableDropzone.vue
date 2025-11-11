@@ -98,7 +98,9 @@ const traverseFileTree = async (entry, filesList) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 1rem; /* Horizontal spacing on left and right */
   border: 3px dashed #cbd5e1;
+  border-radius: 8px; /* Rounded corners */
   background: white;
   transition: all 0.3s ease;
   position: relative;
