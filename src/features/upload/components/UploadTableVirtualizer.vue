@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
@@ -129,18 +129,39 @@ const scrollContainerRef = ref(null);
 // Row height configuration (48px matches UploadTableRow height)
 const ROW_HEIGHT = 48;
 
-// Create virtualizer instance
-const rowVirtualizer = useVirtualizer({
-  count: computed(() => props.files.length),
+// CRITICAL: Use computed options wrapper pattern for TanStack Virtual
+// This ensures count is a plain number, not a ComputedRef
+// See: docs/TanStackAndVue3.md - "The Critical Pattern"
+const virtualizerOptions = computed(() => ({
+  count: props.files?.length || 0, // Plain number, NOT computed()!
   getScrollElement: () => scrollContainerRef.value,
   estimateSize: () => ROW_HEIGHT,
   overscan: 5, // Render 5 extra rows above/below viewport for smooth scrolling
   enableSmoothScroll: true,
-});
+  scrollPaddingStart: 0,
+  scrollPaddingEnd: 0,
+}));
+
+// Create virtualizer instance with computed options wrapper
+const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
 // Computed properties for virtual items and total size
 const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+
+// Debug logging to verify virtualization is working
+watch(
+  () => props.files,
+  (newFiles) => {
+    console.log('[UploadTableVirtualizer] Files changed:', {
+      fileCount: newFiles.length,
+      virtualTotalSize: totalSize.value,
+      virtualItemsCount: virtualItems.value.length,
+      firstVirtualItem: virtualItems.value[0],
+    });
+  },
+  { immediate: true }
+);
 
 // Event handlers
 const handleCancel = (fileId) => {
