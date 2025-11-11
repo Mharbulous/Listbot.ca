@@ -24,9 +24,6 @@
 
     <!-- Status Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
-
-    <!-- Actions Column (100px) -->
-    <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
   </div>
 </template>
 
