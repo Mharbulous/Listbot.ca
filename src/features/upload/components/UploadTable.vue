@@ -328,13 +328,15 @@ const handleClearQueue = () => {
   overflow: hidden;
   margin: 0 auto;
   max-width: 1200px;
+  height: 100%; /* Fill parent container */
+  min-height: 0; /* Allow flex shrinking */
 }
 
 .scroll-container {
   flex: 1;
   position: relative;
   overflow-y: auto;
-  max-height: 600px; /* Limit height to ensure scrollbar appears with many files */
+  min-height: 0; /* Allow flex shrinking and enable scrolling */
 }
 
 .table-body {

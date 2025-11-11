@@ -189,15 +189,23 @@ const handleFolderRecursiveSelect = (event) => {
 
 <style scoped>
 .testing-page {
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  width: 100%; /* Full width of parent */
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
   padding: 2rem;
-  overflow-y: auto;
+  overflow: hidden; /* Prevent page-level scrolling */
+  display: flex;
+  flex-direction: column;
 }
 
 .table-section {
+  flex: 1; /* Take up remaining space */
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flex shrinking */
 }
 
 /* Responsive Design */
