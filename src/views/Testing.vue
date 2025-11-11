@@ -49,11 +49,11 @@
 
         <!-- Right: Clear Queue button -->
         <v-btn
-          color="error"
+          color="white"
           size="large"
-          variant="outlined"
+          variant="elevated"
           prepend-icon="mdi-trash-can-outline"
-          class="clear-queue-btn"
+          class="clear-queue-btn text-black"
           aria-label="Clear upload queue"
           @click="handleClearQueue"
         >
