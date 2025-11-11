@@ -11,6 +11,20 @@
       <p class="dropzone-text-primary">Drag and drop files or folders here</p>
       <p class="dropzone-text-secondary">or use the + Add to Queue button in the top left of the header</p>
     </div>
+
+    <!-- Error Dialog for Multiple Items -->
+    <v-dialog v-model="showMultiDropError" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">Multiple Items Not Supported</v-card-title>
+        <v-card-text class="text-body-1">
+          Dragging and dropping multiple files is not permitted. To upload multiple files at once, use the <strong>Add to Queue &raquo; Files</strong> option. Folders must be uploaded one at a time.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -27,6 +41,7 @@ const emit = defineEmits(['files-dropped']);
 
 // Drag-drop state
 const isDragOver = ref(false);
+const showMultiDropError = ref(false);
 
 // Drag-drop handlers
 const handleDragOver = () => {
@@ -49,9 +64,16 @@ const handleDrop = async (event) => {
   const items = Array.from(event.dataTransfer.items);
   console.log(`[UploadTableDropzone] Drop event - ${items.length} items in dataTransfer`);
 
+  // Check if multiple items are being dropped
+  if (items.length > 1) {
+    console.log(`[UploadTableDropzone] Multiple items detected (${items.length}), showing error dialog`);
+    showMultiDropError.value = true;
+    return; // Don't process multiple items
+  }
+
   const allFiles = [];
 
-  // Process each dropped item
+  // Process single item (file or folder)
   // NOTE: Some browsers/OS leave item.kind empty for items after the first one
   // So we try to get the entry regardless of the kind property
   for (let i = 0; i < items.length; i++) {
