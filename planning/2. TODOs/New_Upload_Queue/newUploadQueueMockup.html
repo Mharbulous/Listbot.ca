@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal File Uploader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Heroicons for icons -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            /* Added padding to body to prevent content from touching edges */
+            padding: 1.5rem; /* p-6 */
+        }
+        /* Custom scrollbar for webkit browsers */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d1d5db; /* cool-gray-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* cool-gray-400 */
+        }
+        
+        /* Ensure table header is sticky */
+        .table-container {
+            max-height: 500px; /* Example max height */
+            overflow-y: auto;
+        }
+        
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <!-- Main container with max-width for better layout on large screens -->
+    <div class="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+        
+        <!-- Header Section -->
+        <header class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-semibold text-gray-800">Upload queue</h1>
+        </header>
+
+        <!-- Controls Section -->
+        <div class="p-6 flex justify-between items-center">
+            <!-- Left-side control: Add to Queue (Dropdown) -->
+            <div class="relative inline-block text-left">
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <ion-icon name="add-outline" class="w-5 h-5 mr-2 -ml-1"></ion-icon>
+                    Add to queue
+                    <ion-icon name="chevron-down-outline" class="w-5 h-5 ml-2 -mr-1"></ion-icon>
+                </button>
+                <!-- 
+                  Dropdown menu, hidden by default. 
+                  In a real app, this would be toggled with JS.
+                -->
+                <div class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden">
+                    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Add files</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Add folder</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right-side control: Clear Queue (Destructive) -->
+            <button type="button" class="inline-flex items-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                <ion-icon name="trash-outline" class="w-5 h-5 mr-2 -ml-1 text-red-500"></ion-icon>
+                Clear queue
+            </button>
+        </div>
+
+        <!-- File Table Section -->
+        <div class="px-6">
+            <div class="border rounded-lg overflow-hidden">
+                <!-- 
+                  Container for scrollable table. 
+                  Added max-height and custom-scrollbar 
+                -->
+                <div class="table-container custom-scrollbar">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <!-- Note: All headers are Sentence case -->
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folder path</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Data rows -->
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-02-25 LF IMPARK re CC expiry.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">42.16 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-04 RBC STMT BSNS ACC $713.00.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">118.75 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-06 IMPARK CC renewal notice.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">89.64 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-06 Lf Impark re CC expiry notice .pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">33.29 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-13 New RBC CC PKG.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">321.35 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-21 RBC CC package.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">183.28 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2025-03-21 RBC SLIP.pdf</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">44.57 KB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">/2025</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="mr-1.5 h-2 w-2 text-blue-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Ready
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-3">
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="More options">
+                                            <ion-icon name="ellipsis-vertical-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-gray-600" aria-label="File information">
+                                            <ion-icon name="information-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-600" aria-label="Remove file">
+                                            <ion-icon name="close-circle-outline" class="w-5 h-5"></ion-icon>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Add more rows as needed -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <footer class="p-6 flex flex-col md:flex-row justify-between items-center bg-gray-50 rounded-b-lg">
+            <!-- Statistics -->
+            <!-- Using Interface 1's pipe separators for chunking -->
+            <div class="text-sm text-gray-600 mb-4 md:mb-0">
+                <span class="font-medium">Total:</span> 32
+                <span class="mx-2 text-gray-300">|</span>
+                <span class="font-medium">Skipped:</span> 0
+                <span class="mx-2 text-gray-300">|</span>
+                <span class="font-medium">Duplicates:</span> 0
+                <span class="mx-2 text-gray-300">|</span>
+                <span class="font-medium">Failed:</span> 0
+                <span class="mx-2 text-gray-300">|</span>
+                <span class="font-medium">Uploaded:</span> 0/32
+            </div>
+            
+            <!-- Primary Action Button -->
+            <!-- 
+              - Placed bottom-right
+              - Green for primary action
+              - Sentence case for readability
+              - Includes count and size for full context
+            -->
+            <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-green-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                <ion-icon name="arrow-up-circle-outline" class="w-5 h-5 mr-2 -ml-1"></ion-icon>
+                Upload 32 files (5.97 MB)
+            </button>
+        </footer>
+
+    </div>
+
+</body>
+</html>
