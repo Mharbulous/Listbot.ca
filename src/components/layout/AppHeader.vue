@@ -3,7 +3,7 @@
     class="fixed top-0 left-[60px] right-0 z-[50] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
   >
     <!-- Left Section: Menu + Page Title -->
-    <div class="flex items-center gap-2 flex-shrink-0">
+    <div class="flex items-center gap-4 flex-shrink-0">
       <button
         class="md:hidden bg-transparent border-none text-2xl cursor-pointer text-slate-600"
         id="mobileMenuBtn"
@@ -13,6 +13,41 @@
       <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
         {{ pageTitle }}
       </h1>
+      <!-- Add to Queue button (Testing page only) -->
+      <div v-if="route.path === '/testing'" class="flex items-center">
+        <v-menu location="bottom">
+          <template v-slot:activator="{ props: menuProps }">
+            <v-btn
+              color="primary"
+              size="default"
+              variant="elevated"
+              prepend-icon="mdi-plus"
+              append-icon="mdi-chevron-down"
+              v-bind="menuProps"
+            >
+              Add to Queue
+            </v-btn>
+          </template>
+
+          <v-list density="compact">
+            <v-list-item
+              prepend-icon="mdi-file-multiple"
+              title="Files"
+              @click="triggerFileSelect"
+            />
+            <v-list-item
+              prepend-icon="mdi-folder-open"
+              title="Folder"
+              @click="triggerFolderSelect"
+            />
+            <v-list-item
+              prepend-icon="mdi-folder-multiple"
+              title="Folder w. Subfolders"
+              @click="triggerFolderRecursiveSelect"
+            />
+          </v-list>
+        </v-menu>
+      </div>
     </div>
 
     <!-- Center Section: Active Matter Display -->
@@ -192,6 +227,19 @@ function navigateToMatter() {
   if (matterId) {
     router.push(`/matters/${matterId}`);
   }
+}
+
+// File selection triggers for Testing page
+function triggerFileSelect() {
+  window.dispatchEvent(new CustomEvent('testing-trigger-file-select'));
+}
+
+function triggerFolderSelect() {
+  window.dispatchEvent(new CustomEvent('testing-trigger-folder-select'));
+}
+
+function triggerFolderRecursiveSelect() {
+  window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
 }
 
 function updateMousePosition(event) {

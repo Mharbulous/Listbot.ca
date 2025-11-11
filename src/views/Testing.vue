@@ -9,45 +9,6 @@
 
     <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
     <div class="table-section">
-      <!-- Upload Buttons (shown above table) -->
-      <div class="table-header-actions">
-        <!-- Add to Queue dropdown -->
-        <v-menu location="bottom">
-          <template v-slot:activator="{ props: menuProps }">
-            <v-btn
-              color="primary"
-              size="large"
-              variant="elevated"
-              prepend-icon="mdi-plus"
-              append-icon="mdi-chevron-down"
-              class="add-queue-btn"
-              aria-label="Add files to upload queue"
-              v-bind="menuProps"
-            >
-              Add to Queue
-            </v-btn>
-          </template>
-
-          <v-list density="compact">
-            <v-list-item
-              prepend-icon="mdi-file-multiple"
-              title="Files"
-              @click="triggerFileSelect"
-            />
-            <v-list-item
-              prepend-icon="mdi-folder-open"
-              title="Folder"
-              @click="triggerFolderSelect"
-            />
-            <v-list-item
-              prepend-icon="mdi-folder-multiple"
-              title="Folder w. Subfolders"
-              @click="triggerFolderRecursiveSelect"
-            />
-          </v-list>
-        </v-menu>
-      </div>
-
       <!-- Upload Table with integrated empty state -->
       <UploadTable
         :files="uploadQueue"
@@ -93,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
@@ -111,6 +72,19 @@ const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQu
 const fileInput = ref(null);
 const folderInput = ref(null);
 const folderRecursiveInput = ref(null);
+
+// Listen for events from AppHeader
+onMounted(() => {
+  window.addEventListener('testing-trigger-file-select', triggerFileSelect);
+  window.addEventListener('testing-trigger-folder-select', triggerFolderSelect);
+  window.addEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('testing-trigger-file-select', triggerFileSelect);
+  window.removeEventListener('testing-trigger-folder-select', triggerFolderSelect);
+  window.removeEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+});
 
 // File selection handlers
 const handleFilesSelected = async (files) => {
@@ -215,44 +189,29 @@ const handleFolderRecursiveSelect = (event) => {
 
 <style scoped>
 .testing-page {
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  width: 100%; /* Full width of parent */
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
   padding: 2rem;
-  overflow-y: auto;
+  overflow: hidden; /* Prevent page-level scrolling */
+  display: flex;
+  flex-direction: column;
 }
 
 .table-section {
+  flex: 1; /* Take up remaining space */
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.table-header-actions {
+  width: 100%;
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 0 1.5rem;
-}
-
-.add-queue-btn {
-  min-width: 200px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0.025em;
+  flex-direction: column;
+  min-height: 0; /* Allow flex shrinking */
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .testing-page {
     padding: 1rem;
-  }
-
-  .table-header-actions {
-    padding: 0 1rem;
-  }
-
-  .add-queue-btn {
-    width: 100%;
   }
 }
 </style>
