@@ -142,9 +142,9 @@ const handleCheckboxToggle = (event) => {
   -webkit-appearance: none;
   -moz-appearance: none;
   background-color: white;
-  border: 2px solid #000000;
+  border: 1px solid #000000;
   border-radius: 3px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   position: relative;
   flex-shrink: 0;
 }
@@ -166,9 +166,18 @@ const handleCheckboxToggle = (event) => {
   line-height: 1;
 }
 
-.file-checkbox:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+/* Modern hover effect: subtle glow and border color change */
+@media (hover: hover) {
+  .file-checkbox:hover:not(:disabled) {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1), 0 0 8px rgba(5, 150, 105, 0.15);
+  }
+}
+
+/* Focus state for keyboard navigation */
+.file-checkbox:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
 }
 
 .file-checkbox:disabled {
