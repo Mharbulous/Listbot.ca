@@ -21,35 +21,22 @@
       </div>
     </div>
 
-    <!-- Split Button for Upload Options -->
+    <!-- Add to Queue Button with Dropdown -->
     <div class="button-group">
       <v-menu location="bottom">
         <template v-slot:activator="{ props: menuProps }">
-          <div class="split-button">
-            <!-- Main action button -->
-            <v-btn
-              color="primary"
-              size="large"
-              variant="elevated"
-              prepend-icon="mdi-plus"
-              class="split-button-main"
-              aria-label="Add files to upload queue"
-              @click="triggerFileSelect"
-            >
-              Add to Queue
-            </v-btn>
-
-            <!-- Dropdown trigger -->
-            <v-btn
-              color="primary"
-              size="large"
-              variant="elevated"
-              icon="mdi-menu-down"
-              class="split-button-dropdown"
-              aria-label="Show more upload options"
-              v-bind="menuProps"
-            />
-          </div>
+          <v-btn
+            color="primary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-plus"
+            append-icon="mdi-chevron-down"
+            class="add-queue-btn"
+            aria-label="Add files to upload queue"
+            v-bind="menuProps"
+          >
+            Add to Queue
+          </v-btn>
         </template>
 
         <v-list density="compact">
