@@ -321,6 +321,8 @@ defineExpose({
 
 /* Dropzone cell wrapper - adds padding around the dropzone */
 .dropzone-cell {
-  padding: 0 1rem; /* Horizontal padding around dropzone */
+  flex: 1; /* Fill remaining space to push footer to bottom */
+  display: flex; /* Allow dropzone to flex and fill space */
+  padding: 1rem 0; /* Vertical padding above and below dropzone */
 }
 </style>
