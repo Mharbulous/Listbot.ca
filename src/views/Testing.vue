@@ -87,36 +87,44 @@ onUnmounted(() => {
 });
 
 // File selection handlers
+// NOTE: For file input events, T=0 is set in handleFileSelect/handleFolderSelect/handleFolderRecursiveSelect
+// For drag-and-drop events, T=0 is set here (since it bypasses the input handlers)
 const handleFilesSelected = async (files) => {
-  // Set T=0 for queue metrics
-  window.queueT0 = performance.now();
-  window.initialBatchComplete = false; // Reset Phase 1 completion flag
-  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
-  console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
-    filesSelected: files.length,
-  });
+  // Set T=0 if not already set (for drag-and-drop case)
+  if (!window.queueT0) {
+    window.queueT0 = performance.now();
+    window.initialBatchComplete = false;
+    window.queueAdditionComplete = false;
+    console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
+      filesSelected: files.length,
+    });
+  }
   await addFilesToQueue(files);
 };
 
 const handleFolderSelected = async (files) => {
-  // Set T=0 for queue metrics
-  window.queueT0 = performance.now();
-  window.initialBatchComplete = false; // Reset Phase 1 completion flag
-  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
-  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (root only):', {
-    filesSelected: files.length,
-  });
+  // Set T=0 if not already set (for drag-and-drop case)
+  if (!window.queueT0) {
+    window.queueT0 = performance.now();
+    window.initialBatchComplete = false;
+    window.queueAdditionComplete = false;
+    console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (root only):', {
+      filesSelected: files.length,
+    });
+  }
   await addFilesToQueue(files);
 };
 
 const handleFolderRecursiveSelected = async (files) => {
-  // Set T=0 for queue metrics
-  window.queueT0 = performance.now();
-  window.initialBatchComplete = false; // Reset Phase 1 completion flag
-  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
-  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
-    filesSelected: files.length,
-  });
+  // Set T=0 if not already set (for drag-and-drop case)
+  if (!window.queueT0) {
+    window.queueT0 = performance.now();
+    window.initialBatchComplete = false;
+    window.queueAdditionComplete = false;
+    console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
+      filesSelected: files.length,
+    });
+  }
   await addFilesToQueue(files);
 };
 
@@ -166,8 +174,16 @@ const triggerFolderRecursiveSelect = () => {
 
 // File input change handlers for table header buttons
 const handleFileSelect = (event) => {
+  // Set T=0 IMMEDIATELY when change event fires (before Array.from which can be slow)
+  window.queueT0 = performance.now();
+  window.initialBatchComplete = false;
+  window.queueAdditionComplete = false;
+
   const files = Array.from(event.target.files);
   if (files.length > 0) {
+    console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
+      filesSelected: files.length,
+    });
     handleFilesSelected(files);
   }
   // Reset input
@@ -175,6 +191,11 @@ const handleFileSelect = (event) => {
 };
 
 const handleFolderSelect = (event) => {
+  // Set T=0 IMMEDIATELY when change event fires (before Array.from which can be slow)
+  window.queueT0 = performance.now();
+  window.initialBatchComplete = false;
+  window.queueAdditionComplete = false;
+
   const allFiles = Array.from(event.target.files);
   if (allFiles.length === 0) return;
 
@@ -185,6 +206,9 @@ const handleFolderSelect = (event) => {
     return parts.length === 2 && parts[0] === rootPath;
   });
 
+  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (root only):', {
+    filesSelected: rootFiles.length,
+  });
   console.log(`[FOLDER] Root only: ${rootFiles.length} files from ${rootPath}`);
   handleFolderSelected(rootFiles);
 
@@ -193,10 +217,20 @@ const handleFolderSelect = (event) => {
 };
 
 const handleFolderRecursiveSelect = (event) => {
+  // Set T=0 IMMEDIATELY when change event fires (before Array.from which can be slow)
+  window.queueT0 = performance.now();
+  window.initialBatchComplete = false;
+  window.queueAdditionComplete = false;
+
   const allFiles = Array.from(event.target.files);
   if (allFiles.length === 0) return;
 
+  const arrayFromElapsed = performance.now() - window.queueT0;
   const folderName = allFiles[0].webkitRelativePath.split('/')[0];
+  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
+    filesSelected: allFiles.length,
+  });
+  console.log(`📊 [QUEUE METRICS] T=${arrayFromElapsed.toFixed(2)}ms - Array.from(FileList) completed`);
   console.log(`[FOLDER+] Recursive: ${allFiles.length} files from ${folderName}`);
   handleFolderRecursiveSelected(allFiles);
 
