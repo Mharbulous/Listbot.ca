@@ -1,5 +1,18 @@
 <template>
   <div class="upload-table-header">
+    <!-- Select Column (60px) - FIRST COLUMN with Select All checkbox -->
+    <div class="header-cell select-header-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
+      <input
+        type="checkbox"
+        class="select-all-checkbox"
+        :checked="allSelected"
+        :indeterminate="someSelected"
+        @change="handleSelectAllToggle"
+        title="Select all files / Deselect all files"
+        aria-label="Select all files"
+      />
+    </div>
+
     <!-- File Name Column (flexible - expands to fill remaining space) -->
     <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
 
@@ -14,19 +27,56 @@
 
     <!-- Actions Column (100px) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Actions</div>
-
-    <!-- Remove Column (100px) -->
-    <div class="header-cell" style="width: 100px; flex-shrink: 0">
-      <span class="sr-only">Remove</span>
-    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
+
 // Component configuration
 defineOptions({
   name: 'UploadTableHeader',
 });
+
+// Props
+const props = defineProps({
+  allSelected: {
+    type: Boolean,
+    default: false,
+  },
+  someSelected: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// Emits
+const emit = defineEmits(['select-all', 'deselect-all']);
+
+// Handle Select All checkbox toggle
+const handleSelectAllToggle = (event) => {
+  const isChecked = event.target.checked;
+
+  if (isChecked) {
+    emit('select-all');
+  } else {
+    emit('deselect-all');
+  }
+};
+
+// Set indeterminate state on the checkbox element
+const selectAllCheckbox = ref(null);
+
+watch(
+  () => props.someSelected,
+  (someSelected) => {
+    const checkbox = document.querySelector('.select-all-checkbox');
+    if (checkbox) {
+      checkbox.indeterminate = someSelected;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -54,6 +104,25 @@ defineOptions({
 
 .header-cell:last-child {
   border-right: none;
+}
+
+/* Select Header Cell */
+.select-header-cell {
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+/* Select All Checkbox Styling with Green Checkmark */
+.select-all-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #10b981; /* Green color for checkmark */
+  transition: transform 0.2s ease;
+}
+
+.select-all-checkbox:hover {
+  transform: scale(1.1);
 }
 
 /* Screen reader only class for accessibility */

@@ -69,6 +69,8 @@
         @undo="handleUndoFile"
         @upload="handleUpload"
         @files-dropped="handleFolderRecursiveSelected"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
       />
 
       <!-- Hidden file inputs -->
@@ -114,7 +116,8 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue } = useUploadTable();
+const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue, selectAll, deselectAll } =
+  useUploadTable();
 
 // Refs for file inputs
 const fileInput = ref(null);
@@ -156,6 +159,16 @@ const handleClearQueue = () => {
 const handleUpload = () => {
   console.log('[TESTING] Upload clicked');
   // TODO: Implement upload logic
+};
+
+const handleSelectAll = () => {
+  console.log('[TESTING] Select all files');
+  selectAll();
+};
+
+const handleDeselectAll = () => {
+  console.log('[TESTING] Deselect all files');
+  deselectAll();
 };
 
 // Trigger file/folder selection for buttons in table header

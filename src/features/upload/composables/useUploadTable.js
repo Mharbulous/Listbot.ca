@@ -130,6 +130,36 @@ export function useUploadTable() {
     }
   };
 
+  /**
+   * Select all files (restore all skipped files to 'ready' status)
+   */
+  const selectAll = () => {
+    let restoredCount = 0;
+    uploadQueue.value.forEach((file) => {
+      // Only restore skipped files, don't change completed files
+      if (file.status === 'skip') {
+        file.status = 'ready';
+        restoredCount++;
+      }
+    });
+    console.log(`[QUEUE] Selected all files (restored ${restoredCount} skipped files)`);
+  };
+
+  /**
+   * Deselect all files (mark all files as 'skip', except completed ones)
+   */
+  const deselectAll = () => {
+    let skippedCount = 0;
+    uploadQueue.value.forEach((file) => {
+      // Skip all files except completed ones
+      if (file.status !== 'completed' && file.status !== 'skip') {
+        file.status = 'skip';
+        skippedCount++;
+      }
+    });
+    console.log(`[QUEUE] Deselected all files (skipped ${skippedCount} files)`);
+  };
+
   return {
     uploadQueue,
     queueProgress,
@@ -139,5 +169,7 @@ export function useUploadTable() {
     updateFileStatus,
     skipFile,
     undoSkip,
+    selectAll,
+    deselectAll,
   };
 }

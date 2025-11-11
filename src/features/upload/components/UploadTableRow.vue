@@ -1,5 +1,18 @@
 <template>
   <div class="upload-table-row">
+    <!-- Select Column (60px) - FIRST COLUMN -->
+    <div class="row-cell select-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
+      <input
+        type="checkbox"
+        class="file-checkbox"
+        :checked="isSelected"
+        :disabled="file.status === 'completed'"
+        @change="handleCheckboxToggle"
+        :title="checkboxTitle"
+        :aria-label="checkboxTitle"
+      />
+    </div>
+
     <!-- File Name Column (flexible - expands to fill remaining space) -->
     <div class="row-cell filename-cell" style="flex: 1; min-width: 150px" :title="file.name">
       {{ file.name }}
@@ -24,20 +37,6 @@
     <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
       <button class="action-btn" title="Preview file" disabled>👁️</button>
       <button class="action-btn" title="Upload now" disabled>⬆️</button>
-    </div>
-
-    <!-- Remove Column (adjusted for scrollbar width) -->
-    <div
-      class="row-cell remove-cell"
-      :style="{ width: `${removeColumnWidth}px`, flexShrink: 0 }" >
-      <button
-        :class="['remove-btn', getButtonClass]"
-        :disabled="file.status === 'completed'"
-        @click="handleCancelOrUndo"
-        :title="getButtonTitle"
-      >
-        {{ getButtonIcon }}
-      </button>
     </div>
   </div>
 </template>
@@ -66,42 +65,19 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo']);
 
-// Compute adjusted remove column width to account for scrollbar
-const removeColumnWidth = computed(() => {
-  // Base width is 100px, reduce by scrollbar width
-  return Math.max(100 - props.scrollbarWidth, 30); // Minimum 30px
+// Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
+const isSelected = computed(() => {
+  return props.file.status !== 'skip';
 });
 
-// Compute button icon based on file status
-const getButtonIcon = computed(() => {
-  if (props.file.status === 'completed') {
-    return '🗑️';
-  } else if (props.file.status === 'skip') {
-    return '↩️';
-  } else {
-    return '❌';
-  }
-});
-
-// Compute button title based on file status
-const getButtonTitle = computed(() => {
+// Compute checkbox title for accessibility
+const checkboxTitle = computed(() => {
   if (props.file.status === 'completed') {
     return 'Already uploaded';
   } else if (props.file.status === 'skip') {
-    return 'Undo skip';
+    return 'File skipped - check to include in upload';
   } else {
-    return 'Cancel upload';
-  }
-});
-
-// Compute button class based on file status
-const getButtonClass = computed(() => {
-  if (props.file.status === 'completed') {
-    return 'icon-trash';
-  } else if (props.file.status === 'skip') {
-    return 'icon-undo';
-  } else {
-    return 'icon-cancel';
+    return 'Include file in upload';
   }
 });
 
@@ -114,11 +90,17 @@ const formatFileSize = (bytes) => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
-// Handle cancel or undo based on current status
-const handleCancelOrUndo = () => {
-  if (props.file.status === 'skip') {
-    emit('undo', props.file.id);
+// Handle checkbox toggle
+const handleCheckboxToggle = (event) => {
+  const isChecked = event.target.checked;
+
+  if (isChecked) {
+    // Checkbox was just checked - file should be included (undo skip if it was skipped)
+    if (props.file.status === 'skip') {
+      emit('undo', props.file.id);
+    }
   } else {
+    // Checkbox was just unchecked - file should be skipped
     emit('cancel', props.file.id);
   }
 };
@@ -143,6 +125,30 @@ const handleCancelOrUndo = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Select Cell */
+.select-cell {
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+/* Checkbox Styling with Green Checkmark */
+.file-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #10b981; /* Green color for checkmark */
+  transition: transform 0.2s ease;
+}
+
+.file-checkbox:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.file-checkbox:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Actions Cell */
@@ -192,37 +198,5 @@ const handleCancelOrUndo = () => {
   color: #6b7280;
   font-size: 0.875rem;
   font-family: 'Courier New', monospace;
-}
-
-/* Remove Cell */
-.remove-cell {
-  justify-content: center;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.25rem;
-  padding: 0.25rem;
-  transition: transform 0.2s ease;
-}
-
-.remove-btn:not(:disabled):hover {
-  transform: scale(1.2);
-}
-
-.remove-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* Emoji size adjustments */
-.remove-btn.icon-cancel {
-  font-size: 0.625rem; /* 50% smaller than 1.25rem */
-}
-
-.remove-btn.icon-undo {
-  font-size: 1rem; /* 20% smaller than 1.25rem */
 }
 </style>
