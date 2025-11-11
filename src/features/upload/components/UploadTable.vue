@@ -39,7 +39,7 @@
             <p class="dropzone-text-primary">
               {{ isDragOver ? 'Drop files here!' : 'Drag and drop files or folders here' }}
             </p>
-            <p class="dropzone-text-secondary">or use the buttons above</p>
+            <p class="dropzone-text-secondary">or use the + Add to Queue button in the top left of the header</p>
           </div>
         </div>
 
@@ -61,7 +61,7 @@
 
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
-      {{ props.isEmpty ? 'Upload queue is empty. Drag and drop files or use the buttons above to add files.' : `${props.files.length} files in upload queue` }}
+      {{ props.isEmpty ? 'Upload queue is empty. Drag and drop files or use the + Add to Queue button in the top left of the header to add files.' : `${props.files.length} files in upload queue` }}
     </div>
   </div>
 </template>
