@@ -13,47 +13,34 @@
       <div class="table-header-actions">
         <v-menu location="bottom">
           <template v-slot:activator="{ props: menuProps }">
-            <div class="split-button">
-              <!-- Main action button -->
-              <v-btn
-                color="primary"
-                size="large"
-                variant="elevated"
-                prepend-icon="mdi-plus"
-                class="split-button-main"
-                aria-label="Add files to upload queue"
-                @click="triggerFileSelect"
-              >
-                Add to Queue
-              </v-btn>
-
-              <!-- Dropdown trigger -->
-              <v-btn
-                color="primary"
-                size="large"
-                variant="elevated"
-                icon="mdi-menu-down"
-                class="split-button-dropdown"
-                aria-label="Show more upload options"
-                v-bind="menuProps"
-              />
-            </div>
+            <v-btn
+              color="primary"
+              size="large"
+              variant="elevated"
+              prepend-icon="mdi-plus"
+              append-icon="mdi-chevron-down"
+              class="add-queue-btn"
+              aria-label="Add files to upload queue"
+              v-bind="menuProps"
+            >
+              Add to Queue
+            </v-btn>
           </template>
 
           <v-list density="compact">
             <v-list-item
               prepend-icon="mdi-file-multiple"
-              title="Queue Files"
+              title="Files"
               @click="triggerFileSelect"
             />
             <v-list-item
               prepend-icon="mdi-folder-open"
-              title="Queue Folder"
+              title="Folder"
               @click="triggerFolderSelect"
             />
             <v-list-item
               prepend-icon="mdi-folder-multiple"
-              title="Queue Folder with Subfolders"
+              title="Folder w. Subfolders"
               @click="triggerFolderRecursiveSelect"
             />
           </v-list>
@@ -233,27 +220,11 @@ const handleFolderRecursiveSelect = (event) => {
   padding: 0 0.5rem;
 }
 
-.split-button {
-  display: inline-flex;
-  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.split-button-main {
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-  min-width: 180px;
+.add-queue-btn {
+  min-width: 200px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.025em;
-}
-
-.split-button-dropdown {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  min-width: 48px !important;
-  padding: 0 8px !important;
 }
 
 /* Responsive Design */
@@ -266,12 +237,8 @@ const handleFolderRecursiveSelect = (event) => {
     padding: 0 1rem;
   }
 
-  .split-button {
+  .add-queue-btn {
     width: 100%;
-  }
-
-  .split-button-main {
-    flex: 1;
   }
 }
 </style>
