@@ -103,6 +103,7 @@ const traverseFileTree = async (entry, filesList) => {
   background: white;
   transition: all 0.3s ease;
   position: relative;
+  padding: 0 1rem; /* Add horizontal padding around the dropzone */
 }
 
 .dropzone-spacer:hover {
