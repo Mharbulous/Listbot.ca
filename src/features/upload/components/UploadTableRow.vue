@@ -13,10 +13,10 @@
       />
     </div>
 
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
+    <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
     <div
       class="row-cell filename-cell"
-      style="flex: 1; min-width: 150px"
+      style="flex: 1; min-width: 150px; max-width: 500px"
       :title="file.name"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
@@ -25,17 +25,17 @@
       <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
     </div>
 
-    <!-- Size Column (100px) -->
+    <!-- Size Column (100px fixed) -->
     <div class="row-cell size-cell" style="width: 100px; flex-shrink: 0">
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Folder Path Column (130px) -->
-    <div class="row-cell path-cell" style="width: 130px; flex-shrink: 0" :title="file.folderPath">
+    <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
+    <div class="row-cell path-cell" style="flex: 1; min-width: 130px; max-width: 500px" :title="file.folderPath">
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Status Column (100px) -->
+    <!-- Status Column (100px fixed) -->
     <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
       <StatusCell :status="file.status" />
     </div>
