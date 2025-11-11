@@ -327,7 +327,8 @@ const handleClearQueue = () => {
   border-radius: 0; /* No border radius for full viewport fill */
   overflow: hidden;
   margin: 0;
-  /* Removed width: 100% to allow table to size based on content, not viewport */
+  /* Size table based on column widths, not viewport */
+  width: fit-content;
   height: 100%; /* Fill parent container */
   min-height: 0; /* Allow flex shrinking */
 }
