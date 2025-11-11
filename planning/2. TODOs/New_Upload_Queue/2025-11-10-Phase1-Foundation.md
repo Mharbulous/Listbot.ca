@@ -162,9 +162,9 @@ const addFilesToQueue = async (files) => {
 | 🔵 | Blue | `ready` | Ready | Queued, ready for upload |
 | 🟡 | Yellow | `uploading` | Uploading... | Currently being uploaded |
 | 🟢 | Green | `completed` | Uploaded | Successfully uploaded |
-| 🟠 | Orange | `skipped` | Duplicate | Detected as duplicate |
+| ⚪ | White | `skipped` | Duplicate | Detected as duplicate |
 | 🔴 | Red | `error` | Failed | Upload failed with error |
-| ⚪ | White | `uploadMetadataOnly` | Metadata Only | Uploaded metadata only |
+| 🟠 | Orange | `uploadMetadataOnly` | Metadata Only | Uploaded metadata only |
 | ⚫ | Gray | `unknown` | Unknown | Unknown status (fallback) |
 
 ```css
