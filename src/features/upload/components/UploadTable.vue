@@ -197,13 +197,29 @@ const footerStats = computed(() => {
   };
 });
 
-// Format bytes
+// Format bytes - Always show 3 significant digits
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B';
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  const value = bytes / Math.pow(k, i);
+
+  // Format to exactly 3 significant digits
+  let formatted;
+  if (value < 10) {
+    // Show 2 decimal places (e.g., 1.23 KB, 7.72 MB)
+    formatted = value.toFixed(2);
+  } else if (value < 100) {
+    // Show 1 decimal place (e.g., 12.3 KB, 87.1 MB)
+    formatted = value.toFixed(1);
+  } else {
+    // Show no decimal places (e.g., 121 KB, 983 MB)
+    formatted = Math.round(value).toString();
+  }
+
+  return formatted + ' ' + sizes[i];
 };
 
 // Drag-drop handlers for empty state
