@@ -9,11 +9,20 @@
       @deselect-all="handleDeselectAll"
     />
 
-    <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
-    <div ref="scrollContainerRef" class="scroll-container">
+    <!-- VIRTUALIZED CONTENT (shown when isEmpty === false) -->
+    <UploadTableVirtualizer
+      v-if="!props.isEmpty"
+      ref="virtualizerRef"
+      :files="props.files"
+      :scrollbar-width="scrollbarWidth"
+      @cancel="handleCancel"
+      @undo="handleUndo"
+    />
+
+    <!-- EMPTY STATE (shown when isEmpty === true) -->
+    <div v-else ref="scrollContainerRef" class="scroll-container">
       <div class="table-body">
-        <!-- EMPTY STATE (shown when isEmpty === true) -->
-        <div v-if="props.isEmpty" class="empty-state-container">
+        <div class="empty-state-container">
           <div
             class="dropzone-empty"
             :class="{ 'dropzone-active': isDragOver }"
@@ -43,17 +52,6 @@
             <p class="dropzone-text-secondary">or use the + Add to Queue button in the top left of the header</p>
           </div>
         </div>
-
-        <!-- FILE ROWS (shown when isEmpty === false) -->
-        <UploadTableRow
-          v-for="file in props.files"
-          v-show="!props.isEmpty"
-          :key="file.id"
-          :file="file"
-          :scrollbar-width="scrollbarWidth"
-          @cancel="handleCancel"
-          @undo="handleUndo"
-        />
       </div>
     </div>
 
@@ -70,7 +68,7 @@
 <script setup>
 import { computed, watch, ref, onMounted, onUnmounted } from 'vue';
 import UploadTableHeader from './UploadTableHeader.vue';
-import UploadTableRow from './UploadTableRow.vue';
+import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
 
 // Component configuration
@@ -95,7 +93,8 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all']);
 
 // Scrollbar width detection
-const scrollContainerRef = ref(null);
+const scrollContainerRef = ref(null); // For empty state
+const virtualizerRef = ref(null); // For virtualized content
 const scrollbarWidth = ref(0);
 
 // Drag-drop state for empty state
@@ -131,9 +130,18 @@ const handleDeselectAll = () => {
 };
 
 const calculateScrollbarWidth = () => {
-  if (!scrollContainerRef.value) return;
+  // Get scroll container from either empty state or virtualizer
+  let container = null;
+  if (props.isEmpty && scrollContainerRef.value) {
+    container = scrollContainerRef.value;
+  } else if (!props.isEmpty && virtualizerRef.value?.scrollContainerRef) {
+    container = virtualizerRef.value.scrollContainerRef;
+  }
+
+  if (!container) return;
+
   // Calculate scrollbar width as the difference between offsetWidth and clientWidth
-  scrollbarWidth.value = scrollContainerRef.value.offsetWidth - scrollContainerRef.value.clientWidth;
+  scrollbarWidth.value = container.offsetWidth - container.clientWidth;
   console.log('[UploadTable] Scrollbar width detected:', scrollbarWidth.value, 'px');
 };
 
