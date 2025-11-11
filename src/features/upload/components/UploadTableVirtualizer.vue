@@ -160,52 +160,34 @@ const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
 
 // ============================================================================
 // QUEUE METRICS: Track when files are ready for rendering
-// TWO-PHASE TRACKING: Initial render (Phase 1) + Final render (Phase 2)
+// Note: Initial paint timing is now tracked in useUploadTable.js using RAF
 // ============================================================================
-let initialRenderLogged = false; // Track if we've logged the initial render (Phase 1)
-let finalRenderLogged = false; // Track if we've logged the final render (Phase 2)
+let finalRenderLogged = false; // Track if we've logged the final render
 
 watch(
   () => props.files.length,
   (newLength, oldLength) => {
     // Only track when files are ADDED (not removed/cleared)
     if (newLength > (oldLength || 0)) {
-      // Reset render flags when new files are added
-      initialRenderLogged = false;
+      // Reset render flag when new files are added
       finalRenderLogged = false;
     }
   }
 );
 
 // ============================================================================
-// RENDER METRICS: Track rendering after queue addition or scroll
-// TWO-PHASE RENDERING:
-//   1. Initial render: After Phase 1 completes (first 200 files)
-//   2. Final render: After Phase 2 completes (all remaining files)
+// RENDER METRICS: Track final rendering after all files are queued
 // ============================================================================
 watch(
   virtualItems,
   () => {
     // Track render completion relative to current active T=0
     nextTick(() => {
-      // Track INITIAL render after Phase 1 completes (first batch of files)
-      if (window.queueT0 && window.initialBatchComplete && !initialRenderLogged && !isScrolling) {
-        const elapsed = performance.now() - window.queueT0;
-        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Initial table render finished`, {
-          renderedRows: virtualItems.value.length,
-          totalFiles: props.files.length,
-          firstVisible: virtualItems.value[0]?.index ?? 'none',
-          lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
-        });
-        initialRenderLogged = true; // Mark as logged
-        window.initialBatchComplete = false; // Clear flag
-      }
       // Track FINAL render after Phase 2 completes (all files added)
-      else if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged && !isScrolling) {
+      if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged && !isScrolling) {
         const elapsed = performance.now() - window.queueT0;
-        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Final table render finished`, {
+        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - All files rendered (${props.files.length} files)`, {
           renderedRows: virtualItems.value.length,
-          totalFiles: props.files.length,
           firstVisible: virtualItems.value[0]?.index ?? 'none',
           lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
         });

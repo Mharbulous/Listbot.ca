@@ -59,8 +59,19 @@ export function useUploadTable() {
       console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Initial batch complete (${phase1Count} files)`);
     }
 
-    // Allow Vue to render the initial batch
-    await nextTick();
+    // CRITICAL: Wait for browser to PAINT the initial batch before starting Phase 2
+    // This ensures the user SEES the table before we block the main thread with Phase 2
+    await nextTick(); // Wait for Vue to update the DOM
+    await new Promise((resolve) => requestAnimationFrame(() => {
+      // Double RAF to ensure paint has completed
+      requestAnimationFrame(() => {
+        if (window.queueT0) {
+          const elapsed = performance.now() - window.queueT0;
+          console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Initial table PAINTED (visible to user)`);
+        }
+        resolve();
+      });
+    }));
 
     // ========================================================================
     // PHASE 2: Bulk Processing (if more files remain)
