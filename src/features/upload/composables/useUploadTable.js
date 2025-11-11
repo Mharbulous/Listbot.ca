@@ -1,4 +1,5 @@
 import { ref, nextTick } from 'vue';
+import { isUnsupportedFileType } from '../utils/fileTypeChecker.js';
 
 /**
  * Composable for managing upload table state
@@ -35,15 +36,20 @@ export function useUploadTable() {
     // Process files in batches
     for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
       const batch = files.slice(i, i + BATCH_SIZE);
-      const processedBatch = batch.map((file, index) => ({
-        id: `${Date.now()}-${i + index}`,
-        name: file.name,
-        size: file.size,
-        status: 'ready',
-        folderPath: extractFolderPath(file),
-        sourceFile: file,
-        sourceLastModified: file.lastModified,
-      }));
+      const processedBatch = batch.map((file, index) => {
+        // Check if file is unsupported (e.g., .lnk, .tmp)
+        const isUnsupported = isUnsupportedFileType(file.name);
+
+        return {
+          id: `${Date.now()}-${i + index}`,
+          name: file.name,
+          size: file.size,
+          status: isUnsupported ? 'n/a' : 'ready',
+          folderPath: extractFolderPath(file),
+          sourceFile: file,
+          sourceLastModified: file.lastModified,
+        };
+      });
 
       uploadQueue.value.push(...processedBatch);
 
@@ -99,11 +105,11 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear skipped files from queue (files with status 'skip')
+   * Clear skipped files from queue (files with status 'skip' or 'n/a')
    */
   const clearQueue = () => {
     const beforeCount = uploadQueue.value.length;
-    uploadQueue.value = uploadQueue.value.filter((file) => file.status !== 'skip');
+    uploadQueue.value = uploadQueue.value.filter((file) => file.status !== 'skip' && file.status !== 'n/a');
     const removedCount = beforeCount - uploadQueue.value.length;
     console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
   };
@@ -146,11 +152,12 @@ export function useUploadTable() {
 
   /**
    * Select all files (restore all skipped files to 'ready' status)
+   * NOTE: Does NOT affect 'n/a' files (unsupported file types)
    */
   const selectAll = () => {
     let restoredCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Only restore skipped files, don't change completed files
+      // Only restore skipped files, don't change completed or n/a files
       if (file.status === 'skip') {
         file.status = 'ready';
         restoredCount++;
@@ -160,13 +167,14 @@ export function useUploadTable() {
   };
 
   /**
-   * Deselect all files (mark all files as 'skip', except completed ones)
+   * Deselect all files (mark all files as 'skip', except completed and n/a files)
+   * NOTE: Does NOT affect 'n/a' files (unsupported file types)
    */
   const deselectAll = () => {
     let skippedCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Skip all files except completed ones
-      if (file.status !== 'completed' && file.status !== 'skip') {
+      // Skip all files except completed and n/a ones
+      if (file.status !== 'completed' && file.status !== 'skip' && file.status !== 'n/a') {
         file.status = 'skip';
         skippedCount++;
       }

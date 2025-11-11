@@ -94,8 +94,8 @@ const isDragOver = ref(false);
 // Selection state for Select All checkbox
 const allFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  // Filter out completed files (can't be toggled)
-  const selectableFiles = props.files.filter((f) => f.status !== 'completed');
+  // Filter out completed and n/a files (can't be toggled)
+  const selectableFiles = props.files.filter((f) => f.status !== 'completed' && f.status !== 'n/a');
   if (selectableFiles.length === 0) return false;
   // All selectable files must NOT be skipped
   return selectableFiles.every((f) => f.status !== 'skip');
@@ -103,7 +103,7 @@ const allFilesSelected = computed(() => {
 
 const someFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  const selectableFiles = props.files.filter((f) => f.status !== 'completed');
+  const selectableFiles = props.files.filter((f) => f.status !== 'completed' && f.status !== 'n/a');
   if (selectableFiles.length === 0) return false;
   const selectedCount = selectableFiles.filter((f) => f.status !== 'skip').length;
   // Some (but not all) files are selected
@@ -141,23 +141,25 @@ const footerStats = computed(() => {
   const duplicates = props.files.filter((f) => f.status === 'skipped').length;
   const failed = props.files.filter((f) => f.status === 'error').length;
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
-  const uploadable = total - duplicates - removed;
+  const naFiles = props.files.filter((f) => f.status === 'n/a').length;
+  // Uploadable = total - duplicates - removed - n/a files
+  const uploadable = total - duplicates - removed - naFiles;
 
-  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates)
+  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not n/a)
   const checkedFiles = props.files.filter(
-    (f) => f.status !== 'skip' && f.status !== 'completed' && f.status !== 'skipped'
+    (f) => f.status !== 'skip' && f.status !== 'completed' && f.status !== 'skipped' && f.status !== 'n/a'
   );
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
 
-  // Unchecked files = files that have been skipped
-  const uncheckedCount = removed;
+  // Unchecked files = files that have been skipped OR marked as n/a
+  const uncheckedCount = removed + naFiles;
 
   return {
     total,
     totalSize: formatBytes(totalSize),
     ready,
-    removed,
+    removed: removed + naFiles, // Include n/a files in "Skipped" counter
     duplicates,
     failed,
     uploaded,
