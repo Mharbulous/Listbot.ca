@@ -222,6 +222,9 @@
       :position="cellTooltip.position.value"
       :opacity="cellTooltip.opacity.value"
       :backgroundColor="cellTooltip.backgroundColor.value"
+      @mouseenter="cellTooltip.handleTooltipMouseEnter"
+      @mouseleave="cellTooltip.handleTooltipMouseLeave"
+      @click="cellTooltip.handleTooltipClick"
     />
 
     <!-- Snackbar for notifications -->
@@ -318,10 +321,8 @@ const handleProcessWithAI = (row) => {
 };
 
 const handleOutsideClick = (event) => {
-  if (cellTooltip.isVisible.value) {
-    const cellEl = event.target.closest('.row-cell');
-    if (!cellEl) cellTooltip.cleanup();
-  }
+  // Delegate to the cellTooltip's handleOutsideClick for proper tooltip closing logic
+  cellTooltip.handleOutsideClick(event);
 };
 
 const handleScrollContainer = () => {
