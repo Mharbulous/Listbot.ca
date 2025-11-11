@@ -1,7 +1,7 @@
 <template>
   <div class="upload-table-container">
     <!-- Sticky Header -->
-    <UploadTableHeader @clear-queue="handleClearQueue" />
+    <UploadTableHeader />
 
     <!-- Simple Scrollable Body (NO VIRTUALIZATION - FOR TESTING) -->
     <div ref="scrollContainerRef" class="scroll-container">
@@ -86,7 +86,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'clear-queue', 'upload', 'files-dropped']);
+const emit = defineEmits(['cancel', 'undo', 'upload', 'files-dropped']);
 
 // Scrollbar width detection
 const scrollContainerRef = ref(null);
@@ -242,11 +242,6 @@ const handleCancel = (fileId) => {
 // Handle undo
 const handleUndo = (fileId) => {
   emit('undo', fileId);
-};
-
-// Handle clear queue
-const handleClearQueue = () => {
-  emit('clear-queue');
 };
 
 // Handle upload

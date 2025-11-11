@@ -1,35 +1,35 @@
 <template>
   <div class="upload-table-footer">
     <div class="footer-content">
-      <!-- Upload Button (Left) -->
+      <!-- File Counts (Left) -->
       <div class="footer-left">
-        <v-btn color="primary" variant="elevated" size="default" class="upload-btn" @click="handleUpload">
-          <v-icon start>mdi-cloud-upload</v-icon>
-          UPLOAD {{ stats.total }} files ({{ stats.totalSize }})
-        </v-btn>
-      </div>
-
-      <!-- File Counts (Right) -->
-      <div class="footer-right">
         <span class="footer-stat">
-          <strong>TOTAL:</strong> {{ stats.total }}
+          <strong>Total:</strong> {{ stats.total }}
         </span>
-        <span class="footer-separator">•</span>
+        <span class="footer-separator">|</span>
         <span class="footer-stat">
           <strong>Skipped:</strong> {{ stats.removed }}
         </span>
-        <span class="footer-separator">•</span>
+        <span class="footer-separator">|</span>
         <span class="footer-stat">
           <strong>Duplicates:</strong> {{ stats.duplicates }}
         </span>
-        <span class="footer-separator">•</span>
+        <span class="footer-separator">|</span>
         <span class="footer-stat">
           <strong>Failed:</strong> {{ stats.failed }}
         </span>
-        <span class="footer-separator">•</span>
+        <span class="footer-separator">|</span>
         <span class="footer-stat">
           <strong>Uploaded:</strong> {{ stats.uploaded }}/{{ stats.uploadable }}
         </span>
+      </div>
+
+      <!-- Upload Button (Right) -->
+      <div class="footer-right">
+        <v-btn color="success" variant="elevated" size="large" class="upload-btn" @click="handleUpload">
+          <v-icon start>mdi-arrow-up-circle-outline</v-icon>
+          Upload {{ stats.total }} files ({{ stats.totalSize }})
+        </v-btn>
       </div>
     </div>
   </div>
@@ -93,19 +93,20 @@ const handleUpload = () => {
 .footer-left {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .footer-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
 }
 
 .upload-btn {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
 }
 
 .footer-stat {
