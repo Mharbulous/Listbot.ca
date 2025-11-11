@@ -32,12 +32,6 @@
     <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
       <StatusCell :status="file.status" />
     </div>
-
-    <!-- Actions Column (100px) -->
-    <div class="row-cell actions-cell" style="width: 100px; flex-shrink: 0">
-      <button class="action-btn" title="Preview file" disabled>👁️</button>
-      <button class="action-btn" title="Upload now" disabled>⬆️</button>
-    </div>
   </div>
 </template>
 
@@ -184,31 +178,6 @@ const handleCheckboxToggle = (event) => {
   opacity: 0.4;
   cursor: not-allowed;
   background-color: #f3f4f6;
-}
-
-/* Actions Cell */
-.actions-cell {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.25rem;
-  padding: 0.25rem;
-  transition: transform 0.2s ease;
-}
-
-.action-btn:not(:disabled):hover {
-  transform: scale(1.2);
-}
-
-.action-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 /* File Name Cell */
