@@ -4,6 +4,7 @@
     <UploadTableHeader
       :all-selected="allFilesSelected"
       :some-selected="someFilesSelected"
+      :scrollbar-width="scrollbarWidth"
       @select-all="handleSelectAll"
       @deselect-all="handleDeselectAll"
     />
@@ -57,7 +58,7 @@
     </div>
 
     <!-- Footer -->
-    <UploadTableFooter :stats="footerStats" @upload="handleUpload" @clear-queue="handleClearQueue" />
+    <UploadTableFooter :stats="footerStats" :scrollbar-width="scrollbarWidth" @upload="handleUpload" @clear-queue="handleClearQueue" />
 
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
