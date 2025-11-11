@@ -35,7 +35,12 @@
           @click="handleClearQueue"
         >
           <v-icon start>mdi-broom</v-icon>
-          Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'skipped file' : 'skipped files' }}
+          <template v-if="stats.uncheckedCount > 999">
+            Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
+          </template>
+          <template v-else>
+            Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'skipped file' : 'skipped files' }}
+          </template>
         </v-btn>
         <v-btn
           color="success"
