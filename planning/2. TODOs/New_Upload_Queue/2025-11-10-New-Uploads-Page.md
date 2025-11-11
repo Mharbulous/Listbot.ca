@@ -62,10 +62,11 @@ Each phase delivers a demonstrable improvement to users:
 - Three upload buttons (Files, Folder, Folder + Subfolders)
 - Drag-and-drop zone with recursive folder traversal
 - DocumentTable-based component structure with standard rendering
-- 7-color status system (Ready, Uploading, Uploaded, Duplicate, Failed, Metadata Only, Unknown)
+- 9-status system (Ready, Uploading, Uploaded, Skip, Duplicate, Failed, N/A, Metadata Only, Unknown)
 - Sticky header and reactive footer status bar
 - Non-blocking queue progress indicator for large batches (>500 files)
 - Works well for <500 files (performance optimization in Phase 1.5)
+- Unsupported file type handling (N/A status with ⛔ emoji)
 
 **📄 Detailed Implementation:** See `2025-11-10-Phase1.0-Foundation.md`
 - Three-button upload system with file input types
