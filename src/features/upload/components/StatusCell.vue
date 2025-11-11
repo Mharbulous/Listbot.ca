@@ -71,7 +71,8 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 }
 
 .status-skip {
-  background-color: #ff9800; /* Orange */
+  background-color: #ffffff; /* White */
+  border: 1px solid #9e9e9e; /* Gray border */
 }
 
 .status-error {
