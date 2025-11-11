@@ -248,12 +248,7 @@ const handleMouseLeave = () => {
   flex-shrink: 0;
   cursor: pointer;
   font-size: 1.25rem;
-  transition: transform 0.2s ease;
   user-select: none;
-}
-
-.eyeball-icon:hover {
-  transform: scale(1.2);
 }
 
 /* Size Cell */
