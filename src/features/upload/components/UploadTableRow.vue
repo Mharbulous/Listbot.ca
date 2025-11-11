@@ -159,7 +159,7 @@ const handleMouseLeave = () => {
 }
 
 .row-cell {
-  padding: 12px 16px;
+  padding: 9px 16px;
   border-right: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
@@ -171,7 +171,7 @@ const handleMouseLeave = () => {
 /* Select Cell */
 .select-cell {
   justify-content: center;
-  padding: 12px 8px;
+  padding: 9px 8px;
 }
 
 /* Checkbox Styling with Dark Green Checkmark in White Box with Black Border */
@@ -247,7 +247,7 @@ const handleMouseLeave = () => {
 .eyeball-icon {
   flex-shrink: 0;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1rem;
   user-select: none;
 }
 
