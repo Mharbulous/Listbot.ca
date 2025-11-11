@@ -112,17 +112,59 @@ watch(
   padding: 12px 8px;
 }
 
-/* Select All Checkbox Styling with Green Checkmark */
+/* Select All Checkbox Styling with Dark Green Checkmark in White Box with Black Border */
 .select-all-checkbox {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #10b981; /* Green color for checkmark */
-  transition: transform 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: white;
+  border: 2px solid #000000;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.select-all-checkbox:checked {
+  background-color: white;
+  border-color: #000000;
+}
+
+.select-all-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #059669; /* Dark green checkmark */
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.select-all-checkbox:indeterminate {
+  background-color: white;
+  border-color: #000000;
+}
+
+.select-all-checkbox:indeterminate::after {
+  content: '−';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #059669; /* Dark green dash for indeterminate */
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .select-all-checkbox:hover {
   transform: scale(1.1);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Screen reader only class for accessibility */
