@@ -88,17 +88,29 @@ onUnmounted(() => {
 
 // File selection handlers
 const handleFilesSelected = async (files) => {
-  console.log('[TESTING] Files selected:', files.length);
+  // Set T=0 for queue metrics
+  window.queueT0 = performance.now();
+  console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
+    filesSelected: files.length,
+  });
   await addFilesToQueue(files);
 };
 
 const handleFolderSelected = async (files) => {
-  console.log('[TESTING] Folder selected (root only):', files.length);
+  // Set T=0 for queue metrics
+  window.queueT0 = performance.now();
+  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (root only):', {
+    filesSelected: files.length,
+  });
   await addFilesToQueue(files);
 };
 
 const handleFolderRecursiveSelected = async (files) => {
-  console.log('[TESTING] Folder + subfolders selected:', files.length);
+  // Set T=0 for queue metrics
+  window.queueT0 = performance.now();
+  console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
+    filesSelected: files.length,
+  });
   await addFilesToQueue(files);
 };
 

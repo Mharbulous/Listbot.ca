@@ -58,6 +58,15 @@ export function useUploadTable() {
     queueProgress.value.isQueueing = false;
 
     console.log(`[QUEUE] Added ${totalFiles} files to queue`);
+
+    // Log queue metrics if T=0 was set
+    if (window.queueT0) {
+      const elapsed = performance.now() - window.queueT0;
+      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Files finished adding to queue`, {
+        totalFiles,
+        averageTimePerFile: `${(elapsed / totalFiles).toFixed(2)}ms`,
+      });
+    }
   };
 
   /**
