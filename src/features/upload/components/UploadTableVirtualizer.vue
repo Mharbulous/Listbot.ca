@@ -102,9 +102,9 @@
     <!-- Error Dialog for Multiple Items -->
     <v-dialog v-model="showMultiDropError" max-width="500">
       <v-card>
-        <v-card-title class="text-h6">Multiple Items Not Supported</v-card-title>
+        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
         <v-card-text class="text-body-1">
-          Dragging and dropping multiple files is not permitted. To upload multiple files at once, use the <strong>Add to Queue &raquo; Files</strong> option. Folders must be uploaded one at a time.
+          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -297,39 +297,52 @@ const handleDrop = async (event) => {
   const items = Array.from(event.dataTransfer.items);
   console.log(`[UploadTableVirtualizer] Drop event - ${items.length} items in dataTransfer`);
 
-  // Check if multiple items are being dropped
-  if (items.length > 1) {
-    console.log(`[UploadTableVirtualizer] Multiple items detected (${items.length}), showing error dialog`);
-    showMultiDropError.value = true;
-    return; // Don't process multiple items
-  }
+  // First pass: Identify item types to detect multiple folders
+  const entries = [];
+  const directories = [];
 
-  const allFiles = [];
-
-  // Process single item (file or folder)
-  // NOTE: Some browsers/OS leave item.kind empty for items after the first one
-  // So we try to get the entry regardless of the kind property
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    console.log(`[UploadTableVirtualizer] Processing item ${i + 1}/${items.length} - kind: '${item.kind}', type: '${item.type}'`);
+    console.log(`[UploadTableVirtualizer] Analyzing item ${i + 1}/${items.length} - kind: '${item.kind}', type: '${item.type}'`);
 
     // Try to get entry regardless of kind (handles browsers that leave kind empty)
     const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
     if (entry) {
       console.log(`[UploadTableVirtualizer] Got entry for item ${i + 1}: isFile=${entry.isFile}, isDirectory=${entry.isDirectory}, name=${entry.name}`);
-      await traverseFileTree(entry, allFiles);
-      console.log(`[UploadTableVirtualizer] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+      entries.push(entry);
+      if (entry.isDirectory) {
+        directories.push(entry);
+      }
     } else {
       // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
       console.log(`[UploadTableVirtualizer] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
       const file = item.getAsFile();
       if (file) {
         console.log(`[UploadTableVirtualizer] Got file via getAsFile(): ${file.name}`);
-        allFiles.push(file);
-        console.log(`[UploadTableVirtualizer] After processing item ${i + 1}: ${allFiles.length} total files collected`);
+        entries.push({ file, isFile: true });
       } else {
         console.warn(`[UploadTableVirtualizer] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
       }
+    }
+  }
+
+  // Check if multiple folders are being dropped
+  if (directories.length > 1) {
+    console.log(`[UploadTableVirtualizer] Multiple folders detected (${directories.length}), showing error dialog`);
+    showMultiDropError.value = true;
+    return; // Don't process multiple folders
+  }
+
+  // Process all entries (multiple files allowed, single folder allowed)
+  const allFiles = [];
+
+  for (const entry of entries) {
+    if (entry.file) {
+      // Direct file (from fallback path)
+      allFiles.push(entry.file);
+    } else {
+      // Entry from webkitGetAsEntry (file or directory)
+      await traverseFileTree(entry, allFiles);
     }
   }
 
