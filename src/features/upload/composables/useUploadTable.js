@@ -27,12 +27,16 @@ export function useUploadTable() {
     const PHASE2_BATCH_SIZE = 1000; // Batch size for Phase 2 (efficient bulk processing)
     const totalFiles = files.length;
 
+    // Sort files by size (smallest first) - O(n log n), negligible overhead
+    // File size is immediately available from File objects (no I/O required)
+    const sortedFiles = [...files].sort((a, b) => a.size - b.size);
+
     // ========================================================================
     // PHASE 1: Quick Feedback (<100ms target)
     // Process first 200 files in a single batch → render table immediately
     // ========================================================================
     const phase1Count = Math.min(PHASE1_SIZE, totalFiles);
-    const phase1Files = files.slice(0, phase1Count);
+    const phase1Files = sortedFiles.slice(0, phase1Count);
 
     // Process Phase 1 files in a single batch (no await nextTick to maximize speed)
     const phase1Batch = phase1Files.map((file, index) => {
@@ -78,7 +82,7 @@ export function useUploadTable() {
     // Process remaining files in larger batches with progress indicator
     // ========================================================================
     if (totalFiles > phase1Count) {
-      const remainingFiles = files.slice(phase1Count);
+      const remainingFiles = sortedFiles.slice(phase1Count);
       const remainingCount = remainingFiles.length;
 
       // Show progress indicator for remaining files
