@@ -114,12 +114,13 @@ const processDroppedEntries = async (entries) => {
 
   try {
     for (const entry of entries) {
-      if (entry.file) {
+      // Check if this is our fallback object (has .file property that's NOT a function)
+      if (entry.file && typeof entry.file !== 'function') {
         // Direct file (from fallback path)
         console.log(`[UploadTableDropzone] Processing direct file: ${entry.file.name}`);
         allFiles.push(entry.file);
       } else {
-        // Entry from webkitGetAsEntry (file or directory)
+        // Entry from webkitGetAsEntry (FileSystemEntry with .file() method)
         await traverseFileTree(entry, allFiles);
       }
     }
