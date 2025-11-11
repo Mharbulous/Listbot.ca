@@ -46,10 +46,6 @@
   <div
     ref="scrollContainerRef"
     class="scroll-container"
-    :class="{ 'drag-over': isDragOver }"
-    @dragover.prevent="handleDragOver"
-    @dragleave.prevent="handleDragLeave"
-    @drop.prevent="handleDrop"
   >
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
     <UploadTableHeader
@@ -98,20 +94,6 @@
       @upload="handleUpload"
       @clear-queue="handleClearQueue"
     />
-
-    <!-- Error Dialog for Multiple Items -->
-    <v-dialog v-model="showMultiDropError" max-width="500">
-      <v-card>
-        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
-        <v-card-text class="text-body-1">
-          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -155,10 +137,6 @@ const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'uploa
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
-
-// Drag-drop state
-const isDragOver = ref(false);
-const showMultiDropError = ref(false);
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -275,119 +253,6 @@ const handleFilesDropped = (files) => {
 };
 
 // ============================================================================
-// DRAG AND DROP HANDLERS
-// ============================================================================
-const handleDragOver = () => {
-  isDragOver.value = true;
-};
-
-const handleDragLeave = (event) => {
-  // Only reset if leaving the scroll container entirely, not child elements
-  const container = event.currentTarget;
-  const relatedTarget = event.relatedTarget;
-  if (!container.contains(relatedTarget)) {
-    isDragOver.value = false;
-  }
-};
-
-const handleDrop = async (event) => {
-  isDragOver.value = false;
-
-  // Get all dropped items
-  const items = Array.from(event.dataTransfer.items);
-  console.log(`[UploadTableVirtualizer] Drop event - ${items.length} items in dataTransfer`);
-
-  // First pass: Identify item types to detect multiple folders
-  const entries = [];
-  const directories = [];
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    console.log(`[UploadTableVirtualizer] Analyzing item ${i + 1}/${items.length} - kind: '${item.kind}', type: '${item.type}'`);
-
-    // Try to get entry regardless of kind (handles browsers that leave kind empty)
-    const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-    if (entry) {
-      console.log(`[UploadTableVirtualizer] Got entry for item ${i + 1}: isFile=${entry.isFile}, isDirectory=${entry.isDirectory}, name=${entry.name}`);
-      entries.push(entry);
-      if (entry.isDirectory) {
-        directories.push(entry);
-      }
-    } else {
-      // Fall back to getAsFile() for individual files when webkitGetAsEntry fails
-      console.log(`[UploadTableVirtualizer] webkitGetAsEntry returned null for item ${i + 1}, falling back to getAsFile()`);
-      const file = item.getAsFile();
-      if (file) {
-        console.log(`[UploadTableVirtualizer] Got file via getAsFile(): ${file.name}`);
-        entries.push({ file, isFile: true });
-      } else {
-        console.warn(`[UploadTableVirtualizer] Both webkitGetAsEntry and getAsFile failed for item ${i + 1}`);
-      }
-    }
-  }
-
-  // Check if multiple folders are being dropped
-  if (directories.length > 1) {
-    console.log(`[UploadTableVirtualizer] Multiple folders detected (${directories.length}), showing error dialog`);
-    showMultiDropError.value = true;
-    return; // Don't process multiple folders
-  }
-
-  // Process all entries (multiple files allowed, single folder allowed)
-  const allFiles = [];
-
-  for (const entry of entries) {
-    if (entry.file) {
-      // Direct file (from fallback path)
-      allFiles.push(entry.file);
-    } else {
-      // Entry from webkitGetAsEntry (file or directory)
-      await traverseFileTree(entry, allFiles);
-    }
-  }
-
-  console.log(`[UploadTableVirtualizer] Finished processing - ${allFiles.length} files collected`);
-  if (allFiles.length > 0) {
-    console.log(`[UploadTableVirtualizer] Emitting files-dropped event with ${allFiles.length} files`);
-    emit('files-dropped', allFiles);
-  }
-};
-
-// Recursive function to traverse folder tree (including subfolders)
-const traverseFileTree = async (entry, filesList) => {
-  if (entry.isFile) {
-    // It's a file - get the File object
-    return new Promise((resolve) => {
-      entry.file((file) => {
-        filesList.push(file);
-        resolve();
-      });
-    });
-  } else if (entry.isDirectory) {
-    // It's a directory - read its contents
-    // IMPORTANT: readEntries() may not return all entries in one call
-    // We must call it repeatedly until it returns an empty array
-    const dirReader = entry.createReader();
-    const readAllEntries = async () => {
-      const entries = await new Promise((resolve) => {
-        dirReader.readEntries(resolve);
-      });
-
-      if (entries.length > 0) {
-        // Process these entries
-        for (const childEntry of entries) {
-          await traverseFileTree(childEntry, filesList);
-        }
-        // Read more entries (recursive call until empty)
-        await readAllEntries();
-      }
-    };
-
-    await readAllEntries();
-  }
-};
-
-// ============================================================================
 // SCROLL METRICS: Track scroll start, stop, and rendering
 // ============================================================================
 const handleScroll = () => {
@@ -435,14 +300,6 @@ defineExpose({
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
-  transition: background-color 0.2s ease;
-}
-
-/* Visual feedback when dragging over the table */
-.scroll-container.drag-over {
-  background-color: #eff6ff; /* Light blue background */
-  outline: 2px dashed #3b82f6; /* Blue dashed border */
-  outline-offset: -2px;
 }
 
 /* Content wrapper for virtual rows (no flex properties) */

@@ -4,7 +4,7 @@
     :class="{ 'dropzone-active': isDragOver }"
     @dragover.prevent="handleDragOver"
     @dragleave.prevent="handleDragLeave"
-    @drop.prevent="handleDrop"
+    @drop.prevent.stop="handleDrop"
   >
     <div class="dropzone-content">
       <v-icon icon="mdi-cloud-upload-outline" size="48" color="grey-lighten-1" class="dropzone-icon" />
