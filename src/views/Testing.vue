@@ -90,7 +90,8 @@ onUnmounted(() => {
 const handleFilesSelected = async (files) => {
   // Set T=0 for queue metrics
   window.queueT0 = performance.now();
-  window.queueAdditionComplete = false; // Reset completion flag
+  window.initialBatchComplete = false; // Reset Phase 1 completion flag
+  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
   console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
     filesSelected: files.length,
   });
@@ -100,7 +101,8 @@ const handleFilesSelected = async (files) => {
 const handleFolderSelected = async (files) => {
   // Set T=0 for queue metrics
   window.queueT0 = performance.now();
-  window.queueAdditionComplete = false; // Reset completion flag
+  window.initialBatchComplete = false; // Reset Phase 1 completion flag
+  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
   console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (root only):', {
     filesSelected: files.length,
   });
@@ -110,7 +112,8 @@ const handleFolderSelected = async (files) => {
 const handleFolderRecursiveSelected = async (files) => {
   // Set T=0 for queue metrics
   window.queueT0 = performance.now();
-  window.queueAdditionComplete = false; // Reset completion flag
+  window.initialBatchComplete = false; // Reset Phase 1 completion flag
+  window.queueAdditionComplete = false; // Reset Phase 2 completion flag
   console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
     filesSelected: files.length,
   });

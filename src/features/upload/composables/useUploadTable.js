@@ -17,59 +17,99 @@ export function useUploadTable() {
   });
 
   /**
-   * Add files to queue with batch processing
+   * Add files to queue with TWO-PHASE batch processing
+   * Phase 1: Process first 200 files quickly → render table immediately
+   * Phase 2: Process remaining files in background
    * @param {File[]} files - Array of File objects to add
    */
   const addFilesToQueue = async (files) => {
-    const BATCH_SIZE = 100;
+    const PHASE1_SIZE = 200; // Number of files to process in Phase 1 (fast initial render)
+    const PHASE2_BATCH_SIZE = 1000; // Batch size for Phase 2 (efficient bulk processing)
     const totalFiles = files.length;
 
-    // Show progress indicator for large batches
-    if (totalFiles > 500) {
+    // ========================================================================
+    // PHASE 1: Quick Feedback (<100ms target)
+    // Process first 200 files in a single batch → render table immediately
+    // ========================================================================
+    const phase1Count = Math.min(PHASE1_SIZE, totalFiles);
+    const phase1Files = files.slice(0, phase1Count);
+
+    // Process Phase 1 files in a single batch (no await nextTick to maximize speed)
+    const phase1Batch = phase1Files.map((file, index) => {
+      const isUnsupported = isUnsupportedFileType(file.name);
+      return {
+        id: `${Date.now()}-${index}`,
+        name: file.name,
+        size: file.size,
+        status: isUnsupported ? 'n/a' : 'ready',
+        folderPath: extractFolderPath(file),
+        sourceFile: file,
+        sourceLastModified: file.lastModified,
+      };
+    });
+
+    uploadQueue.value.push(...phase1Batch);
+
+    // Signal Phase 1 complete (for virtualizer to detect)
+    window.initialBatchComplete = true;
+
+    // Log Phase 1 completion metrics
+    if (window.queueT0) {
+      const elapsed = performance.now() - window.queueT0;
+      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Initial batch complete (${phase1Count} files)`);
+    }
+
+    // Allow Vue to render the initial batch
+    await nextTick();
+
+    // ========================================================================
+    // PHASE 2: Bulk Processing (if more files remain)
+    // Process remaining files in larger batches with progress indicator
+    // ========================================================================
+    if (totalFiles > phase1Count) {
+      const remainingFiles = files.slice(phase1Count);
+      const remainingCount = remainingFiles.length;
+
+      // Show progress indicator for remaining files
       queueProgress.value = {
         isQueueing: true,
-        processed: 0,
+        processed: phase1Count,
         total: totalFiles,
       };
-    }
 
-    // Process files in batches
-    for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
-      const batch = files.slice(i, i + BATCH_SIZE);
-      const processedBatch = batch.map((file, index) => {
-        // Check if file is unsupported (e.g., .lnk, .tmp)
-        const isUnsupported = isUnsupportedFileType(file.name);
+      // Process remaining files in larger batches
+      for (let i = 0; i < remainingCount; i += PHASE2_BATCH_SIZE) {
+        const batch = remainingFiles.slice(i, i + PHASE2_BATCH_SIZE);
+        const processedBatch = batch.map((file, index) => {
+          const isUnsupported = isUnsupportedFileType(file.name);
+          return {
+            id: `${Date.now()}-${phase1Count + i + index}`,
+            name: file.name,
+            size: file.size,
+            status: isUnsupported ? 'n/a' : 'ready',
+            folderPath: extractFolderPath(file),
+            sourceFile: file,
+            sourceLastModified: file.lastModified,
+          };
+        });
 
-        return {
-          id: `${Date.now()}-${i + index}`,
-          name: file.name,
-          size: file.size,
-          status: isUnsupported ? 'n/a' : 'ready',
-          folderPath: extractFolderPath(file),
-          sourceFile: file,
-          sourceLastModified: file.lastModified,
-        };
-      });
+        uploadQueue.value.push(...processedBatch);
 
-      uploadQueue.value.push(...processedBatch);
-
-      // Update progress
-      if (queueProgress.value.isQueueing) {
-        queueProgress.value.processed = Math.min(i + BATCH_SIZE, totalFiles);
+        // Update progress
+        queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);
         await nextTick();
       }
-    }
 
-    // Hide progress indicator
-    queueProgress.value.isQueueing = false;
+      // Hide progress indicator
+      queueProgress.value.isQueueing = false;
+    }
 
     console.log(`[QUEUE] Added ${totalFiles} files to queue`);
 
     // Log queue metrics if T=0 was set
     if (window.queueT0) {
       const elapsed = performance.now() - window.queueT0;
-      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Files finished adding to queue`, {
-        totalFiles,
+      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - All files finished adding to queue (${totalFiles} files)`, {
         averageTimePerFile: `${(elapsed / totalFiles).toFixed(2)}ms`,
       });
 
