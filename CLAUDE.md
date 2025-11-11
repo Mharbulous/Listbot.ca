@@ -23,7 +23,12 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
     - You MUST implement schema changes or refactors _directly_.
     - Firestore and Storage can be wiped clean at any time. Focus on the _optimal_ architecture, not backward compatibility.
 3.  **TERMINOLOGY:** The file processing lifecycle has very specific terminology (Original, Source, Upload, Batesed, etc.). You MUST consult `@docs/architecture/file-lifecycle.md` to ensure you use this terminology correctly in all code, comments, and UI text.
-4.  **TESTS:** All Vitest unit/component tests MUST be located in the `/tests` folder.
+4.  **DEDUPLICATION TERMINOLOGY:** File deduplication uses precise terminology that you MUST follow:
+    - **"duplicate"** or **"duplicates"**: Files with the same hash value AND same modified date
+    - **"copy"** or **"copies"**: Files with the same hash value but different file metadata
+    - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
+    - **"one-and-the-same"**: The exact same file (same hash, same metadata, same folder location)
+5.  **TESTS:** All Vitest unit/component tests MUST be located in the `/tests` folder.
 
 ---
 

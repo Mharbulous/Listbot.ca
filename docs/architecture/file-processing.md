@@ -7,14 +7,14 @@ The system uses hardware-specific calibration to provide accurate time predictio
 
 1. **Phase 1: File Analysis** (Filtering)
 
-   - Size-based duplicate detection and file categorization
+   - Size-based copy detection and file categorization
    - Consistent ~60ms regardless of file count
    - Path parsing and directory structure analysis
-   - Duplicate candidate identification
+   - Copy candidate identification
 
 2. **Phase 2: Hash Processing** (Hardware-Calibrated)
 
-   - BLAKE3 calculation for duplicate detection
+   - BLAKE3 calculation for copy detection
    - Formula: `35 + (6.5 × candidates) + (0.8 × sizeMB)` × hardware calibration factor
    - Uses stored hardware performance factor (H-factor) from actual measurements
    - Accounts for both computational and I/O overhead
@@ -32,8 +32,15 @@ The system uses hardware-specific calibration to provide accurate time predictio
 
 ## File Deduplication Strategy
 
+### Terminology
+- **duplicate** or **duplicates**: Files with the same hash value AND same modified date
+- **copy** or **copies**: Files with the same hash value but different file metadata
+- **file metadata**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
+- **one-and-the-same**: The exact same file (same hash, same metadata, same folder location)
+
+### Strategy
 - **Size-based pre-filtering**: Files with unique sizes skip hash calculation entirely
-- **Hash-based verification**: Only files with identical sizes undergo BLAKE3 hashing
+- **Hash-based verification**: Only files with matching sizes undergo BLAKE3 hashing
 - **Firestore integration**: Hashes serve as document IDs for automatic database-level deduplication
 - **Efficient processing**: Typically 60-80% of files skip expensive hash calculation
 

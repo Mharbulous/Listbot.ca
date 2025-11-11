@@ -1,4 +1,13 @@
 # Client-Side Deduplication Analysis
+## Terminology
+
+This document uses precise terminology for file deduplication:
+
+- **duplicate** or **duplicates**: Files with the same hash value AND same modified date
+- **copy** or **copies**: Files with the same hash value but different file metadata
+- **file metadata**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
+- **one-and-the-same**: The exact same file (same hash, same metadata, same folder location)
+
 
 ## Current Implementation (Old Upload Page)
 
@@ -6,7 +15,7 @@
 The old upload page at `/upload` implements a sophisticated client-side deduplication strategy that distinguishes between:
 1. **Unique files** - Files with no duplicates
 2. **One-and-the-same files** - The exact same file selected multiple times (silently filtered)
-3. **Duplicate files (copies)** - Files with identical content but different metadata (marked, only one uploaded)
+3. **Copies** - Files with same hash but different file metadata (marked, only one uploaded)
 
 ### Current Workflow - Mermaid Diagram
 
@@ -17,7 +26,7 @@ flowchart TD
 
     B --> C{Size Group<br/>Size == 1?}
     C -->|Yes| D[Mark as Unique<br/>Status: ready]
-    C -->|No| E[Add to Duplicate<br/>Candidates]
+    C -->|No| E[Add to Copy<br/>Candidates]
 
     E --> F[Hash with BLAKE3<br/>128-bit / 32 hex chars]
     F --> G[Group by Hash Value]
@@ -37,7 +46,7 @@ flowchart TD
     N -->|Yes| P[Choose Best File<br/>Priority Rules]
 
     P --> Q[Best File<br/>Status: ready]
-    P --> R[Other Copies<br/>Status: uploadMetadataOnly<br/>isDuplicate: true]
+    P --> R[Other Copies<br/>Status: uploadMetadataOnly<br/>isCopy: true]
 
     D --> S[Upload Queue]
     I --> S
@@ -62,7 +71,7 @@ flowchart TD
 
 ### Priority Rules for Choosing Best File
 
-When multiple files have the same hash but different metadata (true duplicates/copies):
+When multiple files have same hash but different file metadata (copies):
 
 1. **Earliest modification date** - Older file wins
 2. **Longest folder path** - Deeper nested file wins
@@ -111,7 +120,7 @@ flowchart TD
     C --> D{Size Group<br/>Size == 1?}
 
     D -->|Yes| E[Mark as Unique<br/>Status: unique<br/>Update UI incrementally]
-    D -->|No| F[Mark as Duplicate Candidate<br/>Status: analyzing]
+    D -->|No| F[Mark as Copy Candidate<br/>Status: analyzing]
 
     F --> G[Phase 2: Content Hashing<br/>BLAKE3 with Progress]
     G --> H[Update UI with Hash Progress<br/>Show % complete per file]
@@ -124,12 +133,12 @@ flowchart TD
 
     L --> M{Metadata Key<br/>fileName_size_lastModified}
     M -->|Same metadata| N[One-and-the-Same<br/>Mark duplicate: same-file<br/>Show: File selected multiple times]
-    M -->|Different metadata| O[True Duplicate Copy<br/>Mark duplicate: content-match]
+    M -->|Different metadata| O[Copy<br/>Mark duplicate: content-match]
 
     N --> P[Auto-select first instance<br/>Status: selected<br/>Others: Status: ignored]
     O --> Q[Apply Priority Rules<br/>to suggest best file]
 
-    Q --> R[Mark suggested: best<br/>Others: available-duplicate]
+    Q --> R[Mark suggested: best<br/>Others: available-copy]
 
     E --> S[Phase 3: Database Check<br/>Check existing hashes in Firestore]
     K --> S
@@ -151,14 +160,14 @@ flowchart TD
     Z --> AA{Upload Phase}
 
     AA -->|ready-to-upload| AB[Upload full file<br/>to Storage + Firestore]
-    AA -->|available-duplicate| AC[Save metadata only<br/>to Firestore<br/>Reference best file hash]
+    AA -->|available-copy| AC[Save metadata only<br/>to Firestore<br/>Reference best file hash]
     AA -->|already-uploaded| AD[Update metadata only<br/>Add new source reference]
 
     AB --> AE[Display Upload Progress<br/>Show savings metrics]
     AC --> AE
     AD --> AE
 
-    AE --> AF([Complete<br/>Show Summary:<br/>- Files uploaded<br/>- Duplicates skipped<br/>- Storage saved])
+    AE --> AF([Complete<br/>Show Summary:<br/>- Files uploaded<br/>- Copies and duplicates skipped<br/>- Storage saved])
 
     style E fill:#90EE90
     style K fill:#90EE90
@@ -176,10 +185,10 @@ flowchart TD
 - **Clear Status Indicators**: Use intuitive status names like "unique", "analyzing", "already-uploaded"
 - **Preview Screen**: Let users review deduplication results before committing
 
-#### 2. Better Duplicate Handling
-- **Three Duplicate Types**:
+#### 2. Better Copy and Duplicate Handling
+- **Three File Types**:
   - `same-file`: Exact same file selected multiple times (silently filter)
-  - `content-match`: Different files with identical content (suggest best, allow override)
+  - `content-match`: Different files with same hash (suggest best, allow override)
   - `already-uploaded`: File already exists in database (update metadata only)
 
 #### 3. Performance Enhancements
@@ -211,7 +220,7 @@ pending → ready → uploadMetadataOnly → completed
 #### Improved System
 ```
 pending → analyzing → unique → ready-to-upload → uploading → completed
-pending → analyzing → content-match → available-duplicate → metadata-only → completed
+pending → analyzing → content-match → available-copy → metadata-only → completed
 pending → analyzing → same-file → ignored
 pending → analyzing → unique → already-uploaded → metadata-updated → completed
 ```

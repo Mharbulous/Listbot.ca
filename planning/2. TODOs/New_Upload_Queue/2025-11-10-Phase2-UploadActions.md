@@ -4,7 +4,7 @@
 **Status:** Not Started
 **Priority:** High
 **Estimated Duration:** 3-4 days
-**Dependencies:** Phase 1 (Foundation: Upload + Table)
+**Dependencies:** Phase 1 and 1.5
 
 ---
 
