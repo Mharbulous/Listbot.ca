@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-table-footer" :style="{ paddingRight: `calc(1.5rem + ${scrollbarWidth}px)` }">
+  <div class="upload-table-footer">
     <div class="footer-content">
       <!-- File Counts (Left) -->
       <div class="footer-left">
@@ -79,10 +79,6 @@ defineProps({
         typeof value.uncheckedCount === 'number'
       );
     },
-  },
-  scrollbarWidth: {
-    type: Number,
-    default: 0,
   },
 });
 
