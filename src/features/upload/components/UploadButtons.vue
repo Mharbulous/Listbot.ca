@@ -163,17 +163,103 @@ const traverseFileTree = async (entry, filesList) => {
   }
 };
 
-// Trigger file/folder selection
-const triggerFileSelect = () => {
-  fileInput.value?.click();
+// Trigger file/folder selection using modern File System Access API when available
+const triggerFileSelect = async () => {
+  // Check if File System Access API is available
+  if ('showOpenFilePicker' in window) {
+    try {
+      const fileHandles = await window.showOpenFilePicker({
+        multiple: true,
+      });
+      const files = await Promise.all(fileHandles.map((handle) => handle.getFile()));
+      if (files.length > 0) {
+        emit('files-selected', files);
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      if (err.name !== 'AbortError') {
+        console.error('Error picking files:', err);
+      }
+    }
+  } else {
+    // Fallback to traditional file input
+    fileInput.value?.click();
+  }
 };
 
-const triggerFolderSelect = () => {
-  folderInput.value?.click();
+const triggerFolderSelect = async () => {
+  // Check if File System Access API is available
+  if ('showDirectoryPicker' in window) {
+    try {
+      const dirHandle = await window.showDirectoryPicker();
+      const files = [];
+      // Get only root-level files (non-recursive)
+      for await (const entry of dirHandle.values()) {
+        if (entry.kind === 'file') {
+          const file = await entry.getFile();
+          // Add webkitRelativePath for compatibility
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: `${dirHandle.name}/${file.name}`,
+            writable: false,
+          });
+          files.push(file);
+        }
+      }
+      if (files.length > 0) {
+        console.log(`[FOLDER] Root only: ${files.length} files from ${dirHandle.name}`);
+        emit('folder-selected', files);
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      if (err.name !== 'AbortError') {
+        console.error('Error picking folder:', err);
+      }
+    }
+  } else {
+    // Fallback to traditional file input
+    folderInput.value?.click();
+  }
 };
 
-const triggerFolderRecursiveSelect = () => {
-  folderRecursiveInput.value?.click();
+const triggerFolderRecursiveSelect = async () => {
+  // Check if File System Access API is available
+  if ('showDirectoryPicker' in window) {
+    try {
+      const dirHandle = await window.showDirectoryPicker();
+      const files = [];
+      await readDirectoryRecursive(dirHandle, files, dirHandle.name);
+      if (files.length > 0) {
+        console.log(`[FOLDER+] Recursive: ${files.length} files from ${dirHandle.name}`);
+        emit('folder-recursive-selected', files);
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      if (err.name !== 'AbortError') {
+        console.error('Error picking folder:', err);
+      }
+    }
+  } else {
+    // Fallback to traditional file input
+    folderRecursiveInput.value?.click();
+  }
+};
+
+// Helper function to recursively read directory using File System Access API
+const readDirectoryRecursive = async (dirHandle, filesList, basePath = '') => {
+  for await (const entry of dirHandle.values()) {
+    const path = basePath ? `${basePath}/${entry.name}` : entry.name;
+    if (entry.kind === 'file') {
+      const file = await entry.getFile();
+      // Add webkitRelativePath for compatibility with existing code
+      Object.defineProperty(file, 'webkitRelativePath', {
+        value: path,
+        writable: false,
+      });
+      filesList.push(file);
+    } else if (entry.kind === 'directory') {
+      await readDirectoryRecursive(entry, filesList, path);
+    }
+  }
 };
 
 // File selection handlers
