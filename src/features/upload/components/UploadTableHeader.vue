@@ -13,16 +13,16 @@
       />
     </div>
 
-    <!-- File Name Column (flexible - expands to fill remaining space) -->
-    <div class="header-cell" style="flex: 1; min-width: 150px">File Name</div>
+    <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
+    <div class="header-cell" style="flex: 1; min-width: 150px; max-width: 500px">File Name</div>
 
-    <!-- Size Column (100px) -->
+    <!-- Size Column (100px fixed) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Size</div>
 
-    <!-- Folder Path Column (min-width to fit text without wrapping) -->
-    <div class="header-cell" style="min-width: 130px; width: 130px; flex-shrink: 0">Folder Path</div>
+    <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
+    <div class="header-cell" style="flex: 1; min-width: 130px; max-width: 500px">Folder Path</div>
 
-    <!-- Status Column (100px) -->
+    <!-- Status Column (100px fixed) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
   </div>
 </template>
