@@ -99,7 +99,7 @@ When multiple files have same hash but different file metadata (copies):
 
 ---
 
-## Proposed Improved Workflow
+## Proposed "Improved" Workflow (DO NOT IMPLEMENT)
 
 ### Claimed Improvements
 1. **Simplified Status System** - Use clearer status names
@@ -127,7 +127,7 @@ When multiple files have same hash but different file metadata (copies):
 
 **Verdict**: The "improved" design sacrifices the original's smart performance optimization for no gain. Database queries should remain in the upload phase where their cost is hidden.
 
-### Improved Workflow - Mermaid Diagram
+### "Improved" Workflow - Mermaid Diagram (For Reference Only - DO NOT IMPLEMENT)
 
 ```mermaid
 flowchart TD
@@ -196,46 +196,48 @@ flowchart TD
     style AF fill:#FFD700
 ```
 
-### Key Improvements Explained
+### What to Extract from the "Improved" Proposal
 
-#### 1. Enhanced User Experience
+#### 1. Genuine UX Enhancements (Should Implement)
 - **Incremental UI Updates**: Show progress as each file is analyzed
-- **Clear Status Indicators**: Use intuitive status names like "unique", "analyzing", "already-uploaded"
-- **Preview Screen**: Let users review deduplication results before committing
+- **Clear Status Indicators**: Use simplified status names: `pending`, `ready`, `copy`, `uploading`, `uploaded`, `read error`, `failed`
+- **Preview Modal**: Display-only modal showing deduplication results before upload begins
+- **Completion Modal**: Show metrics after upload with storage saved and deduplication rate
 
-#### 2. Better Copy and Duplicate Handling
-- **Three File Types**:
-  - `same-file`: Exact same file selected multiple times (silently filter)
-  - `content-match`: Different files with same hash (ALL metadata saved, one file uploaded)
-  - `already-uploaded`: File already exists in database (update metadata only)
+#### 2. Proper Copy and Duplicate Handling
+- **Silently Filter**: One-and-the-same files (duplicate selections) are removed from queue
+- **Mark Copies**: Files with same hash but different metadata get `status: copy`
+- **Save All Metadata**: ALL metadata from ALL copies saved for litigation discovery
+- **Best File Selection**: Only determines which metadata displays as primary in UI (upload choice is irrelevant since content is identical)
 
-**IMPORTANT**: Since files with identical hashes are identical content, the choice of which copy to upload is irrelevant. ALL metadata from ALL copies must be saved for litigation discovery purposes. The "best file" selection only determines which metadata is displayed as primary in the UI.
+**IMPORTANT**: Users CAN exclude files from upload queue entirely, but CANNOT cherry-pick which copy or duplicate to upload.
 
-#### 3. Performance Enhancements (⚠️ Actually Performance Degradation)
-- **Incremental Hashing**: Hash files one at a time with progress feedback
-- **Early Database Check**: ⚠️ Query Firestore BEFORE upload (adds visible latency)
-- **Smart Batching**: Process files in optimal batch sizes
+#### 3. What NOT to Implement (⚠️ Performance Degradation)
+- ❌ **Early Database Check**: Query Firestore BEFORE upload (adds visible latency, increases database load)
+- ❌ **Pre-Upload Hashing**: Hash ALL files before upload starts (adds visible wait time)
+- ❌ **User Override**: Allow users to cherry-pick which copy to upload (violates litigation requirements)
 
-#### 4. User Visibility (Not Control)
-- **Metadata Preview**: Show why files are considered duplicates
-- **Upload Preview**: Display what will be uploaded before starting (modal recommended)
-- **Completion Summary**: Show metrics after upload (modal recommended)
-- **No Override Capability**: Users cannot cherry-pick which copy or duplicate to upload. However, users CAN choose which files to include/exclude from the upload queue entirely (before deduplication analysis)
-- **Checkbox Behavior**: Disable ALL checkboxes during upload phase to prevent unpredictable behavior
-
-#### 5. Error Handling
+#### 4. Error Handling (Should Implement)
 - **Hashing Failure**: File gets `status: read error`
 - **Upload Failure**: File gets `status: failed`
 - **Disabled Upload**: Checkbox disabled for `read error` status (like .lnk and .tmp files)
 - **No Special UI**: Status change and disabled checkbox provide sufficient feedback
 
-#### 6. Metrics & Feedback
+#### 5. Checkbox Behavior (Should Implement)
+- **During Upload**: Disable ALL checkboxes to prevent unpredictable behavior
+- **Error States**: Checkbox disabled for `read error` status
+
+#### 6. Queue Sorting (Should Implement)
+- **Sort by folder path** (NOT by size) when files are added to queue
+- **Rationale**: Size sorting provides NO performance benefit (adds O(n log n) overhead), while folder path sorting improves UX by grouping related files visually
+
+#### 7. Metrics & Feedback (Should Implement)
 - **Deduplication Summary**:
   - Number of unique files
-  - Number of duplicates detected
+  - Number of copies detected
   - Estimated storage saved (MB/GB)
-  - Time saved by skipping duplicates
-- **Real-time Progress**: Show current operation and file being processed
+  - Deduplication rate percentage
+- **Real-time Progress**: Show current file being processed and percentage complete
 
 ### Status Flow Comparison
 
@@ -274,35 +276,50 @@ uploading → failed (upload error)
 
 ---
 
-## Conclusion: Is This Actually Improved?
+## Final Verdict & Implementation Guidance
 
-### Core Algorithm
-✅ **IDENTICAL** - The deduplication logic is unchanged (good - don't break what works)
+### Core Algorithm Assessment
+✅ **IDENTICAL** - The proposed "improved" deduplication logic is the same as the original (good - don't break what works)
 
-### Genuine UX Improvements
-✅ **Status Names** - More descriptive than `ready` and `uploadMetadataOnly`
-✅ **Progress Feedback** - Show hashing progress to users
-✅ **Preview Screen** - Let users see what will happen before upload
-✅ **Metrics Display** - Show deduplication savings
+### What Should Be Implemented (UX Enhancements Only)
 
-### Critical Problems
-❌ **Database Query Timing** - Moving database checks BEFORE upload adds visible latency and increases Firestore load. Original design was smarter.
-❌ **User Override Features** - Proposed override capabilities violate litigation discovery requirements and are technically impossible (can't upload multiple files with same hash to same document ID)
-❌ **Hashing Timing** - Original design hashes during upload (hidden cost), "improved" design hashes before upload (visible wait)
+**1. Status System**
+- Simplified status names: `pending`, `ready`, `copy`, `uploading`, `uploaded`, `read error`, `failed`
+- Visual indicators (icons, colors) for each status
+- Note: One-and-the-same files are silently filtered (not shown in queue)
 
-### Recommendation
-**DO NOT IMPLEMENT** the "improved" workflow as designed. Instead:
-1. Keep the original client-side deduplication exactly as-is
-2. Add ONLY the UX improvements:
-   - Better status names: `pending`, `ready`, `copy`, `uploading`, `uploaded`, `read error`, `failed`
-   - Progress feedback during hashing
-   - Preview modal before upload (display-only)
-   - Completion modal after upload with metrics
-   - Visual indicators (icons, colors) for statuses
-3. Keep database queries DURING upload phase, not before
-4. Do NOT add user override of deduplication decisions (users CAN exclude files from queue, but CANNOT cherry-pick which copy to upload)
-5. Add error handling improvements: `read error` status with disabled checkbox
-6. Disable ALL checkboxes during upload phase to prevent changes
-7. Sort queue by folder path (NOT by size - provides no performance benefit)
+**2. User Interface**
+- Preview modal before upload (display-only, shows deduplication summary)
+- Completion modal after upload (shows metrics and storage saved)
+- Progress feedback during client-side deduplication
+- Disable ALL checkboxes during upload phase to prevent changes
+- Sort queue by folder path (NOT by size - no performance benefit)
 
-The original design is architecturally superior. The "improved" version sacrifices performance for features that either aren't needed or violate requirements.
+**3. Error Handling**
+- `read error` status for hash failures (checkbox disabled, like .lnk files)
+- `failed` status for upload errors
+- Continue processing other files when one fails
+
+**4. Metrics Display**
+- Deduplication summary showing files, copies, storage saved, deduplication rate
+- Real-time progress with current file and percentage
+
+### What Should NOT Be Implemented (Performance Regressions)
+
+❌ **Database Query Before Upload** - Adds visible latency, increases Firestore load
+❌ **Pre-Upload Hashing** - Original design hashes DURING upload (hidden cost)
+❌ **User Override of Deduplication** - Violates litigation requirements, technically impossible (can't upload multiple files with same hash to same document ID)
+
+**Important Clarification**: Users CAN exclude files from upload queue entirely (before deduplication), but CANNOT cherry-pick which copy or duplicate to upload.
+
+### Implementation Recommendation
+
+**Keep the original architecture exactly as-is, add only UX enhancements.**
+
+The original design is architecturally superior because:
+1. Hides expensive operations (hashing, database queries) behind unavoidable upload time
+2. Minimizes Firestore database load
+3. Provides instant client-side deduplication feedback
+4. Complies with litigation discovery requirements (all metadata saved)
+
+The "improved" proposal's architectural changes would degrade performance while adding no meaningful benefit. Only the UX improvements listed above should be implemented.
