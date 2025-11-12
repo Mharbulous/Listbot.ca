@@ -1,6 +1,6 @@
 # Old Upload Page - Comprehensive Documentation
 
-n## Deduplication Terminology
+## Deduplication Terminology
 
 This document uses standardized terminology when referring to deduplication concepts:
 

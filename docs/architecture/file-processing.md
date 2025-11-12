@@ -1,5 +1,29 @@
 # File Processing Implementation Details
 
+## Hash Libraries Used
+
+**CRITICAL**: The system uses specific hash libraries that must be imported correctly:
+
+### File Content Hashing (BLAKE3)
+- **Library**: `hash-wasm` (NOT `@noble/hashes`)
+- **Algorithm**: BLAKE3 with 128-bit output (32 hex characters)
+- **Usage**: File content deduplication, document IDs in Firestore
+- **Import**: `import { blake3 } from 'hash-wasm';`
+- **Implementation**: `src/features/upload/workers/fileHashWorker.js` and `src/features/upload/composables/useFileProcessor.js`
+
+### Metadata Hashing (xxHash)
+- **Library**: `xxhash-wasm`
+- **Algorithm**: xxHash 64-bit (NOT xxHash3)
+- **Output**: 16 hex characters
+- **Usage**: Metadata combination deduplication (sourceFileName|sourceLastModified|fileHash)
+- **Import**: `import xxhash from 'xxhash-wasm';`
+- **Implementation**: `src/features/upload/composables/useFileMetadata.js`
+
+**Why These Libraries:**
+- **Performance**: Both are WebAssembly-based for maximum speed
+- **Browser Compatibility**: Work in web workers without blocking UI
+- **Reliability**: Battle-tested libraries with consistent output
+
 ## File Processing & Estimation System
 
 **Hardware-Calibrated Prediction System:**
