@@ -56,7 +56,7 @@ This app is designed for **litigation document discovery**, which requires speci
 ### Non-Negotiable Requirements
 
 1. **ALL metadata from ALL copies MUST be saved** - For litigation discovery, suppressing any file location or metadata is unacceptable
-2. **No user override of deduplication** - Users cannot choose which files to upload or suppress
+2. **No user override of deduplication** - Users cannot cherry-pick which copy or duplicate to upload/exclude. However, users CAN choose which files to include/exclude from the upload queue entirely (before deduplication analysis)
 3. **"Best file" selection is UI-only** - Since identical hash = identical content, the choice of which copy to upload is irrelevant. The "best file" selection only determines which metadata displays as primary in the UI
 4. **Hash-based document IDs** - Using BLAKE3 hash as Firestore document ID provides database-level deduplication (can't create duplicate documents)
 
@@ -104,6 +104,18 @@ for (const [, fileRefs] of fileSizeGroups) {
 ```
 
 **Rationale:** Files with unique sizes cannot be duplicates. This optimization avoids hashing potentially 50-70% of files, saving significant CPU time.
+
+**Queue Sorting Recommendation:**
+When files are first added to the upload queue (drag-and-drop), sort them by **folder path** (not by size). Sorting by size provides no performance benefit for the grouping operation (which is O(n) regardless) and actually adds O(n log n) overhead. Sorting by folder path improves user experience by grouping related files together visually.
+
+```javascript
+// Sort queue by folder path for better UX
+files.sort((a, b) => {
+  const aPath = getFilePath(a);
+  const bPath = getFilePath(b);
+  return aPath.localeCompare(bPath);
+});
+```
 
 ### Step 2: Hash Duplicate Candidates (Client-Side Only)
 
@@ -299,34 +311,47 @@ The following enhancements improve user experience WITHOUT changing the core arc
 - `completed` - Done
 
 **Enhanced:**
-- `pending` - File queued
-- `unique` - Unique file (no duplicates detected)
-- `same-file` - One-and-the-same (duplicate selection)
-- `content-match` - Copy detected (same hash, different metadata)
-- `ready-to-upload` - Ready for upload
-- `metadata-only` - Metadata will be saved, file content skipped
+- `pending` - File queued, not yet analyzed
+- `ready` - Ready to upload (includes unique files and best files from copy groups)
+- `copy` - Copy detected (same hash, different metadata) - metadata will be saved, file content skipped
 - `uploading` - Currently uploading
-- `completed` - Done
-- `error` - Hash failure or other error
+- `uploaded` - Successfully uploaded
+- `read error` - Hash failure or file read error (checkbox disabled)
+- `failed` - Upload failed (network error, storage error, etc.)
 
 **Implementation:**
 ```javascript
 // During client-side deduplication
 if (fileSizeGroups.get(fileSize).length === 1) {
-  fileRef.status = 'unique'; // Instead of 'ready'
+  fileRef.status = 'ready'; // Unique file, ready to upload
 }
 
-// For one-and-the-same
+// For one-and-the-same (silently filtered - not shown in queue)
 if (oneAndTheSameFiles.length > 1) {
-  oneAndTheSameFiles[0].status = 'same-file';
-  // Others are filtered, not shown in queue
+  // Keep first instance only
+  // Others are removed from queue entirely
 }
 
 // For copies
 if (fileRef.isCopy) {
-  fileRef.status = 'content-match';
-  fileRef.uploadStatus = 'metadata-only'; // During upload
+  fileRef.status = 'copy'; // Metadata will be saved during upload
 }
+
+// For hash failures
+try {
+  const hash = await generateFileHash(fileRef.file);
+} catch (error) {
+  fileRef.status = 'read error';
+  fileRef.canUpload = false; // Disable checkbox
+}
+
+// During upload phase
+fileRef.status = 'uploading';
+
+// After upload
+fileRef.status = 'uploaded'; // Success
+// or
+fileRef.status = 'failed'; // Upload error
 ```
 
 ### 2. Progress Feedback During Hashing
@@ -362,7 +387,7 @@ Current: report_2024.pdf
 
 ### 3. Preview/Summary Screen Before Upload
 
-**After client-side deduplication, show summary:**
+**After client-side deduplication, show summary in a modal dialog:**
 
 ```javascript
 const summary = {
@@ -376,7 +401,7 @@ const summary = {
 };
 ```
 
-**UI Display:**
+**UI Display (Modal):**
 ```
 ┌─────────────────────────────────────┐
 │ Upload Preview                      │
@@ -394,11 +419,14 @@ const summary = {
 └─────────────────────────────────────┘
 ```
 
-**Important:** This is display-only. No user override capability.
+**Important:**
+- This is display-only. No user override of deduplication decisions.
+- Present as a modal to focus user attention before upload begins
+- All file checkboxes should be DISABLED during the upload phase to prevent unpredictable behavior
 
 ### 4. Deduplication Metrics Display
 
-**During and after upload, show savings:**
+**During upload, show progress inline. After upload completion, show summary in a modal:**
 
 ```javascript
 const metrics = {
@@ -411,16 +439,22 @@ const metrics = {
 };
 ```
 
-**UI Display:**
+**UI Display (Modal after completion):**
 ```
-Upload Complete!
+┌─────────────────────────────────────┐
+│ Upload Complete!                    │
+├─────────────────────────────────────┤
+│ 120 files uploaded                  │
+│ 25 copies detected (metadata saved) │
+├─────────────────────────────────────┤
+│ Storage saved: 450 MB               │
+│ Deduplication: 17.2%                │
+├─────────────────────────────────────┤
+│                [Close]              │
+└─────────────────────────────────────┘
+```
 
-120 files uploaded
-25 copies detected (metadata saved)
-───────────────────────────
-Storage saved: 450 MB
-Deduplication: 17.2%
-```
+**Rationale:** Modal ensures users see the completion summary and understand what was accomplished.
 
 ### 5. Error Handling for Hash Failures
 
@@ -431,35 +465,50 @@ try {
   const hash = await generateFileHash(fileRef.file);
   fileRef.hash = hash;
 } catch (error) {
-  fileRef.status = 'error';
-  fileRef.error = 'Failed to hash file - cannot upload';
+  fileRef.status = 'read error';
   fileRef.canUpload = false; // Disable checkbox
   // Continue processing other files
 }
 ```
 
-**UI Display:**
-```
-🔴 corrupted_file.pdf - Failed to hash file
-   [ⓘ] This file cannot be uploaded (checkbox disabled)
-```
+**Behavior:**
+- File status changes to `read error`
+- Checkbox is disabled (same as .lnk and .tmp files)
+- No special UI modal needed - the status and disabled checkbox are sufficient feedback
 
-**Rationale:** Files without hashes cannot be uploaded (no document ID). Better to block with clear error than upload and fail mysteriously.
+**Rationale:** Files without hashes cannot be uploaded (no document ID). Blocking with disabled checkbox prevents upload attempts that would fail.
 
-### 6. File Type Indicators
+### 6. File Status Indicators
 
 **Show visual indicators for file statuses:**
 
 ```javascript
 const statusIcons = {
-  'unique': '✓',        // Green checkmark
-  'same-file': '⊗',     // Gray circled X
-  'content-match': '⚌',  // Blue parallel lines
-  'uploading': '↑',     // Up arrow
-  'completed': '✓',     // Green checkmark
-  'error': '✗',         // Red X
+  'pending': '○',       // Gray circle - not yet analyzed
+  'ready': '✓',         // Green checkmark - ready to upload
+  'copy': '⚌',          // Blue parallel lines - copy detected
+  'uploading': '↑',     // Up arrow - currently uploading
+  'uploaded': '✓',      // Green checkmark - successfully uploaded
+  'read error': '✗',    // Red X - hash/read failure
+  'failed': '⚠',        // Orange warning - upload failed
+};
+
+const statusColors = {
+  'pending': 'gray',
+  'ready': 'green',
+  'copy': 'blue',
+  'uploading': 'blue',
+  'uploaded': 'green',
+  'read error': 'red',
+  'failed': 'orange',
 };
 ```
+
+**Implementation Notes:**
+- Icons provide quick visual scanning
+- Colors reinforce status meaning
+- `read error` and `failed` both show disabled checkboxes
+- During upload phase, ALL checkboxes disabled to prevent changes
 
 ---
 
@@ -520,29 +569,56 @@ const statusIcons = {
 3. If doesn't exist, upload to Storage and create document
 4. Hash-based ID provides automatic database-level deduplication
 
+### Q: Why sort the queue by folder path instead of file size?
+
+**A:** Sorting by size provides NO performance benefit:
+- Size grouping uses a Map, which is O(n) regardless of input order
+- Pre-sorting adds O(n log n) overhead
+- For 10,000 files: ~130,000 extra operations for zero benefit
+
+Sorting by folder path:
+- Groups related files together visually
+- Makes it easier for users to review the queue
+- Same O(n log n) cost, but provides actual value (better UX)
+
 ---
 
 ## Implementation Checklist
 
 To enhance the UI without breaking the architecture:
 
-- [ ] **Update status names** to more descriptive values
-- [ ] **Add progress callback** during client-side hashing phase
-- [ ] **Create preview/summary component** to show before upload
-- [ ] **Add deduplication metrics** display during and after upload
-- [ ] **Implement error status** for hash failures with disabled checkbox
+### Status & Display
+- [ ] **Update status names**: `pending`, `ready`, `copy`, `uploading`, `uploaded`, `read error`, `failed`
 - [ ] **Add visual indicators** (icons, colors) for different statuses
-- [ ] **Display "one-and-the-same" detection** when same file selected multiple times
-- [ ] **Show "copy detected" messages** with explanation
+- [ ] **Add progress callback** during client-side hashing phase
+- [ ] **Display "one-and-the-same" detection** when same file selected multiple times (silently filtered)
+- [ ] **Show "copy detected" indicators** with explanation
+
+### User Interface
+- [ ] **Sort queue by folder path** (not by size) when files are added for better UX
+- [ ] **Create preview modal** to show deduplication summary before upload
+- [ ] **Create completion modal** to show metrics after upload
+- [ ] **Disable ALL checkboxes during upload phase** to prevent unpredictable behavior
+- [ ] **Disable checkbox for `read error` status** (same as .lnk files)
+
+### Metrics & Feedback
+- [ ] **Add deduplication metrics** display during and after upload
 - [ ] **Display storage saved** calculations
+- [ ] **Show upload progress** with current file and percentage
+
+### Error Handling
+- [ ] **Implement `read error` status** for hash failures with disabled checkbox
+- [ ] **Implement `failed` status** for upload errors
+- [ ] **Continue processing** other files when one fails
 
 **DO NOT:**
-- ❌ Add user override capabilities
+- ❌ Add user override of deduplication decisions (users CAN exclude files from queue, but CANNOT cherry-pick which copy/duplicate to upload)
 - ❌ Query database before upload phase
 - ❌ Hash files before user clicks upload button
 - ❌ Allow suppressing metadata from any copy
 - ❌ Change priority rules without documenting rationale
 - ❌ Move expensive operations out of upload phase
+- ❌ Sort queue by file size (provides no performance benefit, adds O(n log n) overhead)
 
 ---
 
