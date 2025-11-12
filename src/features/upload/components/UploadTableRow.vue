@@ -26,7 +26,7 @@
     <div
       class="row-cell filename-cell"
       style="flex: 1; min-width: 150px; max-width: 500px"
-      :title="`${fileTypeDescription} - ${file.name}`"
+      :title="file.name"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
@@ -65,7 +65,6 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import StatusCell from './StatusCell.vue';
 import FileTypeIcon from './FileTypeIcon.vue';
-import { getFileTypeDescription } from '../utils/fileTypeIcons.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { formatDate, formatTime } from '@/utils/dateFormatter.js';
 
@@ -95,9 +94,6 @@ const emit = defineEmits(['cancel', 'undo']);
 
 // Hover state tracking
 const isHovering = ref(false);
-
-// File type description (used in tooltip)
-const fileTypeDescription = computed(() => getFileTypeDescription(props.file.name));
 
 // Formatted modified date tooltip using user preferences
 const modifiedDateTooltip = computed(() => {
