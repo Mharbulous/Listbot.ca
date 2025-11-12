@@ -56,10 +56,10 @@ Each phase delivers a demonstrable improvement to users:
 ### **Phase 1.0: Foundation - Upload + Basic Table**
 **Duration:** 3-4 days | **Priority:** Critical | **Dependencies:** None
 
-**Deliverable:** Complete upload-to-display pipeline with three upload buttons, drag-and-drop, standard table rendering, status system, and footer.
+**Deliverable:** Complete upload-to-display pipeline with two upload buttons, drag-and-drop, standard table rendering, status system, and footer.
 
 **Key Features:**
-- Three upload buttons (Files, Folder, Folder + Subfolders)
+- Two upload buttons (Files, Folder + Subfolders) - root-only option removed per research/2025-11-11-RemoveExcludeSubfoldersOption.md
 - Drag-and-drop zone with recursive folder traversal
 - DocumentTable-based component structure with standard rendering
 - 9-status system (Ready, Uploading, Uploaded, Skip, Duplicate, Failed, N/A, Metadata Only, Unknown)
@@ -67,11 +67,12 @@ Each phase delivers a demonstrable improvement to users:
 - Non-blocking queue progress indicator for large batches (>500 files)
 - Works well for <500 files (performance optimization in Phase 1.5)
 - Unsupported file type handling (N/A status with ⛔ emoji)
+- Eyeball icon (👁️) file preview (implemented early - opens in browser tab)
 
 **📄 Detailed Implementation:** See `2025-11-10-Phase1.0-Foundation.md`
-- Three-button upload system with file input types
+- Two-button upload system with file input types (files, folder-recursive)
 - Drag-and-drop with recursive folder extraction (matches "Folder + Subfolders" behavior)
-- Root-only filtering logic for "Upload Folder" button
+- ~~Root-only filtering logic for "Upload Folder" button~~ (removed - see research doc)
 - Column specifications and widths
 - Status system implementation (colors, dots, text)
 - Footer reactive counts calculation
@@ -346,7 +347,7 @@ console.log('[PERFORMANCE] Upload completion: 3m 24s (715 files, 380 MB)');
 |------|------------|--------|------------|
 | Users confused by duplicate grouping | Low | Medium | Clear visual hierarchy, tooltips |
 | Cancel/undo not discoverable | Low | Medium | User testing, onboarding tooltips |
-| Three-button system not intuitive | Low | High | Clear button labels, hover descriptions |
+| Two-button system not intuitive | Low | Low | Clear button labels, matches industry standards |
 
 ---
 
