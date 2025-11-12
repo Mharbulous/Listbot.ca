@@ -22,6 +22,9 @@
     <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
     <div class="header-cell" style="flex: 1; min-width: 130px; max-width: 500px">Folder Path</div>
 
+    <!-- Modified Column (140px fixed) -->
+    <div class="header-cell" style="width: 140px; flex-shrink: 0">Modified</div>
+
     <!-- Status Column (100px fixed) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Status</div>
   </div>

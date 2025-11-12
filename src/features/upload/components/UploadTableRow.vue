@@ -21,10 +21,11 @@
     <div
       class="row-cell filename-cell"
       style="flex: 1; min-width: 150px; max-width: 500px"
-      :title="file.name"
+      :title="`${fileTypeDescription} - ${file.name}`"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
+      <span class="file-type-icon" :title="fileTypeDescription">{{ fileTypeIcon }}</span>
       <span class="filename-text">{{ file.name }}</span>
       <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
     </div>
@@ -39,6 +40,15 @@
       {{ file.folderPath || '/' }}
     </div>
 
+    <!-- Modified Column (140px fixed) -->
+    <div
+      class="row-cell modified-cell"
+      style="width: 140px; flex-shrink: 0"
+      :title="modifiedDateTooltip"
+    >
+      {{ formatModifiedDate(file.sourceLastModified) }}
+    </div>
+
     <!-- Status Column (100px fixed) -->
     <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
       <StatusCell :status="file.status" />
@@ -48,12 +58,20 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import StatusCell from './StatusCell.vue';
+import { getFileTypeIcon, getFileTypeDescription } from '../utils/fileTypeIcons.js';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { formatDate, formatTime } from '@/utils/dateFormatter.js';
 
 // Component configuration
 defineOptions({
   name: 'UploadTableRow',
 });
+
+// User preferences for date/time formatting
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
 
 // Props
 const props = defineProps({
@@ -72,6 +90,18 @@ const emit = defineEmits(['cancel', 'undo']);
 
 // Hover state tracking
 const isHovering = ref(false);
+
+// File type icon and description
+const fileTypeIcon = computed(() => getFileTypeIcon(props.file.name));
+const fileTypeDescription = computed(() => getFileTypeDescription(props.file.name));
+
+// Formatted modified date tooltip using user preferences
+const modifiedDateTooltip = computed(() => {
+  if (!props.file.sourceLastModified) return 'Unknown';
+  const date = formatDate(props.file.sourceLastModified, dateFormat.value);
+  const time = formatTime(props.file.sourceLastModified, timeFormat.value);
+  return `${date} at ${time}`;
+});
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
 const isSelected = computed(() => {
@@ -96,6 +126,29 @@ const formatFileSize = (bytes) => {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
+// Format modified date using user preferences
+const formatModifiedDate = (timestamp) => {
+  if (!timestamp) return '—';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // If modified today, show time only using user's time format preference
+  if (diffDays === 0) {
+    return formatTime(timestamp, timeFormat.value);
+  }
+
+  // If modified within last 7 days, show "X days ago" (format-independent)
+  if (diffDays < 7) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  }
+
+  // Otherwise show date using user's date format preference
+  return formatDate(timestamp, dateFormat.value);
 };
 
 // Handle checkbox toggle
@@ -249,6 +302,13 @@ const handleMouseLeave = () => {
   cursor: default;
 }
 
+.file-type-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  user-select: none;
+  line-height: 1;
+}
+
 .filename-text {
   flex: 1;
   overflow: hidden;
@@ -279,5 +339,11 @@ const handleMouseLeave = () => {
   color: #6b7280;
   font-size: 0.875rem;
   font-family: 'Courier New', monospace;
+}
+
+/* Modified Cell */
+.modified-cell {
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 </style>
