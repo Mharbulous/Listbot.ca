@@ -1,31 +1,62 @@
 <template>
   <div class="upload-table-container">
-    <!-- VIRTUALIZED CONTENT (handles both empty and populated states) -->
-    <UploadTableVirtualizer
-      ref="virtualizerRef"
-      :files="props.files"
-      :all-selected="allFilesSelected"
-      :some-selected="someFilesSelected"
-      :footer-stats="footerStats"
-      @cancel="handleCancel"
-      @undo="handleUndo"
-      @select-all="handleSelectAll"
-      @deselect-all="handleDeselectAll"
-      @upload="handleUpload"
-      @clear-queue="handleClearQueue"
-      @files-dropped="handleFilesDropped"
-    />
+    <!-- Wrapper for drag-and-drop handling (positioned relative for absolute overlay) -->
+    <div
+      class="table-positioning-wrapper"
+      @dragover.prevent="handleDragOver"
+      @dragleave.prevent="handleDragLeave"
+      @drop.prevent.stop="handleDrop"
+    >
+      <!-- Drag overlay - positioned absolutely over entire table -->
+      <div v-if="isDragOver" class="drag-overlay">
+        <div class="drag-overlay-content">
+          <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
+          <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
+          <p class="drag-overlay-text-secondary">Release to add files to the upload queue</p>
+        </div>
+      </div>
+
+      <!-- VIRTUALIZED CONTENT (handles both empty and populated states) -->
+      <UploadTableVirtualizer
+        ref="virtualizerRef"
+        :files="props.files"
+        :all-selected="allFilesSelected"
+        :some-selected="someFilesSelected"
+        :footer-stats="footerStats"
+        @cancel="handleCancel"
+        @undo="handleUndo"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
+        @upload="handleUpload"
+        @clear-queue="handleClearQueue"
+      />
+    </div>
 
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
       {{ props.isEmpty ? 'Upload queue is empty. Drag and drop files or use the + Add to Queue button in the top left of the header to add files.' : `${props.files.length} files in upload queue` }}
     </div>
+
+    <!-- Error Dialog for Multiple Items -->
+    <v-dialog v-model="showMultiDropError" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
+        <v-card-text class="text-body-1">
+          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, watch, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
+import { useFileDropHandler } from '../composables/useFileDropHandler';
 
 // Component configuration
 defineOptions({
@@ -47,6 +78,32 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all']);
+
+// ============================================================================
+// DRAG AND DROP HANDLING
+// ============================================================================
+const {
+  isDragOver,
+  showMultiDropError,
+  handleDragOver: handleDragOverBase,
+  handleDragLeave: handleDragLeaveBase,
+  handleDrop: handleDropBase,
+} = useFileDropHandler();
+
+// Wrap drag handlers to emit files
+const handleDragOver = () => {
+  handleDragOverBase();
+};
+
+const handleDragLeave = (event) => {
+  handleDragLeaveBase(event);
+};
+
+const handleDrop = (event) => {
+  handleDropBase(event, (files) => {
+    emit('files-dropped', files);
+  });
+};
 
 // Refs
 const virtualizerRef = ref(null); // For virtualized content
@@ -79,18 +136,6 @@ const handleSelectAll = () => {
 const handleDeselectAll = () => {
   emit('deselect-all');
 };
-
-// Debug: Watch files prop
-watch(
-  () => props.files,
-  (newFiles) => {
-    console.log('[UploadTable] Files updated:', newFiles.length, 'files');
-    if (newFiles.length > 0 && newFiles.length <= 3) {
-      console.log('[UploadTable] First file:', newFiles[0]);
-    }
-  },
-  { immediate: true }
-);
 
 // Footer stats
 const footerStats = computed(() => {
@@ -174,11 +219,6 @@ const handleUpload = () => {
 const handleClearQueue = () => {
   emit('clear-queue');
 };
-
-// Handle files dropped (from dropzone in virtualizer)
-const handleFilesDropped = (files) => {
-  emit('files-dropped', files);
-};
 </script>
 
 <style scoped>
@@ -196,6 +236,87 @@ const handleFilesDropped = (files) => {
   min-height: 0; /* Allow flex shrinking */
 }
 
+/* Wrapper for drag-and-drop - enables absolute positioning of overlay */
+.table-positioning-wrapper {
+  flex: 1;
+  position: relative; /* Creates positioning context for absolute overlay */
+  min-height: 0; /* Allow flex shrinking */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */
+/* NOT part of virtualized content - sits on top of everything */
+/* Styled to match UploadTableDropzone for visual consistency */
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0.5rem; /* Small margin from edges */
+  border: 3px dashed #3b82f6; /* Match dropzone active border */
+  border-radius: 8px; /* Rounded corners like dropzone */
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Light blue gradient */
+  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* Allow drop events to pass through to wrapper */
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.drag-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem; /* Match dropzone gap */
+  padding: 1.5rem; /* Match dropzone padding */
+  text-align: center;
+  pointer-events: none; /* Ensure all drop events go to wrapper */
+}
+
+.drag-overlay-icon {
+  margin-bottom: 0.25rem;
+  animation: iconBounce 0.6s ease infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.drag-overlay-text-primary {
+  font-size: 1.25rem; /* Slightly larger for overlay */
+  font-weight: 600;
+  color: #334155; /* Match dropzone text color */
+  margin: 0;
+  text-align: center;
+}
+
+.drag-overlay-text-secondary {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #64748b; /* Match dropzone secondary text color */
+  margin: 0;
+  text-align: center;
+}
 
 /* Screen reader only class for accessibility */
 .sr-only {

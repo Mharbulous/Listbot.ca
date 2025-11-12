@@ -42,26 +42,10 @@
 -->
 
 <template>
-  <!-- Wrapper for table + overlay (enables absolute positioning of overlay) -->
-  <div
-    class="table-wrapper"
-    @dragover.prevent="handleDragOver"
-    @dragleave.prevent="handleDragLeave"
-    @drop.prevent.stop="handleDrop"
-  >
-    <!-- Drag overlay - OUTSIDE scroll container, positioned absolutely over entire table -->
-    <!-- This overlay is NOT part of virtualized content and won't interfere with scrolling -->
-    <!-- NO drop handler on overlay itself - it has pointer-events: none, so events pass through to wrapper -->
-    <div v-if="isDragOver" class="drag-overlay">
-      <div class="drag-overlay-content">
-        <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
-        <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
-        <p class="drag-overlay-text-secondary">Release to add files to the upload queue</p>
-      </div>
-    </div>
-
+  <!-- Wrapper for table (no drag-drop - that's handled by parent UploadTable.vue) -->
+  <div class="table-wrapper">
     <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
-    <div ref="scrollContainerRef" class="scroll-container" :class="{ 'drag-over': isDragOver }">
+    <div ref="scrollContainerRef" class="scroll-container">
       <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
       <UploadTableHeader
         :all-selected="props.allSelected"
@@ -98,11 +82,6 @@
         </div>
       </div>
 
-      <!-- Dropzone Spacer (fills gap between last row and footer) -->
-      <div class="dropzone-cell">
-        <UploadTableDropzone @files-dropped="handleFilesDropped" />
-      </div>
-
       <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
       <UploadTableFooter
         :stats="props.footerStats"
@@ -110,31 +89,15 @@
         @clear-queue="handleClearQueue"
       />
     </div>
-
-    <!-- Error Dialog for Multiple Items -->
-    <v-dialog v-model="showMultiDropError" max-width="500">
-      <v-card>
-        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
-        <v-card-text class="text-body-1">
-          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
-import { useFileDropHandler } from '../composables/useFileDropHandler';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
-import UploadTableDropzone from './UploadTableDropzone.vue';
 
 // Component configuration
 defineOptions({
@@ -164,44 +127,10 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'files-dropped']);
+const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
-
-// ============================================================================
-// DRAG AND DROP HANDLING
-// ============================================================================
-const {
-  isDragOver,
-  showMultiDropError,
-  handleDragOver: handleDragOverBase,
-  handleDragLeave: handleDragLeaveBase,
-  handleDrop: handleDropBase,
-} = useFileDropHandler();
-
-// Wrap drag handlers to emit files
-const handleDragOver = () => {
-  console.log('[UploadTableVirtualizer] handleDragOver called');
-  handleDragOverBase();
-};
-
-const handleDragLeave = (event) => {
-  console.log('[UploadTableVirtualizer] handleDragLeave called');
-  handleDragLeaveBase(event);
-};
-
-const handleDrop = (event) => {
-  console.log('[UploadTableVirtualizer] handleDrop called on wrapper', event.target);
-  // The overlay is now outside the scroll container and won't interfere with virtualization
-  // Simply hide it and process the drop
-  isDragOver.value = false;
-
-  handleDropBase(event, (files) => {
-    console.log('[UploadTableVirtualizer] Files extracted:', files.length);
-    emit('files-dropped', files);
-  });
-};
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -313,10 +242,6 @@ const handleClearQueue = () => {
   emit('clear-queue');
 };
 
-const handleFilesDropped = (files) => {
-  emit('files-dropped', files);
-};
-
 // ============================================================================
 // SCROLL METRICS: Track scroll start, stop, and rendering
 // ============================================================================
@@ -394,90 +319,5 @@ defineExpose({
   left: 0;
   width: 100%;
   will-change: transform; /* Optimize for GPU-accelerated transforms */
-}
-
-/* Dropzone cell wrapper - adds padding around the dropzone */
-.dropzone-cell {
-  flex: 1; /* Fill remaining space to push footer to bottom */
-  display: flex; /* Allow dropzone to flex and fill space */
-  padding: 1rem 0; /* Vertical padding above and below dropzone */
-}
-
-/* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */
-/* NOT part of virtualized content - sits on top of everything */
-/* Styled to match UploadTableDropzone for visual consistency */
-.drag-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0.5rem; /* Small margin from edges */
-  border: 3px dashed #3b82f6; /* Match dropzone active border */
-  border-radius: 8px; /* Rounded corners like dropzone */
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Light blue gradient */
-  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.15);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none; /* Allow drop events to pass through to wrapper */
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.drag-overlay-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem; /* Match dropzone gap */
-  padding: 1.5rem; /* Match dropzone padding */
-  text-align: center;
-  pointer-events: none; /* Ensure all drop events go to wrapper */
-}
-
-.drag-overlay-icon {
-  margin-bottom: 0.25rem;
-  animation: iconBounce 0.6s ease infinite;
-}
-
-@keyframes iconBounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-.drag-overlay-text-primary {
-  font-size: 1.25rem; /* Slightly larger for overlay */
-  font-weight: 600;
-  color: #334155; /* Match dropzone text color */
-  margin: 0;
-  text-align: center;
-}
-
-.drag-overlay-text-secondary {
-  font-size: 1rem;
-  font-weight: 400;
-  color: #64748b; /* Match dropzone secondary text color */
-  margin: 0;
-  text-align: center;
-}
-
-.scroll-container.drag-over {
-  /* Visual feedback on scroll container (subtle) */
-  opacity: 0.7;
 }
 </style>
