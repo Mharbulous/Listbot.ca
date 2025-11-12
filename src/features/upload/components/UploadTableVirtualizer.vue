@@ -177,8 +177,19 @@ const {
   handleDrop: handleDropBase,
 } = useFileDropHandler();
 
+// Flag to prevent dragover from reactivating overlay after drop
+// This fixes the race condition where queued dragover events fire after drop
+let dropJustOccurred = false;
+let dropCooldownTimer = null;
+
 // Wrap drag handlers to emit files
 const handleDragOver = () => {
+  // Ignore dragover events immediately after drop to prevent race condition
+  // where queued dragover events reactivate the overlay after drop completes
+  if (dropJustOccurred) {
+    return;
+  }
+
   handleDragOverBase();
 };
 
@@ -190,6 +201,20 @@ const handleDrop = (event) => {
   // Immediately hide overlay
   isDragOver.value = false;
 
+  // Set flag to block dragover events for 50ms
+  // This prevents queued dragover events from reactivating the overlay
+  dropJustOccurred = true;
+
+  // Clear any existing timer
+  if (dropCooldownTimer) {
+    clearTimeout(dropCooldownTimer);
+  }
+
+  // Reset flag after cooldown period
+  dropCooldownTimer = setTimeout(() => {
+    dropJustOccurred = false;
+  }, 50);
+
   handleDropBase(event, (files) => {
     emit('files-dropped', files);
   });
@@ -198,6 +223,7 @@ const handleDrop = (event) => {
 // Ensure overlay is hidden when drag operation ends
 const handleDragEnd = () => {
   isDragOver.value = false;
+  dropJustOccurred = false; // Also reset the flag on dragend
 };
 
 // ============================================================================
