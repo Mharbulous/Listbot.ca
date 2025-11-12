@@ -248,13 +248,13 @@ const handleClearQueue = () => {
 /* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */
 /* NOT part of virtualized content - sits on top of everything */
 /* Styled to match UploadTableDropzone for visual consistency */
+/* Accounts for header (48px) + footer (68px) + 1rem padding on all sides */
 .drag-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0 1rem; /* Match dropzone horizontal margins (no top/bottom margin) */
+  top: calc(48px + 1rem); /* Header height + top padding */
+  left: 1rem; /* Left padding */
+  right: 1rem; /* Right padding */
+  bottom: calc(68px + 1rem); /* Footer height + bottom padding */
   border: 3px dashed #3b82f6; /* Match dropzone active border */
   border-radius: 8px; /* Rounded corners like dropzone */
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Light blue gradient */
