@@ -8,15 +8,6 @@ import { blake3 } from 'hash-wasm';
 // Worker-specific timing utility
 let processingStartTime = null;
 
-function logWorkerTime(eventName) {
-  if (processingStartTime === null) {
-    // If no start time set, use current time as baseline
-    processingStartTime = Date.now();
-  }
-  const relativeTime = Date.now() - processingStartTime;
-  console.log(`${eventName}: ${relativeTime}`);
-}
-
 // Message types
 const MESSAGE_TYPES = {
   PROCESS_FILES: 'PROCESS_FILES',
@@ -129,16 +120,27 @@ async function processFiles(files, batchId) {
 
     // Step 3: Hash potential duplicates and group by hash
     const hashGroups = new Map(); // hash_value -> [file_references]
-    const hashingStartTime = Date.now();
+    const hashFailures = []; // Track files that fail to hash
 
     for (const fileRef of duplicateCandidates) {
-      const hash = await generateFileHash(fileRef.file);
-      fileRef.hash = hash;
+      try {
+        const hash = await generateFileHash(fileRef.file);
+        fileRef.hash = hash;
 
-      if (!hashGroups.has(hash)) {
-        hashGroups.set(hash, []);
+        if (!hashGroups.has(hash)) {
+          hashGroups.set(hash, []);
+        }
+        hashGroups.get(hash).push(fileRef);
+      } catch (error) {
+        // Hash failure - mark as read error
+        fileRef.status = 'read error';
+        fileRef.canUpload = false;
+        hashFailures.push(fileRef);
+        console.error(
+          `[WORKER] Hash failed for ${fileRef.metadata.sourceFileName}:`,
+          error.message
+        );
       }
-      hashGroups.get(hash).push(fileRef);
 
       processedCount++;
       sendProgressUpdate();
@@ -230,15 +232,15 @@ async function processFiles(files, batchId) {
       return result;
     });
 
-    const duplicatesForQueue = duplicateFiles.map((fileRef) => {
+    const copiesForQueue = duplicateFiles.map((fileRef) => {
       const result = {
         id: fileRef.id,
         originalIndex: fileRef.originalIndex,
         path: fileRef.path,
         metadata: fileRef.metadata,
         hash: fileRef.hash,
-        isDuplicate: fileRef.isDuplicate,
-        status: 'uploadMetadataOnly',
+        isCopy: fileRef.isDuplicate, // Rename isDuplicate to isCopy for Phase 3 terminology
+        status: 'copy', // Use 'copy' status instead of 'uploadMetadataOnly'
       };
       // Mark shortcut files so they can be skipped during upload
       if (isShortcutFile(fileRef.metadata.sourceFileName)) {
@@ -247,13 +249,23 @@ async function processFiles(files, batchId) {
       return result;
     });
 
+    const readErrorFiles = hashFailures.map((fileRef) => ({
+      id: fileRef.id,
+      originalIndex: fileRef.originalIndex,
+      path: fileRef.path,
+      metadata: fileRef.metadata,
+      status: 'read error',
+      canUpload: false,
+    }));
+
     // Send completion message
     self.postMessage({
       type: MESSAGE_TYPES.PROCESSING_COMPLETE,
       batchId,
       result: {
         readyFiles,
-        duplicateFiles: duplicatesForQueue,
+        copyFiles: copiesForQueue, // Rename from duplicateFiles to copyFiles
+        readErrorFiles, // Add hash failures
       },
     });
   } catch (error) {

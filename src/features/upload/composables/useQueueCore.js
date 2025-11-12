@@ -29,13 +29,6 @@ export function useQueueCore() {
     );
   };
 
-  // Helper function to detect Windows shortcut files (.lnk)
-  // These files should be skipped as they contain no useful document content
-  const isShortcutFile = (fileName) => {
-    if (!fileName) return false;
-    return fileName.toLowerCase().endsWith('.lnk');
-  };
-
   // Legacy hash generation (kept for fallback compatibility)
   const generateFileHash = async (file) => {
     const buffer = await file.arrayBuffer();
@@ -269,14 +262,14 @@ export function useQueueCore() {
             }
             finalFiles.push(bestFile);
 
-            // Mark others as duplicates
+            // Mark others as copies (Phase 3 terminology)
             allUniqueFiles.forEach((fileRef) => {
               if (fileRef !== bestFile) {
                 const index = finalFiles.findIndex((f) => f === fileRef);
                 if (index > -1) {
                   finalFiles.splice(index, 1);
                 }
-                fileRef.isDuplicate = true;
+                fileRef.isCopy = true; // Use Phase 3 terminology: isCopy instead of isDuplicate
                 duplicateFiles.push(fileRef);
               }
             });
