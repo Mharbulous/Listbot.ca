@@ -101,13 +101,31 @@ When multiple files have same hash but different file metadata (copies):
 
 ## Proposed Improved Workflow
 
-### Improvements
+### Claimed Improvements
 1. **Simplified Status System** - Use clearer status names
 2. **User Visibility** - Show deduplication results to user before upload
-3. **User Control** - Allow users to override duplicate detection
-4. **Performance Metrics** - Track and display deduplication savings
-5. **Incremental Hashing** - Hash files incrementally for better progress feedback
-6. **Early Database Check** - Check Firestore for existing files before full processing
+3. **Performance Metrics** - Track and display deduplication savings
+4. **Incremental Hashing** - Hash files incrementally for better progress feedback
+5. **Early Database Check** - Check Firestore for existing files before full processing
+
+### ⚠️ CRITICAL ARCHITECTURAL FLAW
+
+**The "improved" workflow fundamentally breaks the original design's performance optimization.**
+
+#### Original Design (Smart):
+- **Phase 1 (Client-Side Only)**: Size grouping and deduplication - NO database queries
+- **Phase 2 (During Upload)**: Hashing and database queries happen ONLY when actually uploading
+- **Key Benefit**: Database query time is HIDDEN behind the much longer file upload time
+- **Result**: User sees fast client-side deduplication, database load minimized
+
+#### "Improved" Design (Broken):
+- **Phase 1 (Client-Side)**: Size grouping
+- **Phase 2 (Client-Side)**: Hash ALL files before upload
+- **Phase 3 (Database Check)**: Query Firestore BEFORE user even clicks upload
+- **Key Problem**: Database queries add VISIBLE latency before upload starts
+- **Result**: User waits for database queries, increased Firestore load, no benefit
+
+**Verdict**: The "improved" design sacrifices the original's smart performance optimization for no gain. Database queries should remain in the upload phase where their cost is hidden.
 
 ### Improved Workflow - Mermaid Diagram
 
@@ -149,14 +167,14 @@ flowchart TD
     T -->|Yes| U[Status: already-uploaded<br/>Show: Existing file found]
     T -->|No| V[Status: ready-to-upload]
 
-    U --> W[Preview & Review Screen<br/>Show deduplication summary]
+    U --> W[Preview Screen<br/>Show deduplication summary<br/>Display-only, no overrides allowed]
     V --> W
 
     W --> X{User Action}
-    X -->|Override| Y[Allow user to change<br/>file selections]
+    X -->|Cancel| Y[Abort Upload]
     X -->|Confirm| Z[Final Upload Queue]
 
-    Y --> W
+    Y --> End([Cancelled])
     Z --> AA{Upload Phase}
 
     AA -->|ready-to-upload| AB[Upload full file<br/>to Storage + Firestore]
@@ -188,20 +206,27 @@ flowchart TD
 #### 2. Better Copy and Duplicate Handling
 - **Three File Types**:
   - `same-file`: Exact same file selected multiple times (silently filter)
-  - `content-match`: Different files with same hash (suggest best, allow override)
+  - `content-match`: Different files with same hash (ALL metadata saved, one file uploaded)
   - `already-uploaded`: File already exists in database (update metadata only)
 
-#### 3. Performance Enhancements
+**IMPORTANT**: Since files with identical hashes are identical content, the choice of which copy to upload is irrelevant. ALL metadata from ALL copies must be saved for litigation discovery purposes. The "best file" selection only determines which metadata is displayed as primary in the UI.
+
+#### 3. Performance Enhancements (⚠️ Actually Performance Degradation)
 - **Incremental Hashing**: Hash files one at a time with progress feedback
-- **Early Database Check**: Query Firestore after hashing to find existing files
+- **Early Database Check**: ⚠️ Query Firestore BEFORE upload (adds visible latency)
 - **Smart Batching**: Process files in optimal batch sizes
 
-#### 4. User Control
-- **Override Capability**: Users can choose different file from duplicate group
+#### 4. User Visibility (Not Control)
 - **Metadata Preview**: Show why files are considered duplicates
 - **Upload Preview**: Display what will be uploaded before starting
+- **No Override Capability**: Users cannot override deduplication or suppress metadata discovery
 
-#### 5. Metrics & Feedback
+#### 5. Error Handling
+- **Hashing Failure**: File gets `status: error` with red dot indicator
+- **Disabled Upload**: Checkbox disabled (like .lnk and .tmp files)
+- **User Notification**: Clear error message explaining why file cannot be uploaded
+
+#### 6. Metrics & Feedback
 - **Deduplication Summary**:
   - Number of unique files
   - Number of duplicates detected
@@ -232,3 +257,31 @@ pending → analyzing → unique → already-uploaded → metadata-updated → c
 3. **Error Handling**: Better error messages for hash failures or network issues
 4. **Cancellation**: Allow users to cancel analysis at any stage
 5. **Memory Management**: Handle large file sets efficiently
+
+---
+
+## Conclusion: Is This Actually Improved?
+
+### Core Algorithm
+✅ **IDENTICAL** - The deduplication logic is unchanged (good - don't break what works)
+
+### Genuine UX Improvements
+✅ **Status Names** - More descriptive than `ready` and `uploadMetadataOnly`
+✅ **Progress Feedback** - Show hashing progress to users
+✅ **Preview Screen** - Let users see what will happen before upload
+✅ **Metrics Display** - Show deduplication savings
+
+### Critical Problems
+❌ **Database Query Timing** - Moving database checks BEFORE upload adds visible latency and increases Firestore load. Original design was smarter.
+❌ **User Override Features** - Proposed override capabilities violate litigation discovery requirements and are technically impossible (can't upload multiple files with same hash to same document ID)
+❌ **Hashing Timing** - Original design hashes during upload (hidden cost), "improved" design hashes before upload (visible wait)
+
+### Recommendation
+**DO NOT IMPLEMENT** the "improved" workflow as designed. Instead:
+1. Keep the original client-side deduplication exactly as-is
+2. Add ONLY the UX improvements (status names, progress feedback, metrics)
+3. Keep database queries DURING upload phase, not before
+4. Do NOT add user override capabilities
+5. Add error handling improvements for hash failures
+
+The original design is architecturally superior. The "improved" version sacrifices performance for features that either aren't needed or violate requirements.
