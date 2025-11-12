@@ -91,8 +91,14 @@
       <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
       <UploadTableFooter
         :stats="props.footerStats"
+        :is-uploading="props.isUploading"
+        :is-paused="props.isPaused"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
+        @pause="handlePause"
+        @resume="handleResume"
+        @cancel="handleCancel"
+        @retry-failed="handleRetryFailed"
       />
     </div>
   </div>
@@ -131,10 +137,18 @@ const props = defineProps({
     required: true,
     default: () => ({}),
   },
+  isUploading: {
+    type: Boolean,
+    default: false,
+  },
+  isPaused: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue']);
+const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
@@ -247,6 +261,22 @@ const handleUpload = () => {
 
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+const handlePause = () => {
+  emit('pause');
+};
+
+const handleResume = () => {
+  emit('resume');
+};
+
+const handleCancelUpload = () => {
+  emit('cancel-upload');
+};
+
+const handleRetryFailed = () => {
+  emit('retry-failed');
 };
 
 // ============================================================================

@@ -13,6 +13,8 @@
       <UploadTable
         :files="uploadQueue"
         :is-empty="uploadQueue.length === 0"
+        :is-uploading="uploadAdapter.isUploading.value"
+        :is-paused="uploadAdapter.isPaused.value"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
         @upload="handleUpload"
@@ -20,6 +22,10 @@
         @files-dropped="handleFolderRecursiveSelected"
         @select-all="handleSelectAll"
         @deselect-all="handleDeselectAll"
+        @pause="handlePause"
+        @resume="handleResume"
+        @cancel-upload="handleCancelUpload"
+        @retry-failed="handleRetryFailed"
       />
 
       <!-- Hidden file inputs -->
@@ -49,6 +55,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
+import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
+import { useNotification } from '../core/composables/useNotification.js';
 
 // Component configuration
 defineOptions({
@@ -56,8 +64,16 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue, selectAll, deselectAll } =
+const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue, updateFileStatus, selectAll, deselectAll } =
   useUploadTable();
+const { showNotification } = useNotification();
+
+// Upload adapter
+const uploadAdapter = useUploadAdapter({
+  uploadQueue,
+  updateFileStatus,
+  showNotification,
+});
 
 // Refs for file inputs
 const fileInput = ref(null);
@@ -119,9 +135,14 @@ const handleClearQueue = () => {
   clearQueue();
 };
 
-const handleUpload = () => {
+const handleUpload = async () => {
   console.log('[TESTING] Upload clicked');
-  // TODO: Implement upload logic
+  try {
+    const result = await uploadAdapter.uploadQueueFiles();
+    console.log('[TESTING] Upload result:', result);
+  } catch (error) {
+    console.error('[TESTING] Upload error:', error);
+  }
 };
 
 const handleSelectAll = () => {
@@ -132,6 +153,37 @@ const handleSelectAll = () => {
 const handleDeselectAll = () => {
   console.log('[TESTING] Deselect all files');
   deselectAll();
+};
+
+// Upload control handlers
+const handlePause = () => {
+  console.log('[TESTING] Pause upload');
+  uploadAdapter.pauseUpload();
+};
+
+const handleResume = async () => {
+  console.log('[TESTING] Resume upload');
+  try {
+    const result = await uploadAdapter.resumeUpload();
+    console.log('[TESTING] Resume result:', result);
+  } catch (error) {
+    console.error('[TESTING] Resume error:', error);
+  }
+};
+
+const handleCancelUpload = () => {
+  console.log('[TESTING] Cancel upload');
+  uploadAdapter.cancelUpload();
+};
+
+const handleRetryFailed = async () => {
+  console.log('[TESTING] Retry failed uploads');
+  try {
+    const result = await uploadAdapter.retryFailedUploads();
+    console.log('[TESTING] Retry result:', result);
+  } catch (error) {
+    console.error('[TESTING] Retry error:', error);
+  }
 };
 
 // Trigger file/folder selection for buttons in table header

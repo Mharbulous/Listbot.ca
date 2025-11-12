@@ -23,12 +23,18 @@
         :all-selected="allFilesSelected"
         :some-selected="someFilesSelected"
         :footer-stats="footerStats"
+        :is-uploading="props.isUploading"
+        :is-paused="props.isPaused"
         @cancel="handleCancel"
         @undo="handleUndo"
         @select-all="handleSelectAll"
         @deselect-all="handleDeselectAll"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
+        @pause="handlePause"
+        @resume="handleResume"
+        @cancel-upload="handleCancelUpload"
+        @retry-failed="handleRetryFailed"
       />
     </div>
 
@@ -74,10 +80,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isUploading: {
+    type: Boolean,
+    default: false,
+  },
+  isPaused: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all']);
+const emit = defineEmits(['cancel', 'undo', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // ============================================================================
 // DRAG AND DROP HANDLING
@@ -218,6 +232,26 @@ const handleUpload = () => {
 // Handle clear queue
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+// Handle pause
+const handlePause = () => {
+  emit('pause');
+};
+
+// Handle resume
+const handleResume = () => {
+  emit('resume');
+};
+
+// Handle cancel upload
+const handleCancelUpload = () => {
+  emit('cancel-upload');
+};
+
+// Handle retry failed
+const handleRetryFailed = () => {
+  emit('retry-failed');
 };
 </script>
 
