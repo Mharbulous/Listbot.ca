@@ -39,22 +39,22 @@
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
-    <div class="row-cell path-cell" style="flex: 1; min-width: 130px; max-width: 500px" :title="file.folderPath">
-      {{ file.folderPath || '/' }}
-    </div>
-
-    <!-- Modified Column (140px fixed) -->
+    <!-- Modified Column (130px fixed) -->
     <div
       class="row-cell modified-cell"
-      style="width: 140px; flex-shrink: 0"
+      style="width: 130px; flex-shrink: 0"
       :title="modifiedDateTooltip"
     >
       {{ formatModifiedDate(file.sourceLastModified) }}
     </div>
 
-    <!-- Status Column (100px fixed) -->
-    <div class="row-cell status-cell-wrapper" style="width: 100px; flex-shrink: 0">
+    <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
+    <div class="row-cell path-cell" style="flex: 1; min-width: 130px; max-width: 500px" :title="file.folderPath">
+      {{ file.folderPath || '/' }}
+    </div>
+
+    <!-- Status Column (110px fixed) -->
+    <div class="row-cell status-cell-wrapper" style="width: 110px; flex-shrink: 0">
       <StatusCell :status="file.status" />
     </div>
   </div>
