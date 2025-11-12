@@ -20,39 +20,57 @@ This document contains user stories to validate whether the "improved" deduplica
 3. Same metadata → "same-file" status, keep first
 4. Different metadata → "content-match" status, choose best file
 
-**Key Observation:** The core deduplication algorithm appears **identical**. The main differences are:
+**Key Observation:** The core deduplication algorithm is **IDENTICAL**. The main differences are:
 - **Status naming**: More descriptive status names (`same-file`, `content-match` vs. `isDuplicate`)
-- **Added features**: Database check, user preview, override capability
+- **Added features**: Database check, user preview
 - **UX improvements**: Progress feedback, metrics, better visibility
+
+### 🔴 CRITICAL ARCHITECTURAL FLAW DISCOVERED
+
+**Original Design (Smart):**
+- Client-side deduplication uses ONLY size comparison (fast, no database queries)
+- Hashing and database queries happen DURING upload phase
+- Database query latency is HIDDEN behind file upload time (which is much longer)
+- Result: Fast initial deduplication, minimal Firestore load, optimal user experience
+
+**"Improved" Design (Broken):**
+- Phase 1: Size grouping (client-side)
+- Phase 2: Hash ALL files BEFORE upload (client-side, slow)
+- Phase 3: Query Firestore BEFORE user clicks upload (adds visible latency)
+- Result: Users wait for hashing + database queries before seeing results, increased Firestore load, degraded performance
+
+**Impact:** The "improved" design fundamentally breaks the original's smart performance optimization by moving expensive operations (hashing, database queries) from "during upload" (hidden cost) to "before upload" (visible wait time).
 
 ### What's Actually "Improved"?
 
-✅ **Genuine Improvements:**
-1. **Database Check Phase**: Checking Firestore for existing files before upload is new functionality
-2. **User Control**: Preview/review screen with override capability
-3. **Progress Feedback**: Incremental hashing with progress indicators
-4. **Better Status Tracking**: More granular status names for clarity
-5. **Metrics Display**: Showing deduplication savings and statistics
+✅ **Genuine UX Improvements:**
+1. **Progress Feedback**: Incremental hashing with progress indicators
+2. **Better Status Tracking**: More descriptive status names for clarity
+3. **Metrics Display**: Showing deduplication savings and statistics
+4. **Preview Screen**: Display-only preview of what will be uploaded
+5. **Error Handling**: Clearer error states for hash failures
 
-⚠️ **Potentially Problematic Changes:**
-1. **User Override**: Allowing users to override deduplication could lead to:
-   - Duplicate uploads if user doesn't understand the logic
-   - Increased storage costs
-   - Confusion about which file is "canonical"
-2. **Database Check Timing**: Checking database AFTER hashing means:
-   - All files are hashed even if they exist in DB
-   - Could check DB earlier based on size alone (but this would miss hash collisions)
-3. **Complexity**: More statuses and phases mean more potential for bugs
+❌ **Critical Problems:**
+1. **Performance Degradation**: Moving hashing and database queries BEFORE upload adds visible latency (original design hides this cost)
+2. **Increased Firestore Load**: Querying database before upload instead of during upload increases database demand
+3. **User Override Features**: Proposed override capabilities:
+   - Violate litigation discovery requirements (cannot suppress metadata)
+   - Are technically impossible (can't upload multiple files with same hash to same Firestore document ID)
+   - Should NOT be implemented
+4. **Unnecessary Complexity**: More statuses and phases without corresponding benefit
 
 ### Behavioral Equivalence Question
 
 **The critical question:** Does the improved logic produce the same final results as the original logic?
 
-Based on the mermaid diagrams:
+Based on analysis:
 - **One-and-the-same detection**: ✅ Same (select first instance)
 - **Copy detection**: ✅ Same (apply priority rules)
-- **Priority rules**: ⚠️ Not explicitly shown in improved diagram
-- **Final file selection**: ⚠️ Unclear if user override changes this
+- **Priority rules**: ✅ Same 5-tier priority system
+- **Final file selection**: ✅ Same (no user override capability)
+- **Metadata handling**: ✅ Same (all metadata saved for litigation discovery)
+
+**Verdict on Core Logic:** The deduplication algorithm is identical. The "improved" version just wraps it in different status names and adds a preview screen.
 
 ---
 
@@ -61,9 +79,8 @@ Based on the mermaid diagrams:
 1. **Basic Deduplication**: Simple cases with unique files and copies
 2. **One-and-the-Same**: Same file selected multiple times
 3. **Priority Rules**: Testing the 5-tier priority system
-4. **Database Interaction**: Files that already exist in Firestore
-5. **User Override**: How user choices affect final results
-6. **Edge Cases**: Error conditions, large file sets, cancellation
+4. **Database Interaction**: Files that already exist in Firestore (performance concern)
+5. **Edge Cases**: Error conditions, large file sets, cancellation
 
 ---
 
@@ -600,112 +617,9 @@ Database: Document with hash kkk111... already exists
 
 ---
 
-## Category 5: User Override (New in Improved)
+## Category 5: Edge Cases
 
-### Story 5.1: User Overrides Best File Choice
-
-**Scenario:** System chooses File A as best, but user prefers File B.
-
-**Initial State:**
-```
-File A: /Desktop/report_old.pdf (1 MB, modified: 2024-01-01, hash: lll222...)
-File B: /Desktop/report_new.pdf (1 MB, modified: 2024-02-15, hash: lll222...)
-System choice: File A (earlier date wins)
-```
-
-**Expected Original Behavior:**
-- File A: `status: ready`
-- File B: `isDuplicate: true`
-- No user override capability
-- Upload: File A to Storage, File B metadata only
-
-**Expected Improved Behavior:**
-1. Phase 1-3: File A chosen as best, File B as copy
-2. Preview: Shows File A as selected, File B as available
-3. **User action:** Clicks File B to override
-4. File A: `status: available-copy`
-5. File B: `status: ready-to-upload`
-6. Upload: File B to Storage, File A metadata only
-
-**Equivalence Check:** ❌ **NOT EQUIVALENT** - Different file uploaded
-
-**Validation Points:**
-- ⚠️ User override changes which file is uploaded
-- ⚠️ This is a NEW capability not in original system
-- ? Should this be allowed? What's the use case?
-- ? Could this lead to user confusion or mistakes?
-- ✓ Gives users control, but at cost of complexity
-
----
-
-### Story 5.2: User Chooses to Upload Multiple Copies
-
-**Scenario:** System identifies copies, but user wants to upload both.
-
-**Initial State:**
-```
-File A: /Projects/2023/final.pdf (1 MB, modified: 2024-01-15, hash: mmm333...)
-File B: /Projects/2024/final.pdf (1 MB, modified: 2024-01-15, hash: mmm333...)
-System: Detects as copies (same hash)
-```
-
-**Expected Original Behavior:**
-- One file chosen as best, other marked as duplicate
-- No way to upload both
-- Upload: One file to Storage, one metadata only
-
-**Expected Improved Behavior:**
-1. Preview: Shows File A as best, File B as copy
-2. **User action:** Overrides to upload both
-3. Both: `status: ready-to-upload`
-4. Upload: Both to Storage
-
-**Equivalence Check:** ❌ **NOT EQUIVALENT** - Two files uploaded instead of one
-
-**Validation Points:**
-- ⚠️ **CRITICAL ISSUE**: Uploading both violates deduplication goal
-- ⚠️ Both files have same hash → same document ID in Firestore
-- ❌ **THIS WOULD FAIL**: Can't create two documents with same ID
-- 🔴 **IMPROVED LOGIC HAS A FLAW HERE**
-
-**Conclusion:** User should NOT be able to upload multiple copies with same hash to Storage, as they share the same document ID. Override should only allow choosing WHICH copy to upload, not uploading ALL copies.
-
----
-
-### Story 5.3: User Overrides "Already Uploaded" Status
-
-**Scenario:** System detects file exists in database, user wants to upload anyway.
-
-**Initial State:**
-```
-File A: /Desktop/document.pdf (1 MB, modified: 2024-03-01, hash: nnn444...)
-Database: Document with hash nnn444... already exists
-```
-
-**Expected Original Behavior:**
-- No database check, file would be uploaded
-- (Potential conflict at database level)
-
-**Expected Improved Behavior:**
-1. Phase 3: Database check finds hash exists
-2. File A: `status: already-uploaded`
-3. Preview: Shows "Existing file found"
-4. **User action:** Wants to upload anyway (maybe source location changed?)
-5. System: ???
-
-**Equivalence Check:** ⚠️ **UNCLEAR** - What should happen?
-
-**Validation Points:**
-- ? Should user be able to override "already-uploaded" status?
-- ? If file content is identical (same hash), why upload again?
-- ✓ Metadata update makes sense (new source reference)
-- ? Maybe user wants to update the Storage file if it was corrupted?
-
----
-
-## Category 6: Edge Cases
-
-### Story 6.1: Hash Collision (Theoretical)
+### Story 5.1: Hash Collision (Theoretical)
 
 **Scenario:** Two different files produce the same BLAKE3 hash (extremely unlikely).
 
@@ -727,13 +641,13 @@ File B: /Desktop/doc2.pdf (1 MB, content: "DIFFERENT", hash: ooo555...)
 **Equivalence Check:** ⚠️ Both systems have same vulnerability
 
 **Validation Points:**
-- ✓ BLAKE3 collision probability is ~2^-128 (negligible)
+- ✓ BLAKE3 collision probability is ~2^-128 (infinitesimal)
 - ✓ Neither system can detect true collisions
-- ✓ This is acceptable given hash security guarantees
+- ✓ **ACCEPTABLE RISK** - Hash collision probability is negligible per BLAKE3 design
 
 ---
 
-### Story 6.2: Hashing Failure
+### Story 5.2: Hashing Failure
 
 **Scenario:** One file fails to hash due to read error.
 
@@ -747,23 +661,27 @@ File B: /Desktop/corrupted.pdf (1.5 MB, hash: ERROR - read failure)
 - File A: Hashed successfully → `status: ready`
 - File B: Hash error → included without hash (see code line 212-214)
 - Both uploaded
+- ⚠️ **ISSUE**: File B uploaded without hash - how is Firestore document ID generated?
 
 **Expected Improved Behavior:**
 - File A: `status: ready-to-upload`
-- File B: `status: ERROR` or `status: pending`?
-- Preview: Shows error for File B
-- User decision: Upload anyway or exclude?
+- File B: `status: error`
+- UI Display: Red dot indicator next to File B
+- Checkbox: Disabled (like .lnk and .tmp files)
+- File B: **Blocked from upload**
+- Clear error message: "Failed to hash file - cannot upload"
 
-**Equivalence Check:** ⚠️ Different error handling
+**Equivalence Check:** ❌ **NOT EQUIVALENT** - Improved system blocks failed files
 
 **Validation Points:**
-- ✓ Original system includes file without hash (prevents data loss)
-- ? Improved system should have clearer error handling
-- ? How does Firestore handle document without hash ID?
+- ✓ Improved error handling prevents uploading files without hashes
+- ✓ Red dot + disabled checkbox provides clear visual feedback
+- ✓ Consistent with .lnk and .tmp file blocking behavior
+- ✓ Prevents Firestore document ID generation issues
 
 ---
 
-### Story 6.3: Very Large File Set (1000+ files)
+### Story 5.3: Very Large File Set (1000+ files)
 
 **Scenario:** User selects 1000 files with various duplicates.
 
@@ -798,7 +716,7 @@ File B: /Desktop/corrupted.pdf (1.5 MB, hash: ERROR - read failure)
 
 ---
 
-### Story 6.4: User Cancels During Hashing
+### Story 5.4: User Cancels During Hashing
 
 **Scenario:** User starts upload, then cancels during hash phase.
 
@@ -824,72 +742,93 @@ File B: /Desktop/corrupted.pdf (1.5 MB, hash: ERROR - read failure)
 
 ## Summary of Findings
 
-### ✅ Genuine Improvements
-1. **Database check**: Avoids uploading files that already exist
-2. **Progress feedback**: Better user experience during hashing
-3. **Preview screen**: User visibility before upload
-4. **Metrics display**: Shows deduplication savings
-5. **Status clarity**: More descriptive status names
+### ✅ Genuine UX Improvements (Should Implement)
+1. **Progress feedback**: Better user experience during hashing with progress indicators
+2. **Preview screen**: Display-only visibility of deduplication results before upload
+3. **Metrics display**: Shows deduplication savings (files/storage saved)
+4. **Status clarity**: More descriptive status names (`unique`, `same-file`, `content-match` vs. `ready`, `isDuplicate`)
+5. **Error handling**: Clear `error` status with red dot and disabled checkbox for hash failures
 
-### ⚠️ Concerns & Questions
+### 🔴 Critical Architectural Flaw
 
-1. **User Override Risks:**
-   - Story 5.2 reveals a critical flaw: Users cannot upload multiple copies with same hash (same Firestore ID)
-   - Override should only allow choosing WHICH copy, not uploading ALL copies
-   - This needs clear UI constraints
+**THE BIGGEST PROBLEM WITH THE "IMPROVED" DESIGN:**
 
-2. **Database Check Performance:**
-   - Checking 1000+ hashes in Firestore could be slow
-   - Needs batch query optimization
-   - Should this be done BEFORE hashing? (No - loses benefit of size-based filtering)
+The original design was architecturally smart:
+- Client-side deduplication = fast, no database load
+- Hashing + database queries happen DURING upload
+- Query latency is HIDDEN behind the much longer upload time
+- Result: Fast UI, optimized performance
 
-3. **Original System Behavior Unclear:**
-   - How does original system handle files that already exist in database?
-   - Does Firestore reject duplicate hash IDs?
-   - Need to test this scenario
+The "improved" design breaks this:
+- Phase 3 queries Firestore BEFORE upload starts
+- Users wait for database queries before seeing results
+- Increased Firestore load (queries happen even if user cancels)
+- Hashing happens before upload (visible wait time)
+- Result: Slower UX, increased database load, degraded performance
 
-4. **Behavioral Equivalence:**
-   - Core deduplication algorithm appears identical
-   - Main differences are:
-     - Additional database check phase
-     - User override capability
-     - More detailed status tracking
-   - Final uploaded files SHOULD be the same (if user doesn't override)
+**VERDICT**: Moving database queries and hashing to BEFORE upload is a **performance regression**, not an improvement.
 
-### 🔴 Critical Issues Found
+### ❌ Features That Should NOT Be Implemented
 
-1. **Story 5.2**: User override allowing multiple copies with same hash would cause Firestore ID collision
-   - **FIX NEEDED**: Constrain override to choosing between copies, not uploading multiple
+1. **User Override Capabilities:**
+   - Files with identical hashes ARE identical - choice of which to upload is irrelevant
+   - ALL metadata MUST be saved for litigation discovery (cannot be suppressed)
+   - Users cannot override deduplication or metadata collection
+   - Technically impossible to upload multiple files with same hash (same Firestore document ID)
 
-2. **Database Check Logic**: If "best" file already exists, what happens to other copies?
-   - Should all copies reference existing hash?
-   - This is actually better behavior than original system
+2. **Database Check Before Upload:**
+   - Adds visible latency
+   - Increases Firestore load unnecessarily
+   - Original design hides this cost during upload phase
+
+### ⚠️ Clarifications on Original Design
+
+1. **Metadata Handling:**
+   - ALL metadata from ALL copies is saved (required for litigation discovery)
+   - "Best file" selection only determines which metadata displays as primary in UI
+   - The actual file uploaded is irrelevant (identical hash = identical content)
+
+2. **Hash Failures:**
+   - Original system: Includes file without hash (unclear how document ID is generated)
+   - Improved system: Block upload with `error` status, disabled checkbox
+   - Improved handling prevents Firestore document ID issues
 
 ### 📊 Behavioral Equivalence Verdict
 
-**Core Algorithm:** ✅ **EQUIVALENT** - Same deduplication logic
-**Final Results (without overrides):** ✅ **EQUIVALENT** - Same files uploaded
-**Overall System:** ⚠️ **ENHANCED but NOT IDENTICAL** due to:
-- Database check (new functionality)
-- User override (new functionality, needs constraints)
-- Better UX (improved, not changed)
+**Core Algorithm:** ✅ **IDENTICAL** - Same deduplication logic, just different status names
+**Final Results:** ✅ **EQUIVALENT** - Same files uploaded, all metadata saved
+**Performance:** ❌ **DEGRADED** - Moving hashing/database queries before upload adds visible latency
+**Overall System:** ⚠️ **REGRESSION** - Worse performance, added complexity, no algorithmic improvement
 
 ### 🎯 Recommendations
 
-1. **Implement the improved system** - It genuinely improves UX
-2. **Fix Story 5.2** - Constrain user override to prevent ID collisions
-3. **Optimize database checks** - Use batch queries for large file sets
-4. **Document override behavior** - Make it clear what users can and cannot do
-5. **Test database interaction** - Verify behavior when files exist in Firestore
-6. **Preserve core logic** - Don't change priority rules or deduplication algorithm
+**DO NOT IMPLEMENT the "improved" system as designed.**
+
+Instead, selectively add ONLY the beneficial UX features to the existing system:
+
+1. **✅ ADD: Better status names** - Use `unique`, `same-file`, `content-match` instead of `ready`, `isDuplicate`
+2. **✅ ADD: Progress feedback** - Show hashing progress during upload phase (not before)
+3. **✅ ADD: Preview screen** - Display-only preview of what will be uploaded (no overrides)
+4. **✅ ADD: Metrics display** - Show deduplication savings after processing
+5. **✅ ADD: Error handling** - Clear `error` status with red dot for hash failures
+
+**❌ DO NOT ADD:**
+- User override capabilities (violates litigation requirements, technically impossible)
+- Database checks before upload (performance regression)
+- Hashing before upload phase (visible latency)
+- Phase 3 "Database Check" (keep queries during upload where latency is hidden)
 
 ### ✅ Final Answer: Is It Actually Improved?
 
-**YES**, but with caveats:
-- The core deduplication logic is unchanged (good - don't break what works)
-- The UX improvements are genuine enhancements
-- The database check is new functionality that adds value
-- User override needs constraints to prevent issues
-- The "improved" system is more complex, which increases risk of bugs
+**NO** - The "improved" system is a **performance regression** disguised as an improvement:
 
-**Recommendation:** Implement with the fixes noted above, particularly constraining user override behavior.
+- **Core Algorithm**: Unchanged (good, but not an "improvement")
+- **UX Features**: Some are genuinely better (status names, progress, metrics)
+- **Architecture**: Fundamentally broken (moves expensive operations to wrong phase)
+- **Performance**: Degraded (adds visible latency, increases database load)
+- **User Override**: Violates requirements and is technically impossible
+- **Complexity**: Increased without corresponding benefit
+
+**Your original design is architecturally superior.** The "improved" version sacrifices performance for features that are either unnecessary, impossible, or violate litigation discovery requirements.
+
+**Recommendation:** Keep your carefully-designed original deduplication logic. Only add the beneficial UX improvements (status names, progress indicators, metrics) without changing when hashing and database queries occur.
