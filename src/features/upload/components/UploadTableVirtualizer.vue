@@ -50,6 +50,7 @@
     @dragover.prevent="handleDragOver"
     @dragleave.prevent="handleDragLeave"
     @drop.prevent.stop="handleDrop"
+    @dragend.prevent="handleDragEnd"
   >
     <!-- Drag overlay for visual feedback -->
     <div v-if="isDragOver" class="drag-overlay">
@@ -186,9 +187,17 @@ const handleDragLeave = (event) => {
 };
 
 const handleDrop = (event) => {
+  // Immediately hide overlay
+  isDragOver.value = false;
+
   handleDropBase(event, (files) => {
     emit('files-dropped', files);
   });
+};
+
+// Ensure overlay is hidden when drag operation ends
+const handleDragEnd = () => {
+  isDragOver.value = false;
 };
 
 // ============================================================================
