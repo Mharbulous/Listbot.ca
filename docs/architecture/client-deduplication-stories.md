@@ -2,6 +2,32 @@
 
 This document contains all user stories and implementation requirements for the client-side deduplication feature.
 
+---
+
+## Related Documentation
+
+This document is part of a three-document set for deduplication:
+
+1. **`@docs/architecture/client-deduplication-logic.md`**
+   - Architectural rationale and design philosophy
+   - Detailed implementation guide with code examples
+   - Performance optimization strategies
+   - **Read this first** to understand WHY each requirement exists
+
+2. **This document (`client-deduplication-stories.md`)**
+   - User stories and implementation requirements
+   - Complete checklist of features to implement
+   - Anti-requirements (what NOT to do)
+
+3. **`@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3-DuplicateManagement.md`**
+   - Implementation planning for Phase 3
+   - Task breakdown and timeline
+   - Testing scenarios
+
+**Also see:** `@docs/architecture/file-lifecycle.md` for definitive file terminology.
+
+---
+
 ## Implementation Checklist
 
 To enhance the UI without breaking the architecture:

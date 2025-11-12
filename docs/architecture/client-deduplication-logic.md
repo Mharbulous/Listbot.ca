@@ -8,6 +8,30 @@ This document explains the architectural rationale behind the original client-si
 
 ---
 
+## Related Documentation
+
+This document is part of a three-document set for deduplication:
+
+1. **This document (`client-deduplication-logic.md`)**
+   - Architectural rationale and design philosophy
+   - Detailed implementation guide with code examples
+   - Performance optimization strategies
+   - Testing strategy
+
+2. **`@docs/architecture/client-deduplication-stories.md`**
+   - User stories and implementation requirements
+   - Complete checklist of features to implement
+   - UX enhancement requirements
+
+3. **`@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3-DuplicateManagement.md`**
+   - Implementation planning for Phase 3
+   - Task breakdown and timeline
+   - Testing scenarios
+
+**Also see:** `@docs/architecture/file-lifecycle.md` for definitive file terminology.
+
+---
+
 ## Core Design Philosophy
 
 ### The Smart Performance Optimization
