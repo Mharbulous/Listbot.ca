@@ -46,7 +46,19 @@
   <div
     ref="scrollContainerRef"
     class="scroll-container"
+    :class="{ 'drag-over': isDragOver }"
+    @dragover.prevent="handleDragOver"
+    @dragleave.prevent="handleDragLeave"
+    @drop.prevent.stop="handleDrop"
   >
+    <!-- Drag overlay for visual feedback -->
+    <div v-if="isDragOver" class="drag-overlay">
+      <div class="drag-overlay-content">
+        <v-icon icon="mdi-cloud-upload-outline" size="64" color="white" />
+        <p class="drag-overlay-text">Drop files or folders to add to queue</p>
+      </div>
+    </div>
+
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
     <UploadTableHeader
       :all-selected="props.allSelected"
@@ -94,12 +106,27 @@
       @upload="handleUpload"
       @clear-queue="handleClearQueue"
     />
+
+    <!-- Error Dialog for Multiple Items -->
+    <v-dialog v-model="showMultiDropError" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
+        <v-card-text class="text-body-1">
+          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
+import { useFileDropHandler } from '../composables/useFileDropHandler';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
@@ -137,6 +164,32 @@ const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'uploa
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
+
+// ============================================================================
+// DRAG AND DROP HANDLING
+// ============================================================================
+const {
+  isDragOver,
+  showMultiDropError,
+  handleDragOver: handleDragOverBase,
+  handleDragLeave: handleDragLeaveBase,
+  handleDrop: handleDropBase,
+} = useFileDropHandler();
+
+// Wrap drag handlers to emit files
+const handleDragOver = () => {
+  handleDragOverBase();
+};
+
+const handleDragLeave = (event) => {
+  handleDragLeaveBase(event);
+};
+
+const handleDrop = (event) => {
+  handleDropBase(event, (files) => {
+    emit('files-dropped', files);
+  });
+};
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -327,5 +380,51 @@ defineExpose({
   flex: 1; /* Fill remaining space to push footer to bottom */
   display: flex; /* Allow dropzone to flex and fill space */
   padding: 1rem 0; /* Vertical padding above and below dropzone */
+}
+
+/* Drag overlay - full-screen feedback when dragging over table */
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.drag-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.drag-overlay-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.scroll-container.drag-over {
+  border: 3px solid #3b82f6;
+  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.3);
 }
 </style>
