@@ -17,6 +17,11 @@
       />
     </div>
 
+    <!-- File Type Icon Column (40px) - SECOND COLUMN -->
+    <div class="row-cell file-type-cell" style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px">
+      <FileTypeIcon :file-name="file.name" />
+    </div>
+
     <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
     <div
       class="row-cell filename-cell"
@@ -60,6 +65,7 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import StatusCell from './StatusCell.vue';
+import FileTypeIcon from './FileTypeIcon.vue';
 import { getFileTypeIcon, getFileTypeDescription } from '../utils/fileTypeIcons.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { formatDate, formatTime } from '@/utils/dateFormatter.js';
