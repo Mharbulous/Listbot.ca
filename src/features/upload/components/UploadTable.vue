@@ -254,7 +254,7 @@ const handleClearQueue = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  margin: 0.5rem; /* Small margin from edges */
+  margin: 0 1rem; /* Match dropzone horizontal margins (no top/bottom margin) */
   border: 3px dashed #3b82f6; /* Match dropzone active border */
   border-radius: 8px; /* Rounded corners like dropzone */
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Light blue gradient */
