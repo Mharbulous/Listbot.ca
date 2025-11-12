@@ -53,8 +53,9 @@
     <!-- This overlay is NOT part of virtualized content and won't interfere with scrolling -->
     <div v-if="isDragOver" class="drag-overlay" @drop.prevent.stop="handleDrop">
       <div class="drag-overlay-content">
-        <v-icon icon="mdi-cloud-upload-outline" size="64" color="white" />
-        <p class="drag-overlay-text">Drop files or folders to add to queue</p>
+        <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
+        <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
+        <p class="drag-overlay-text-secondary">Release to add files to the upload queue</p>
       </div>
     </div>
 
@@ -399,13 +400,18 @@ defineExpose({
 
 /* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */
 /* NOT part of virtualized content - sits on top of everything */
+/* Styled to match UploadTableDropzone for visual consistency */
 .drag-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(59, 130, 246, 0.95);
+  margin: 0.5rem; /* Small margin from edges */
+  border: 3px dashed #3b82f6; /* Match dropzone active border */
+  border-radius: 8px; /* Rounded corners like dropzone */
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Light blue gradient */
+  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.15);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -417,9 +423,11 @@ defineExpose({
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -427,21 +435,44 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem; /* Match dropzone gap */
+  padding: 1.5rem; /* Match dropzone padding */
   text-align: center;
   pointer-events: none; /* Ensure all drop events go to wrapper */
 }
 
-.drag-overlay-text {
-  font-size: 1.25rem;
+.drag-overlay-icon {
+  margin-bottom: 0.25rem;
+  animation: iconBounce 0.6s ease infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.drag-overlay-text-primary {
+  font-size: 1.25rem; /* Slightly larger for overlay */
   font-weight: 600;
-  color: white;
+  color: #334155; /* Match dropzone text color */
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.drag-overlay-text-secondary {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #64748b; /* Match dropzone secondary text color */
+  margin: 0;
+  text-align: center;
 }
 
 .scroll-container.drag-over {
-  border: 3px solid #3b82f6;
-  box-shadow: inset 0 0 24px rgba(59, 130, 246, 0.3);
+  /* Visual feedback on scroll container (subtle) */
+  opacity: 0.7;
 }
 </style>
