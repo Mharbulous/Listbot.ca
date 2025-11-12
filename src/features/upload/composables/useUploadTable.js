@@ -16,6 +16,10 @@ export function useUploadTable() {
     total: 0,
   });
 
+  // Batch order counter (increments each time addFilesToQueue is called)
+  // Used for sorting: files are sorted by batch order, then by folder path
+  let batchOrderCounter = 0;
+
   /**
    * Add files to queue with TWO-PHASE batch processing
    * Phase 1: Process first 200 files quickly → render table immediately
@@ -27,9 +31,18 @@ export function useUploadTable() {
     const PHASE2_BATCH_SIZE = 1000; // Batch size for Phase 2 (efficient bulk processing)
     const totalFiles = files.length;
 
-    // Sort files by size (smallest first) - O(n log n), negligible overhead
-    // File size is immediately available from File objects (no I/O required)
-    const sortedFiles = [...files].sort((a, b) => a.size - b.size);
+    // Increment batch counter for this batch
+    const currentBatchOrder = ++batchOrderCounter;
+
+    // Sort files by folder path - O(n log n), negligible overhead
+    // Folder path is immediately available from File objects (no I/O required)
+    // Note: Batch order is the PRIMARY sort (handled by storing batchOrder with each file)
+    // This sorts files WITHIN each batch by folder path
+    const sortedFiles = [...files].sort((a, b) => {
+      const pathA = extractFolderPath(a);
+      const pathB = extractFolderPath(b);
+      return pathA.localeCompare(pathB);
+    });
 
     // ========================================================================
     // PHASE 1: Quick Feedback (<100ms target)
@@ -49,6 +62,7 @@ export function useUploadTable() {
         folderPath: extractFolderPath(file),
         sourceFile: file,
         sourceLastModified: file.lastModified,
+        batchOrder: currentBatchOrder,
       };
     });
 
@@ -105,6 +119,7 @@ export function useUploadTable() {
             folderPath: extractFolderPath(file),
             sourceFile: file,
             sourceLastModified: file.lastModified,
+            batchOrder: currentBatchOrder,
           };
         });
 
