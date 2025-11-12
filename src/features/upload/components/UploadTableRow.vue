@@ -44,7 +44,7 @@
     <div
       class="row-cell modified-cell"
       style="width: 140px; flex-shrink: 0"
-      :title="file.sourceLastModified ? new Date(file.sourceLastModified).toLocaleString() : 'Unknown'"
+      :title="modifiedDateTooltip"
     >
       {{ formatModifiedDate(file.sourceLastModified) }}
     </div>
@@ -58,13 +58,20 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import StatusCell from './StatusCell.vue';
 import { getFileTypeIcon, getFileTypeDescription } from '../utils/fileTypeIcons.js';
+import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { formatDate, formatTime } from '@/utils/dateFormatter.js';
 
 // Component configuration
 defineOptions({
   name: 'UploadTableRow',
 });
+
+// User preferences for date/time formatting
+const preferencesStore = useUserPreferencesStore();
+const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
 
 // Props
 const props = defineProps({
@@ -87,6 +94,14 @@ const isHovering = ref(false);
 // File type icon and description
 const fileTypeIcon = computed(() => getFileTypeIcon(props.file.name));
 const fileTypeDescription = computed(() => getFileTypeDescription(props.file.name));
+
+// Formatted modified date tooltip using user preferences
+const modifiedDateTooltip = computed(() => {
+  if (!props.file.sourceLastModified) return 'Unknown';
+  const date = formatDate(props.file.sourceLastModified, dateFormat.value);
+  const time = formatTime(props.file.sourceLastModified, timeFormat.value);
+  return `${date} at ${time}`;
+});
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
 const isSelected = computed(() => {
@@ -113,7 +128,7 @@ const formatFileSize = (bytes) => {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
-// Format modified date
+// Format modified date using user preferences
 const formatModifiedDate = (timestamp) => {
   if (!timestamp) return '—';
 
@@ -122,18 +137,18 @@ const formatModifiedDate = (timestamp) => {
   const diffMs = now - date;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  // If modified today, show time only
+  // If modified today, show time only using user's time format preference
   if (diffDays === 0) {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return formatTime(timestamp, timeFormat.value);
   }
 
-  // If modified within last 7 days, show "X days ago"
+  // If modified within last 7 days, show "X days ago" (format-independent)
   if (diffDays < 7) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   }
 
-  // Otherwise show date in MM/DD/YYYY format
-  return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  // Otherwise show date using user's date format preference
+  return formatDate(timestamp, dateFormat.value);
 };
 
 // Handle checkbox toggle
