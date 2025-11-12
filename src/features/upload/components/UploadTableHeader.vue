@@ -13,6 +13,11 @@
       />
     </div>
 
+    <!-- File Type Icon Column (40px) - SECOND COLUMN -->
+    <div class="header-cell file-type-header-cell" style="width: 40px; flex-shrink: 0; justify-content: center">
+      #️⃣
+    </div>
+
     <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
     <div class="header-cell" style="flex: 1; min-width: 150px; max-width: 500px">File Name</div>
 
