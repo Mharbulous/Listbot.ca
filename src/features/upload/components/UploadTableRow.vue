@@ -30,7 +30,6 @@
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
-      <span class="file-type-icon" :title="fileTypeDescription">{{ fileTypeIcon }}</span>
       <span class="filename-text">{{ file.name }}</span>
       <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
     </div>
@@ -66,7 +65,7 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import StatusCell from './StatusCell.vue';
 import FileTypeIcon from './FileTypeIcon.vue';
-import { getFileTypeIcon, getFileTypeDescription } from '../utils/fileTypeIcons.js';
+import { getFileTypeDescription } from '../utils/fileTypeIcons.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
 import { formatDate, formatTime } from '@/utils/dateFormatter.js';
 
@@ -97,8 +96,7 @@ const emit = defineEmits(['cancel', 'undo']);
 // Hover state tracking
 const isHovering = ref(false);
 
-// File type icon and description
-const fileTypeIcon = computed(() => getFileTypeIcon(props.file.name));
+// File type description (used in tooltip)
 const fileTypeDescription = computed(() => getFileTypeDescription(props.file.name));
 
 // Formatted modified date tooltip using user preferences
@@ -306,13 +304,6 @@ const handleMouseLeave = () => {
   align-items: center;
   gap: 8px;
   cursor: default;
-}
-
-.file-type-icon {
-  flex-shrink: 0;
-  font-size: 1.125rem;
-  user-select: none;
-  line-height: 1;
 }
 
 .filename-text {
