@@ -39,10 +39,10 @@
       {{ formatFileSize(file.size) }}
     </div>
 
-    <!-- Modified Column (130px fixed) -->
+    <!-- Modified Column (120px fixed) -->
     <div
       class="row-cell modified-cell"
-      style="width: 130px; flex-shrink: 0"
+      style="width: 120px; flex-shrink: 0"
       :title="modifiedDateTooltip"
     >
       {{ formatModifiedDate(file.sourceLastModified) }}
@@ -53,8 +53,8 @@
       {{ file.folderPath || '/' }}
     </div>
 
-    <!-- Status Column (110px fixed) -->
-    <div class="row-cell status-cell-wrapper" style="width: 110px; flex-shrink: 0">
+    <!-- Status Column (120px fixed) -->
+    <div class="row-cell status-cell-wrapper" style="width: 120px; flex-shrink: 0">
       <StatusCell :status="file.status" />
     </div>
   </div>

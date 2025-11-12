@@ -24,14 +24,14 @@
     <!-- Size Column (100px fixed) -->
     <div class="header-cell" style="width: 100px; flex-shrink: 0">Size</div>
 
-    <!-- Modified Column (130px fixed) -->
-    <div class="header-cell" style="width: 130px; flex-shrink: 0">Modified</div>
+    <!-- Modified Column (120px fixed) -->
+    <div class="header-cell" style="width: 120px; flex-shrink: 0">Modified</div>
 
     <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
     <div class="header-cell" style="flex: 1; min-width: 130px; max-width: 500px">Folder Path</div>
 
-    <!-- Status Column (110px fixed) -->
-    <div class="header-cell" style="width: 110px; flex-shrink: 0">Status</div>
+    <!-- Status Column (120px fixed) -->
+    <div class="header-cell" style="width: 120px; flex-shrink: 0">Status</div>
   </div>
 </template>
 
