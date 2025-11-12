@@ -82,6 +82,12 @@
         </div>
       </div>
 
+      <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
+      <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
+      <div class="dropzone-cell">
+        <UploadTableDropzone />
+      </div>
+
       <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
       <UploadTableFooter
         :stats="props.footerStats"
@@ -98,6 +104,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
+import UploadTableDropzone from './UploadTableDropzone.vue';
 
 // Component configuration
 defineOptions({
@@ -319,5 +326,13 @@ defineExpose({
   left: 0;
   width: 100%;
   will-change: transform; /* Optimize for GPU-accelerated transforms */
+}
+
+/* Dropzone cell wrapper - adds padding around the dropzone */
+/* This is a VISUAL ONLY indicator - drag-drop is handled by parent UploadTable.vue */
+.dropzone-cell {
+  flex: 1; /* Fill remaining space to push footer to bottom */
+  display: flex; /* Allow dropzone to flex and fill space */
+  padding: 1rem 0; /* Vertical padding above and below dropzone */
 }
 </style>
