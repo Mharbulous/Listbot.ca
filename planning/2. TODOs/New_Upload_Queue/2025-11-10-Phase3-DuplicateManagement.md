@@ -10,145 +10,347 @@
 
 ## Overview
 
-Implement intelligent file copy/duplicate handling with visual grouping and checkbox-based selection to choose which copy of a file to upload. Additionally, filter out true duplicates (same file uploaded multiple times) with warning popup.
+Implement intelligent file copy/duplicate handling using a **two-phase deduplication approach** that hides expensive operations (hashing, database queries) behind unavoidable upload time. This architecture provides instant client-side feedback while minimizing CPU usage and database load.
 
-**Goal:** Copies grouped below primary file with checkbox-based swap capability; duplicates filtered with user notification
-**Deliverable:** Visual hierarchy for copies with checkbox swap + duplicate filtering popup
-**User Impact:** Users can easily identify and choose which copy to upload, while being warned about duplicate uploads
+**Goal:** Automatic copy detection and deduplication with optimal performance and UX feedback
+**Deliverable:** Two-phase deduplication (client-side + upload), visual grouping, preview/completion modals, one-and-the-same filtering
+**User Impact:** Users see instant deduplication feedback, understand what will be uploaded, and save storage space without manual intervention
+
+**Architecture Reference:** This phase implements `@docs/architecture/client-deduplication-logic.md`
+
+---
+
+## Related Documentation
+
+**IMPORTANT:** This planning document implements the architecture described in:
+
+1. **`@docs/architecture/client-deduplication-logic.md`**
+   - Complete architectural rationale and design philosophy
+   - Detailed implementation guide with code examples
+   - Performance optimization strategies
+   - Common questions & answers
+
+2. **`@docs/architecture/client-deduplication-stories.md`**
+   - User stories and implementation requirements
+   - Complete checklist of features to implement
+   - UX enhancement requirements
+   - Anti-requirements (what NOT to do)
+
+3. **`@docs/architecture/file-lifecycle.md`**
+   - Definitive guide to file terminology
+   - File processing lifecycle stages
+   - Required terminology for all code and UI
+
+**Before implementing this phase, read all three documents above.**
 
 ---
 
 ## Terminology (CRITICAL)
 
-**This phase uses precise deduplication terminology:**
+**This phase uses precise deduplication terminology (from file-lifecycle.md):**
 
-- **"Copy"** or **"Copies"**: Files with the same hash value but different file metadata (different name, path, or modified date)
+- **"Copy"** or **"Copies"**: Files with the same hash value but different file metadata
   - Example: `invoice.pdf` in `/2024/Tax` and `invoice (1).pdf` in `/2024/Backup` with same content
-  - These files will be uploaded to the SAME document (deduplicated by hash)
-  - User must choose which copy's metadata to use
+  - **Only ONE file content is uploaded** (to save storage)
+  - **ALL metadata from ALL copies is saved** (for litigation discovery)
+  - System automatically selects "best file" using priority rules (see 3.2)
+  - Users CANNOT override which copy is uploaded
 
-- **"Duplicate"** or **"Duplicates"**: The exact same file being queued multiple times (same hash, same metadata, same location)
+- **"One-and-the-Same"**: The exact same file selected multiple times (same hash, same metadata, same location)
   - Example: User drags the same folder twice, resulting in `invoice.pdf` appearing twice in queue
-  - These are true duplicates and should be filtered out with a warning popup
-  - Only one instance should remain in the queue
+  - These are **silently filtered** from the queue (no user notification needed)
+  - Only one instance remains in the queue
 
-- **"Primary Copy"**: The copy that will be uploaded (selected for upload)
-  - Always displayed at the top of the copy group
-  - Checkbox is checked by default
-  - Filename displayed in **bold**
-  - Has 🔵 Ready status
-
-- **"Secondary Copy"** or just "Copy": Copies that will NOT be uploaded
-  - Displayed below the primary copy in the group
-  - Checkbox is unchecked by default
-  - Filename displayed in normal (non-bold) font
-  - Has 🟣 Copy status (purple dot)
+- **"Best File"**: The copy chosen for upload when multiple copies exist
+  - Selected automatically using priority rules (earliest modified date, longest path, etc.)
+  - This is a **UI-only decision** - identical hash = identical content
+  - All other copies' metadata is still saved to database
 
 **Visual Note:** Throughout this document, status emojis (🔵 🟡 🟢 🟣 ⚪ 🔴 🟠) are visual shorthand for planning purposes. The actual implementation uses CSS-styled colored dots (circles) with text labels. See `StatusCell.vue` for implementation details.
+
+**Non-Negotiable Requirements:**
+1. Users CANNOT cherry-pick which copy to upload (but CAN exclude entire copy groups from queue)
+2. ALL metadata from ALL copies MUST be saved to database
+3. Hash-based document IDs provide database-level deduplication
 
 ---
 
 ## Features
 
-### 3.1 Copy Grouping & Visual Hierarchy
-### 3.2 Checkbox-Based Copy Swap
-### 3.3 Duplicate Filtering with Warning Popup
+### 3.1 Client-Side Deduplication (Phase 1: Instant Feedback)
+### 3.2 Best File Selection & Visual Grouping
+### 3.3 Upload Phase Deduplication (Phase 2: Hidden During Upload)
+### 3.4 UX Enhancements (Progress, Preview, Completion Modals)
 
 ---
 
-## 3.1 Copy Grouping & Visual Hierarchy
+## 3.1 Client-Side Deduplication (Phase 1: Instant Feedback)
 
-### Visual Design
+This phase runs BEFORE user clicks upload and provides instant feedback without database queries.
 
-**Column Order (Current Implementation):**
-Select | File Name | Size | Folder Path | Status
+### Step 1: Size-Based Pre-Filtering
 
-**Grouped Display:**
+**Optimization:** Files with unique sizes cannot be duplicates, so skip hashing them (saves 50-70% of CPU time).
+
+```javascript
+// useClientDeduplication.js - Step 1
+const groupBySize = (files) => {
+  const fileSizeGroups = new Map(); // size -> [file_references]
+
+  files.forEach((file, index) => {
+    const fileRef = {
+      file,
+      originalIndex: index,
+      path: getFilePath(file),
+      metadata: {
+        sourceFileName: file.name,
+        sourceFileSize: file.size,
+        sourceFileType: file.type,
+        lastModified: file.lastModified,
+      },
+    };
+
+    if (!fileSizeGroups.has(file.size)) {
+      fileSizeGroups.set(file.size, []);
+    }
+    fileSizeGroups.get(file.size).push(fileRef);
+  });
+
+  // Separate unique from potential duplicates
+  const uniqueFiles = [];
+  const duplicateCandidates = [];
+
+  for (const [, fileRefs] of fileSizeGroups) {
+    if (fileRefs.length === 1) {
+      uniqueFiles.push(fileRefs[0]); // Definitely unique - skip hashing
+    } else {
+      duplicateCandidates.push(...fileRefs); // Need to hash these
+    }
+  }
+
+  console.log(`[DEDUP] Unique by size: ${uniqueFiles.length}, Need hashing: ${duplicateCandidates.length}`);
+
+  return { uniqueFiles, duplicateCandidates };
+};
+```
+
+**Queue Sorting:** Sort by **folder path** (NOT size) for better UX. Sorting by size provides no performance benefit (grouping is O(n) regardless) and adds O(n log n) overhead.
+
+```javascript
+// Sort queue by folder path for better UX (group related files)
+files.sort((a, b) => {
+  const aPath = getFilePath(a);
+  const bPath = getFilePath(b);
+  return aPath.localeCompare(bPath);
+});
+```
+
+### Step 2: Hash Duplicate Candidates (with Progress Feedback)
+
+**Only hash files with matching sizes.**
+
+```javascript
+// useClientDeduplication.js - Step 2
+const hashDuplicateCandidates = async (duplicateCandidates, onProgress) => {
+  const hashGroups = new Map(); // hash -> [file_references]
+  let processedCount = 0;
+  const totalFiles = duplicateCandidates.length;
+
+  for (const fileRef of duplicateCandidates) {
+    try {
+      // Hash using BLAKE3 in web worker (non-blocking)
+      const hash = await generateFileHash(fileRef.file);
+      fileRef.hash = hash;
+      fileRef.status = 'ready';
+
+      if (!hashGroups.has(hash)) {
+        hashGroups.set(hash, []);
+      }
+      hashGroups.get(hash).push(fileRef);
+    } catch (error) {
+      // Hash failure - mark as read error
+      fileRef.status = 'read error';
+      fileRef.canUpload = false; // Disable checkbox
+      console.error(`[DEDUP] Hash failed for ${fileRef.metadata.sourceFileName}:`, error);
+    }
+
+    processedCount++;
+
+    // Update progress UI
+    onProgress({
+      phase: 'analyzing',
+      current: processedCount,
+      total: totalFiles,
+      percentage: Math.round((processedCount / totalFiles) * 100),
+      currentFile: fileRef.metadata.sourceFileName,
+    });
+  }
+
+  return hashGroups;
+};
+```
+
+**UI Display During Hashing:**
+```
+Analyzing files: 45 / 100 (45%)
+Current: report_2024.pdf
+```
+
+### Step 3: One-and-the-Same Detection & Grouping
+
+**Filter out files selected multiple times (silently, no popup).**
+
+```javascript
+// useClientDeduplication.js - Step 3
+const detectOneAndTheSame = (hashGroups) => {
+  const finalFiles = [];
+
+  for (const [hash, fileRefs] of hashGroups) {
+    if (fileRefs.length === 1) {
+      finalFiles.push(fileRefs[0]); // Unique hash
+      continue;
+    }
+
+    // Multiple files with same hash - check metadata
+    const oneAndTheSameGroups = new Map(); // metadata_key -> [file_references]
+
+    fileRefs.forEach((fileRef) => {
+      // Metadata signature for detecting one-and-the-same
+      const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
+
+      if (!oneAndTheSameGroups.has(metadataKey)) {
+        oneAndTheSameGroups.set(metadataKey, []);
+      }
+      oneAndTheSameGroups.get(metadataKey).push(fileRef);
+    });
+
+    // Process each metadata group
+    for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
+      if (oneAndTheSameFiles.length > 1) {
+        // One-and-the-same: User selected same file multiple times
+        // Keep only first instance (others are silently filtered)
+        finalFiles.push(oneAndTheSameFiles[0]);
+        console.log(`[DEDUP] Filtered ${oneAndTheSameFiles.length - 1} one-and-the-same: ${oneAndTheSameFiles[0].metadata.sourceFileName}`);
+      } else {
+        // Unique metadata (copy with different name/date)
+        finalFiles.push(oneAndTheSameFiles[0]);
+      }
+    }
+  }
+
+  return finalFiles;
+};
+```
+
+---
+
+## 3.2 Best File Selection & Visual Grouping
+
+When multiple copies exist (same hash, different metadata), the system automatically selects the "best file" using priority rules.
+
+### Priority Rules for Best File Selection
+
+When multiple copies exist, choose the best file using these rules **in order**:
+
+1. **Earliest modification date** - Older file is likely the original
+2. **Longest folder path** - Deeper nesting suggests more organized structure
+3. **Shortest filename** - Concise names preferred over verbose ones
+4. **Alphanumeric sort** - Alphabetically first for consistency
+5. **Original selection order** - First selected wins (stable sort)
+
+```javascript
+// useBestFileSelection.js
+const chooseBestFile = (fileRefs) => {
+  return fileRefs.sort((a, b) => {
+    // Priority 1: Earliest modification date
+    if (a.metadata.lastModified !== b.metadata.lastModified) {
+      return a.metadata.lastModified - b.metadata.lastModified;
+    }
+
+    // Priority 2: Longest folder path
+    const aFolderPath = a.path.substring(0, a.path.lastIndexOf('/') + 1);
+    const bFolderPath = b.path.substring(0, b.path.lastIndexOf('/') + 1);
+    if (aFolderPath.length !== bFolderPath.length) {
+      return bFolderPath.length - aFolderPath.length; // Descending
+    }
+
+    // Priority 3: Shortest filename
+    if (a.metadata.sourceFileName.length !== b.metadata.sourceFileName.length) {
+      return a.metadata.sourceFileName.length - b.metadata.sourceFileName.length;
+    }
+
+    // Priority 4: Alphanumeric filename sort
+    if (a.metadata.sourceFileName !== b.metadata.sourceFileName) {
+      return a.metadata.sourceFileName.localeCompare(b.metadata.sourceFileName);
+    }
+
+    // Priority 5: Original selection order
+    return a.originalIndex - b.originalIndex;
+  })[0];
+};
+```
+
+**Rationale:** Earliest modified date trumps all other factors. In document workflows, the earliest version is typically the original, and later versions are copies.
+
+### Visual Grouping
+
+**Copy groups display in queue with visual hierarchy:**
+
 ```
 ┌────────┬───────────────────┬──────────┬──────────────┬─────────┐
 │ Select │ File Name         │ Size     │ Folder Path  │ Status  │
 ├────────┼───────────────────┼──────────┼──────────────┼─────────┤
-│  [✓]   │ invoice.pdf       │ 2.4 MB   │ /2024/Tax    │ 🔵 Ready│  ← Primary (bold, left border)
-│  [ ]   │ invoice (1).pdf   │ 2.4 MB   │ /2024/Backup │ 🟣 Copy │  ← Copy (non-bold, left border)
-│  [ ]   │ invoice (2).pdf   │ 2.4 MB   │ /Archive     │ 🟣 Copy │  ← Copy (non-bold, left border)
+│  [✓]   │ invoice.pdf       │ 2.4 MB   │ /2024/Tax    │ 🔵 Ready│  ← Best file (bold, left border)
+│  [✓]   │ invoice (1).pdf   │ 2.4 MB   │ /2024/Backup │ 🟣 Copy │  ← Copy (normal font, left border)
+│  [✓]   │ invoice (2).pdf   │ 2.4 MB   │ /Archive     │ 🟣 Copy │  ← Copy (normal font, left border)
 │  [✓]   │ report.docx       │ 890 KB   │ /Reports     │ 🔵 Ready│  ← Unique file (bold, no border)
 └────────┴───────────────────┴──────────┴──────────────┴─────────┘
 ```
 
-**Note:** Status emojis (🔵 🟣) are visual shorthand. Actual implementation renders: `<span class="status-dot">` (colored circle) + text label.
+**Visual Indicators:**
 
-### Visual Indicators
+- **Best File (Will Upload):**
+  - **Bold filename**
+  - 🔵 Ready status (blue dot + "Ready" text)
+  - Checkbox **checked** by default
+  - Colored left border (3px solid purple) on entire row
+  - Located at **top** of copy group
 
-**Primary Copy (Ready to Upload):**
-- **Bold filename** (only bold file in the group)
-- 🔵 Ready status (blue dot + "Ready" text)
-- Checkbox **checked** by default
-- Colored left border (3px solid purple) on entire row
-- Located at **top** of copy group
+- **Copies (Metadata Only):**
+  - **Normal filename** (regular font weight)
+  - 🟣 Copy status (purple dot + "Copy" text)
+  - Checkbox **checked** by default (can be unchecked to exclude from upload entirely)
+  - Colored left border (3px solid purple) on entire row
+  - Located **below** best file in group
 
-**Secondary Copies (Will NOT Upload):**
-- **Non-bold filename** (regular font weight)
-- 🟣 Copy status (purple dot + "Copy" text)
-- Checkbox **unchecked** by default
-- Colored left border (3px solid purple) on entire row
-- Located **below** primary copy in group
+- **Unique Files (No Copies):**
+  - **Bold filename**
+  - 🔵 Ready status
+  - Checkbox checked by default
+  - **No left border**
 
-**Unique Files (No Copies):**
-- **Bold filename** (default for all unique files)
-- 🔵 Ready status
-- Checkbox checked by default
-- **No left border**
+**Important:** Checkboxes on copies control whether to include/exclude the ENTIRE copy group from upload. Users CANNOT cherry-pick which copy to upload - they can only include or exclude all copies together.
 
-### Grouping Logic
+### Checkbox Behavior
 
 ```javascript
-// Group files by hash, identifying primary and secondary copies
-function groupCopies(files) {
-  const groups = new Map();
-
-  files.forEach(file => {
-    if (!groups.has(file.hash)) {
-      groups.set(file.hash, {
-        primary: null,
-        copies: []
+// useCopyGrouping.js
+const handleCopyGroupCheckbox = (file, isChecked, copyGroup) => {
+  if (file.status === 'copy') {
+    // User unchecked a copy - skip that individual copy's metadata
+    file.status = isChecked ? 'copy' : 'skip';
+  } else {
+    // User unchecked the best file - skip entire group
+    if (!isChecked) {
+      copyGroup.forEach(f => f.status = 'skip');
+    } else {
+      // Restore group
+      copyGroup.forEach((f, index) => {
+        f.status = index === 0 ? 'ready' : 'copy';
       });
     }
-
-    const group = groups.get(file.hash);
-
-    // Primary copy: the one with checkbox checked (status ready/uploading/completed)
-    if (file.status === 'ready' || file.status === 'uploading' || file.status === 'completed') {
-      group.primary = file;
-    }
-    // Secondary copy: unchecked (status 'copy')
-    else if (file.status === 'copy') {
-      group.copies.push(file);
-    }
-  });
-
-  return groups;
-}
-
-// Flatten groups into display order: primary first, then copies
-function flattenGroupsForDisplay(groups) {
-  const displayOrder = [];
-
-  groups.forEach(group => {
-    if (group.primary) {
-      // Always put primary at top
-      displayOrder.push(group.primary);
-
-      // Sort copies by modified date (oldest first)
-      const sortedCopies = group.copies.sort((a, b) =>
-        a.sourceLastModified - b.sourceLastModified
-      );
-
-      displayOrder.push(...sortedCopies);
-    }
-  });
-
-  return displayOrder;
-}
+  }
+};
 ```
 
 ### CSS Styling
@@ -159,13 +361,13 @@ function flattenGroupsForDisplay(groups) {
   border-left: 3px solid #9C27B0; /* Purple left border */
 }
 
-/* Primary copy - bold filename */
-.table-row.primary-copy .filename-text {
+/* Best file - bold filename */
+.table-row.best-file .filename-text {
   font-weight: 700; /* Bold */
 }
 
-/* Secondary copy - normal filename */
-.table-row.secondary-copy .filename-text {
+/* Copy - normal filename */
+.table-row.copy-file .filename-text {
   font-weight: 400; /* Normal */
 }
 
@@ -173,237 +375,20 @@ function flattenGroupsForDisplay(groups) {
 .table-row .filename-text {
   font-weight: 700; /* Bold by default */
 }
-
-/* Unique files explicitly not in a copy group */
-.table-row:not(.copy-group) .filename-text {
-  font-weight: 700; /* Ensure bold for unique files */
-}
 ```
 
----
-
-## 3.2 Checkbox-Based Copy Swap
-
-### Behavior Specification
-
-**Checkbox Interaction Rules:**
-
-1. **Primary Copy Checkbox (Checked → Unchecked):**
-   - When primary copy checkbox is **unchecked**:
-     - Primary copy status → `skip` (⚪ Skip)
-     - ALL copies in group status → `skip` (⚪ Skip)
-     - ALL checkboxes in group → unchecked
-     - Entire group will be skipped (not uploaded)
-     - Group still visible, can be restored
-
-2. **Secondary Copy Checkbox (Unchecked → Checked):**
-   - When a secondary copy checkbox is **checked**:
-     - That copy becomes the **new primary**
-     - Old primary becomes a **secondary copy**
-     - Rows swap positions (new primary moves to top)
-     - Filenames swap bold/non-bold styling
-     - Statuses swap (new primary gets Ready, old gets Copy)
-     - Only ONE checkbox can be checked in a copy group at a time
-
-3. **Skipped Group Restoration (Any Copy Checked):**
-   - When ANY checkbox in a skipped group is **checked**:
-     - That copy becomes the new primary (Ready status)
-     - All other copies → `copy` status (unchecked)
-     - Group restored from skip state
-
-4. **Select All / Deselect All Behavior:**
-   - **Select All** checkbox affects **only primary copies**
-   - Does NOT affect secondary copies (they remain unchecked)
-   - **Deselect All** unchecks all primary copies (sets groups to skip state)
-
-5. **Mutual Exclusivity:**
-   - Among copies with the same hash, **maximum ONE** checkbox can be checked
-   - Checking one copy automatically unchecks the previous primary
-
-### Swap Algorithm
-
-```javascript
-// useCopySwap.js
-export function useCopySwap(uploadQueue) {
-
-  /**
-   * Handle checkbox change on a file
-   * @param {Object} file - The file whose checkbox changed
-   * @param {boolean} isChecked - New checkbox state
-   */
-  const handleCheckboxChange = (file, isChecked) => {
-    const copyGroup = findCopyGroup(file.hash, uploadQueue.value);
-
-    if (!copyGroup || copyGroup.length === 1) {
-      // Not a copy group, just toggle skip status
-      file.status = isChecked ? 'ready' : 'skip';
-      return;
-    }
-
-    if (isChecked) {
-      // User checked a copy - make it the primary
-      promoteCopyToPrimary(file, copyGroup);
-    } else {
-      // User unchecked the primary - skip entire group
-      skipEntireGroup(copyGroup);
-    }
-  };
-
-  /**
-   * Promote a copy to primary (swap)
-   * @param {Object} newPrimary - The copy to promote
-   * @param {Array} copyGroup - All files in the group
-   */
-  const promoteCopyToPrimary = (newPrimary, copyGroup) => {
-    console.log(`[COPY SWAP] Promoting ${newPrimary.name} to primary`);
-
-    // Find current primary
-    const currentPrimary = copyGroup.find(f =>
-      f.status === 'ready' || f.status === 'uploading' || f.status === 'completed'
-    );
-
-    if (currentPrimary && currentPrimary.id !== newPrimary.id) {
-      // Demote current primary to copy
-      currentPrimary.status = 'copy';
-
-      // Swap positions in queue (move new primary above old primary)
-      const newPrimaryIndex = uploadQueue.value.indexOf(newPrimary);
-      const currentPrimaryIndex = uploadQueue.value.indexOf(currentPrimary);
-
-      // Remove new primary from its current position
-      uploadQueue.value.splice(newPrimaryIndex, 1);
-
-      // Insert new primary at the top of the group (current primary's position)
-      uploadQueue.value.splice(currentPrimaryIndex, 0, newPrimary);
-    }
-
-    // Promote new primary
-    newPrimary.status = 'ready';
-    newPrimary.swappedAt = Date.now();
-
-    // Ensure all other copies are unchecked
-    copyGroup.forEach(f => {
-      if (f.id !== newPrimary.id && f.status !== 'copy') {
-        f.status = 'copy';
-      }
-    });
-  };
-
-  /**
-   * Skip entire copy group
-   * @param {Array} copyGroup - All files in the group
-   */
-  const skipEntireGroup = (copyGroup) => {
-    console.log(`[COPY SWAP] Skipping entire group (${copyGroup.length} files)`);
-
-    copyGroup.forEach(file => {
-      file.status = 'skip';
-    });
-  };
-
-  /**
-   * Find all files with the same hash
-   * @param {string} hash - File hash
-   * @param {Array} queue - Upload queue
-   * @returns {Array} - Files with matching hash
-   */
-  const findCopyGroup = (hash, queue) => {
-    return queue.filter(f => f.hash === hash);
-  };
-
-  return {
-    handleCheckboxChange,
-    promoteCopyToPrimary,
-    skipEntireGroup,
-    findCopyGroup
-  };
-}
-```
-
-### Component Changes
-
-**UploadTableRow.vue - Checkbox Handler:**
-
-```vue
-<script setup>
-import { computed } from 'vue';
-
-const props = defineProps({
-  file: { type: Object, required: true },
-  isCopyGroup: { type: Boolean, default: false },
-  isPrimary: { type: Boolean, default: false }
-});
-
-const emit = defineEmits(['checkbox-change']);
-
-// Checkbox is checked if status is ready/uploading/completed
-const isChecked = computed(() => {
-  return ['ready', 'uploading', 'completed'].includes(props.file.status);
-});
-
-// Apply copy group styling
-const rowClasses = computed(() => ({
-  'copy-group': props.isCopyGroup,
-  'primary-copy': props.isCopyGroup && props.isPrimary,
-  'secondary-copy': props.isCopyGroup && !props.isPrimary
-}));
-
-const handleCheckboxChange = (event) => {
-  emit('checkbox-change', {
-    file: props.file,
-    isChecked: event.target.checked
-  });
-};
-</script>
-
-<template>
-  <div class="upload-table-row" :class="rowClasses">
-    <!-- Select Column -->
-    <div class="row-cell select-cell">
-      <input
-        type="checkbox"
-        :checked="isChecked"
-        :disabled="file.status === 'completed'"
-        @change="handleCheckboxChange"
-      />
-    </div>
-
-    <!-- File Name Column - Bold for primary, normal for copies -->
-    <div class="row-cell filename-cell">
-      <span class="filename-text">{{ file.name }}</span>
-      <span v-if="isHovering" class="eyeball-icon" @click="openFile">👁️</span>
-    </div>
-
-    <!-- Size Column -->
-    <div class="row-cell size-cell">
-      {{ formatFileSize(file.size) }}
-    </div>
-
-    <!-- Folder Path Column -->
-    <div class="row-cell path-cell">
-      {{ file.folderPath || '/' }}
-    </div>
-
-    <!-- Status Column -->
-    <div class="row-cell status-cell-wrapper">
-      <StatusCell :status="file.status" />
-    </div>
-  </div>
-</template>
-```
-
-**StatusCell.vue - Add Copy Status:**
+### StatusCell.vue - Add Copy Status
 
 ```javascript
 // Status text mapping (add 'copy' status)
 const statusTextMap = {
   ready: 'Ready',
   uploading: 'Uploading...',
-  completed: 'Uploaded',
-  copy: 'Copy',        // NEW: Purple dot for secondary copies
+  uploaded: 'Uploaded',
+  copy: 'Copy',        // NEW: Purple dot for copies (metadata only)
   skip: 'Skip',
-  error: 'Failed',
-  uploadMetadataOnly: 'Metadata Only',
+  'read error': 'Read Error',
+  failed: 'Failed',
   unknown: 'Unknown',
   'n/a': 'N/A',
 };
@@ -416,316 +401,305 @@ const statusTextMap = {
 
 ---
 
-## 3.3 Duplicate Filtering with Warning Popup
+## 3.3 Upload Phase Deduplication (Phase 2: Hidden During Upload)
 
-### Behavior Specification
+This phase runs DURING upload and hides expensive operations (database queries) behind unavoidable file upload time.
 
-**When files are added to queue:**
+**Key Principle:** Upload time is ~100x longer than hash+query time. By performing database operations DURING upload, users never notice the latency.
 
-1. **Detect True Duplicates:**
-   - During `addFilesToQueue()`, check for files with:
-     - Same hash
-     - Same file metadata (name, size, modified date)
-     - Same folder path
-   - These are "duplicates" (user trying to queue the same file multiple times)
+- Hashing a 10MB file: ~50ms
+- Querying Firestore: ~100ms
+- Uploading 10MB file: ~5-15 seconds
 
-2. **Filter Duplicates:**
-   - Keep only ONE instance of each duplicate
-   - Track count of filtered duplicates
-   - Store list of duplicate filenames
+**Total overhead: ~150ms hidden in 5-15 seconds of upload time.**
 
-3. **Show Warning Popup (if duplicates found):**
-   - Display modal/dialog with:
-     - Count of duplicates filtered (e.g., "15 duplicate files were filtered")
-     - Scrollable list of duplicate filenames
-     - OK button to dismiss
-   - Popup appears after queue processing completes
-   - Non-blocking (user can dismiss and continue)
+### Hash-Based Document IDs
 
-### Detection Logic
+**BLAKE3 hash is used as Firestore document ID** - provides automatic database-level deduplication.
 
 ```javascript
-// useDuplicateFilter.js
-export function useDuplicateFilter() {
+// useUploadPhaseDeduplication.js
+const uploadFile = async (fileRef) => {
+  // Hash was already calculated in client-side phase (3.1)
+  const documentId = fileRef.hash; // BLAKE3 hash is the document ID
 
-  /**
-   * Filter duplicate files from array
-   * @param {Array} files - Files to filter
-   * @returns {Object} - { uniqueFiles, duplicates }
-   */
-  const filterDuplicates = (files) => {
-    const seen = new Map();
-    const uniqueFiles = [];
-    const duplicates = [];
+  try {
+    // Check if document exists (happens DURING upload, not before)
+    const docRef = doc(db, 'documents', documentId);
+    const docSnap = await getDoc(docRef);
 
-    files.forEach(file => {
-      // Create unique key: hash + metadata + path
-      const key = `${file.hash}_${file.name}_${file.size}_${file.lastModified}_${file.webkitRelativePath || ''}`;
+    if (docSnap.exists()) {
+      // File already exists in database
+      // Update metadata to add new source reference
+      console.log(`[UPLOAD] File exists in DB: ${fileRef.metadata.sourceFileName}`);
 
-      if (seen.has(key)) {
-        // This is a duplicate - same file queued again
-        duplicates.push({
-          name: file.name,
-          path: file.webkitRelativePath || file.name,
-          size: file.size
-        });
-      } else {
-        // First occurrence - keep it
-        seen.set(key, true);
-        uniqueFiles.push(file);
-      }
-    });
+      await updateDoc(docRef, {
+        sources: arrayUnion({
+          fileName: fileRef.metadata.sourceFileName,
+          path: fileRef.path,
+          lastModified: fileRef.metadata.lastModified,
+          uploadedAt: serverTimestamp(),
+        })
+      });
 
-    console.log(`[DUPLICATE FILTER] Found ${duplicates.length} duplicates, kept ${uniqueFiles.length} unique files`);
+      fileRef.status = 'uploaded';
+    } else {
+      // New file - upload to Storage and create Firestore document
+      console.log(`[UPLOAD] New file, uploading: ${fileRef.metadata.sourceFileName}`);
 
-    return {
-      uniqueFiles,
-      duplicates
-    };
-  };
+      const storageRef = ref(storage, `documents/${documentId}`);
+      await uploadBytes(storageRef, fileRef.file);
 
-  return {
-    filterDuplicates
-  };
-}
-```
+      await setDoc(docRef, {
+        hash: documentId,
+        size: fileRef.metadata.sourceFileSize,
+        type: fileRef.metadata.sourceFileType,
+        sources: [{
+          fileName: fileRef.metadata.sourceFileName,
+          path: fileRef.path,
+          lastModified: fileRef.metadata.lastModified,
+          uploadedAt: serverTimestamp(),
+        }]
+      });
 
-### Popup Component
-
-**DuplicateWarningPopup.vue:**
-
-```vue
-<template>
-  <v-dialog v-model="show" max-width="600px" persistent>
-    <v-card>
-      <v-card-title class="text-h5 bg-warning">
-        <v-icon start>mdi-alert</v-icon>
-        Duplicate Files Detected
-      </v-card-title>
-
-      <v-card-text class="pt-4">
-        <p class="text-body-1 mb-4">
-          <strong>{{ duplicateCount }}</strong> duplicate {{ duplicateCount === 1 ? 'file was' : 'files were' }}
-          filtered from the upload queue. You were attempting to upload the same
-          {{ duplicateCount === 1 ? 'file' : 'files' }} multiple times.
-        </p>
-
-        <div class="duplicate-list-container">
-          <p class="text-subtitle-2 mb-2">Filtered duplicates:</p>
-          <div class="duplicate-list">
-            <div
-              v-for="(dup, index) in duplicates"
-              :key="index"
-              class="duplicate-item"
-            >
-              <v-icon size="small" color="grey">mdi-file-outline</v-icon>
-              <span class="duplicate-name">{{ dup.path }}</span>
-              <span class="duplicate-size text-grey">{{ formatFileSize(dup.size) }}</span>
-            </div>
-          </div>
-        </div>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" variant="elevated" @click="handleClose">
-          OK
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-</template>
-
-<script setup>
-import { ref, computed } from 'vue';
-
-const props = defineProps({
-  duplicates: {
-    type: Array,
-    required: true
-  }
-});
-
-const emit = defineEmits(['close']);
-
-const show = ref(true);
-
-const duplicateCount = computed(() => props.duplicates.length);
-
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-};
-
-const handleClose = () => {
-  show.value = false;
-  emit('close');
-};
-</script>
-
-<style scoped>
-.duplicate-list-container {
-  background: #f5f5f5;
-  border-radius: 4px;
-  padding: 12px;
-}
-
-.duplicate-list {
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.duplicate-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-
-.duplicate-name {
-  flex: 1;
-  font-family: 'Courier New', monospace;
-  font-size: 0.875rem;
-}
-
-.duplicate-size {
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-</style>
-```
-
-### Integration with Queue Management
-
-**useUploadTable.js - Updated addFilesToQueue:**
-
-```javascript
-import { useDuplicateFilter } from './useDuplicateFilter.js';
-
-export function useUploadTable() {
-  const uploadQueue = ref([]);
-  const showDuplicateWarning = ref(false);
-  const filteredDuplicates = ref([]);
-
-  const { filterDuplicates } = useDuplicateFilter();
-
-  const addFilesToQueue = async (files) => {
-    // STEP 1: Filter duplicates
-    const { uniqueFiles, duplicates } = filterDuplicates(files);
-
-    if (duplicates.length > 0) {
-      // Store duplicates for popup
-      filteredDuplicates.value = duplicates;
-      showDuplicateWarning.value = true;
+      fileRef.status = 'uploaded';
     }
 
-    // STEP 2: Process unique files only
-    const processedFiles = uniqueFiles.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: file.name,
-      size: file.size,
-      hash: file.hash, // Computed during processing
-      status: 'ready',
-      folderPath: extractFolderPath(file),
-      sourceFile: file,
-      sourceLastModified: file.lastModified,
-    }));
+    // Upload copies (metadata only)
+    for (const copy of fileRef.copies || []) {
+      await updateDoc(docRef, {
+        sources: arrayUnion({
+          fileName: copy.metadata.sourceFileName,
+          path: copy.path,
+          lastModified: copy.metadata.lastModified,
+          uploadedAt: serverTimestamp(),
+        })
+      });
 
-    // STEP 3: Detect copies (same hash, different metadata)
-    const groupedByHash = new Map();
-    processedFiles.forEach(file => {
-      if (!groupedByHash.has(file.hash)) {
-        groupedByHash.set(file.hash, []);
-      }
-      groupedByHash.get(file.hash).push(file);
-    });
+      copy.status = 'uploaded';
+    }
+  } catch (error) {
+    console.error(`[UPLOAD] Failed: ${fileRef.metadata.sourceFileName}:`, error);
+    fileRef.status = 'failed';
+    throw error;
+  }
+};
+```
 
-    // STEP 4: Mark copies and set primary
-    groupedByHash.forEach((group) => {
-      if (group.length > 1) {
-        // Multiple files with same hash = copies
-        // First one is primary (ready), rest are copies
-        group.forEach((file, index) => {
-          file.status = index === 0 ? 'ready' : 'copy';
-        });
-      }
-    });
+### Rationale
 
-    uploadQueue.value.push(...processedFiles);
+**Why hash-based document IDs?**
+1. **Automatic deduplication** - Firestore prevents duplicate document IDs
+2. **Deterministic** - Same file always gets same ID
+3. **No race conditions** - Multiple users uploading same file won't create duplicates
+4. **Fast lookups** - Direct document access by hash (no queries needed)
 
-    console.log(`[QUEUE] Added ${processedFiles.length} files (filtered ${duplicates.length} duplicates)`);
-  };
+**Why query during upload, not before?**
+1. **Hidden latency** - Query time is tiny compared to upload time
+2. **Reduced database load** - No queries for files user might cancel
+3. **Faster start** - Upload can begin immediately after client-side deduplication
+4. **Simpler logic** - No need to coordinate database state with queue state
 
-  const closeDuplicateWarning = () => {
-    showDuplicateWarning.value = false;
-    filteredDuplicates.value = [];
-  };
+**BLAKE3 Collision Probability:**
+- Probability: ~2^-128 (1 in 340 undecillion)
+- Equivalent to hashing every atom in 100 Earth's worth of data
+- **ACCEPTABLE RISK** - Far more likely that cosmic rays corrupt RAM during hashing
 
-  return {
-    uploadQueue,
-    showDuplicateWarning,
-    filteredDuplicates,
-    addFilesToQueue,
-    closeDuplicateWarning,
-    // ... other methods
-  };
+---
+
+## 3.4 UX Enhancements (Progress, Preview, Completion Modals)
+
+### Preview Modal (Before Upload)
+
+**Show summary AFTER client-side deduplication, BEFORE upload begins.**
+
+```javascript
+const summary = {
+  totalSelected: files.length,
+  uniqueFiles: uniqueFiles.length,
+  copies: files.filter(f => f.status === 'copy').length,
+  oneAndTheSame: /* count of silently filtered files */,
+  toUpload: files.filter(f => f.status === 'ready').length,
+  metadataOnly: files.filter(f => f.status === 'copy').length,
+  estimatedStorageSaved: /* calculate size of copies */,
+};
+```
+
+**UI Display (Modal):**
+```
+┌─────────────────────────────────────┐
+│ Upload Preview                      │
+├─────────────────────────────────────┤
+│ Files Selected:        150          │
+│ Unique Files:          120          │
+│ Copies Detected:       25           │
+│ One-and-the-Same:      5 (filtered) │
+├─────────────────────────────────────┤
+│ To Upload:             120 files    │
+│ Metadata Only:         25 files     │
+│ Storage Saved:         ~450 MB      │
+├─────────────────────────────────────┤
+│         [Cancel]  [Confirm Upload]  │
+└─────────────────────────────────────┘
+```
+
+**Important:**
+- Display-only modal - no user override of deduplication decisions
+- ALL file checkboxes should be DISABLED during upload phase to prevent unpredictable behavior
+- Modal focuses user attention before upload begins
+
+### Completion Modal (After Upload)
+
+**Show summary AFTER upload completes.**
+
+```javascript
+const metrics = {
+  filesUploaded: 120,
+  filesCopies: 25,
+  totalFiles: 145,
+  storageSaved: calculateSize(copies),
+  timeSaved: estimateTimeSaved(copies),
+  deduplicationRate: (25 / 145 * 100).toFixed(1) + '%',
+};
+```
+
+**UI Display (Modal after completion):**
+```
+┌─────────────────────────────────────┐
+│ Upload Complete!                    │
+├─────────────────────────────────────┤
+│ 120 files uploaded                  │
+│ 25 copies detected (metadata saved) │
+├─────────────────────────────────────┤
+│ Storage saved: 450 MB               │
+│ Deduplication: 17.2%                │
+├─────────────────────────────────────┤
+│                [Close]              │
+└─────────────────────────────────────┘
+```
+
+**Rationale:** Modal ensures users see the completion summary and understand what was accomplished.
+
+### Status Names & Visual Indicators
+
+**Status Progression:**
+
+```javascript
+const statusTextMap = {
+  'pending': 'Pending',        // ⚪ Gray - Not yet analyzed
+  'ready': 'Ready',            // 🔵 Blue - Ready to upload (unique or best file)
+  'copy': 'Copy',              // 🟣 Purple - Copy detected (metadata only)
+  'uploading': 'Uploading...',  // 🔵 Blue - Currently uploading
+  'uploaded': 'Uploaded',      // 🟢 Green - Successfully uploaded
+  'read error': 'Read Error',  // 🔴 Red - Hash/read failure (checkbox disabled)
+  'failed': 'Failed',          // 🟠 Orange - Upload failed
+  'skip': 'Skip',              // ⚪ Gray - User skipped
+};
+```
+
+**Visual Icons & Colors:**
+```javascript
+const statusIcons = {
+  'pending': '○',       // Gray circle - not yet analyzed
+  'ready': '✓',         // Green checkmark - ready to upload
+  'copy': '⚌',          // Blue parallel lines - copy detected
+  'uploading': '↑',     // Up arrow - currently uploading
+  'uploaded': '✓',      // Green checkmark - successfully uploaded
+  'read error': '✗',    // Red X - hash/read failure
+  'failed': '⚠',        // Orange warning - upload failed
+  'skip': '○',          // Gray circle - skipped
+};
+
+const statusColors = {
+  'pending': 'gray',
+  'ready': 'green',
+  'copy': 'blue',
+  'uploading': 'blue',
+  'uploaded': 'green',
+  'read error': 'red',
+  'failed': 'orange',
+  'skip': 'gray',
+};
+```
+
+### Error Handling for Hash Failures
+
+```javascript
+try {
+  const hash = await generateFileHash(fileRef.file);
+  fileRef.hash = hash;
+} catch (error) {
+  fileRef.status = 'read error';
+  fileRef.canUpload = false; // Disable checkbox
+  // Continue processing other files
 }
 ```
+
+**Behavior:**
+- File status changes to `read error`
+- Checkbox is disabled (same as .lnk and .tmp files)
+- No special UI modal needed - the status and disabled checkbox are sufficient feedback
+
+**Rationale:** Files without hashes cannot be uploaded (no document ID). Blocking with disabled checkbox prevents upload attempts that would fail.
 
 ---
 
 ## Implementation Tasks
 
+**For complete user stories and requirements, see:** `@docs/architecture/client-deduplication-stories.md`
+
 ### Task Checklist
 
-#### 3.1 Copy Grouping
+#### 3.1 Client-Side Deduplication
+- [ ] Create `useClientDeduplication.js` composable
+- [ ] Implement `groupBySize()` - size-based pre-filtering
+- [ ] Implement `hashDuplicateCandidates()` - hash only matching sizes
+- [ ] Implement `detectOneAndTheSame()` - filter duplicate selections
+- [ ] Add progress callback during hashing phase
+- [ ] Integrate with BLAKE3 web worker (`fileHashWorker.js`)
+- [ ] Handle hash failures (set `read error` status, disable checkbox)
+- [ ] Sort queue by folder path (NOT size)
+- [ ] Test with various file size distributions
+
+#### 3.2 Best File Selection & Grouping
+- [ ] Create `useBestFileSelection.js` composable
+- [ ] Implement `chooseBestFile()` with priority rules
 - [ ] Add 'copy' status to StatusCell.vue (purple dot)
-- [ ] Create `useCopyGrouping.js` composable
-- [ ] Implement `groupCopies()` function
-- [ ] Implement `flattenGroupsForDisplay()` function
-- [ ] Sort copies by modified date within group
 - [ ] Add left border styling for copy groups
-- [ ] Add bold/non-bold filename styling
-- [ ] Test with various copy scenarios
+- [ ] Add bold/non-bold filename styling (best file vs copies)
+- [ ] Implement checkbox behavior (include/exclude groups, not swap)
+- [ ] Add copy group classes (best-file, copy-file)
+- [ ] Test priority rules with edge cases
+- [ ] Verify visual grouping clarity
 
-#### 3.2 Checkbox Swap
-- [ ] Create `useCopySwap.js` composable
-- [ ] Implement `handleCheckboxChange()` function
-- [ ] Implement `promoteCopyToPrimary()` swap function
-- [ ] Implement `skipEntireGroup()` function
-- [ ] Update UploadTableRow.vue checkbox handler
-- [ ] Add copy group classes (primary-copy, secondary-copy)
-- [ ] Test mutual exclusivity (only one checked per group)
-- [ ] Test swap animation/transition
-- [ ] Test Select All/None with copy groups
+#### 3.3 Upload Phase Deduplication
+- [ ] Create `useUploadPhaseDeduplication.js` composable
+- [ ] Implement hash-based document ID logic
+- [ ] Implement Firestore existence check (during upload)
+- [ ] Handle existing files (metadata-only update)
+- [ ] Handle new files (Storage upload + Firestore create)
+- [ ] Save all source metadata in `sources` array
+- [ ] Test database-level deduplication
+- [ ] Test with concurrent uploads (same file)
+- [ ] Verify latency is hidden during upload
 
-#### 3.3 Duplicate Filtering
-- [ ] Create `useDuplicateFilter.js` composable
-- [ ] Implement `filterDuplicates()` detection function
-- [ ] Create `DuplicateWarningPopup.vue` component
-- [ ] Integrate duplicate filtering into `addFilesToQueue()`
-- [ ] Add duplicate tracking state (showWarning, filteredDuplicates)
-- [ ] Test duplicate detection accuracy
-- [ ] Test popup display and dismissal
-- [ ] Test with large duplicate counts (100+)
+#### 3.4 UX Enhancements
+- [ ] Create preview modal component (`UploadPreviewModal.vue`)
+- [ ] Create completion modal component (`UploadCompletionModal.vue`)
+- [ ] Add deduplication metrics calculation
+- [ ] Display storage saved calculations
+- [ ] Add status progression (pending, ready, copy, uploading, uploaded, read error, failed)
+- [ ] Add visual indicators (icons, colors)
+- [ ] Disable all checkboxes during upload phase
+- [ ] Test modals with large file counts (1000+)
 
-#### 3.4 Integration
-- [ ] Integrate copy grouping with existing table
-- [ ] Update row rendering to apply copy group styling
-- [ ] Connect checkbox swap to upload queue
-- [ ] Ensure copy swap doesn't break virtual scrolling
-- [ ] Test with Phase 1.5 virtualization
+#### 3.5 Integration
+- [ ] Integrate client-side deduplication with queue addition
+- [ ] Integrate upload phase deduplication with upload logic
+- [ ] Ensure virtual scrolling works with copy groups
 - [ ] Verify footer counts are accurate with copies
-- [ ] Test Select All/None behavior with mixed files
+- [ ] Test with Phase 1.5 virtualization
+- [ ] Test Select All/None behavior with copy groups
 
 ---
 
