@@ -28,8 +28,8 @@ export function useQueueProgress() {
       console.log(`Skipped ${skippedFiles.length} files from cloud folders during deduplication`);
     }
 
-    // Process duplicate groups to get final results
-    const { finalFiles, duplicateFiles } = processDuplicateGroups(hashGroups);
+    // Process duplicate groups to get final results (Phase 3 terminology: copies, not duplicates)
+    const { finalFiles, duplicateFiles: copyFiles } = processDuplicateGroups(hashGroups);
 
     // Step 6: Combine unique and non-duplicate files
     const allFinalFiles = [...uniqueFiles, ...finalFiles];
@@ -47,10 +47,11 @@ export function useQueueProgress() {
       return result;
     });
 
-    const duplicatesForQueue = duplicateFiles.map((fileRef) => {
+    const copiesForQueue = copyFiles.map((fileRef) => {
       const result = {
         ...fileRef,
-        status: 'uploadMetadataOnly',
+        isCopy: true, // Phase 3 terminology
+        status: 'copy', // Use 'copy' status instead of 'uploadMetadataOnly'
       };
       // Mark shortcut files so they can be skipped during upload
       if (fileRef.file && fileRef.file.name && fileRef.file.name.toLowerCase().endsWith('.lnk')) {
@@ -60,14 +61,19 @@ export function useQueueProgress() {
     });
 
     // Update UI using existing API
-    // Note: shortcut files are included in readyFiles/duplicatesForQueue with skipReason='shortcut'
+    // Note: shortcut files are included in readyFiles/copiesForQueue with skipReason='shortcut'
     logProcessingTime('UI_UPDATE_START');
-    await updateUploadQueue(readyFiles, duplicatesForQueue);
+    await updateUploadQueue(readyFiles, copiesForQueue, []);
 
     // Fallback processing complete - UI update timing will be handled by useFileQueue
 
-    // Return in exact same format as current API, plus skipped file count
-    return { readyFiles, duplicatesForQueue, skippedFileCount: skippedFiles?.length || 0 };
+    // Return in Phase 3 format (readyFiles, copyFiles, readErrorFiles)
+    return {
+      readyFiles,
+      copyFiles: copiesForQueue,
+      readErrorFiles: [],
+      skippedFileCount: skippedFiles?.length || 0,
+    };
   };
 
   // Main processing controller that handles worker vs main thread for source file deduplication
@@ -94,11 +100,15 @@ export function useQueueProgress() {
 
     if (workerResult.success) {
       // Update UI using existing API
-      // Note: shortcut files are included in readyFiles/duplicateFiles with skipReason='shortcut'
+      // Note: shortcut files are included in readyFiles/copyFiles with skipReason='shortcut'
       logProcessingTime('UI_UPDATE_START');
-      await updateUploadQueue(workerResult.result.readyFiles, workerResult.result.duplicateFiles);
+      await updateUploadQueue(
+        workerResult.result.readyFiles,
+        workerResult.result.copyFiles || [],
+        workerResult.result.readErrorFiles || []
+      );
 
-      // Return in exact same format as current API
+      // Return in Phase 3 format
       return workerResult.result;
     }
 

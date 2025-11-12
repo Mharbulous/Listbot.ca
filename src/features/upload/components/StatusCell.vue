@@ -19,7 +19,25 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) =>
-      ['ready', 'hashing', 'checking', 'uploading', 'creating_metadata', 'completed', 'skipped', 'skip', 'error', 'network_error', 'uploadMetadataOnly', 'unknown', 'n/a'].includes(value),
+      [
+        'ready',
+        'hashing',
+        'checking',
+        'uploading',
+        'creating_metadata',
+        'completed',
+        'skipped',
+        'skip',
+        'error',
+        'network_error',
+        'copy',
+        'read error',
+        'uploaded',
+        'failed',
+        'uploadMetadataOnly',
+        'unknown',
+        'n/a',
+      ].includes(value),
   },
 });
 
@@ -31,11 +49,15 @@ const statusTextMap = {
   uploading: 'Uploading...',
   creating_metadata: 'Saving...',
   completed: 'Uploaded',
+  uploaded: 'Uploaded',
   skipped: 'Duplicate',
   skip: 'Skip',
   error: 'Failed',
+  failed: 'Failed',
   network_error: 'Network Error',
-  uploadMetadataOnly: 'Metadata Only',
+  copy: 'Copy',
+  'read error': 'Read Error',
+  uploadMetadataOnly: 'Metadata Only', // Legacy - deprecated in favor of 'copy'
   unknown: 'Unknown',
   'n/a': 'N/A',
 };
@@ -103,8 +125,24 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
   background-color: #ff5722; /* Deep Orange */
 }
 
+.status-copy {
+  background-color: #9c27b0; /* Purple - indicates copy (same hash, different metadata) */
+}
+
+.status-read.error {
+  background-color: #f44336; /* Red - hash/read failure */
+}
+
+.status-uploaded {
+  background-color: #4caf50; /* Green - successfully uploaded */
+}
+
+.status-failed {
+  background-color: #ff5722; /* Deep Orange - upload failed */
+}
+
 .status-uploadMetadataOnly {
-  background-color: #ffffff; /* White */
+  background-color: #ffffff; /* White - Legacy status (deprecated in favor of 'copy') */
   border: 1px solid #ccc;
 }
 

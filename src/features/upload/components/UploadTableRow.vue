@@ -1,9 +1,18 @@
 <template>
-  <div class="upload-table-row" @dblclick="handleRowDoubleClick">
+  <div
+    class="upload-table-row"
+    :class="{
+      'copy-file': file.status === 'copy',
+      'has-copy-group': file.isCopy || file.status === 'copy',
+    }"
+    @dblclick="handleRowDoubleClick"
+  >
     <!-- Select Column (60px) - FIRST COLUMN -->
     <div class="row-cell select-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
       <!-- Show ⛔ emoji for unsupported files (n/a status) -->
-      <span v-if="file.status === 'n/a'" class="not-uploadable-icon" title="File type not supported">⛔</span>
+      <span v-if="file.status === 'n/a'" class="not-uploadable-icon" title="File type not supported"
+        >⛔</span
+      >
       <!-- Show checkbox for all other files -->
       <input
         v-else
@@ -18,7 +27,10 @@
     </div>
 
     <!-- File Type Icon Column (40px) - SECOND COLUMN -->
-    <div class="row-cell file-type-cell" style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px">
+    <div
+      class="row-cell file-type-cell"
+      style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
+    >
       <FileTypeIcon :file-name="file.name" />
     </div>
 
@@ -30,7 +42,14 @@
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
-      <span class="filename-text">{{ file.name }}</span>
+      <span
+        class="filename-text"
+        :class="{
+          'filename-bold': file.status === 'ready' && !file.isCopy,
+          'filename-normal': file.status === 'copy' || file.isCopy,
+        }"
+        >{{ file.name }}</span
+      >
       <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
     </div>
 
@@ -49,7 +68,11 @@
     </div>
 
     <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
-    <div class="row-cell path-cell" style="flex: 1; min-width: 130px; max-width: 500px" :title="file.folderPath">
+    <div
+      class="row-cell path-cell"
+      style="flex: 1; min-width: 130px; max-width: 500px"
+      :title="file.folderPath"
+    >
       {{ file.folderPath || '/' }}
     </div>
 
@@ -175,7 +198,7 @@ const openFile = (event) => {
     const fileUrl = URL.createObjectURL(props.file.sourceFile);
 
     // Open in new tab/window (browser will handle based on file type)
-    const newWindow = window.open(fileUrl, '_blank');
+    window.open(fileUrl, '_blank');
 
     // Revoke the URL after a delay to free up memory
     setTimeout(() => {
@@ -210,6 +233,11 @@ const handleMouseLeave = () => {
   border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.15s ease;
   cursor: default;
+}
+
+/* Phase 3: Copy group visual indicator (left border) */
+.upload-table-row.has-copy-group {
+  border-left: 3px solid #9c27b0; /* Purple left border for copy groups */
 }
 
 .upload-table-row:hover {
@@ -276,7 +304,9 @@ const handleMouseLeave = () => {
 @media (hover: hover) {
   .file-checkbox:hover:not(:disabled) {
     border-color: #2196f3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1), 0 0 8px rgba(33, 150, 243, 0.15);
+    box-shadow:
+      0 0 0 3px rgba(33, 150, 243, 0.1),
+      0 0 8px rgba(33, 150, 243, 0.15);
   }
 }
 
@@ -307,6 +337,16 @@ const handleMouseLeave = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Phase 3: Bold filename for best files (ready, not a copy) */
+.filename-text.filename-bold {
+  font-weight: 700;
+}
+
+/* Phase 3: Normal filename for copies */
+.filename-text.filename-normal {
+  font-weight: 400;
 }
 
 .eyeball-icon {
