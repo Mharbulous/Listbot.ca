@@ -51,7 +51,8 @@
   >
     <!-- Drag overlay - OUTSIDE scroll container, positioned absolutely over entire table -->
     <!-- This overlay is NOT part of virtualized content and won't interfere with scrolling -->
-    <div v-if="isDragOver" class="drag-overlay" @drop.prevent.stop="handleDrop">
+    <!-- NO drop handler on overlay itself - it has pointer-events: none, so events pass through to wrapper -->
+    <div v-if="isDragOver" class="drag-overlay">
       <div class="drag-overlay-content">
         <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
         <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
@@ -181,19 +182,23 @@ const {
 
 // Wrap drag handlers to emit files
 const handleDragOver = () => {
+  console.log('[UploadTableVirtualizer] handleDragOver called');
   handleDragOverBase();
 };
 
 const handleDragLeave = (event) => {
+  console.log('[UploadTableVirtualizer] handleDragLeave called');
   handleDragLeaveBase(event);
 };
 
 const handleDrop = (event) => {
+  console.log('[UploadTableVirtualizer] handleDrop called on wrapper', event.target);
   // The overlay is now outside the scroll container and won't interfere with virtualization
   // Simply hide it and process the drop
   isDragOver.value = false;
 
   handleDropBase(event, (files) => {
+    console.log('[UploadTableVirtualizer] Files extracted:', files.length);
     emit('files-dropped', files);
   });
 };

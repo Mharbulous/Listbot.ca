@@ -199,10 +199,12 @@ export function useFileDropHandler() {
    * @param {Function} onFilesDropped - Callback to handle extracted files
    */
   const handleDrop = async (event, onFilesDropped) => {
+    console.log('[useFileDropHandler] handleDrop called', event);
     isDragOver.value = false;
 
     // PHASE 1: SYNCHRONOUS EXTRACTION
     const { entries, directories } = extractDroppedItems(event);
+    console.log('[useFileDropHandler] Extracted entries:', entries.length, 'directories:', directories.length);
 
     // Validate: prevent multiple folder drops
     if (directories.length > 1) {
@@ -213,9 +215,13 @@ export function useFileDropHandler() {
     // PHASE 2: ASYNCHRONOUS PROCESSING
     try {
       const files = await processEntries(entries);
+      console.log('[useFileDropHandler] Processed files:', files.length);
 
       if (files.length > 0 && onFilesDropped) {
+        console.log('[useFileDropHandler] Calling onFilesDropped callback');
         onFilesDropped(files);
+      } else {
+        console.warn('[useFileDropHandler] No files to process or no callback provided');
       }
     } catch (error) {
       console.error('[useFileDropHandler] Error processing dropped files:', error);
