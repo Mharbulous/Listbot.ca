@@ -72,10 +72,12 @@ By performing hash and database operations DURING upload, users never notice the
 
 This app is designed for **litigation document discovery**, which requires specific terminology:
 
-- **duplicate** or **duplicates**: Files with the same hash value AND same modified date
+- **duplicate** or **duplicates**: Files with the same hash value AND same modified date (one-and-the-same files selected multiple times)
 - **copy** or **copies**: Files with the same hash value but different file metadata
 - **file metadata**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
-- **one-and-the-same**: The exact same file (same hash, same metadata, same folder location)
+- **one-and-the-same**: The exact same file selected multiple times (same hash, same metadata, same folder location)
+  - Marked with status "duplicate" in the queue (gray/white dot, checkbox disabled)
+  - Visible in queue for transparency but not selectable for upload
 
 ### Non-Negotiable Requirements
 
@@ -185,8 +187,15 @@ for (const [hash, fileRefs] of hashGroups) {
   for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
     if (oneAndTheSameFiles.length > 1) {
       // One-and-the-same: User selected same file multiple times
-      // Keep only first instance (others are silently filtered)
+      // Keep first instance as ready, mark others as duplicate
       finalFiles.push(oneAndTheSameFiles[0]);
+
+      // Mark subsequent instances as duplicates (shown in queue but cannot be selected)
+      for (let i = 1; i < oneAndTheSameFiles.length; i++) {
+        oneAndTheSameFiles[i].status = 'duplicate';
+        oneAndTheSameFiles[i].canUpload = false; // Disable checkbox
+        finalFiles.push(oneAndTheSameFiles[i]);
+      }
     } else {
       // Unique metadata (copy with different name/date)
       finalFiles.push(oneAndTheSameFiles[0]);
@@ -338,6 +347,7 @@ The following enhancements improve user experience WITHOUT changing the core arc
 - `pending` - File queued, not yet analyzed
 - `ready` - Ready to upload (includes unique files and best files from copy groups)
 - `copy` - Copy detected (same hash, different metadata) - metadata will be saved, file content skipped
+- `duplicate` - One-and-the-same file (same hash, same metadata) - shown in queue but not selectable (checkbox disabled)
 - `uploading` - Currently uploading
 - `uploaded` - Successfully uploaded
 - `read error` - Hash failure or file read error (checkbox disabled)
@@ -350,10 +360,14 @@ if (fileSizeGroups.get(fileSize).length === 1) {
   fileRef.status = 'ready'; // Unique file, ready to upload
 }
 
-// For one-and-the-same (silently filtered - not shown in queue)
+// For one-and-the-same (marked as duplicate - shown but not selectable)
 if (oneAndTheSameFiles.length > 1) {
-  // Keep first instance only
-  // Others are removed from queue entirely
+  // Keep first instance as ready
+  // Mark others as duplicate with disabled checkbox
+  for (let i = 1; i < oneAndTheSameFiles.length; i++) {
+    oneAndTheSameFiles[i].status = 'duplicate';
+    oneAndTheSameFiles[i].canUpload = false;
+  }
 }
 
 // For copies
@@ -417,10 +431,10 @@ Current: report_2024.pdf
 const summary = {
   totalSelected: files.length,
   uniqueFiles: uniqueFiles.length,
-  copies: files.filter(f => f.isCopy).length,
-  oneAndTheSame: /* count of filtered files */,
-  toUpload: files.filter(f => !f.isCopy).length,
-  metadataOnly: files.filter(f => f.isCopy).length,
+  copies: files.filter(f => f.status === 'copy').length,
+  duplicates: files.filter(f => f.status === 'duplicate').length,
+  toUpload: files.filter(f => f.status === 'ready').length,
+  metadataOnly: files.filter(f => f.status === 'copy').length,
   estimatedStorageSaved: /* calculate size of copies */,
 };
 ```
@@ -433,7 +447,7 @@ const summary = {
 │ Files Selected:        150          │
 │ Unique Files:          120          │
 │ Copies Detected:       25           │
-│ Duplicate Selections:  5 (filtered) │
+│ Duplicates Filtered:   5            │
 ├─────────────────────────────────────┤
 │ To Upload:             120 files    │
 │ Metadata Only:         25 files     │
@@ -511,6 +525,7 @@ const statusIcons = {
   'pending': '○',       // Gray circle - not yet analyzed
   'ready': '✓',         // Green checkmark - ready to upload
   'copy': '⚌',          // Blue parallel lines - copy detected
+  'duplicate': '○',     // Gray circle - one-and-the-same file
   'uploading': '↑',     // Up arrow - currently uploading
   'uploaded': '✓',      // Green checkmark - successfully uploaded
   'read error': '✗',    // Red X - hash/read failure
@@ -521,6 +536,7 @@ const statusColors = {
   'pending': 'gray',
   'ready': 'green',
   'copy': 'blue',
+  'duplicate': 'gray',  // Same as skip
   'uploading': 'blue',
   'uploaded': 'green',
   'read error': 'red',
@@ -531,7 +547,12 @@ const statusColors = {
 **Implementation Notes:**
 - Icons provide quick visual scanning
 - Colors reinforce status meaning
-- `read error` and `failed` both show disabled checkboxes
+- **Disabled checkboxes** (always unchecked, unaffected by Select All/None):
+  - `duplicate` - One-and-the-same files (already queued)
+  - `read error` - Hash/read failures (cannot generate document ID)
+  - `n/a` - Unsupported file types (.lnk, .tmp, etc.)
+- **Enabled checkboxes** (affected by Select All/None):
+  - All other statuses (`ready`, `copy`, `skip`, etc.)
 - During upload phase, ALL checkboxes disabled to prevent changes
 
 ---

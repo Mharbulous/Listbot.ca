@@ -58,8 +58,9 @@ Implement intelligent file copy/duplicate handling using a **two-phase deduplica
 
 - **"One-and-the-Same"**: The exact same file selected multiple times (same hash, same metadata, same location)
   - Example: User drags the same folder twice, resulting in `invoice.pdf` appearing twice in queue
-  - These are **silently filtered** from the queue (no user notification needed)
-  - Only one instance remains in the queue
+  - The first instance remains with status "ready"
+  - Subsequent instances are marked with status **"duplicate"** (white dot, checkbox disabled)
+  - Duplicates are shown in queue but cannot be selected for upload
 
 - **"Best File"**: The copy chosen for upload when multiple copies exist
   - Selected automatically using priority rules (earliest modified date, longest path, etc.)
@@ -228,9 +229,17 @@ const detectOneAndTheSame = (hashGroups) => {
     for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
       if (oneAndTheSameFiles.length > 1) {
         // One-and-the-same: User selected same file multiple times
-        // Keep only first instance (others are silently filtered)
+        // Keep first instance as ready, mark others as duplicate
         finalFiles.push(oneAndTheSameFiles[0]);
-        console.log(`[DEDUP] Filtered ${oneAndTheSameFiles.length - 1} one-and-the-same: ${oneAndTheSameFiles[0].metadata.sourceFileName}`);
+
+        // Mark subsequent instances as duplicates (shown in queue but cannot be selected)
+        for (let i = 1; i < oneAndTheSameFiles.length; i++) {
+          oneAndTheSameFiles[i].status = 'duplicate';
+          oneAndTheSameFiles[i].canUpload = false; // Disable checkbox
+          finalFiles.push(oneAndTheSameFiles[i]);
+        }
+
+        console.log(`[DEDUP] Marked ${oneAndTheSameFiles.length - 1} duplicates: ${oneAndTheSameFiles[0].metadata.sourceFileName}`);
       } else {
         // Unique metadata (copy with different name/date)
         finalFiles.push(oneAndTheSameFiles[0]);
@@ -380,12 +389,13 @@ const handleCopyGroupCheckbox = (file, isChecked, copyGroup) => {
 ### StatusCell.vue - Add Copy Status
 
 ```javascript
-// Status text mapping (add 'copy' status)
+// Status text mapping (add 'copy' and 'duplicate' statuses)
 const statusTextMap = {
   ready: 'Ready',
   uploading: 'Uploading...',
   uploaded: 'Uploaded',
   copy: 'Copy',        // NEW: Purple dot for copies (metadata only)
+  duplicate: 'Duplicate', // NEW: White dot for one-and-the-same files (checkbox disabled)
   skip: 'Skip',
   'read error': 'Read Error',
   failed: 'Failed',
@@ -393,9 +403,12 @@ const statusTextMap = {
   'n/a': 'N/A',
 };
 
-// CSS for copy status
+// CSS for copy and duplicate statuses
 .status-copy {
   background-color: #9C27B0; /* Purple */
+}
+.status-duplicate {
+  background-color: #9E9E9E; /* Gray/White - same as skip */
 }
 ```
 
@@ -518,7 +531,7 @@ const summary = {
   totalSelected: files.length,
   uniqueFiles: uniqueFiles.length,
   copies: files.filter(f => f.status === 'copy').length,
-  oneAndTheSame: /* count of silently filtered files */,
+  duplicates: files.filter(f => f.status === 'duplicate').length,
   toUpload: files.filter(f => f.status === 'ready').length,
   metadataOnly: files.filter(f => f.status === 'copy').length,
   estimatedStorageSaved: /* calculate size of copies */,
@@ -533,7 +546,7 @@ const summary = {
 │ Files Selected:        150          │
 │ Unique Files:          120          │
 │ Copies Detected:       25           │
-│ One-and-the-Same:      5 (filtered) │
+│ Duplicates Filtered:   5            │
 ├─────────────────────────────────────┤
 │ To Upload:             120 files    │
 │ Metadata Only:         25 files     │
@@ -589,6 +602,7 @@ const statusTextMap = {
   'pending': 'Pending',        // ⚪ Gray - Not yet analyzed
   'ready': 'Ready',            // 🔵 Blue - Ready to upload (unique or best file)
   'copy': 'Copy',              // 🟣 Purple - Copy detected (metadata only)
+  'duplicate': 'Duplicate',    // ⚪ Gray - One-and-the-same file (checkbox disabled)
   'uploading': 'Uploading...',  // 🔵 Blue - Currently uploading
   'uploaded': 'Uploaded',      // 🟢 Green - Successfully uploaded
   'read error': 'Read Error',  // 🔴 Red - Hash/read failure (checkbox disabled)
@@ -603,6 +617,7 @@ const statusIcons = {
   'pending': '○',       // Gray circle - not yet analyzed
   'ready': '✓',         // Green checkmark - ready to upload
   'copy': '⚌',          // Blue parallel lines - copy detected
+  'duplicate': '○',     // Gray circle - one-and-the-same file
   'uploading': '↑',     // Up arrow - currently uploading
   'uploaded': '✓',      // Green checkmark - successfully uploaded
   'read error': '✗',    // Red X - hash/read failure
@@ -614,6 +629,7 @@ const statusColors = {
   'pending': 'gray',
   'ready': 'green',
   'copy': 'blue',
+  'duplicate': 'gray',  // Same as skip
   'uploading': 'blue',
   'uploaded': 'green',
   'read error': 'red',
@@ -637,10 +653,18 @@ try {
 
 **Behavior:**
 - File status changes to `read error`
-- Checkbox is disabled (same as .lnk and .tmp files)
+- Checkbox is disabled (same as .lnk, .tmp files, and duplicate files)
 - No special UI modal needed - the status and disabled checkbox are sufficient feedback
 
 **Rationale:** Files without hashes cannot be uploaded (no document ID). Blocking with disabled checkbox prevents upload attempts that would fail.
+
+**Checkbox Behavior Summary:**
+- **Disabled checkboxes** (always unchecked, unaffected by Select All/None):
+  - `duplicate` - One-and-the-same files (already queued)
+  - `read error` - Hash/read failures (cannot generate document ID)
+  - `n/a` - Unsupported file types (.lnk, .tmp, etc.)
+- **Enabled checkboxes** (affected by Select All/None):
+  - All other statuses (`ready`, `copy`, `skip`, etc.)
 
 ---
 
@@ -654,7 +678,8 @@ try {
 - [ ] Create `useClientDeduplication.js` composable
 - [ ] Implement `groupBySize()` - size-based pre-filtering
 - [ ] Implement `hashDuplicateCandidates()` - hash only matching sizes
-- [ ] Implement `detectOneAndTheSame()` - filter duplicate selections
+- [ ] Implement `detectOneAndTheSame()` - mark duplicate selections with 'duplicate' status
+- [ ] Set `canUpload: false` for duplicate files (disable checkbox)
 - [ ] Add progress callback during hashing phase
 - [ ] Integrate with BLAKE3 web worker (`fileHashWorker.js`)
 - [ ] Handle hash failures (set `read error` status, disable checkbox)
@@ -665,9 +690,11 @@ try {
 - [ ] Create `useBestFileSelection.js` composable
 - [ ] Implement `chooseBestFile()` with priority rules
 - [ ] Add 'copy' status to StatusCell.vue (purple dot)
+- [ ] Add 'duplicate' status to StatusCell.vue (gray/white dot)
 - [ ] Add left border styling for copy groups
 - [ ] Add bold/non-bold filename styling (best file vs copies)
 - [ ] Implement checkbox behavior (include/exclude groups, not swap)
+- [ ] Disable checkboxes for 'duplicate', 'read error', and 'n/a' statuses
 - [ ] Add copy group classes (best-file, copy-file)
 - [ ] Test priority rules with edge cases
 - [ ] Verify visual grouping clarity
@@ -686,11 +713,12 @@ try {
 #### 3.4 UX Enhancements
 - [ ] Create preview modal component (`UploadPreviewModal.vue`)
 - [ ] Create completion modal component (`UploadCompletionModal.vue`)
-- [ ] Add deduplication metrics calculation
+- [ ] Add deduplication metrics calculation (include duplicate count)
 - [ ] Display storage saved calculations
-- [ ] Add status progression (pending, ready, copy, uploading, uploaded, read error, failed)
+- [ ] Add status progression (pending, ready, copy, duplicate, uploading, uploaded, read error, failed)
 - [ ] Add visual indicators (icons, colors)
 - [ ] Disable all checkboxes during upload phase
+- [ ] Ensure Select All/None does NOT affect duplicate, read error, or n/a files
 - [ ] Test modals with large file counts (1000+)
 
 #### 3.5 Integration
@@ -943,7 +971,7 @@ This phase adds table customization capabilities.
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-12 (Updated for actual Phase 1.0/1.5 implementation, checkbox-based swap, duplicate filtering)
+**Last Updated:** 2025-11-12 (Added 'duplicate' status for one-and-the-same files with disabled checkbox; updated checkbox behavior)
 **Assignee:** TBD
 
 ---
@@ -955,13 +983,16 @@ This phase adds table customization capabilities.
 2. **Swap Mechanism:** Changed from dedicated swap button (↔️) to checkbox-based swap for simplicity and consistency
 3. **Column Order:** Updated to match actual implementation: Select | File Name | Size | Folder Path | Status
 4. **Visual Hierarchy:** Changed from indentation + arrow to left border + bold/non-bold text
-5. **Duplicate Handling:** Added duplicate filtering with warning popup (new feature)
-6. **Select All Behavior:** Clarified that Select All affects only primary copies, not secondary copies
-7. **Status Display:** Added note that emojis are visual shorthand; actual implementation uses CSS dots
-8. **Terminology:** Replaced "Cancel" with "Skip" throughout to match Phase 1.0 implementation
+5. **Duplicate Handling:** Changed from silent filtering to visible 'duplicate' status with disabled checkbox
+6. **Duplicate Status:** Added 'duplicate' status (gray/white dot) for one-and-the-same files, shown in queue but not selectable
+7. **Checkbox Behavior:** Clarified that duplicate, read error, and n/a files have disabled checkboxes unaffected by Select All/None
+8. **Select All Behavior:** Clarified that Select All affects only primary copies, not secondary copies
+9. **Status Display:** Added note that emojis are visual shorthand; actual implementation uses CSS dots
+10. **Terminology:** Replaced "Cancel" with "Skip" throughout to match Phase 1.0 implementation
 
 **Rationale:**
 - Checkbox-based swap is more intuitive and consistent with existing UI
 - Left border + font weight provides clearer visual hierarchy
-- Duplicate filtering prevents user error and provides helpful feedback
+- Showing duplicates in queue (vs. silent filtering) provides transparency and helps users understand what was detected
+- Disabled checkbox prevents accidental selection while maintaining visibility
 - Aligns with actual Phase 1.0/1.5 architecture and components
