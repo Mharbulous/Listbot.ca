@@ -47,6 +47,15 @@
         @change="handleFolderRecursiveSelect"
       />
     </div>
+
+
+    <!-- Notification Snackbar -->
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="4000">
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false"> Close </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -66,7 +75,7 @@ defineOptions({
 // Composables
 const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue, updateFileStatus, selectAll, deselectAll } =
   useUploadTable();
-const { showNotification } = useNotification();
+const { snackbar, showNotification } = useNotification();
 
 // Upload adapter
 const uploadAdapter = useUploadAdapter({
