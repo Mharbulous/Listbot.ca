@@ -218,13 +218,16 @@ flowchart TD
 
 #### 4. User Visibility (Not Control)
 - **Metadata Preview**: Show why files are considered duplicates
-- **Upload Preview**: Display what will be uploaded before starting
-- **No Override Capability**: Users cannot override deduplication or suppress metadata discovery
+- **Upload Preview**: Display what will be uploaded before starting (modal recommended)
+- **Completion Summary**: Show metrics after upload (modal recommended)
+- **No Override Capability**: Users cannot cherry-pick which copy or duplicate to upload. However, users CAN choose which files to include/exclude from the upload queue entirely (before deduplication analysis)
+- **Checkbox Behavior**: Disable ALL checkboxes during upload phase to prevent unpredictable behavior
 
 #### 5. Error Handling
-- **Hashing Failure**: File gets `status: error` with red dot indicator
-- **Disabled Upload**: Checkbox disabled (like .lnk and .tmp files)
-- **User Notification**: Clear error message explaining why file cannot be uploaded
+- **Hashing Failure**: File gets `status: read error`
+- **Upload Failure**: File gets `status: failed`
+- **Disabled Upload**: Checkbox disabled for `read error` status (like .lnk and .tmp files)
+- **No Special UI**: Status change and disabled checkbox provide sufficient feedback
 
 #### 6. Metrics & Feedback
 - **Deduplication Summary**:
@@ -242,13 +245,24 @@ pending → ready → uploading → completed
 pending → ready → uploadMetadataOnly → completed
 ```
 
-#### Improved System
+#### Enhanced System (Recommended)
 ```
-pending → analyzing → unique → ready-to-upload → uploading → completed
-pending → analyzing → content-match → available-copy → metadata-only → completed
-pending → analyzing → same-file → ignored
-pending → analyzing → unique → already-uploaded → metadata-updated → completed
+pending → ready → uploading → uploaded
+pending → copy → uploading (metadata-only) → uploaded
+pending → read error (checkbox disabled)
+uploading → failed (upload error)
 ```
+
+**Key Status Definitions:**
+- `pending` - File queued, not yet analyzed
+- `ready` - Ready to upload (unique files and best files from copy groups)
+- `copy` - Copy detected (metadata will be saved, file content skipped)
+- `uploading` - Currently uploading
+- `uploaded` - Successfully uploaded
+- `read error` - Hash/read failure (checkbox disabled)
+- `failed` - Upload error
+
+**Note:** One-and-the-same files (duplicate selections) are silently filtered and not shown in queue.
 
 ### Implementation Considerations
 
@@ -279,9 +293,16 @@ pending → analyzing → unique → already-uploaded → metadata-updated → c
 ### Recommendation
 **DO NOT IMPLEMENT** the "improved" workflow as designed. Instead:
 1. Keep the original client-side deduplication exactly as-is
-2. Add ONLY the UX improvements (status names, progress feedback, metrics)
+2. Add ONLY the UX improvements:
+   - Better status names: `pending`, `ready`, `copy`, `uploading`, `uploaded`, `read error`, `failed`
+   - Progress feedback during hashing
+   - Preview modal before upload (display-only)
+   - Completion modal after upload with metrics
+   - Visual indicators (icons, colors) for statuses
 3. Keep database queries DURING upload phase, not before
-4. Do NOT add user override capabilities
-5. Add error handling improvements for hash failures
+4. Do NOT add user override of deduplication decisions (users CAN exclude files from queue, but CANNOT cherry-pick which copy to upload)
+5. Add error handling improvements: `read error` status with disabled checkbox
+6. Disable ALL checkboxes during upload phase to prevent changes
+7. Sort queue by folder path (NOT by size - provides no performance benefit)
 
 The original design is architecturally superior. The "improved" version sacrifices performance for features that either aren't needed or violate requirements.
