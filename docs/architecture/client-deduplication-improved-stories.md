@@ -56,7 +56,7 @@ This app is designed for **litigation document discovery**, which requires speci
 ### Non-Negotiable Requirements
 
 1. **ALL metadata from ALL copies MUST be saved** - For litigation discovery, suppressing any file location or metadata is unacceptable
-2. **No user override of deduplication** - Users cannot cherry-pick which copy or duplicate to upload/exclude. However, users CAN choose which files to include/exclude from the upload queue entirely (before deduplication analysis)
+2. **No user override of deduplication** - Users cannot cherry-pick which copy or duplicate to upload/exclude. However, users CAN choose which files to include/exclude from the upload queue entirely (meaning include/exclude all copies)
 3. **"Best file" selection is UI-only** - Since identical hash = identical content, the choice of which copy to upload is irrelevant. The "best file" selection only determines which metadata displays as primary in the UI
 4. **Hash-based document IDs** - Using BLAKE3 hash as Firestore document ID provides database-level deduplication (can't create duplicate documents)
 

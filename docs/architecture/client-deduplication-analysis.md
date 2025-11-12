@@ -1,4 +1,6 @@
 # Client-Side Deduplication Analysis
+## Note:  This document is an analysis of two possible deduplication algorithims.  If you are looking for information on the algorithim that was decided on, look elsewhere.
+
 ## Terminology
 
 This document uses precise terminology for file deduplication:
