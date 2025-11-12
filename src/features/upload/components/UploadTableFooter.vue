@@ -26,7 +26,9 @@
 
       <!-- Upload Button (Right) -->
       <div class="footer-right">
+        <!-- Clear Queue Button (shown when NOT uploading and has skipped files) -->
         <v-btn
+          v-if="!isUploading && !isPaused"
           color="white"
           variant="elevated"
           size="large"
@@ -42,7 +44,23 @@
             Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'skipped file' : 'skipped files' }}
           </template>
         </v-btn>
+
+        <!-- Retry Failed Button (shown when has failed files and NOT uploading) -->
         <v-btn
+          v-if="!isUploading && !isPaused && stats.failed > 0"
+          color="warning"
+          variant="elevated"
+          size="large"
+          class="retry-btn"
+          @click="handleRetryFailed"
+        >
+          <v-icon start>mdi-refresh</v-icon>
+          Retry {{ stats.failed }} failed {{ stats.failed === 1 ? 'file' : 'files' }}
+        </v-btn>
+
+        <!-- Upload Button (shown when NOT uploading) -->
+        <v-btn
+          v-if="!isUploading && !isPaused"
           color="success"
           variant="elevated"
           size="large"
@@ -52,6 +70,58 @@
         >
           <v-icon start>mdi-cloud-upload-outline</v-icon>
           Upload {{ stats.checkedCount }} {{ stats.checkedCount === 1 ? 'file' : 'files' }} ({{ stats.checkedSize }})
+        </v-btn>
+
+        <!-- Pause Button (shown during active upload) -->
+        <v-btn
+          v-if="isUploading && !isPaused"
+          color="warning"
+          variant="elevated"
+          size="large"
+          class="pause-btn"
+          @click="handlePause"
+        >
+          <v-icon start>mdi-pause</v-icon>
+          Pause Upload
+        </v-btn>
+
+        <!-- Cancel Button (shown during active upload) -->
+        <v-btn
+          v-if="isUploading && !isPaused"
+          color="error"
+          variant="elevated"
+          size="large"
+          class="cancel-btn"
+          @click="handleCancel"
+        >
+          <v-icon start>mdi-close-circle</v-icon>
+          Cancel
+        </v-btn>
+
+        <!-- Resume Button (shown when paused) -->
+        <v-btn
+          v-if="isPaused"
+          color="success"
+          variant="elevated"
+          size="large"
+          class="resume-btn"
+          @click="handleResume"
+        >
+          <v-icon start>mdi-play</v-icon>
+          Resume Upload
+        </v-btn>
+
+        <!-- Cancel Button (shown when paused) -->
+        <v-btn
+          v-if="isPaused"
+          color="error"
+          variant="elevated"
+          size="large"
+          class="cancel-btn"
+          @click="handleCancel"
+        >
+          <v-icon start>mdi-close-circle</v-icon>
+          Cancel
         </v-btn>
       </div>
     </div>
@@ -85,10 +155,18 @@ defineProps({
       );
     },
   },
+  isUploading: {
+    type: Boolean,
+    default: false,
+  },
+  isPaused: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['upload', 'clear-queue']);
+const emit = defineEmits(['upload', 'clear-queue', 'pause', 'resume', 'cancel', 'retry-failed']);
 
 // Handle upload
 const handleUpload = () => {
@@ -98,6 +176,26 @@ const handleUpload = () => {
 // Handle clear queue
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+// Handle pause
+const handlePause = () => {
+  emit('pause');
+};
+
+// Handle resume
+const handleResume = () => {
+  emit('resume');
+};
+
+// Handle cancel
+const handleCancel = () => {
+  emit('cancel');
+};
+
+// Handle retry failed
+const handleRetryFailed = () => {
+  emit('retry-failed');
 };
 </script>
 
@@ -172,6 +270,42 @@ const handleClearQueue = () => {
 
 .upload-btn:disabled :deep(.v-icon) {
   color: #d1d5db !important;
+}
+
+.retry-btn {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+  transition: all 0.3s ease !important;
+  width: 220px !important;
+}
+
+.pause-btn {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+  transition: all 0.3s ease !important;
+  width: 180px !important;
+}
+
+.resume-btn {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+  transition: all 0.3s ease !important;
+  width: 180px !important;
+}
+
+.cancel-btn {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  text-transform: none !important;
+  transition: all 0.3s ease !important;
+  width: 140px !important;
 }
 
 .footer-stat {

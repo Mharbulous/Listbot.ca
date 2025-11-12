@@ -19,18 +19,22 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) =>
-      ['ready', 'uploading', 'completed', 'skipped', 'skip', 'error', 'uploadMetadataOnly', 'unknown', 'n/a'].includes(value),
+      ['ready', 'hashing', 'checking', 'uploading', 'creating_metadata', 'completed', 'skipped', 'skip', 'error', 'network_error', 'uploadMetadataOnly', 'unknown', 'n/a'].includes(value),
   },
 });
 
 // Status text mapping
 const statusTextMap = {
   ready: 'Ready',
+  hashing: 'Hashing...',
+  checking: 'Checking...',
   uploading: 'Uploading...',
+  creating_metadata: 'Saving...',
   completed: 'Uploaded',
   skipped: 'Duplicate',
   skip: 'Skip',
   error: 'Failed',
+  network_error: 'Network Error',
   uploadMetadataOnly: 'Metadata Only',
   unknown: 'Unknown',
   'n/a': 'N/A',
@@ -53,13 +57,28 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
   flex-shrink: 0;
 }
 
-/* 8-Color Status System */
+/* Status System */
 .status-ready {
   background-color: #2196f3; /* Blue */
 }
 
+.status-hashing {
+  background-color: #00bcd4; /* Cyan */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-checking {
+  background-color: #03a9f4; /* Light Blue */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 .status-uploading {
   background-color: #ffc107; /* Yellow */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-creating_metadata {
+  background-color: #8bc34a; /* Light Green */
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -78,6 +97,10 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
 .status-error {
   background-color: #f44336; /* Red */
+}
+
+.status-network_error {
+  background-color: #ff5722; /* Deep Orange */
 }
 
 .status-uploadMetadataOnly {
