@@ -34,7 +34,35 @@
   reviewRequiredCount: number,   // Default: 0, tags with confidence < 95%
 
   // Timestamps - REQUIRED
-  fileCreated: timestamp         // Firebase Storage creation timestamp (from timeCreated metadata)
+  uploadDate: timestamp,         // Firebase Storage creation timestamp (from timeCreated metadata)
+
+  // Embedded Source Metadata (Denormalized for Performance) - OPTIONAL
+  sourceFileName: string,        // Primary source filename (from selected sourceMetadata variant)
+  sourceLastModified: timestamp, // Primary source file modification date
+  sourceFolderPath: string,      // Primary source folder path (pipe-delimited)
+
+  // Source Metadata Variants Map (Fast Duplicate Checking) - OPTIONAL
+  sourceMetadataVariants: {      // Map of all metadata variants for this file
+    [metadataHash]: {            // Key is metadataHash (16 hex chars)
+      sourceFileName: string,
+      sourceLastModified: timestamp,
+      sourceFolderPath: string,
+      uploadDate: timestamp
+    }
+  },
+  sourceMetadataCount: number,   // Count of metadata variants (for performance)
+
+  // Embedded Tags (Denormalized for Performance) - OPTIONAL
+  tags: {                        // Map of embedded tags for DocumentTable
+    [categoryId]: {
+      tagName: string,
+      confidence: number,
+      source: 'ai' | 'human',
+      autoApproved: boolean,
+      reviewRequired: boolean,
+      createdAt: timestamp
+    }
+  }
 }
 ```
 
@@ -65,9 +93,9 @@
 
 - **INCREMENT** counters atomically using FieldValue.increment()
 - **NEVER** manually calculate from subcollection
-- **UPDATE** fileCreated whenever counters change
+- **UPDATE** uploadDate whenever counters change
 
-**fileCreated Timestamp:**
+**uploadDate Timestamp:**
 
 - **PRIMARY SOURCE**: Retrieved from Firebase Storage metadata's `timeCreated` field after upload completes
 - **CONVERSION**: Storage timestamp (ISO 8601 string) is converted to Firestore Timestamp object
@@ -75,6 +103,36 @@
 - **PURPOSE**: Ensures exact timestamp match between Storage file and Firestore evidence document
 - **ACCURACY**: Eliminates 1-second discrepancies between Storage and Firestore operations
 - **IMMUTABILITY**: Represents when file was created in Storage (not when document was modified)
+
+**Embedded Source Metadata (Performance Optimization):**
+
+- **PURPOSE**: Denormalized data from sourceMetadata subcollection for single-query table rendering
+- **UPDATED**: Automatically updated when sourceMetadata is created or sourceID is changed
+- **SOURCE**: Copied from the sourceMetadata document referenced by sourceID field
+- **PRIMARY METADATA**: Represents the "selected" metadata variant for display
+- **ELIMINATES**: Subcollection queries for DocumentTable rendering (massive performance gain)
+
+**sourceMetadataVariants Map (Fast Duplicate Checking):**
+
+- **PURPOSE**: Embedded map of ALL metadata variants for instant duplicate detection
+- **KEY**: metadataHash (16 hex chars) serves as map key
+- **UPDATED**: Atomically updated when new sourceMetadata documents are created
+- **FAST LOOKUP**: Check `sourceMetadataVariants[metadataHash]` instead of querying subcollection
+- **USE CASE**: `metadataRecordExists()` checks this map for O(1) duplicate detection
+- **PERFORMANCE**: Eliminates subcollection query for every duplicate check
+
+**sourceMetadataCount Counter:**
+
+- **PURPOSE**: Track number of metadata variants without counting subcollection
+- **INCREMENT**: Atomically incremented when new sourceMetadata document is created
+- **DISPLAY**: Shows users how many different upload contexts exist for this file
+
+**Embedded Tags Map (DocumentTable Performance):**
+
+- **PURPOSE**: Simplified tag data for DocumentTable rendering without subcollection queries
+- **SYNC**: Automatically synchronized with tags subcollection via batch writes
+- **DUAL STORAGE**: Full metadata in subcollection, simplified data in embedded map
+- **PERFORMANCE**: Enables DocumentTable to load 10,000+ documents in single query
 
 **Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
 
@@ -214,14 +272,16 @@ match /firms/{firmId}/matters/{matterId}}/evidence/{fileHash} {
 function validateEvidenceCreate(data, fileHash) {
   return data.keys().hasAll(['sourceID', 'fileSize',
                               'isProcessed', 'processingStage', 'tagCount',
-                              'autoApprovedCount', 'reviewRequiredCount', 'updatedAt']) &&
+                              'autoApprovedCount', 'reviewRequiredCount', 'uploadDate']) &&
          fileHash.size() == 32 &&  // Document ID must be valid BLAKE3 hash
          data.sourceID.size() == 16 &&  // Must be valid xxHash metadata hash
          data.fileSize > 0 &&
          data.processingStage in ['uploaded', 'splitting', 'merging', 'complete'] &&
          data.tagCount >= 0 &&
          data.autoApprovedCount >= 0 &&
-         data.reviewRequiredCount >= 0;
+         data.reviewRequiredCount >= 0 &&
+         // Optional embedded source metadata fields
+         (!data.keys().has('sourceMetadataCount') || data.sourceMetadataCount >= 0);
 }
 
 function validateTagDocument(data) {
@@ -333,7 +393,7 @@ await db.runTransaction(async (transaction) => {
   // Update counters atomically
   const counterUpdates = {
     tagCount: FieldValue.increment(1),
-    updatedAt: FieldValue.serverTimestamp(),
+    uploadDate: FieldValue.serverTimestamp(),
   };
 
   if (status === 'auto_approved') {
@@ -370,7 +430,7 @@ await evidenceRef.update({
   processingStage: newStage,
   isProcessed: newStage === 'complete',
   hasAllPages: newStage === 'complete' ? true : null,
-  updatedAt: FieldValue.serverTimestamp(),
+  uploadDate: FieldValue.serverTimestamp(),
 });
 ```
 
@@ -425,8 +485,16 @@ Collection: tags
 
 - **MUST** process documents in order: upload → split → merge → complete
 - **NEVER** mark isProcessed=true unless processingStage='complete'
-- **ALWAYS** update timestamps on any field change
+- **ALWAYS** update uploadDate timestamp on any field change
 - **DO NOT** allow manual stage changes without proper validation
+
+### Embedded Metadata Management
+
+- **SYNC** embedded source metadata with sourceMetadata subcollection
+- **UPDATE** sourceMetadataVariants map when creating new sourceMetadata documents
+- **INCREMENT** sourceMetadataCount atomically using FieldValue.increment()
+- **MAINTAIN** tags map in sync with tags subcollection via batch writes
+- **NEVER** manually edit embedded maps without updating corresponding subcollections
 
 ### Tag Management
 
