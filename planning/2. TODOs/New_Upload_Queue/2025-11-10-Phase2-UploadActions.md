@@ -10,7 +10,7 @@
 
 ## Overview
 
-Implement the core batch upload functionality that actually uploads files to Firebase Storage and Firestore. This phase transforms the upload queue from a display-only table into a fully functional upload system.
+Implement the core batch upload functionality that actually uploads files to Firebase Storage and Firestore. This phase transforms the upload queue from a display-only table into a fully functional upload system by **integrating existing upload infrastructure** from the old `/upload` route.
 
 **Goal:** Complete upload pipeline from queue to Firebase with progress tracking
 **Deliverable:** Working "Upload X files" button that processes the entire queue
@@ -30,15 +30,149 @@ Implement the core batch upload functionality that actually uploads files to Fir
 ✅ **Empty State** - Integrated drag-and-drop zone when queue is empty
 ✅ **File Preview** - Eyeball icon (👁️) on hover to open file locally
 
+### Existing Upload Infrastructure (from `/upload` route):
+✅ **File Hashing Worker** - `src/features/upload/workers/fileHashWorker.js` (335 lines)
+  - Uses `hash-wasm` library with BLAKE3 (128-bit = 32 hex chars)
+  - Size-based pre-filtering (only hashes files with matching sizes)
+  - "One-and-the-same" detection (same file selected twice)
+  - "Duplicate" detection (different files, same content)
+  - Best file selection algorithm (earliest mod date → longest path → shortest name)
+  - Progress updates, health checks, error handling
+  - Marks shortcut files (.lnk) with `skipReason: 'shortcut'`
+
+✅ **Worker Communication** - `useWebWorker.js` - Generic worker management
+  - Message passing, error recovery, health monitoring
+  - Registry integration, timeout handling
+
+✅ **Worker Manager** - `useWorkerManager.js` - High-level worker lifecycle
+  - Auto-restart, retry logic, performance monitoring
+
+✅ **File Processing** - `useFileProcessor.js` - Core file operations
+  - `calculateFileHash()` - BLAKE3 hashing with network error detection
+  - `checkFileExists()` - Checks if fileHash exists in Firestore
+  - `uploadSingleFile()` - Uploads to Firebase Storage with retry logic
+  - `generateStoragePath()` - Creates storage path
+
+✅ **File Metadata** - `useFileMetadata.js` - Firestore metadata management
+  - `createMetadataRecord()` - Creates Evidence + sourceMetadata documents
+  - `generateMetadataHash()` - xxHash 64-bit of `fileName|modified|hash`
+  - `metadataRecordExists()` - Checks embedded sourceMetadataVariants map
+
+✅ **Upload Orchestration** - `useUploadOrchestration.js` - Upload control
+  - Pause/resume state management
+  - Session ID tracking
+  - Abort controller management
+
+✅ **Upload Handlers** - `useFileUploadHandlers.js` - Upload workflow
+  - `continueUpload()` - Main upload loop
+  - `processDuplicateFile()` - Skips upload, records metadata only
+  - `processExistingFile()` - Skips if already in Firestore
+  - `processNewFileUpload()` - Uploads new file
+  - Network error handling with retry logic
+
 ### What's Missing (This Phase):
-❌ **Upload Button Implementation** - Currently just logs "Upload clicked"
-❌ **File Hashing** - BLAKE3 hash calculation for deduplication
-❌ **Firebase Storage Upload** - Actual file upload to cloud storage
-❌ **Firestore Metadata** - Document creation with file metadata
-❌ **Upload Progress** - Real-time status updates (ready → uploading → completed/error)
-❌ **Error Handling** - Retry logic, error display, graceful failures
-❌ **Concurrent Upload Management** - Queue orchestration with configurable concurrency
-❌ **Pause/Resume** - Ability to pause and resume upload process
+❌ **Connect new queue to existing upload infrastructure**
+❌ **Adapt existing composables for new queue structure**
+❌ **Wire up "Upload X files" button in Testing.vue**
+❌ **Update file statuses in real-time during upload**
+❌ **Handle upload progress tracking in virtualized table**
+
+---
+
+## CRITICAL: Actual Firestore Structure
+
+**⚠️ The planning document's Firestore structure was outdated. Use this ACTUAL implementation:**
+
+### Evidence Document (Parent)
+**Path:** `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}`
+**Document ID:** BLAKE3 hash (32 hex characters)
+
+```javascript
+{
+  // Display configuration
+  sourceID: metadataHash, // xxHash 64-bit (16 hex chars)
+
+  // Source file properties (for quick access)
+  fileSize: 2458624, // bytes
+  fileType: "application/pdf", // MIME type
+
+  // Processing status (for future Document Processing Workflow)
+  isProcessed: false,
+  hasAllPages: null, // null = unknown, true/false after processing
+  processingStage: "uploaded", // uploaded|splitting|merging|complete
+
+  // Tag counters (for subcollection)
+  tagCount: 0,
+  autoApprovedCount: 0,
+  reviewRequiredCount: 0,
+
+  // Embedded tags (denormalized for performance)
+  tags: {},
+
+  // Embedded source metadata (denormalized for performance)
+  sourceMetadata: {},
+  sourceMetadataVariants: {
+    // Map of metadataHash -> metadata for fast duplicate checking
+    "a1b2c3d4e5f6g7h8": {
+      sourceFileName: "invoice.pdf",
+      sourceLastModified: Timestamp(1705334400000),
+      sourceFolderPath: "/2024/Tax",
+      uploadDate: Timestamp(1705420800000)
+    }
+  },
+  sourceMetadataCount: 1, // Incremented with each variant
+
+  // Primary source metadata (embedded for fast table rendering without subcollection queries)
+  sourceFileName: "invoice.pdf",
+  sourceLastModified: Timestamp(1705334400000),
+  sourceFolderPath: "/2024/Tax",
+
+  // Timestamps
+  uploadDate: Timestamp(1705420800000),
+}
+```
+
+### sourceMetadata Subcollection Document
+**Path:** `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}`
+**Document ID:** xxHash 64-bit of `sourceFileName|lastModified|fileHash` (16 hex chars)
+
+```javascript
+{
+  // Core file metadata (only what varies between identical files)
+  sourceFileName: "invoice.pdf",
+  sourceLastModified: Timestamp(1705334400000),
+  fileHash: "a1b2c3d4...", // BLAKE3 hash (32 hex chars)
+
+  // File path information
+  sourceFolderPath: "/2024/Tax", // Smart pattern recognition, comma-separated if multiple
+}
+```
+
+### Firebase Storage Path
+**Format:** `firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{extension}`
+
+**Example:**
+```
+firms/firm123/matters/matter456/uploads/a1b2c3d4e5f6....pdf
+```
+
+**Custom Metadata:**
+```javascript
+{
+  firmId: "firm123",
+  userId: "user789",
+  originalName: "invoice.pdf",
+  hash: "a1b2c3d4e5f6..."
+}
+```
+
+### Key Differences from Planning Doc:
+1. **Evidence document must be created FIRST** before sourceMetadata subcollection (Firestore requirement)
+2. **sourceMetadataVariants map** embedded in Evidence for fast duplicate checking (no subcollection query)
+3. **Primary source metadata** embedded in Evidence for fast table rendering
+4. **Storage path** uses `matters/{matterId}/uploads/` (not just `{documentId}/` as in plan)
+5. **Metadata hash** uses xxHash 64-bit (16 hex chars), not BLAKE3
+6. **Hash library** is `hash-wasm`, not `@noble/hashes`
 
 ---
 
@@ -72,369 +206,395 @@ Implement the core batch upload functionality that actually uploads files to Fir
 
 ## Features
 
-### 2.1 File Hashing with BLAKE3 (Web Worker)
-### 2.2 Upload to Firebase Storage
-### 2.3 Create Firestore Metadata Records
+### 2.1 Integrate Existing File Hashing Worker
+### 2.2 Adapt File Upload Composables for New Queue
+### 2.3 Create Upload Pipeline in Testing.vue
 ### 2.4 Upload Progress Tracking & Status Updates
-### 2.5 Concurrent Upload Management
-### 2.6 Error Handling & Retry Logic
-### 2.7 Pause/Resume Upload
-### 2.8 Upload Complete Summary
+### 2.5 Error Handling & Retry Logic (Already Exists)
+### 2.6 Pause/Resume Upload (Already Exists)
+### 2.7 Upload Complete Summary
 
 ---
 
-## 2.1 File Hashing with BLAKE3 (Web Worker)
+## 2.1 Integrate Existing File Hashing Worker
 
-### Why Hashing First?
+### Why Integration, Not Creation?
 
-**Deduplication Strategy:**
-- Files are identified by their BLAKE3 hash (used as Firestore document ID)
-- Before uploading, check if hash already exists in storage
-- If exists: skip upload, create metadata-only record
-- If new: upload file + create metadata record
+The `fileHashWorker.js` already exists with sophisticated deduplication logic:
+- **Size-based pre-filtering:** Only hashes files with matching sizes (performance optimization)
+- **One-and-the-same detection:** Filters out the same file selected multiple times
+- **Duplicate detection:** Identifies different files with identical content
+- **Best file selection:** Chooses which duplicate to upload based on priority rules
 
-### Web Worker Implementation
+**Location:** `src/features/upload/workers/fileHashWorker.js` (335 lines)
 
-**Location:** `src/workers/fileHashWorker.js` (may already exist from old upload system)
+### Worker Message Types
 
 ```javascript
-// fileHashWorker.js
-importScripts('https://unpkg.com/@noble/hashes@1.3.1/blake3.min.js');
-
-self.onmessage = async (event) => {
-  const { file, fileId } = event.data;
-
-  try {
-    // Read file as ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-
-    // Calculate BLAKE3 hash
-    const hashArray = blake3.hash(new Uint8Array(arrayBuffer));
-    const hash = Array.from(hashArray)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    // Send hash back to main thread
-    self.postMessage({
-      fileId,
-      hash,
-      success: true
-    });
-  } catch (error) {
-    self.postMessage({
-      fileId,
-      error: error.message,
-      success: false
-    });
-  }
+const MESSAGE_TYPES = {
+  PROCESS_FILES: 'PROCESS_FILES',
+  PROGRESS_UPDATE: 'PROGRESS_UPDATE',
+  PROCESSING_COMPLETE: 'PROCESSING_COMPLETE',
+  ERROR: 'ERROR',
+  HEALTH_CHECK: 'HEALTH_CHECK',
+  HEALTH_CHECK_RESPONSE: 'HEALTH_CHECK_RESPONSE',
 };
 ```
 
-### Hashing Logic (Phase 1 of Upload Process)
+### Worker Input/Output
 
+**Input Message:**
 ```javascript
-// useFileHashing.js
-export function useFileHashing() {
-  const hashWorker = ref(null);
-  const hashQueue = ref(new Map()); // fileId -> { resolve, reject }
-
-  onMounted(() => {
-    hashWorker.value = new Worker('/src/workers/fileHashWorker.js');
-    hashWorker.value.onmessage = handleHashResult;
-  });
-
-  onUnmounted(() => {
-    hashWorker.value?.terminate();
-  });
-
-  const calculateHash = (file) => {
-    return new Promise((resolve, reject) => {
-      const fileId = file.id;
-
-      // Store promise callbacks
-      hashQueue.value.set(fileId, { resolve, reject });
-
-      // Post to worker
-      hashWorker.value.postMessage({
-        file: file.sourceFile,
-        fileId
-      });
-
-      console.log(`[HASH] Calculating hash for: ${file.name}`);
-    });
-  };
-
-  const handleHashResult = (event) => {
-    const { fileId, hash, success, error } = event.data;
-    const callbacks = hashQueue.value.get(fileId);
-
-    if (!callbacks) return;
-
-    if (success) {
-      console.log(`[HASH] ✓ Hash calculated: ${hash.substring(0, 8)}... for file ${fileId}`);
-      callbacks.resolve(hash);
-    } else {
-      console.error(`[HASH] ✗ Hash failed for file ${fileId}:`, error);
-      callbacks.reject(new Error(error));
+self.postMessage({
+  type: 'PROCESS_FILES',
+  files: [
+    {
+      id: 'file_123',
+      file: File, // Actual File object
+      originalIndex: 0,
+      customPath: '/2024/Tax/invoice.pdf' // Optional
     }
-
-    hashQueue.value.delete(fileId);
-  };
-
-  return {
-    calculateHash
-  };
-}
+  ],
+  batchId: 'batch_456',
+  options: {}
+});
 ```
 
-### Batched Hashing for Performance
-
-```javascript
-// Hash files in batches of 5 concurrently
-const hashFiles = async (files) => {
-  const BATCH_SIZE = 5;
-  const results = [];
-
-  for (let i = 0; i < files.length; i += BATCH_SIZE) {
-    const batch = files.slice(i, i + BATCH_SIZE);
-
-    // Update status to "hashing" or similar
-    batch.forEach(f => f.status = 'hashing');
-
-    // Hash batch concurrently
-    const hashes = await Promise.all(
-      batch.map(file => calculateHash(file))
-    );
-
-    // Store hashes
-    batch.forEach((file, index) => {
-      file.hash = hashes[index];
-      file.status = 'ready'; // Back to ready after hashing
-    });
-
-    results.push(...hashes);
-  }
-
-  return results;
-};
-```
-
----
-
-## 2.2 Upload to Firebase Storage
-
-### Storage Path Structure
-
-```
-/uploads/{firmId}/{documentId}/{documentId}.{ext}
-```
-
-**Example:**
-```
-/uploads/firm123/a1b2c3d4e5f6.../a1b2c3d4e5f6....pdf
-```
-
-**Why use hash as filename?**
-- Automatic deduplication at storage level
-- No filename collisions
-- Consistent references in Firestore
-
-### Upload Function
-
-```javascript
-// useFirebaseUpload.js
-import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/firebase/config.js';
-
-export function useFirebaseUpload(firmId) {
-
-  /**
-   * Upload file to Firebase Storage
-   * @param {Object} file - File object from queue
-   * @returns {Promise<Object>} - { downloadURL, storagePath }
-   */
-  const uploadToStorage = async (file) => {
-    try {
-      // Extract file extension
-      const ext = file.name.split('.').pop();
-
-      // Build storage path
-      const storagePath = `uploads/${firmId}/${file.hash}/${file.hash}.${ext}`;
-
-      // Create storage reference
-      const fileRef = storageRef(storage, storagePath);
-
-      // Create upload task
-      const uploadTask = uploadBytesResumable(fileRef, file.sourceFile, {
-        contentType: file.sourceFile.type || 'application/octet-stream'
-      });
-
-      // Return promise that resolves when upload completes
-      return new Promise((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
-
-          // Progress callback
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            file.uploadProgress = progress;
-            console.log(`[UPLOAD] ${file.name}: ${progress.toFixed(1)}%`);
-          },
-
-          // Error callback
-          (error) => {
-            console.error(`[UPLOAD] ✗ Failed: ${file.name}`, error);
-            reject(error);
-          },
-
-          // Success callback
-          async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log(`[UPLOAD] ✓ Success: ${file.name}`);
-
-            resolve({
-              downloadURL,
-              storagePath,
-              uploadedAt: Date.now()
-            });
-          }
-        );
-      });
-
-    } catch (error) {
-      console.error(`[UPLOAD] ✗ Error: ${file.name}`, error);
-      throw error;
-    }
-  };
-
-  return {
-    uploadToStorage
-  };
-}
-```
-
----
-
-## 2.3 Create Firestore Metadata Records
-
-### Document Structure
-
-**Collection:** `/firms/{firmId}/documents`
-**Document ID:** BLAKE3 hash (same as file identifier)
-
+**Output Message (Success):**
 ```javascript
 {
-  // Core identification
-  id: "a1b2c3d4e5f6...", // BLAKE3 hash
-  hash: "a1b2c3d4e5f6...", // Same as id
-
-  // Source file metadata (from original file on user's computer)
-  sourceFileName: "invoice.pdf",
-  sourceFolderPath: "/2024/Tax",
-  sourceFileSize: 2458624, // bytes
-  sourceLastModified: 1705334400000, // timestamp
-
-  // Storage metadata
-  storagePath: "uploads/firm123/a1b2c3d4e5f6.../a1b2c3d4e5f6....pdf",
-  downloadURL: "https://storage.googleapis.com/...",
-
-  // Upload metadata
-  uploadedAt: 1705420800000,
-  uploadedBy: "user123",
-  firmId: "firm123",
-
-  // File processing metadata (for future phases)
-  status: "uploaded", // uploaded, processing, ready
-  fileType: "application/pdf",
-  pageCount: null, // Will be set after processing
-
-  // Timestamps
-  createdAt: 1705420800000,
-  updatedAt: 1705420800000,
+  type: 'PROCESSING_COMPLETE',
+  batchId: 'batch_456',
+  result: {
+    readyFiles: [
+      {
+        id: 'file_123',
+        originalIndex: 0,
+        path: '/2024/Tax/invoice.pdf',
+        metadata: {
+          sourceFileName: 'invoice.pdf',
+          sourceFileSize: 2458624,
+          sourceFileType: 'application/pdf',
+          lastModified: 1705334400000
+        },
+        hash: 'a1b2c3d4...', // BLAKE3 32-char hash (only if file had size duplicate)
+        status: 'ready',
+        skipReason: 'shortcut' // Present if .lnk file
+      }
+    ],
+    duplicateFiles: [
+      {
+        id: 'file_124',
+        originalIndex: 1,
+        path: '/2024/Tax/invoice-copy.pdf',
+        metadata: { /* same as above */ },
+        hash: 'a1b2c3d4...', // Same hash as readyFiles entry
+        isDuplicate: true,
+        status: 'uploadMetadataOnly'
+      }
+    ]
+  }
 }
 ```
 
-### Metadata Creation Function
+### Using Existing useWebWorker.js
+
+**Don't create new composable - use existing one:**
 
 ```javascript
-// useFirestoreMetadata.js
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/firebase/config.js';
-import { useAuthStore } from '@/stores/auth.js';
+// In Testing.vue or new useNewUploadQueue.js composable
+import { useWebWorker } from '@/features/upload/composables/useWebWorker.js';
 
-export function useFirestoreMetadata(firmId) {
+const hashWorker = useWebWorker('../features/upload/workers/fileHashWorker.js');
+
+// Initialize worker
+onMounted(() => {
+  hashWorker.initializeWorker();
+});
+
+// Send files to worker
+const processFiles = async (files) => {
+  const filesData = files.map((file, index) => ({
+    id: file.id,
+    file: file.sourceFile,
+    originalIndex: index,
+    customPath: file.folderPath ? `${file.folderPath}/${file.name}` : file.name
+  }));
+
+  const response = await hashWorker.sendMessage({
+    type: 'PROCESS_FILES',
+    files: filesData,
+    batchId: `batch_${Date.now()}`,
+  }, {
+    timeout: 300000 // 5 minutes for large batches
+  });
+
+  return response.result;
+};
+
+// Cleanup
+onUnmounted(() => {
+  hashWorker.terminateWorker();
+});
+```
+
+### Integration Strategy
+
+**Option 1: Hash on Upload (Recommended)**
+- Keep Phase 1.0/1.5 queue as-is (no hashing in queue phase)
+- When "Upload X files" clicked, send batch to hashWorker
+- Worker returns `{ readyFiles, duplicateFiles }`
+- Upload readyFiles, skip duplicateFiles (metadata only)
+
+**Option 2: Hash During Queue (Complex)**
+- Integrate hashWorker into queue addition phase
+- Files get hashed before appearing in table
+- More complex, may slow down queue display
+
+**Recommendation:** Use Option 1 for Phase 2 - simpler, cleaner separation of concerns.
+
+---
+
+## 2.2 Adapt File Upload Composables for New Queue
+
+### Existing Composables (From `/upload` Route)
+
+**File Processor:** `useFileProcessor.js`
+```javascript
+const {
+  calculateFileHash,     // BLAKE3 hashing
+  checkFileExists,       // Check if fileHash exists in Firestore
+  uploadSingleFile,      // Upload to Firebase Storage
+  generateStoragePath,   // Create storage path
+} = useFileProcessor({
+  authStore,
+  matterStore,
+  queueDeduplication,
+  timeWarning,
+  updateUploadQueue,
+  updateAllFilesToReady,
+  analysisTimedOut,
+  skippedFolders,
+  allFilesAnalysis,
+  mainFolderAnalysis,
+});
+```
+
+**File Metadata:** `useFileMetadata.js`
+```javascript
+const {
+  generateMetadataHash,    // xxHash of fileName|modified|hash
+  createMetadataRecord,    // Create Evidence + sourceMetadata
+  metadataRecordExists,    // Check embedded sourceMetadataVariants map
+} = useFileMetadata();
+```
+
+**Upload Orchestration:** `useUploadOrchestration.js`
+```javascript
+const {
+  isStartingUpload,
+  isPaused,
+  pauseRequested,
+  currentUploadIndex,
+  getCurrentSessionId,
+  resetSessionId,
+  getUploadAbortController,
+  setUploadAbortController,
+  handlePauseUpload,
+  handleResumeUpload,
+  handleStartUpload,
+} = useUploadOrchestration();
+```
+
+**Upload Handlers:** `useFileUploadHandlers.js`
+```javascript
+const {
+  continueUpload,           // Main upload loop
+  processDuplicateFile,     // Skip upload, metadata only
+  processExistingFile,      // Skip if already exists
+  processNewFileUpload,     // Upload new file
+} = useFileUploadHandlers({
+  uploadQueue,
+  uploadStatus,
+  pauseRequested,
+  isPaused,
+  updateUploadStatus,
+  updateFileStatus,
+  showNotification,
+  calculateFileHash,
+  checkFileExists,
+  uploadSingleFile,
+  populateExistingHash,
+  logUploadEvent,
+  updateUploadEvent,
+  createMetadata: createMetadataRecord,
+  generateMetadataHash,
+  getCurrentSessionId,
+  getUploadAbortController,
+  setUploadAbortController,
+});
+```
+
+### Adaptation Strategy
+
+**Option 1: Adapter Pattern (Recommended)**
+Create a thin adapter layer that translates between new queue structure and existing composables:
+
+```javascript
+// src/features/upload/composables/useUploadAdapter.js
+export function useUploadAdapter() {
   const authStore = useAuthStore();
+  const matterStore = useMatterViewStore();
 
-  /**
-   * Check if file hash already exists in Firestore
-   * @param {string} hash - BLAKE3 hash
-   * @returns {Promise<boolean>}
-   */
-  const checkFileExists = async (hash) => {
-    const docRef = doc(db, `firms/${firmId}/documents`, hash);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists();
-  };
+  // Import existing composables
+  const fileProcessor = useFileProcessor({ /* params */ });
+  const fileMetadata = useFileMetadata();
+  const uploadOrchestration = useUploadOrchestration();
+  const uploadHandlers = useFileUploadHandlers({ /* params */ });
 
-  /**
-   * Create metadata record in Firestore
-   * @param {Object} file - File object from queue
-   * @param {Object} uploadResult - Result from uploadToStorage (optional if duplicate)
-   * @returns {Promise<void>}
-   */
-  const createMetadataRecord = async (file, uploadResult = null) => {
-    try {
-      const docRef = doc(db, `firms/${firmId}/documents`, file.hash);
+  // Adapter methods that translate new queue format to old format
+  const uploadQueueFiles = async (newQueueFiles) => {
+    // Convert new queue structure to old queue structure
+    const oldQueueFormat = newQueueFiles.map(file => ({
+      sourceName: file.name,
+      sourceFile: file.sourceFile,
+      hash: file.hash,
+      status: file.status,
+      skipReason: file.skipReason,
+      // ... other mappings
+    }));
 
-      const metadata = {
-        // Core identification
-        id: file.hash,
-        hash: file.hash,
-
-        // Source file metadata
-        sourceFileName: file.name,
-        sourceFolderPath: file.folderPath || '/',
-        sourceFileSize: file.size,
-        sourceLastModified: file.sourceLastModified || Date.now(),
-
-        // Upload metadata
-        uploadedAt: serverTimestamp(),
-        uploadedBy: authStore.userId,
-        firmId: firmId,
-
-        // File type
-        fileType: file.sourceFile.type || 'application/octet-stream',
-
-        // Timestamps
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      // Add storage metadata if file was uploaded (not duplicate)
-      if (uploadResult) {
-        metadata.storagePath = uploadResult.storagePath;
-        metadata.downloadURL = uploadResult.downloadURL;
-        metadata.status = 'uploaded';
-      } else {
-        // Duplicate - file already in storage, just adding new metadata record
-        metadata.status = 'uploadMetadataOnly';
-      }
-
-      await setDoc(docRef, metadata);
-
-      console.log(`[FIRESTORE] ✓ Metadata created: ${file.name} (${file.hash.substring(0, 8)}...)`);
-
-    } catch (error) {
-      console.error(`[FIRESTORE] ✗ Metadata failed: ${file.name}`, error);
-      throw error;
-    }
+    // Use existing upload handlers
+    return await uploadHandlers.continueUpload();
   };
 
   return {
-    checkFileExists,
-    createMetadataRecord
+    uploadQueueFiles,
+    // Expose other adapted methods
   };
 }
+```
+
+**Option 2: Refactor Composables (Complex)**
+- Modify existing composables to work with both queue structures
+- Risk breaking old `/upload` route
+- Not recommended for Phase 2
+
+**Recommendation:** Use Option 1 - keep old system working, add adapter for new queue.
+
+---
+
+## 2.3 Create Upload Pipeline in Testing.vue
+
+### Current State (Phase 1.5)
+
+```javascript
+// Testing.vue - Line 122
+const handleUpload = () => {
+  console.log('[TESTING] Upload clicked');
+  // TODO: Implement upload logic
+};
+```
+
+### Updated Implementation (Phase 2)
+
+```javascript
+// Testing.vue
+import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
+import { useWebWorker } from '../features/upload/composables/useWebWorker.js';
+import { useAuthStore } from '../core/stores/auth.js';
+import { useMatterViewStore } from '../stores/matterView.js';
+
+// In setup:
+const authStore = useAuthStore();
+const matterStore = useMatterViewStore();
+const uploadAdapter = useUploadAdapter();
+const hashWorker = useWebWorker('../features/upload/workers/fileHashWorker.js');
+
+// Initialize hash worker
+onMounted(() => {
+  hashWorker.initializeWorker();
+});
+
+onUnmounted(() => {
+  hashWorker.terminateWorker();
+});
+
+const handleUpload = async () => {
+  try {
+    // Step 1: Validate matter is selected
+    if (!matterStore.currentMatterId) {
+      console.error('[TESTING] No matter selected');
+      // TODO: Show user notification
+      return;
+    }
+
+    // Step 2: Filter uploadable files
+    const uploadableFiles = uploadQueue.value.filter(file =>
+      file.status === 'ready' &&
+      !file.skipReason // Exclude .lnk files
+    );
+
+    if (uploadableFiles.length === 0) {
+      console.log('[TESTING] No files to upload');
+      return;
+    }
+
+    console.log(`[TESTING] Starting upload of ${uploadableFiles.length} files`);
+
+    // Step 3: Send files to hash worker
+    const filesData = uploadableFiles.map((file, index) => ({
+      id: file.id,
+      file: file.sourceFile,
+      originalIndex: index,
+      customPath: file.folderPath ? `${file.folderPath}/${file.name}` : file.name
+    }));
+
+    // Update status to show hashing in progress
+    uploadableFiles.forEach(file => {
+      file.status = 'hashing'; // Add this status if not in Phase 1
+    });
+
+    const hashResult = await hashWorker.sendMessage({
+      type: 'PROCESS_FILES',
+      files: filesData,
+      batchId: `batch_${Date.now()}`,
+    }, {
+      timeout: 300000 // 5 minutes
+    });
+
+    // Step 4: Process hash results
+    const { readyFiles, duplicateFiles } = hashResult.result;
+
+    // Update files with hashes
+    readyFiles.forEach(readyFile => {
+      const queueFile = uploadQueue.value.find(f => f.id === readyFile.id);
+      if (queueFile) {
+        queueFile.hash = readyFile.hash;
+        queueFile.status = 'ready';
+      }
+    });
+
+    // Mark duplicates
+    duplicateFiles.forEach(dupFile => {
+      const queueFile = uploadQueue.value.find(f => f.id === dupFile.id);
+      if (queueFile) {
+        queueFile.hash = dupFile.hash;
+        queueFile.status = 'uploadMetadataOnly';
+        queueFile.isDuplicate = true;
+      }
+    });
+
+    // Step 5: Use upload adapter to upload files
+    await uploadAdapter.uploadQueueFiles(uploadQueue.value);
+
+    console.log('[TESTING] Upload complete');
+
+  } catch (error) {
+    console.error('[TESTING] Upload failed:', error);
+    // TODO: Show user notification
+  }
+};
 ```
 
 ---
@@ -451,359 +611,295 @@ ready → hashing → uploading → completed
 
 **Status Transitions:**
 1. **ready**: File queued and ready to upload
-2. **hashing**: Calculating BLAKE3 hash (if not already done)
+2. **hashing**: Calculating BLAKE3 hash (worker processing)
 3. **uploading**: Uploading to Firebase Storage (shows progress %)
 4. **completed**: Successfully uploaded and metadata created
 5. **error**: Upload failed (shows error message)
-6. **skip**: User manually skipped via checkbox
-7. **skipped**: Duplicate detected (will be set in Phase 3)
+6. **network_error**: Network failure (retryable)
+7. **skip**: User manually skipped via checkbox
+8. **skipped**: Duplicate detected or already exists
+9. **uploadMetadataOnly**: Duplicate within queue (metadata record only)
 
 ### Progress Tracking
 
+The existing `uploadSingleFile()` in `useFileProcessor.js` uses `uploadBytesResumable` which provides progress:
+
 ```javascript
-// Add to file object during upload
-file.uploadProgress = 0; // 0-100
-file.uploadStartedAt = Date.now();
-file.uploadCompletedAt = null;
-file.error = null;
+uploadTask.on(
+  'state_changed',
+  (snapshot) => {
+    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    // TODO: Update file.uploadProgress in queue
+  },
+  (error) => { /* error handling */ },
+  async () => { /* success handling */ }
+);
+```
+
+**Integration with New Queue:**
+```javascript
+// In adapter, pass progress callback
+const uploadWithProgress = async (queueFile, fileHash) => {
+  const progressCallback = (progress) => {
+    // Update queue file
+    queueFile.uploadProgress = progress;
+  };
+
+  // Modify uploadSingleFile to accept progress callback (or use existing implementation)
+  await fileProcessor.uploadSingleFile(
+    queueFile.sourceFile,
+    fileHash,
+    queueFile.name,
+    abortSignal,
+    progressCallback
+  );
+};
 ```
 
 ### Real-Time Status Updates
 
-```vue
-<!-- StatusCell.vue - Already Exists, No Changes Needed -->
-<!-- Shows colored dot + text based on file.status -->
-<!-- Uploading status has pulsing animation -->
-```
-
-**Footer Updates During Upload:**
-- Uploaded count increases as files complete
-- Ready count decreases as files start uploading
-- Error count increases if uploads fail
-- Progress percentage: `(uploaded / total) * 100`
-
----
-
-## 2.5 Concurrent Upload Management
-
-### Upload Queue Orchestration
+The virtualized table (Phase 1.5) uses reactive refs, so status changes automatically update the UI:
 
 ```javascript
-// useUploadOrchestrator.js
-export function useUploadOrchestrator(firmId) {
-  const { calculateHash } = useFileHashing();
-  const { uploadToStorage } = useFirebaseUpload(firmId);
-  const { checkFileExists, createMetadataRecord } = useFirestoreMetadata(firmId);
+// Just update the file object, Vue reactivity handles the rest
+file.status = 'uploading';
+file.uploadProgress = 45;
 
-  const uploadQueue = ref([]);
-  const isUploading = ref(false);
-  const isPaused = ref(false);
-  const concurrency = ref(3); // Upload 3 files concurrently
-  const activeUploads = ref(0);
-
-  /**
-   * Process entire upload queue
-   * @param {Array} files - Files to upload
-   */
-  const processQueue = async (files) => {
-    // Filter out skipped files and already completed files
-    uploadQueue.value = files.filter(f =>
-      f.status !== 'skip' &&
-      f.status !== 'completed' &&
-      f.status !== 'n/a'
-    );
-
-    if (uploadQueue.value.length === 0) {
-      console.log('[UPLOAD] No files to upload');
-      return;
-    }
-
-    isUploading.value = true;
-    console.log(`[UPLOAD] Starting batch upload: ${uploadQueue.value.length} files`);
-
-    // Process files with concurrency control
-    const results = await processWithConcurrency(uploadQueue.value, concurrency.value);
-
-    isUploading.value = false;
-
-    // Log summary
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
-    const skipped = results.filter(r => r.skipped).length;
-
-    console.log(`[UPLOAD] Batch complete: ${successful} uploaded, ${failed} failed, ${skipped} skipped (duplicates)`);
-
-    return {
-      successful,
-      failed,
-      skipped,
-      results
-    };
-  };
-
-  /**
-   * Process files with concurrency limit
-   */
-  const processWithConcurrency = async (files, limit) => {
-    const results = [];
-    let index = 0;
-
-    const processNext = async () => {
-      if (index >= files.length || isPaused.value) return;
-
-      const file = files[index++];
-      activeUploads.value++;
-
-      try {
-        const result = await uploadSingleFile(file);
-        results.push(result);
-      } catch (error) {
-        results.push({
-          file,
-          success: false,
-          error: error.message
-        });
-      } finally {
-        activeUploads.value--;
-
-        // Continue processing if not paused
-        if (!isPaused.value && index < files.length) {
-          await processNext();
-        }
-      }
-    };
-
-    // Start initial batch of concurrent uploads
-    const initialBatch = Array(Math.min(limit, files.length))
-      .fill(0)
-      .map(() => processNext());
-
-    await Promise.all(initialBatch);
-
-    return results;
-  };
-
-  /**
-   * Upload a single file through the entire pipeline
-   * @param {Object} file - File from queue
-   * @returns {Promise<Object>} - Upload result
-   */
-  const uploadSingleFile = async (file) => {
-    try {
-      console.log(`[UPLOAD] Processing: ${file.name}`);
-
-      // STEP 1: Calculate hash if not already done
-      if (!file.hash) {
-        file.status = 'hashing';
-        file.hash = await calculateHash(file);
-      }
-
-      // STEP 2: Check if file already exists
-      const exists = await checkFileExists(file.hash);
-
-      if (exists) {
-        // File is a duplicate - skip storage upload, just create metadata
-        console.log(`[UPLOAD] Duplicate detected: ${file.name} (${file.hash.substring(0, 8)}...)`);
-
-        file.status = 'uploadMetadataOnly';
-        await createMetadataRecord(file, null);
-        file.status = 'completed';
-
-        return {
-          file,
-          success: true,
-          skipped: true,
-          reason: 'duplicate'
-        };
-      }
-
-      // STEP 3: Upload to storage
-      file.status = 'uploading';
-      file.uploadProgress = 0;
-      file.uploadStartedAt = Date.now();
-
-      const uploadResult = await uploadToStorage(file);
-
-      // STEP 4: Create metadata record
-      await createMetadataRecord(file, uploadResult);
-
-      // STEP 5: Mark as completed
-      file.status = 'completed';
-      file.uploadCompletedAt = Date.now();
-      file.uploadProgress = 100;
-
-      console.log(`[UPLOAD] ✓ Complete: ${file.name}`);
-
-      return {
-        file,
-        success: true,
-        skipped: false
-      };
-
-    } catch (error) {
-      console.error(`[UPLOAD] ✗ Failed: ${file.name}`, error);
-
-      file.status = 'error';
-      file.error = error.message;
-
-      return {
-        file,
-        success: false,
-        error: error.message
-      };
-    }
-  };
-
-  const pauseUpload = () => {
-    isPaused.value = true;
-    console.log('[UPLOAD] Paused');
-  };
-
-  const resumeUpload = () => {
-    isPaused.value = false;
-    console.log('[UPLOAD] Resumed');
-    // Trigger processNext for remaining files
-    processQueue(uploadQueue.value);
-  };
-
-  return {
-    processQueue,
-    uploadSingleFile,
-    pauseUpload,
-    resumeUpload,
-    isUploading,
-    isPaused,
-    activeUploads,
-    concurrency
-  };
-}
+// StatusCell.vue will automatically show updated dot color and text
+// Footer will automatically update counts
 ```
 
 ---
 
-## 2.6 Error Handling & Retry Logic
+## 2.5 Error Handling & Retry Logic (Already Exists)
 
-### Error Types
+### Existing Implementation
 
-1. **Network Errors:** Connection lost during upload
-2. **Storage Errors:** Firebase Storage quota exceeded, permission denied
-3. **Firestore Errors:** Document creation failed
-4. **Hash Errors:** File hashing failed (corrupt file, unsupported format)
+The old upload system has robust error handling:
 
-### Retry Strategy
-
+**Network Error Detection:** `src/features/upload/utils/networkUtils.js`
 ```javascript
-// useRetryLogic.js
-export function useRetryLogic() {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000; // 2 seconds
-
-  const retryWithBackoff = async (operation, maxRetries = MAX_RETRIES) => {
-    let lastError;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error;
-
-        if (attempt < maxRetries) {
-          const delay = RETRY_DELAY * Math.pow(2, attempt - 1); // Exponential backoff
-          console.log(`[RETRY] Attempt ${attempt} failed, retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-
-    throw lastError;
-  };
-
-  return {
-    retryWithBackoff
-  };
-}
-```
-
-### Error Display
-
-```javascript
-// Add to file object on error
-file.status = 'error';
-file.error = error.message;
-file.retryCount = attempt;
-
-// Show error icon in status cell (already handled by StatusCell.vue)
-// Red dot + "Failed" text
-```
-
-### Manual Retry
-
-**Future Enhancement (Optional for Phase 2):**
-- Add a "Retry Failed" button in footer
-- Filters failed files and re-adds them to queue
-- Resets error status to 'ready'
-
----
-
-## 2.7 Pause/Resume Upload
-
-### UI Controls
-
-**Footer Buttons During Upload:**
-```
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ Uploading: 23/100 | Failed: 2 | Uploaded: 75                                   │
-│                                              [⏸️ Pause]  [❌ Cancel Remaining]  │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
-
-**When Paused:**
-```
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ Upload Paused | Uploaded: 75/100 | Failed: 2 | Remaining: 23                   │
-│                                              [▶️ Resume]  [❌ Cancel Remaining]  │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Implementation
-
-```javascript
-// Pause: Set isPaused flag
-const pauseUpload = () => {
-  isPaused.value = true;
-  console.log('[UPLOAD] Paused - current uploads will complete');
-};
-
-// Resume: Clear flag and continue processing
-const resumeUpload = () => {
-  isPaused.value = false;
-  console.log('[UPLOAD] Resumed');
-  processQueue(uploadQueue.value);
-};
-
-// Cancel: Mark all remaining files as cancelled
-const cancelRemaining = () => {
-  const remaining = uploadQueue.value.filter(f =>
-    f.status === 'ready' || f.status === 'hashing'
+const isNetworkError = (error) => {
+  return (
+    error.message.includes('network') ||
+    error.message.includes('offline') ||
+    error.code === 'storage/retry-limit-exceeded' ||
+    // ... more checks
   );
+};
+```
 
-  remaining.forEach(f => {
-    f.status = 'skip';
+**Retry Logic:**
+```javascript
+const retryOnNetworkError = async (operation, options = {}) => {
+  const { maxRetries = 4, onRetry } = options;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (!isNetworkError(error) || attempt === maxRetries - 1) {
+        throw error;
+      }
+
+      const delay = getRetryDelay(attempt); // Exponential backoff
+      if (onRetry) await onRetry(attempt, delay);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+};
+```
+
+**Used in:**
+- `checkFileExists()` - 4 retries
+- `uploadSingleFile()` - 4 retries with exponential backoff
+
+### Integration Strategy
+
+**No changes needed** - existing error handling works with new queue. The adapter passes through retry callbacks.
+
+**Display Network Errors:**
+```javascript
+// In upload adapter
+try {
+  await uploadSingleFile(/* ... */);
+} catch (error) {
+  if (error.isNetworkError) {
+    queueFile.status = 'network_error';
+    queueFile.error = 'Network error - check connection';
+  } else {
+    queueFile.status = 'error';
+    queueFile.error = error.message;
+  }
+}
+```
+
+**Retry Failed Button (Already Exists):**
+```javascript
+// From FileUpload.vue - Line 351
+const onRetryFailed = () => {
+  // Reset network error files back to ready status
+  uploadQueue.value.forEach((file) => {
+    if (file.status === 'network_error') {
+      file.status = 'ready';
+    }
   });
 
-  isPaused.value = true;
-  console.log(`[UPLOAD] Cancelled ${remaining.length} remaining files`);
+  // Reset upload status counters
+  resetUploadStatus();
+
+  // Show notification
+  showNotification('Retrying failed uploads. Please ensure you have a stable connection.', 'info');
+
+  // Start upload
+  onStartUpload();
+};
+```
+
+**Adapt for new queue** - add "Retry Failed" button to UploadTableFooter.vue when errors exist.
+
+---
+
+## 2.6 Pause/Resume Upload (Already Exists)
+
+### Existing Implementation
+
+**State Management:** `useUploadOrchestration.js`
+```javascript
+const isPaused = ref(false);
+const pauseRequested = ref(false);
+const currentUploadIndex = ref(0);
+
+const handlePauseUpload = (updateUploadStatus) => {
+  pauseRequested.value = true;
+  updateUploadStatus('requestPause');
+};
+
+const handleResumeUpload = (updateUploadStatus, continueUpload) => {
+  isPaused.value = false;
+  updateUploadStatus('resume');
+  continueUpload();
+};
+```
+
+**Upload Loop:** `useFileUploadHandlers.js` - Line 172
+```javascript
+const continueUpload = async () => {
+  const startIndex = uploadStatus.value.currentUploadIndex || 0;
+
+  for (let i = startIndex; i < filesToProcess.length; i++) {
+    // Check for pause request
+    if (pauseRequested.value) {
+      updateUploadStatus('setUploadIndex', i);
+      updateUploadStatus('pause');
+      isPaused.value = true;
+      pauseRequested.value = false;
+      return; // Exit loop, preserving index
+    }
+
+    // Process file...
+  }
+};
+```
+
+### UI Integration
+
+**Footer Buttons During Upload:**
+```vue
+<!-- UploadTableFooter.vue -->
+<template>
+  <div class="footer-actions">
+    <!-- Show pause/resume based on upload state -->
+    <v-btn
+      v-if="isUploading && !isPaused"
+      @click="$emit('pause-upload')"
+      color="warning"
+    >
+      ⏸️ Pause Upload
+    </v-btn>
+
+    <v-btn
+      v-if="isUploading && isPaused"
+      @click="$emit('resume-upload')"
+      color="success"
+    >
+      ▶️ Resume Upload
+    </v-btn>
+
+    <v-btn
+      v-if="isUploading"
+      @click="$emit('cancel-upload')"
+      color="error"
+    >
+      ❌ Cancel Upload
+    </v-btn>
+  </div>
+</template>
+```
+
+**Testing.vue Handlers:**
+```javascript
+const handlePauseUpload = () => {
+  uploadOrchestration.handlePauseUpload(updateUploadStatus);
+};
+
+const handleResumeUpload = () => {
+  uploadOrchestration.handleResumeUpload(updateUploadStatus, continueUpload);
+};
+
+const handleCancelUpload = () => {
+  // Abort controller cancels in-flight upload
+  const controller = uploadOrchestration.getUploadAbortController();
+  controller.abort();
+
+  // Reset state
+  uploadOrchestration.resetSessionId();
+  // ... other cleanup
 };
 ```
 
 ---
 
-## 2.8 Upload Complete Summary
+## 2.7 Upload Complete Summary
 
-### Summary Modal (Optional Enhancement)
+### Summary Stats
+
+**Calculate from queue after upload:**
+```javascript
+const getUploadSummary = () => {
+  const completed = uploadQueue.value.filter(f => f.status === 'completed').length;
+  const skipped = uploadQueue.value.filter(f => f.status === 'skipped' || f.status === 'uploadMetadataOnly').length;
+  const failed = uploadQueue.value.filter(f => f.status === 'error' || f.status === 'network_error').length;
+  const total = uploadQueue.value.length;
+
+  return {
+    completed,
+    skipped,
+    failed,
+    total,
+    duration: uploadEndTime - uploadStartTime
+  };
+};
+```
+
+### Console Logging
+
+```javascript
+console.log('[UPLOAD] ========================================');
+console.log('[UPLOAD] BATCH UPLOAD COMPLETE');
+console.log('[UPLOAD] ========================================');
+console.log(`[UPLOAD] Total files: ${summary.total}`);
+console.log(`[UPLOAD] Successfully uploaded: ${summary.completed}`);
+console.log(`[UPLOAD] Duplicates skipped: ${summary.skipped}`);
+console.log(`[UPLOAD] Failed: ${summary.failed}`);
+console.log(`[UPLOAD] Duration: ${summary.duration}ms`);
+console.log('[UPLOAD] ========================================');
+```
+
+### Optional: Summary Modal
 
 ```vue
-<!-- UploadCompleteModal.vue -->
+<!-- UploadCompleteModal.vue (Optional for Phase 2) -->
 <template>
   <v-dialog v-model="show" max-width="600px">
     <v-card>
@@ -817,7 +913,7 @@ const cancelRemaining = () => {
           <div class="stat-item">
             <v-icon color="success">mdi-cloud-upload</v-icon>
             <span class="stat-label">Uploaded:</span>
-            <span class="stat-value">{{ summary.successful }}</span>
+            <span class="stat-value">{{ summary.completed }}</span>
           </div>
 
           <div class="stat-item">
@@ -832,25 +928,14 @@ const cancelRemaining = () => {
             <span class="stat-value">{{ summary.failed }}</span>
           </div>
         </div>
-
-        <div v-if="summary.failed > 0" class="failed-files-section">
-          <p class="text-subtitle-2 mb-2">Failed files:</p>
-          <div class="failed-files-list">
-            <div v-for="file in failedFiles" :key="file.id" class="failed-file-item">
-              <v-icon size="small" color="error">mdi-file-alert</v-icon>
-              <span class="file-name">{{ file.name }}</span>
-              <span class="error-text">{{ file.error }}</span>
-            </div>
-          </div>
-        </div>
       </v-card-text>
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn v-if="summary.failed > 0" color="warning" @click="retryFailed">
+        <v-btn v-if="summary.failed > 0" color="warning" @click="$emit('retry-failed')">
           Retry Failed
         </v-btn>
-        <v-btn color="primary" @click="close">
+        <v-btn color="primary" @click="$emit('close')">
           Close
         </v-btn>
       </v-card-actions>
@@ -859,132 +944,74 @@ const cancelRemaining = () => {
 </template>
 ```
 
-### Console Logging
-
-```javascript
-console.log('[UPLOAD] ========================================');
-console.log('[UPLOAD] BATCH UPLOAD COMPLETE');
-console.log('[UPLOAD] ========================================');
-console.log(`[UPLOAD] Total files: ${uploadQueue.length}`);
-console.log(`[UPLOAD] Successfully uploaded: ${successful}`);
-console.log(`[UPLOAD] Duplicates skipped: ${skipped}`);
-console.log(`[UPLOAD] Failed: ${failed}`);
-console.log(`[UPLOAD] Duration: ${duration}ms`);
-console.log('[UPLOAD] ========================================');
-```
-
 ---
 
 ## Implementation Tasks
 
 ### Task Checklist
 
-#### 2.1 File Hashing
-- [ ] Create/update `fileHashWorker.js` with BLAKE3
-- [ ] Create `useFileHashing.js` composable
-- [ ] Implement `calculateHash()` function
-- [ ] Add hash result handler
+#### 2.1 Hash Worker Integration
+- [ ] Verify `fileHashWorker.js` works with new queue structure
+- [ ] Test hash worker with `useWebWorker.js` composable
+- [ ] Implement progress updates during hashing
+- [ ] Handle hash worker errors gracefully
 - [ ] Test with various file sizes (1MB, 10MB, 100MB)
-- [ ] Add batched hashing for performance
-- [ ] Handle hash errors gracefully
 
-#### 2.2 Firebase Storage Upload
-- [ ] Create `useFirebaseUpload.js` composable
-- [ ] Implement `uploadToStorage()` function
-- [ ] Add upload progress tracking
-- [ ] Handle storage errors (quota, permissions)
-- [ ] Test with various file types
-- [ ] Test with large files (>100MB)
+#### 2.2 Upload Adapter Creation
+- [ ] Create `useUploadAdapter.js` composable
+- [ ] Map new queue structure to old upload format
+- [ ] Integrate with `useFileProcessor.js`
+- [ ] Integrate with `useFileMetadata.js`
+- [ ] Integrate with `useUploadOrchestration.js`
+- [ ] Integrate with `useFileUploadHandlers.js`
+- [ ] Test adapter with both queue structures
 
-#### 2.3 Firestore Metadata
-- [ ] Create `useFirestoreMetadata.js` composable
-- [ ] Implement `checkFileExists()` function
-- [ ] Implement `createMetadataRecord()` function
-- [ ] Define document schema
-- [ ] Test duplicate detection
-- [ ] Handle Firestore errors
-
-#### 2.4 Upload Orchestration
-- [ ] Create `useUploadOrchestrator.js` composable
-- [ ] Implement `processQueue()` function
-- [ ] Implement `uploadSingleFile()` function
-- [ ] Add concurrent upload management
-- [ ] Update file status in real-time
-- [ ] Update footer stats reactively
-
-#### 2.5 Error Handling
-- [ ] Create `useRetryLogic.js` composable
-- [ ] Implement retry with exponential backoff
-- [ ] Add error display in StatusCell
-- [ ] Log errors to console
-- [ ] Test various error scenarios
-
-#### 2.6 Pause/Resume
-- [ ] Add pause/resume state management
-- [ ] Update footer buttons during upload
-- [ ] Implement `pauseUpload()` function
-- [ ] Implement `resumeUpload()` function
-- [ ] Implement `cancelRemaining()` function
-- [ ] Test pause/resume behavior
-
-#### 2.7 Testing.vue Integration
-- [ ] Update `handleUpload()` in Testing.vue
-- [ ] Connect to `useUploadOrchestrator`
-- [ ] Pass firmId from authStore
+#### 2.3 Testing.vue Integration
+- [ ] Update `handleUpload()` with complete pipeline
+- [ ] Add hash worker initialization
+- [ ] Implement upload state management
+- [ ] Connect pause/resume handlers
+- [ ] Add error handling and notifications
 - [ ] Test complete upload flow
 - [ ] Verify footer updates correctly
 
-#### 2.8 Upload Complete Summary (Optional)
-- [ ] Create `UploadCompleteModal.vue` component
-- [ ] Show summary after upload completes
-- [ ] Display success/error stats
-- [ ] Add "Retry Failed" button
+#### 2.4 Upload Progress Tracking
+- [ ] Add progress callback to upload adapter
+- [ ] Update file status in real-time
+- [ ] Update upload progress percentage
+- [ ] Verify virtualized table updates smoothly
+- [ ] Test with large files (>100MB)
+
+#### 2.5 Error Handling (Verify Existing)
+- [ ] Verify retry logic works with new queue
+- [ ] Add network error display in StatusCell
+- [ ] Add "Retry Failed" button to footer
+- [ ] Test various error scenarios
+- [ ] Verify exponential backoff works
+
+#### 2.6 Pause/Resume (Verify Existing)
+- [ ] Verify pause/resume state management works
+- [ ] Add pause/resume buttons to footer
+- [ ] Test pause during upload
+- [ ] Test resume after pause
+- [ ] Verify upload index preservation
+
+#### 2.7 Upload Complete Summary
+- [ ] Calculate summary stats after upload
+- [ ] Add console logging
+- [ ] (Optional) Create UploadCompleteModal.vue
 - [ ] Test with various scenarios
 
 ---
 
 ## Testing Requirements
 
-### Unit Tests
-
-```javascript
-// useFileHashing.spec.js
-describe('File Hashing', () => {
-  it('calculates BLAKE3 hash correctly', async () => {});
-  it('handles hash errors gracefully', async () => {});
-  it('processes batches concurrently', async () => {});
-});
-
-// useFirebaseUpload.spec.js
-describe('Firebase Upload', () => {
-  it('uploads file to correct storage path', async () => {});
-  it('tracks upload progress', async () => {});
-  it('handles storage quota errors', async () => {});
-  it('handles network errors', async () => {});
-});
-
-// useFirestoreMetadata.spec.js
-describe('Firestore Metadata', () => {
-  it('checks if file exists by hash', async () => {});
-  it('creates metadata record with correct schema', async () => {});
-  it('handles duplicate files correctly', async () => {});
-});
-
-// useUploadOrchestrator.spec.js
-describe('Upload Orchestrator', () => {
-  it('processes queue with concurrency limit', async () => {});
-  it('updates file status during upload', async () => {});
-  it('handles mixed success/failure', async () => {});
-  it('pauses and resumes correctly', async () => {});
-});
-```
-
 ### Integration Tests
 
 ```javascript
-describe('Complete Upload Flow', () => {
-  it('uploads file from queue to Firestore', async () => {
-    // Select files → Calculate hash → Upload to storage → Create metadata
+describe('Phase 2: Complete Upload Flow', () => {
+  it('uploads files from new queue to Firestore', async () => {
+    // Queue files → Hash → Upload to storage → Create Evidence → Create sourceMetadata
   });
 
   it('detects and skips duplicate files', async () => {
@@ -998,6 +1025,10 @@ describe('Complete Upload Flow', () => {
   it('updates footer stats in real-time', async () => {
     // Start upload → Verify counts update as files complete
   });
+
+  it('pauses and resumes upload correctly', async () => {
+    // Start upload → Pause after 10 files → Resume → Verify continues from correct index
+  });
 });
 ```
 
@@ -1006,29 +1037,29 @@ describe('Complete Upload Flow', () => {
 1. **Single File Upload:**
    - Queue 1 file
    - Click "Upload X files"
-   - Verify: hashing → uploading → completed
+   - Verify: ready → hashing → uploading → completed
    - Check Firebase Storage for file
-   - Check Firestore for metadata record
+   - Check Firestore for Evidence + sourceMetadata
 
 2. **Batch Upload (100 files):**
    - Queue 100 files
    - Click upload
-   - Verify concurrency (max 3 uploading at once)
    - Verify footer stats update correctly
    - Verify all files complete
+   - Check Firestore has 100 Evidence documents
 
 3. **Duplicate Detection:**
-   - Upload file A
-   - Queue file A again
-   - Upload
-   - Verify: Second upload skips storage, creates metadata only
-   - Verify status shows "Metadata Only"
+   - Queue same file twice
+   - Click upload
+   - Verify: First upload succeeds, second shows "Metadata Only"
+   - Check Firestore: Evidence exists with sourceMetadataCount = 2
 
-4. **Error Handling:**
+4. **Network Error Handling:**
+   - Start upload
    - Disconnect network mid-upload
-   - Verify status shows "Failed"
+   - Verify status shows "Network Error"
    - Reconnect network
-   - Retry failed files
+   - Click "Retry Failed"
    - Verify success
 
 5. **Pause/Resume:**
@@ -1036,7 +1067,7 @@ describe('Complete Upload Flow', () => {
    - Click Pause after 10 complete
    - Verify upload stops
    - Click Resume
-   - Verify upload continues from where it left off
+   - Verify upload continues from file 11
 
 6. **Large Files:**
    - Upload 200MB file
@@ -1049,55 +1080,61 @@ describe('Complete Upload Flow', () => {
 
 ### Functional Requirements
 - [ ] "Upload X files" button triggers batch upload
-- [ ] Files are hashed with BLAKE3 before upload
+- [ ] Files are hashed via existing worker before upload
 - [ ] Duplicates are detected and skipped (metadata only)
 - [ ] Files upload to Firebase Storage at correct path
-- [ ] Metadata records created in Firestore
+- [ ] Evidence documents created in Firestore
+- [ ] sourceMetadata subcollection documents created
 - [ ] File status updates in real-time (ready → hashing → uploading → completed)
-- [ ] Upload progress shown for each file
+- [ ] Upload progress shown for each file (optional for Phase 2)
 - [ ] Footer stats update as uploads complete
-- [ ] Concurrent uploads limited to 3 at a time
 - [ ] Errors are caught and displayed
 - [ ] Failed uploads can be retried
 - [ ] Pause/resume works correctly
 - [ ] Upload completes with summary
 
+### Compatibility Requirements
+- [ ] Old upload system at `/upload` still works
+- [ ] Both systems share same Firestore structure
+- [ ] Both systems use same hash worker
+- [ ] No breaking changes to existing composables
+
 ### Performance Requirements
-- [ ] Hash calculation <2s for 10MB file
+- [ ] Hash calculation <2s for 10MB file (via worker)
 - [ ] 100 files (1MB each) upload in <60s
-- [ ] Concurrent uploads improve overall speed
 - [ ] No memory leaks during long upload sessions
 - [ ] UI remains responsive during upload
-
-### Visual Requirements
-- [ ] Status dots update smoothly
-- [ ] Uploading status shows pulsing animation
-- [ ] Progress % displayed during upload (optional)
-- [ ] Footer buttons change during upload (Pause/Resume)
-- [ ] Error status clearly visible (red dot + Failed text)
+- [ ] Virtualized table updates smoothly (60 FPS)
 
 ---
 
 ## Dependencies
 
+### NPM Packages (Already Installed)
+- `hash-wasm` - BLAKE3 hashing (used by fileHashWorker.js)
+- `xxhash-wasm` - xxHash for metadata hash (used by useFileMetadata.js)
+- `firebase` - Storage and Firestore SDKs
+
+**Verify Installation:**
+```bash
+npm list hash-wasm
+npm list xxhash-wasm
+```
+
 ### Internal Dependencies
 - Phase 1.0: Upload Queue Foundation (table structure, skip/undo system)
 - Phase 1.5: Virtualization (performance for large queues)
+- Existing upload infrastructure from `/upload` route:
+  - `src/features/upload/workers/fileHashWorker.js`
+  - `src/features/upload/composables/useWebWorker.js`
+  - `src/features/upload/composables/useFileProcessor.js`
+  - `src/features/upload/composables/useFileMetadata.js`
+  - `src/features/upload/composables/useUploadOrchestration.js`
+  - `src/features/upload/composables/useFileUploadHandlers.js`
 - `useAuthStore` - For userId and firmId
-- `fileHashWorker.js` - May exist from old upload system
+- `useMatterViewStore` - For currentMatterId
 - `firebase/config.js` - Firebase initialization
-
-### External Dependencies
-- Firebase Storage SDK (`firebase/storage`)
-- Firebase Firestore SDK (`firebase/firestore`)
-- BLAKE3 hashing library (`@noble/hashes`)
-
-### NPM Packages
-```bash
-# May already be installed
-npm install firebase
-npm install @noble/hashes
-```
+- `EvidenceService` - For creating Evidence documents
 
 ---
 
@@ -1109,15 +1146,17 @@ npm install @noble/hashes
 | Hash 1MB file | <100ms | Web worker |
 | Hash 10MB file | <2s | Web worker |
 | Upload 1MB file | <5s | Network dependent |
-| Create metadata | <500ms | Firestore write |
-| 100 files (1MB each) | <60s | 3 concurrent uploads |
-| 1000 files (1MB each) | <600s | 3 concurrent uploads |
+| Create Evidence | <500ms | Firestore write |
+| Create sourceMetadata | <500ms | Firestore write |
+| 100 files (1MB each) | <60s | Sequential with concurrency |
 
 **Performance Logging:**
 ```javascript
 console.log('[PERFORMANCE] Phase 2 - Hash calculation: Xms');
+console.log('[PERFORMANCE] Phase 2 - Check file exists: Xms');
 console.log('[PERFORMANCE] Phase 2 - Storage upload: Xms');
-console.log('[PERFORMANCE] Phase 2 - Metadata creation: Xms');
+console.log('[PERFORMANCE] Phase 2 - Evidence creation: Xms');
+console.log('[PERFORMANCE] Phase 2 - sourceMetadata creation: Xms');
 console.log('[PERFORMANCE] Phase 2 - Total upload time: Xms');
 console.log('[PERFORMANCE] Phase 2 - Average time per file: Xms');
 ```
@@ -1129,11 +1168,12 @@ console.log('[PERFORMANCE] Phase 2 - Average time per file: Xms');
 ### Technical Risks
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
+| Adapter complexity breaks upload | Medium | High | Thorough testing, keep old system working |
 | Storage quota exceeded | Medium | High | Check quota before upload, show warning |
-| Network timeout for large files | Medium | Medium | Implement resume from partial upload |
-| Web worker not supported | Low | High | Fallback to main thread hashing (slower) |
-| Firestore rate limits | Low | Medium | Batch writes, add delay if needed |
-| Race condition with concurrent uploads | Low | Medium | Use proper locking/state management |
+| Network timeout for large files | Medium | Medium | Already has retry logic with exponential backoff |
+| Hash worker not compatible | Low | Medium | Test early with new queue structure |
+| Firestore rate limits | Low | Medium | Use batch writes where possible |
+| Matter not selected | Medium | High | Validate before upload, show error |
 
 ### UX Risks
 | Risk | Likelihood | Impact | Mitigation |
@@ -1152,23 +1192,24 @@ If Phase 2 upload fails or has critical bugs:
 2. Users can still use old upload system at `/upload` route
 3. Phase 1.0/1.5 queue system remains fully functional
 4. Can deploy fixes without reverting entire phase
+5. No breaking changes to existing upload infrastructure
 
 ---
 
 ## Next Phase Preview
 
-**Phase 3:** File Copy Management (Deduplication)
+**Phase 3:** File Copy Management (Deduplication UI)
 - Visual grouping of copies (same hash, different metadata)
 - Checkbox-based copy swap (promote copy to primary)
 - Left border + bold/non-bold styling for copy hierarchy
 - Duplicate filtering with warning popup
 
-Phase 3 builds on Phase 2's upload system by adding intelligent copy management.
+Phase 3 builds on Phase 2's upload system by adding intelligent copy management UI.
 
 ---
 
 **Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-12 (Complete rewrite to align with Phase 1.0/1.5 implementation)
+**Last Updated:** 2025-11-12 (Complete rewrite to align with actual implementation)
 **Assignee:** TBD
 
 ---
@@ -1176,26 +1217,31 @@ Phase 3 builds on Phase 2's upload system by adding intelligent copy management.
 ## Summary of Changes from Original Plan
 
 **Original Phase 2 Focus:**
+- Create fileHashWorker.js from scratch
+- Create useFileHashing.js composable
+- Create useUploadOrchestrator.js from scratch
+- Create Firestore structure from scratch
 - Cancel action (❌ button in Actions column)
 - Undo action (🔄 button)
-- Duplicate promotion on cancel
-- Immediate upload (⬆️ Upload Now button for individual files)
+- Immediate upload (⬆️ Upload Now button)
 
-**Why These Are No Longer Needed:**
-1. **Skip/Undo via Checkboxes** - Already implemented in Phase 1.0 (no separate cancel button needed)
-2. **No Actions Column** - The actual implementation uses checkboxes only, no action buttons
-3. **No Immediate Upload** - Batch upload is simpler and more intuitive for this use case
-4. **Duplicate Promotion** - Phase 3 will handle copy management with checkbox-based swap
+**Why These Changes Were Made:**
+1. **Hash Worker Already Exists** - `fileHashWorker.js` (335 lines) with sophisticated deduplication
+2. **Worker Infrastructure Already Exists** - `useWebWorker.js` and `useWorkerManager.js`
+3. **Upload Infrastructure Already Exists** - Complete upload pipeline from old `/upload` route
+4. **Firestore Structure Already Defined** - Evidence + sourceMetadata with embedded variants
+5. **No Actions Column** - Phase 1.0/1.5 used checkboxes for skip/undo, not action buttons
 
 **New Phase 2 Focus:**
-1. **Batch Upload Implementation** - The actual upload process (hash → upload → metadata)
-2. **Upload Progress Tracking** - Real-time status updates during upload
-3. **Error Handling & Retry** - Graceful failure handling
-4. **Pause/Resume** - Upload control for long batch operations
-5. **Concurrent Upload Management** - Queue orchestration with configurable concurrency
+1. **Integration Over Creation** - Leverage existing infrastructure, don't rebuild
+2. **Adapter Pattern** - Create thin adapter between new queue and existing composables
+3. **Maintain Compatibility** - Keep old `/upload` route working
+4. **Use Actual Firestore Structure** - Evidence (parent) → sourceMetadata (subcollection)
+5. **Correct Dependencies** - `hash-wasm` and `xxhash-wasm`, not `@noble/hashes`
 
 **Rationale:**
-- Phase 1.0/1.5 already provides the UI and file management (skip/undo, select all, footer stats)
-- Phase 2 should focus on making the "Upload X files" button actually work
-- This aligns with the natural progression: Display → Upload → Advanced Features (copies, sorting, etc.)
-- The original Phase 2 plan assumed an Actions column that was never implemented
+- Phase 1.0/1.5 provided UI and queue management
+- Old `/upload` route provided battle-tested upload infrastructure
+- Phase 2 should **connect** the two systems, not rebuild from scratch
+- This minimizes risk, reduces development time, and maintains existing functionality
+- The actual Firestore structure is more sophisticated than the planning doc assumed
