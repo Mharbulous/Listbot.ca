@@ -42,71 +42,72 @@
 -->
 
 <template>
-  <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
+  <!-- Wrapper for table + overlay (enables absolute positioning of overlay) -->
   <div
-    ref="scrollContainerRef"
-    class="scroll-container"
-    :class="{ 'drag-over': isDragOver }"
+    class="table-wrapper"
     @dragover.prevent="handleDragOver"
     @dragleave.prevent="handleDragLeave"
     @drop.prevent.stop="handleDrop"
-    @dragend.prevent="handleDragEnd"
   >
-    <!-- Drag overlay for visual feedback -->
-    <div v-if="isDragOver" class="drag-overlay">
+    <!-- Drag overlay - OUTSIDE scroll container, positioned absolutely over entire table -->
+    <!-- This overlay is NOT part of virtualized content and won't interfere with scrolling -->
+    <div v-if="isDragOver" class="drag-overlay" @drop.prevent.stop="handleDrop">
       <div class="drag-overlay-content">
         <v-icon icon="mdi-cloud-upload-outline" size="64" color="white" />
         <p class="drag-overlay-text">Drop files or folders to add to queue</p>
       </div>
     </div>
 
-    <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
-    <UploadTableHeader
-      :all-selected="props.allSelected"
-      :some-selected="props.someSelected"
-      @select-all="handleSelectAll"
-      @deselect-all="handleDeselectAll"
-    />
+    <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
+    <div ref="scrollContainerRef" class="scroll-container" :class="{ 'drag-over': isDragOver }">
+      <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
+      <UploadTableHeader
+        :all-selected="props.allSelected"
+        :some-selected="props.someSelected"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
+      />
 
-    <!-- Content wrapper for rows (no flex properties) -->
-    <div class="content-wrapper">
-      <!-- Virtual container with dynamic height based on total content size -->
-      <div class="virtual-container" :style="{ height: totalSize + 'px' }">
-        <!-- Only render visible rows + overscan buffer -->
-        <div
-          v-for="virtualRow in virtualItems"
-          :key="virtualRow.key"
-          class="virtual-row"
-          :style="{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: virtualRow.size + 'px',
-            transform: `translateY(${virtualRow.start}px)`,
-          }"
-        >
-          <UploadTableRow
-            :file="props.files[virtualRow.index]"
-            :scrollbar-width="0"
-            @cancel="handleCancel"
-            @undo="handleUndo"
-          />
+      <!-- Content wrapper for rows (no flex properties) -->
+      <div class="content-wrapper">
+        <!-- Virtual container with dynamic height based on total content size -->
+        <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+          <!-- Only render visible rows + overscan buffer -->
+          <div
+            v-for="virtualRow in virtualItems"
+            :key="virtualRow.key"
+            class="virtual-row"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: virtualRow.size + 'px',
+              transform: `translateY(${virtualRow.start}px)`,
+            }"
+          >
+            <UploadTableRow
+              :file="props.files[virtualRow.index]"
+              :scrollbar-width="0"
+              @cancel="handleCancel"
+              @undo="handleUndo"
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Dropzone Spacer (fills gap between last row and footer) -->
-    <div class="dropzone-cell">
-      <UploadTableDropzone @files-dropped="handleFilesDropped" />
-    </div>
+      <!-- Dropzone Spacer (fills gap between last row and footer) -->
+      <div class="dropzone-cell">
+        <UploadTableDropzone @files-dropped="handleFilesDropped" />
+      </div>
 
-    <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
-    <UploadTableFooter
-      :stats="props.footerStats"
-      @upload="handleUpload"
-      @clear-queue="handleClearQueue"
-    />
+      <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
+      <UploadTableFooter
+        :stats="props.footerStats"
+        @upload="handleUpload"
+        @clear-queue="handleClearQueue"
+      />
+    </div>
 
     <!-- Error Dialog for Multiple Items -->
     <v-dialog v-model="showMultiDropError" max-width="500">
@@ -177,19 +178,8 @@ const {
   handleDrop: handleDropBase,
 } = useFileDropHandler();
 
-// Flag to prevent dragover from reactivating overlay after drop
-// This fixes the race condition where queued dragover events fire after drop
-let dropJustOccurred = false;
-let dropCooldownTimer = null;
-
 // Wrap drag handlers to emit files
 const handleDragOver = () => {
-  // Ignore dragover events immediately after drop to prevent race condition
-  // where queued dragover events reactivate the overlay after drop completes
-  if (dropJustOccurred) {
-    return;
-  }
-
   handleDragOverBase();
 };
 
@@ -198,32 +188,13 @@ const handleDragLeave = (event) => {
 };
 
 const handleDrop = (event) => {
-  // Immediately hide overlay
+  // The overlay is now outside the scroll container and won't interfere with virtualization
+  // Simply hide it and process the drop
   isDragOver.value = false;
-
-  // Set flag to block dragover events for 50ms
-  // This prevents queued dragover events from reactivating the overlay
-  dropJustOccurred = true;
-
-  // Clear any existing timer
-  if (dropCooldownTimer) {
-    clearTimeout(dropCooldownTimer);
-  }
-
-  // Reset flag after cooldown period
-  dropCooldownTimer = setTimeout(() => {
-    dropJustOccurred = false;
-  }, 50);
 
   handleDropBase(event, (files) => {
     emit('files-dropped', files);
   });
-};
-
-// Ensure overlay is hidden when drag operation ends
-const handleDragEnd = () => {
-  isDragOver.value = false;
-  dropJustOccurred = false; // Also reset the flag on dragend
 };
 
 // ============================================================================
@@ -381,6 +352,15 @@ defineExpose({
 </script>
 
 <style scoped>
+/* Wrapper for table + overlay - enables absolute positioning of overlay */
+.table-wrapper {
+  flex: 1;
+  position: relative; /* Creates positioning context for absolute overlay */
+  min-height: 0; /* Allow flex shrinking */
+  display: flex;
+  flex-direction: column;
+}
+
 .scroll-container {
   flex: 1;
   position: relative;
@@ -417,7 +397,8 @@ defineExpose({
   padding: 1rem 0; /* Vertical padding above and below dropzone */
 }
 
-/* Drag overlay - full-screen feedback when dragging over table */
+/* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */
+/* NOT part of virtualized content - sits on top of everything */
 .drag-overlay {
   position: absolute;
   top: 0;
@@ -429,7 +410,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: none; /* Allow drop events to pass through to wrapper */
   animation: fadeIn 0.2s ease;
 }
 
@@ -448,6 +429,7 @@ defineExpose({
   align-items: center;
   gap: 1rem;
   text-align: center;
+  pointer-events: none; /* Ensure all drop events go to wrapper */
 }
 
 .drag-overlay-text {
