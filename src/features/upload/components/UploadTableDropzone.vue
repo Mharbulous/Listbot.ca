@@ -1,59 +1,23 @@
 <template>
-  <div
-    class="dropzone-spacer"
-    :class="{ 'dropzone-active': isDragOver }"
-    @dragover.prevent="handleDragOver"
-    @dragleave.prevent="handleDragLeave"
-    @drop.prevent.stop="handleDrop"
-  >
+  <!-- Visual-only dropzone indicator -->
+  <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
+  <div class="dropzone-spacer">
     <div class="dropzone-content">
       <v-icon icon="mdi-cloud-upload-outline" size="48" color="grey-lighten-1" class="dropzone-icon" />
       <p class="dropzone-text-primary">Drag and drop files or folders here</p>
       <p class="dropzone-text-secondary">or use the + Add to Queue button in the top left of the header</p>
     </div>
-
-    <!-- Error Dialog for Multiple Items -->
-    <v-dialog v-model="showMultiDropError" max-width="500">
-      <v-card>
-        <v-card-title class="text-h6">Multiple Folders Not Supported</v-card-title>
-        <v-card-text class="text-body-1">
-          Dragging and dropping multiple folders is not permitted. Please drag and drop one folder at a time. You can drag and drop multiple files at once.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" variant="elevated" @click="showMultiDropError = false">OK</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import { useFileDropHandler } from '../composables/useFileDropHandler';
-
 // Component configuration
 defineOptions({
   name: 'UploadTableDropzone',
 });
 
-// Emits
-const emit = defineEmits(['files-dropped']);
-
-// Use the file drop handler composable
-const {
-  isDragOver,
-  showMultiDropError,
-  handleDragOver,
-  handleDragLeave,
-  handleDrop: handleDropBase,
-} = useFileDropHandler();
-
-// Wrap the drop handler to emit files
-const handleDrop = (event) => {
-  handleDropBase(event, (files) => {
-    emit('files-dropped', files);
-  });
-};
+// This component is VISUAL ONLY - no drag-drop handlers
+// All drag-drop functionality is handled by parent UploadTable.vue
 </script>
 
 <style scoped>
