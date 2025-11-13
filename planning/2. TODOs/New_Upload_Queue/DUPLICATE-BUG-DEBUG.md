@@ -2,8 +2,33 @@
 
 **Created:** 2025-11-13
 **Branch:** `claude/debug-duplicate-detection-bug-011CV56o6M2ZJChPcHVFTZdP`
-**Status:** 🔍 Debugging in Progress
+**Status:** ✅ **RESOLVED**
 **Priority:** 🚨 CRITICAL BUG
+
+---
+
+## 🎯 RESOLUTION SUMMARY
+
+**ROOT CAUSE FOUND:** The new upload table (`/testing` → `useUploadTable.js`) completely bypassed all deduplication logic!
+
+**Why Previous Fixes Didn't Work:**
+- Commits 1da2f26 and b41e6f5 fixed the OLD upload system (`/upload`)
+- The OLD system didn't allow adding files when queue wasn't empty
+- Therefore, the "drag same file twice" scenario was NEVER tested
+- The NEW system allows adding files anytime but had NO deduplication
+
+**The Fix (Commit: 65fd819):**
+- Implemented `deduplicateAgainstExisting()` in `useUploadTable.js`
+- Added Phase 1.5: Deduplication check after initial render
+- Checks new files against existing queue items + themselves
+- Marks one-and-the-same files as `status='duplicate'`, `canUpload=false`
+
+**Additional Fixes:**
+- Commit ec14b2b: Fixed `isDuplicate` flag to recognize 'duplicate' status
+- Commit 4ac2e33: Added comprehensive debug logging
+
+**Status:** ✅ Deduplication fully implemented in new upload system
+**Ready for Testing:** Yes - test by dragging same file twice on `/testing` page
 
 ---
 
