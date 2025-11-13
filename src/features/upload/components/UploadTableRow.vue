@@ -31,9 +31,9 @@
       class="row-cell file-type-cell"
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
-      <!-- Show ⛔ emoji for same/duplicate files -->
-      <span v-if="file.status === 'same'" class="not-uploadable-icon" title="Duplicate file - already in queue"
-        >⛔</span
+      <!-- Show red ✘ for same/duplicate files -->
+      <span v-if="file.status === 'same'" class="not-uploadable-icon" style="color: red;" title="Duplicate file - already in queue"
+        >✘</span
       >
       <!-- Show file type icon for all other files -->
       <FileTypeIcon v-else :file-name="file.name" />
