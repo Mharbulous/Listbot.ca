@@ -31,9 +31,9 @@
       class="row-cell file-type-cell"
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
-      <!-- Show red ✘ for same/duplicate files -->
-      <span v-if="file.status === 'same'" class="not-uploadable-icon" style="color: red;" title="Duplicate file - already in queue"
-        >✘</span
+      <!-- Show ⛔ emoji for same/duplicate files -->
+      <span v-if="file.status === 'same'" class="not-uploadable-icon" title="Duplicate file - already in queue"
+        >⛔</span
       >
       <!-- Show file type icon for all other files -->
       <FileTypeIcon v-else :file-name="file.name" />
@@ -135,8 +135,13 @@ const modifiedDateTooltip = computed(() => {
 });
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
+// Unchecked means: skip, same (duplicate), n/a, read error, completed
 const isSelected = computed(() => {
-  return props.file.status !== 'skip';
+  return props.file.status !== 'skip' &&
+         props.file.status !== 'same' &&
+         props.file.status !== 'n/a' &&
+         props.file.status !== 'read error' &&
+         props.file.status !== 'completed';
 });
 
 // Compute checkbox title for accessibility
@@ -312,6 +317,13 @@ const handleMouseLeave = () => {
   font-size: 18px;
   font-weight: 900;
   line-height: 1;
+}
+
+/* Red X for disabled checkboxes (duplicate/same files) */
+.file-checkbox:disabled:checked::after {
+  content: '✘';
+  color: red;
+  font-size: 16px;
 }
 
 /* Modern hover effect: subtle glow and border color change */
