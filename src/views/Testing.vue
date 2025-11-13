@@ -17,6 +17,7 @@
         :is-paused="uploadAdapter.isPaused.value"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
+        @remove="handleRemoveFile"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
         @files-dropped="handleFolderRecursiveSelected"
@@ -73,7 +74,7 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, clearQueue, updateFileStatus, selectAll, deselectAll } =
+const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, updateFileStatus, selectAll, deselectAll } =
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
 
@@ -137,6 +138,11 @@ const handleCancelFile = (fileId) => {
 const handleUndoFile = (fileId) => {
   console.log('[TESTING] Undo skip file:', fileId);
   undoSkip(fileId);
+};
+
+const handleRemoveFile = (fileId) => {
+  console.log('[TESTING] Remove file from queue:', fileId);
+  removeFromQueue(fileId);
 };
 
 const handleClearQueue = () => {
