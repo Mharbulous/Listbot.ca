@@ -28,16 +28,18 @@ export function useUploadTable() {
    * Deduplicate files against existing queue
    * Checks for one-and-the-same files (same content + metadata)
    * @param {Array} newQueueItems - New queue items to check
+   * @param {Array} existingQueueSnapshot - Snapshot of queue BEFORE new items were added
    * @returns {Promise<Array>} - Queue items with duplicate status updated
    */
-  const deduplicateAgainstExisting = async (newQueueItems) => {
+  const deduplicateAgainstExisting = async (newQueueItems, existingQueueSnapshot) => {
     console.log('[DEDUP-TABLE] Starting deduplication check:', {
       newFiles: newQueueItems.length,
-      existingFiles: uploadQueue.value.length,
+      existingFiles: existingQueueSnapshot.length,
     });
 
     // Get all files that need to be checked (existing + new)
-    const allFiles = [...uploadQueue.value, ...newQueueItems];
+    // Use the snapshot of existing files from BEFORE this batch was added
+    const allFiles = [...existingQueueSnapshot, ...newQueueItems];
 
     // Group by size first (optimization - files with unique sizes can't be duplicates)
     const sizeGroups = new Map();
@@ -47,7 +49,7 @@ export function useUploadTable() {
       }
       sizeGroups.get(item.size).push({
         queueItem: item,
-        isExisting: index < uploadQueue.value.length,
+        isExisting: index < existingQueueSnapshot.length,
         index,
       });
     });
@@ -210,6 +212,9 @@ export function useUploadTable() {
       };
     });
 
+    // Capture snapshot of queue BEFORE adding new files
+    const existingQueueSnapshot = [...uploadQueue.value];
+
     uploadQueue.value.push(...phase1Batch);
 
     // Signal Phase 1 complete (for virtualizer to detect)
@@ -240,7 +245,7 @@ export function useUploadTable() {
     // Check Phase 1 files for duplicates (against existing queue + themselves)
     // ========================================================================
     console.log('[QUEUE] Running deduplication for Phase 1 files');
-    await deduplicateAgainstExisting(phase1Batch);
+    await deduplicateAgainstExisting(phase1Batch, existingQueueSnapshot);
 
     if (window.queueT0) {
       const elapsed = performance.now() - window.queueT0;
@@ -281,10 +286,13 @@ export function useUploadTable() {
           };
         });
 
-        // Deduplicate this batch
-        await deduplicateAgainstExisting(processedBatch);
+        // Capture snapshot of queue BEFORE adding this batch
+        const phase2Snapshot = [...uploadQueue.value];
 
         uploadQueue.value.push(...processedBatch);
+
+        // Deduplicate this batch against existing queue
+        await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
 
         // Update progress
         queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);
