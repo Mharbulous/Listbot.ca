@@ -212,9 +212,43 @@ export function useUploadTable() {
       };
     });
 
-    // Capture snapshot of queue BEFORE adding new files
+    // Capture snapshot of queue BEFORE running deduplication
     const existingQueueSnapshot = [...uploadQueue.value];
 
+    // ========================================================================
+    // PHASE 1.5: Deduplication Check (BEFORE adding to queue)
+    // Check Phase 1 files for duplicates (against existing queue + themselves)
+    // This ensures files have correct statuses when first rendered
+    // ========================================================================
+    console.log('[QUEUE] Running deduplication for Phase 1 files');
+    await deduplicateAgainstExisting(phase1Batch, existingQueueSnapshot);
+
+    if (window.queueT0) {
+      const elapsed = performance.now() - window.queueT0;
+      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Deduplication complete for Phase 1`);
+    }
+
+    // Sort batch to group duplicates together
+    // Files with same hash should appear consecutively, with 'ready' before 'same'
+    phase1Batch.sort((a, b) => {
+      // First, group by hash (if both have hashes)
+      if (a.hash && b.hash) {
+        if (a.hash !== b.hash) {
+          return a.hash.localeCompare(b.hash);
+        }
+        // Same hash - put 'ready' before 'same'
+        if (a.status === 'ready' && b.status === 'same') return -1;
+        if (a.status === 'same' && b.status === 'ready') return 1;
+        return 0;
+      }
+      // If only one has hash, files without hash come first
+      if (a.hash && !b.hash) return 1;
+      if (!a.hash && b.hash) return -1;
+      // Neither has hash - maintain original order
+      return 0;
+    });
+
+    // Now add files to queue with correct statuses already set
     uploadQueue.value.push(...phase1Batch);
 
     // Signal Phase 1 complete (for virtualizer to detect)
@@ -239,23 +273,6 @@ export function useUploadTable() {
         resolve();
       });
     }));
-
-    // ========================================================================
-    // PHASE 1.5: Deduplication Check
-    // Check Phase 1 files for duplicates (against existing queue + themselves)
-    // ========================================================================
-    console.log('[QUEUE] Running deduplication for Phase 1 files');
-    await deduplicateAgainstExisting(phase1Batch, existingQueueSnapshot);
-
-    // Force Vue to detect status changes from deduplication by triggering reactivity
-    // This ensures components re-render with the updated status values
-    uploadQueue.value = [...uploadQueue.value];
-    await nextTick();
-
-    if (window.queueT0) {
-      const elapsed = performance.now() - window.queueT0;
-      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Deduplication complete for Phase 1`);
-    }
 
     // ========================================================================
     // PHASE 2: Bulk Processing (if more files remain)
@@ -291,16 +308,34 @@ export function useUploadTable() {
           };
         });
 
-        // Capture snapshot of queue BEFORE adding this batch
+        // Capture snapshot of queue BEFORE deduplicating this batch
         const phase2Snapshot = [...uploadQueue.value];
 
-        uploadQueue.value.push(...processedBatch);
-
-        // Deduplicate this batch against existing queue
+        // Deduplicate this batch against existing queue BEFORE adding to queue
         await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
 
-        // Force Vue to detect status changes from deduplication by triggering reactivity
-        uploadQueue.value = [...uploadQueue.value];
+        // Sort batch to group duplicates together
+        // Files with same hash should appear consecutively, with 'ready' before 'same'
+        processedBatch.sort((a, b) => {
+          // First, group by hash (if both have hashes)
+          if (a.hash && b.hash) {
+            if (a.hash !== b.hash) {
+              return a.hash.localeCompare(b.hash);
+            }
+            // Same hash - put 'ready' before 'same'
+            if (a.status === 'ready' && b.status === 'same') return -1;
+            if (a.status === 'same' && b.status === 'ready') return 1;
+            return 0;
+          }
+          // If only one has hash, files without hash come first
+          if (a.hash && !b.hash) return 1;
+          if (!a.hash && b.hash) return -1;
+          // Neither has hash - maintain original order
+          return 0;
+        });
+
+        // Now add to queue with correct statuses already set
+        uploadQueue.value.push(...processedBatch);
 
         // Update progress
         queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);
