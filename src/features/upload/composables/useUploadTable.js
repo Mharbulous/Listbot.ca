@@ -247,6 +247,11 @@ export function useUploadTable() {
     console.log('[QUEUE] Running deduplication for Phase 1 files');
     await deduplicateAgainstExisting(phase1Batch, existingQueueSnapshot);
 
+    // Force Vue to detect status changes from deduplication by triggering reactivity
+    // This ensures components re-render with the updated status values
+    uploadQueue.value = [...uploadQueue.value];
+    await nextTick();
+
     if (window.queueT0) {
       const elapsed = performance.now() - window.queueT0;
       console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Deduplication complete for Phase 1`);
@@ -293,6 +298,9 @@ export function useUploadTable() {
 
         // Deduplicate this batch against existing queue
         await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
+
+        // Force Vue to detect status changes from deduplication by triggering reactivity
+        uploadQueue.value = [...uploadQueue.value];
 
         // Update progress
         queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);
