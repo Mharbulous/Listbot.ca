@@ -28,6 +28,7 @@ export function useUploadTable() {
    * Sort queue by group timestamp and status
    * - Groups with most recently added files appear first (desc groupTimestamp)
    * - Within each group: ready → copy → same
+   * - Files with same hash are grouped together (primary duplicate immediately above 'same' file)
    * - Maintains stable sort within same status
    */
   const sortQueueByGroupTimestamp = () => {
@@ -38,13 +39,20 @@ export function useUploadTable() {
       const timestampDiff = (b.groupTimestamp || 0) - (a.groupTimestamp || 0);
       if (timestampDiff !== 0) return timestampDiff;
 
-      // Secondary sort: status order (ready < copy < same)
+      // Secondary sort: group by hash (ensures files with same hash appear together)
+      // This ensures the primary duplicate appears immediately above its "same" file
+      const hashA = a.hash || '';
+      const hashB = b.hash || '';
+      const hashDiff = hashA.localeCompare(hashB);
+      if (hashDiff !== 0) return hashDiff;
+
+      // Tertiary sort: status order (ready < copy < same)
       const statusA = statusOrder[a.status] !== undefined ? statusOrder[a.status] : 99;
       const statusB = statusOrder[b.status] !== undefined ? statusOrder[b.status] : 99;
       const statusDiff = statusA - statusB;
       if (statusDiff !== 0) return statusDiff;
 
-      // Tertiary sort: maintain original add order (stable sort by id)
+      // Quaternary sort: maintain original add order (stable sort by id)
       return 0;
     });
 
