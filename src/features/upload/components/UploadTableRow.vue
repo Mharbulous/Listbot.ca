@@ -332,11 +332,19 @@ const handleMouseLeave = () => {
   line-height: 1;
 }
 
-/* Red X for disabled checkboxes (duplicate/same files) */
+/* Red X for disabled checkboxes (duplicate files) */
 .file-checkbox:disabled:checked::after {
   content: '✘';
   color: red;
   font-size: 16px;
+}
+
+/* Red X for delete button (same files - clickable) */
+.file-checkbox.delete-checkbox:checked::after {
+  content: '✘';
+  color: red;
+  font-size: 16px;
+  font-weight: 900;
 }
 
 /* Modern hover effect: subtle glow and border color change */
