@@ -578,6 +578,7 @@ export function useUploadTable() {
   /**
    * Swap a copy file to become the primary (ready) file
    * The current primary file will become a copy
+   * Rows remain in their current order - only statuses and checkboxes swap
    * @param {string} fileId - File ID of the copy to make primary
    */
   const swapCopyToPrimary = (fileId) => {
@@ -609,21 +610,20 @@ export function useUploadTable() {
       copyFile.status = 'ready';
       copyFile.isCopy = false;
     } else {
-      // Swap statuses
+      // Swap statuses (rows stay in current order)
       primaryFile.status = 'copy';
       primaryFile.isCopy = true;
       copyFile.status = 'ready';
       copyFile.isCopy = false;
 
-      console.log('[QUEUE] Swapped copy to primary:', {
+      console.log('[QUEUE] Swapped copy to primary (rows unchanged):', {
         newPrimary: copyFile.name,
         newCopy: primaryFile.name,
         hash: copyFile.hash.substring(0, 8) + '...',
       });
     }
 
-    // Re-sort the queue to reflect the new status order
-    sortQueueByGroupTimestamp();
+    // Note: sortQueueByGroupTimestamp() NOT called - rows maintain their current positions
   };
 
   return {
