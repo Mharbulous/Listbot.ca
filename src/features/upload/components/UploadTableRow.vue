@@ -18,6 +18,7 @@
         v-else
         type="checkbox"
         class="file-checkbox"
+        :class="{ 'faded-checkbox': file.status === 'same' }"
         :checked="isSelected"
         :disabled="file.status === 'completed' || file.status === 'same' || file.status === 'duplicate' || file.status === 'read error'"
         @change="handleCheckboxToggle"
@@ -135,10 +136,14 @@ const modifiedDateTooltip = computed(() => {
 });
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
-// Unchecked means: skip, same (duplicate), n/a, read error, completed
+// For 'same' files: checkbox is checked (to show red X) but disabled (can't toggle)
+// Unchecked means: skip, n/a, read error
 const isSelected = computed(() => {
+  // 'same' files are checked (but disabled) to show red X
+  if (props.file.status === 'same') {
+    return true;
+  }
   return props.file.status !== 'skip' &&
-         props.file.status !== 'same' &&
          props.file.status !== 'n/a' &&
          props.file.status !== 'read error' &&
          props.file.status !== 'completed';
@@ -148,6 +153,8 @@ const isSelected = computed(() => {
 const checkboxTitle = computed(() => {
   if (props.file.status === 'completed') {
     return 'Already uploaded';
+  } else if (props.file.status === 'same') {
+    return 'File already in queue - cannot upload';
   } else if (props.file.status === 'duplicate') {
     return 'Duplicate file - already in queue';
   } else if (props.file.status === 'read error') {
@@ -346,6 +353,11 @@ const handleMouseLeave = () => {
   opacity: 0.4;
   cursor: not-allowed;
   background-color: #f3f4f6;
+}
+
+/* Faded/ghostly appearance for 'same' files */
+.file-checkbox.faded-checkbox {
+  opacity: 0.4;
 }
 
 /* File Name Cell */
