@@ -13,6 +13,7 @@
       :file-id="file.id"
       @toggle="handleCheckboxToggle"
       @remove="handleRemove"
+      @swap="handleSwap"
     />
 
     <!-- File Type Icon Column (40px) - SECOND COLUMN -->
@@ -102,7 +103,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'remove']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap']);
 
 // Use file formatters composable
 const { formatFileSize, formatModifiedDate, getModifiedDateTooltip } = useFileFormatters();
@@ -128,6 +129,11 @@ const handleCheckboxToggle = ({ fileId, isChecked }) => {
 // Handle remove from SelectCell (for 'same' files)
 const handleRemove = (fileId) => {
   emit('remove', fileId);
+};
+
+// Handle swap from SelectCell (for 'copy' files)
+const handleSwap = (fileId) => {
+  emit('swap', fileId);
 };
 
 // Open file locally on user's computer
@@ -165,10 +171,8 @@ const handleRowDoubleClick = () => {
   cursor: default;
 }
 
-/* Phase 3: Copy group visual indicator (left border) */
-.upload-table-row.has-copy-group {
-  border-left: 3px solid #9c27b0; /* Purple left border for copy groups */
-}
+/* Phase 3: Copy group visual indicator (left border) - REMOVED */
+/* Purple left border removed per user request */
 
 .upload-table-row:hover {
   background-color: #f9fafb;

@@ -28,6 +28,7 @@
         @cancel="handleCancel"
         @undo="handleUndo"
         @remove="handleRemove"
+        @swap="handleSwap"
         @select-all="handleSelectAll"
         @deselect-all="handleDeselectAll"
         @upload="handleUpload"
@@ -92,7 +93,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'remove', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // ============================================================================
 // DRAG AND DROP HANDLING
@@ -241,6 +242,11 @@ const handleUndo = (fileId) => {
 // Handle remove
 const handleRemove = (fileId) => {
   emit('remove', fileId);
+};
+
+// Handle swap (for copy files)
+const handleSwap = (fileId) => {
+  emit('swap', fileId);
 };
 
 // Handle upload

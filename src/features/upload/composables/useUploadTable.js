@@ -575,6 +575,57 @@ export function useUploadTable() {
     console.log(`[QUEUE] Deselected all files (skipped ${skippedCount} files)`);
   };
 
+  /**
+   * Swap a copy file to become the primary (ready) file
+   * The current primary file will become a copy
+   * @param {string} fileId - File ID of the copy to make primary
+   */
+  const swapCopyToPrimary = (fileId) => {
+    // Find the copy file
+    const copyFile = uploadQueue.value.find((f) => f.id === fileId);
+    if (!copyFile) {
+      console.error('[QUEUE] Cannot swap: file not found:', fileId);
+      return;
+    }
+
+    if (copyFile.status !== 'copy') {
+      console.error('[QUEUE] Cannot swap: file is not a copy:', fileId);
+      return;
+    }
+
+    if (!copyFile.hash) {
+      console.error('[QUEUE] Cannot swap: file has no hash:', fileId);
+      return;
+    }
+
+    // Find all files with the same hash
+    const sameHashFiles = uploadQueue.value.filter((f) => f.hash === copyFile.hash);
+
+    // Find the current primary file (status = 'ready')
+    const primaryFile = sameHashFiles.find((f) => f.status === 'ready');
+
+    if (!primaryFile) {
+      console.warn('[QUEUE] No primary file found for hash group, making copy the primary:', copyFile.hash.substring(0, 8));
+      copyFile.status = 'ready';
+      copyFile.isCopy = false;
+    } else {
+      // Swap statuses
+      primaryFile.status = 'copy';
+      primaryFile.isCopy = true;
+      copyFile.status = 'ready';
+      copyFile.isCopy = false;
+
+      console.log('[QUEUE] Swapped copy to primary:', {
+        newPrimary: copyFile.name,
+        newCopy: primaryFile.name,
+        hash: copyFile.hash.substring(0, 8) + '...',
+      });
+    }
+
+    // Re-sort the queue to reflect the new status order
+    sortQueueByGroupTimestamp();
+  };
+
   return {
     uploadQueue,
     queueProgress,
@@ -586,5 +637,6 @@ export function useUploadTable() {
     undoSkip,
     selectAll,
     deselectAll,
+    swapCopyToPrimary,
   };
 }

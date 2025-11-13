@@ -40,11 +40,12 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['toggle', 'remove']);
+const emit = defineEmits(['toggle', 'remove', 'swap']);
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
 // For 'same' files: checkbox is checked (to show red X) but disabled (can't toggle)
-// Unchecked means: skip, n/a, read error
+// For 'copy' files: checkbox is unchecked (can be clicked to make it the primary)
+// Unchecked means: skip, n/a, read error, copy
 const isChecked = computed(() => {
   // 'same' files are checked (but disabled) to show red X
   if (props.fileStatus === 'same') {
@@ -54,7 +55,8 @@ const isChecked = computed(() => {
     props.fileStatus !== 'skip' &&
     props.fileStatus !== 'n/a' &&
     props.fileStatus !== 'read error' &&
-    props.fileStatus !== 'completed'
+    props.fileStatus !== 'completed' &&
+    props.fileStatus !== 'copy'
   );
 });
 
@@ -73,6 +75,8 @@ const checkboxTitle = computed(() => {
     return 'Already uploaded';
   } else if (props.fileStatus === 'same') {
     return 'Click to remove duplicate file from queue';
+  } else if (props.fileStatus === 'copy') {
+    return 'Click to make this copy the primary file for upload';
   } else if (props.fileStatus === 'duplicate') {
     return 'Duplicate file - already in queue';
   } else if (props.fileStatus === 'read error') {
@@ -85,14 +89,18 @@ const checkboxTitle = computed(() => {
 });
 
 // Handle checkbox toggle
-// TODO Phase 3a Enhancement: Implement copy group behavior where toggling any file in a copy group
-// toggles the entire group (requires tracking copy groups by hash in parent component)
 const handleToggle = (event) => {
   const isChecked = event.target.checked;
 
   // Special case: 'same' files - clicking removes them from the queue
   if (props.fileStatus === 'same') {
     emit('remove', props.fileId);
+    return;
+  }
+
+  // Special case: 'copy' files - clicking swaps it to become the primary
+  if (props.fileStatus === 'copy') {
+    emit('swap', props.fileId);
     return;
   }
 

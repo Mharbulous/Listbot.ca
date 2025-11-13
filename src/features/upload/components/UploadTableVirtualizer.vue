@@ -78,6 +78,7 @@
               @cancel="handleCancel"
               @undo="handleUndo"
               @remove="handleRemove"
+              @swap="handleSwap"
             />
           </div>
         </div>
@@ -149,7 +150,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'remove', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
@@ -250,6 +251,10 @@ const handleUndo = (fileId) => {
 
 const handleRemove = (fileId) => {
   emit('remove', fileId);
+};
+
+const handleSwap = (fileId) => {
+  emit('swap', fileId);
 };
 
 const handleSelectAll = () => {

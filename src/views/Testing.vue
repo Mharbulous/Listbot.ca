@@ -18,6 +18,7 @@
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
         @remove="handleRemoveFile"
+        @swap="handleSwapFile"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
         @files-dropped="handleFolderRecursiveSelected"
@@ -74,7 +75,7 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, updateFileStatus, selectAll, deselectAll } =
+const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary } =
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
 
@@ -143,6 +144,11 @@ const handleUndoFile = (fileId) => {
 const handleRemoveFile = (fileId) => {
   console.log('[TESTING] Remove file from queue:', fileId);
   removeFromQueue(fileId);
+};
+
+const handleSwapFile = (fileId) => {
+  console.log('[TESTING] Swap copy to primary:', fileId);
+  swapCopyToPrimary(fileId);
 };
 
 const handleClearQueue = () => {
