@@ -272,17 +272,17 @@ export function useQueueCore() {
               duplicates: oneAndTheSameFiles.slice(1).map((f) => f.file.name),
             });
 
-            // Mark subsequent instances as duplicates
+            // Mark subsequent instances as same (one-and-the-same)
             for (let i = 1; i < oneAndTheSameFiles.length; i++) {
-              const duplicateFile = oneAndTheSameFiles[i];
-              duplicateFile.status = 'duplicate';
-              duplicateFile.canUpload = false; // Disable checkbox
-              console.log('[DEDUP-MARK] Marking as duplicate:', {
-                fileName: duplicateFile.file.name,
-                status: duplicateFile.status,
-                canUpload: duplicateFile.canUpload,
+              const sameFile = oneAndTheSameFiles[i];
+              sameFile.status = 'same';
+              sameFile.canUpload = false; // Disable checkbox
+              console.log('[DEDUP-MARK] Marking as same (one-and-the-same):', {
+                fileName: sameFile.file.name,
+                status: sameFile.status,
+                canUpload: sameFile.canUpload,
               });
-              finalFiles.push(duplicateFile); // Keep in queue for visibility
+              finalFiles.push(sameFile); // Keep in queue for visibility
             }
           }
         }

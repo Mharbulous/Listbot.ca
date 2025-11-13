@@ -19,7 +19,7 @@
         type="checkbox"
         class="file-checkbox"
         :checked="isSelected"
-        :disabled="file.status === 'completed' || file.status === 'duplicate' || file.status === 'read error'"
+        :disabled="file.status === 'completed' || file.status === 'same' || file.status === 'duplicate' || file.status === 'read error'"
         @change="handleCheckboxToggle"
         :title="checkboxTitle"
         :aria-label="checkboxTitle"

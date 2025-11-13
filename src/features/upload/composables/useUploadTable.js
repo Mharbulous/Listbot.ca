@@ -140,14 +140,14 @@ export function useUploadTable() {
           files: metadataItems.map((i) => ({ name: i.queueItem.name, isExisting: i.isExisting })),
         });
 
-        // Keep first instance, mark others as duplicate
+        // Keep first instance, mark others as same (one-and-the-same)
         for (let i = 1; i < metadataItems.length; i++) {
           const { queueItem } = metadataItems[i];
-          queueItem.status = 'duplicate';
+          queueItem.status = 'same';
           queueItem.canUpload = false;
-          queueItem.isDuplicate = true;
+          queueItem.isSame = true;
 
-          console.log('[DEDUP-TABLE] Marked as duplicate:', {
+          console.log('[DEDUP-TABLE] Marked as same (one-and-the-same):', {
             name: queueItem.name,
             status: queueItem.status,
             canUpload: queueItem.canUpload,
@@ -383,12 +383,12 @@ export function useUploadTable() {
 
   /**
    * Select all files (restore all skipped files to 'ready' status)
-   * NOTE: Does NOT affect 'n/a' or 'duplicate' files
+   * NOTE: Does NOT affect 'n/a', 'same', 'duplicate', or 'read error' files
    */
   const selectAll = () => {
     let restoredCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Only restore skipped files, don't change completed, n/a, or duplicate files
+      // Only restore skipped files, don't change completed, n/a, same, duplicate, or read error files
       if (file.status === 'skip') {
         file.status = 'ready';
         restoredCount++;
@@ -398,17 +398,18 @@ export function useUploadTable() {
   };
 
   /**
-   * Deselect all files (mark all files as 'skip', except completed, n/a, duplicate, and read error files)
-   * NOTE: Does NOT affect files with disabled checkboxes (n/a, duplicate, read error)
+   * Deselect all files (mark all files as 'skip', except completed, n/a, same, duplicate, and read error files)
+   * NOTE: Does NOT affect files with disabled checkboxes (n/a, same, duplicate, read error)
    */
   const deselectAll = () => {
     let skippedCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Skip all files except completed, n/a, duplicate, and read error ones (these have disabled checkboxes)
+      // Skip all files except completed, n/a, same, duplicate, and read error ones (these have disabled checkboxes)
       if (
         file.status !== 'completed' &&
         file.status !== 'skip' &&
         file.status !== 'n/a' &&
+        file.status !== 'same' &&
         file.status !== 'duplicate' &&
         file.status !== 'read error'
       ) {

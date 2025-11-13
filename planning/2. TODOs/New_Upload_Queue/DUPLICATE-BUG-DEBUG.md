@@ -21,10 +21,16 @@
 - Implemented `deduplicateAgainstExisting()` in `useUploadTable.js`
 - Added Phase 1.5: Deduplication check after initial render
 - Checks new files against existing queue items + themselves
-- Marks one-and-the-same files as `status='duplicate'`, `canUpload=false`
+- Marks one-and-the-same files as `status='same'`, `canUpload=false`
+
+**Terminology Change (Commit: bce2d7f):**
+- Changed status from 'duplicate' to **'same'** for client-side detection
+- **'same'** = One-and-the-same file (already in current queue) - CLIENT-SIDE
+- **'duplicate'** = File already exists in Firebase Storage - SERVER-SIDE (Phase 3b)
+- Visual: 'same' shows gray dot, 'duplicate' shows orange dot
 
 **Additional Fixes:**
-- Commit ec14b2b: Fixed `isDuplicate` flag to recognize 'duplicate' status
+- Commit ec14b2b: Fixed `isDuplicate` flag to recognize 'same'/'duplicate' status
 - Commit 4ac2e33: Added comprehensive debug logging
 
 **Status:** ✅ Deduplication fully implemented in new upload system
@@ -38,7 +44,7 @@
 
 **Expected Behavior:**
 - First instance: Status = "Ready" (🔵 blue dot), checkbox enabled
-- Second instance: Status = "Duplicate" (⚪ gray dot), checkbox disabled
+- Second instance: Status = "Same" (⚪ gray dot), checkbox disabled
 
 **Current Buggy Behavior:**
 - First instance: Status = "Ready" (🔵 blue dot), checkbox enabled
