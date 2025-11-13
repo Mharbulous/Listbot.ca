@@ -135,8 +135,13 @@ const modifiedDateTooltip = computed(() => {
 });
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
+// Unchecked means: skip, same (duplicate), n/a, read error, completed
 const isSelected = computed(() => {
-  return props.file.status !== 'skip';
+  return props.file.status !== 'skip' &&
+         props.file.status !== 'same' &&
+         props.file.status !== 'n/a' &&
+         props.file.status !== 'read error' &&
+         props.file.status !== 'completed';
 });
 
 // Compute checkbox title for accessibility

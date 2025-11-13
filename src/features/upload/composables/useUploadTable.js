@@ -387,11 +387,16 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear skipped files from queue (files with status 'skip' or 'n/a')
+   * Clear skipped files from queue (files with status 'skip', 'same', 'n/a', or 'read error')
    */
   const clearQueue = () => {
     const beforeCount = uploadQueue.value.length;
-    uploadQueue.value = uploadQueue.value.filter((file) => file.status !== 'skip' && file.status !== 'n/a');
+    uploadQueue.value = uploadQueue.value.filter((file) =>
+      file.status !== 'skip' &&
+      file.status !== 'same' &&
+      file.status !== 'n/a' &&
+      file.status !== 'read error'
+    );
     const removedCount = beforeCount - uploadQueue.value.length;
     console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
   };
