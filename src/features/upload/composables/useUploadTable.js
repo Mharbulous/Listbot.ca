@@ -237,14 +237,20 @@ export function useUploadTable() {
   };
 
   /**
-   * Deselect all files (mark all files as 'skip', except completed and n/a files)
-   * NOTE: Does NOT affect 'n/a' files (unsupported file types)
+   * Deselect all files (mark all files as 'skip', except completed, n/a, duplicate, and read error files)
+   * NOTE: Does NOT affect files with disabled checkboxes (n/a, duplicate, read error)
    */
   const deselectAll = () => {
     let skippedCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Skip all files except completed and n/a ones
-      if (file.status !== 'completed' && file.status !== 'skip' && file.status !== 'n/a') {
+      // Skip all files except completed, n/a, duplicate, and read error ones (these have disabled checkboxes)
+      if (
+        file.status !== 'completed' &&
+        file.status !== 'skip' &&
+        file.status !== 'n/a' &&
+        file.status !== 'duplicate' &&
+        file.status !== 'read error'
+      ) {
         file.status = 'skip';
         skippedCount++;
       }

@@ -241,11 +241,18 @@ export function useQueueCore() {
             // Unique file (different metadata from others with same hash)
             finalFiles.push(oneAndTheSameFiles[0]);
           } else {
-            // One-and-the-same file selected multiple times - just pick the first one
+            // One-and-the-same file selected multiple times
+            // Keep first instance as ready, mark others as duplicate (shown in queue but cannot be selected)
             const chosenFile = oneAndTheSameFiles[0];
             finalFiles.push(chosenFile);
 
-            // Don't mark others as duplicates - they're the same file, just filter them out
+            // Mark subsequent instances as duplicates
+            for (let i = 1; i < oneAndTheSameFiles.length; i++) {
+              const duplicateFile = oneAndTheSameFiles[i];
+              duplicateFile.status = 'duplicate';
+              duplicateFile.canUpload = false; // Disable checkbox
+              finalFiles.push(duplicateFile); // Keep in queue for visibility
+            }
           }
         }
 
@@ -269,8 +276,10 @@ export function useQueueCore() {
                 if (index > -1) {
                   finalFiles.splice(index, 1);
                 }
-                fileRef.isCopy = true; // Use Phase 3 terminology: isCopy instead of isDuplicate
-                duplicateFiles.push(fileRef);
+                fileRef.isCopy = true; // Mark as copy
+                fileRef.status = 'copy'; // Set status for UI display
+                finalFiles.push(fileRef); // Keep in queue for visibility (below best file)
+                duplicateFiles.push(fileRef); // Also track separately for metadata processing
               }
             });
           }

@@ -19,7 +19,7 @@
         type="checkbox"
         class="file-checkbox"
         :checked="isSelected"
-        :disabled="file.status === 'completed'"
+        :disabled="file.status === 'completed' || file.status === 'duplicate' || file.status === 'read error'"
         @change="handleCheckboxToggle"
         :title="checkboxTitle"
         :aria-label="checkboxTitle"
@@ -135,6 +135,10 @@ const isSelected = computed(() => {
 const checkboxTitle = computed(() => {
   if (props.file.status === 'completed') {
     return 'Already uploaded';
+  } else if (props.file.status === 'duplicate') {
+    return 'Duplicate file - already in queue';
+  } else if (props.file.status === 'read error') {
+    return 'Cannot read file - hash generation failed';
   } else if (props.file.status === 'skip') {
     return 'File skipped - check to include in upload';
   } else {
@@ -175,6 +179,8 @@ const formatModifiedDate = (timestamp) => {
 };
 
 // Handle checkbox toggle
+// TODO Phase 3a Enhancement: Implement copy group behavior where toggling any file in a copy group
+// toggles the entire group (requires tracking copy groups by hash in parent component)
 const handleCheckboxToggle = (event) => {
   const isChecked = event.target.checked;
 

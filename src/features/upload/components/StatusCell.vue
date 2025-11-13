@@ -31,6 +31,7 @@ const props = defineProps({
         'error',
         'network_error',
         'copy',
+        'duplicate',
         'read error',
         'uploaded',
         'failed',
@@ -56,6 +57,7 @@ const statusTextMap = {
   failed: 'Failed',
   network_error: 'Network Error',
   copy: 'Copy',
+  duplicate: 'Duplicate',
   'read error': 'Read Error',
   uploadMetadataOnly: 'Metadata Only', // Legacy - deprecated in favor of 'copy'
   unknown: 'Unknown',
@@ -127,6 +129,10 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
 .status-copy {
   background-color: #9c27b0; /* Purple - indicates copy (same hash, different metadata) */
+}
+
+.status-duplicate {
+  background-color: #9e9e9e; /* Gray - indicates one-and-the-same file (same hash, same metadata) */
 }
 
 .status-read.error {
