@@ -34,8 +34,20 @@ export function useQueueProgress() {
     // Step 6: Combine unique and non-duplicate files
     const allFinalFiles = [...uniqueFiles, ...finalFiles];
 
+    console.log('[PROGRESS] All final files before queue preparation:', {
+      count: allFinalFiles.length,
+      files: allFinalFiles.map((f) => ({
+        name: f.file.name,
+        status: f.status,
+        canUpload: f.canUpload,
+      })),
+    });
+
     // Prepare for queue - preserve special statuses (duplicate, read error), default to ready
     const readyFiles = allFinalFiles.map((fileRef) => {
+      const originalStatus = fileRef.status;
+      const originalCanUpload = fileRef.canUpload;
+
       const result = {
         ...fileRef,
         // Preserve 'duplicate' and 'read error' statuses, otherwise set to 'ready'
@@ -43,11 +55,29 @@ export function useQueueProgress() {
         // Preserve canUpload flag if it was set (e.g., false for duplicates)
         canUpload: fileRef.canUpload !== undefined ? fileRef.canUpload : true,
       };
+
+      console.log('[PROGRESS-MAP] Processing file for queue:', {
+        fileName: fileRef.file.name,
+        originalStatus,
+        originalCanUpload,
+        resultStatus: result.status,
+        resultCanUpload: result.canUpload,
+      });
+
       // Mark shortcut files so they can be skipped during upload
       if (fileRef.file && fileRef.file.name && fileRef.file.name.toLowerCase().endsWith('.lnk')) {
         result.skipReason = 'shortcut';
       }
       return result;
+    });
+
+    console.log('[PROGRESS] Ready files after queue preparation:', {
+      count: readyFiles.length,
+      files: readyFiles.map((f) => ({
+        name: f.file.name,
+        status: f.status,
+        canUpload: f.canUpload,
+      })),
     });
 
     const copiesForQueue = copyFiles.map((fileRef) => {

@@ -217,7 +217,15 @@ export function useQueueCore() {
     const finalFiles = [];
     const duplicateFiles = [];
 
-    for (const [, fileRefs] of hashGroups) {
+    console.log('[DEDUP] Processing hash groups:', hashGroups.size, 'groups');
+
+    for (const [hash, fileRefs] of hashGroups) {
+      console.log('[DEDUP-HASH] Processing hash group:', {
+        hash: hash.substring(0, 8) + '...',
+        fileCount: fileRefs.length,
+        files: fileRefs.map((f) => f.file.name),
+      });
+
       if (fileRefs.length === 1) {
         // Unique hash - not a duplicate
         finalFiles.push(fileRefs[0]);
@@ -229,6 +237,12 @@ export function useQueueCore() {
           // Create metadata signature for one-and-the-same source file detection
           const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
+          console.log('[DEDUP-METADATA] Creating metadata key for:', {
+            fileName: fileRef.file.name,
+            metadataKey,
+            metadata: fileRef.metadata,
+          });
+
           if (!oneAndTheSameGroups.has(metadataKey)) {
             oneAndTheSameGroups.set(metadataKey, []);
           }
@@ -236,7 +250,13 @@ export function useQueueCore() {
         });
 
         // Handle one-and-the-same files and duplicate files
-        for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
+        for (const [metadataKey, oneAndTheSameFiles] of oneAndTheSameGroups) {
+          console.log('[DEDUP-GROUPS] Processing metadata group:', {
+            metadataKey,
+            fileCount: oneAndTheSameFiles.length,
+            files: oneAndTheSameFiles.map((f) => ({ name: f.file.name, path: f.path })),
+          });
+
           if (oneAndTheSameFiles.length === 1) {
             // Unique file (different metadata from others with same hash)
             finalFiles.push(oneAndTheSameFiles[0]);
@@ -246,11 +266,22 @@ export function useQueueCore() {
             const chosenFile = oneAndTheSameFiles[0];
             finalFiles.push(chosenFile);
 
+            console.log('[DEDUP-MARK] Found one-and-the-same files:', {
+              count: oneAndTheSameFiles.length,
+              chosenFile: chosenFile.file.name,
+              duplicates: oneAndTheSameFiles.slice(1).map((f) => f.file.name),
+            });
+
             // Mark subsequent instances as duplicates
             for (let i = 1; i < oneAndTheSameFiles.length; i++) {
               const duplicateFile = oneAndTheSameFiles[i];
               duplicateFile.status = 'duplicate';
               duplicateFile.canUpload = false; // Disable checkbox
+              console.log('[DEDUP-MARK] Marking as duplicate:', {
+                fileName: duplicateFile.file.name,
+                status: duplicateFile.status,
+                canUpload: duplicateFile.canUpload,
+              });
               finalFiles.push(duplicateFile); // Keep in queue for visibility
             }
           }
@@ -286,6 +317,11 @@ export function useQueueCore() {
         }
       }
     }
+
+    console.log('[DEDUP-RESULT] Final results:', {
+      totalFiles: finalFiles.length,
+      statuses: finalFiles.map((f) => ({ name: f.file.name, status: f.status, canUpload: f.canUpload })),
+    });
 
     return { finalFiles, duplicateFiles };
   };

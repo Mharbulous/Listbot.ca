@@ -1,9 +1,10 @@
 import { ref, nextTick } from 'vue';
 import { isUnsupportedFileType } from '../utils/fileTypeChecker.js';
+import { useQueueCore } from './useQueueCore.js';
 
 /**
  * Composable for managing upload table state
- * Handles queue management, file processing, and status updates
+ * Handles queue management, file processing, status updates, and deduplication
  */
 export function useUploadTable() {
   // Upload queue
@@ -20,9 +21,150 @@ export function useUploadTable() {
   // Used for sorting: files are sorted by batch order, then by folder path
   let batchOrderCounter = 0;
 
+  // Initialize deduplication logic
+  const queueCore = useQueueCore();
+
   /**
-   * Add files to queue with TWO-PHASE batch processing
+   * Deduplicate files against existing queue
+   * Checks for one-and-the-same files (same content + metadata)
+   * @param {Array} newQueueItems - New queue items to check
+   * @returns {Promise<Array>} - Queue items with duplicate status updated
+   */
+  const deduplicateAgainstExisting = async (newQueueItems) => {
+    console.log('[DEDUP-TABLE] Starting deduplication check:', {
+      newFiles: newQueueItems.length,
+      existingFiles: uploadQueue.value.length,
+    });
+
+    // Get all files that need to be checked (existing + new)
+    const allFiles = [...uploadQueue.value, ...newQueueItems];
+
+    // Group by size first (optimization - files with unique sizes can't be duplicates)
+    const sizeGroups = new Map();
+    allFiles.forEach((item, index) => {
+      if (!sizeGroups.has(item.size)) {
+        sizeGroups.set(item.size, []);
+      }
+      sizeGroups.get(item.size).push({
+        queueItem: item,
+        isExisting: index < uploadQueue.value.length,
+        index,
+      });
+    });
+
+    console.log('[DEDUP-TABLE] Size groups:', sizeGroups.size);
+
+    // Find files that need hashing (multiple files with same size)
+    const filesToHash = [];
+    for (const [size, items] of sizeGroups) {
+      if (items.length > 1) {
+        filesToHash.push(...items);
+        console.log('[DEDUP-TABLE] Size group needs hashing:', {
+          size,
+          count: items.length,
+          files: items.map((i) => i.queueItem.name),
+        });
+      }
+    }
+
+    if (filesToHash.length === 0) {
+      console.log('[DEDUP-TABLE] No files need hashing (all unique sizes)');
+      return newQueueItems;
+    }
+
+    console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'files');
+
+    // Hash all files that need it
+    const hashGroups = new Map();
+    for (const { queueItem, isExisting } of filesToHash) {
+      try {
+        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+        queueItem.hash = hash;
+
+        if (!hashGroups.has(hash)) {
+          hashGroups.set(hash, []);
+        }
+        hashGroups.get(hash).push({
+          queueItem,
+          isExisting,
+        });
+
+        console.log('[DEDUP-TABLE] Hashed file:', {
+          name: queueItem.name,
+          hash: hash.substring(0, 8) + '...',
+          isExisting,
+        });
+      } catch (error) {
+        console.error('[DEDUP-TABLE] Hash failed for', queueItem.name, error);
+        queueItem.status = 'read error';
+        queueItem.canUpload = false;
+      }
+    }
+
+    console.log('[DEDUP-TABLE] Hash groups:', hashGroups.size);
+
+    // Check for duplicates within hash groups
+    for (const [hash, items] of hashGroups) {
+      if (items.length === 1) continue; // No duplicates
+
+      console.log('[DEDUP-TABLE] Checking hash group:', {
+        hash: hash.substring(0, 8) + '...',
+        count: items.length,
+        files: items.map((i) => i.queueItem.name),
+      });
+
+      // Group by metadata key (filename_size_modified)
+      const metadataGroups = new Map();
+      items.forEach(({ queueItem, isExisting }) => {
+        const metadataKey = `${queueItem.name}_${queueItem.size}_${queueItem.sourceLastModified}`;
+
+        if (!metadataGroups.has(metadataKey)) {
+          metadataGroups.set(metadataKey, []);
+        }
+        metadataGroups.get(metadataKey).push({ queueItem, isExisting });
+
+        console.log('[DEDUP-TABLE] Metadata key:', {
+          name: queueItem.name,
+          metadataKey,
+          isExisting,
+        });
+      });
+
+      // Mark one-and-the-same files as duplicates
+      for (const [metadataKey, metadataItems] of metadataGroups) {
+        if (metadataItems.length === 1) continue; // No one-and-the-same
+
+        console.log('[DEDUP-TABLE] Found one-and-the-same files:', {
+          metadataKey,
+          count: metadataItems.length,
+          files: metadataItems.map((i) => ({ name: i.queueItem.name, isExisting: i.isExisting })),
+        });
+
+        // Keep first instance, mark others as duplicate
+        for (let i = 1; i < metadataItems.length; i++) {
+          const { queueItem } = metadataItems[i];
+          queueItem.status = 'duplicate';
+          queueItem.canUpload = false;
+          queueItem.isDuplicate = true;
+
+          console.log('[DEDUP-TABLE] Marked as duplicate:', {
+            name: queueItem.name,
+            status: queueItem.status,
+            canUpload: queueItem.canUpload,
+          });
+        }
+      }
+    }
+
+    console.log('[DEDUP-TABLE] Deduplication complete');
+
+    return newQueueItems;
+  };
+
+  /**
+   * Add files to queue with TWO-PHASE batch processing + DEDUPLICATION
    * Phase 1: Process first 200 files quickly → render table immediately
+   * Phase 1.5: Run deduplication check
    * Phase 2: Process remaining files in background
    * @param {File[]} files - Array of File objects to add
    */
@@ -63,6 +205,8 @@ export function useUploadTable() {
         sourceFile: file,
         sourceLastModified: file.lastModified,
         batchOrder: currentBatchOrder,
+        canUpload: !isUnsupported,
+        isDuplicate: false,
       };
     });
 
@@ -90,6 +234,18 @@ export function useUploadTable() {
         resolve();
       });
     }));
+
+    // ========================================================================
+    // PHASE 1.5: Deduplication Check
+    // Check Phase 1 files for duplicates (against existing queue + themselves)
+    // ========================================================================
+    console.log('[QUEUE] Running deduplication for Phase 1 files');
+    await deduplicateAgainstExisting(phase1Batch);
+
+    if (window.queueT0) {
+      const elapsed = performance.now() - window.queueT0;
+      console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Deduplication complete for Phase 1`);
+    }
 
     // ========================================================================
     // PHASE 2: Bulk Processing (if more files remain)
@@ -120,8 +276,13 @@ export function useUploadTable() {
             sourceFile: file,
             sourceLastModified: file.lastModified,
             batchOrder: currentBatchOrder,
+            canUpload: !isUnsupported,
+            isDuplicate: false,
           };
         });
+
+        // Deduplicate this batch
+        await deduplicateAgainstExisting(processedBatch);
 
         uploadQueue.value.push(...processedBatch);
 
@@ -134,7 +295,7 @@ export function useUploadTable() {
       queueProgress.value.isQueueing = false;
     }
 
-    console.log(`[QUEUE] Added ${totalFiles} files to queue`);
+    console.log(`[QUEUE] Added ${totalFiles} files to queue (with deduplication)`);
 
     // Log queue metrics if T=0 was set
     if (window.queueT0) {
@@ -222,12 +383,12 @@ export function useUploadTable() {
 
   /**
    * Select all files (restore all skipped files to 'ready' status)
-   * NOTE: Does NOT affect 'n/a' files (unsupported file types)
+   * NOTE: Does NOT affect 'n/a' or 'duplicate' files
    */
   const selectAll = () => {
     let restoredCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Only restore skipped files, don't change completed or n/a files
+      // Only restore skipped files, don't change completed, n/a, or duplicate files
       if (file.status === 'skip') {
         file.status = 'ready';
         restoredCount++;

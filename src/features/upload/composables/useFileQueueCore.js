@@ -86,7 +86,16 @@ export function useFileQueueCore() {
 
   // Helper function to process source files into queue item format
   const processFileChunk = (files) => {
-    return files.map((fileRef) => {
+    console.log('[QUEUE-CHUNK] Processing file chunk:', {
+      count: files.length,
+      files: files.map((f) => ({
+        name: f.file.name,
+        status: f.status,
+        canUpload: f.canUpload,
+      })),
+    });
+
+    const queueItems = files.map((fileRef) => {
       const queueItem = {
         id: crypto.randomUUID(),
         sourceFile: fileRef.file,
@@ -97,8 +106,16 @@ export function useFileQueueCore() {
         sourcePath: fileRef.path || getFilePath(fileRef),
         metadata: fileRef.metadata,
         status: fileRef.status,
-        isDuplicate: fileRef.status === 'uploadMetadataOnly',
+        isDuplicate: fileRef.status === 'duplicate' || fileRef.status === 'uploadMetadataOnly',
+        canUpload: fileRef.canUpload, // Preserve canUpload flag
       };
+
+      console.log('[QUEUE-ITEM] Created queue item:', {
+        fileName: queueItem.sourceName,
+        status: queueItem.status,
+        canUpload: queueItem.canUpload,
+        isDuplicate: queueItem.isDuplicate,
+      });
 
       // Only include hash if it was calculated during deduplication process
       if (fileRef.hash) {
@@ -107,6 +124,17 @@ export function useFileQueueCore() {
 
       return queueItem;
     });
+
+    console.log('[QUEUE-CHUNK] Final queue items:', {
+      count: queueItems.length,
+      items: queueItems.map((item) => ({
+        name: item.sourceName,
+        status: item.status,
+        canUpload: item.canUpload,
+      })),
+    });
+
+    return queueItems;
   };
 
   // Queue management
