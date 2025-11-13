@@ -125,8 +125,10 @@ const virtualizerRef = ref(null); // For virtualized content
 // Selection state for Select All checkbox
 const allFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  // Filter out completed and n/a files (can't be toggled)
-  const selectableFiles = props.files.filter((f) => f.status !== 'completed' && f.status !== 'n/a');
+  // Filter out completed, n/a, duplicate, and read error files (can't be toggled - checkboxes disabled)
+  const selectableFiles = props.files.filter(
+    (f) => f.status !== 'completed' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'read error'
+  );
   if (selectableFiles.length === 0) return false;
   // All selectable files must NOT be skipped
   return selectableFiles.every((f) => f.status !== 'skip');
@@ -134,7 +136,9 @@ const allFilesSelected = computed(() => {
 
 const someFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  const selectableFiles = props.files.filter((f) => f.status !== 'completed' && f.status !== 'n/a');
+  const selectableFiles = props.files.filter(
+    (f) => f.status !== 'completed' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'read error'
+  );
   if (selectableFiles.length === 0) return false;
   const selectedCount = selectableFiles.filter((f) => f.status !== 'skip').length;
   // Some (but not all) files are selected
@@ -157,22 +161,29 @@ const footerStats = computed(() => {
   const totalSize = props.files.reduce((sum, f) => sum + (f.size || 0), 0);
   const ready = props.files.filter((f) => f.status === 'ready').length;
   const removed = props.files.filter((f) => f.status === 'skip').length;
-  const duplicates = props.files.filter((f) => f.status === 'skipped').length;
+  const duplicates = props.files.filter((f) => f.status === 'skipped' || f.status === 'duplicate').length;
   const failed = props.files.filter((f) => f.status === 'error').length;
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
   const naFiles = props.files.filter((f) => f.status === 'n/a').length;
-  // Uploadable = total - duplicates - removed - n/a files
-  const uploadable = total - duplicates - removed - naFiles;
+  const readErrors = props.files.filter((f) => f.status === 'read error').length;
+  // Uploadable = total - duplicates - removed - n/a files - read errors
+  const uploadable = total - duplicates - removed - naFiles - readErrors;
 
-  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not n/a)
+  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not n/a, not read errors)
   const checkedFiles = props.files.filter(
-    (f) => f.status !== 'skip' && f.status !== 'completed' && f.status !== 'skipped' && f.status !== 'n/a'
+    (f) =>
+      f.status !== 'skip' &&
+      f.status !== 'completed' &&
+      f.status !== 'skipped' &&
+      f.status !== 'duplicate' &&
+      f.status !== 'n/a' &&
+      f.status !== 'read error'
   );
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
 
-  // Unchecked files = files that have been skipped OR marked as n/a
-  const uncheckedCount = removed + naFiles;
+  // Unchecked files = files that have been skipped OR marked as n/a OR read errors
+  const uncheckedCount = removed + naFiles + readErrors;
 
   return {
     total,
