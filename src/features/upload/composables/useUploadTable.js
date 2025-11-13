@@ -150,10 +150,11 @@ export function useUploadTable() {
         files: items.map((i) => i.queueItem.name),
       });
 
-      // Group by metadata key (filename_size_modified)
+      // Group by metadata key (filename_size_modified_path)
+      // MUST include folderPath to distinguish copies in different folders
       const metadataGroups = new Map();
       items.forEach(({ queueItem, isExisting }) => {
-        const metadataKey = `${queueItem.name}_${queueItem.size}_${queueItem.sourceLastModified}`;
+        const metadataKey = `${queueItem.name}_${queueItem.size}_${queueItem.sourceLastModified}_${queueItem.folderPath}`;
 
         if (!metadataGroups.has(metadataKey)) {
           metadataGroups.set(metadataKey, []);
@@ -162,6 +163,7 @@ export function useUploadTable() {
 
         console.log('[DEDUP-TABLE] Metadata key:', {
           name: queueItem.name,
+          folderPath: queueItem.folderPath,
           metadataKey,
           isExisting,
         });
@@ -190,6 +192,50 @@ export function useUploadTable() {
             canUpload: queueItem.canUpload,
           });
         }
+      }
+
+      // Handle copies (same hash, different metadata - e.g., different folders)
+      if (metadataGroups.size > 1) {
+        console.log('[DEDUP-TABLE] Found copies (different metadata):', {
+          hash: hash.substring(0, 8) + '...',
+          copyCount: metadataGroups.size,
+        });
+
+        // Get first file from each metadata group (excluding one-and-the-same duplicates)
+        const uniqueFiles = Array.from(metadataGroups.values()).map((group) => group[0]);
+
+        // Choose best file using priority rules
+        const bestFile = queueCore.chooseBestFile(
+          uniqueFiles.map(({ queueItem }) => ({
+            metadata: {
+              sourceFileName: queueItem.name,
+              sourceFileSize: queueItem.size,
+              lastModified: queueItem.sourceLastModified,
+            },
+            path: queueItem.folderPath + queueItem.name,
+            originalIndex: queueItem.id,
+          }))
+        );
+
+        // Mark all others as copies
+        uniqueFiles.forEach(({ queueItem }) => {
+          const filePath = queueItem.folderPath + queueItem.name;
+          if (filePath !== bestFile.path) {
+            queueItem.status = 'copy';
+            queueItem.isCopy = true;
+
+            console.log('[DEDUP-TABLE] Marked as copy:', {
+              name: queueItem.name,
+              folderPath: queueItem.folderPath,
+              status: queueItem.status,
+            });
+          } else {
+            console.log('[DEDUP-TABLE] Best file (will upload):', {
+              name: queueItem.name,
+              folderPath: queueItem.folderPath,
+            });
+          }
+        });
       }
     }
 
