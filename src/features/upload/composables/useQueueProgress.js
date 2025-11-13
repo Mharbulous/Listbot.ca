@@ -34,11 +34,14 @@ export function useQueueProgress() {
     // Step 6: Combine unique and non-duplicate files
     const allFinalFiles = [...uniqueFiles, ...finalFiles];
 
-    // Prepare for queue - mark shortcut files with skipReason
+    // Prepare for queue - preserve special statuses (duplicate, read error), default to ready
     const readyFiles = allFinalFiles.map((fileRef) => {
       const result = {
         ...fileRef,
-        status: 'ready',
+        // Preserve 'duplicate' and 'read error' statuses, otherwise set to 'ready'
+        status: fileRef.status === 'duplicate' || fileRef.status === 'read error' ? fileRef.status : 'ready',
+        // Preserve canUpload flag if it was set (e.g., false for duplicates)
+        canUpload: fileRef.canUpload !== undefined ? fileRef.canUpload : true,
       };
       // Mark shortcut files so they can be skipped during upload
       if (fileRef.file && fileRef.file.name && fileRef.file.name.toLowerCase().endsWith('.lnk')) {
