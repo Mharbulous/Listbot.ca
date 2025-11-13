@@ -18,9 +18,9 @@
         v-else
         type="checkbox"
         class="file-checkbox"
-        :class="{ 'faded-checkbox': file.status === 'same' }"
+        :class="{ 'faded-checkbox': file.status === 'same', 'delete-checkbox': file.status === 'same' }"
         :checked="isSelected"
-        :disabled="file.status === 'completed' || file.status === 'same' || file.status === 'duplicate' || file.status === 'read error'"
+        :disabled="file.status === 'completed' || file.status === 'duplicate' || file.status === 'read error'"
         @change="handleCheckboxToggle"
         :title="checkboxTitle"
         :aria-label="checkboxTitle"
@@ -122,7 +122,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo']);
+const emit = defineEmits(['cancel', 'undo', 'remove']);
 
 // Hover state tracking
 const isHovering = ref(false);
@@ -154,7 +154,7 @@ const checkboxTitle = computed(() => {
   if (props.file.status === 'completed') {
     return 'Already uploaded';
   } else if (props.file.status === 'same') {
-    return 'File already in queue - cannot upload';
+    return 'Click to remove duplicate file from queue';
   } else if (props.file.status === 'duplicate') {
     return 'Duplicate file - already in queue';
   } else if (props.file.status === 'read error') {
@@ -203,6 +203,12 @@ const formatModifiedDate = (timestamp) => {
 // toggles the entire group (requires tracking copy groups by hash in parent component)
 const handleCheckboxToggle = (event) => {
   const isChecked = event.target.checked;
+
+  // Special case: 'same' files - clicking removes them from the queue
+  if (props.file.status === 'same') {
+    emit('remove', props.file.id);
+    return;
+  }
 
   if (isChecked) {
     // Checkbox was just checked - file should be included (undo skip if it was skipped)
@@ -358,6 +364,22 @@ const handleMouseLeave = () => {
 /* Faded/ghostly appearance for 'same' files */
 .file-checkbox.faded-checkbox {
   opacity: 0.4;
+}
+
+/* Delete button styling for 'same' files */
+.file-checkbox.delete-checkbox {
+  cursor: pointer;
+}
+
+/* Hover effect for delete checkbox */
+@media (hover: hover) {
+  .file-checkbox.delete-checkbox:hover {
+    opacity: 1;
+    border-color: #ef4444;
+    box-shadow:
+      0 0 0 3px rgba(239, 68, 68, 0.1),
+      0 0 8px rgba(239, 68, 68, 0.15);
+  }
 }
 
 /* File Name Cell */

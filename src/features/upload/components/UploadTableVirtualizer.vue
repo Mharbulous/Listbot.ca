@@ -77,6 +77,7 @@
               :scrollbar-width="0"
               @cancel="handleCancel"
               @undo="handleUndo"
+              @remove="handleRemove"
             />
           </div>
         </div>
@@ -148,7 +149,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
@@ -245,6 +246,10 @@ const handleCancel = (fileId) => {
 
 const handleUndo = (fileId) => {
   emit('undo', fileId);
+};
+
+const handleRemove = (fileId) => {
+  emit('remove', fileId);
 };
 
 const handleSelectAll = () => {
