@@ -134,7 +134,8 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
 }
 
 .status-same {
-  background-color: #9e9e9e; /* Gray - indicates one-and-the-same file (already in queue) */
+  background-color: #ffffff; /* White - indicates one-and-the-same file (already in queue) */
+  border: 1px solid #000000; /* Black border for visibility */
 }
 
 .status-duplicate {
