@@ -1,9 +1,9 @@
 # Phase 3b: Upload Phase Deduplication
 
 **Phase:** 3b of 7
-**Status:** Not Started
+**Status:** Partially Implemented (Infrastructure exists, needs copy upload logic & modal wiring)
 **Priority:** High
-**Estimated Duration:** 2 days
+**Estimated Duration:** 1-2 days (reduced due to existing infrastructure)
 **Dependencies:** Phase 3a (Client-Side Deduplication)
 
 ---
@@ -24,45 +24,59 @@ Implement upload-phase deduplication that hides expensive operations (database q
 
 **IMPORTANT:** This planning document implements the architecture described in:
 
-1. **`@docs/architecture/client-deduplication-logic.md`**
+1. **`@docs/architecture/Evidence.md`** ⭐ **PRIMARY REFERENCE**
+   - Evidence document structure with `sourceMetadataVariants` map
+   - Hash-based document IDs for automatic deduplication
+   - Embedded metadata architecture for performance
+   - Already implemented and in production use
+
+2. **`@docs/architecture/client-deduplication-logic.md`**
    - Complete architectural rationale and design philosophy
    - Detailed implementation guide with code examples
    - Performance optimization strategies
    - Common questions & answers
 
-2. **`@docs/architecture/client-deduplication-stories.md`**
+3. **`@docs/architecture/client-deduplication-stories.md`**
    - User stories and implementation requirements
    - Complete checklist of features to implement
    - UX enhancement requirements
    - Anti-requirements (what NOT to do)
 
-3. **`@docs/architecture/file-lifecycle.md`**
+4. **`@docs/architecture/file-lifecycle.md`**
    - Definitive guide to file terminology
    - File processing lifecycle stages
    - Required terminology for all code and UI
 
-**Before implementing this phase, read all three documents above.**
+**Before implementing this phase, read `@docs/architecture/Evidence.md` to understand the existing metadata architecture.**
 
 ---
 
 ## Terminology (CRITICAL)
 
-**This phase uses precise deduplication terminology (from file-lifecycle.md):**
+**This phase uses precise deduplication terminology (from file-lifecycle.md and Evidence.md):**
 
 - **"Copy"** or **"Copies"**: Files with the same hash value but different file metadata
   - During upload: Only ONE file content is uploaded to Storage
-  - ALL metadata from ALL copies is saved to Firestore `sources` array
-  - Each copy adds a new entry to the `sources` array
+  - ALL metadata from ALL copies is saved to Firestore `sourceMetadataVariants` map
+  - Each copy adds a new entry to the map using its metadataHash as the key
 
-- **"Hash-Based Document ID"**: BLAKE3 hash is used as Firestore document ID
+- **"Hash-Based Document ID"**: BLAKE3 hash is used as Firestore Evidence document ID
   - Provides automatic database-level deduplication
   - Same file always gets same ID (deterministic)
   - No race conditions possible
+  - Path: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}`
 
 - **"Metadata-Only Update"**: When file already exists in database
   - File content is NOT uploaded to Storage (already exists)
-  - New source metadata is appended to `sources` array
+  - New source metadata is added to `sourceMetadataVariants` map
+  - Also creates a subcollection document at `evidence/{fileHash}/sourceMetadata/{metadataHash}`
   - Saves storage space and upload time
+
+- **"sourceMetadataVariants Map"**: Embedded map in Evidence document for O(1) duplicate detection
+  - Key: metadataHash (xxHash, 16 hex chars)
+  - Value: Source file metadata (name, lastModified, folderPath, uploadDate)
+  - Enables instant duplicate checking without subcollection queries
+  - Performance: O(1) lookup vs O(n) array scan
 
 **Visual Note:** Throughout this document, status emojis (🔵 🟡 🟢 🟣 ⚪ 🔴 🟠) are visual shorthand for planning purposes. The actual implementation uses CSS-styled colored dots (circles) with text labels.
 
@@ -87,75 +101,154 @@ This phase runs DURING upload and hides expensive operations (database queries) 
 
 **Total overhead: ~100ms hidden in 5-15 seconds of upload time.**
 
-### Hash-Based Document IDs
+### Hash-Based Document IDs with sourceMetadataVariants Map
 
-**BLAKE3 hash is used as Firestore document ID** - provides automatic database-level deduplication.
+**BLAKE3 hash is used as Evidence document ID** - provides automatic database-level deduplication.
+
+**Architecture Note:** This implementation uses the existing `sourceMetadataVariants` map pattern (see `@docs/architecture/Evidence.md`). The map provides O(1) metadata lookups and is already integrated with production UI components like `DigitalFileTab.vue`.
 
 ```javascript
-// useUploadPhaseDeduplication.js
-const uploadFile = async (fileRef) => {
+// useUploadAdapter.js (updated to handle copies)
+const uploadFile = async (queueFile) => {
   // Hash was already calculated in client-side phase (3a)
-  const documentId = fileRef.hash; // BLAKE3 hash is the document ID
+  const fileHash = queueFile.hash; // BLAKE3 hash is the Evidence document ID
+  const firmId = authStore.currentFirm;
+  const matterId = matterStore.currentMatterId;
 
   try {
-    // Check if document exists (happens DURING upload, not before)
-    const docRef = doc(db, 'documents', documentId);
-    const docSnap = await getDoc(docRef);
+    // Check if Evidence document exists (happens DURING upload, not before)
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash);
+    const evidenceSnap = await getDoc(evidenceRef);
 
-    if (docSnap.exists()) {
-      // File already exists in database
-      // Update metadata to add new source reference
-      console.log(`[UPLOAD] File exists in DB: ${fileRef.metadata.sourceFileName}`);
+    if (evidenceSnap.exists()) {
+      // File already exists in database - metadata-only update
+      console.log(`[UPLOAD] File exists in DB, adding metadata: ${queueFile.name}`);
 
-      await updateDoc(docRef, {
-        sources: arrayUnion({
-          fileName: fileRef.metadata.sourceFileName,
-          path: fileRef.path,
-          lastModified: fileRef.metadata.lastModified,
-          uploadedAt: serverTimestamp(),
-        })
+      // Generate metadataHash for this specific upload context
+      const metadataHash = await generateMetadataHash(
+        queueFile.name,
+        queueFile.sourceLastModified,
+        fileHash
+      );
+
+      // Check if this exact metadata already exists
+      const existingVariants = evidenceSnap.data().sourceMetadataVariants || {};
+      if (existingVariants[metadataHash]) {
+        console.log(`[UPLOAD] Metadata already exists, skipping: ${queueFile.name}`);
+        queueFile.status = 'skipped';
+        return { success: true, skipped: true };
+      }
+
+      // Add new metadata variant to map (O(1) operation)
+      await updateDoc(evidenceRef, {
+        // Add to sourceMetadataVariants map for fast lookup
+        [`sourceMetadataVariants.${metadataHash}`]: {
+          sourceFileName: queueFile.name,
+          sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
+          sourceFolderPath: queueFile.folderPath || '/',
+          uploadDate: serverTimestamp()
+        },
+        // Increment variant count
+        sourceMetadataCount: increment(1)
       });
 
-      fileRef.status = 'uploaded';
+      // Also create sourceMetadata subcollection document (for detailed queries)
+      await createMetadataRecord({
+        sourceFileName: queueFile.name,
+        lastModified: queueFile.sourceLastModified,
+        fileHash: fileHash,
+        size: queueFile.size,
+        originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
+        sourceFileType: queueFile.sourceFile.type,
+      });
+
+      queueFile.status = 'uploaded';
+      return { success: true, skipped: false };
     } else {
-      // New file - upload to Storage and create Firestore document
-      console.log(`[UPLOAD] New file, uploading: ${fileRef.metadata.sourceFileName}`);
+      // New file - upload to Storage and create Evidence document
+      console.log(`[UPLOAD] New file, uploading to Storage: ${queueFile.name}`);
 
-      const storageRef = ref(storage, `documents/${documentId}`);
-      await uploadBytes(storageRef, fileRef.file);
+      // Upload file to Storage
+      const uploadResult = await uploadSingleFile(
+        queueFile.sourceFile,
+        fileHash,
+        queueFile.name,
+        abortSignal,
+        (progress) => { queueFile.uploadProgress = progress; }
+      );
 
-      await setDoc(docRef, {
-        hash: documentId,
-        size: fileRef.metadata.sourceFileSize,
-        type: fileRef.metadata.sourceFileType,
-        sources: [{
-          fileName: fileRef.metadata.sourceFileName,
-          path: fileRef.path,
-          lastModified: fileRef.metadata.lastModified,
-          uploadedAt: serverTimestamp(),
-        }]
+      // Create metadata record (creates both Evidence doc and sourceMetadata subcollection)
+      await createMetadataRecord({
+        sourceFileName: queueFile.name,
+        lastModified: queueFile.sourceLastModified,
+        fileHash: fileHash,
+        size: queueFile.size,
+        originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
+        sourceFileType: queueFile.sourceFile.type,
+        storageCreatedTimestamp: uploadResult.timeCreated,
       });
 
-      fileRef.status = 'uploaded';
+      queueFile.status = 'uploaded';
+      return { success: true, skipped: false };
     }
+  } catch (error) {
+    console.error(`[UPLOAD] Failed: ${queueFile.name}:`, error);
+    queueFile.status = 'failed';
+    throw error;
+  }
+};
 
-    // Upload copies (metadata only)
-    for (const copy of fileRef.copies || []) {
-      await updateDoc(docRef, {
-        sources: arrayUnion({
-          fileName: copy.metadata.sourceFileName,
-          path: copy.path,
-          lastModified: copy.metadata.lastModified,
-          uploadedAt: serverTimestamp(),
-        })
+// Upload copies (metadata only) - NEW FUNCTIONALITY TO IMPLEMENT
+const uploadCopyMetadata = async (queueFile) => {
+  // Get all copies from queue (files with status='copy' and same hash)
+  const copies = uploadQueue.value.filter(f =>
+    f.hash === queueFile.hash &&
+    f.status === 'copy' &&
+    f.isSelected
+  );
+
+  if (copies.length === 0) return;
+
+  console.log(`[UPLOAD] Uploading metadata for ${copies.length} copies of ${queueFile.name}`);
+
+  for (const copy of copies) {
+    try {
+      // Generate unique metadataHash for this copy
+      const metadataHash = await generateMetadataHash(
+        copy.name,
+        copy.sourceLastModified,
+        queueFile.hash
+      );
+
+      // Add copy's metadata to sourceMetadataVariants map
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', queueFile.hash);
+
+      await updateDoc(evidenceRef, {
+        [`sourceMetadataVariants.${metadataHash}`]: {
+          sourceFileName: copy.name,
+          sourceLastModified: Timestamp.fromMillis(copy.sourceLastModified),
+          sourceFolderPath: copy.folderPath || '/',
+          uploadDate: serverTimestamp()
+        },
+        sourceMetadataCount: increment(1)
+      });
+
+      // Create sourceMetadata subcollection document
+      await createMetadataRecord({
+        sourceFileName: copy.name,
+        lastModified: copy.sourceLastModified,
+        fileHash: queueFile.hash,
+        size: copy.size,
+        originalPath: copy.folderPath ? `${copy.folderPath}/${copy.name}` : copy.name,
+        sourceFileType: copy.sourceFile.type,
       });
 
       copy.status = 'uploaded';
+      console.log(`[UPLOAD] Copy metadata uploaded: ${copy.name}`);
+    } catch (error) {
+      console.error(`[UPLOAD] Failed to upload copy metadata: ${copy.name}`, error);
+      copy.status = 'failed';
     }
-  } catch (error) {
-    console.error(`[UPLOAD] Failed: ${fileRef.metadata.sourceFileName}:`, error);
-    fileRef.status = 'failed';
-    throw error;
   }
 };
 ```
@@ -167,6 +260,13 @@ const uploadFile = async (fileRef) => {
 2. **Deterministic** - Same file always gets same ID
 3. **No race conditions** - Multiple users uploading same file won't create duplicates
 4. **Fast lookups** - Direct document access by hash (no queries needed)
+
+**Why sourceMetadataVariants map instead of sources array?**
+1. **O(1) duplicate detection** - Check `map[metadataHash]` vs O(n) array scan
+2. **Atomic updates** - Update individual variants: `sourceMetadataVariants.${hash}`
+3. **Production-tested** - Already used by DigitalFileTab.vue dropdown selector
+4. **Performance** - Fast lookups without reading entire array
+5. **Architecture alignment** - Matches existing Evidence.md design
 
 **Why query during upload, not before?**
 1. **Hidden latency** - Query time is tiny compared to upload time
@@ -368,38 +468,59 @@ const completeUpload = () => {
 ### Task Checklist
 
 #### 3b.1 Upload Phase Deduplication
-- [ ] Create `useUploadPhaseDeduplication.js` composable
-- [ ] Implement hash-based document ID logic
-- [ ] Implement Firestore existence check (during upload)
-- [ ] Handle existing files (metadata-only update)
-- [ ] Handle new files (Storage upload + Firestore create)
-- [ ] Save all source metadata in `sources` array
-- [ ] Implement copy metadata uploads (arrayUnion)
-- [ ] Test database-level deduplication
-- [ ] Test with concurrent uploads (same file)
+
+**✅ Already Implemented:**
+- [x] Hash-based document ID logic (Evidence ID = fileHash)
+- [x] Firestore existence check during upload (`checkFileExists()`)
+- [x] Handle new files (Storage upload + Evidence creation)
+- [x] sourceMetadataVariants map structure (Evidence.md)
+- [x] createMetadataRecord() with map updates
+- [x] Upload error handling with network retry logic
+
+**❌ Still Needs Implementation:**
+- [ ] **CRITICAL:** Implement `uploadCopyMetadata()` function in useUploadAdapter.js
+  - Loop through files with status='copy' and same hash
+  - For each copy, add entry to sourceMetadataVariants map
+  - Call createMetadataRecord() for subcollection document
+  - Update copy.status to 'uploaded'
+- [ ] Call `uploadCopyMetadata()` after main file uploads successfully
+- [ ] Handle existing file metadata variant checking (prevent duplicate metadataHash)
+- [ ] Test database-level deduplication with multiple copies
+- [ ] Test with concurrent uploads (same file, different users)
 - [ ] Verify latency is hidden during upload
-- [ ] Handle upload errors gracefully
 
 #### 3b.2 UX Enhancements
-- [ ] Create preview modal component (`UploadPreviewModal.vue`)
-- [ ] Create completion modal component (`UploadCompletionModal.vue`)
-- [ ] Add deduplication metrics calculation (include duplicate count)
-- [ ] Display storage saved calculations
-- [ ] Add upload progress tracking (per-file)
-- [ ] Display upload progress in status column
-- [ ] Disable all checkboxes during upload phase
-- [ ] Show preview modal before upload starts
-- [ ] Show completion modal after upload finishes
+
+**✅ Already Implemented:**
+- [x] Preview modal component exists (`UploadPreviewModal.vue`)
+- [x] Completion modal component exists (`UploadCompletionModal.vue`)
+- [x] Upload progress tracking in useUploadAdapter.js (queueFile.uploadProgress)
+
+**❌ Still Needs Implementation:**
+- [ ] **Wire preview modal to Testing.vue** - show before upload starts
+  - Calculate metrics: totalSelected, uniqueFiles, copies, duplicates, storageSaved
+  - Show modal in handleUpload() before calling uploadAdapter.uploadQueueFiles()
+  - Handle confirm/cancel events
+- [ ] **Wire completion modal to useUploadAdapter.js** - show after upload finishes
+  - Calculate final metrics: filesUploaded, filesCopies, storageSaved, deduplicationRate
+  - Show modal after uploadQueueFiles() completes
+  - Handle close event
+- [ ] **Display upload progress in StatusCell.vue**
+  - Add support for "Uploading X%" text when status='uploading'
+  - Read uploadProgress from file object
+- [ ] **Disable checkboxes during upload** in UploadTableRow.vue
+  - Add :disabled="isUploading" to checkbox component
+  - Pass isUploading prop from parent components
 - [ ] Test modals with large file counts (1000+)
 
 #### 3b.3 Integration
-- [ ] Integrate upload phase deduplication with upload logic
-- [ ] Connect preview modal to upload start
-- [ ] Connect completion modal to upload finish
-- [ ] Ensure status progression works correctly
+- [ ] Connect preview modal to upload start in Testing.vue
+- [ ] Connect completion modal to upload finish in useUploadAdapter.js
+- [ ] Verify copy metadata uploads work end-to-end
+- [ ] Ensure status progression works correctly (ready → uploading → uploaded)
 - [ ] Verify virtual scrolling works during upload
 - [ ] Verify footer counts update during upload
-- [ ] Test with Phase 3a client-side deduplication
+- [ ] Test full flow: client-side dedup (3a) → preview → upload → copies → completion
 
 ---
 
@@ -408,13 +529,16 @@ const completeUpload = () => {
 ### Unit Tests
 
 ```javascript
-// useUploadPhaseDeduplication.spec.js
+// useUploadAdapter.spec.js
 describe('Upload Phase Deduplication', () => {
-  it('uses hash as document ID', () => {});
-  it('checks document existence before upload', () => {});
-  it('uploads new files to Storage and Firestore', () => {});
-  it('updates existing files metadata-only', () => {});
-  it('appends copy metadata to sources array', () => {});
+  it('uses hash as Evidence document ID', () => {});
+  it('checks document existence during upload', () => {});
+  it('uploads new files to Storage and creates Evidence document', () => {});
+  it('updates existing files with metadata-only (no Storage upload)', () => {});
+  it('adds copy metadata to sourceMetadataVariants map', () => {});
+  it('prevents duplicate metadataHash entries', () => {});
+  it('increments sourceMetadataCount correctly', () => {});
+  it('creates sourceMetadata subcollection documents', () => {});
   it('handles upload failures gracefully', () => {});
   it('handles concurrent uploads of same file', () => {});
 });
@@ -454,10 +578,13 @@ describe('Upload Phase Integration', () => {
 });
 
 describe('Database Deduplication Integration', () => {
-  it('creates new document for new file', () => {});
-  it('updates existing document for duplicate', () => {});
-  it('saves all copy metadata', () => {});
-  it('handles race condition (concurrent uploads)', () => {});
+  it('creates new Evidence document for new file', () => {});
+  it('updates existing Evidence document with new metadata variant', () => {});
+  it('saves all copy metadata to sourceMetadataVariants map', () => {});
+  it('prevents duplicate metadataHash in map', () => {});
+  it('creates sourceMetadata subcollection documents for each variant', () => {});
+  it('handles race condition (concurrent uploads of same file)', () => {});
+  it('integrates with DigitalFileTab dropdown (UI test)', () => {});
 });
 ```
 
@@ -478,7 +605,9 @@ describe('Database Deduplication Integration', () => {
 3. **Upload with Existing Files:**
    - Upload files that already exist in database
    - Verify metadata-only updates (no Storage upload)
-   - Verify new source entries added to `sources` array
+   - Verify new entries added to `sourceMetadataVariants` map
+   - Verify sourceMetadataCount increments correctly
+   - Verify new variants appear in DigitalFileTab dropdown
    - Verify completion modal reflects existing files
 
 4. **Upload Progress:**
@@ -501,8 +630,10 @@ describe('Database Deduplication Integration', () => {
 
 7. **Concurrent Uploads:**
    - Have two users upload same file simultaneously
-   - Verify no duplicate documents created
-   - Verify both users' metadata saved in `sources` array
+   - Verify no duplicate Evidence documents created (hash-based ID prevents this)
+   - Verify both users' metadata saved in `sourceMetadataVariants` map
+   - Verify sourceMetadataCount reflects all variants
+   - Verify both variants appear in DigitalFileTab dropdown
 
 ---
 
@@ -510,15 +641,17 @@ describe('Database Deduplication Integration', () => {
 
 ### Functional Requirements
 - [ ] Preview modal shows accurate deduplication summary
-- [ ] Upload uses hash-based document IDs
+- [ ] Upload uses hash-based Evidence document IDs
 - [ ] Database queries hidden during upload (no perceived latency)
-- [ ] New files uploaded to Storage and Firestore
-- [ ] Existing files get metadata-only updates
-- [ ] All copy metadata saved to `sources` array
-- [ ] Upload progress displayed per file
+- [ ] New files uploaded to Storage and Evidence document created
+- [ ] Existing files get metadata-only updates (no Storage upload)
+- [ ] All copy metadata saved to `sourceMetadataVariants` map
+- [ ] sourceMetadataCount increments atomically
+- [ ] sourceMetadata subcollection documents created for each variant
+- [ ] Upload progress displayed per file (percentage in status column)
 - [ ] Checkboxes disabled during upload
 - [ ] Completion modal shows accurate metrics
-- [ ] Upload errors handled gracefully
+- [ ] Upload errors handled gracefully with network retry logic
 
 ### Performance Requirements
 - [ ] Database query <100ms (hidden in 5-15s upload)
@@ -541,13 +674,18 @@ describe('Database Deduplication Integration', () => {
 ### Internal Dependencies
 - Phase 3a: Client-Side Deduplication (provides hashes and copy groups)
 - `useUploadTable.js` - For upload orchestration
+- `useUploadAdapter.js` - For upload processing (needs copy upload logic)
+- `useFileMetadata.js` - For metadata creation and map updates
 - `StatusCell.vue` - For status display during upload
-- Firebase Firestore - For document storage and queries
+- `DigitalFileTab.vue` - Dropdown selector uses sourceMetadataVariants map
+- `Evidence.md` - Architecture reference for map structure
+- Firebase Firestore - For Evidence document storage and queries
 - Firebase Storage - For file storage
 
 ### External Dependencies
 - Firebase SDK (`firebase/firestore`, `firebase/storage`)
 - BLAKE3 hash (already computed in Phase 3a)
+- xxHash (for metadataHash generation in useFileMetadata.js)
 
 ---
 
@@ -579,10 +717,11 @@ console.log('[PERFORMANCE] Phase 3b - Deduplication rate: X%');
 ### Technical Risks
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Concurrent uploads create duplicate docs | Low | High | Hash-based IDs prevent duplicates |
-| Network errors during upload | Medium | Medium | Implement retry logic |
-| Large metadata arrays slow queries | Low | Low | Monitor Firestore performance |
+| Concurrent uploads create duplicate docs | Low | High | Hash-based IDs prevent duplicates automatically |
+| Network errors during upload | Medium | Medium | Already implemented with exponential backoff retry |
+| Large sourceMetadataVariants maps | Low | Low | Map structure allows efficient O(1) lookups |
 | BLAKE3 collision | Extremely Low | High | Acceptable risk (2^-128 probability) |
+| Copy metadata upload failures | Medium | Medium | Individual try/catch per copy, log errors |
 
 ### UX Risks
 | Risk | Likelihood | Impact | Mitigation |
@@ -606,6 +745,34 @@ This phase adds table customization capabilities.
 
 ---
 
-**Phase Status:** ⬜ Not Started
-**Last Updated:** 2025-11-12
+## Architecture Update History
+
+### 2025-11-13: Updated to Use Existing sourceMetadataVariants Map Architecture
+
+**Changes Made:**
+- ✅ Updated from planned `sources` array to existing `sourceMetadataVariants` map
+- ✅ Aligned with production architecture documented in `@docs/architecture/Evidence.md`
+- ✅ Leverages existing `useFileMetadata.js` infrastructure
+- ✅ Maintains compatibility with `DigitalFileTab.vue` dropdown selector
+- ✅ Updated code examples to reflect actual implementation pattern
+- ✅ Reduced estimated duration (1-2 days vs 2 days) due to existing infrastructure
+
+**Rationale:**
+The existing `sourceMetadataVariants` map architecture provides:
+- **O(1) duplicate detection** vs O(n) array scans
+- **Atomic updates** without reading entire collections
+- **Production-tested** code already in use by multiple components
+- **Better performance** for metadata variant lookups
+
+**What Still Needs Implementation:**
+1. Copy metadata upload logic in `useUploadAdapter.js`
+2. Preview modal wiring in `Testing.vue`
+3. Completion modal wiring in `useUploadAdapter.js`
+4. Upload progress display in `StatusCell.vue`
+5. Checkbox disabling during upload
+
+---
+
+**Phase Status:** 🟡 Partially Implemented
+**Last Updated:** 2025-11-13
 **Assignee:** TBD
