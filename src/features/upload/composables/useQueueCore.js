@@ -235,10 +235,12 @@ export function useQueueCore() {
 
         fileRefs.forEach((fileRef) => {
           // Create metadata signature for one-and-the-same source file detection
-          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
+          // MUST include path to distinguish copies in different folders
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
 
           console.log('[DEDUP-METADATA] Creating metadata key for:', {
             fileName: fileRef.file.name,
+            path: fileRef.path,
             metadataKey,
             metadata: fileRef.metadata,
           });

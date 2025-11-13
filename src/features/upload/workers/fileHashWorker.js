@@ -160,7 +160,8 @@ async function processFiles(files, batchId) {
 
         fileRefs.forEach((fileRef) => {
           // Create metadata signature for one-and-the-same file detection
-          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
+          // MUST include path to distinguish copies in different folders
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
 
           if (!oneAndTheSameGroups.has(metadataKey)) {
             oneAndTheSameGroups.set(metadataKey, []);
