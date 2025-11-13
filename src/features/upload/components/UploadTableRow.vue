@@ -31,12 +31,18 @@
       class="row-cell file-type-cell"
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
-      <FileTypeIcon :file-name="file.name" />
+      <!-- Show ⛔ emoji for same/duplicate files -->
+      <span v-if="file.status === 'same'" class="not-uploadable-icon" title="Duplicate file - already in queue"
+        >⛔</span
+      >
+      <!-- Show file type icon for all other files -->
+      <FileTypeIcon v-else :file-name="file.name" />
     </div>
 
     <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
     <div
       class="row-cell filename-cell"
+      :class="{ 'faded-cell': file.status === 'same' }"
       style="flex: 1; min-width: 150px; max-width: 500px"
       :title="file.name"
       @mouseenter="handleMouseEnter"
@@ -54,13 +60,14 @@
     </div>
 
     <!-- Size Column (100px fixed) -->
-    <div class="row-cell size-cell" style="width: 100px; flex-shrink: 0">
+    <div class="row-cell size-cell" :class="{ 'faded-cell': file.status === 'same' }" style="width: 100px; flex-shrink: 0">
       {{ formatFileSize(file.size) }}
     </div>
 
     <!-- Modified Column (120px fixed) -->
     <div
       class="row-cell modified-cell"
+      :class="{ 'faded-cell': file.status === 'same' }"
       style="width: 120px; flex-shrink: 0"
       :title="modifiedDateTooltip"
     >
@@ -70,6 +77,7 @@
     <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
     <div
       class="row-cell path-cell"
+      :class="{ 'faded-cell': file.status === 'same' }"
       style="flex: 1; min-width: 130px; max-width: 500px"
       :title="file.folderPath"
     >
@@ -384,5 +392,11 @@ const handleMouseLeave = () => {
 .modified-cell {
   color: #6b7280;
   font-size: 0.875rem;
+}
+
+/* Faded cell styling for 'same' status files */
+.faded-cell {
+  opacity: 0.4;
+  color: #9ca3af;
 }
 </style>
