@@ -8,24 +8,12 @@
     @dblclick="handleRowDoubleClick"
   >
     <!-- Select Column (60px) - FIRST COLUMN -->
-    <div class="row-cell select-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
-      <!-- Show ⛔ emoji for unsupported files (n/a status) -->
-      <span v-if="file.status === 'n/a'" class="not-uploadable-icon" title="File type not supported"
-        >⛔</span
-      >
-      <!-- Show checkbox for all other files -->
-      <input
-        v-else
-        type="checkbox"
-        class="file-checkbox"
-        :class="{ 'faded-checkbox': file.status === 'same', 'delete-checkbox': file.status === 'same' }"
-        :checked="isSelected"
-        :disabled="file.status === 'completed' || file.status === 'duplicate' || file.status === 'read error'"
-        @change="handleCheckboxToggle"
-        :title="checkboxTitle"
-        :aria-label="checkboxTitle"
-      />
-    </div>
+    <SelectCell
+      :file-status="file.status"
+      :file-id="file.id"
+      @toggle="handleCheckboxToggle"
+      @remove="handleRemove"
+    />
 
     <!-- File Type Icon Column (40px) - SECOND COLUMN -->
     <div
@@ -33,7 +21,10 @@
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
       <!-- Show ⛔ emoji for same/duplicate files -->
-      <span v-if="file.status === 'same'" class="not-uploadable-icon" title="Duplicate file - already in queue"
+      <span
+        v-if="file.status === 'same'"
+        class="not-uploadable-icon"
+        title="Duplicate file - already in queue"
         >⛔</span
       >
       <!-- Show file type icon for all other files -->
@@ -41,27 +32,20 @@
     </div>
 
     <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
-    <div
-      class="row-cell filename-cell"
-      :class="{ 'faded-cell': file.status === 'same' }"
-      style="flex: 1; min-width: 150px; max-width: 500px"
-      :title="file.name"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
-    >
-      <span
-        class="filename-text"
-        :class="{
-          'filename-bold': file.status === 'ready' && !file.isCopy,
-          'filename-normal': file.status === 'copy' || file.isCopy,
-        }"
-        >{{ file.name }}</span
-      >
-      <span v-if="isHovering" class="eyeball-icon" @click="openFile" title="Preview file">👁️</span>
-    </div>
+    <FileNameCell
+      :file-name="file.name"
+      :file-status="file.status"
+      :is-copy="file.isCopy"
+      :source-file="file.sourceFile"
+      @preview="openFile"
+    />
 
     <!-- Size Column (100px fixed) -->
-    <div class="row-cell size-cell" :class="{ 'faded-cell': file.status === 'same' }" style="width: 100px; flex-shrink: 0">
+    <div
+      class="row-cell size-cell"
+      :class="{ 'faded-cell': file.status === 'same' }"
+      style="width: 100px; flex-shrink: 0"
+    >
       {{ formatFileSize(file.size) }}
     </div>
 
@@ -93,21 +77,17 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
+import SelectCell from './SelectCell.vue';
+import FileNameCell from './FileNameCell.vue';
 import StatusCell from './StatusCell.vue';
 import FileTypeIcon from './FileTypeIcon.vue';
-import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
-import { formatDate, formatTime } from '@/utils/dateFormatter.js';
+import { useFileFormatters } from '../composables/useFileFormatters.js';
 
 // Component configuration
 defineOptions({
   name: 'UploadTableRow',
 });
-
-// User preferences for date/time formatting
-const preferencesStore = useUserPreferencesStore();
-const { dateFormat, timeFormat } = storeToRefs(preferencesStore);
 
 // Props
 const props = defineProps({
@@ -124,107 +104,34 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo', 'remove']);
 
-// Hover state tracking
-const isHovering = ref(false);
+// Use file formatters composable
+const { formatFileSize, formatModifiedDate, getModifiedDateTooltip } = useFileFormatters();
 
-// Formatted modified date tooltip using user preferences
+// Formatted modified date tooltip
 const modifiedDateTooltip = computed(() => {
-  if (!props.file.sourceLastModified) return 'Unknown';
-  const date = formatDate(props.file.sourceLastModified, dateFormat.value);
-  const time = formatTime(props.file.sourceLastModified, timeFormat.value);
-  return `${date} at ${time}`;
+  return getModifiedDateTooltip(props.file.sourceLastModified);
 });
 
-// Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
-// For 'same' files: checkbox is checked (to show red X) but disabled (can't toggle)
-// Unchecked means: skip, n/a, read error
-const isSelected = computed(() => {
-  // 'same' files are checked (but disabled) to show red X
-  if (props.file.status === 'same') {
-    return true;
-  }
-  return props.file.status !== 'skip' &&
-         props.file.status !== 'n/a' &&
-         props.file.status !== 'read error' &&
-         props.file.status !== 'completed';
-});
-
-// Compute checkbox title for accessibility
-const checkboxTitle = computed(() => {
-  if (props.file.status === 'completed') {
-    return 'Already uploaded';
-  } else if (props.file.status === 'same') {
-    return 'Click to remove duplicate file from queue';
-  } else if (props.file.status === 'duplicate') {
-    return 'Duplicate file - already in queue';
-  } else if (props.file.status === 'read error') {
-    return 'Cannot read file - hash generation failed';
-  } else if (props.file.status === 'skip') {
-    return 'File skipped - check to include in upload';
-  } else {
-    return 'Include file in upload';
-  }
-});
-
-// Format file size
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-};
-
-// Format modified date using user preferences
-const formatModifiedDate = (timestamp) => {
-  if (!timestamp) return '—';
-
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  // If modified today, show time only using user's time format preference
-  if (diffDays === 0) {
-    return formatTime(timestamp, timeFormat.value);
-  }
-
-  // If modified within last 7 days, show "X days ago" (format-independent)
-  if (diffDays < 7) {
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  }
-
-  // Otherwise show date using user's date format preference
-  return formatDate(timestamp, dateFormat.value);
-};
-
-// Handle checkbox toggle
-// TODO Phase 3a Enhancement: Implement copy group behavior where toggling any file in a copy group
-// toggles the entire group (requires tracking copy groups by hash in parent component)
-const handleCheckboxToggle = (event) => {
-  const isChecked = event.target.checked;
-
-  // Special case: 'same' files - clicking removes them from the queue
-  if (props.file.status === 'same') {
-    emit('remove', props.file.id);
-    return;
-  }
-
+// Handle checkbox toggle from SelectCell
+const handleCheckboxToggle = ({ fileId, isChecked }) => {
   if (isChecked) {
     // Checkbox was just checked - file should be included (undo skip if it was skipped)
     if (props.file.status === 'skip') {
-      emit('undo', props.file.id);
+      emit('undo', fileId);
     }
   } else {
     // Checkbox was just unchecked - file should be skipped
-    emit('cancel', props.file.id);
+    emit('cancel', fileId);
   }
 };
 
-// Open file locally on user's computer
-const openFile = (event) => {
-  event.stopPropagation(); // Prevent triggering row double-click
+// Handle remove from SelectCell (for 'same' files)
+const handleRemove = (fileId) => {
+  emit('remove', fileId);
+};
 
+// Open file locally on user's computer
+const openFile = () => {
   if (props.file.sourceFile) {
     // Create a URL for the file object
     const fileUrl = URL.createObjectURL(props.file.sourceFile);
@@ -245,16 +152,7 @@ const openFile = (event) => {
 
 // Handle row double-click to open file
 const handleRowDoubleClick = () => {
-  openFile({ stopPropagation: () => {} }); // Create mock event object
-};
-
-// Handle mouse enter/leave for hover state
-const handleMouseEnter = () => {
-  isHovering.value = true;
-};
-
-const handleMouseLeave = () => {
-  isHovering.value = false;
+  openFile();
 };
 </script>
 
@@ -286,142 +184,16 @@ const handleMouseLeave = () => {
   white-space: nowrap;
 }
 
-/* Select Cell */
-.select-cell {
+/* File Type Cell */
+.file-type-cell {
   justify-content: center;
-  padding: 9px 8px;
 }
 
-/* Not uploadable icon (⛔ emoji for unsupported files) */
+/* Not uploadable icon (⛔ emoji for duplicate files in file type column) */
 .not-uploadable-icon {
   font-size: 20px;
   user-select: none;
   cursor: not-allowed;
-}
-
-/* Checkbox Styling with Dark Green Checkmark in White Box with Black Border */
-.file-checkbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: white;
-  border: 1px solid #000000;
-  border-radius: 3px;
-  transition: all 0.25s ease;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.file-checkbox:checked {
-  background-color: white;
-  border-color: #000000;
-}
-
-.file-checkbox:checked::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #2196f3; /* Blue checkmark to match ready status */
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-/* Red X for disabled checkboxes (duplicate files) */
-.file-checkbox:disabled:checked::after {
-  content: '✘';
-  color: red;
-  font-size: 16px;
-}
-
-/* Red X for delete button (same files - clickable) */
-.file-checkbox.delete-checkbox:checked::after {
-  content: '✘';
-  color: red;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-/* Modern hover effect: subtle glow and border color change */
-@media (hover: hover) {
-  .file-checkbox:hover:not(:disabled) {
-    border-color: #2196f3;
-    box-shadow:
-      0 0 0 3px rgba(33, 150, 243, 0.1),
-      0 0 8px rgba(33, 150, 243, 0.15);
-  }
-}
-
-/* Focus state for keyboard navigation */
-.file-checkbox:focus-visible {
-  outline: 2px solid #2196f3;
-  outline-offset: 2px;
-}
-
-.file-checkbox:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background-color: #f3f4f6;
-}
-
-/* Faded/ghostly appearance for 'same' files */
-.file-checkbox.faded-checkbox {
-  opacity: 0.4;
-}
-
-/* Delete button styling for 'same' files */
-.file-checkbox.delete-checkbox {
-  cursor: pointer;
-}
-
-/* Hover effect for delete checkbox */
-@media (hover: hover) {
-  .file-checkbox.delete-checkbox:hover {
-    opacity: 1;
-    border-color: #ef4444;
-    box-shadow:
-      0 0 0 3px rgba(239, 68, 68, 0.1),
-      0 0 8px rgba(239, 68, 68, 0.15);
-  }
-}
-
-/* File Name Cell */
-.filename-cell {
-  font-weight: 500;
-  color: #1f2937;
-  display: flex !important;
-  align-items: center;
-  gap: 8px;
-  cursor: default;
-}
-
-.filename-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Phase 3: Bold filename for best files (ready, not a copy) */
-.filename-text.filename-bold {
-  font-weight: 700;
-}
-
-/* Phase 3: Normal filename for copies */
-.filename-text.filename-normal {
-  font-weight: 400;
-}
-
-.eyeball-icon {
-  flex-shrink: 0;
-  cursor: pointer;
-  font-size: 1rem;
-  user-select: none;
 }
 
 /* Size Cell */
@@ -430,9 +202,10 @@ const handleMouseLeave = () => {
   font-size: 0.875rem;
 }
 
-/* Status Cell Wrapper */
-.status-cell-wrapper {
-  justify-content: flex-start;
+/* Modified Cell */
+.modified-cell {
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 
 /* Path Cell */
@@ -442,10 +215,9 @@ const handleMouseLeave = () => {
   font-family: 'Courier New', monospace;
 }
 
-/* Modified Cell */
-.modified-cell {
-  color: #6b7280;
-  font-size: 0.875rem;
+/* Status Cell Wrapper */
+.status-cell-wrapper {
+  justify-content: flex-start;
 }
 
 /* Faded cell styling for 'same' status files */
