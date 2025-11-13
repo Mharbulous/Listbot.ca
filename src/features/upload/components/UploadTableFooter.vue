@@ -26,7 +26,7 @@
 
       <!-- Upload Button (Right) -->
       <div class="footer-right">
-        <!-- Clear Queue Button (shown when NOT uploading and has skipped files) -->
+        <!-- Clear Queue Button (shown when NOT uploading and has unchecked files) -->
         <v-btn
           v-if="!isUploading && !isPaused"
           color="white"
@@ -37,12 +37,7 @@
           @click="handleClearQueue"
         >
           <v-icon start>mdi-broom</v-icon>
-          <template v-if="stats.uncheckedCount > 999">
-            Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
-          </template>
-          <template v-else>
-            Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'skipped file' : 'skipped files' }}
-          </template>
+          Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
         </v-btn>
 
         <!-- Retry Failed Button (shown when has failed files and NOT uploading) -->
