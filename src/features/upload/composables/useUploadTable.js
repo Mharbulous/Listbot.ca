@@ -25,6 +25,33 @@ export function useUploadTable() {
   const queueCore = useQueueCore();
 
   /**
+   * Sort queue by group timestamp and status
+   * - Groups with most recently added files appear first (desc groupTimestamp)
+   * - Within each group: ready → copy → same
+   * - Maintains stable sort within same status
+   */
+  const sortQueueByGroupTimestamp = () => {
+    const statusOrder = { ready: 0, copy: 1, same: 2, 'n/a': 3, skip: 4, 'read error': 5 };
+
+    uploadQueue.value.sort((a, b) => {
+      // Primary sort: group timestamp (descending - most recent first)
+      const timestampDiff = (b.groupTimestamp || 0) - (a.groupTimestamp || 0);
+      if (timestampDiff !== 0) return timestampDiff;
+
+      // Secondary sort: status order (ready < copy < same)
+      const statusA = statusOrder[a.status] !== undefined ? statusOrder[a.status] : 99;
+      const statusB = statusOrder[b.status] !== undefined ? statusOrder[b.status] : 99;
+      const statusDiff = statusA - statusB;
+      if (statusDiff !== 0) return statusDiff;
+
+      // Tertiary sort: maintain original add order (stable sort by id)
+      return 0;
+    });
+
+    console.log('[QUEUE] Queue sorted by group timestamp');
+  };
+
+  /**
    * Deduplicate files against existing queue
    * Checks for one-and-the-same files (same content + metadata)
    * @param {Array} newQueueItems - New queue items to check
@@ -209,6 +236,7 @@ export function useUploadTable() {
         batchOrder: currentBatchOrder,
         canUpload: !isUnsupported,
         isDuplicate: false,
+        groupTimestamp: Date.now(), // Initial group timestamp (will be updated after deduplication)
       };
     });
 
@@ -228,28 +256,41 @@ export function useUploadTable() {
       console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - Deduplication complete for Phase 1`);
     }
 
-    // Sort batch to group duplicates together
-    // Files with same hash should appear consecutively, with 'ready' before 'same'
-    phase1Batch.sort((a, b) => {
-      // First, group by hash (if both have hashes)
-      if (a.hash && b.hash) {
-        if (a.hash !== b.hash) {
-          return a.hash.localeCompare(b.hash);
-        }
-        // Same hash - put 'ready' before 'same'
-        if (a.status === 'ready' && b.status === 'same') return -1;
-        if (a.status === 'same' && b.status === 'ready') return 1;
-        return 0;
-      }
-      // If only one has hash, files without hash come first
-      if (a.hash && !b.hash) return 1;
-      if (!a.hash && b.hash) return -1;
-      // Neither has hash - maintain original order
-      return 0;
-    });
+    // ========================================================================
+    // PHASE 1.6: Update group timestamps
+    // For each unique hash in the new batch, update groupTimestamp for ALL
+    // files with that hash (both new and existing) to move the group to the top
+    // ========================================================================
+    const currentTimestamp = Date.now();
+    const newHashes = new Set(phase1Batch.filter((f) => f.hash).map((f) => f.hash));
 
-    // Now add files to queue with correct statuses already set
+    if (newHashes.size > 0) {
+      console.log('[QUEUE] Updating group timestamps for', newHashes.size, 'hash groups');
+
+      // Update groupTimestamp for all files in the queue that match any of the new hashes
+      uploadQueue.value.forEach((file) => {
+        if (file.hash && newHashes.has(file.hash)) {
+          file.groupTimestamp = currentTimestamp;
+        }
+      });
+
+      // Update groupTimestamp for all files in the new batch that have hashes
+      phase1Batch.forEach((file) => {
+        if (file.hash) {
+          file.groupTimestamp = currentTimestamp;
+        }
+      });
+    }
+
+    // Now add files to queue with correct statuses and groupTimestamps already set
     uploadQueue.value.push(...phase1Batch);
+
+    // ========================================================================
+    // PHASE 1.7: Sort entire queue by group timestamp
+    // Groups with most recently added files appear first
+    // Within each group: ready → copy → same
+    // ========================================================================
+    sortQueueByGroupTimestamp();
 
     // Signal Phase 1 complete (for virtualizer to detect)
     window.initialBatchComplete = true;
@@ -305,6 +346,7 @@ export function useUploadTable() {
             batchOrder: currentBatchOrder,
             canUpload: !isUnsupported,
             isDuplicate: false,
+            groupTimestamp: Date.now(), // Initial group timestamp (will be updated after deduplication)
           };
         });
 
@@ -314,28 +356,31 @@ export function useUploadTable() {
         // Deduplicate this batch against existing queue BEFORE adding to queue
         await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
 
-        // Sort batch to group duplicates together
-        // Files with same hash should appear consecutively, with 'ready' before 'same'
-        processedBatch.sort((a, b) => {
-          // First, group by hash (if both have hashes)
-          if (a.hash && b.hash) {
-            if (a.hash !== b.hash) {
-              return a.hash.localeCompare(b.hash);
-            }
-            // Same hash - put 'ready' before 'same'
-            if (a.status === 'ready' && b.status === 'same') return -1;
-            if (a.status === 'same' && b.status === 'ready') return 1;
-            return 0;
-          }
-          // If only one has hash, files without hash come first
-          if (a.hash && !b.hash) return 1;
-          if (!a.hash && b.hash) return -1;
-          // Neither has hash - maintain original order
-          return 0;
-        });
+        // Update group timestamps for files with matching hashes
+        const currentTimestamp = Date.now();
+        const newHashes = new Set(processedBatch.filter((f) => f.hash).map((f) => f.hash));
 
-        // Now add to queue with correct statuses already set
+        if (newHashes.size > 0) {
+          // Update groupTimestamp for all files in the queue that match any of the new hashes
+          uploadQueue.value.forEach((file) => {
+            if (file.hash && newHashes.has(file.hash)) {
+              file.groupTimestamp = currentTimestamp;
+            }
+          });
+
+          // Update groupTimestamp for all files in the new batch that have hashes
+          processedBatch.forEach((file) => {
+            if (file.hash) {
+              file.groupTimestamp = currentTimestamp;
+            }
+          });
+        }
+
+        // Now add to queue with correct statuses and groupTimestamps already set
         uploadQueue.value.push(...processedBatch);
+
+        // Sort entire queue by group timestamp
+        sortQueueByGroupTimestamp();
 
         // Update progress
         queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);
