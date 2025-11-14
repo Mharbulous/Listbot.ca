@@ -11,16 +11,20 @@
     <div class="table-section">
       <!-- Upload Table with integrated empty state -->
       <UploadTable
-        :files="uploadQueue"
+        :files="filteredUploadQueue"
         :is-empty="uploadQueue.length === 0"
         :is-uploading="uploadAdapter.isUploading.value"
         :is-paused="uploadAdapter.isPaused.value"
+        :duplicates-hidden="duplicatesHidden"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
         @remove="handleRemoveFile"
         @swap="handleSwapFile"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
+        @clear-duplicates="handleClearDuplicates"
+        @clear-skipped="handleClearSkipped"
+        @toggle-duplicates="handleToggleDuplicates"
         @files-dropped="handleFolderRecursiveSelected"
         @select-all="handleSelectAll"
         @deselect-all="handleDeselectAll"
@@ -62,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
@@ -75,9 +79,24 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary } =
+const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility } =
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
+
+// Filtered upload queue based on duplicatesHidden state
+const filteredUploadQueue = computed(() => {
+  if (!duplicatesHidden.value) {
+    return uploadQueue.value;
+  }
+  // When duplicates are hidden, only show files that are NOT duplicates/copies
+  // Show files with status: 'ready', 'skip', 'n/a', 'read error', 'error', 'completed', etc.
+  // Hide files with status: 'skipped', 'duplicate', 'copy'
+  return uploadQueue.value.filter((file) =>
+    file.status !== 'skipped' &&
+    file.status !== 'duplicate' &&
+    file.status !== 'copy'
+  );
+});
 
 // Upload adapter
 const uploadAdapter = useUploadAdapter({
@@ -154,6 +173,21 @@ const handleSwapFile = (fileId) => {
 const handleClearQueue = () => {
   console.log('[TESTING] Clear queue');
   clearQueue();
+};
+
+const handleClearDuplicates = () => {
+  console.log('[TESTING] Clear duplicates');
+  clearDuplicates();
+};
+
+const handleClearSkipped = () => {
+  console.log('[TESTING] Clear skipped files');
+  clearSkipped();
+};
+
+const handleToggleDuplicates = () => {
+  console.log('[TESTING] Toggle duplicates visibility');
+  toggleDuplicatesVisibility();
 };
 
 const handleUpload = async () => {
