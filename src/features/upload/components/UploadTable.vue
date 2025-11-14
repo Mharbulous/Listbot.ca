@@ -202,8 +202,8 @@ const footerStats = computed(() => {
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
 
-  // Unchecked files = files that have been skipped OR marked as redundant OR n/a OR read errors
-  const uncheckedCount = removed + redundantFiles + naFiles + readErrors;
+  // Unchecked files = files that have been skipped OR marked as duplicate OR n/a OR read errors
+  const uncheckedCount = removed + duplicates + naFiles + readErrors;
 
   // Copy count = files with status === 'copy' (for Hide/Show Copies menu item)
   // IMPORTANT: Use allFiles (not files) to count ALL copies, regardless of visibility
@@ -216,7 +216,7 @@ const footerStats = computed(() => {
     total,
     totalSize: formatBytes(totalSize),
     ready,
-    removed: removed + redundantFiles + naFiles, // Include redundant files and n/a files in "Skipped" counter
+    removed: removed + duplicates + naFiles, // Include duplicate files and n/a files in "Skipped" counter
     duplicates,
     failed,
     uploaded,
