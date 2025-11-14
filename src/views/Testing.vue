@@ -94,6 +94,8 @@ const { snackbar, showNotification } = useNotification();
 
 // Enhanced upload queue with computed displayed status
 // Copy files should show 'skip' status when their primary is skipped
+// IMPORTANT: Must return original objects (not copies) to maintain reactivity
+// for lazy hash verification updates
 const enhancedUploadQueue = computed(() => {
   return uploadQueue.value.map(file => {
     // If this is a copy file, check if its primary is skipped
@@ -105,18 +107,14 @@ const enhancedUploadQueue = computed(() => {
 
       // If primary is skipped, display this copy as skipped too
       if (primaryFile && primaryFile.status === 'skip') {
-        return {
-          ...file,
-          displayedStatus: 'skip'
-        };
+        file.displayedStatus = 'skip';
+        return file; // Return original object to maintain reactivity
       }
     }
 
     // Otherwise, display the actual status
-    return {
-      ...file,
-      displayedStatus: file.status
-    };
+    file.displayedStatus = file.status;
+    return file; // Return original object to maintain reactivity
   });
 });
 
