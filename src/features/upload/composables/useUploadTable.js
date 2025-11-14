@@ -119,12 +119,19 @@ export function useUploadTable() {
 
     console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'files');
 
-    // Hash all files that need it
+    // Hash all files that need it (skip files that already have hashes)
     const hashGroups = new Map();
     for (const { queueItem, isExisting } of filesToHash) {
       try {
-        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-        queueItem.hash = hash;
+        if (!queueItem.hash) {
+          // Only hash if file doesn't already have a hash (performance optimization)
+          // Files from previous uploads already have hashes - no need to re-hash
+          const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+          queueItem.hash = hash;
+        }
+
+        // Use existing or newly generated hash
+        const hash = queueItem.hash;
 
         if (!hashGroups.has(hash)) {
           hashGroups.set(hash, []);
