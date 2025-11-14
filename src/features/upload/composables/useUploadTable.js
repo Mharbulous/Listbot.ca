@@ -491,12 +491,11 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear duplicate files from queue (files with status 'skipped' or 'duplicate')
+   * Clear duplicate files from queue (files with status 'duplicate')
    */
   const clearDuplicates = () => {
     const beforeCount = uploadQueue.value.length;
     uploadQueue.value = uploadQueue.value.filter((file) =>
-      file.status !== 'skipped' &&
       file.status !== 'duplicate'
     );
     const removedCount = beforeCount - uploadQueue.value.length;
