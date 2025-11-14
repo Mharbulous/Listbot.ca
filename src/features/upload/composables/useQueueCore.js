@@ -269,6 +269,7 @@ export function useQueueCore() {
    * @returns {Object} - { readyFiles, duplicateFiles, copyFiles, promotions }
    */
   const preFilterByMetadataAndPath = (newQueueItems, existingQueue) => {
+    const t0 = performance.now();
     console.log('[PREFILTER] Starting metadata pre-filter:', {
       newFiles: newQueueItems.length,
       existingFiles: existingQueue.length,
@@ -365,6 +366,7 @@ export function useQueueCore() {
       }
     });
 
+    const preFilterTime = performance.now() - t0;
     console.log('[PREFILTER] Pre-filter complete:', {
       ready: readyFiles.length,
       duplicates: duplicateFiles.length,
@@ -375,6 +377,7 @@ export function useQueueCore() {
       metadataComparisons,
       avgComparisonsPerFile: (metadataComparisons / newQueueItems.length).toFixed(2),
       optimizationRatio: `${((existingQueue.length * newQueueItems.length) / (existingQueue.length + metadataComparisons)).toFixed(1)}x faster`,
+      preFilterTimeMs: preFilterTime.toFixed(2),
     });
 
     return { readyFiles, duplicateFiles, copyFiles, promotions };
