@@ -133,11 +133,75 @@ Add new function: `preFilterByMetadataAndPath(newFiles, existingQueue)`
   ```
 - **CRITICAL**: Store `referenceFileId` because tentative duplicates/copies have no hash yet, so can't use hash-based lookup to find best copy during verification.
 
-**Key logic**:
-1. Group new files by metadata key: `${filename}_${size}_${lastModified}`
-2. For each NEW file with metadata matches, find ALL matching EXISTING files
-3. Use `findBestMatchingFile()` to pick the one with longest path suffix
-4. Track `referenceFileId` for later hash verification
+**Key optimization - Size-based pre-grouping** (O(N+M) instead of O(N×M)):
+
+Pre-group existing files by size BEFORE comparing metadata. This reduces comparisons from 1,000,000 (1000 new × 1000 existing) to ~3,000 (1000 new files × ~3 candidates per size bucket).
+
+```javascript
+function preFilterByMetadataAndPath(newFiles, existingQueue) {
+  // 1. Pre-group existing files by size (O(M) - only done once)
+  const sizeMap = new Map();
+  for (const existing of existingQueue) {
+    if (!sizeMap.has(existing.size)) {
+      sizeMap.set(existing.size, []);
+    }
+    sizeMap.get(existing.size).push(existing);
+  }
+
+  const readyFiles = [];
+  const duplicateFiles = [];
+  const copyFiles = [];
+  const promotions = [];
+
+  // 2. For each new file, only check against same-size existing files (O(N × k))
+  //    where k = avg files per size bucket (typically 1-5, not M)
+  for (const newFile of newFiles) {
+    const candidatesWithSameSize = sizeMap.get(newFile.size);
+
+    // UNIQUE SIZE = definitely ready (skip metadata check entirely)
+    if (!candidatesWithSameSize || candidatesWithSameSize.length === 0) {
+      readyFiles.push(newFile);
+      continue;
+    }
+
+    // Find all metadata matches within same-size candidates
+    const metadataMatches = candidatesWithSameSize.filter(existing =>
+      existing.name === newFile.name &&
+      existing.lastModified === newFile.lastModified
+    );
+
+    if (metadataMatches.length === 0) {
+      readyFiles.push(newFile);
+      continue;
+    }
+
+    // Apply path hierarchy logic using findBestMatchingFile()
+    const result = findBestMatchingFile(newFile, metadataMatches);
+
+    if (result.type === 'duplicate') {
+      duplicateFiles.push({ file: newFile, referenceFileId: result.file.id });
+    } else if (result.type === 'copy') {
+      copyFiles.push({ file: newFile, referenceFileId: result.file.id });
+    } else if (result.type === 'promote_new') {
+      readyFiles.push(newFile);
+      promotions.push({
+        existingFileId: result.file.id,
+        newPrimaryId: newFile.id
+      });
+    } else if (result.type === 'keep_existing') {
+      duplicateFiles.push({ file: newFile, referenceFileId: result.file.id });
+    }
+  }
+
+  return { readyFiles, duplicateFiles, copyFiles, promotions };
+}
+```
+
+**Why size-based pre-grouping works**:
+- File size distribution is typically sparse - most files have unique sizes
+- Files with matching size are rare (estimated 1-5 per size bucket)
+- Checking 1000 files against 3 candidates each = 3,000 comparisons vs 1,000,000
+- **~300× speedup** for the metadata comparison phase
 
 ### Step 2: Integrate Pre-filter into `deduplicateAgainstExisting()`
 
@@ -483,11 +547,19 @@ Files can transition through these states:
 
 ### 4. Performance Considerations
 
-**Pre-filter complexity**:
-- O(N × M) where N = new files, M = existing queue files
-- For 1000 new + 1000 existing = 1,000,000 comparisons
+**Pre-filter complexity with size-based pre-grouping**:
+- **O(N + M)** where N = new files, M = existing queue files
+- Build size map: O(M) - one pass through existing files
+- Process new files: O(N × k) where k = avg files per size bucket (~3-5 typically)
+- **Total comparisons**: ~3,000 for 1000 new + 1000 existing (vs 1,000,000 without size grouping)
 - Each comparison is metadata string compare + path `endsWith()` check
-- Expected time: <100ms (string operations are fast)
+- **Expected time**: <100ms (dominated by size map creation, not comparisons)
+
+**Why size grouping is critical**:
+- Most files have unique sizes (sparse distribution)
+- Without grouping: 1000 new × 1000 existing = 1,000,000 comparisons
+- With grouping: 1000 new × ~3 candidates = ~3,000 comparisons (~300× speedup)
+- Early-exit for unique sizes (no metadata check needed)
 
 **Hash calculation deferral**:
 - First upload: Hash ~200 files → ~2 sec
@@ -498,6 +570,7 @@ Files can transition through these states:
 **Net performance gain**:
 - Second upload: 10 sec → <2 sec (80% improvement)
 - Third upload: 30 sec → <2 sec (93% improvement)
+- Pre-filter itself: ~1 sec → ~0.003 sec (~300× speedup)
 
 ---
 
