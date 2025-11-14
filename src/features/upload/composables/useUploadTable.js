@@ -177,20 +177,20 @@ export function useUploadTable() {
       for (const [metadataKey, metadataItems] of metadataGroups) {
         if (metadataItems.length === 1) continue; // No redundant files
 
-        console.log('[DEDUP-TABLE] Found redundant files:', {
+        console.log('[DEDUP-TABLE] Found duplicate files:', {
           metadataKey,
           count: metadataItems.length,
           files: metadataItems.map((i) => ({ name: i.queueItem.name, isExisting: i.isExisting })),
         });
 
-        // Keep first instance, mark others as redundant
+        // Keep first instance, mark others as duplicate
         for (let i = 1; i < metadataItems.length; i++) {
           const { queueItem } = metadataItems[i];
-          queueItem.status = 'redundant';
+          queueItem.status = 'duplicate';
           queueItem.canUpload = false;
-          queueItem.isRedundant = true;
+          queueItem.isDuplicate = true;
 
-          console.log('[DEDUP-TABLE] Marked as redundant:', {
+          console.log('[DEDUP-TABLE] Marked as duplicate:', {
             name: queueItem.name,
             status: queueItem.status,
             canUpload: queueItem.canUpload,
@@ -491,12 +491,12 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear duplicate files from queue (files with status 'duplicate')
+   * Clear duplicate files from queue (files with status 'duplicate' or legacy 'redundant')
    */
   const clearDuplicates = () => {
     const beforeCount = uploadQueue.value.length;
     uploadQueue.value = uploadQueue.value.filter((file) =>
-      file.status !== 'duplicate'
+      file.status !== 'duplicate' && file.status !== 'redundant'
     );
     const removedCount = beforeCount - uploadQueue.value.length;
     console.log(`[QUEUE] Cleared ${removedCount} duplicate files`);
