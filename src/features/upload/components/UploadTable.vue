@@ -175,7 +175,7 @@ const footerStats = computed(() => {
   const totalSize = props.files.reduce((sum, f) => sum + (f.size || 0), 0);
   const ready = props.files.filter((f) => f.status === 'ready').length;
   const removed = props.files.filter((f) => f.status === 'skip').length;
-  const duplicates = props.files.filter((f) => f.status === 'skipped' || f.status === 'duplicate').length;
+  const duplicates = props.files.filter((f) => f.status === 'duplicate').length;
   const redundantFiles = props.files.filter((f) => f.status === 'redundant').length;
   const failed = props.files.filter((f) => f.status === 'error').length;
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
