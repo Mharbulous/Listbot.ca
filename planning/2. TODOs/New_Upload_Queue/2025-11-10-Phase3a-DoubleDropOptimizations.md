@@ -316,6 +316,7 @@ async function beforeDelete(queueItem) {
 ### Step 5: Add Hash Verification on Upload
 
 **Location**: Upload processing logic (likely in `useUploadTable.js` or separate upload composable)
+n**IMPORTANT**: Tentative duplicates are auto-excluded from upload in the UI (grayed out, unchecked by default), so this verification step handles the edge case where a user manually selects a tentative duplicate for upload. In practice, most tentative duplicates never reach this stage.
 
 **Implementation**:
 ```javascript
