@@ -11,6 +11,9 @@ export function useUploadTable() {
   // Upload queue
   const uploadQueue = ref([]);
 
+  // Duplicates visibility state
+  const duplicatesHidden = ref(false);
+
   // Queue progress (for large batches >500 files)
   const queueProgress = ref({
     isQueueing: false,
@@ -488,6 +491,31 @@ export function useUploadTable() {
   };
 
   /**
+   * Clear duplicate files from queue (files with status 'skipped' or 'duplicate')
+   */
+  const clearDuplicates = () => {
+    const beforeCount = uploadQueue.value.length;
+    uploadQueue.value = uploadQueue.value.filter((file) =>
+      file.status !== 'skipped' &&
+      file.status !== 'duplicate'
+    );
+    const removedCount = beforeCount - uploadQueue.value.length;
+    console.log(`[QUEUE] Cleared ${removedCount} duplicate files`);
+  };
+
+  /**
+   * Clear skipped files from queue (files with status 'skip')
+   */
+  const clearSkipped = () => {
+    const beforeCount = uploadQueue.value.length;
+    uploadQueue.value = uploadQueue.value.filter((file) =>
+      file.status !== 'skip'
+    );
+    const removedCount = beforeCount - uploadQueue.value.length;
+    console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
+  };
+
+  /**
    * Update file status
    * @param {string} fileId - File ID
    * @param {string} status - New status
@@ -613,17 +641,31 @@ export function useUploadTable() {
     // Note: sortQueueByGroupTimestamp() NOT called - rows maintain their current positions
   };
 
+  /**
+   * Toggle visibility of duplicate files
+   * When hidden, only shows files with status 'ready' (primary files)
+   * When shown, displays all files including 'skipped', 'duplicate', and 'copy' statuses
+   */
+  const toggleDuplicatesVisibility = () => {
+    duplicatesHidden.value = !duplicatesHidden.value;
+    console.log(`[QUEUE] Duplicates ${duplicatesHidden.value ? 'hidden' : 'shown'}`);
+  };
+
   return {
     uploadQueue,
+    duplicatesHidden,
     queueProgress,
     addFilesToQueue,
     removeFromQueue,
     clearQueue,
+    clearDuplicates,
+    clearSkipped,
     updateFileStatus,
     skipFile,
     undoSkip,
     selectAll,
     deselectAll,
     swapCopyToPrimary,
+    toggleDuplicatesVisibility,
   };
 }

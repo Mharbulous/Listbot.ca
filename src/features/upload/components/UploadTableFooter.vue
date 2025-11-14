@@ -26,19 +26,61 @@
 
       <!-- Upload Button (Right) -->
       <div class="footer-right">
-        <!-- Clear Queue Button (shown when NOT uploading and has unchecked files) -->
-        <v-btn
-          v-if="!isUploading && !isPaused"
-          color="white"
-          variant="elevated"
-          size="large"
-          class="clear-queue-btn text-black"
-          :disabled="stats.uncheckedCount === 0"
-          @click="handleClearQueue"
-        >
-          <v-icon start>mdi-broom</v-icon>
-          Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
-        </v-btn>
+        <!-- Clear Queue Button with Drop-up Menu (shown when NOT uploading and has unchecked files) -->
+        <v-menu v-if="!isUploading && !isPaused" location="top">
+          <template v-slot:activator="{ props: menuProps }">
+            <v-btn
+              color="white"
+              variant="elevated"
+              size="large"
+              class="clear-queue-btn text-black"
+              :disabled="stats.uncheckedCount === 0"
+              v-bind="menuProps"
+            >
+              <v-icon start>mdi-broom</v-icon>
+              Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
+              <v-icon end>mdi-chevron-up</v-icon>
+            </v-btn>
+          </template>
+
+          <v-list density="compact">
+            <v-list-item
+              :disabled="stats.duplicates === 0"
+              @click="handleClearDuplicates"
+            >
+              <template v-slot:prepend>
+                <span class="status-dot-menu status-duplicate-menu"></span>
+              </template>
+              <v-list-item-title>
+                Clear {{ stats.duplicates }} {{ stats.duplicates === 1 ? 'duplicate' : 'duplicates' }}
+              </v-list-item-title>
+            </v-list-item>
+
+            <v-list-item
+              :disabled="stats.removed === 0"
+              @click="handleClearSkipped"
+            >
+              <template v-slot:prepend>
+                <span class="status-dot-menu status-skip-menu"></span>
+              </template>
+              <v-list-item-title>
+                Clear {{ stats.removed }} skipped {{ stats.removed === 1 ? 'file' : 'files' }}
+              </v-list-item-title>
+            </v-list-item>
+
+            <v-list-item
+              :disabled="stats.duplicates === 0"
+              @click="handleToggleDuplicates"
+            >
+              <template v-slot:prepend>
+                <span class="status-dot-menu status-skipped-menu"></span>
+              </template>
+              <v-list-item-title>
+                {{ duplicatesHidden ? 'Show' : 'Hide' }} {{ stats.duplicates }} {{ stats.duplicates === 1 ? 'duplicate' : 'duplicates' }}
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
 
         <!-- Retry Failed Button (shown when has failed files and NOT uploading) -->
         <v-btn
@@ -158,10 +200,14 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  duplicatesHidden: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['upload', 'clear-queue', 'pause', 'resume', 'cancel', 'retry-failed']);
+const emit = defineEmits(['upload', 'clear-queue', 'pause', 'resume', 'cancel', 'retry-failed', 'clear-duplicates', 'clear-skipped', 'toggle-duplicates']);
 
 // Handle upload
 const handleUpload = () => {
@@ -191,6 +237,21 @@ const handleCancel = () => {
 // Handle retry failed
 const handleRetryFailed = () => {
   emit('retry-failed');
+};
+
+// Handle clear duplicates
+const handleClearDuplicates = () => {
+  emit('clear-duplicates');
+};
+
+// Handle clear skipped
+const handleClearSkipped = () => {
+  emit('clear-skipped');
+};
+
+// Handle toggle duplicates visibility
+const handleToggleDuplicates = () => {
+  emit('toggle-duplicates');
 };
 </script>
 
@@ -316,6 +377,29 @@ const handleRetryFailed = () => {
 
 .footer-separator {
   color: #9ca3af;
+}
+
+/* Status dots for menu items */
+.status-dot-menu {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.status-duplicate-menu {
+  background-color: #ffffff;
+  border: 1px solid #000000;
+}
+
+.status-skip-menu {
+  background-color: #ffffff;
+  border: 1px solid #9e9e9e;
+}
+
+.status-skipped-menu {
+  background-color: #9c27b0;
 }
 
 /* Responsive Design */

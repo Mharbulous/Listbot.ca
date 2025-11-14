@@ -25,6 +25,7 @@
         :footer-stats="footerStats"
         :is-uploading="props.isUploading"
         :is-paused="props.isPaused"
+        :duplicates-hidden="props.duplicatesHidden"
         :get-group-background="getGroupBackgroundColor"
         :is-first-in-group="isFirstInGroup"
         :is-last-in-group="isLastInGroup"
@@ -36,6 +37,9 @@
         @deselect-all="handleDeselectAll"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
+        @clear-duplicates="handleClearDuplicates"
+        @clear-skipped="handleClearSkipped"
+        @toggle-duplicates="handleToggleDuplicates"
         @pause="handlePause"
         @resume="handleResume"
         @cancel-upload="handleCancelUpload"
@@ -94,10 +98,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  duplicatesHidden: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'upload', 'clear-queue', 'files-dropped', 'select-all', 'deselect-all', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'upload', 'clear-queue', 'clear-duplicates', 'clear-skipped', 'toggle-duplicates', 'files-dropped', 'select-all', 'deselect-all', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // ============================================================================
 // DRAG AND DROP HANDLING
@@ -261,6 +269,21 @@ const handleUpload = () => {
 // Handle clear queue
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+// Handle clear duplicates
+const handleClearDuplicates = () => {
+  emit('clear-duplicates');
+};
+
+// Handle clear skipped
+const handleClearSkipped = () => {
+  emit('clear-skipped');
+};
+
+// Handle toggle duplicates
+const handleToggleDuplicates = () => {
+  emit('toggle-duplicates');
 };
 
 // Handle pause

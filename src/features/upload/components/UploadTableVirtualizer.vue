@@ -98,8 +98,12 @@
         :stats="props.footerStats"
         :is-uploading="props.isUploading"
         :is-paused="props.isPaused"
+        :duplicates-hidden="props.duplicatesHidden"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
+        @clear-duplicates="handleClearDuplicates"
+        @clear-skipped="handleClearSkipped"
+        @toggle-duplicates="handleToggleDuplicates"
         @pause="handlePause"
         @resume="handleResume"
         @cancel="handleCancel"
@@ -150,6 +154,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  duplicatesHidden: {
+    type: Boolean,
+    default: false,
+  },
   // Group styling functions (PASS-THROUGH ONLY - business logic in composable)
   getGroupBackground: {
     type: Function,
@@ -166,7 +174,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'clear-duplicates', 'clear-skipped', 'toggle-duplicates', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
@@ -287,6 +295,18 @@ const handleUpload = () => {
 
 const handleClearQueue = () => {
   emit('clear-queue');
+};
+
+const handleClearDuplicates = () => {
+  emit('clear-duplicates');
+};
+
+const handleClearSkipped = () => {
+  emit('clear-skipped');
+};
+
+const handleToggleDuplicates = () => {
+  emit('toggle-duplicates');
 };
 
 const handlePause = () => {
