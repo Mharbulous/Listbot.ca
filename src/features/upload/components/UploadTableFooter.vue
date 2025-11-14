@@ -8,14 +8,6 @@
         </span>
         <span class="footer-separator">|</span>
         <span class="footer-stat">
-          <strong>Skipped:</strong> {{ stats.removed }}
-        </span>
-        <span class="footer-separator">|</span>
-        <span class="footer-stat">
-          <strong>Duplicates:</strong> {{ stats.duplicates }}
-        </span>
-        <span class="footer-separator">|</span>
-        <span class="footer-stat">
           <strong>Failed:</strong> {{ stats.failed }}
         </span>
         <span class="footer-separator">|</span>
