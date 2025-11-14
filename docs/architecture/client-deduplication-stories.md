@@ -38,7 +38,7 @@ As a user uploading files, I want the system to automatically detect when I've s
 **US-2: Size-Based Pre-Filtering**
 As a user uploading many files, I want files with unique sizes to skip the hashing step, so that the deduplication analysis completes quickly without unnecessary processing.
 
-**US-3: One-and-the-Same Filtering**
+**US-3: Duplicate Filtering**
 As a user who accidentally selected the same file multiple times, I want those duplicates to be silently filtered out, so that I don't have to manually identify and remove them.
 
 **US-4: Best File Selection**
