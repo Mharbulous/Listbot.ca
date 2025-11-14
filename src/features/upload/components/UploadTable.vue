@@ -194,7 +194,6 @@ const footerStats = computed(() => {
     (f) =>
       f.status !== 'skip' &&
       f.status !== 'completed' &&
-      f.status !== 'skipped' &&
       f.status !== 'duplicate' &&
       f.status !== 'redundant' &&
       f.status !== 'n/a' &&

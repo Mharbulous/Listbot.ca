@@ -91,9 +91,8 @@ const filteredUploadQueue = computed(() => {
   }
   // When duplicates are hidden, only show files that are NOT duplicates/copies
   // Show files with status: 'ready', 'skip', 'n/a', 'read error', 'error', 'completed', etc.
-  // Hide files with status: 'skipped', 'duplicate', 'copy'
+  // Hide files with status: 'duplicate', 'copy'
   return uploadQueue.value.filter((file) =>
-    file.status !== 'skipped' &&
     file.status !== 'duplicate' &&
     file.status !== 'copy'
   );

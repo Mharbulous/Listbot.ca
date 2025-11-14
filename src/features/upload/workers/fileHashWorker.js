@@ -239,7 +239,8 @@ async function processFiles(files, batchId) {
         path: fileRef.path,
         metadata: fileRef.metadata,
         hash: fileRef.hash,
-        status: 'ready',
+        status: fileRef.status || 'ready', // Preserve existing status (e.g., 'duplicate')
+        canUpload: fileRef.canUpload !== undefined ? fileRef.canUpload : true, // Preserve canUpload flag
       };
       // Mark shortcut files so they can be skipped during upload
       if (isShortcutFile(fileRef.metadata.sourceFileName)) {
