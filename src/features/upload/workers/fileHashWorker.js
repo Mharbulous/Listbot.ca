@@ -155,44 +155,52 @@ async function processFiles(files, batchId) {
         // Unique hash - not a duplicate
         finalFiles.push(fileRefs[0]);
       } else {
-        // Multiple files with same hash - check if they're redundant or copy files
-        const redundantFileGroups = new Map(); // metadata_key -> [file_references]
+        // Multiple files with same hash - check if they're duplicates or copy files
+        const duplicateGroups = new Map(); // metadata_key -> [file_references]
 
         fileRefs.forEach((fileRef) => {
-          // Create metadata signature for redundant file detection
+          // Create metadata signature for duplicate file detection
           //
-          // Files are considered redundant when:
-          //   - Their folder paths are hierarchically nested or related (e.g., /, /Arrears, /2. BDLC Invoices/Arrears),
-          //     indicating the same file queued multiple times with varying path context
-          //   - Their folder paths fall within the same hierarchical branch (e.g., /2025/2. BDLC Invoices/Arrears,
-          //     /2025/2. BDLC Invoices, /2025), where path differences provide no additional archival or organizational value
+          // Files are considered duplicates when:
+          //   - They have identical content (hash value) AND core metadata (name, size, modified date)
+          //   - Folder path variations have no informational value
           //
-          // MUST include path to distinguish copies in different folders
-          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
+          // Files are considered copies when:
+          //   - They have identical content (hash value) BUT different file metadata that IS meaningful
+          //
+          // Do NOT include path in metadata key - path variations alone don't make files copies
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
-          if (!redundantFileGroups.has(metadataKey)) {
-            redundantFileGroups.set(metadataKey, []);
+          if (!duplicateGroups.has(metadataKey)) {
+            duplicateGroups.set(metadataKey, []);
           }
-          redundantFileGroups.get(metadataKey).push(fileRef);
+          duplicateGroups.get(metadataKey).push(fileRef);
         });
 
-        // Step 5: Handle redundant files and copy files
-        for (const [, redundantFiles] of redundantFileGroups) {
-          if (redundantFiles.length === 1) {
+        // Step 5: Handle duplicate files and copy files
+        for (const [, duplicateFiles] of duplicateGroups) {
+          if (duplicateFiles.length === 1) {
             // Unique file (different metadata from others with same hash)
-            finalFiles.push(redundantFiles[0]);
+            finalFiles.push(duplicateFiles[0]);
           } else {
-            // Redundant file selected multiple times - just pick the first one
-            const chosenFile = redundantFiles[0];
+            // Duplicate file selected multiple times (same hash AND same metadata)
+            // Keep first instance as ready, mark others as duplicate (shown in queue but cannot be selected)
+            const chosenFile = duplicateFiles[0];
             finalFiles.push(chosenFile);
 
-            // Don't mark others as copies - they're redundant files, just filter them out
+            // Mark subsequent instances as duplicates (keep in queue for visibility)
+            for (let i = 1; i < duplicateFiles.length; i++) {
+              const duplicateFile = duplicateFiles[i];
+              duplicateFile.status = 'duplicate';
+              duplicateFile.canUpload = false;
+              finalFiles.push(duplicateFile); // Keep in queue for visibility
+            }
           }
         }
 
         // If we have multiple distinct source files with same hash (copy files), choose the best one
-        if (redundantFileGroups.size > 1) {
-          const allUniqueFiles = Array.from(redundantFileGroups.values()).map((group) => group[0]);
+        if (duplicateGroups.size > 1) {
+          const allUniqueFiles = Array.from(duplicateGroups.values()).map((group) => group[0]);
           if (allUniqueFiles.length > 1) {
             const bestFile = chooseBestFile(allUniqueFiles);
 
@@ -203,14 +211,14 @@ async function processFiles(files, batchId) {
             }
             finalFiles.push(bestFile);
 
-            // Mark others as duplicates
+            // Mark others as copies (same hash, different metadata)
             allUniqueFiles.forEach((fileRef) => {
               if (fileRef !== bestFile) {
                 const index = finalFiles.findIndex((f) => f === fileRef);
                 if (index > -1) {
                   finalFiles.splice(index, 1);
                 }
-                fileRef.isDuplicate = true;
+                fileRef.isCopy = true;
                 duplicateFiles.push(fileRef);
               }
             });
@@ -247,8 +255,8 @@ async function processFiles(files, batchId) {
         path: fileRef.path,
         metadata: fileRef.metadata,
         hash: fileRef.hash,
-        isCopy: fileRef.isDuplicate, // Rename isDuplicate to isCopy for Phase 3 terminology
-        status: 'copy', // Use 'copy' status instead of 'uploadMetadataOnly'
+        isCopy: fileRef.isCopy, // Flag for copy files (same hash, different metadata)
+        status: 'copy', // Use 'copy' status for files with meaningful metadata differences
       };
       // Mark shortcut files so they can be skipped during upload
       if (isShortcutFile(fileRef.metadata.sourceFileName)) {

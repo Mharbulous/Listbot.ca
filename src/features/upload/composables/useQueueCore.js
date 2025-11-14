@@ -230,20 +230,21 @@ export function useQueueCore() {
         // Unique hash - not a duplicate
         finalFiles.push(fileRefs[0]);
       } else {
-        // Multiple files with same hash - check if they're redundant or copy files
-        const redundantFileGroups = new Map(); // metadata_key -> [file_references]
+        // Multiple files with same hash - check if they're duplicates or copy files
+        const duplicateGroups = new Map(); // metadata_key -> [file_references]
 
         fileRefs.forEach((fileRef) => {
-          // Create metadata signature for redundant source file detection
+          // Create metadata signature for duplicate source file detection
           //
-          // Files are considered redundant when:
-          //   - Their folder paths are hierarchically nested or related (e.g., /, /Arrears, /2. BDLC Invoices/Arrears),
-          //     indicating the same file queued multiple times with varying path context
-          //   - Their folder paths fall within the same hierarchical branch (e.g., /2025/2. BDLC Invoices/Arrears,
-          //     /2025/2. BDLC Invoices, /2025), where path differences provide no additional archival or organizational value
+          // Files are considered duplicates when:
+          //   - They have identical content (hash value) AND core metadata (name, size, modified date)
+          //   - Folder path variations have no informational value
           //
-          // MUST include path to distinguish copies in different folders
-          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
+          // Files are considered copies when:
+          //   - They have identical content (hash value) BUT different file metadata that IS meaningful
+          //
+          // Do NOT include path in metadata key - path variations alone don't make files copies
+          const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
           console.log('[DEDUP-METADATA] Creating metadata key for:', {
             fileName: fileRef.file.name,
@@ -252,53 +253,53 @@ export function useQueueCore() {
             metadata: fileRef.metadata,
           });
 
-          if (!redundantFileGroups.has(metadataKey)) {
-            redundantFileGroups.set(metadataKey, []);
+          if (!duplicateGroups.has(metadataKey)) {
+            duplicateGroups.set(metadataKey, []);
           }
-          redundantFileGroups.get(metadataKey).push(fileRef);
+          duplicateGroups.get(metadataKey).push(fileRef);
         });
 
-        // Handle redundant files and copy files
-        for (const [metadataKey, redundantFiles] of redundantFileGroups) {
+        // Handle duplicate files and copy files
+        for (const [metadataKey, duplicateFiles] of duplicateGroups) {
           console.log('[DEDUP-GROUPS] Processing metadata group:', {
             metadataKey,
-            fileCount: redundantFiles.length,
-            files: redundantFiles.map((f) => ({ name: f.file.name, path: f.path })),
+            fileCount: duplicateFiles.length,
+            files: duplicateFiles.map((f) => ({ name: f.file.name, path: f.path })),
           });
 
-          if (redundantFiles.length === 1) {
+          if (duplicateFiles.length === 1) {
             // Unique file (different metadata from others with same hash)
-            finalFiles.push(redundantFiles[0]);
+            finalFiles.push(duplicateFiles[0]);
           } else {
-            // Redundant file selected multiple times
-            // Keep first instance as ready, mark others as redundant (shown in queue but cannot be selected)
-            const chosenFile = redundantFiles[0];
+            // Duplicate file selected multiple times (same hash AND same metadata)
+            // Keep first instance as ready, mark others as duplicate (shown in queue but cannot be selected)
+            const chosenFile = duplicateFiles[0];
             finalFiles.push(chosenFile);
 
-            console.log('[DEDUP-MARK] Found redundant files:', {
-              count: redundantFiles.length,
+            console.log('[DEDUP-MARK] Found duplicate files:', {
+              count: duplicateFiles.length,
               chosenFile: chosenFile.file.name,
-              redundant: redundantFiles.slice(1).map((f) => f.file.name),
+              duplicates: duplicateFiles.slice(1).map((f) => f.file.name),
             });
 
-            // Mark subsequent instances as redundant
-            for (let i = 1; i < redundantFiles.length; i++) {
-              const redundantFile = redundantFiles[i];
-              redundantFile.status = 'redundant';
-              redundantFile.canUpload = false; // Disable checkbox
-              console.log('[DEDUP-MARK] Marking as redundant:', {
-                fileName: redundantFile.file.name,
-                status: redundantFile.status,
-                canUpload: redundantFile.canUpload,
+            // Mark subsequent instances as duplicates
+            for (let i = 1; i < duplicateFiles.length; i++) {
+              const duplicateFile = duplicateFiles[i];
+              duplicateFile.status = 'duplicate';
+              duplicateFile.canUpload = false; // Disable checkbox
+              console.log('[DEDUP-MARK] Marking as duplicate:', {
+                fileName: duplicateFile.file.name,
+                status: duplicateFile.status,
+                canUpload: duplicateFile.canUpload,
               });
-              finalFiles.push(redundantFile); // Keep in queue for visibility
+              finalFiles.push(duplicateFile); // Keep in queue for visibility
             }
           }
         }
 
         // If we have multiple distinct files with same hash (copy files), choose the best one
-        if (redundantFileGroups.size > 1) {
-          const allUniqueFiles = Array.from(redundantFileGroups.values()).map((group) => group[0]);
+        if (duplicateGroups.size > 1) {
+          const allUniqueFiles = Array.from(duplicateGroups.values()).map((group) => group[0]);
           if (allUniqueFiles.length > 1) {
             const bestFile = chooseBestFile(allUniqueFiles);
 
