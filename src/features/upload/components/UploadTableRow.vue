@@ -4,7 +4,9 @@
     :class="{
       'copy-file': file.status === 'copy',
       'has-copy-group': file.isCopy || file.status === 'copy',
+      'group-boundary': isFirstInGroup,
     }"
+    :style="{ backgroundColor: backgroundColor }"
     @dblclick="handleRowDoubleClick"
   >
     <!-- Select Column (60px) - FIRST COLUMN -->
@@ -94,6 +96,14 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  backgroundColor: {
+    type: String,
+    default: '#ffffff',
+  },
+  isFirstInGroup: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
@@ -165,11 +175,19 @@ const handleRowDoubleClick = () => {
   cursor: default;
 }
 
+/* Group boundary - subtle top border for first file in each hash group */
+.upload-table-row.group-boundary {
+  border-top: 2px solid #d1d5db;
+}
+
 /* Phase 3: Copy group visual indicator (left border) - REMOVED */
 /* Purple left border removed per user request */
 
+/* Hover state - works with both white and gray backgrounds */
+/* Darken white (#ffffff) to light gray (#f9fafb) */
+/* Darken light gray (#f9fafb) to slightly darker gray (#f3f4f6) */
 .upload-table-row:hover {
-  background-color: #f9fafb;
+  background-color: #f3f4f6 !important;
 }
 
 .row-cell {

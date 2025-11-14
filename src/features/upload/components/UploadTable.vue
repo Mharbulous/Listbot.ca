@@ -25,6 +25,8 @@
         :footer-stats="footerStats"
         :is-uploading="props.isUploading"
         :is-paused="props.isPaused"
+        :get-group-background="getGroupBackgroundColor"
+        :is-first-in-group="isFirstInGroup"
         @cancel="handleCancel"
         @undo="handleUndo"
         @remove="handleRemove"
@@ -65,6 +67,7 @@
 import { computed, watch, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import { useFileDropHandler } from '../composables/useFileDropHandler';
+import { getGroupBackgroundColor, isFirstInGroup } from '../composables/useGroupStyling';
 
 // Component configuration
 defineOptions({
