@@ -72,6 +72,7 @@ function findBestMatchingFile(newFile, existingMatches) {
 ```
 
 **Non-obvious**: Must check ALL metadata matches, not just first one. Example: NEW `/2017/2017-06/Invoices/file.pdf` might match EXISTING `/file.pdf`, `/Invoices/file.pdf`, and `/2017-06/Invoices/file.pdf` - the longest suffix wins.
+n**Tie-breaking**: When multiple EXISTING files have equal-length path suffixes, the first match encountered wins. This simple rule preserves existing primary/best status without requiring complex tie-breaking logic.
 
 ### 3. State Management via `queueItem.hash`
 
@@ -154,6 +155,45 @@ Add new function: `preFilterByMetadataAndPath(newFiles, existingQueue)`
 4. Handle promotions (update existing queue items' status)
 
 **Non-obvious detail**: Files marked as "duplicate" or "copy" during pre-filter should NOT enter the hash calculation phase. They remain in queue with tentative status and `hash: null`.
+
+
+**Promotions handling code**:
+```javascript
+const result = preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
+
+// Add new ready files
+result.readyFiles.forEach(newFile => {
+  newFile.status = 'ready';
+  uploadQueue.value.push(newFile);
+});
+
+// Add new duplicates
+result.duplicateFiles.forEach(item => {
+  item.file.status = 'duplicate';
+  item.file.referenceFileId = item.referenceFileId;
+  uploadQueue.value.push(item.file);
+});
+
+// Add new copies
+result.copyFiles.forEach(item => {
+  item.file.status = 'copy';
+  item.file.referenceFileId = item.referenceFileId;
+  uploadQueue.value.push(item.file);
+});
+
+// Handle promotions - demote existing files
+result.promotions.forEach(promo => {
+  const existingFile = uploadQueue.value.find(f => f.id === promo.existingFileId);
+  if (existingFile) {
+    existingFile.status = 'duplicate';              // Demote from 'ready' to 'duplicate'
+    existingFile.referenceFileId = promo.newPrimaryId;  // Point to new primary
+  }
+});
+```
+
+**Promotions array structure**:
+- `existingFileId`: ID of EXISTING file to demote from 'ready' to 'duplicate'
+- `newPrimaryId`: ID of NEW file that's becoming the primary (used to set `referenceFileId`)
 
 ### Step 3: Add Hash Verification on Hover
 
