@@ -259,6 +259,25 @@ export function useUploadTable() {
     // Increment batch counter for this batch
     const currentBatchOrder = ++batchOrderCounter;
 
+    // Ensure webkitRelativePath is set on all files
+    // This handles both drag-and-drop and file input scenarios
+    files.forEach((file) => {
+      if (!file.webkitRelativePath && file.path) {
+        // If file.path exists but webkitRelativePath doesn't, set it
+        try {
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: file.path,
+            writable: false,
+            enumerable: true,
+            configurable: true,
+          });
+        } catch (e) {
+          // If defineProperty fails, log but continue
+          console.warn('[QUEUE] Could not set webkitRelativePath:', e);
+        }
+      }
+    });
+
     // Sort files by folder path - O(n log n), negligible overhead
     // Folder path is immediately available from File objects (no I/O required)
     // Note: Batch order is the PRIMARY sort (handled by storing batchOrder with each file)
