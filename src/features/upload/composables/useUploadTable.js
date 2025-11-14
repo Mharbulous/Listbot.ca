@@ -62,7 +62,7 @@ export function useUploadTable() {
 
   /**
    * Deduplicate files against existing queue
-   * Checks for one-and-the-same files (same content + metadata)
+   * Checks for redundant files (same content + metadata)
    * @param {Array} newQueueItems - New queue items to check
    * @param {Array} existingQueueSnapshot - Snapshot of queue BEFORE new items were added
    * @returns {Promise<Array>} - Queue items with duplicate status updated
@@ -170,24 +170,24 @@ export function useUploadTable() {
         });
       });
 
-      // Mark one-and-the-same files as duplicates
+      // Mark redundant files
       for (const [metadataKey, metadataItems] of metadataGroups) {
-        if (metadataItems.length === 1) continue; // No one-and-the-same
+        if (metadataItems.length === 1) continue; // No redundant files
 
-        console.log('[DEDUP-TABLE] Found one-and-the-same files:', {
+        console.log('[DEDUP-TABLE] Found redundant files:', {
           metadataKey,
           count: metadataItems.length,
           files: metadataItems.map((i) => ({ name: i.queueItem.name, isExisting: i.isExisting })),
         });
 
-        // Keep first instance, mark others as same (one-and-the-same)
+        // Keep first instance, mark others as redundant
         for (let i = 1; i < metadataItems.length; i++) {
           const { queueItem } = metadataItems[i];
-          queueItem.status = 'same';
+          queueItem.status = 'redundant';
           queueItem.canUpload = false;
-          queueItem.isSame = true;
+          queueItem.isRedundant = true;
 
-          console.log('[DEDUP-TABLE] Marked as same (one-and-the-same):', {
+          console.log('[DEDUP-TABLE] Marked as redundant:', {
             name: queueItem.name,
             status: queueItem.status,
             canUpload: queueItem.canUpload,
@@ -202,7 +202,7 @@ export function useUploadTable() {
           copyCount: metadataGroups.size,
         });
 
-        // Get first file from each metadata group (excluding one-and-the-same duplicates)
+        // Get first file from each metadata group (excluding redundant files)
         const uniqueFiles = Array.from(metadataGroups.values()).map((group) => group[0]);
 
         // Choose best file using priority rules

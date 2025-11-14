@@ -1,7 +1,7 @@
 <template>
   <div
     class="filename-cell"
-    :class="{ 'faded-cell': fileStatus === 'same' }"
+    :class="{ 'faded-cell': fileStatus === 'redundant' }"
     style="flex: 1; min-width: 150px; max-width: 500px"
     :title="fileName"
     @mouseenter="isHovering = true"
@@ -102,7 +102,7 @@ const handlePreview = (event) => {
   user-select: none;
 }
 
-/* Faded cell styling for 'same' status files */
+/* Faded cell styling for 'redundant' status files */
 .faded-cell {
   opacity: 0.4;
   color: #9ca3af;

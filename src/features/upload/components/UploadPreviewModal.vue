@@ -22,9 +22,9 @@
             <span class="stat-value stat-highlight">{{ summary.copies }}</span>
           </div>
 
-          <div v-if="summary.oneAndTheSame > 0" class="stat-row">
-            <span class="stat-label">One-and-the-Same:</span>
-            <span class="stat-value stat-muted">{{ summary.oneAndTheSame }} (filtered)</span>
+          <div v-if="summary.redundant > 0" class="stat-row">
+            <span class="stat-label">Redundant:</span>
+            <span class="stat-value stat-muted">{{ summary.redundant }} (filtered)</span>
           </div>
 
           <div v-if="summary.readErrors > 0" class="stat-row">
@@ -83,7 +83,7 @@ defineProps({
       totalSelected: 0,
       uniqueFiles: 0,
       copies: 0,
-      oneAndTheSame: 0,
+      redundant: 0,
       readErrors: 0,
       toUpload: 0,
       metadataOnly: 0,

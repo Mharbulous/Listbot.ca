@@ -9,7 +9,7 @@
       v-else
       type="checkbox"
       class="file-checkbox"
-      :class="{ 'faded-checkbox': fileStatus === 'same', 'delete-checkbox': fileStatus === 'same' }"
+      :class="{ 'faded-checkbox': fileStatus === 'redundant', 'delete-checkbox': fileStatus === 'redundant' }"
       :checked="isChecked"
       :disabled="isDisabled"
       @change="handleToggle"
@@ -43,12 +43,12 @@ const props = defineProps({
 const emit = defineEmits(['toggle', 'remove', 'swap']);
 
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
-// For 'same' files: checkbox is checked (to show red X) but disabled (can't toggle)
+// For 'redundant' files: checkbox is checked (to show red X) but disabled (can't toggle)
 // For 'copy' files: checkbox is unchecked (can be clicked to make it the primary)
 // Unchecked means: skip, n/a, read error, copy
 const isChecked = computed(() => {
-  // 'same' files are checked (but disabled) to show red X
-  if (props.fileStatus === 'same') {
+  // 'redundant' files are checked (but disabled) to show red X
+  if (props.fileStatus === 'redundant') {
     return true;
   }
   return (
@@ -73,8 +73,8 @@ const isDisabled = computed(() => {
 const checkboxTitle = computed(() => {
   if (props.fileStatus === 'completed') {
     return 'Already uploaded';
-  } else if (props.fileStatus === 'same') {
-    return 'Click to remove duplicate file from queue';
+  } else if (props.fileStatus === 'redundant') {
+    return 'Click to remove redundant file from queue';
   } else if (props.fileStatus === 'copy') {
     return 'Click to make this copy the primary file for upload';
   } else if (props.fileStatus === 'duplicate') {
@@ -92,9 +92,9 @@ const checkboxTitle = computed(() => {
 const handleToggle = (event) => {
   const isChecked = event.target.checked;
 
-  // Special case: 'same' files - clicking removes them from the queue
+  // Special case: 'redundant' files - clicking removes them from the queue
   // CRITICAL: Prevent default to avoid checkbox state change that could affect wrong row during array splice
-  if (props.fileStatus === 'same') {
+  if (props.fileStatus === 'redundant') {
     event.preventDefault(); // Prevent checkbox from being unchecked
     emit('remove', props.fileId);
     return;
@@ -169,7 +169,7 @@ const handleToggle = (event) => {
   font-size: 16px;
 }
 
-/* Red X for delete button (same files - clickable) */
+/* Red X for delete button (redundant files - clickable) */
 .file-checkbox.delete-checkbox:checked::after {
   content: '✘';
   color: red;
@@ -199,12 +199,12 @@ const handleToggle = (event) => {
   background-color: #f3f4f6;
 }
 
-/* Faded/ghostly appearance for 'same' files */
+/* Faded/ghostly appearance for 'redundant' files */
 .file-checkbox.faded-checkbox {
   opacity: 0.4;
 }
 
-/* Delete button styling for 'same' files */
+/* Delete button styling for 'redundant' files */
 .file-checkbox.delete-checkbox {
   cursor: pointer;
 }

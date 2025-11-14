@@ -230,11 +230,18 @@ export function useQueueCore() {
         // Unique hash - not a duplicate
         finalFiles.push(fileRefs[0]);
       } else {
-        // Multiple files with same hash - check if they're one-and-the-same or duplicate files
-        const oneAndTheSameGroups = new Map(); // metadata_key -> [file_references]
+        // Multiple files with same hash - check if they're redundant or copy files
+        const redundantFileGroups = new Map(); // metadata_key -> [file_references]
 
         fileRefs.forEach((fileRef) => {
-          // Create metadata signature for one-and-the-same source file detection
+          // Create metadata signature for redundant source file detection
+          //
+          // Files are considered redundant when:
+          //   - Their folder paths are hierarchically nested or related (e.g., /, /Arrears, /2. BDLC Invoices/Arrears),
+          //     indicating the same file queued multiple times with varying path context
+          //   - Their folder paths fall within the same hierarchical branch (e.g., /2025/2. BDLC Invoices/Arrears,
+          //     /2025/2. BDLC Invoices, /2025), where path differences provide no additional archival or organizational value
+          //
           // MUST include path to distinguish copies in different folders
           const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
 
@@ -245,53 +252,53 @@ export function useQueueCore() {
             metadata: fileRef.metadata,
           });
 
-          if (!oneAndTheSameGroups.has(metadataKey)) {
-            oneAndTheSameGroups.set(metadataKey, []);
+          if (!redundantFileGroups.has(metadataKey)) {
+            redundantFileGroups.set(metadataKey, []);
           }
-          oneAndTheSameGroups.get(metadataKey).push(fileRef);
+          redundantFileGroups.get(metadataKey).push(fileRef);
         });
 
-        // Handle one-and-the-same files and duplicate files
-        for (const [metadataKey, oneAndTheSameFiles] of oneAndTheSameGroups) {
+        // Handle redundant files and copy files
+        for (const [metadataKey, redundantFiles] of redundantFileGroups) {
           console.log('[DEDUP-GROUPS] Processing metadata group:', {
             metadataKey,
-            fileCount: oneAndTheSameFiles.length,
-            files: oneAndTheSameFiles.map((f) => ({ name: f.file.name, path: f.path })),
+            fileCount: redundantFiles.length,
+            files: redundantFiles.map((f) => ({ name: f.file.name, path: f.path })),
           });
 
-          if (oneAndTheSameFiles.length === 1) {
+          if (redundantFiles.length === 1) {
             // Unique file (different metadata from others with same hash)
-            finalFiles.push(oneAndTheSameFiles[0]);
+            finalFiles.push(redundantFiles[0]);
           } else {
-            // One-and-the-same file selected multiple times
-            // Keep first instance as ready, mark others as duplicate (shown in queue but cannot be selected)
-            const chosenFile = oneAndTheSameFiles[0];
+            // Redundant file selected multiple times
+            // Keep first instance as ready, mark others as redundant (shown in queue but cannot be selected)
+            const chosenFile = redundantFiles[0];
             finalFiles.push(chosenFile);
 
-            console.log('[DEDUP-MARK] Found one-and-the-same files:', {
-              count: oneAndTheSameFiles.length,
+            console.log('[DEDUP-MARK] Found redundant files:', {
+              count: redundantFiles.length,
               chosenFile: chosenFile.file.name,
-              duplicates: oneAndTheSameFiles.slice(1).map((f) => f.file.name),
+              redundant: redundantFiles.slice(1).map((f) => f.file.name),
             });
 
-            // Mark subsequent instances as same (one-and-the-same)
-            for (let i = 1; i < oneAndTheSameFiles.length; i++) {
-              const sameFile = oneAndTheSameFiles[i];
-              sameFile.status = 'same';
-              sameFile.canUpload = false; // Disable checkbox
-              console.log('[DEDUP-MARK] Marking as same (one-and-the-same):', {
-                fileName: sameFile.file.name,
-                status: sameFile.status,
-                canUpload: sameFile.canUpload,
+            // Mark subsequent instances as redundant
+            for (let i = 1; i < redundantFiles.length; i++) {
+              const redundantFile = redundantFiles[i];
+              redundantFile.status = 'redundant';
+              redundantFile.canUpload = false; // Disable checkbox
+              console.log('[DEDUP-MARK] Marking as redundant:', {
+                fileName: redundantFile.file.name,
+                status: redundantFile.status,
+                canUpload: redundantFile.canUpload,
               });
-              finalFiles.push(sameFile); // Keep in queue for visibility
+              finalFiles.push(redundantFile); // Keep in queue for visibility
             }
           }
         }
 
-        // If we have multiple distinct files with same hash (duplicate files), choose the best one
-        if (oneAndTheSameGroups.size > 1) {
-          const allUniqueFiles = Array.from(oneAndTheSameGroups.values()).map((group) => group[0]);
+        // If we have multiple distinct files with same hash (copy files), choose the best one
+        if (redundantFileGroups.size > 1) {
+          const allUniqueFiles = Array.from(redundantFileGroups.values()).map((group) => group[0]);
           if (allUniqueFiles.length > 1) {
             const bestFile = chooseBestFile(allUniqueFiles);
 

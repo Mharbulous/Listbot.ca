@@ -106,7 +106,7 @@ export function useFileQueueCore() {
         sourcePath: fileRef.path || getFilePath(fileRef),
         metadata: fileRef.metadata,
         status: fileRef.status,
-        isDuplicate: fileRef.status === 'same' || fileRef.status === 'duplicate' || fileRef.status === 'uploadMetadataOnly',
+        isDuplicate: fileRef.status === 'redundant' || fileRef.status === 'duplicate' || fileRef.status === 'uploadMetadataOnly',
         canUpload: fileRef.canUpload, // Preserve canUpload flag
       };
 

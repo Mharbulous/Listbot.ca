@@ -50,9 +50,9 @@ export function useQueueProgress() {
 
       const result = {
         ...fileRef,
-        // Preserve 'same' and 'read error' statuses, otherwise set to 'ready'
-        status: fileRef.status === 'same' || fileRef.status === 'read error' ? fileRef.status : 'ready',
-        // Preserve canUpload flag if it was set (e.g., false for same/duplicate files)
+        // Preserve 'redundant' and 'read error' statuses, otherwise set to 'ready'
+        status: fileRef.status === 'redundant' || fileRef.status === 'read error' ? fileRef.status : 'ready',
+        // Preserve canUpload flag if it was set (e.g., false for redundant/duplicate files)
         canUpload: fileRef.canUpload !== undefined ? fileRef.canUpload : true,
       };
 

@@ -155,37 +155,44 @@ async function processFiles(files, batchId) {
         // Unique hash - not a duplicate
         finalFiles.push(fileRefs[0]);
       } else {
-        // Multiple files with same hash - check if they're one-and-the-same or duplicate files
-        const oneAndTheSameGroups = new Map(); // metadata_key -> [file_references]
+        // Multiple files with same hash - check if they're redundant or copy files
+        const redundantFileGroups = new Map(); // metadata_key -> [file_references]
 
         fileRefs.forEach((fileRef) => {
-          // Create metadata signature for one-and-the-same file detection
+          // Create metadata signature for redundant file detection
+          //
+          // Files are considered redundant when:
+          //   - Their folder paths are hierarchically nested or related (e.g., /, /Arrears, /2. BDLC Invoices/Arrears),
+          //     indicating the same file queued multiple times with varying path context
+          //   - Their folder paths fall within the same hierarchical branch (e.g., /2025/2. BDLC Invoices/Arrears,
+          //     /2025/2. BDLC Invoices, /2025), where path differences provide no additional archival or organizational value
+          //
           // MUST include path to distinguish copies in different folders
           const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}_${fileRef.path}`;
 
-          if (!oneAndTheSameGroups.has(metadataKey)) {
-            oneAndTheSameGroups.set(metadataKey, []);
+          if (!redundantFileGroups.has(metadataKey)) {
+            redundantFileGroups.set(metadataKey, []);
           }
-          oneAndTheSameGroups.get(metadataKey).push(fileRef);
+          redundantFileGroups.get(metadataKey).push(fileRef);
         });
 
-        // Step 5: Handle one-and-the-same files and duplicate files
-        for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
-          if (oneAndTheSameFiles.length === 1) {
+        // Step 5: Handle redundant files and copy files
+        for (const [, redundantFiles] of redundantFileGroups) {
+          if (redundantFiles.length === 1) {
             // Unique file (different metadata from others with same hash)
-            finalFiles.push(oneAndTheSameFiles[0]);
+            finalFiles.push(redundantFiles[0]);
           } else {
-            // One-and-the-same file selected multiple times - just pick the first one
-            const chosenFile = oneAndTheSameFiles[0];
+            // Redundant file selected multiple times - just pick the first one
+            const chosenFile = redundantFiles[0];
             finalFiles.push(chosenFile);
 
-            // Don't mark others as duplicates - they're the same file, just filter them out
+            // Don't mark others as copies - they're redundant files, just filter them out
           }
         }
 
-        // If we have multiple distinct source files with same hash (duplicate files), choose the best one
-        if (oneAndTheSameGroups.size > 1) {
-          const allUniqueFiles = Array.from(oneAndTheSameGroups.values()).map((group) => group[0]);
+        // If we have multiple distinct source files with same hash (copy files), choose the best one
+        if (redundantFileGroups.size > 1) {
+          const allUniqueFiles = Array.from(redundantFileGroups.values()).map((group) => group[0]);
           if (allUniqueFiles.length > 1) {
             const bestFile = chooseBestFile(allUniqueFiles);
 

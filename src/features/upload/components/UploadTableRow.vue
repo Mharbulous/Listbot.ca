@@ -19,10 +19,10 @@
     <!-- File Type Icon Column (40px) - SECOND COLUMN -->
     <div
       class="row-cell file-type-cell"
-      :class="{ 'faded-cell': file.status === 'same' }"
+      :class="{ 'faded-cell': file.status === 'redundant' }"
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
-      <!-- Show file type icon for all files (faded for 'same' status) -->
+      <!-- Show file type icon for all files (faded for 'redundant' status) -->
       <FileTypeIcon :file-name="file.name" />
     </div>
 
@@ -38,7 +38,7 @@
     <!-- Size Column (100px fixed) -->
     <div
       class="row-cell size-cell"
-      :class="{ 'faded-cell': file.status === 'same' }"
+      :class="{ 'faded-cell': file.status === 'redundant' }"
       style="width: 100px; flex-shrink: 0"
     >
       {{ formatFileSize(file.size) }}
@@ -47,7 +47,7 @@
     <!-- Modified Column (120px fixed) -->
     <div
       class="row-cell modified-cell"
-      :class="{ 'faded-cell': file.status === 'same' }"
+      :class="{ 'faded-cell': file.status === 'redundant' }"
       style="width: 120px; flex-shrink: 0"
       :title="modifiedDateTooltip"
     >
@@ -57,7 +57,7 @@
     <!-- Folder Path Column (flexible - expands based on content, max 500px) -->
     <div
       class="row-cell path-cell"
-      :class="{ 'faded-cell': file.status === 'same' }"
+      :class="{ 'faded-cell': file.status === 'redundant' }"
       style="flex: 1; min-width: 130px; max-width: 500px"
       :title="file.folderPath"
     >
@@ -120,7 +120,7 @@ const handleCheckboxToggle = ({ fileId, isChecked }) => {
   }
 };
 
-// Handle remove from SelectCell (for 'same' files)
+// Handle remove from SelectCell (for 'redundant' files)
 const handleRemove = (fileId) => {
   emit('remove', fileId);
 };
@@ -211,7 +211,7 @@ const handleRowDoubleClick = () => {
   justify-content: flex-start;
 }
 
-/* Faded cell styling for 'same' status files */
+/* Faded cell styling for 'redundant' status files */
 .faded-cell {
   opacity: 0.4;
   color: #9ca3af;
