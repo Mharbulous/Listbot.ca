@@ -210,13 +210,13 @@ const footerStats = computed(() => {
   const copyCount = props.allFiles.filter((f) => f.status === 'copy').length;
 
   // Skip-only count = files with status === 'skip' ONLY (for Clear Skipped Files menu item)
-  const skipOnlyCount = removed; // This is the original 'removed' count (line 177) before adding redundant/n/a
+  const skipOnlyCount = removed; // Same as 'removed' count - only files with status === 'skip'
 
   return {
     total,
     totalSize: formatBytes(totalSize),
     ready,
-    removed: removed + duplicates + naFiles, // Include duplicate files and n/a files in "Skipped" counter
+    removed, // Only files with status === 'skip' (not duplicates or n/a files)
     duplicates,
     failed,
     uploaded,
