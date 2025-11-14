@@ -617,8 +617,12 @@ export function useUploadTable() {
     // Find all files with the same hash
     const sameHashFiles = uploadQueue.value.filter((f) => f.hash === copyFile.hash);
 
-    // Find the current primary file (status = 'ready')
-    const primaryFile = sameHashFiles.find((f) => f.status === 'ready');
+    // Find the current primary file (status = 'ready' or 'skip')
+    // Check for 'ready' first, then 'skip' if the group is skipped
+    let primaryFile = sameHashFiles.find((f) => f.status === 'ready');
+    if (!primaryFile) {
+      primaryFile = sameHashFiles.find((f) => f.status === 'skip');
+    }
 
     if (!primaryFile) {
       console.warn('[QUEUE] No primary file found for hash group, making copy the primary:', copyFile.hash.substring(0, 8));
@@ -626,6 +630,8 @@ export function useUploadTable() {
       copyFile.isCopy = false;
     } else {
       // Swap statuses (rows stay in current order)
+      // The old primary becomes a copy, regardless of whether it was 'ready' or 'skip'
+      const oldPrimaryWasSkipped = primaryFile.status === 'skip';
       primaryFile.status = 'copy';
       primaryFile.isCopy = true;
       copyFile.status = 'ready';
@@ -633,7 +639,8 @@ export function useUploadTable() {
 
       console.log('[QUEUE] Swapped copy to primary (rows unchanged):', {
         newPrimary: copyFile.name,
-        newCopy: primaryFile.name,
+        oldPrimary: primaryFile.name,
+        oldPrimaryWasSkipped,
         hash: copyFile.hash.substring(0, 8) + '...',
       });
     }

@@ -68,7 +68,7 @@
 
     <!-- Status Column (120px fixed) -->
     <div class="row-cell status-cell-wrapper" style="width: 120px; flex-shrink: 0">
-      <StatusCell :status="file.status" />
+      <StatusCell :status="file.displayedStatus || file.status" />
     </div>
   </div>
 </template>

@@ -84,15 +84,43 @@ const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile,
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
 
+// Enhanced upload queue with computed displayed status
+// Copy files should show 'skip' status when their primary is skipped
+const enhancedUploadQueue = computed(() => {
+  return uploadQueue.value.map(file => {
+    // If this is a copy file, check if its primary is skipped
+    if (file.status === 'copy' && file.hash) {
+      // Find the primary file (same hash, status = 'ready' or 'skip')
+      const primaryFile = uploadQueue.value.find(f =>
+        f.hash === file.hash && (f.status === 'ready' || f.status === 'skip')
+      );
+
+      // If primary is skipped, display this copy as skipped too
+      if (primaryFile && primaryFile.status === 'skip') {
+        return {
+          ...file,
+          displayedStatus: 'skip'
+        };
+      }
+    }
+
+    // Otherwise, display the actual status
+    return {
+      ...file,
+      displayedStatus: file.status
+    };
+  });
+});
+
 // Filtered upload queue based on duplicatesHidden state
 const filteredUploadQueue = computed(() => {
   if (!duplicatesHidden.value) {
-    return uploadQueue.value;
+    return enhancedUploadQueue.value;
   }
   // When duplicates are hidden, only show files that are NOT duplicates/copies
   // Show files with status: 'ready', 'skip', 'n/a', 'read error', 'error', 'completed', etc.
   // Hide files with status: 'duplicate', 'copy'
-  return uploadQueue.value.filter((file) =>
+  return enhancedUploadQueue.value.filter((file) =>
     file.status !== 'duplicate' &&
     file.status !== 'copy'
   );
