@@ -86,6 +86,11 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  allFiles: {
+    type: Array,
+    required: true,
+    default: () => [],
+  },
   isEmpty: {
     type: Boolean,
     default: false,
@@ -202,7 +207,8 @@ const footerStats = computed(() => {
   const uncheckedCount = removed + redundantFiles + naFiles + readErrors;
 
   // Copy count = files with status === 'copy' (for Hide/Show Copies menu item)
-  const copyCount = props.files.filter((f) => f.status === 'copy').length;
+  // IMPORTANT: Use allFiles (not files) to count ALL copies, regardless of visibility
+  const copyCount = props.allFiles.filter((f) => f.status === 'copy').length;
 
   // Skip-only count = files with status === 'skip' ONLY (for Clear Skipped Files menu item)
   const skipOnlyCount = removed; // This is the original 'removed' count (line 177) before adding redundant/n/a

@@ -12,6 +12,7 @@
       <!-- Upload Table with integrated empty state -->
       <UploadTable
         :files="filteredUploadQueue"
+        :all-files="uploadQueue"
         :is-empty="uploadQueue.length === 0"
         :is-uploading="uploadAdapter.isUploading.value"
         :is-paused="uploadAdapter.isPaused.value"
