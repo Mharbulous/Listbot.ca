@@ -72,10 +72,11 @@ By performing hash and database operations DURING upload, users never notice the
 
 This app is designed for **litigation document discovery**, which requires specific terminology:
 
-- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value
+- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value. Duplicates are not uploaded and their metadata is not copied.
   - Marked with status "duplicate" in the queue (gray/white dot, checkbox disabled)
   - Visible in queue for transparency but not selectable for upload
-- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful
+- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful. Copies are not uploaded to storage, but their metadata is recorded for informational value.
+- **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value.
 - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
 
 ### Non-Negotiable Requirements
