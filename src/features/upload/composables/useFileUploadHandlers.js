@@ -38,10 +38,38 @@ export const useFileUploadHandlers = ({
 }) => {
   /**
    * Process duplicate file (consolidated logic)
-   * Skips upload and records metadata for files that are duplicates within the queue
+   * Skips upload and DOES NOT record metadata for true duplicates
+   * (same hash AND same metadata - no informational value)
    */
   const processDuplicateFile = async (queueFile) => {
     updateUploadStatus('currentFile', queueFile.sourceName, 'processing_duplicate');
+    updateFileStatus(queueFile, 'skipped');
+
+    await safeLog(
+      async () =>
+        await logFileEvent(
+          logUploadEvent,
+          generateMetadataHash,
+          'upload_skipped_duplicate',
+          queueFile,
+          queueFile.hash
+        ),
+      `duplicate file ${queueFile.sourceName}`
+    );
+
+    // DO NOT save metadata for duplicates - no informational value
+    // Metadata is not copied per the duplicate definition
+
+    updateUploadStatus('skipped');
+  };
+
+  /**
+   * Process copy file (consolidated logic)
+   * Skips upload but DOES record metadata for copies
+   * (same hash but different metadata - has informational value)
+   */
+  const processCopyFile = async (queueFile) => {
+    updateUploadStatus('currentFile', queueFile.sourceName, 'processing_copy');
     updateFileStatus(queueFile, 'skipped');
 
     await safeLog(
@@ -53,7 +81,7 @@ export const useFileUploadHandlers = ({
           queueFile,
           queueFile.hash
         ),
-      `duplicate file ${queueFile.sourceName}`
+      `copy file ${queueFile.sourceName}`
     );
 
     await safeMetadata(
@@ -64,7 +92,7 @@ export const useFileUploadHandlers = ({
           queueFile,
           queueFile.hash
         ),
-      `for duplicate ${queueFile.sourceName}`
+      `for copy ${queueFile.sourceName}`
     );
 
     updateUploadStatus('skipped');
@@ -207,10 +235,21 @@ export const useFileUploadHandlers = ({
           continue;
         }
 
-        // Handle duplicate files
+        // Handle duplicate files (same hash AND same metadata - no metadata saved)
         if (queueFile.isDuplicate) {
           try {
             await processDuplicateFile(queueFile);
+          } catch {
+            updateFileStatus(queueFile, 'failed');
+            updateUploadStatus('failed');
+          }
+          continue;
+        }
+
+        // Handle copy files (same hash but different metadata - metadata IS saved)
+        if (queueFile.isCopy) {
+          try {
+            await processCopyFile(queueFile);
           } catch {
             updateFileStatus(queueFile, 'failed');
             updateUploadStatus('failed');
@@ -373,6 +412,7 @@ export const useFileUploadHandlers = ({
 
   return {
     processDuplicateFile,
+    processCopyFile,
     processExistingFile,
     processNewFileUpload,
     continueUpload,

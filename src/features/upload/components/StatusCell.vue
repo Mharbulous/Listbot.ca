@@ -31,12 +31,12 @@ const props = defineProps({
         'error',
         'network_error',
         'copy',
-        'redundant',
         'duplicate',
         'read error',
         'uploaded',
         'failed',
-        'uploadMetadataOnly',
+        'redundant', // Legacy - deprecated in favor of 'duplicate'
+        'uploadMetadataOnly', // Legacy - deprecated in favor of 'copy'
         'unknown',
         'n/a',
       ].includes(value),
@@ -58,10 +58,10 @@ const statusTextMap = {
   failed: 'Failed',
   network_error: 'Network Error',
   copy: 'Copy',
-  redundant: 'Redundant',
   duplicate: 'Duplicate',
   'read error': 'Read Error',
-  uploadMetadataOnly: 'Metadata Only', // Legacy - deprecated in favor of 'copy'
+  redundant: 'Duplicate', // Legacy - maps to 'Duplicate' for backward compatibility
+  uploadMetadataOnly: 'Copy', // Legacy - maps to 'Copy' for backward compatibility
   unknown: 'Unknown',
   'n/a': 'N/A',
 };
@@ -133,13 +133,15 @@ const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
   background-color: #9c27b0; /* Purple - indicates copy (same hash, different metadata) */
 }
 
-.status-redundant {
-  background-color: #ffffff; /* White - indicates redundant file (already in queue) */
+.status-duplicate {
+  background-color: #ffffff; /* White - indicates duplicate file (same hash, same metadata) */
   border: 1px solid #000000; /* Black border for visibility */
 }
 
-.status-duplicate {
-  background-color: #ff9800; /* Orange - indicates file already exists in Firebase Storage */
+.status-redundant {
+  /* Legacy status - maps to duplicate styling */
+  background-color: #ffffff; /* White */
+  border: 1px solid #000000; /* Black border */
 }
 
 .status-read.error {
