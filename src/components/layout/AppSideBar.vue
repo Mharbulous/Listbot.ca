@@ -3,7 +3,7 @@
     <!-- Header with Logo -->
     <div class="sidebar-header">
       <img
-        src="/src/assets/images/BDLC Logo transparent.png"
+        src="/src/assets/images/BDLC-Logo-transparent.png"
         alt="Logo"
         class="sidebar-logo"
       />
