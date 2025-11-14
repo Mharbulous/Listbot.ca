@@ -120,6 +120,7 @@ import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
 import UploadTableDropzone from './UploadTableDropzone.vue';
+import { useLazyHashVerification } from '../composables/useLazyHashVerification.js';
 
 // Component configuration
 defineOptions({
@@ -210,6 +211,15 @@ const rowVirtualizer = useVirtualizer(virtualizerOptions);
 // Computed properties for virtual items and total size
 const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+
+// ============================================================================
+// LAZY HASH VERIFICATION: Verify tentative duplicates when rows become visible
+// ============================================================================
+// Convert props.files to computed ref for the composable
+const filesRef = computed(() => props.files);
+
+// Initialize lazy verification - automatically verifies visible tentative duplicates
+useLazyHashVerification(filesRef, virtualItems);
 
 // ============================================================================
 // QUEUE METRICS: Track when files are ready for rendering
