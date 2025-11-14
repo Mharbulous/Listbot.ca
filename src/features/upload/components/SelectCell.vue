@@ -93,13 +93,17 @@ const handleToggle = (event) => {
   const isChecked = event.target.checked;
 
   // Special case: 'same' files - clicking removes them from the queue
+  // CRITICAL: Prevent default to avoid checkbox state change that could affect wrong row during array splice
   if (props.fileStatus === 'same') {
+    event.preventDefault(); // Prevent checkbox from being unchecked
     emit('remove', props.fileId);
     return;
   }
 
   // Special case: 'copy' files - clicking swaps it to become the primary
+  // CRITICAL: Prevent default to avoid checkbox state change that could affect wrong row during array mutation
   if (props.fileStatus === 'copy') {
+    event.preventDefault(); // Prevent checkbox state change
     emit('swap', props.fileId);
     return;
   }
