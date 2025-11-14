@@ -4,15 +4,19 @@
       <!-- File Counts (Left) -->
       <div class="footer-left">
         <span class="footer-stat">
-          <strong>Total:</strong> {{ stats.total }}
+          <strong>{{ stats.ready }}</strong> Ready
         </span>
         <span class="footer-separator">|</span>
         <span class="footer-stat">
-          <strong>Failed:</strong> {{ stats.failed }}
+          <strong>{{ stats.uploaded }}</strong> Uploaded
         </span>
         <span class="footer-separator">|</span>
         <span class="footer-stat">
-          <strong>Uploaded:</strong> {{ stats.uploaded }}/{{ stats.uploadable }}
+          <strong>{{ stats.failed }}</strong> Failed
+        </span>
+        <span class="footer-separator">|</span>
+        <span class="footer-stat">
+          <strong>{{ stats.total }}</strong> Total
         </span>
       </div>
 
