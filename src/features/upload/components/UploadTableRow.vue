@@ -4,7 +4,7 @@
     :class="{
       'copy-file': file.status === 'copy',
       'has-copy-group': file.isCopy || file.status === 'copy',
-      'group-boundary': isFirstInGroup,
+      'group-boundary': isLastInGroup,
     }"
     :style="{ backgroundColor: backgroundColor }"
     @dblclick="handleRowDoubleClick"
@@ -104,6 +104,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isLastInGroup: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
@@ -170,14 +174,13 @@ const handleRowDoubleClick = () => {
 .upload-table-row {
   display: flex;
   height: 48px; /* Must match ROW_HEIGHT in UploadTableVirtualizer.vue */
-  border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.15s ease;
   cursor: default;
 }
 
-/* Group boundary - subtle top border for first file in each hash group */
+/* Group boundary - thin border between groups (only on last file in each group) */
 .upload-table-row.group-boundary {
-  border-top: 2px solid #d1d5db;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 /* Phase 3: Copy group visual indicator (left border) - REMOVED */

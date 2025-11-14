@@ -70,6 +70,31 @@ export function isFirstInGroup(file, index, files) {
 }
 
 /**
+ * Check if file is the last in its hash group
+ * Last file in each group gets a bottom border to separate from next group
+ *
+ * @param {Object} file - File object with hash property
+ * @param {number} index - Index of file in the files array
+ * @param {Array} files - All files in the queue
+ * @returns {boolean} - True if last file in its hash group
+ */
+export function isLastInGroup(file, index, files) {
+  // Last file overall is always last in its group
+  if (index === files.length - 1) {
+    return true;
+  }
+
+  // Files without hashes are considered individual groups
+  if (!file.hash) {
+    return true;
+  }
+
+  // Check if next file has a different hash
+  const nextFile = files[index + 1];
+  return !nextFile.hash || nextFile.hash !== file.hash;
+}
+
+/**
  * Composable export (for Vue component usage)
  * Not strictly needed since we export individual functions,
  * but follows Vue composable pattern for consistency
@@ -78,5 +103,6 @@ export function useGroupStyling() {
   return {
     getGroupBackgroundColor,
     isFirstInGroup,
+    isLastInGroup,
   };
 }
