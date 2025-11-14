@@ -21,6 +21,9 @@ export function useUploadTable() {
     total: 0,
   });
 
+  // Cancellation flag for queueing process
+  let cancelQueueingFlag = false;
+
   // Batch order counter (increments each time addFilesToQueue is called)
   // Used for sorting: files are sorted by batch order, then by folder path
   let batchOrderCounter = 0;
@@ -336,6 +339,14 @@ export function useUploadTable() {
 
       // Process remaining files in larger batches
       for (let i = 0; i < remainingCount; i += PHASE2_BATCH_SIZE) {
+        // Check for cancellation
+        if (cancelQueueingFlag) {
+          console.log('[QUEUE] Queueing cancelled by user');
+          queueProgress.value.isQueueing = false;
+          cancelQueueingFlag = false; // Reset flag
+          return;
+        }
+
         const batch = remainingFiles.slice(i, i + PHASE2_BATCH_SIZE);
         const processedBatch = batch.map((file, index) => {
           const isUnsupported = isUnsupportedFileType(file.name);
@@ -604,6 +615,15 @@ export function useUploadTable() {
     console.log(`[QUEUE] Duplicates ${duplicatesHidden.value ? 'hidden' : 'shown'}`);
   };
 
+  /**
+   * Cancel the queueing process
+   * Sets the cancellation flag to stop Phase 2 processing
+   */
+  const cancelQueue = () => {
+    console.log('[QUEUE] Cancel requested');
+    cancelQueueingFlag = true;
+  };
+
   return {
     uploadQueue,
     duplicatesHidden,
@@ -620,5 +640,6 @@ export function useUploadTable() {
     deselectAll,
     swapCopyToPrimary,
     toggleDuplicatesVisibility,
+    cancelQueue,
   };
 }

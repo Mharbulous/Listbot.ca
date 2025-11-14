@@ -5,6 +5,7 @@
       v-if="queueProgress.isQueueing"
       :processed="queueProgress.processed"
       :total="queueProgress.total"
+      @cancel="handleCancelQueue"
     />
 
     <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
@@ -80,7 +81,7 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility } =
+const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue } =
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
 
@@ -216,6 +217,11 @@ const handleClearSkipped = () => {
 const handleToggleDuplicates = () => {
   console.log('[TESTING] Toggle duplicates visibility');
   toggleDuplicatesVisibility();
+};
+
+const handleCancelQueue = () => {
+  console.log('[TESTING] Cancel queue');
+  cancelQueue();
 };
 
 const handleUpload = async () => {
