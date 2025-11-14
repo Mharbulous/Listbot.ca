@@ -279,21 +279,45 @@ export function useQueueCore() {
     const copyFiles = [];
     const promotions = [];
 
-    // Build metadata index from existing queue
-    // Key: filename_size_lastModified
-    const existingMetadataIndex = new Map();
+    // OPTIMIZATION: Build size map first (O(M) - one-time cost)
+    // This groups existing files by size to reduce metadata comparisons from O(N×M) to O(N×k)
+    // where k = avg files per size bucket (typically 3-5, not M which could be 1000+)
+    const existingSizeMap = new Map();
     existingQueue.forEach((item) => {
-      const metadataKey = `${item.name}_${item.size}_${item.sourceLastModified}`;
-      if (!existingMetadataIndex.has(metadataKey)) {
-        existingMetadataIndex.set(metadataKey, []);
+      if (!existingSizeMap.has(item.size)) {
+        existingSizeMap.set(item.size, []);
       }
-      existingMetadataIndex.get(metadataKey).push(item);
+      existingSizeMap.get(item.size).push(item);
     });
 
-    // Process each new file
+    let uniqueSizeCount = 0;
+    let metadataComparisons = 0;
+
+    // Process each new file (O(N × k) where k ≈ 3-5)
     newQueueItems.forEach((newFile) => {
+      // EARLY EXIT: If size is unique, skip all metadata checks
+      const existingSizeGroup = existingSizeMap.get(newFile.size);
+      if (!existingSizeGroup || existingSizeGroup.length === 0) {
+        readyFiles.push(newFile);
+        uniqueSizeCount++;
+        return;
+      }
+
+      // Build metadata index ONLY from same-size candidates (not all existing files)
+      const metadataIndex = new Map();
+      existingSizeGroup.forEach((item) => {
+        const metadataKey = `${item.name}_${item.size}_${item.sourceLastModified}`;
+        if (!metadataIndex.has(metadataKey)) {
+          metadataIndex.set(metadataKey, []);
+        }
+        metadataIndex.get(metadataKey).push(item);
+      });
+
+      // Check for metadata matches within same-size group
       const metadataKey = `${newFile.name}_${newFile.size}_${newFile.sourceLastModified}`;
-      const existingMatches = existingMetadataIndex.get(metadataKey);
+      const existingMatches = metadataIndex.get(metadataKey);
+
+      metadataComparisons += existingSizeGroup.length;
 
       // No metadata matches → mark as ready
       if (!existingMatches || existingMatches.length === 0) {
@@ -337,6 +361,9 @@ export function useQueueCore() {
       duplicates: duplicateFiles.length,
       copies: copyFiles.length,
       promotions: promotions.length,
+      uniqueSizeCount,
+      metadataComparisons,
+      avgComparisonsPerFile: (metadataComparisons / newQueueItems.length).toFixed(2),
     });
 
     return { readyFiles, duplicateFiles, copyFiles, promotions };
