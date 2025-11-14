@@ -180,14 +180,14 @@ const footerStats = computed(() => {
   const totalSize = props.files.reduce((sum, f) => sum + (f.size || 0), 0);
   const ready = props.files.filter((f) => f.status === 'ready').length;
   const removed = props.files.filter((f) => f.status === 'skip').length;
-  const duplicates = props.files.filter((f) => f.status === 'duplicate').length;
-  const redundantFiles = props.files.filter((f) => f.status === 'redundant').length;
+  // Count both 'duplicate' and legacy 'redundant' status as duplicates
+  const duplicates = props.files.filter((f) => f.status === 'duplicate' || f.status === 'redundant').length;
   const failed = props.files.filter((f) => f.status === 'error').length;
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
   const naFiles = props.files.filter((f) => f.status === 'n/a').length;
   const readErrors = props.files.filter((f) => f.status === 'read error').length;
-  // Uploadable = total - duplicates - redundant files - removed - n/a files - read errors
-  const uploadable = total - duplicates - redundantFiles - removed - naFiles - readErrors;
+  // Uploadable = total - duplicates - removed - n/a files - read errors
+  const uploadable = total - duplicates - removed - naFiles - readErrors;
 
   // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not redundant, not n/a, not read errors)
   const checkedFiles = props.files.filter(
