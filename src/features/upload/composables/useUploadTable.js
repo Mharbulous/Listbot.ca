@@ -31,12 +31,12 @@ export function useUploadTable() {
   /**
    * Sort queue by group timestamp and status
    * - Groups with most recently added files appear first (desc groupTimestamp)
-   * - Within each group: ready → copy → same
-   * - Files with same hash are grouped together (primary duplicate immediately above 'same' file)
+   * - Within each group: ready → copy → duplicate
+   * - Files with same hash are grouped together (primary duplicate immediately above 'duplicate' file)
    * - Maintains stable sort within same status
    */
   const sortQueueByGroupTimestamp = () => {
-    const statusOrder = { ready: 0, copy: 1, same: 2, 'n/a': 3, skip: 4, 'read error': 5 };
+    const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
 
     uploadQueue.value.sort((a, b) => {
       // Primary sort: group timestamp (descending - most recent first)
@@ -44,13 +44,13 @@ export function useUploadTable() {
       if (timestampDiff !== 0) return timestampDiff;
 
       // Secondary sort: group by hash (ensures files with same hash appear together)
-      // This ensures the primary duplicate appears immediately above its "same" file
+      // This ensures the primary duplicate appears immediately above its "duplicate" file
       const hashA = a.hash || '';
       const hashB = b.hash || '';
       const hashDiff = hashA.localeCompare(hashB);
       if (hashDiff !== 0) return hashDiff;
 
-      // Tertiary sort: status order (ready < copy < same)
+      // Tertiary sort: status order (ready < copy < duplicate)
       const statusA = statusOrder[a.status] !== undefined ? statusOrder[a.status] : 99;
       const statusB = statusOrder[b.status] !== undefined ? statusOrder[b.status] : 99;
       const statusDiff = statusA - statusB;
@@ -346,7 +346,7 @@ export function useUploadTable() {
     // ========================================================================
     // PHASE 1.7: Sort entire queue by group timestamp
     // Groups with most recently added files appear first
-    // Within each group: ready → copy → same
+    // Within each group: ready → copy → duplicate
     // ========================================================================
     sortQueueByGroupTimestamp();
 
@@ -476,13 +476,13 @@ export function useUploadTable() {
   };
 
   /**
-   * Clear skipped files from queue (files with status 'skip', 'same', 'n/a', or 'read error')
+   * Clear skipped files from queue (files with status 'skip', 'duplicate', 'n/a', or 'read error')
    */
   const clearQueue = () => {
     const beforeCount = uploadQueue.value.length;
     uploadQueue.value = uploadQueue.value.filter((file) =>
       file.status !== 'skip' &&
-      file.status !== 'same' &&
+      file.status !== 'duplicate' &&
       file.status !== 'n/a' &&
       file.status !== 'read error'
     );
@@ -553,12 +553,12 @@ export function useUploadTable() {
 
   /**
    * Select all files (restore all skipped files to 'ready' status)
-   * NOTE: Does NOT affect 'n/a', 'same', 'duplicate', or 'read error' files
+   * NOTE: Does NOT affect 'n/a', 'duplicate', or 'read error' files
    */
   const selectAll = () => {
     let restoredCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Only restore skipped files, don't change completed, n/a, same, duplicate, or read error files
+      // Only restore skipped files, don't change completed, n/a, duplicate, or read error files
       if (file.status === 'skip') {
         file.status = 'ready';
         restoredCount++;
@@ -568,18 +568,17 @@ export function useUploadTable() {
   };
 
   /**
-   * Deselect all files (mark all files as 'skip', except completed, n/a, same, duplicate, and read error files)
-   * NOTE: Does NOT affect files with disabled checkboxes (n/a, same, duplicate, read error)
+   * Deselect all files (mark all files as 'skip', except completed, n/a, duplicate, and read error files)
+   * NOTE: Does NOT affect files with disabled checkboxes (n/a, duplicate, read error)
    */
   const deselectAll = () => {
     let skippedCount = 0;
     uploadQueue.value.forEach((file) => {
-      // Skip all files except completed, n/a, same, duplicate, and read error ones (these have disabled checkboxes)
+      // Skip all files except completed, n/a, duplicate, and read error ones (these have disabled checkboxes)
       if (
         file.status !== 'completed' &&
         file.status !== 'skip' &&
         file.status !== 'n/a' &&
-        file.status !== 'same' &&
         file.status !== 'duplicate' &&
         file.status !== 'read error'
       ) {
