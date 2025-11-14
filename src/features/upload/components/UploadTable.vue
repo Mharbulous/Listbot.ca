@@ -27,6 +27,7 @@
         :is-paused="props.isPaused"
         :get-group-background="getGroupBackgroundColor"
         :is-first-in-group="isFirstInGroup"
+        :is-last-in-group="isLastInGroup"
         @cancel="handleCancel"
         @undo="handleUndo"
         @remove="handleRemove"
@@ -67,7 +68,7 @@
 import { computed, watch, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import { useFileDropHandler } from '../composables/useFileDropHandler';
-import { getGroupBackgroundColor, isFirstInGroup } from '../composables/useGroupStyling';
+import { getGroupBackgroundColor, isFirstInGroup, isLastInGroup } from '../composables/useGroupStyling';
 
 // Component configuration
 defineOptions({
