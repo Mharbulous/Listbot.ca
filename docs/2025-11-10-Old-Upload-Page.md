@@ -4,8 +4,9 @@
 
 This document uses standardized terminology when referring to deduplication concepts:
 
-- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value
-- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful
+- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value. Duplicates are not uploaded and their metadata is not copied.
+- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful. Copies are not uploaded to storage, but their metadata is recorded for informational value.
+- **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value.
 - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
 
 Understanding this distinction is critical for the deduplication system, which detects copies at the storage level (via hash) while preserving each unique metadata combination.
