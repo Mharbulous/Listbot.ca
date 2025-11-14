@@ -75,6 +75,8 @@
             <UploadTableRow
               :file="props.files[virtualRow.index]"
               :scrollbar-width="0"
+              :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
+              :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
               @cancel="handleCancel"
               @undo="handleUndo"
               @remove="handleRemove"
@@ -146,6 +148,15 @@ const props = defineProps({
   isPaused: {
     type: Boolean,
     default: false,
+  },
+  // Group styling functions (PASS-THROUGH ONLY - business logic in composable)
+  getGroupBackground: {
+    type: Function,
+    default: null,
+  },
+  isFirstInGroup: {
+    type: Function,
+    default: null,
   },
 });
 
