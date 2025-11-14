@@ -19,6 +19,12 @@ export function useUploadTable() {
     isQueueing: false,
     processed: 0,
     total: 0,
+    cancelled: false,
+    filesReady: 0,
+    filesCopies: 0,
+    filesDuplicates: 0,
+    filesUnsupported: 0,
+    filesReadError: 0,
   });
 
   // Cancellation flag for queueing process
@@ -299,6 +305,18 @@ export function useUploadTable() {
     // ========================================================================
     sortQueueByGroupTimestamp();
 
+    // Initialize queueProgress stats from Phase 1 files
+    const phase1Stats = uploadQueue.value.reduce((acc, file) => {
+      acc[file.status] = (acc[file.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    queueProgress.value.filesReady = phase1Stats['ready'] || 0;
+    queueProgress.value.filesCopies = phase1Stats['copy'] || 0;
+    queueProgress.value.filesDuplicates = phase1Stats['duplicate'] || 0;
+    queueProgress.value.filesUnsupported = phase1Stats['n/a'] || 0;
+    queueProgress.value.filesReadError = phase1Stats['read error'] || 0;
+
     // Signal Phase 1 complete (for virtualizer to detect)
     window.initialBatchComplete = true;
 
@@ -330,18 +348,18 @@ export function useUploadTable() {
       const remainingFiles = sortedFiles.slice(phase1Count);
       const remainingCount = remainingFiles.length;
 
-      // Show progress indicator for remaining files
-      queueProgress.value = {
-        isQueueing: true,
-        processed: phase1Count,
-        total: totalFiles,
-      };
+      // Show progress indicator for remaining files (preserve existing stats)
+      queueProgress.value.isQueueing = true;
+      queueProgress.value.processed = phase1Count;
+      queueProgress.value.total = totalFiles;
 
       // Process remaining files in larger batches
       for (let i = 0; i < remainingCount; i += PHASE2_BATCH_SIZE) {
         // Check for cancellation
         if (cancelQueueingFlag) {
           console.log('[QUEUE] Queueing cancelled by user');
+          // Stats are already tracked incrementally - just set cancelled flag
+          queueProgress.value.cancelled = true;
           queueProgress.value.isQueueing = false;
           cancelQueueingFlag = false; // Reset flag
           return;
@@ -396,6 +414,18 @@ export function useUploadTable() {
 
         // Sort entire queue by group timestamp
         sortQueueByGroupTimestamp();
+
+        // Update stats with current batch counts
+        const batchStats = processedBatch.reduce((acc, file) => {
+          acc[file.status] = (acc[file.status] || 0) + 1;
+          return acc;
+        }, {});
+
+        queueProgress.value.filesReady += batchStats['ready'] || 0;
+        queueProgress.value.filesCopies += batchStats['copy'] || 0;
+        queueProgress.value.filesDuplicates += batchStats['duplicate'] || 0;
+        queueProgress.value.filesUnsupported += batchStats['n/a'] || 0;
+        queueProgress.value.filesReadError += batchStats['read error'] || 0;
 
         // Update progress
         queueProgress.value.processed = Math.min(phase1Count + i + PHASE2_BATCH_SIZE, totalFiles);

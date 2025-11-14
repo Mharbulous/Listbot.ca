@@ -2,10 +2,17 @@
   <div class="main-viewport">
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
-      v-if="queueProgress.isQueueing"
+      v-if="queueProgress.isQueueing || queueProgress.cancelled"
       :processed="queueProgress.processed"
       :total="queueProgress.total"
+      :cancelled="queueProgress.cancelled"
+      :files-ready="queueProgress.filesReady"
+      :files-copies="queueProgress.filesCopies"
+      :files-duplicates="queueProgress.filesDuplicates"
+      :files-unsupported="queueProgress.filesUnsupported"
+      :files-read-error="queueProgress.filesReadError"
       @cancel="handleCancelQueue"
+      @close="handleCloseModal"
     />
 
     <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
@@ -222,6 +229,11 @@ const handleToggleDuplicates = () => {
 const handleCancelQueue = () => {
   console.log('[TESTING] Cancel queue');
   cancelQueue();
+};
+const handleCloseModal = () => {
+  console.log('[TESTING] Close modal');
+  queueProgress.value.cancelled = false;
+  queueProgress.value.isQueueing = false;
 };
 
 const handleUpload = async () => {
