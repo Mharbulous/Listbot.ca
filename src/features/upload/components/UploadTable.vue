@@ -142,11 +142,12 @@ const handleDrop = (event) => {
 const virtualizerRef = ref(null); // For virtualized content
 
 // Selection state for Select All checkbox
+// Only counts "best" or "primary" files (excludes copies)
 const allFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  // Filter out completed, redundant, n/a, duplicate, and read error files (can't be toggled - checkboxes disabled)
+  // Filter out completed, redundant, n/a, duplicate, copy, and read error files (can't be toggled or are copies)
   const selectableFiles = props.files.filter(
-    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'read error'
+    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
   );
   if (selectableFiles.length === 0) return false;
   // All selectable files must NOT be skipped
@@ -156,7 +157,7 @@ const allFilesSelected = computed(() => {
 const someFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
   const selectableFiles = props.files.filter(
-    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'read error'
+    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
   );
   if (selectableFiles.length === 0) return false;
   const selectedCount = selectableFiles.filter((f) => f.status !== 'skip').length;

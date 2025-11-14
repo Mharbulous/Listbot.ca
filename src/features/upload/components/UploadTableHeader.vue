@@ -8,8 +8,8 @@
         :checked="allSelected"
         :indeterminate="someSelected"
         @change="handleSelectAllToggle"
-        title="Select all files / Deselect all files"
-        aria-label="Select all files"
+        title="Select one from each group / Deselect all primary files"
+        aria-label="Select one from each group or deselect all primary files"
       />
     </div>
 
