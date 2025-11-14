@@ -74,6 +74,7 @@ export function useUploadTable() {
 
   /**
    * Deduplicate files against existing queue
+   * Phase 3a: Pre-filter by metadata BEFORE hash calculation for performance
    * Checks for redundant files (same content + metadata)
    * @param {Array} newQueueItems - New queue items to check
    * @param {Array} existingQueueSnapshot - Snapshot of queue BEFORE new items were added
@@ -85,9 +86,64 @@ export function useUploadTable() {
       existingFiles: existingQueueSnapshot.length,
     });
 
-    // Get all files that need to be checked (existing + new)
-    // Use the snapshot of existing files from BEFORE this batch was added
-    const allFiles = [...existingQueueSnapshot, ...newQueueItems];
+    // ========================================================================
+    // PHASE 3a: Metadata Pre-Filter (BEFORE hash calculation)
+    // Mark files as tentative duplicates/copies based on metadata + folder path
+    // Hash calculation deferred to verification trigger points
+    // ========================================================================
+    const preFilterResult = queueCore.preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
+
+    // Mark ready files
+    preFilterResult.readyFiles.forEach((newFile) => {
+      newFile.status = 'ready';
+      newFile.canUpload = true;
+    });
+
+    // Mark tentative duplicates (NO hash yet - will be verified on hover/delete/upload)
+    preFilterResult.duplicateFiles.forEach((item) => {
+      item.file.status = 'duplicate';
+      item.file.canUpload = false;
+      item.file.isDuplicate = true;
+      item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
+    });
+
+    // Mark tentative copies (NO hash yet - will be verified on hover/delete/upload)
+    preFilterResult.copyFiles.forEach((item) => {
+      item.file.status = 'copy';
+      item.file.canUpload = true;
+      item.file.isCopy = true;
+      item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
+    });
+
+    // Handle promotions - demote existing files when new file is more specific
+    preFilterResult.promotions.forEach((promo) => {
+      const existingFile = uploadQueue.value.find((f) => f.id === promo.existingFileId);
+      if (existingFile) {
+        existingFile.status = 'duplicate'; // Demote from 'ready' to 'duplicate'
+        existingFile.canUpload = false;
+        existingFile.isDuplicate = true;
+        existingFile.referenceFileId = promo.newPrimaryId; // Point to new primary
+        console.log('[PREFILTER] Demoted existing file to duplicate:', {
+          fileName: existingFile.name,
+          newPrimaryId: promo.newPrimaryId,
+        });
+      }
+    });
+
+    // ========================================================================
+    // Hash-based deduplication (fallback for files marked as 'ready')
+    // Only hash files that weren't pre-filtered as duplicates/copies
+    // This ensures existing behavior is preserved for files that need it
+    // ========================================================================
+    const readyFiles = newQueueItems.filter((f) => f.status === 'ready');
+
+    if (readyFiles.length === 0) {
+      console.log('[DEDUP-TABLE] All files pre-filtered, no hash calculation needed');
+      return newQueueItems;
+    }
+
+    // Get all files that need to be checked (existing + ready new files)
+    const allFiles = [...existingQueueSnapshot, ...readyFiles];
 
     // Group by size first (optimization - files with unique sizes can't be duplicates)
     const sizeGroups = new Map();
@@ -102,22 +158,22 @@ export function useUploadTable() {
       });
     });
 
-    console.log('[DEDUP-TABLE] Size groups:', sizeGroups.size);
+    console.log('[DEDUP-TABLE] Size groups for ready files:', sizeGroups.size);
 
     // Find files that need hashing (multiple files with same size)
     const filesToHash = [];
-    for (const [size, items] of sizeGroups) {
+    for (const [, items] of sizeGroups) {
       if (items.length > 1) {
         filesToHash.push(...items);
       }
     }
 
     if (filesToHash.length === 0) {
-      console.log('[DEDUP-TABLE] No files need hashing (all unique sizes)');
+      console.log('[DEDUP-TABLE] No ready files need hashing (all unique sizes)');
       return newQueueItems;
     }
 
-    console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'files');
+    console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'ready files');
 
     // Hash all files that need it (skip files that already have hashes)
     const hashGroups = new Map();
@@ -150,7 +206,7 @@ export function useUploadTable() {
     console.log('[DEDUP-TABLE] Hash groups:', hashGroups.size);
 
     // Check for duplicates within hash groups
-    for (const [hash, items] of hashGroups) {
+    for (const [, items] of hashGroups) {
       if (items.length === 1) continue; // No duplicates
 
       // Group by metadata key (filename_size_modified_path)
@@ -166,7 +222,7 @@ export function useUploadTable() {
       });
 
       // Mark redundant files
-      for (const [metadataKey, metadataItems] of metadataGroups) {
+      for (const [, metadataItems] of metadataGroups) {
         if (metadataItems.length === 1) continue; // No redundant files
 
         // Keep first instance, mark others as duplicate
@@ -661,6 +717,192 @@ export function useUploadTable() {
     cancelQueueingFlag = true;
   };
 
+  /**
+   * Phase 3a: Hash verification on status hover
+   * Verifies tentative duplicate/copy status when user hovers over status column
+   * @param {Object} queueItem - Queue item to verify
+   * @returns {Promise<Object>} - { verified: boolean, hash: string, error: string }
+   */
+  const verifyHashOnHover = async (queueItem) => {
+    // Only verify if status is duplicate/copy and no hash exists
+    if (!queueItem.hash && (queueItem.status === 'duplicate' || queueItem.status === 'copy')) {
+      // Race condition check: Hash might have been calculated by another trigger
+      if (queueItem.hash) {
+        return { verified: true, hash: queueItem.hash };
+      }
+
+      // Calculate hash with error handling
+      try {
+        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+        queueItem.hash = hash;
+      } catch (error) {
+        console.error('[HASH-VERIFY] Hash calculation failed:', {
+          file: queueItem.name,
+          error: error.message,
+        });
+        queueItem.status = 'read error';
+        queueItem.errorMessage = error.message;
+        queueItem.canUpload = false;
+        return { verified: false, error: error.message };
+      }
+
+      // Find best/primary copy using referenceFileId (set during pre-filter)
+      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
+
+      // ERROR CHECK: Best copy MUST have hash
+      if (!bestCopy?.hash) {
+        console.error('[HASH-VERIFY] CRITICAL: Best copy has no hash', {
+          tentativeFile: queueItem.name,
+          referenceFileId: queueItem.referenceFileId,
+          bestCopyFound: !!bestCopy,
+        });
+        return {
+          verified: false,
+          error: 'Cannot verify duplicate status - best copy has no hash. Please report this issue.',
+        };
+      }
+
+      // Compare hashes
+      if (queueItem.hash !== bestCopy.hash) {
+        queueItem.status = 'ready';
+        queueItem.canUpload = true;
+        queueItem.isDuplicate = false;
+        queueItem.isCopy = false;
+        console.warn('[HASH-VERIFY] Hash mismatch - promoting to ready', {
+          file: queueItem.name,
+          tentativeHash: queueItem.hash,
+          bestCopyHash: bestCopy.hash,
+        });
+        return {
+          verified: false,
+          hash: queueItem.hash,
+          mismatch: true,
+          message: `File "${queueItem.name}" was incorrectly marked as duplicate. Status changed to Ready.`,
+        };
+      }
+
+      return { verified: true, hash: queueItem.hash };
+    }
+
+    // Already has hash or not a tentative status
+    return { verified: true, hash: queueItem.hash || 'No hash' };
+  };
+
+  /**
+   * Phase 3a: Hash verification before deletion
+   * Verifies tentative duplicate status before allowing deletion
+   * @param {Object} queueItem - Queue item to verify before deletion
+   * @returns {Promise<Object>} - { allowDeletion: boolean, message: string }
+   */
+  const verifyHashBeforeDelete = async (queueItem) => {
+    if (queueItem.status === 'duplicate' && !queueItem.hash) {
+      // Race condition check
+      if (queueItem.hash) {
+        return { allowDeletion: true };
+      }
+
+      // Calculate hash with error handling
+      try {
+        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+        queueItem.hash = hash;
+      } catch (error) {
+        console.error('[DELETE-VERIFY] Hash calculation failed:', {
+          file: queueItem.name,
+          error: error.message,
+        });
+        return {
+          allowDeletion: false,
+          error: `Cannot verify file "${queueItem.name}": ${error.message}`,
+        };
+      }
+
+      // Find best/primary copy using referenceFileId
+      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
+
+      if (!bestCopy?.hash) {
+        console.error('[DELETE-VERIFY] CRITICAL: Best copy has no hash', {
+          tentativeFile: queueItem.name,
+          referenceFileId: queueItem.referenceFileId,
+        });
+        return {
+          allowDeletion: false,
+          error: 'Cannot verify duplicate status - best copy has no hash. Please report this issue.',
+        };
+      }
+
+      if (queueItem.hash !== bestCopy.hash) {
+        queueItem.status = 'ready';
+        queueItem.canUpload = true;
+        queueItem.isDuplicate = false;
+        console.warn('[DELETE-VERIFY] Hash mismatch - blocking deletion', {
+          file: queueItem.name,
+        });
+        return {
+          allowDeletion: false,
+          mismatch: true,
+          message: `File "${queueItem.name}" is actually unique content, not a duplicate. Deletion blocked and status changed to Ready.`,
+        };
+      }
+    }
+
+    return { allowDeletion: true };
+  };
+
+  /**
+   * Phase 3a: Hash verification before upload
+   * Verifies tentative duplicate/copy status before upload
+   * @param {Object} queueItem - Queue item to verify before upload
+   * @returns {Promise<Object>} - { shouldSkip: boolean, message: string }
+   */
+  const verifyHashBeforeUpload = async (queueItem) => {
+    // Always calculate hash if missing (required for Firestore document ID)
+    if (!queueItem.hash) {
+      try {
+        queueItem.hash = await queueCore.generateFileHash(queueItem.sourceFile);
+      } catch (error) {
+        console.error('[UPLOAD-VERIFY] Hash calculation failed:', {
+          file: queueItem.name,
+          error: error.message,
+        });
+        queueItem.status = 'error';
+        queueItem.errorMessage = error.message;
+        return { shouldSkip: true, error: error.message }; // Don't upload files that can't be hashed
+      }
+    }
+
+    // If this was tentatively marked as duplicate/copy, verify now
+    if (queueItem.status === 'duplicate' || queueItem.status === 'copy') {
+      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
+
+      if (!bestCopy?.hash) {
+        console.error('[UPLOAD-VERIFY] CRITICAL: Best copy has no hash', {
+          tentativeFile: queueItem.name,
+          referenceFileId: queueItem.referenceFileId,
+        });
+        // Fail-safe: treat as ready to avoid data loss
+        queueItem.status = 'ready';
+        queueItem.canUpload = true;
+        queueItem.isDuplicate = false;
+        queueItem.isCopy = false;
+      } else if (queueItem.hash !== bestCopy.hash) {
+        queueItem.status = 'ready';
+        queueItem.canUpload = true;
+        queueItem.isDuplicate = false;
+        queueItem.isCopy = false;
+        console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
+          file: queueItem.name,
+        });
+      }
+    }
+
+    // Proceed with normal upload logic
+    if (queueItem.status === 'duplicate' || queueItem.status === 'copy') {
+      return { shouldSkip: true }; // Confirmed duplicate/copy - don't upload
+    }
+
+    return { shouldSkip: false };
+  };
+
   return {
     uploadQueue,
     duplicatesHidden,
@@ -678,5 +920,10 @@ export function useUploadTable() {
     swapCopyToPrimary,
     toggleDuplicatesVisibility,
     cancelQueue,
+
+    // Phase 3a: Hash verification functions
+    verifyHashOnHover,
+    verifyHashBeforeDelete,
+    verifyHashBeforeUpload,
   };
 }

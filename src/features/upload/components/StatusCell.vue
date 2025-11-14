@@ -1,7 +1,7 @@
 <template>
-  <div class="status-cell" :title="hash || ''">
+  <div class="status-cell" :title="tooltipText">
     <span class="status-dot" :class="`status-${status}`"></span>
-    <span class="status-text">{{ statusText }}</span>
+    <span class="status-text">{{ displayStatusText }}</span>
   </div>
 </template>
 
@@ -70,7 +70,31 @@ const statusTextMap = {
   'n/a': 'N/A',
 };
 
-const statusText = computed(() => statusTextMap[props.status] || 'Unknown');
+// Base status text
+const baseStatusText = computed(() => statusTextMap[props.status] || 'Unknown');
+
+// Display status text with tentative indicator
+// Phase 3a: Add "?" for tentative duplicate/copy status (no hash yet)
+const displayStatusText = computed(() => {
+  if ((props.status === 'duplicate' || props.status === 'copy') && !props.hash) {
+    return baseStatusText.value + '?';
+  }
+  return baseStatusText.value;
+});
+
+// Tooltip text
+const tooltipText = computed(() => {
+  if (props.hash) {
+    return props.hash;
+  }
+
+  // Phase 3a: Show helpful tooltip for tentative statuses
+  if ((props.status === 'duplicate' || props.status === 'copy') && !props.hash) {
+    return 'Tentative status - will be verified before upload';
+  }
+
+  return '';
+});
 </script>
 
 <style scoped>
