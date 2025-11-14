@@ -23,37 +23,55 @@ Then apply folder path hierarchy logic to determine status.
 
 ### 2. Folder Path Hierarchy Logic
 
-**CRITICAL**: Root-level files (shorter paths) are **children** of deeper paths.
-- Example: `/file.pdf` is CHILD of `/2017/file.pdf`
+**CRITICAL**: Longer paths are "more specific" and win over shorter paths.
+- Example: `/2017/2017-06/invoice.pdf` is MORE specific than `/2017/invoice.pdf`
+
+**Best Match Algorithm**: When NEW file matches metadata of multiple EXISTING files, find the one with the **longest matching path suffix**.
 
 ```javascript
-function comparePaths(newFolderPath, existingFolderPath) {
-  // Case 1: Identical paths → NEW is "duplicate"
-  if (newFolderPath === existingFolderPath) {
-    return 'duplicate';
+function findBestMatchingFile(newFile, existingMatches) {
+  const newFolderPath = extractFolderPath(newFile.path);
+  let bestMatch = null;
+  let bestMatchScore = -1;
+  let bestMatchType = null;
+
+  for (const existing of existingMatches) {
+    const existingFolderPath = extractFolderPath(existing.path);
+
+    // STOP immediately on exact match (highest priority)
+    if (newFolderPath === existingFolderPath) {
+      return { file: existing, type: 'duplicate' };
+    }
+
+    // NEW is more specific (longer) - ends with EXISTING path
+    if (newFolderPath.endsWith(existingFolderPath)) {
+      const score = existingFolderPath.length; // Longer suffix = better match
+      if (score > bestMatchScore) {
+        bestMatch = existing;
+        bestMatchScore = score;
+        bestMatchType = 'promote_new'; // Demote EXISTING, NEW becomes primary
+      }
+    }
+    // EXISTING is more specific (longer) - ends with NEW path
+    else if (existingFolderPath.endsWith(newFolderPath)) {
+      const score = newFolderPath.length;
+      if (score > bestMatchScore) {
+        bestMatch = existing;
+        bestMatchScore = score;
+        bestMatchType = 'keep_existing'; // NEW is duplicate of EXISTING
+      }
+    }
   }
 
-  // Case 2: NEW is parent of EXISTING (NEW path ends with EXISTING path)
-  // Example: NEW="/2017/2017-06/Invoices" contains EXISTING="/Invoices"
-  // → Promote NEW to best (more specific), demote EXISTING to duplicate
-  if (newFolderPath.endsWith(existingFolderPath)) {
-    return 'promote_new';
-  }
-
-  // Case 3: EXISTING is parent of NEW (EXISTING path ends with NEW path)
-  // Example: EXISTING="/2017/Statements" contains NEW="/Statements"
-  // → Keep EXISTING as best, mark NEW as duplicate
-  if (existingFolderPath.endsWith(newFolderPath)) {
-    return 'keep_existing';
-  }
-
-  // Case 4: Different paths (siblings, cousins, unrelated)
-  // → Mark NEW as "copy" (different metadata that IS meaningful)
-  return 'copy';
+  // No parent/child match found → mark as copy of first match
+  return {
+    file: bestMatch || existingMatches[0],
+    type: bestMatch ? bestMatchType : 'copy'
+  };
 }
 ```
 
-**Edge Case**: Paths must be normalized (forward slashes, case-sensitive comparison).
+**Non-obvious**: Must check ALL metadata matches, not just first one. Example: NEW `/2017/2017-06/Invoices/file.pdf` might match EXISTING `/file.pdf`, `/Invoices/file.pdf`, and `/2017-06/Invoices/file.pdf` - the longest suffix wins.
 
 ### 3. State Management via `queueItem.hash`
 
@@ -102,14 +120,22 @@ Add new function: `preFilterByMetadataAndPath(newFiles, existingQueue)`
 - Extract folder path using: `path.substring(0, path.lastIndexOf('/'))`
 - Normalize paths: `path.replace(/\\/g, '/')` (Windows backslash → forward slash)
 - Comparison is **case-sensitive**
-- Return structure: `{ readyFiles, duplicateFiles, copyFiles, promotions }`
-  - `promotions`: Array of existing files to demote when NEW is promoted
+- Return structure:
+  ```javascript
+  {
+    readyFiles: [],
+    duplicateFiles: [{ file, referenceFileId }], // Track which EXISTING file it matches
+    copyFiles: [{ file, referenceFileId }],      // Track which EXISTING file it matches
+    promotions: [] // EXISTING files to demote when NEW promoted
+  }
+  ```
+- **CRITICAL**: Store `referenceFileId` because tentative duplicates/copies have no hash yet, so can't use hash-based lookup to find best copy during verification.
 
 **Key logic**:
 1. Group new files by metadata key: `${filename}_${size}_${lastModified}`
-2. For each metadata group, compare against existing queue files with same metadata
-3. Apply `comparePaths()` logic to determine status
-4. Track promotions (when NEW becomes best, EXISTING is demoted to duplicate)
+2. For each NEW file with metadata matches, find ALL matching EXISTING files
+3. Use `findBestMatchingFile()` to pick the one with longest path suffix
+4. Track `referenceFileId` for later hash verification
 
 ### Step 2: Integrate Pre-filter into `deduplicateAgainstExisting()`
 
@@ -137,22 +163,35 @@ Add new function: `preFilterByMetadataAndPath(newFiles, existingQueue)`
 ```javascript
 async function onStatusHover(queueItem) {
   if (!queueItem.hash && (queueItem.status === 'duplicate' || queueItem.status === 'copy')) {
-    // Show "Verifying hash..." in tooltip immediately
     tooltipContent.value = 'Verifying hash...';
 
-    // Calculate hash
-    const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-    queueItem.hash = hash;
+    // Race condition check: Hash might have been calculated by another trigger
+    if (queueItem.hash) {
+      tooltipContent.value = queueItem.hash;
+      return;
+    }
 
-    // Find best/primary copy (function exists elsewhere in codebase)
-    const bestCopy = findBestCopyForItem(queueItem); // TODO: Identify this function
+    // Calculate hash with error handling
+    try {
+      const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+      queueItem.hash = hash;
+    } catch (error) {
+      console.error('[HASH-VERIFY] Hash calculation failed:', { file: queueItem.name, error: error.message });
+      showToast(`Cannot verify file "${queueItem.name}": ${error.message}`, 'error');
+      queueItem.status = 'error';
+      queueItem.errorMessage = error.message;
+      return;
+    }
+
+    // Find best/primary copy using referenceFileId (set during pre-filter)
+    const bestCopy = uploadQueue.value.find(f => f.id === queueItem.referenceFileId);
 
     // ERROR CHECK: Best copy MUST have hash
-    if (!bestCopy.hash) {
+    if (!bestCopy?.hash) {
       console.error('[HASH-VERIFY] CRITICAL: Best copy has no hash', {
         tentativeFile: queueItem.name,
-        bestCopyFile: bestCopy.name,
-        bestCopyStatus: bestCopy.status,
+        referenceFileId: queueItem.referenceFileId,
+        bestCopyFound: !!bestCopy,
       });
       showToast('Cannot verify duplicate status - best copy has no hash. Please report this issue.', 'error');
       tooltipContent.value = 'Verification failed';
@@ -161,7 +200,6 @@ async function onStatusHover(queueItem) {
 
     // Compare hashes
     if (queueItem.hash !== bestCopy.hash) {
-      // Mismatch! Auto-promote to ready
       queueItem.status = 'ready';
       queueItem.canUpload = true;
       console.warn('[HASH-VERIFY] Hash mismatch - promoting to ready', {
@@ -178,7 +216,10 @@ async function onStatusHover(queueItem) {
 }
 ```
 
-**Non-obvious detail**: Need to identify the function that finds the best/primary copy for a given queue item. This logic exists elsewhere in the codebase (likely in `useUploadTable.js` or `useQueueCore.js`).
+**Non-obvious details**:
+- Use `referenceFileId` (set during pre-filter) to find best copy, NOT hash-based lookup
+- Check if hash was already calculated (race condition: deletion handler might have calculated it first)
+- Error handling prevents UI from hanging on corrupted/inaccessible files
 
 ### Step 4: Add Hash Verification on Deletion
 
@@ -188,29 +229,36 @@ async function onStatusHover(queueItem) {
 ```javascript
 async function beforeDelete(queueItem) {
   if (queueItem.status === 'duplicate' && !queueItem.hash) {
-    // Show loading indicator
     showLoadingToast('Verifying duplicate before deletion...');
 
-    // Calculate hash
-    const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-    queueItem.hash = hash;
+    // Race condition check
+    if (queueItem.hash) {
+      return { allowDeletion: true };
+    }
 
-    // Find best/primary copy
-    const bestCopy = findBestCopyForItem(queueItem);
+    // Calculate hash with error handling
+    try {
+      const hash = await queueCore.generateFileHash(queueItem.sourceFile);
+      queueItem.hash = hash;
+    } catch (error) {
+      console.error('[DELETE-VERIFY] Hash calculation failed:', { file: queueItem.name, error: error.message });
+      showToast(`Cannot verify file "${queueItem.name}": ${error.message}`, 'error');
+      return { allowDeletion: false };
+    }
 
-    // ERROR CHECK: Best copy MUST have hash
-    if (!bestCopy.hash) {
+    // Find best/primary copy using referenceFileId
+    const bestCopy = uploadQueue.value.find(f => f.id === queueItem.referenceFileId);
+
+    if (!bestCopy?.hash) {
       console.error('[DELETE-VERIFY] CRITICAL: Best copy has no hash', {
         tentativeFile: queueItem.name,
-        bestCopyFile: bestCopy.name,
+        referenceFileId: queueItem.referenceFileId,
       });
       showToast('Cannot verify duplicate status - best copy has no hash. Please report this issue.', 'error');
       return { allowDeletion: false };
     }
 
-    // Compare hashes
     if (queueItem.hash !== bestCopy.hash) {
-      // ABORT deletion! This is unique content
       queueItem.status = 'ready';
       queueItem.canUpload = true;
       console.warn('[DELETE-VERIFY] Hash mismatch - blocking deletion', {
@@ -234,23 +282,28 @@ async function beforeDelete(queueItem) {
 async function beforeUpload(queueItem) {
   // Always calculate hash if missing (required for Firestore document ID)
   if (!queueItem.hash) {
-    queueItem.hash = await queueCore.generateFileHash(queueItem.sourceFile);
+    try {
+      queueItem.hash = await queueCore.generateFileHash(queueItem.sourceFile);
+    } catch (error) {
+      console.error('[UPLOAD-VERIFY] Hash calculation failed:', { file: queueItem.name, error: error.message });
+      queueItem.status = 'error';
+      queueItem.errorMessage = error.message;
+      return { shouldSkip: true }; // Don't upload files that can't be hashed
+    }
   }
 
   // If this was tentatively marked as duplicate/copy, verify now
   if (queueItem.status === 'duplicate' || queueItem.status === 'copy') {
-    const bestCopy = findBestCopyForItem(queueItem);
+    const bestCopy = uploadQueue.value.find(f => f.id === queueItem.referenceFileId);
 
-    // ERROR CHECK
-    if (!bestCopy.hash) {
+    if (!bestCopy?.hash) {
       console.error('[UPLOAD-VERIFY] CRITICAL: Best copy has no hash', {
         tentativeFile: queueItem.name,
-        bestCopyFile: bestCopy.name,
+        referenceFileId: queueItem.referenceFileId,
       });
       showToast('Cannot verify duplicate status - best copy has no hash. Please report this issue.', 'error');
       queueItem.status = 'ready'; // Fail-safe: treat as ready to avoid data loss
     } else if (queueItem.hash !== bestCopy.hash) {
-      // Mismatch! Promote to ready and upload
       queueItem.status = 'ready';
       queueItem.canUpload = true;
       console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
@@ -332,41 +385,17 @@ This ensures zero false positives while hiding hash calculation time within uplo
 
 ## Non-Obvious Implementation Details
 
-### 1. Finding Best/Primary Copy
+### 1. Finding Best/Primary Copy During Pre-filter
 
-**CONFIRMED**: Best/primary copy is identified by status, NOT by explicit reference tracking.
+**CRITICAL**: During pre-filter, tentative duplicates/copies have NO hash yet, so can't use existing hash-based lookup (`uploadQueue.filter(f => f.hash === targetFile.hash)`).
 
-**Logic** (from `useUploadTable.js` lines 614-619):
+**Solution**: Pre-filter stores `referenceFileId` on each tentative duplicate/copy, pointing to the EXISTING file it matched against. During hash verification, use:
+
 ```javascript
-// Find all files with the same hash
-const sameHashFiles = uploadQueue.value.filter((f) => f.hash === targetFile.hash);
-
-// Find the current primary file (status = 'ready' or 'skip')
-let primaryFile = sameHashFiles.find((f) => f.status === 'ready');
-if (!primaryFile) {
-  primaryFile = sameHashFiles.find((f) => f.status === 'skip');
-}
+const bestCopy = uploadQueue.value.find(f => f.id === queueItem.referenceFileId);
 ```
 
-**Key insight**: The primary file is the one with `status === 'ready'` (or `status === 'skip'` if entire group is skipped). No explicit `primaryCopyId` field exists.
-
-**Implementation for hash verification**:
-```javascript
-function findBestCopyForItem(queueItem) {
-  // Find all files with the same hash
-  const sameHashFiles = uploadQueue.value.filter((f) => f.hash === queueItem.hash);
-
-  // Primary file has status 'ready' or 'skip'
-  let primaryFile = sameHashFiles.find((f) => f.status === 'ready');
-  if (!primaryFile) {
-    primaryFile = sameHashFiles.find((f) => f.status === 'skip');
-  }
-
-  return primaryFile; // May be undefined if no primary found (error case)
-}
-```
-
-**Edge case**: If pre-filter marks NEW file as duplicate, the EXISTING file must be the primary (with status 'ready'). The hash comparison verifies this assumption.
+**No cascading updates needed**: When EXISTING file is demoted (due to NEW promotion), don't need to update OTHER files that referenced EXISTING. At upload time, the system finds current primary by `status === 'ready'`, not by stored references. Old references are harmless - hash verification will find the correct primary.
 
 ### 2. Path Normalization Edge Cases
 
@@ -382,6 +411,22 @@ function findBestCopyForItem(queueItem) {
 - Path might be just filename (no folder)
 - `path.lastIndexOf('/')` returns -1 → folder path is empty string
 - Empty string is child of any non-empty path (by definition)
+
+### 5. UI Status Display
+
+**Unverified status indicator**: Show "Duplicate?" or "Copy?" (with `?`) until hash verified.
+
+```javascript
+function getStatusDisplay(queueItem) {
+  const base = queueItem.status.charAt(0).toUpperCase() + queueItem.status.slice(1);
+  if ((queueItem.status === 'duplicate' || queueItem.status === 'copy') && !queueItem.hash) {
+    return base + '?';
+  }
+  return base;
+}
+```
+
+**Remove "?" after verification**: All three hash verification points (hover, delete, upload) confirm the status, so subsequent displays show "Duplicate" or "Copy" without "?".
 
 ### 3. State Transitions
 
