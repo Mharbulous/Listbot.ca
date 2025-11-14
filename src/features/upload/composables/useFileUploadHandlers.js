@@ -9,7 +9,7 @@ import {
   createFileMetadataRecord,
   logFileEvent,
 } from '../utils/uploadHelpers.js';
-import { isNetworkError, getNetworkErrorMessage, getRetryDelay } from '../utils/networkUtils.js';
+import { isNetworkError, getNetworkErrorMessage } from '../utils/networkUtils.js';
 
 /**
  * File Upload Handlers Composable
@@ -286,6 +286,37 @@ export const useFileUploadHandlers = ({
             break;
           }
 
+          // Phase 3a: Hash verification for tentative duplicates/copies
+          // If file was marked as duplicate/copy during pre-filter but hash was deferred,
+          // verify now by comparing hashes
+          if ((queueFile.isDuplicate || queueFile.isCopy) && queueFile.referenceFileId) {
+            const referenceFile = uploadQueue.value.find((f) => f.id === queueFile.referenceFileId);
+
+            if (!referenceFile?.hash) {
+              // CRITICAL ERROR: Reference file should have hash by now
+              console.error('[UPLOAD-VERIFY] CRITICAL: Best copy has no hash', {
+                tentativeFile: queueFile.sourceName,
+                referenceFileId: queueFile.referenceFileId,
+              });
+              // Fail-safe: treat as ready to avoid data loss
+              queueFile.status = 'ready';
+              queueFile.isDuplicate = false;
+              queueFile.isCopy = false;
+            } else if (fileHash !== referenceFile.hash) {
+              // Hash mismatch - this is actually unique content, promote to ready
+              queueFile.status = 'ready';
+              queueFile.isDuplicate = false;
+              queueFile.isCopy = false;
+              console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
+                file: queueFile.sourceName,
+                tentativeHash: fileHash,
+                referenceHash: referenceFile.hash,
+              });
+              // Continue with upload below
+            }
+            // If hashes match, continue with duplicate/copy processing
+          }
+
           // Check if file exists with retry callback
           updateUploadStatus('currentFile', queueFile.sourceName, 'checking_existing');
           const retryCallback = async (attempt, delayMs) => {
@@ -380,7 +411,6 @@ export const useFileUploadHandlers = ({
         const networkErrors = uploadQueue.value.filter(
           (f) => f.status === 'network_error'
         ).length;
-        const otherErrors = uploadStatus.value.failed - networkErrors;
 
         if (uploadStatus.value.failed === 0) {
           showNotification(`All ${totalProcessed} files processed successfully!`, 'success');
