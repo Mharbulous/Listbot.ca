@@ -201,6 +201,12 @@ const footerStats = computed(() => {
   // Unchecked files = files that have been skipped OR marked as redundant OR n/a OR read errors
   const uncheckedCount = removed + redundantFiles + naFiles + readErrors;
 
+  // Copy count = files with status === 'copy' (for Hide/Show Copies menu item)
+  const copyCount = props.files.filter((f) => f.status === 'copy').length;
+
+  // Skip-only count = files with status === 'skip' ONLY (for Clear Skipped Files menu item)
+  const skipOnlyCount = removed; // This is the original 'removed' count (line 177) before adding redundant/n/a
+
   return {
     total,
     totalSize: formatBytes(totalSize),
@@ -213,6 +219,8 @@ const footerStats = computed(() => {
     checkedCount,
     checkedSize: formatBytes(checkedSize),
     uncheckedCount,
+    copyCount,
+    skipOnlyCount,
   };
 });
 
