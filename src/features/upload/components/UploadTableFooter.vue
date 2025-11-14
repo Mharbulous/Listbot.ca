@@ -34,7 +34,7 @@
               variant="elevated"
               size="large"
               class="clear-queue-btn text-black"
-              :disabled="stats.uncheckedCount === 0"
+              :disabled="stats.duplicates === 0 && stats.skipOnlyCount === 0 && stats.copyCount === 0"
               v-bind="menuProps"
             >
               <v-icon start>mdi-broom</v-icon>
