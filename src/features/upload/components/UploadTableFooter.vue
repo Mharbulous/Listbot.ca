@@ -57,26 +57,26 @@
             </v-list-item>
 
             <v-list-item
-              :disabled="stats.removed === 0"
+              :disabled="stats.skipOnlyCount === 0"
               @click="handleClearSkipped"
             >
               <template v-slot:prepend>
                 <span class="status-dot-menu status-skip-menu"></span>
               </template>
               <v-list-item-title>
-                Clear {{ stats.removed }} skipped {{ stats.removed === 1 ? 'file' : 'files' }}
+                Clear {{ stats.skipOnlyCount }} skipped {{ stats.skipOnlyCount === 1 ? 'file' : 'files' }}
               </v-list-item-title>
             </v-list-item>
 
             <v-list-item
-              :disabled="stats.duplicates === 0"
+              :disabled="stats.copyCount === 0"
               @click="handleToggleDuplicates"
             >
               <template v-slot:prepend>
                 <span class="status-dot-menu status-skipped-menu"></span>
               </template>
               <v-list-item-title>
-                {{ duplicatesHidden ? 'Show' : 'Hide' }} {{ stats.duplicates }} {{ stats.duplicates === 1 ? 'duplicate' : 'duplicates' }}
+                {{ duplicatesHidden ? 'Show' : 'Hide' }} {{ stats.copyCount }} {{ stats.copyCount === 1 ? 'copy' : 'copies' }}
               </v-list-item-title>
             </v-list-item>
           </v-list>
@@ -188,7 +188,9 @@ defineProps({
         typeof value.uploadable === 'number' &&
         typeof value.checkedCount === 'number' &&
         typeof value.checkedSize === 'string' &&
-        typeof value.uncheckedCount === 'number'
+        typeof value.uncheckedCount === 'number' &&
+        typeof value.copyCount === 'number' &&
+        typeof value.skipOnlyCount === 'number'
       );
     },
   },
