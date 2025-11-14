@@ -100,11 +100,6 @@ export function useUploadTable() {
     for (const [size, items] of sizeGroups) {
       if (items.length > 1) {
         filesToHash.push(...items);
-        console.log('[DEDUP-TABLE] Size group needs hashing:', {
-          size,
-          count: items.length,
-          files: items.map((i) => i.queueItem.name),
-        });
       }
     }
 
@@ -129,12 +124,6 @@ export function useUploadTable() {
           queueItem,
           isExisting,
         });
-
-        console.log('[DEDUP-TABLE] Hashed file:', {
-          name: queueItem.name,
-          hash: hash.substring(0, 8) + '...',
-          isExisting,
-        });
       } catch (error) {
         console.error('[DEDUP-TABLE] Hash failed for', queueItem.name, error);
         queueItem.status = 'read error';
@@ -148,12 +137,6 @@ export function useUploadTable() {
     for (const [hash, items] of hashGroups) {
       if (items.length === 1) continue; // No duplicates
 
-      console.log('[DEDUP-TABLE] Checking hash group:', {
-        hash: hash.substring(0, 8) + '...',
-        count: items.length,
-        files: items.map((i) => i.queueItem.name),
-      });
-
       // Group by metadata key (filename_size_modified_path)
       // MUST include folderPath to distinguish copies in different folders
       const metadataGroups = new Map();
@@ -164,24 +147,11 @@ export function useUploadTable() {
           metadataGroups.set(metadataKey, []);
         }
         metadataGroups.get(metadataKey).push({ queueItem, isExisting });
-
-        console.log('[DEDUP-TABLE] Metadata key:', {
-          name: queueItem.name,
-          folderPath: queueItem.folderPath,
-          metadataKey,
-          isExisting,
-        });
       });
 
       // Mark redundant files
       for (const [metadataKey, metadataItems] of metadataGroups) {
         if (metadataItems.length === 1) continue; // No redundant files
-
-        console.log('[DEDUP-TABLE] Found duplicate files:', {
-          metadataKey,
-          count: metadataItems.length,
-          files: metadataItems.map((i) => ({ name: i.queueItem.name, isExisting: i.isExisting })),
-        });
 
         // Keep first instance, mark others as duplicate
         for (let i = 1; i < metadataItems.length; i++) {
@@ -189,22 +159,11 @@ export function useUploadTable() {
           queueItem.status = 'duplicate';
           queueItem.canUpload = false;
           queueItem.isDuplicate = true;
-
-          console.log('[DEDUP-TABLE] Marked as duplicate:', {
-            name: queueItem.name,
-            status: queueItem.status,
-            canUpload: queueItem.canUpload,
-          });
         }
       }
 
       // Handle copies (same hash, different metadata - e.g., different folders)
       if (metadataGroups.size > 1) {
-        console.log('[DEDUP-TABLE] Found copies (different metadata):', {
-          hash: hash.substring(0, 8) + '...',
-          copyCount: metadataGroups.size,
-        });
-
         // Get first file from each metadata group (excluding redundant files)
         const uniqueFiles = Array.from(metadataGroups.values()).map((group) => group[0]);
 
@@ -227,17 +186,6 @@ export function useUploadTable() {
           if (filePath !== bestFile.path) {
             queueItem.status = 'copy';
             queueItem.isCopy = true;
-
-            console.log('[DEDUP-TABLE] Marked as copy:', {
-              name: queueItem.name,
-              folderPath: queueItem.folderPath,
-              status: queueItem.status,
-            });
-          } else {
-            console.log('[DEDUP-TABLE] Best file (will upload):', {
-              name: queueItem.name,
-              folderPath: queueItem.folderPath,
-            });
           }
         });
       }
@@ -323,8 +271,6 @@ export function useUploadTable() {
     const newHashes = new Set(phase1Batch.filter((f) => f.hash).map((f) => f.hash));
 
     if (newHashes.size > 0) {
-      console.log('[QUEUE] Updating group timestamps for', newHashes.size, 'hash groups');
-
       // Update groupTimestamp for all files in the queue that match any of the new hashes
       uploadQueue.value.forEach((file) => {
         if (file.hash && newHashes.has(file.hash)) {
