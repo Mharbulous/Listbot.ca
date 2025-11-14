@@ -1,5 +1,5 @@
 <template>
-  <div class="status-cell">
+  <div class="status-cell" :title="hash || ''">
     <span class="status-dot" :class="`status-${status}`"></span>
     <span class="status-text">{{ statusText }}</span>
   </div>
@@ -40,6 +40,10 @@ const props = defineProps({
         'unknown',
         'n/a',
       ].includes(value),
+  },
+  hash: {
+    type: String,
+    default: null,
   },
 });
 
