@@ -22,6 +22,16 @@
           />
         </div>
       </v-card-text>
+      <v-card-actions class="px-6 pb-4">
+        <v-spacer />
+        <v-btn
+          variant="text"
+          color="error"
+          @click="handleCancel"
+        >
+          Cancel
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -46,11 +56,19 @@ const props = defineProps({
   },
 });
 
+// Emits
+const emit = defineEmits(['cancel']);
+
 // Computed
 const progressPercent = computed(() => {
   if (props.total === 0) return 0;
   return Math.round((props.processed / props.total) * 100);
 });
+
+// Methods
+const handleCancel = () => {
+  emit('cancel');
+};
 </script>
 
 <style scoped>
