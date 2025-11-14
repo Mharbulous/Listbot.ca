@@ -53,14 +53,17 @@ export function useUploadTable() {
       // If file has hash, use it directly
       if (file.hash) return file.hash;
 
+      // If this file is referenced by tentative duplicates but not hashed yet
+      if (file.tentativeGroupId) return file.tentativeGroupId;
+
       // If file is tentative duplicate/copy (no hash but has referenceFileId)
       // Use the reference file's hash for grouping
       if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
         const referenceFile = uploadQueue.value.find((f) => f.id === file.referenceFileId);
         if (referenceFile) {
           // Reference file might also be tentative initially, but will get hashed first
-          // Use reference file's hash if available, otherwise use referenceFileId as fallback
-          return referenceFile.hash || file.referenceFileId;
+          // Use reference file's hash if available, otherwise tentativeGroupId, otherwise referenceFileId as fallback
+          return referenceFile.hash || referenceFile.tentativeGroupId || file.referenceFileId;
         }
         // Fallback: use referenceFileId if reference file not found
         return file.referenceFileId;
@@ -129,6 +132,12 @@ export function useUploadTable() {
       item.file.canUpload = false;
       item.file.isDuplicate = true;
       item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
+
+      // Update the reference file to know it's part of a tentative group
+      const refFile = uploadQueue.value.find((f) => f.id === item.referenceFileId);
+      if (refFile && !refFile.hash) {
+        refFile.tentativeGroupId = refFile.id; // Use own ID as group key
+      }
     });
 
     // Mark tentative copies (NO hash yet - will be verified on hover/delete/upload)
@@ -137,6 +146,12 @@ export function useUploadTable() {
       item.file.canUpload = true;
       item.file.isCopy = true;
       item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
+
+      // Update the reference file to know it's part of a tentative group
+      const refFile = uploadQueue.value.find((f) => f.id === item.referenceFileId);
+      if (refFile && !refFile.hash) {
+        refFile.tentativeGroupId = refFile.id; // Use own ID as group key
+      }
     });
 
     // Handle promotions - demote existing files when new file is more specific
@@ -147,6 +162,13 @@ export function useUploadTable() {
         existingFile.canUpload = false;
         existingFile.isDuplicate = true;
         existingFile.referenceFileId = promo.newPrimaryId; // Point to new primary
+
+        // Update the new primary file to know it's part of a tentative group
+        const newPrimary = uploadQueue.value.find((f) => f.id === promo.newPrimaryId);
+        if (newPrimary && !newPrimary.hash) {
+          newPrimary.tentativeGroupId = newPrimary.id; // Use own ID as group key
+        }
+
         console.log('[PREFILTER] Demoted existing file to duplicate:', {
           fileName: existingFile.name,
           newPrimaryId: promo.newPrimaryId,
