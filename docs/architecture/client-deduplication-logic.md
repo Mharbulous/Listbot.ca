@@ -72,12 +72,11 @@ By performing hash and database operations DURING upload, users never notice the
 
 This app is designed for **litigation document discovery**, which requires specific terminology:
 
-- **duplicate** or **duplicates**: Files with the same hash value AND same modified date (one-and-the-same files selected multiple times)
-- **copy** or **copies**: Files with the same hash value but different file metadata
-- **file metadata**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
-- **one-and-the-same**: The exact same file selected multiple times (same hash, same metadata, same folder location)
+- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value
   - Marked with status "duplicate" in the queue (gray/white dot, checkbox disabled)
   - Visible in queue for transparency but not selectable for upload
+- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful
+- **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
 
 ### Non-Negotiable Requirements
 
@@ -161,7 +160,7 @@ for (const fileRef of duplicateCandidates) {
 
 **Rationale:** Only hash files that might be duplicates (same size). Use BLAKE3 for speed and security.
 
-### Step 3: Group by Metadata for One-and-the-Same Detection
+### Step 3: Group by Metadata for Duplicate Detection
 
 ```javascript
 for (const [hash, fileRefs] of hashGroups) {
@@ -171,40 +170,40 @@ for (const [hash, fileRefs] of hashGroups) {
   }
 
   // Multiple files with same hash - check metadata
-  const oneAndTheSameGroups = new Map(); // metadata_key -> [file_references]
+  const duplicateGroups = new Map(); // metadata_key -> [file_references]
 
   fileRefs.forEach((fileRef) => {
-    // Metadata signature for detecting one-and-the-same
+    // Metadata signature for detecting duplicates
     const metadataKey = `${fileRef.metadata.sourceFileName}_${fileRef.metadata.sourceFileSize}_${fileRef.metadata.lastModified}`;
 
-    if (!oneAndTheSameGroups.has(metadataKey)) {
-      oneAndTheSameGroups.set(metadataKey, []);
+    if (!duplicateGroups.has(metadataKey)) {
+      duplicateGroups.set(metadataKey, []);
     }
-    oneAndTheSameGroups.get(metadataKey).push(fileRef);
+    duplicateGroups.get(metadataKey).push(fileRef);
   });
 
   // Process each metadata group
-  for (const [, oneAndTheSameFiles] of oneAndTheSameGroups) {
-    if (oneAndTheSameFiles.length > 1) {
-      // One-and-the-same: User selected same file multiple times
+  for (const [, duplicateFiles] of duplicateGroups) {
+    if (duplicateFiles.length > 1) {
+      // Duplicate: User selected same file multiple times
       // Keep first instance as ready, mark others as duplicate
-      finalFiles.push(oneAndTheSameFiles[0]);
+      finalFiles.push(duplicateFiles[0]);
 
       // Mark subsequent instances as duplicates (shown in queue but cannot be selected)
-      for (let i = 1; i < oneAndTheSameFiles.length; i++) {
-        oneAndTheSameFiles[i].status = 'duplicate';
-        oneAndTheSameFiles[i].canUpload = false; // Disable checkbox
-        finalFiles.push(oneAndTheSameFiles[i]);
+      for (let i = 1; i < duplicateFiles.length; i++) {
+        duplicateFiles[i].status = 'duplicate';
+        duplicateFiles[i].canUpload = false; // Disable checkbox
+        finalFiles.push(duplicateFiles[i]);
       }
     } else {
       // Unique metadata (copy with different name/date)
-      finalFiles.push(oneAndTheSameFiles[0]);
+      finalFiles.push(duplicateFiles[0]);
     }
   }
 
   // If multiple distinct metadata groups, choose best file
-  if (oneAndTheSameGroups.size > 1) {
-    const allUniqueFiles = Array.from(oneAndTheSameGroups.values()).map(group => group[0]);
+  if (duplicateGroups.size > 1) {
+    const allUniqueFiles = Array.from(duplicateGroups.values()).map(group => group[0]);
     const bestFile = chooseBestFile(allUniqueFiles);
 
     // Mark others as copies
@@ -219,7 +218,7 @@ for (const [hash, fileRefs] of hashGroups) {
 ```
 
 **Rationale:**
-- One-and-the-same files (user accidentally selected same file twice) are silently filtered - no need to confuse user
+- Duplicate files (user accidentally selected same file twice) are silently filtered - no need to confuse user
 - Copies (same content, different metadata) all get their metadata saved, but only one file uploaded
 - Best file selection uses priority rules for deterministic, sensible behavior
 
@@ -347,7 +346,7 @@ The following enhancements improve user experience WITHOUT changing the core arc
 - `pending` - File queued, not yet analyzed
 - `ready` - Ready to upload (includes unique files and best files from copy groups)
 - `copy` - Copy detected (same hash, different metadata) - metadata will be saved, file content skipped
-- `duplicate` - One-and-the-same file (same hash, same metadata) - shown in queue but not selectable (checkbox disabled)
+- `duplicate` - Duplicate file (same hash, same metadata) - shown in queue but not selectable (checkbox disabled)
 - `uploading` - Currently uploading
 - `uploaded` - Successfully uploaded
 - `read error` - Hash failure or file read error (checkbox disabled)
@@ -360,13 +359,13 @@ if (fileSizeGroups.get(fileSize).length === 1) {
   fileRef.status = 'ready'; // Unique file, ready to upload
 }
 
-// For one-and-the-same (marked as duplicate - shown but not selectable)
-if (oneAndTheSameFiles.length > 1) {
+// For duplicates (marked as duplicate - shown but not selectable)
+if (duplicateFiles.length > 1) {
   // Keep first instance as ready
   // Mark others as duplicate with disabled checkbox
-  for (let i = 1; i < oneAndTheSameFiles.length; i++) {
-    oneAndTheSameFiles[i].status = 'duplicate';
-    oneAndTheSameFiles[i].canUpload = false;
+  for (let i = 1; i < duplicateFiles.length; i++) {
+    duplicateFiles[i].status = 'duplicate';
+    duplicateFiles[i].canUpload = false;
   }
 }
 
@@ -525,7 +524,7 @@ const statusIcons = {
   'pending': '○',       // Gray circle - not yet analyzed
   'ready': '✓',         // Green checkmark - ready to upload
   'copy': '⚌',          // Blue parallel lines - copy detected
-  'duplicate': '○',     // Gray circle - one-and-the-same file
+  'duplicate': '○',     // Gray circle - duplicate file
   'uploading': '↑',     // Up arrow - currently uploading
   'uploaded': '✓',      // Green checkmark - successfully uploaded
   'read error': '✗',    // Red X - hash/read failure
@@ -548,7 +547,7 @@ const statusColors = {
 - Icons provide quick visual scanning
 - Colors reinforce status meaning
 - **Disabled checkboxes** (always unchecked, unaffected by Select All/None):
-  - `duplicate` - One-and-the-same files (already queued)
+  - `duplicate` - Duplicate files (already queued)
   - `read error` - Hash/read failures (cannot generate document ID)
   - `n/a` - Unsupported file types (.lnk, .tmp, etc.)
 - **Enabled checkboxes** (affected by Select All/None):
@@ -662,7 +661,7 @@ describe('chooseBestFile', () => {
   // ... test all 5 priority rules
 });
 
-describe('oneAndTheSameDetection', () => {
+describe('duplicateDetection', () => {
   it('should filter duplicate selections', () => {
     const files = [
       { name: 'file.pdf', size: 1000, lastModified: 1000, path: '/a/file.pdf' },
@@ -704,14 +703,14 @@ Test the complete flow:
 
 ```javascript
 describe('Complete Deduplication Flow', () => {
-  it('should handle mix of unique, copies, and one-and-the-same', async () => {
+  it('should handle mix of unique, copies, and duplicates', async () => {
     const files = [
       createFile('unique1.pdf', 1000, 'content1'),
       createFile('unique2.pdf', 2000, 'content2'),
       createFile('copy1.pdf', 3000, 'content3'),
       createFile('copy2.pdf', 3000, 'content3'), // Same content, different name
       createFile('same.pdf', 4000, 'content4'),
-      createFile('same.pdf', 4000, 'content4'), // One-and-the-same
+      createFile('same.pdf', 4000, 'content4'), // Duplicate
     ];
 
     const result = await processFiles(files);

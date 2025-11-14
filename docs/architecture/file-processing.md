@@ -57,10 +57,9 @@ The system uses hardware-specific calibration to provide accurate time predictio
 ## File Deduplication Strategy
 
 ### Terminology
-- **duplicate** or **duplicates**: Files with the same hash value AND same modified date
-- **copy** or **copies**: Files with the same hash value but different file metadata
-- **file metadata**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
-- **one-and-the-same**: The exact same file (same hash, same metadata, same folder location)
+- **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value
+- **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful
+- **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
 
 ### Strategy
 - **Size-based pre-filtering**: Files with unique sizes skip hash calculation entirely
