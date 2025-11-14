@@ -38,7 +38,7 @@
               v-bind="menuProps"
             >
               <v-icon start>mdi-broom</v-icon>
-              Clear {{ stats.uncheckedCount }} {{ stats.uncheckedCount === 1 ? 'file' : 'files' }}
+              Clear Files
               <v-icon end>mdi-chevron-up</v-icon>
             </v-btn>
           </template>
@@ -188,7 +188,6 @@ defineProps({
         typeof value.uploadable === 'number' &&
         typeof value.checkedCount === 'number' &&
         typeof value.checkedSize === 'string' &&
-        typeof value.uncheckedCount === 'number' &&
         typeof value.copyCount === 'number' &&
         typeof value.skipOnlyCount === 'number'
       );

@@ -203,9 +203,6 @@ const footerStats = computed(() => {
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
 
-  // Unchecked files = files that have been skipped OR marked as duplicate OR n/a OR read errors
-  const uncheckedCount = removed + duplicates + naFiles + readErrors;
-
   // Copy count = files with status === 'copy' (for Hide/Show Copies menu item)
   // IMPORTANT: Use allFiles (not files) to count ALL copies, regardless of visibility
   const copyCount = props.allFiles.filter((f) => f.status === 'copy').length;
@@ -224,7 +221,6 @@ const footerStats = computed(() => {
     uploadable,
     checkedCount,
     checkedSize: formatBytes(checkedSize),
-    uncheckedCount,
     copyCount,
     skipOnlyCount,
   };
