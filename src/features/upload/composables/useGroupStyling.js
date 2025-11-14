@@ -11,8 +11,41 @@
  */
 
 /**
+ * Helper function to get grouping key for a file
+ * Uses the same logic as queue sorting to ensure consistency
+ *
+ * @param {Object} file - File object
+ * @param {Array} files - All files in the queue
+ * @returns {string} - Grouping key (hash, tentativeGroupId, or referenceFileId)
+ */
+function getGroupingKey(file, files) {
+  // If file has hash, use it directly
+  if (file.hash) return file.hash;
+
+  // If this file is referenced by tentative duplicates but not hashed yet
+  if (file.tentativeGroupId) return file.tentativeGroupId;
+
+  // If file is tentative duplicate/copy (no hash but has referenceFileId)
+  // Use the reference file's grouping key for grouping
+  if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
+    const referenceFile = files.find((f) => f.id === file.referenceFileId);
+    if (referenceFile) {
+      // Use reference file's hash if available, otherwise tentativeGroupId, otherwise referenceFileId as fallback
+      return referenceFile.hash || referenceFile.tentativeGroupId || file.referenceFileId;
+    }
+    // Fallback: use referenceFileId if reference file not found
+    return file.referenceFileId;
+  }
+
+  // No hash and no referenceFileId - treat as unique group
+  // Use file ID to ensure each unique file gets its own group
+  return file.id || '';
+}
+
+/**
  * Get background color for a file based on its hash group
  * Alternates between white and light gray for each group (including unique files)
+ * Handles tentative duplicates by grouping them with their reference file
  *
  * @param {Object} file - File object with hash property
  * @param {Array} files - All files in the queue (for determining unique hashes)
@@ -44,6 +77,7 @@ export function getGroupBackgroundColor(file, files) {
 /**
  * Check if file is the first in its hash group
  * First file in each group gets a subtle top border
+ * Handles tentative duplicates by comparing grouping keys
  *
  * @param {Object} file - File object with hash property
  * @param {number} index - Index of file in the files array
@@ -56,19 +90,19 @@ export function isFirstInGroup(file, index, files) {
     return true;
   }
 
-  // Files without hashes are considered individual groups
-  if (!file.hash) {
-    return true;
-  }
-
-  // Check if previous file has a different hash
+  // Get grouping keys for current and previous files
+  const currentGroupKey = getGroupingKey(file, files);
   const prevFile = files[index - 1];
-  return !prevFile.hash || prevFile.hash !== file.hash;
+  const prevGroupKey = getGroupingKey(prevFile, files);
+
+  // Different grouping keys = different groups
+  return currentGroupKey !== prevGroupKey;
 }
 
 /**
  * Check if file is the last in its hash group
  * Last file in each group gets a bottom border to separate from next group
+ * Handles tentative duplicates by comparing grouping keys
  *
  * @param {Object} file - File object with hash property
  * @param {number} index - Index of file in the files array
@@ -81,14 +115,13 @@ export function isLastInGroup(file, index, files) {
     return true;
   }
 
-  // Files without hashes are considered individual groups
-  if (!file.hash) {
-    return true;
-  }
-
-  // Check if next file has a different hash
+  // Get grouping keys for current and next files
+  const currentGroupKey = getGroupingKey(file, files);
   const nextFile = files[index + 1];
-  return !nextFile.hash || nextFile.hash !== file.hash;
+  const nextGroupKey = getGroupingKey(nextFile, files);
+
+  // Different grouping keys = different groups
+  return currentGroupKey !== nextGroupKey;
 }
 
 /**
