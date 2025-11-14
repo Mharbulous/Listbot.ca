@@ -72,7 +72,8 @@ function findBestMatchingFile(newFile, existingMatches) {
 ```
 
 **Non-obvious**: Must check ALL metadata matches, not just first one. Example: NEW `/2017/2017-06/Invoices/file.pdf` might match EXISTING `/file.pdf`, `/Invoices/file.pdf`, and `/2017-06/Invoices/file.pdf` - the longest suffix wins.
-n**Tie-breaking**: When multiple EXISTING files have equal-length path suffixes, the first match encountered wins. This simple rule preserves existing primary/best status without requiring complex tie-breaking logic.
+
+**Tie-breaking**: When multiple EXISTING files have equal-length path suffixes, the first match encountered wins. This simple rule preserves existing primary/best status without requiring complex tie-breaking logic.
 
 ### 3. State Management via `queueItem.hash`
 
@@ -316,7 +317,8 @@ async function beforeDelete(queueItem) {
 ### Step 5: Add Hash Verification on Upload
 
 **Location**: Upload processing logic (likely in `useUploadTable.js` or separate upload composable)
-n**IMPORTANT**: Tentative duplicates are auto-excluded from upload in the UI (grayed out, unchecked by default), so this verification step handles the edge case where a user manually selects a tentative duplicate for upload. In practice, most tentative duplicates never reach this stage.
+
+**IMPORTANT**: Tentative duplicates are auto-excluded from upload in the UI (grayed out, unchecked by default), so this verification step handles the edge case where a user manually selects a tentative duplicate for upload. In practice, most tentative duplicates never reach this stage.
 
 **Implementation**:
 ```javascript
