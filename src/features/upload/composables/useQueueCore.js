@@ -290,10 +290,26 @@ export function useQueueCore() {
       existingSizeMap.get(item.size).push(item);
     });
 
+    // CRITICAL FIX: Pre-build metadata indices for EACH size group (O(M) total)
+    // Previously this was built inside the new file loop = O(N×k) bug!
+    // Now: Build once per size group, lookup O(1) per new file
+    const metadataIndicesBySize = new Map();
+    for (const [size, items] of existingSizeMap) {
+      const metadataIndex = new Map();
+      items.forEach((item) => {
+        const metadataKey = `${item.name}_${item.size}_${item.sourceLastModified}`;
+        if (!metadataIndex.has(metadataKey)) {
+          metadataIndex.set(metadataKey, []);
+        }
+        metadataIndex.get(metadataKey).push(item);
+      });
+      metadataIndicesBySize.set(size, metadataIndex);
+    }
+
     let uniqueSizeCount = 0;
     let metadataComparisons = 0;
 
-    // Process each new file (O(N × k) where k ≈ 3-5)
+    // Process each new file (O(N) with O(1) metadata lookups)
     newQueueItems.forEach((newFile) => {
       // EARLY EXIT: If size is unique, skip all metadata checks
       const existingSizeGroup = existingSizeMap.get(newFile.size);
@@ -303,15 +319,8 @@ export function useQueueCore() {
         return;
       }
 
-      // Build metadata index ONLY from same-size candidates (not all existing files)
-      const metadataIndex = new Map();
-      existingSizeGroup.forEach((item) => {
-        const metadataKey = `${item.name}_${item.size}_${item.sourceLastModified}`;
-        if (!metadataIndex.has(metadataKey)) {
-          metadataIndex.set(metadataKey, []);
-        }
-        metadataIndex.get(metadataKey).push(item);
-      });
+      // Lookup pre-built metadata index for this size group (O(1))
+      const metadataIndex = metadataIndicesBySize.get(newFile.size);
 
       // Check for metadata matches within same-size group
       const metadataKey = `${newFile.name}_${newFile.size}_${newFile.sourceLastModified}`;
@@ -362,8 +371,10 @@ export function useQueueCore() {
       copies: copyFiles.length,
       promotions: promotions.length,
       uniqueSizeCount,
+      sizeGroups: existingSizeMap.size,
       metadataComparisons,
       avgComparisonsPerFile: (metadataComparisons / newQueueItems.length).toFixed(2),
+      optimizationRatio: `${((existingQueue.length * newQueueItems.length) / (existingQueue.length + metadataComparisons)).toFixed(1)}x faster`,
     });
 
     return { readyFiles, duplicateFiles, copyFiles, promotions };
