@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "coryphaeus-ed11a"
+  },
+  "targets": {
+    "coryphaeus-ed11a": {
+      "hosting": {
+        "docs": [
+          "docs-7762f"
+        ]
+      }
+    }
   }
 }
