@@ -19,17 +19,11 @@
     <!-- File Type Icon Column (40px) - SECOND COLUMN -->
     <div
       class="row-cell file-type-cell"
+      :class="{ 'faded-cell': file.status === 'same' }"
       style="width: 40px; flex-shrink: 0; justify-content: center; padding: 9px 8px"
     >
-      <!-- Show ⛔ emoji for same/duplicate files -->
-      <span
-        v-if="file.status === 'same'"
-        class="not-uploadable-icon"
-        title="Duplicate file - already in queue"
-        >⛔</span
-      >
-      <!-- Show file type icon for all other files -->
-      <FileTypeIcon v-else :file-name="file.name" />
+      <!-- Show file type icon for all files (faded for 'same' status) -->
+      <FileTypeIcon :file-name="file.name" />
     </div>
 
     <!-- File Name Column (flexible - expands to fill remaining space, max 500px) -->
@@ -191,13 +185,6 @@ const handleRowDoubleClick = () => {
 /* File Type Cell */
 .file-type-cell {
   justify-content: center;
-}
-
-/* Not uploadable icon (⛔ emoji for duplicate files in file type column) */
-.not-uploadable-icon {
-  font-size: 20px;
-  user-select: none;
-  cursor: not-allowed;
 }
 
 /* Size Cell */
