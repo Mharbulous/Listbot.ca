@@ -125,19 +125,27 @@ export function useFileDropHandler() {
     if (entry.isFile) {
       const file = await entry.getFile();
 
-      // Set webkitRelativePath from fullPath to preserve folder structure
-      // This is needed because drag-and-drop File objects don't have webkitRelativePath set automatically
+      // Preserve folder structure by setting path information on the File object
+      // The centralized path extractor will read this information later
       // Remove leading slash from fullPath to match webkitRelativePath format
       const relativePath = entry.fullPath.startsWith('/') ? entry.fullPath.slice(1) : entry.fullPath;
 
-      // Create a new File object with webkitRelativePath property
-      // We need to use Object.defineProperty because webkitRelativePath is read-only
-      Object.defineProperty(file, 'webkitRelativePath', {
-        value: relativePath,
-        writable: false,
-        enumerable: true,
-        configurable: true,
-      });
+      // Try to set webkitRelativePath (standard property for folder structure)
+      // If this fails, set _dropPath as fallback
+      if (!file.webkitRelativePath) {
+        try {
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: relativePath,
+            writable: false,
+            enumerable: true,
+            configurable: true,
+          });
+        } catch (e) {
+          // If defineProperty fails, store in _dropPath as fallback
+          // The centralized path extractor will check this property
+          file._dropPath = relativePath;
+        }
+      }
 
       filesList.push(file);
     } else if (entry.isDirectory) {
