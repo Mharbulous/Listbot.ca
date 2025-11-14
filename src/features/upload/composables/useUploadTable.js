@@ -42,21 +42,45 @@ export function useUploadTable() {
    * - Groups with most recently added files appear first (desc groupTimestamp)
    * - Within each group: ready → copy → duplicate
    * - Files with same hash are grouped together (primary duplicate immediately above 'duplicate' file)
+   * - Tentative duplicates (no hash yet) group with their reference file via referenceFileId
    * - Maintains stable sort within same status
    */
   const sortQueueByGroupTimestamp = () => {
     const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
+
+    // Helper to get grouping key for a file (hash or reference file's hash)
+    const getGroupingKey = (file) => {
+      // If file has hash, use it directly
+      if (file.hash) return file.hash;
+
+      // If file is tentative duplicate/copy (no hash but has referenceFileId)
+      // Use the reference file's hash for grouping
+      if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
+        const referenceFile = uploadQueue.value.find((f) => f.id === file.referenceFileId);
+        if (referenceFile) {
+          // Reference file might also be tentative initially, but will get hashed first
+          // Use reference file's hash if available, otherwise use referenceFileId as fallback
+          return referenceFile.hash || file.referenceFileId;
+        }
+        // Fallback: use referenceFileId if reference file not found
+        return file.referenceFileId;
+      }
+
+      // No hash and no referenceFileId - use empty string (sorts to end)
+      return '';
+    };
 
     uploadQueue.value.sort((a, b) => {
       // Primary sort: group timestamp (descending - most recent first)
       const timestampDiff = (b.groupTimestamp || 0) - (a.groupTimestamp || 0);
       if (timestampDiff !== 0) return timestampDiff;
 
-      // Secondary sort: group by hash (ensures files with same hash appear together)
-      // This ensures the primary duplicate appears immediately above its "duplicate" file
-      const hashA = a.hash || '';
-      const hashB = b.hash || '';
-      const hashDiff = hashA.localeCompare(hashB);
+      // Secondary sort: group by hash or referenceFileId (ensures files with same content appear together)
+      // This ensures the primary file appears immediately above its "duplicate"/"copy" files
+      // Tentative duplicates (no hash) will group with their reference file
+      const groupKeyA = getGroupingKey(a);
+      const groupKeyB = getGroupingKey(b);
+      const hashDiff = groupKeyA.localeCompare(groupKeyB);
       if (hashDiff !== 0) return hashDiff;
 
       // Tertiary sort: status order (ready < copy < duplicate)
@@ -338,23 +362,27 @@ export function useUploadTable() {
     // PHASE 1.6: Update group timestamps
     // For each unique hash in the new batch, update groupTimestamp for ALL
     // files with that hash (both new and existing) to move the group to the top
+    // Also handle tentative duplicates (no hash yet) via referenceFileId
     // ========================================================================
     const currentTimestamp = Date.now();
     const newHashes = new Set(phase1Batch.filter((f) => f.hash).map((f) => f.hash));
+    const newReferenceIds = new Set(phase1Batch.filter((f) => f.referenceFileId && !f.hash).map((f) => f.referenceFileId));
 
-    if (newHashes.size > 0) {
-      // Update groupTimestamp for all files in the queue that match any of the new hashes
+    if (newHashes.size > 0 || newReferenceIds.size > 0) {
+      // Update groupTimestamp for all files in the queue that match any of the new hashes or referenceFileIds
       uploadQueue.value.forEach((file) => {
-        if (file.hash && newHashes.has(file.hash)) {
+        const matchesHash = file.hash && newHashes.has(file.hash);
+        const matchesReferenceId = file.id && newReferenceIds.has(file.id); // This file is referenced by a tentative duplicate
+        const isTentativeInGroup = file.referenceFileId && newReferenceIds.has(file.referenceFileId); // Tentative duplicate in same group
+
+        if (matchesHash || matchesReferenceId || isTentativeInGroup) {
           file.groupTimestamp = currentTimestamp;
         }
       });
 
-      // Update groupTimestamp for all files in the new batch that have hashes
+      // Update groupTimestamp for all files in the new batch (hashed or tentative)
       phase1Batch.forEach((file) => {
-        if (file.hash) {
-          file.groupTimestamp = currentTimestamp;
-        }
+        file.groupTimestamp = currentTimestamp;
       });
     }
 
@@ -452,23 +480,26 @@ export function useUploadTable() {
         // Deduplicate this batch against existing queue BEFORE adding to queue
         await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
 
-        // Update group timestamps for files with matching hashes
+        // Update group timestamps for files with matching hashes or referenceFileIds
         const currentTimestamp = Date.now();
         const newHashes = new Set(processedBatch.filter((f) => f.hash).map((f) => f.hash));
+        const newReferenceIds = new Set(processedBatch.filter((f) => f.referenceFileId && !f.hash).map((f) => f.referenceFileId));
 
-        if (newHashes.size > 0) {
-          // Update groupTimestamp for all files in the queue that match any of the new hashes
+        if (newHashes.size > 0 || newReferenceIds.size > 0) {
+          // Update groupTimestamp for all files in the queue that match any of the new hashes or referenceFileIds
           uploadQueue.value.forEach((file) => {
-            if (file.hash && newHashes.has(file.hash)) {
+            const matchesHash = file.hash && newHashes.has(file.hash);
+            const matchesReferenceId = file.id && newReferenceIds.has(file.id); // This file is referenced by a tentative duplicate
+            const isTentativeInGroup = file.referenceFileId && newReferenceIds.has(file.referenceFileId); // Tentative duplicate in same group
+
+            if (matchesHash || matchesReferenceId || isTentativeInGroup) {
               file.groupTimestamp = currentTimestamp;
             }
           });
 
-          // Update groupTimestamp for all files in the new batch that have hashes
+          // Update groupTimestamp for all files in the new batch (hashed or tentative)
           processedBatch.forEach((file) => {
-            if (file.hash) {
-              file.groupTimestamp = currentTimestamp;
-            }
+            file.groupTimestamp = currentTimestamp;
           });
         }
 
