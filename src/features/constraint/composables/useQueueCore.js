@@ -1,5 +1,5 @@
 import { createApplicationError } from '../../../utils/errorMessages';
-import { blake3 } from 'hash-wasm';
+import { blake3, xxhash128 } from 'hash-wasm';
 
 /**
  * Queue Core Composable
@@ -38,6 +38,48 @@ export function useQueueCore() {
     const hash = await blake3(uint8Array, 128);
 
     // Return BLAKE3 hash of source file content (32 hex characters)
+    return hash;
+  };
+
+  /**
+   * Generate XXH3 content hash for Phase 1 deduplication
+   * Uses XXH128 for high-speed hashing with low collision probability
+   * @param {File} file - Browser File object to hash
+   * @returns {Promise<string>} - XXH128 hash (32 hex characters)
+   */
+  const generateXXH3Hash = async (file) => {
+    const buffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(buffer);
+
+    // Generate XXH128 hash (128-bit output = 32 hex characters)
+    // XXH128 is ~10x faster than BLAKE3 for content hashing
+    const hash = await xxhash128(uint8Array);
+
+    return hash;
+  };
+
+  /**
+   * Generate XXH3 metadata hash for Phase 1 Layer 3 optimization
+   * Catches "same folder twice" scenario without expensive content hashing
+   * @param {Object} params - Metadata parameters
+   * @param {string} params.firmId - Firm ID (Solo Firm: firmId === userId)
+   * @param {number} params.modDate - File last modified timestamp
+   * @param {string} params.name - File name
+   * @param {string} params.extension - File extension
+   * @returns {Promise<string>} - XXH128 hash of metadata string
+   */
+  const generateMetadataHash = async ({ firmId, modDate, name, extension }) => {
+    // CRITICAL: Order matters for consistency
+    // Format: firmId|modDate|name|extension
+    const metadataString = `${firmId}|${modDate}|${name}|${extension}`;
+
+    // Convert string to Uint8Array for hashing
+    const encoder = new TextEncoder();
+    const uint8Array = encoder.encode(metadataString);
+
+    // Generate XXH128 hash (much faster than content hash, ~10-50μs)
+    const hash = await xxhash128(uint8Array);
+
     return hash;
   };
 
@@ -511,5 +553,9 @@ export function useQueueCore() {
     // Phase 3a: Metadata pre-filter optimization
     preFilterByMetadataAndPath,
     findBestMatchingFile,
+
+    // Phase 1: XXH3 hashing functions
+    generateXXH3Hash,
+    generateMetadataHash,
   };
 }
