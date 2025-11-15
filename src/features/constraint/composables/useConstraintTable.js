@@ -308,7 +308,7 @@ export function useConstraintTable() {
       console.log('[DEDUP-PHASE1] 🚀 Performance Insight:', {
         contentHashesAvoidedByLayer3: contentHashesAvoided,
         estimatedTimeSavedMs: timeSavedByLayer3.toFixed(2),
-        speedupRatio: timeSavedByLayer3 > 0 ? `~${(timeSavedByLayer3 / elapsed).toFixed(1)}x faster`,
+        speedupRatio: `~${(timeSavedByLayer3 / elapsed).toFixed(1)}x faster`,
       });
       console.log(`[DEDUP-PHASE1] 🎯 Layer 3 optimization saved ~${timeSavedByLayer3.toFixed(2)}ms by catching duplicates with cheap metadata hash`);
     }
