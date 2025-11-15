@@ -25,6 +25,7 @@
         :is-uploading="uploadAdapter.isUploading.value"
         :is-paused="uploadAdapter.isPaused.value"
         :duplicates-hidden="duplicatesHidden"
+        :verification-state="verificationState"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
         @remove="handleRemoveFile"
@@ -81,6 +82,7 @@ import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
 import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
 import { useNotification } from '../core/composables/useNotification.js';
+import { useTentativeVerification } from '../features/upload/composables/useTentativeVerification.js';
 
 // Component configuration
 defineOptions({
@@ -88,7 +90,7 @@ defineOptions({
 });
 
 // Composables
-const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue } =
+const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue, sortQueueByGroupTimestamp } =
   useUploadTable();
 const { snackbar, showNotification } = useNotification();
 
@@ -138,6 +140,9 @@ const uploadAdapter = useUploadAdapter({
   updateFileStatus,
   showNotification,
 });
+
+// Tentative file verification (auto-starts after queue rendering is complete)
+const { verificationState } = useTentativeVerification(uploadQueue, removeFromQueue, sortQueueByGroupTimestamp);
 
 // Refs for file inputs
 const fileInput = ref(null);
