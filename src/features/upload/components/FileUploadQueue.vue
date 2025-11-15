@@ -600,4 +600,20 @@ const getPhaseMessage = () => {
 :deep(.fade-transition-leave-from) {
   opacity: 1 !important;
 }
+
+/* Fade-out animation for file deletion during verification */
+:deep(.file-deletion-fade-out) {
+  animation: fadeOutDeletion 500ms ease-out forwards;
+}
+
+@keyframes fadeOutDeletion {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
 </style>
