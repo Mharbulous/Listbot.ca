@@ -55,6 +55,12 @@ const router = createRouter({
     //   meta: { requiresAuth: true, title: 'Upload Queue' },
     // },
     {
+      path: '/constraint',
+      name: 'constraint',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Constraint' },
+    },
+    {
       path: '/list',
       name: 'list',
       component: () => import('../views/defaults/UnderConstruction.vue'),
