@@ -382,7 +382,7 @@ const getUploadButtonText = () => {
   left: 0;
   height: 100%;
   width: var(--progress, 0);
-  background: #4caf50;
+  background: rgb(var(--v-theme-success));
   transition: width 0.3s ease;
   z-index: 0;
 }
@@ -394,7 +394,7 @@ const getUploadButtonText = () => {
 }
 
 .upload-btn-progress:disabled::before {
-  background: #4caf50;
+  background: rgb(var(--v-theme-success));
 }
 
 .retry-btn {
