@@ -71,6 +71,9 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
         queueItem.isCopy = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
         return false;
       }
 
@@ -90,6 +93,9 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
           queueItem.canUpload = true;
           queueItem.isDuplicate = false;
           queueItem.isCopy = false;
+          // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+          delete queueItem.tentativeGroupId;
+          delete queueItem.referenceFileId;
           return false;
         }
       }
@@ -106,6 +112,9 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
         queueItem.isCopy = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
         return false;
       }
 

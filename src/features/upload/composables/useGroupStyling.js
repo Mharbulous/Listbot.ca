@@ -14,24 +14,28 @@
  * Helper function to get grouping key for a file
  * Uses the same logic as queue sorting to ensure consistency
  *
+ * STABILITY: Prioritizes tentativeGroupId over hash to prevent groups from shifting
+ * position when lazy hash verification completes (prevents zebra pattern flashing)
+ *
  * @param {Object} file - File object
  * @param {Array} files - All files in the queue
- * @returns {string} - Grouping key (hash, tentativeGroupId, or referenceFileId)
+ * @returns {string} - Grouping key (tentativeGroupId, hash, or referenceFileId)
  */
 function getGroupingKey(file, files) {
-  // If file has hash, use it directly
-  if (file.hash) return file.hash;
-
-  // If this file is referenced by tentative duplicates but not hashed yet
+  // PRIORITY 1: tentativeGroupId (stable group identifier)
+  // This ensures groups maintain their position even after hash calculation
   if (file.tentativeGroupId) return file.tentativeGroupId;
 
-  // If file is tentative duplicate/copy (no hash but has referenceFileId)
+  // PRIORITY 2: hash (for files that were hashed immediately)
+  if (file.hash) return file.hash;
+
+  // PRIORITY 3: referenceFileId (for tentative duplicates/copies)
   // Use the reference file's grouping key for grouping
   if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
     const referenceFile = files.find((f) => f.id === file.referenceFileId);
     if (referenceFile) {
-      // Use reference file's hash if available, otherwise tentativeGroupId, otherwise referenceFileId as fallback
-      return referenceFile.hash || referenceFile.tentativeGroupId || file.referenceFileId;
+      // Use reference file's tentativeGroupId if available, otherwise hash, otherwise referenceFileId
+      return referenceFile.tentativeGroupId || referenceFile.hash || file.referenceFileId;
     }
     // Fallback: use referenceFileId if reference file not found
     return file.referenceFileId;
@@ -47,6 +51,10 @@ function getGroupingKey(file, files) {
  * Alternates between white and light gray for each group (including unique files)
  * Handles tentative duplicates by grouping them with their reference file
  *
+ * OPTIMIZATION: Tentative files (status=duplicate/copy, no hash) inherit color from
+ * their reference file instead of recalculating group index. This prevents color
+ * flashing during lazy hash verification (99%+ of tentatives are confirmed).
+ *
  * @param {Object} file - File object with hash property
  * @param {Array} files - All files in the queue (for determining unique hashes)
  * @returns {string} - Background color (#ffffff or #f9fafb)
@@ -56,7 +64,24 @@ export function getGroupBackgroundColor(file, files) {
   const fileIndex = files.indexOf(file);
   if (fileIndex === -1) return '#ffffff';
 
-  // Count how many groups come before (and including) this file
+  // OPTIMIZATION: Tentative duplicates/copies inherit color from reference file
+  // This prevents color flashing during lazy hash verification (99%+ of tentatives are confirmed)
+  // Only in rare cases (0.1%) where hash verification fails will colors change (desired visual feedback)
+  if ((file.status === 'duplicate' || file.status === 'copy') && !file.hash && file.referenceFileId) {
+    // Find the reference file
+    const referenceFile = files.find((f) => f.id === file.referenceFileId);
+    if (referenceFile) {
+      // Recursively get reference file's color (handles chains of tentatives)
+      return getGroupBackgroundColor(referenceFile, files);
+    }
+    // Fallback: use file directly above (reference should be there due to sorting)
+    if (fileIndex > 0) {
+      return getGroupBackgroundColor(files[fileIndex - 1], files);
+    }
+  }
+
+  // Standard group index calculation for all other files
+  // (hashed files, unique files, and promoted files)
   let groupIndex = 0;
 
   for (let i = 0; i <= fileIndex; i++) {
@@ -79,6 +104,10 @@ export function getGroupBackgroundColor(file, files) {
  * First file in each group gets a subtle top border
  * Handles tentative duplicates by comparing grouping keys
  *
+ * OPTIMIZATION: Tentative files (status=duplicate/copy, no hash) are NEVER first in group
+ * because they always belong to their reference file's group. This prevents extra borders
+ * and maintains visual grouping stability.
+ *
  * @param {Object} file - File object with hash property
  * @param {number} index - Index of file in the files array
  * @param {Array} files - All files in the queue
@@ -88,6 +117,12 @@ export function isFirstInGroup(file, index, files) {
   // First file overall is always first in its group
   if (index === 0) {
     return true;
+  }
+
+  // OPTIMIZATION: Tentative files are NEVER first in group
+  // They always belong to their reference file's group
+  if ((file.status === 'duplicate' || file.status === 'copy') && !file.hash) {
+    return false;
   }
 
   // Get grouping keys for current and previous files
@@ -104,6 +139,9 @@ export function isFirstInGroup(file, index, files) {
  * Last file in each group gets a bottom border to separate from next group
  * Handles tentative duplicates by comparing grouping keys
  *
+ * OPTIMIZATION: If next file is a tentative that references this file, this file
+ * is NOT last in group (tentatives belong to the same visual group as their reference).
+ *
  * @param {Object} file - File object with hash property
  * @param {number} index - Index of file in the files array
  * @param {Array} files - All files in the queue
@@ -115,9 +153,21 @@ export function isLastInGroup(file, index, files) {
     return true;
   }
 
+  const nextFile = files[index + 1];
+
+  // OPTIMIZATION: If next file is a tentative that references this file, NOT last in group
+  // This ensures tentatives are visually grouped with their reference file
+  if (
+    nextFile &&
+    (nextFile.status === 'duplicate' || nextFile.status === 'copy') &&
+    !nextFile.hash &&
+    nextFile.referenceFileId === file.id
+  ) {
+    return false;
+  }
+
   // Get grouping keys for current and next files
   const currentGroupKey = getGroupingKey(file, files);
-  const nextFile = files[index + 1];
   const nextGroupKey = getGroupingKey(nextFile, files);
 
   // Different grouping keys = different groups
