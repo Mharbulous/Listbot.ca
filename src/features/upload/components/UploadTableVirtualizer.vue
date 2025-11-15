@@ -115,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
@@ -192,10 +192,6 @@ const scrollContainerRef = ref(null);
 // PERFORMANCE METRICS TRACKING
 // ============================================================================
 // NOTE: queueT0 is stored in window.queueT0 (set in Testing.vue when user selects files)
-let scrollT0 = null; // T=0 for scroll events
-let isScrolling = false;
-let scrollTimeout = null;
-const SCROLL_STOP_DELAY = 150; // ms to wait before considering scroll stopped
 
 // Row height configuration (48px matches UploadTableRow height)
 const ROW_HEIGHT = 48;
@@ -246,7 +242,7 @@ watch(
     // Track render completion relative to current active T=0
     nextTick(() => {
       // Track FINAL render after Phase 2 completes (all files added)
-      if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged && !isScrolling) {
+      if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged) {
         const elapsed = performance.now() - window.queueT0;
         console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - All files rendered (${props.files.length} files)`, {
           renderedRows: virtualItems.value.length,
@@ -258,15 +254,6 @@ watch(
         // Clear queue metrics flags after final render is complete
         window.queueT0 = null;
         window.queueAdditionComplete = false;
-      }
-      // Track rendering during/after scroll
-      else if (scrollT0 && isScrolling) {
-        const elapsed = performance.now() - scrollT0;
-        console.log(`📊 [SCROLL METRICS] T=${elapsed.toFixed(2)}ms - Table render finished`, {
-          renderedRows: virtualItems.value.length,
-          firstVisible: virtualItems.value[0]?.index ?? 'none',
-          lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
-        });
       }
     });
   },
@@ -333,40 +320,6 @@ const handleCancelUpload = () => {
 const handleRetryFailed = () => {
   emit('retry-failed');
 };
-
-// ============================================================================
-// SCROLL METRICS: Track scroll start, stop, and rendering
-// ============================================================================
-const handleScroll = () => {
-  // First scroll event = T=0 for scroll
-  if (!isScrolling) {
-    scrollT0 = performance.now();
-    isScrolling = true;
-    console.log('📊 [SCROLL METRICS] T=0.00ms - Scroll started');
-  }
-
-  // Clear previous timeout and set new one to detect scroll stop
-  if (scrollTimeout) {
-    clearTimeout(scrollTimeout);
-  }
-
-  scrollTimeout = setTimeout(() => {
-    if (isScrolling && scrollT0) {
-      const elapsed = performance.now() - scrollT0;
-      console.log(`📊 [SCROLL METRICS] T=${elapsed.toFixed(2)}ms - Scroll stopped`);
-      isScrolling = false;
-      scrollT0 = null;
-    }
-  }, SCROLL_STOP_DELAY);
-};
-
-// Setup scroll listener when component mounts
-onMounted(() => {
-  if (scrollContainerRef.value) {
-    scrollContainerRef.value.addEventListener('scroll', handleScroll, { passive: true });
-    console.log('📊 [METRICS] Performance tracking initialized');
-  }
-});
 
 // Expose scroll container ref for parent component
 defineExpose({
