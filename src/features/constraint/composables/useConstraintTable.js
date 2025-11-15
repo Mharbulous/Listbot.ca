@@ -3,6 +3,7 @@ import { isUnsupportedFileType } from '../utils/fileTypeChecker.js';
 import { useQueueCore } from './useQueueCore.js';
 import { extractFolderPath } from '../utils/filePathExtractor.js';
 import { useAuthStore } from '@/core/stores/auth.js';
+import { createApplicationError } from '@/utils/errorMessages.js';
 
 /**
  * Composable for managing constraint table state
@@ -167,16 +168,46 @@ export function useConstraintTable() {
     });
 
     // Get firmId from auth store (Solo Firm: firmId === userId)
-    const firmId = authStore.currentFirm;
+    let firmId = authStore.currentFirm;
 
+    // CRITICAL: Require valid firmId for deduplication
+    // Fallback to Solo Firm architecture (firmId === userId) with explicit warning
     if (!firmId) {
-      console.error('[DEDUP-PHASE1] CRITICAL: No firmId available from auth store');
-      // Fallback: mark all as ready
-      newQueueItems.forEach((file) => {
-        file.status = 'ready';
-        file.canUpload = true;
-      });
-      return newQueueItems;
+      console.warn(
+        '[DEDUP-PHASE1] WARNING: No firmId in auth store, attempting Solo Firm fallback'
+      );
+
+      // Check if user is authenticated - use Solo Firm architecture
+      if (authStore.user?.uid) {
+        firmId = authStore.user.uid;
+        console.warn('[DEDUP-PHASE1] Using Solo Firm fallback: firmId = userId =', firmId);
+      } else {
+        // No authenticated user - this is a critical error
+        const error = createApplicationError(
+          'Authentication required for file processing',
+          {
+            source: 'deduplication',
+            phase: 'phase1',
+            validation: true,
+          }
+        );
+
+        console.error('[DEDUP-PHASE1] CRITICAL: No authenticated user - cannot process files', {
+          authState: authStore.authState,
+          isAuthenticated: authStore.isAuthenticated,
+          error,
+        });
+
+        // Mark all files as read error to prevent processing
+        newQueueItems.forEach((file) => {
+          file.status = 'read error';
+          file.canUpload = false;
+          file.error = 'Authentication required. Please sign in and try again.';
+        });
+
+        // Throw error to notify caller
+        throw new Error(error.message);
+      }
     }
 
     // ════════════════════════════════════════════════════════════════
