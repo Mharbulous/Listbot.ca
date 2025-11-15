@@ -1,9 +1,10 @@
 /**
  * Web Worker for file hash processing
- * Handles BLAKE3 hash generation for file deduplication without blocking the main thread
+ * Handles XXH128 hash generation for file deduplication without blocking the main thread
+ * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
  */
 
-import { blake3 } from 'hash-wasm';
+import { xxh128 } from 'hash-wasm';
 
 // Worker-specific timing utility
 let processingStartTime = null;
@@ -18,16 +19,25 @@ const MESSAGE_TYPES = {
   HEALTH_CHECK_RESPONSE: 'HEALTH_CHECK_RESPONSE',
 };
 
-// Helper function to generate BLAKE3 hash (128-bit / 32 hex characters)
+// Helper function to generate XXH128 hash (128-bit / 32 hex characters)
+// NOTE: Switched from BLAKE3 to XXH128 for performance comparison
+// XXH128 is significantly faster while maintaining 128-bit collision resistance
 async function generateFileHash(file) {
+  const hashStartTime = performance.now();
   try {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
-    const hash = await blake3(uint8Array, 128);
+    // Generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+    const hash = await xxh128(uint8Array);
 
-    // Return BLAKE3 hash of source file content (32 hex characters)
+    const hashDuration = performance.now() - hashStartTime;
+    if (hashDuration > 100) {
+      // Log slow hashes for performance monitoring
+      console.log(`[HASH-PERF] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    }
+
+    // Return XXH128 hash of source file content (32 hex characters)
     return hash;
   } catch (error) {
     throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);
@@ -122,6 +132,11 @@ async function processFiles(files, batchId) {
     const hashGroups = new Map(); // hash_value -> [file_references]
     const hashFailures = []; // Track files that fail to hash
 
+    // Performance tracking for hashing phase
+    const hashingStartTime = performance.now();
+    const totalHashBytes = duplicateCandidates.reduce((sum, f) => sum + f.file.size, 0);
+    console.log(`[HASH-PERF] Starting hash of ${duplicateCandidates.length} files (${(totalHashBytes / 1024 / 1024).toFixed(2)} MB total)`);
+
     for (const fileRef of duplicateCandidates) {
       try {
         const hash = await generateFileHash(fileRef.file);
@@ -145,6 +160,12 @@ async function processFiles(files, batchId) {
       processedCount++;
       sendProgressUpdate();
     }
+
+    // Log hashing performance summary
+    const hashingDuration = performance.now() - hashingStartTime;
+    const throughputMBps = (totalHashBytes / 1024 / 1024) / (hashingDuration / 1000);
+    console.log(`[HASH-PERF] Hashing complete: ${hashingDuration.toFixed(2)}ms for ${duplicateCandidates.length} files (${throughputMBps.toFixed(2)} MB/s)`);
+    console.log(`[HASH-PERF] XXH128 Average: ${(hashingDuration / duplicateCandidates.length).toFixed(2)}ms per file`);
 
     const finalFiles = [];
     const duplicateFiles = [];
