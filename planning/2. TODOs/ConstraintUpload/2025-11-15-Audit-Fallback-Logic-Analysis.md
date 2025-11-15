@@ -18,37 +18,45 @@ The Phase 1 deduplication implementation contains **6 critical fallback mechanis
 
 ## Critical Findings
 
-### 🚨 FALLBACK #1: Missing FirmId → Mark All Ready
+### ✅ FALLBACK #1: Missing FirmId → Mark All Ready (FIXED)
 **Location:** `src/features/constraint/composables/useConstraintTable.js:172-179`
 
+**Status:** ✅ **FIXED** as of 2025-11-15
+
+**Original Problem:**
+- Bypassed ALL deduplication when firmId was missing  
+- Marked all files as 'ready' without verification
+- Silent failure that masked auth bugs
+
+**Current Implementation (Fixed):**
 ```javascript
 if (!firmId) {
-  console.error('[DEDUP-PHASE1] CRITICAL: No firmId available from auth store');
-  // Fallback: mark all as ready
-  newQueueItems.forEach((file) => {
-    file.status = 'ready';
-    file.canUpload = true;
-  });
-  return newQueueItems;
+  // First: Attempt Solo Firm fallback with explicit warning
+  if (authStore.user?.uid) {
+    firmId = authStore.user.uid;
+    console.warn('[DEDUP-PHASE1] Using Solo Firm fallback: firmId = userId');
+  } else {
+    // No authenticated user - critical error
+    const error = createApplicationError('Authentication required for file processing', {...});
+
+    // Mark files as 'read error' (not 'ready')
+    newQueueItems.forEach((file) => {
+      file.status = 'read error';
+      file.canUpload = false;
+      file.error = 'Authentication required. Please sign in and try again.';
+    });
+
+    throw new Error(error.message);
+  }
 }
 ```
 
-**Why This Is Problematic:**
-- **Bypasses ALL deduplication** - no Layer 1, 2, or 3 processing
-- **Masks auth bugs** - if `currentFirm` is incorrectly null, user never sees symptoms
-- **Violates Phase 1 guarantees** - files marked 'ready' without any hash verification
-- **Silent failure** - only logs to console, user sees normal behavior
-
-**What It Should Do:**
-- Throw an error that prevents file processing entirely
-- Show user-visible error modal: "Authentication required for file processing"
-- OR: Use fallback to `authStore.currentUser?.uid` with explicit warning
-
-**Test Case to Expose:**
-1. Clear `authStore.currentFirm`
-2. Upload same file twice
-3. Expected: Both marked as duplicates
-4. Actual: Both marked as 'ready' (duplicate upload succeeds)
+**Fix Verification:**
+- ✅ Uses Solo Firm architecture (firmId = userId) as primary fallback
+- ✅ Marks files as 'read error' (not 'ready') when auth fails
+- ✅ Throws error to prevent silent failure
+- ✅ Provides user-friendly error message
+- ✅ Logs with explicit warning when fallback used
 
 ---
 
@@ -222,10 +230,11 @@ const hashToUse = file.xxh3Hash || file.hash;
 3. ✅ Create handover prompt for next session
 
 ### Next Session (High Priority)
-1. **Remove Fallback #1 (No FirmId)**
-   - Replace with explicit error that stops processing
-   - Add user-visible error modal
-   - Test: Force firmId to null, verify upload is blocked
+1. ✅ **Remove Fallback #1 (No FirmId)** - COMPLETED
+   - ✅ Implemented Solo Firm fallback (firmId = userId) with warning
+   - ✅ Files marked as 'read error' when auth fails (not 'ready')
+   - ✅ Error thrown to prevent silent processing
+   - ✅ User-friendly error message added
 
 2. **Remove Fallback #3 (Duplicate Hashing)**
    - Per implementation plan: duplicates should NOT be content-hashed
@@ -253,7 +262,7 @@ const hashToUse = file.xxh3Hash || file.hash;
 | "Remove tentative verification functions" | `useTentativeVerification.js` still exists | ❌ Yes |
 | "Layer 3 duplicates skip Layer 2" | Duplicates still content-hashed | ❌ Yes |
 | "XXH3 hashing for all files" | Falls back to BLAKE3 on error | ⚠️ Partial |
-| "FirmId MUST come from auth store" | Falls back to marking all ready | ❌ Yes |
+| "FirmId MUST come from auth store" | Uses Solo Firm fallback, then errors if no auth | ✅ Fixed |
 
 ---
 
