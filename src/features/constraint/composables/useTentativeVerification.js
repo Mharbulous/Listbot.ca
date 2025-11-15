@@ -41,11 +41,12 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   /**
    * Get all tentative files from the queue
    * Tentative files: files with status 'duplicate' or 'copy' but NO hash
+   * PHASE 1 NOTE: Excludes Phase 1 files (which have xxh3Hash) - those are already verified
    * @returns {Array} Array of tentative files
    */
   const getTentativeFiles = () => {
     return uploadQueue.value.filter(
-      (file) => (file.status === 'duplicate' || file.status === 'copy') && !file.hash
+      (file) => (file.status === 'duplicate' || file.status === 'copy') && !file.hash && !file.xxh3Hash
     );
   };
 
@@ -91,8 +92,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       return { verified: false, mismatch: true, statusChange: 'ready' };
     }
 
-    // Ensure reference file has a hash
-    if (!referenceFile.hash) {
+    // Ensure reference file has a hash (BLAKE3 or XXH3 for Phase 1 compatibility)
+    const referenceHash = referenceFile.hash || referenceFile.xxh3Hash;
+    if (!referenceHash) {
       console.error('[TENTATIVE-VERIFY] Reference file has no hash:', {
         file: file.name,
         referenceFile: referenceFile.name,
@@ -108,12 +110,12 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     }
 
     // Compare hashes
-    if (hash !== referenceFile.hash) {
+    if (hash !== referenceHash) {
       // Hash mismatch - this is actually a unique file!
       console.log('[TENTATIVE-VERIFY] Hash mismatch - promoting to ready:', {
         file: file.name,
         fileHash: hash.substring(0, 8) + '...',
-        referenceHash: referenceFile.hash.substring(0, 8) + '...',
+        referenceHash: referenceHash.substring(0, 8) + '...',
       });
 
       file.status = 'ready';
@@ -147,12 +149,14 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   /**
    * Hash all reference files that need hashing
    * Reference files are identified by having a tentativeGroupId set
+   * PHASE 1 NOTE: Excludes Phase 1 files (which have xxh3Hash) - those are already verified
    * @returns {Promise<number>} Number of reference files hashed
    */
   const hashReferenceFiles = async () => {
     // Find all reference files (files with tentativeGroupId) that need hashing
+    // Skip Phase 1 files (which already have xxh3Hash)
     const referenceFiles = uploadQueue.value.filter(
-      (file) => file.tentativeGroupId && !file.hash
+      (file) => file.tentativeGroupId && !file.hash && !file.xxh3Hash
     );
 
     if (referenceFiles.length === 0) {
@@ -169,8 +173,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     let hashedCount = 0;
     for (const refFile of sortedReferenceFiles) {
       // Re-check if file still exists and still needs hashing
+      // Skip Phase 1 files (which already have xxh3Hash)
       const currentFile = uploadQueue.value.find((f) => f.id === refFile.id);
-      if (!currentFile || currentFile.hash) {
+      if (!currentFile || currentFile.hash || currentFile.xxh3Hash) {
         continue;
       }
 
@@ -308,8 +313,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     console.log('[TENTATIVE-VERIFY] Phase 2A: Processing visible files with animation');
     for (const file of visibleFiles) {
       // Re-check if file still exists and is still tentative
+      // Skip Phase 1 files (which already have xxh3Hash)
       const currentFile = uploadQueue.value.find((f) => f.id === file.id);
-      if (!currentFile || currentFile.hash) {
+      if (!currentFile || currentFile.hash || currentFile.xxh3Hash) {
         console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
         verificationState.value.processed++;
         continue;
@@ -337,8 +343,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
 
     for (const file of sortedNonVisibleFiles) {
       // Re-check if file still exists and is still tentative
+      // Skip Phase 1 files (which already have xxh3Hash)
       const currentFile = uploadQueue.value.find((f) => f.id === file.id);
-      if (!currentFile || currentFile.hash) {
+      if (!currentFile || currentFile.hash || currentFile.xxh3Hash) {
         console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
         verificationState.value.processed++;
         continue;
