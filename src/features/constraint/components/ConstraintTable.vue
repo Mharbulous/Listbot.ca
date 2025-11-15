@@ -26,7 +26,6 @@
         :is-uploading="props.isUploading"
         :is-paused="props.isPaused"
         :duplicates-hidden="props.duplicatesHidden"
-        :verification-state="props.verificationState"
         :get-group-background="getGroupBackgroundColor"
         :is-first-in-group="isFirstInGroup"
         :is-last-in-group="isLastInGroup"
@@ -107,14 +106,6 @@ const props = defineProps({
   duplicatesHidden: {
     type: Boolean,
     default: false,
-  },
-  verificationState: {
-    type: Object,
-    default: () => ({
-      isVerifying: false,
-      processed: 0,
-      total: 0,
-    }),
   },
 });
 
