@@ -260,6 +260,11 @@ export function useConstraintTable() {
       layer3MetadataHashCount: 0,
       layer3MetadataHashTime: 0,
       layer3DuplicatesDetected: 0,
+      // Track new vs existing files processed in each layer
+      layer3NewFilesProcessed: 0,
+      layer3ExistingFilesProcessed: 0,
+      layer2NewFilesProcessed: 0,
+      layer2ExistingFilesProcessed: 0,  // Should always be 0!
     };
 
     // Process each size group
@@ -302,6 +307,8 @@ export function useConstraintTable() {
       filesProcessed: metrics.layer3MetadataHashCount,
       duplicatesDetected: metrics.layer3DuplicatesDetected,
       passedToLayer2: metrics.layer2ContentHashCount,
+      newFilesProcessed: metrics.layer3NewFilesProcessed,
+      existingFilesProcessed: metrics.layer3ExistingFilesProcessed,
       totalTimeMs: metrics.layer3MetadataHashTime.toFixed(2),
       avgTimePerHashUs: (avgMetadataHashTime * 1000).toFixed(2) + 'μs',
     });
@@ -314,6 +321,8 @@ export function useConstraintTable() {
       filesProcessed: metrics.layer2ContentHashCount,
       copiesDetected: metrics.layer2CopiesDetected,
       uniqueFiles: metrics.layer2UniqueFiles,
+      newFilesProcessed: metrics.layer2NewFilesProcessed,
+      existingFilesProcessed: metrics.layer2ExistingFilesProcessed,
       totalTimeMs: metrics.layer2ContentHashTime.toFixed(2),
       avgTimePerHashMs: avgContentHashTime.toFixed(2),
     });
@@ -366,6 +375,13 @@ export function useConstraintTable() {
       const isNewFile = newQueueItems.includes(file);
       let metadataHash;
 
+      // Track new vs existing files
+      if (isNewFile) {
+        metrics.layer3NewFilesProcessed++;
+      } else {
+        metrics.layer3ExistingFilesProcessed++;
+      }
+
       if (isNewFile) {
         // NEW file: Compute metadata hash
         const layer3Start = performance.now();
@@ -403,34 +419,35 @@ export function useConstraintTable() {
       }
 
       if (metadataIndex.has(metadataHash)) {
-        // Metadata collision → this is a duplicate
-        // Get the reference file (the first file with this metadata hash)
         const referenceFile = metadataIndex.get(metadataHash);
 
-        // Only update if this is a new file
         if (isNewFile) {
-          // Generate xxh3Hash for the duplicate (needed to prevent tentative verification)
-          const layer2Start = performance.now();
-          const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
-          const layer2Time = performance.now() - layer2Start;
+          // ✅ DEFENSIVE CHECK: Reference file MUST have xxh3Hash
+          if (!referenceFile.xxh3Hash) {
+            console.error('[DEDUP-PHASE1] CRITICAL: Reference file missing hash:', {
+              referenceFile: referenceFile.name,
+              referenceId: referenceFile.id,
+            });
+            // Mark as error, don't promote to ready
+            file.status = 'read error';
+            file.canUpload = false;
+            file.error = 'Reference file missing content hash';
+            metrics.layer3DuplicatesDetected++;
+            continue;
+          }
 
-          // Track content hash time (even for duplicates, since we still hash them)
-          metrics.layer2ContentHashTime += layer2Time;
-
-          file.xxh3Hash = contentHash;
-
-          // Set reference to the original file
+          // ✅ Copy hash from reference file (already computed)
+          file.xxh3Hash = referenceFile.xxh3Hash;
+          file.metadataHash = metadataHash;
           file.referenceFileId = referenceFile.id;
 
           file.status = 'duplicate';
           file.canUpload = false;
           file.isDuplicate = true;
 
-          // Track duplicate detection
           metrics.layer3DuplicatesDetected++;
         }
-        // Skip Layer 2 processing - we already have the content hash
-        continue;
+        continue;  // Skip Layer 2 - that's the optimization!
       }
 
       // New metadata hash → store in index
@@ -466,6 +483,7 @@ export function useConstraintTable() {
       // Track Layer 2 metrics (only for NEW files)
       metrics.layer2ContentHashCount++;
       metrics.layer2ContentHashTime += layer2Time;
+      metrics.layer2NewFilesProcessed++;
 
       file.xxh3Hash = contentHash;
 
