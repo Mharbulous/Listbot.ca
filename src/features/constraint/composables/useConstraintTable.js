@@ -72,12 +72,14 @@ export function useConstraintTable() {
       }
 
       // No hash - use empty string (sorts to end)
-      // This should only happen for files that failed hash generation entirely
-      if (file.status !== 'n/a' && file.status !== 'read error') {
-        console.warn('[DEDUP-PHASE1] MISSING HASH: File has no xxh3Hash or legacy hash', {
+      // This is expected for 'ready' files with unique sizes (Layer 1 optimization)
+      // Only warn if 'copy' or 'duplicate' status (these should ALWAYS have a hash)
+      if (file.status === 'copy' || file.status === 'duplicate') {
+        console.error('[DEDUP-PHASE1] CRITICAL: Copy/duplicate file missing hash (data corruption)', {
           fileName: file.name,
           fileSize: file.size,
           status: file.status,
+          referenceFileId: file.referenceFileId,
         });
       }
       return '';
