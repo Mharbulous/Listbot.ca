@@ -69,6 +69,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/second-upload',
+    name: 'SecondUploadInterface',
+    component: () => import('../views/SecondUploadInterface.vue'),
+    meta: {
+      requiresAuth: false,
+      devOnly: true,
+      title: 'Second Upload Interface',
+      description: 'Alternative upload interface design for testing different UX patterns and workflows',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),

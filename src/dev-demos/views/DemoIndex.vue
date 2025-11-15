@@ -139,6 +139,14 @@ const availableDemos = computed(() => [
     tags: ['Firestore', 'Database', 'System Categories', 'CRUD Operations'],
     status: 'Active',
   },
+  {
+    title: 'Second Upload Interface',
+    description:
+      'Alternative upload interface design for testing different UX patterns and workflows. Experiment with file selection, upload options, and progress visualization.',
+    route: '/dev/second-upload',
+    tags: ['Upload', 'UI Design', 'UX Testing', 'Interface', 'Vue 3'],
+    status: 'Active',
+  },
   // Future demos will be added here
 ]);
 </script>
