@@ -25,7 +25,6 @@
         :is-uploading="constraintAdapter.isUploading.value"
         :is-paused="constraintAdapter.isPaused.value"
         :duplicates-hidden="duplicatesHidden"
-        :verification-state="verificationState"
         @cancel="handleCancelFile"
         @undo="handleUndoFile"
         @remove="handleRemoveFile"
@@ -82,7 +81,6 @@ import ConstraintTable from '../features/constraint/components/ConstraintTable.v
 import { useConstraintTable } from '../features/constraint/composables/useConstraintTable.js';
 import { useConstraintAdapter } from '../features/constraint/composables/useConstraintAdapter.js';
 import { useNotification } from '../core/composables/useNotification.js';
-import { useTentativeVerification } from '../features/constraint/composables/useTentativeVerification.js';
 
 // Component configuration
 defineOptions({
@@ -140,9 +138,6 @@ const constraintAdapter = useConstraintAdapter({
   updateFileStatus,
   showNotification,
 });
-
-// Tentative file verification (auto-starts after queue rendering is complete)
-const { verificationState } = useTentativeVerification(constraintQueue, removeFromQueue, sortQueueByGroupTimestamp);
 
 // Refs for file inputs
 const fileInput = ref(null);

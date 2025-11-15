@@ -47,7 +47,6 @@ export function useConstraintTable() {
    * - Groups with most recently added files appear first (desc groupTimestamp)
    * - Within each group: ready → copy → duplicate
    * - Files with same hash are grouped together (primary duplicate immediately above 'duplicate' file)
-   * - Tentative duplicates (no hash yet) group with their reference file via referenceFileId
    * - Copies and duplicates are sorted by the same metadata criteria (ensuring matching order)
    */
   const sortQueueByGroupTimestamp = () => {
@@ -58,6 +57,13 @@ export function useConstraintTable() {
     const getGroupingKey = (file) => {
       // Use xxh3Hash for Phase 1 deduplication
       if (file.xxh3Hash) return file.xxh3Hash;
+
+      // ✅ LAYER 3 OPTIMIZATION: Duplicates use metadataHash as grouping key
+      // Duplicates detected by Layer 3 don't have xxh3Hash (skipped content hashing)
+      // Group them by metadataHash instead to keep them with their reference file
+      if (file.status === 'duplicate' && file.metadataHash) {
+        return file.metadataHash;
+      }
 
       // Fallback: use legacy hash (for compatibility during migration)
       // WARNING: This fallback indicates incomplete XXH3 migration or hash generation failure
@@ -72,12 +78,14 @@ export function useConstraintTable() {
       }
 
       // No hash - use empty string (sorts to end)
-      // This should only happen for files that failed hash generation entirely
-      if (file.status !== 'n/a' && file.status !== 'read error') {
-        console.warn('[DEDUP-PHASE1] MISSING HASH: File has no xxh3Hash or legacy hash', {
+      // This is expected for 'ready' files with unique sizes (Layer 1 optimization)
+      // Only warn if 'copy' or 'duplicate' status (these should ALWAYS have a hash)
+      if (file.status === 'copy' || file.status === 'duplicate') {
+        console.error('[DEDUP-PHASE1] CRITICAL: Copy/duplicate file missing hash (data corruption)', {
           fileName: file.name,
           fileSize: file.size,
           status: file.status,
+          referenceFileId: file.referenceFileId,
         });
       }
       return '';
@@ -124,9 +132,8 @@ export function useConstraintTable() {
       const timestampDiff = (b.groupTimestamp || 0) - (a.groupTimestamp || 0);
       if (timestampDiff !== 0) return timestampDiff;
 
-      // Secondary sort: group by hash or referenceFileId (ensures files with same content appear together)
+      // Secondary sort: group by hash (ensures files with same content appear together)
       // This ensures the primary file appears immediately above its "duplicate"/"copy" files
-      // Tentative duplicates (no hash) will group with their reference file
       const groupKeyA = getGroupingKey(a);
       const groupKeyB = getGroupingKey(b);
       const hashDiff = groupKeyA.localeCompare(groupKeyB);
@@ -472,42 +479,19 @@ export function useConstraintTable() {
 
       if (metadataIndex.has(metadataHash)) {
         const referenceFile = metadataIndex.get(metadataHash);
-        const isReferenceNew = newQueueSet.has(referenceFile);
 
         if (isNewFile) {
-          // ✅ DEFENSIVE CHECK: Reference file MUST have xxh3Hash
-          if (!referenceFile.xxh3Hash) {
-            if (isReferenceNew) {
-              // Reference is also new and hasn't been hashed yet (same batch)
-              // Both files need to go through Layer 2
-              // Add this file to Layer 2 processing queue
-              newFilesNeedingContentHash.push(file);
-              // Don't update metadataIndex - keep first occurrence as reference
-              // Don't mark as duplicate yet - Layer 2 will detect it
-              continue;
-            } else {
-              // Reference is an existing file but missing hash - data corruption
-              console.error('[DEDUP-PHASE1] CRITICAL: Existing reference file missing hash:', {
-                referenceFile: referenceFile.name,
-                referenceId: referenceFile.id,
-              });
-              // Mark as error, don't promote to ready
-              file.status = 'read error';
-              file.canUpload = false;
-              file.error = 'Reference file missing content hash';
-              metrics.layer3DuplicatesDetected++;
-              continue;
-            }
-          }
+          // ✅ LAYER 3 OPTIMIZATION: Trust metadata hash for duplicate detection
+          // If metadata matches (firmId + modDate + name + ext), skip content hashing entirely
+          // This is the core optimization that makes Layer 3 fast
 
-          // ✅ Copy hash from reference file (already computed)
-          file.xxh3Hash = referenceFile.xxh3Hash;
           file.metadataHash = metadataHash;
-          file.referenceFileId = referenceFile.id;
-
           file.status = 'duplicate';
           file.canUpload = false;
           file.isDuplicate = true;
+
+          // ✅ Don't set xxh3Hash for duplicates - use metadataHash as grouping key instead
+          // This prevents unnecessary content hashing of duplicate files
 
           metrics.layer3DuplicatesDetected++;
         }
@@ -568,9 +552,6 @@ export function useConstraintTable() {
         // Content hash collision → could be duplicate or copy
         // Get the reference file (the first file with this content hash)
         const referenceFile = contentHashIndex.get(contentHash);
-
-        // Set reference to the original file
-        file.referenceFileId = referenceFile.id;
 
         // Check if metadata also matches (duplicate vs copy)
         const metadataMatches = file.metadataHash && referenceFile.metadataHash &&
