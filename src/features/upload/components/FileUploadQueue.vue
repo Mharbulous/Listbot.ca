@@ -176,16 +176,18 @@
 
     <!-- Upload Summary -->
     <v-card-actions v-if="files.length > 0" class="bg-grey-lighten-5 queue-footer">
-      <div class="d-flex w-100 justify-space-between align-center">
+      <div class="d-flex flex-column w-100 gap-1">
         <div class="text-body-2 text-grey-darken-1">
-          <strong>{{ uploadableFiles.length }}</strong> files ready for upload
+          <strong>{{ uploadableFiles.length }}</strong> Ready
           <span v-if="skippableFiles.length > 0">
-            • <strong>{{ skippableFiles.length }}</strong> will be skipped
+            + <strong>{{ skippableFiles.length }}</strong> Copies
           </span>
+          = <strong>{{ files.length }}</strong> Total
         </div>
 
         <div class="text-body-2 text-grey-darken-1">
-          Total size: <strong>{{ formatUploadSize(totalSize) }}</strong>
+          <strong>{{ uploadStatus.successful }}/{{ uploadableFiles.length }}</strong> Uploaded
+          | <strong>{{ uploadStatus.failed }}</strong> Failed
         </div>
       </div>
     </v-card-actions>
