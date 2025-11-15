@@ -68,7 +68,13 @@
 
     <!-- Status Column (120px fixed) -->
     <div class="row-cell status-cell-wrapper" style="width: 120px; flex-shrink: 0">
-      <StatusCell :status="file.displayedStatus || file.status" :hash="file.hash" />
+      <StatusCell
+        :status="file.displayedStatus || file.status"
+        :hash="file.hash"
+        :file-id="file.id"
+        :source-file="file.sourceFile"
+        :queue-file="file"
+      />
     </div>
   </div>
 </template>
