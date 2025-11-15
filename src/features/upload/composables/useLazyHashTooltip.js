@@ -1,5 +1,14 @@
 import { reactive, readonly } from 'vue';
-import { xxh128 } from 'hash-wasm';
+import xxhash from 'xxhash-wasm';
+
+// Initialize xxHash hasher (singleton pattern for performance)
+let xxhashInstance = null;
+const getXxHash = async () => {
+  if (!xxhashInstance) {
+    xxhashInstance = await xxhash();
+  }
+  return xxhashInstance;
+};
 
 // NOTE: Switched from BLAKE3 to XXH128 for performance comparison
 export function useLazyHashTooltip() {
@@ -23,8 +32,10 @@ export function useLazyHashTooltip() {
       const buffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
-      // Generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
-      const hash = await xxh128(uint8Array);
+      // Get xxHash instance and generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+      const hasher = await getXxHash();
+      const hashValue = hasher.h128(uint8Array); // Returns BigInt (128-bit hash)
+      const hash = hashValue.toString(16).padStart(32, '0'); // Convert to 32-char hex string
 
       const hashDuration = performance.now() - hashStartTime;
       console.log(`[HASH-PERF-TOOLTIP] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
