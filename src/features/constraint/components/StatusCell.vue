@@ -1,12 +1,22 @@
 <template>
-  <div class="status-cell" :title="tooltipText">
-    <span class="status-dot" :class="`status-${status}`"></span>
-    <span class="status-text">{{ displayStatusText }}</span>
-  </div>
+  <v-tooltip location="top" :open-delay="100">
+    <template v-slot:activator="{ props: tooltipProps }">
+      <div
+        class="status-cell"
+        v-bind="tooltipProps"
+        @mouseenter="handleMouseEnter"
+      >
+        <span class="status-dot" :class="`status-${status}`"></span>
+        <span class="status-text">{{ displayStatusText }}</span>
+      </div>
+    </template>
+    <span>{{ tooltipText }}</span>
+  </v-tooltip>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useLazyXXH3Tooltip } from '../composables/useLazyXXH3Tooltip.js';
 
 // Component configuration
 defineOptions({
@@ -45,7 +55,36 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  fileId: {
+    type: String,
+    required: true,
+  },
+  sourceFile: {
+    type: File,
+    default: null,
+  },
+  queueFile: {
+    type: Object,
+    default: null,
+  },
 });
+
+// Initialize lazy XXH3 tooltip composable
+const xxh3Tooltip = useLazyXXH3Tooltip();
+
+// Pre-populate cache if xxh3Hash already exists
+onMounted(() => {
+  if (props.queueFile?.xxh3Hash) {
+    xxh3Tooltip.populateExistingHash(props.fileId, props.queueFile.xxh3Hash);
+  }
+});
+
+// Handle mouse enter to trigger lazy hash calculation
+const handleMouseEnter = () => {
+  if (props.sourceFile && props.queueFile) {
+    xxh3Tooltip.onTooltipHover(props.fileId, props.sourceFile, props.queueFile);
+  }
+};
 
 // Status text mapping
 const statusTextMap = {
@@ -82,18 +121,31 @@ const displayStatusText = computed(() => {
   return baseStatusText.value;
 });
 
-// Tooltip text
+// Tooltip text - displays XXH3 hash
 const tooltipText = computed(() => {
-  if (props.hash) {
-    return props.hash;
+  // Priority 1: Show XXH3 hash from queue file if available
+  if (props.queueFile?.xxh3Hash) {
+    return props.queueFile.xxh3Hash;
   }
 
-  // Phase 3a: Show helpful tooltip for tentative statuses
+  // Priority 2: Show XXH3 hash from cache (after lazy calculation)
+  const cachedHash = xxh3Tooltip.getHashDisplay(props.fileId);
+  if (cachedHash && cachedHash !== 'Hover to calculate hash') {
+    return cachedHash;
+  }
+
+  // Priority 3: Show helpful tooltip for tentative statuses
   if ((props.status === 'duplicate' || props.status === 'copy') && !props.hash) {
     return 'Tentative status - will be verified before upload';
   }
 
-  return '';
+  // Priority 4: Show legacy hash if available (backward compatibility)
+  if (props.hash) {
+    return props.hash;
+  }
+
+  // Default: Prompt user to hover
+  return 'Hover to view hash';
 });
 </script>
 
