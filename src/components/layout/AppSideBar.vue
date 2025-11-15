@@ -66,6 +66,7 @@ const navItems = [
   { key: 'cloud', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/documents` : '/documents'), icon: '📁', label: 'Documents' },
   { key: 'list', path: '/list', icon: '📃', label: 'List' },
   { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
+  { key: 'constraint', path: '/constraint', icon: '🧺', label: 'Constraint' },
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
 ]
 
