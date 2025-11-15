@@ -38,6 +38,9 @@ export function useConstraintTable() {
   // Initialize deduplication logic
   const queueCore = useQueueCore();
 
+  // Get auth store for firmId (Solo Firm: firmId === userId)
+  const authStore = useAuthStore();
+
   /**
    * Sort queue by group timestamp and status
    * - Groups with most recently added files appear first (desc groupTimestamp)
@@ -160,8 +163,7 @@ export function useConstraintTable() {
     });
 
     // Get firmId from auth store (Solo Firm: firmId === userId)
-    const authStore = useAuthStore();
-    const firmId = authStore.currentUser?.uid;
+    const firmId = authStore.currentFirm;
 
     if (!firmId) {
       console.error('[DEDUP-PHASE1] CRITICAL: No firmId available from auth store');
