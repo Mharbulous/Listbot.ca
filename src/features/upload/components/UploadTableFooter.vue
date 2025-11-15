@@ -3,21 +3,29 @@
     <div class="footer-content">
       <!-- File Counts (Left) -->
       <div class="footer-left">
-        <span class="footer-stat">
-          <strong>{{ stats.ready }}</strong> Ready
-        </span>
-        <span class="footer-separator">|</span>
-        <span class="footer-stat">
-          <strong>{{ stats.uploaded }}</strong> Uploaded
-        </span>
-        <span class="footer-separator">|</span>
-        <span class="footer-stat">
-          <strong>{{ stats.failed }}</strong> Failed
-        </span>
-        <span class="footer-separator">|</span>
-        <span class="footer-stat">
-          <strong>{{ stats.total }}</strong> Total
-        </span>
+        <!-- Line 1: Ready + Copies = Total -->
+        <div class="footer-line">
+          <span class="footer-stat">
+            <strong>{{ stats.ready }}</strong> Ready
+          </span>
+          <span v-if="stats.copyCount > 0" class="footer-stat">
+            + <strong>{{ stats.copyCount }}</strong> Copies
+          </span>
+          <span class="footer-stat">
+            = <strong>{{ stats.total }}</strong> Total
+          </span>
+        </div>
+
+        <!-- Line 2: Uploaded | Failed -->
+        <div class="footer-line">
+          <span class="footer-stat">
+            <strong>{{ stats.uploaded }}/{{ stats.ready }}</strong> Uploaded
+          </span>
+          <span class="footer-separator">|</span>
+          <span class="footer-stat">
+            <strong>{{ stats.failed }}</strong> Failed
+          </span>
+        </div>
       </div>
 
       <!-- Upload Button (Right) -->
@@ -301,9 +309,14 @@ const getUploadButtonText = () => {
 
 .footer-left {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-line {
+  display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .footer-right {
@@ -454,12 +467,8 @@ const getUploadButtonText = () => {
     gap: 0.5rem;
   }
 
-  .footer-separator {
-    display: none;
-  }
-
-  .footer-stat {
-    flex-basis: calc(50% - 0.25rem);
+  .footer-line {
+    gap: 0.35rem;
   }
 }
 </style>
