@@ -176,8 +176,8 @@
 
     <!-- Upload Summary -->
     <v-card-actions v-if="files.length > 0" class="bg-grey-lighten-5 queue-footer">
-      <div class="d-flex flex-column w-100 gap-1">
-        <div class="text-body-2 text-grey-darken-1">
+      <div class="d-flex flex-column w-100">
+        <div class="text-body-2 text-grey-darken-1 mb-1">
           <strong>{{ uploadableFiles.length }}</strong> Ready
           <span v-if="skippableFiles.length > 0">
             + <strong>{{ skippableFiles.length }}</strong> Copies
