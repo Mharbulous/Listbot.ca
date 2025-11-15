@@ -329,23 +329,47 @@ export function useConstraintTable() {
     // Purpose: Catch "same folder twice" with cheap metadata hash
     // ════════════════════════════════════════════════════════════════
     const metadataIndex = new Map(); // metadataHash -> file
+    const newFilesNeedingContentHash = []; // Track NEW files that need Layer 2
 
     for (const file of filesWithSize) {
-      // Generate XXH3 Metadata Hash = XXH3(firmID + modDate + name + ext)
-      const layer3Start = performance.now();
-      const metadataHash = await queueCore.generateMetadataHash({
-        firmId: firmId,
-        modDate: file.sourceLastModified,
-        name: file.name,
-        extension: getFileExtension(file.name),
-      });
-      const layer3Time = performance.now() - layer3Start;
+      const isNewFile = newQueueItems.includes(file);
+      let metadataHash;
 
-      // Track Layer 3 metrics
-      metrics.layer3MetadataHashCount++;
-      metrics.layer3MetadataHashTime += layer3Time;
+      if (isNewFile) {
+        // NEW file: Compute metadata hash
+        const layer3Start = performance.now();
+        metadataHash = await queueCore.generateMetadataHash({
+          firmId: firmId,
+          modDate: file.sourceLastModified,
+          name: file.name,
+          extension: getFileExtension(file.name),
+        });
+        const layer3Time = performance.now() - layer3Start;
 
-      file.metadataHash = metadataHash;
+        // Track Layer 3 metrics (only for NEW files)
+        metrics.layer3MetadataHashCount++;
+        metrics.layer3MetadataHashTime += layer3Time;
+
+        file.metadataHash = metadataHash;
+      } else {
+        // EXISTING file: Use existing metadata hash if available
+        // (if not available, compute it once to populate the index)
+        if (!file.metadataHash) {
+          const layer3Start = performance.now();
+          metadataHash = await queueCore.generateMetadataHash({
+            firmId: firmId,
+            modDate: file.sourceLastModified,
+            name: file.name,
+            extension: getFileExtension(file.name),
+          });
+          const layer3Time = performance.now() - layer3Start;
+          file.metadataHash = metadataHash;
+
+          // Don't track metrics for existing files
+        } else {
+          metadataHash = file.metadataHash;
+        }
+      }
 
       if (metadataIndex.has(metadataHash)) {
         // Metadata collision → this is a duplicate
@@ -353,7 +377,7 @@ export function useConstraintTable() {
         const referenceFile = metadataIndex.get(metadataHash);
 
         // Only update if this is a new file
-        if (newQueueItems.includes(file)) {
+        if (isNewFile) {
           // Generate xxh3Hash for the duplicate (needed to prevent tentative verification)
           const layer2Start = performance.now();
           const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
@@ -378,25 +402,37 @@ export function useConstraintTable() {
         continue;
       }
 
-      // New metadata hash → store in index and proceed to Layer 2
+      // New metadata hash → store in index
       metadataIndex.set(metadataHash, file);
+
+      // Only add NEW files to Layer 2 processing queue
+      if (isNewFile) {
+        newFilesNeedingContentHash.push(file);
+      }
     }
 
     // ════════════════════════════════════════════════════════════════
-    // LAYER 2: Content Hash (only for files with unique metadata)
+    // LAYER 2: Content Hash (only for NEW files with unique metadata)
     // ════════════════════════════════════════════════════════════════
     const contentHashIndex = new Map(); // contentHash -> file
 
-    // Only process files that passed Layer 3 (unique metadata hash)
-    const filesForContentHash = Array.from(metadataIndex.values());
+    // First, populate content hash index with EXISTING files (skip hashing)
+    for (const file of filesWithSize) {
+      const isNewFile = newQueueItems.includes(file);
+      if (!isNewFile && file.xxh3Hash) {
+        // Existing file with content hash → add to index
+        contentHashIndex.set(file.xxh3Hash, file);
+      }
+    }
 
-    for (const file of filesForContentHash) {
+    // Now process only NEW files that passed Layer 3 (unique metadata hash)
+    for (const file of newFilesNeedingContentHash) {
       // Generate XXH3 Content Hash
       const layer2Start = performance.now();
       const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
       const layer2Time = performance.now() - layer2Start;
 
-      // Track Layer 2 metrics
+      // Track Layer 2 metrics (only for NEW files)
       metrics.layer2ContentHashCount++;
       metrics.layer2ContentHashTime += layer2Time;
 
@@ -407,28 +443,24 @@ export function useConstraintTable() {
         // Get the reference file (the first file with this content hash)
         const referenceFile = contentHashIndex.get(contentHash);
 
-        // Only update if this is a new file
-        if (newQueueItems.includes(file)) {
-          // Set reference to the original file
-          file.referenceFileId = referenceFile.id;
+        // Set reference to the original file
+        file.referenceFileId = referenceFile.id;
 
-          file.status = 'copy';
-          file.canUpload = false; // Don't upload content (already exists)
-          file.isCopy = true;
+        file.status = 'copy';
+        file.canUpload = false; // Don't upload content (already exists)
+        file.isCopy = true;
 
-          // Track copy detection
-          metrics.layer2CopiesDetected++;
-        }
+        // Track copy detection
+        metrics.layer2CopiesDetected++;
       } else {
         // Unique content → mark as 'ready'
-        // Only update if this is a new file
-        if (newQueueItems.includes(file)) {
-          file.status = 'ready';
-          file.canUpload = true;
+        file.status = 'ready';
+        file.canUpload = true;
 
-          // Track unique files
-          metrics.layer2UniqueFiles++;
-        }
+        // Track unique files
+        metrics.layer2UniqueFiles++;
+
+        // Add to index for future comparisons
         contentHashIndex.set(contentHash, file);
       }
     }
