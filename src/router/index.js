@@ -51,7 +51,7 @@ const router = createRouter({
     // {
     //   path: '/testing',
     //   name: 'testing',
-    //   component: () => import('../views/Testing.vue'),
+    //   component: () => import('../views/Uploadv2.vue'),
     //   meta: { requiresAuth: true, title: 'Upload Queue' },
     // },
     {
