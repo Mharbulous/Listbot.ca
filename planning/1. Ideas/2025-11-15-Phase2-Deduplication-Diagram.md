@@ -56,10 +56,9 @@ flowchart TD
     Loop -->|Next File| CheckCopy{File Status<br/>from Phase 1?}
 
     CheckCopy -->|ready| CalcHash[Calculate BLAKE3 Hash<br/><i>during file read for upload</i><br/>⏱️ ~50ms for 10MB]
-    CheckCopy -->|copy| ReusePrimary[Reuse Primary File Hash<br/><i>skip BLAKE3 calculation</i><br/>⏱️ 0ms saved]
+    CheckCopy -->|copy| CalcHash
 
     CalcHash --> Query[Query Firestore<br/>doc = blake3Hash<br/>⏱️ ~100ms]
-    ReusePrimary --> Query
 
     Query --> Exists{Document<br/>Exists?}
 
@@ -79,7 +78,6 @@ flowchart TD
     style CheckCopy fill:#fff3cd
     style Exists fill:#fff3cd
     style CalcHash fill:#cfe2ff
-    style ReusePrimary fill:#d1ecf1
     style Query fill:#cfe2ff
     style UpdateMeta fill:#f8d7da
     style UploadBoth fill:#d4edda
@@ -106,17 +104,19 @@ flowchart TD
 
 Each iteration processes one file's upload:
 
-#### Step 2a: Check Phase 1 Status
+#### Step 2a: Calculate BLAKE3 Hash
 
-- **If file is `ready`:**
-  - Calculate BLAKE3 hash (128-bit)
-  - This happens DURING the file read for network upload
-  - Hash becomes the Firestore document ID
+**CRITICAL: BLAKE3 is ALWAYS calculated for ALL files at Phase 2**
 
-- **If file is `copy`:**
-  - Skip BLAKE3 calculation (optimization)
-  - Reuse the hash from the primary file in the same batch
-  - Only need to update metadata
+- Calculate BLAKE3 hash (128-bit) for EVERY file
+- This happens DURING the file read for network upload
+- Hash becomes the Firestore document ID
+- **Why no skip for "copy" files:**
+  - Phase 1 uses XXH3 (fast, non-cryptographic) for client-side organization
+  - XXH3 could potentially misidentify files
+  - Cannot risk files being missed due to XXH3 false positives
+  - BLAKE3 must be calculated server-side for cryptographic certainty
+  - Upload speeds are the bottleneck anyway (~5-15s vs ~50ms hash time)
 
 #### Step 2b: Query Firestore
 
@@ -231,14 +231,14 @@ Process next file in upload queue until all `ready` and `copy` files are process
 
 **Result:** Users experience zero additional latency from deduplication.
 
-### Optimization: Copy Files
+### Server-Side Copy Detection
 
-Files marked `copy` in Phase 1 (same content as another file in the batch):
+Files detected as copies during Phase 2 (Firestore document already exists):
 
-- **Skip:** BLAKE3 hashing (reuse primary hash)
-- **Skip:** Storage upload (content already uploaded)
+- **BLAKE3:** Always calculated (cannot skip - security requirement)
+- **Skip:** Storage upload only (content already exists)
 - **Do:** Firestore metadata update only
-- **Savings:** ~5-15 seconds per copy file
+- **Savings:** ~5-15 seconds per copy file (storage upload time only)
 
 ---
 
@@ -304,14 +304,10 @@ Phase 2 upload logic should be in:
 ```javascript
 // Phase 2 upload function (pseudocode)
 async function uploadFileWithDeduplication(file, phase1Status) {
-  let blake3Hash;
-
-  // Step 1: Hash or reuse
-  if (phase1Status === 'copy') {
-    blake3Hash = file.primaryHash; // Reuse from Phase 1 primary
-  } else {
-    blake3Hash = await calculateBLAKE3(file); // During file read
-  }
+  // Step 1: ALWAYS calculate BLAKE3 hash
+  // CRITICAL: Never skip BLAKE3 at Phase 2, even for "copy" files
+  // Phase 1 uses XXH3 (non-cryptographic) - cannot rely on it for server decisions
+  const blake3Hash = await calculateBLAKE3(file); // During file read
 
   // Step 2: Query Firestore
   const docRef = doc(db, 'documents', blake3Hash);
