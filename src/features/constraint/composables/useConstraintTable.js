@@ -455,20 +455,32 @@ export function useConstraintTable() {
 
       if (metadataIndex.has(metadataHash)) {
         const referenceFile = metadataIndex.get(metadataHash);
+        const isReferenceNew = newQueueSet.has(referenceFile);
 
         if (isNewFile) {
           // ✅ DEFENSIVE CHECK: Reference file MUST have xxh3Hash
           if (!referenceFile.xxh3Hash) {
-            console.error('[DEDUP-PHASE1] CRITICAL: Reference file missing hash:', {
-              referenceFile: referenceFile.name,
-              referenceId: referenceFile.id,
-            });
-            // Mark as error, don't promote to ready
-            file.status = 'read error';
-            file.canUpload = false;
-            file.error = 'Reference file missing content hash';
-            metrics.layer3DuplicatesDetected++;
-            continue;
+            if (isReferenceNew) {
+              // Reference is also new and hasn't been hashed yet (same batch)
+              // Both files need to go through Layer 2
+              // Add this file to Layer 2 processing queue
+              newFilesNeedingContentHash.push(file);
+              // Don't update metadataIndex - keep first occurrence as reference
+              // Don't mark as duplicate yet - Layer 2 will detect it
+              continue;
+            } else {
+              // Reference is an existing file but missing hash - data corruption
+              console.error('[DEDUP-PHASE1] CRITICAL: Existing reference file missing hash:', {
+                referenceFile: referenceFile.name,
+                referenceId: referenceFile.id,
+              });
+              // Mark as error, don't promote to ready
+              file.status = 'read error';
+              file.canUpload = false;
+              file.error = 'Reference file missing content hash';
+              metrics.layer3DuplicatesDetected++;
+              continue;
+            }
           }
 
           // ✅ Copy hash from reference file (already computed)
@@ -536,19 +548,30 @@ export function useConstraintTable() {
       file.xxh3Hash = contentHash;
 
       if (contentHashIndex.has(contentHash)) {
-        // Content hash collision → this is a copy (same content, different metadata)
+        // Content hash collision → could be duplicate or copy
         // Get the reference file (the first file with this content hash)
         const referenceFile = contentHashIndex.get(contentHash);
 
         // Set reference to the original file
         file.referenceFileId = referenceFile.id;
 
-        file.status = 'copy';
-        file.canUpload = false; // Don't upload content (already exists)
-        file.isCopy = true;
+        // Check if metadata also matches (duplicate vs copy)
+        const metadataMatches = file.metadataHash && referenceFile.metadataHash &&
+                                file.metadataHash === referenceFile.metadataHash;
 
-        // Track copy detection
-        metrics.layer2CopiesDetected++;
+        if (metadataMatches) {
+          // Same content AND same metadata → duplicate
+          file.status = 'duplicate';
+          file.canUpload = false; // Don't upload content (already exists)
+          file.isDuplicate = true;
+          metrics.layer3DuplicatesDetected++; // Count as Layer 3 metric (metadata-based)
+        } else {
+          // Same content, different metadata → copy
+          file.status = 'copy';
+          file.canUpload = false; // Don't upload content (already exists)
+          file.isCopy = true;
+          metrics.layer2CopiesDetected++;
+        }
       } else {
         // Unique content → mark as 'ready'
         file.status = 'ready';
