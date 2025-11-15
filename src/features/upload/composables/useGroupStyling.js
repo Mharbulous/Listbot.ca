@@ -14,6 +14,10 @@
  * Get background color for a file based on its hash group
  * Alternates between white and light gray for each group (including unique files)
  *
+ * OPTIMIZATION: Tentative files (no hash) inherit color from row above
+ * instead of counting groups, since they're always positioned directly below
+ * the file they tentatively match.
+ *
  * @param {Object} file - File object with hash property
  * @param {Array} files - All files in the queue (for determining unique hashes)
  * @returns {string} - Background color (#ffffff or #f9fafb)
@@ -23,7 +27,15 @@ export function getGroupBackgroundColor(file, files) {
   const fileIndex = files.indexOf(file);
   if (fileIndex === -1) return '#ffffff';
 
-  // Count how many groups come before (and including) this file
+  // TENTATIVE files (no hash) → inherit color from row above
+  // Tentative duplicates and copies don't have hash values yet,
+  // but are sorted to appear directly below the files they match.
+  // No need to count groups - just use the same color as above.
+  if (!file.hash && fileIndex > 0) {
+    return getGroupBackgroundColor(files[fileIndex - 1], files);
+  }
+
+  // Files WITH hashes → count groups to determine color
   let groupIndex = 0;
 
   for (let i = 0; i <= fileIndex; i++) {
