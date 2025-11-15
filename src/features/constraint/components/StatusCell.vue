@@ -112,10 +112,15 @@ const statusTextMap = {
 // Base status text
 const baseStatusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
-// Display status text with tentative indicator
-// Phase 3a: Add "?" for tentative duplicate/copy status (no hash yet)
+// Display status text (no tentative states in Phase 1)
+// Phase 1: All hashes are calculated immediately, so no "?" indicator needed
 const displayStatusText = computed(() => {
-  if ((props.status === 'duplicate' || props.status === 'copy') && !props.hash) {
+  // Phase 1: Check for xxh3Hash (immediate hashing) or legacy hash prop
+  const hasHash = props.queueFile?.xxh3Hash || props.hash;
+
+  // Only add "?" if status is duplicate/copy AND no hash exists
+  // This should be rare in Phase 1 since all hashes are calculated immediately
+  if ((props.status === 'duplicate' || props.status === 'copy') && !hasHash) {
     return baseStatusText.value + '?';
   }
   return baseStatusText.value;
