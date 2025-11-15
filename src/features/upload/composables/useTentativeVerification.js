@@ -5,11 +5,13 @@
  *
  * This composable:
  * 1. Auto-starts verification when queue addition is complete
- * 2. Processes files by size (smallest first for quick wins)
- * 3. Throttles hashing (one file at a time to avoid CPU spikes)
- * 4. Removes verified duplicates immediately
- * 5. Updates copy status from "Copy?" to "Copy"
- * 6. Moves newly discovered unique files to the top
+ * 2. PHASE 1: Hashes reference files (those with tentativeGroupId) first
+ * 3. PHASE 2: Verifies tentative files against their hashed references
+ * 4. Processes files by size (smallest first for quick wins)
+ * 5. Throttles hashing (one file at a time to avoid CPU spikes)
+ * 6. Removes verified duplicates immediately
+ * 7. Updates copy status from "Copy?" to "Copy"
+ * 8. Moves newly discovered unique files to the top
  */
 
 import { ref, watch } from 'vue';
@@ -143,6 +145,64 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   };
 
   /**
+   * Hash all reference files that need hashing
+   * Reference files are identified by having a tentativeGroupId set
+   * @returns {Promise<number>} Number of reference files hashed
+   */
+  const hashReferenceFiles = async () => {
+    // Find all reference files (files with tentativeGroupId) that need hashing
+    const referenceFiles = uploadQueue.value.filter(
+      (file) => file.tentativeGroupId && !file.hash
+    );
+
+    if (referenceFiles.length === 0) {
+      return 0;
+    }
+
+    console.log('[TENTATIVE-VERIFY] Hashing reference files:', {
+      totalReferenceFiles: referenceFiles.length,
+    });
+
+    // Hash reference files one at a time (smallest first for quick wins)
+    const sortedReferenceFiles = [...referenceFiles].sort((a, b) => a.size - b.size);
+
+    let hashedCount = 0;
+    for (const refFile of sortedReferenceFiles) {
+      // Re-check if file still exists and still needs hashing
+      const currentFile = uploadQueue.value.find((f) => f.id === refFile.id);
+      if (!currentFile || currentFile.hash) {
+        continue;
+      }
+
+      try {
+        const hash = await queueCore.generateFileHash(currentFile.sourceFile);
+        currentFile.hash = hash;
+        hashedCount++;
+        console.log('[TENTATIVE-VERIFY] Hashed reference file:', {
+          name: currentFile.name,
+          hash: hash.substring(0, 8) + '...',
+        });
+      } catch (error) {
+        console.error('[TENTATIVE-VERIFY] Failed to hash reference file:', {
+          name: currentFile.name,
+          error: error.message,
+        });
+        // Mark as error so verification can handle it
+        currentFile.status = 'read error';
+        currentFile.errorMessage = error.message;
+        currentFile.canUpload = false;
+      }
+    }
+
+    console.log('[TENTATIVE-VERIFY] Reference file hashing complete:', {
+      hashedCount,
+      totalReferenceFiles: referenceFiles.length,
+    });
+
+    return hashedCount;
+  };
+
+  /**
    * Start the verification process
    * Processes all tentative files in the queue
    */
@@ -169,6 +229,11 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     verificationState.value.processed = 0;
     verificationState.value.total = tentativeFiles.length;
 
+    // PHASE 1: Hash all reference files first
+    // This ensures reference files have hashes before we verify tentative files against them
+    await hashReferenceFiles();
+
+    // PHASE 2: Verify tentative files against their references
     // Sort tentative files by size (smallest first for quick wins)
     const sortedTentativeFiles = [...tentativeFiles].sort((a, b) => a.size - b.size);
 
