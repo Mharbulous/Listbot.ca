@@ -1,5 +1,5 @@
 import { createApplicationError } from '../../../utils/errorMessages';
-import { xxh128 } from 'hash-wasm';
+import { xxh128 } from 'xxhash-wasm';
 
 /**
  * Queue Core Composable
