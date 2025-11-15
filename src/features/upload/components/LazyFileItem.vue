@@ -1,5 +1,9 @@
 <template>
-  <v-list-item class="px-0" :class="{ 'bg-purple-lighten-5': file.isDuplicate }">
+  <v-list-item
+    class="px-0"
+    :class="{ 'bg-purple-lighten-5': file.isDuplicate }"
+    :data-file-id="file.id"
+  >
     <template #prepend>
       <v-tooltip location="bottom" transition="fade-transition" :open-delay="0" :close-delay="0">
         <template #activator="{ props: tooltipProps }">

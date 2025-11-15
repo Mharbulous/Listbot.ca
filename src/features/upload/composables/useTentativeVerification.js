@@ -6,12 +6,12 @@
  * This composable:
  * 1. Auto-starts verification when queue addition is complete
  * 2. PHASE 1: Hashes reference files (those with tentativeGroupId) first
- * 3. PHASE 2: Verifies tentative files against their hashed references
- * 4. Processes files in REVERSE order (bottom to top) to prevent table jiggling
- * 5. Throttles hashing (one file at a time to avoid CPU spikes)
- * 6. Removes verified duplicates immediately
- * 7. Updates copy status from "Copy?" to "Copy"
- * 8. Moves newly discovered unique files to the top
+ * 3. PHASE 2: Verifies tentative files using two-phase deletion strategy:
+ *    - Phase 2A: Visible files - animated fade-out before deletion (user feedback)
+ *    - Phase 2B: Non-visible files - batched deletion (no animation, single re-render)
+ * 4. Throttles hashing (one file at a time to avoid CPU spikes)
+ * 5. Updates copy status from "Copy?" to "Copy"
+ * 6. Moves newly discovered unique files to the top
  */
 
 import { ref, watch } from 'vue';
@@ -203,6 +203,54 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   };
 
   /**
+   * Get IDs of files currently visible in the viewport
+   * @returns {Set<string>} Set of file IDs that are currently visible
+   */
+  const getVisibleFileIds = () => {
+    const scrollContainer = document.querySelector('.scrollable-content');
+    if (!scrollContainer) {
+      console.log('[TENTATIVE-VERIFY] Scroll container not found');
+      return new Set();
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const visibleIds = new Set();
+
+    // Check each file item in the queue
+    uploadQueue.value.forEach((file) => {
+      const fileElement = document.querySelector(`[data-file-id="${file.id}"]`);
+      if (fileElement) {
+        const rect = fileElement.getBoundingClientRect();
+        // Check if element is within visible viewport (with small buffer)
+        if (rect.top < containerRect.bottom + 50 && rect.bottom > containerRect.top - 50) {
+          visibleIds.add(file.id);
+        }
+      }
+    });
+
+    console.log('[TENTATIVE-VERIFY] Detected visible files:', visibleIds.size);
+    return visibleIds;
+  };
+
+  /**
+   * Apply fade-out animation to a file element
+   * @param {string} fileId - The ID of the file to animate
+   * @returns {Promise<void>} Resolves when animation completes
+   */
+  const animateFileDeletion = async (fileId) => {
+    const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+    if (!fileElement) {
+      return;
+    }
+
+    // Add fade-out animation class
+    fileElement.classList.add('file-deletion-fade-out');
+
+    // Wait for animation to complete (500ms duration)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  };
+
+  /**
    * Start the verification process
    * Processes all tentative files in the queue
    */
@@ -233,15 +281,33 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     // This ensures reference files have hashes before we verify tentative files against them
     await hashReferenceFiles();
 
-    // PHASE 2: Verify tentative files against their references
-    // Process files in REVERSE order (bottom to top)
-    // This prevents table jiggling - deletions happen below the viewport
-    // so the visible portion of the table stays stable
-    const sortedTentativeFiles = [...tentativeFiles].reverse();
+    // PHASE 2: Verify tentative files with two-phase deletion strategy
+    // Detect which files are currently visible in the viewport
+    const visibleFileIds = getVisibleFileIds();
 
-    // Process files one at a time (throttled to avoid CPU spikes)
-    for (const file of sortedTentativeFiles) {
-      // Re-check if file still exists and is still tentative (might have been removed/modified)
+    console.log('[TENTATIVE-VERIFY] Two-phase deletion strategy:', {
+      totalTentativeFiles: tentativeFiles.length,
+      visibleFiles: visibleFileIds.size,
+      nonVisibleFiles: tentativeFiles.length - visibleFileIds.size,
+    });
+
+    // Separate files into visible and non-visible
+    const visibleFiles = [];
+    const nonVisibleFiles = [];
+
+    tentativeFiles.forEach((file) => {
+      if (visibleFileIds.has(file.id)) {
+        visibleFiles.push(file);
+      } else {
+        nonVisibleFiles.push(file);
+      }
+    });
+
+    // PHASE 2A: Process visible files with animation feedback
+    // These get individual animated deletions so user sees progress
+    console.log('[TENTATIVE-VERIFY] Phase 2A: Processing visible files with animation');
+    for (const file of visibleFiles) {
+      // Re-check if file still exists and is still tentative
       const currentFile = uploadQueue.value.find((f) => f.id === file.id);
       if (!currentFile || currentFile.hash) {
         console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
@@ -252,7 +318,8 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       const result = await verifyTentativeFile(currentFile);
 
       if (result.shouldRemove) {
-        // Remove verified duplicate from queue
+        // Apply fade-out animation before removing
+        await animateFileDeletion(currentFile.id);
         removeFromQueue(currentFile.id);
       } else if (result.statusChange === 'ready') {
         // File was promoted to ready - resort queue to move it to top
@@ -261,6 +328,39 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
 
       verificationState.value.processed++;
     }
+
+    // PHASE 2B: Process non-visible files (batched deletion)
+    // Process bottom-to-top to minimize impact, batch all deletions at end
+    console.log('[TENTATIVE-VERIFY] Phase 2B: Processing non-visible files (batched)');
+    const sortedNonVisibleFiles = [...nonVisibleFiles].reverse();
+    const filesToRemove = [];
+
+    for (const file of sortedNonVisibleFiles) {
+      // Re-check if file still exists and is still tentative
+      const currentFile = uploadQueue.value.find((f) => f.id === file.id);
+      if (!currentFile || currentFile.hash) {
+        console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
+        verificationState.value.processed++;
+        continue;
+      }
+
+      const result = await verifyTentativeFile(currentFile);
+
+      if (result.shouldRemove) {
+        // Collect for batch deletion (no animation needed - not visible)
+        filesToRemove.push(currentFile.id);
+      } else if (result.statusChange === 'ready') {
+        // File was promoted to ready - resort queue to move it to top
+        sortQueueByGroupTimestamp();
+      }
+
+      verificationState.value.processed++;
+    }
+
+    // Batch remove all non-visible verified duplicates
+    // This causes only ONE re-render instead of many
+    console.log('[TENTATIVE-VERIFY] Batch removing non-visible files:', filesToRemove.length);
+    filesToRemove.forEach((id) => removeFromQueue(id));
 
     // Sort queue one final time to ensure everything is in the right place
     sortQueueByGroupTimestamp();
