@@ -151,17 +151,17 @@ export function useUploadTable() {
    * @returns {Promise<Array>} - Queue items with duplicate status updated
    */
   const deduplicateAgainstExisting = async (newQueueItems, existingQueueSnapshot) => {
-    console.log('[DEDUP-TABLE] Starting deduplication check:', {
-      newFiles: newQueueItems.length,
-      existingFiles: existingQueueSnapshot.length,
-    });
+    const dedupT0 = performance.now();
+    console.log(`📊 [DEDUP] T=0.00ms - Starting: {new: ${newQueueItems.length}, existing: ${existingQueueSnapshot.length}}`);
 
     // ========================================================================
     // PHASE 3a: Metadata Pre-Filter (BEFORE hash calculation)
     // Mark files as tentative duplicates/copies based on metadata + folder path
     // Hash calculation deferred to verification trigger points
     // ========================================================================
+    const preFilterT0 = performance.now();
     const preFilterResult = queueCore.preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
+    const preFilterTime = performance.now() - preFilterT0;
 
     // OPTIMIZATION: Build queue index once (O(M+N)), then O(1) lookups
     // Prevents O(N×M) from repeated uploadQueue.value.find() calls
@@ -237,8 +237,13 @@ export function useUploadTable() {
     // ========================================================================
     const readyFiles = newQueueItems.filter((f) => f.status === 'ready');
 
+    // Log prefilter results
+    console.log(`  ├─ [PREFILTER] Complete: {ready: ${readyFiles.length}, dup: ${preFilterResult.duplicateFiles.length}, copy: ${preFilterResult.copyFiles.length}} (${preFilterTime.toFixed(2)}ms)`);
+
     if (readyFiles.length === 0) {
-      console.log('[DEDUP-TABLE] All files pre-filtered, no hash calculation needed');
+      console.log('  └─ [HASH] Skipped - all files pre-filtered');
+      const totalTime = performance.now() - dedupT0;
+      console.log(`📊 [DEDUP] T=${totalTime.toFixed(2)}ms - Complete\n`);
       return newQueueItems;
     }
 
@@ -246,6 +251,7 @@ export function useUploadTable() {
     const allFiles = [...existingQueueSnapshot, ...readyFiles];
 
     // Group by size first (optimization - files with unique sizes can't be duplicates)
+    const sizeGroupT0 = performance.now();
     const sizeGroups = new Map();
     allFiles.forEach((item, index) => {
       if (!sizeGroups.has(item.size)) {
@@ -257,8 +263,7 @@ export function useUploadTable() {
         index,
       });
     });
-
-    console.log('[DEDUP-TABLE] Size groups for ready files:', sizeGroups.size);
+    const sizeGroupTime = performance.now() - sizeGroupT0;
 
     // Find files that need hashing (multiple files with same size)
     const filesToHash = [];
@@ -269,14 +274,18 @@ export function useUploadTable() {
     }
 
     if (filesToHash.length === 0) {
-      console.log('[DEDUP-TABLE] No ready files need hashing (all unique sizes)');
+      console.log('  └─ [HASH] Skipped - all unique sizes');
+      const totalTime = performance.now() - dedupT0;
+      console.log(`📊 [DEDUP] T=${totalTime.toFixed(2)}ms - Complete\n`);
       return newQueueItems;
     }
 
-    console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'ready files');
-
     // Hash all files that need it (skip files that already have hashes)
+    console.log(`  ├─ [HASH] Hashing ${filesToHash.length} files...`);
+    const hashT0 = performance.now();
     const hashGroups = new Map();
+    let hashedCount = 0;
+
     for (const { queueItem, isExisting } of filesToHash) {
       try {
         if (!queueItem.hash) {
@@ -284,6 +293,7 @@ export function useUploadTable() {
           // Files from previous uploads already have hashes - no need to re-hash
           const hash = await queueCore.generateFileHash(queueItem.sourceFile);
           queueItem.hash = hash;
+          hashedCount++;
         }
 
         // Use existing or newly generated hash
@@ -297,13 +307,15 @@ export function useUploadTable() {
           isExisting,
         });
       } catch (error) {
-        console.error('[DEDUP-TABLE] Hash failed for', queueItem.name, error);
+        console.error('  │  [HASH-ERROR]', queueItem.name, error.message);
         queueItem.status = 'read error';
         queueItem.canUpload = false;
       }
     }
 
-    console.log('[DEDUP-TABLE] Hash groups:', hashGroups.size);
+    const hashTime = performance.now() - hashT0;
+    const avgHashTime = hashedCount > 0 ? (hashTime / hashedCount).toFixed(2) : '0.00';
+    console.log(`  ├─ [HASH] Complete: {groups: ${hashGroups.size}, hashed: ${hashedCount}} (avg: ${avgHashTime}ms/file, total: ${hashTime.toFixed(2)}ms)`);
 
     // Check for duplicates within hash groups
     for (const [, items] of hashGroups) {
@@ -363,7 +375,9 @@ export function useUploadTable() {
       }
     }
 
-    console.log('[DEDUP-TABLE] Deduplication complete');
+    const totalTime = performance.now() - dedupT0;
+    console.log(`  └─ [GROUPING] Identified duplicates and copies`);
+    console.log(`📊 [DEDUP] T=${totalTime.toFixed(2)}ms - Complete\n`);
 
     return newQueueItems;
   };
@@ -628,7 +642,7 @@ export function useUploadTable() {
     const index = uploadQueue.value.findIndex((f) => f.id === fileId);
     if (index !== -1) {
       uploadQueue.value.splice(index, 1);
-      console.log(`[QUEUE] Removed file: ${fileId}`);
+      // Verbose logging removed - see batch operations for summary logs
     }
   };
 
