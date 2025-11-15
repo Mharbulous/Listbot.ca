@@ -241,9 +241,11 @@ export function useConstraintTable() {
         // Metadata collision → this is a duplicate
         // Only update if this is a new file
         if (newQueueItems.includes(file)) {
+          const primaryFile = metadataIndex.get(metadataHash);
           file.status = 'duplicate';
           file.canUpload = false;
           file.isDuplicate = true;
+          file.referenceFileId = primaryFile.id; // Link to the primary file
           console.log('[DEDUP-PHASE1] Layer 3: Duplicate caught by metadata hash:', file.name);
         }
         // Skip Layer 2 (content hash) - already know it's a duplicate
@@ -271,9 +273,11 @@ export function useConstraintTable() {
         // Content hash collision → this is a copy (same content, different metadata)
         // Only update if this is a new file
         if (newQueueItems.includes(file)) {
+          const primaryFile = contentHashIndex.get(contentHash);
           file.status = 'copy';
           file.canUpload = false; // Don't upload content (already exists)
           file.isCopy = true;
+          file.referenceFileId = primaryFile.id; // Link to the primary file
           console.log('[DEDUP-PHASE1] Layer 2: Copy detected (same content, different metadata):', file.name);
         }
       } else {
