@@ -1,7 +1,7 @@
 /**
  * Web Worker for file hash processing
- * Handles XXH128 hash generation for file deduplication without blocking the main thread
- * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
+ * Handles XXH32 hash generation for file deduplication without blocking the main thread
+ * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
  */
 
 import xxhash from 'xxhash-wasm';
@@ -28,19 +28,18 @@ const MESSAGE_TYPES = {
   HEALTH_CHECK_RESPONSE: 'HEALTH_CHECK_RESPONSE',
 };
 
-// Helper function to generate XXH128 hash (128-bit / 32 hex characters)
-// NOTE: Switched from BLAKE3 to XXH128 for performance comparison
-// XXH128 is significantly faster while maintaining 128-bit collision resistance
+// Helper function to generate XXH32 hash (32-bit / 8 hex characters)
+// NOTE: Switched from BLAKE3 to XXH32 for performance comparison
+// XXH32 is significantly faster while maintaining good collision resistance
 async function generateFileHash(file) {
   const hashStartTime = performance.now();
   try {
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Get xxHash instance and generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+    // Get xxHash instance and generate XXH32 hash with 32-bit output (4 bytes = 8 hex characters)
     const hasher = await getXxHash();
-    const hashValue = hasher.h128(uint8Array); // Returns BigInt (128-bit hash)
-    const hash = hashValue.toString(16).padStart(32, '0'); // Convert to 32-char hex string
+    const hash = hasher.h32ToString(uint8Array); // Returns zero-padded hex string
 
     const hashDuration = performance.now() - hashStartTime;
     if (hashDuration > 100) {
@@ -48,7 +47,7 @@ async function generateFileHash(file) {
       console.log(`[HASH-PERF] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
     }
 
-    // Return XXH128 hash of source file content (32 hex characters)
+    // Return XXH32 hash of source file content (8 hex characters)
     return hash;
   } catch (error) {
     throw new Error(`Failed to generate hash for file ${file.name}: ${error.message}`);
@@ -176,7 +175,7 @@ async function processFiles(files, batchId) {
     const hashingDuration = performance.now() - hashingStartTime;
     const throughputMBps = (totalHashBytes / 1024 / 1024) / (hashingDuration / 1000);
     console.log(`[HASH-PERF] Hashing complete: ${hashingDuration.toFixed(2)}ms for ${duplicateCandidates.length} files (${throughputMBps.toFixed(2)} MB/s)`);
-    console.log(`[HASH-PERF] XXH128 Average: ${(hashingDuration / duplicateCandidates.length).toFixed(2)}ms per file`);
+    console.log(`[HASH-PERF] XXH32 Average: ${(hashingDuration / duplicateCandidates.length).toFixed(2)}ms per file`);
 
     const finalFiles = [];
     const duplicateFiles = [];

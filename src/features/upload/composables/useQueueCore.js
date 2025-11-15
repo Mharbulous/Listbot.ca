@@ -21,7 +21,7 @@ const getXxHash = async () => {
  * It works with file reference objects containing Browser File objects and metadata
  * from the user's filesystem.
  *
- * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
+ * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
  */
 export function useQueueCore() {
   // Helper function to get source file path consistently from various file reference formats
@@ -41,21 +41,20 @@ export function useQueueCore() {
   };
 
   // Legacy hash generation (kept for fallback compatibility)
-  // NOTE: Switched from BLAKE3 to XXH128 for performance comparison
+  // NOTE: Switched from BLAKE3 to XXH32 for performance comparison
   const generateFileHash = async (file) => {
     const hashStartTime = performance.now();
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Get xxHash instance and generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+    // Get xxHash instance and generate XXH32 hash with 32-bit output (4 bytes = 8 hex characters)
     const hasher = await getXxHash();
-    const hashValue = hasher.h128(uint8Array); // Returns BigInt (128-bit hash)
-    const hash = hashValue.toString(16).padStart(32, '0'); // Convert to 32-char hex string
+    const hash = hasher.h32ToString(uint8Array); // Returns zero-padded hex string
 
     const hashDuration = performance.now() - hashStartTime;
     console.log(`[HASH-PERF-FALLBACK] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
-    // Return XXH128 hash of source file content (32 hex characters)
+    // Return XXH32 hash of source file content (8 hex characters)
     return hash;
   };
 
