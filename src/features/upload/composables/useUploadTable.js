@@ -238,7 +238,7 @@ export function useUploadTable() {
     const readyFiles = newQueueItems.filter((f) => f.status === 'ready');
 
     // Log prefilter results
-    console.log(`  ├─ [PREFILTER] Complete: {ready: ${readyFiles.length}, dup: ${preFilterResult.duplicateFiles.length}, copy: ${preFilterResult.copyFiles.length}} (${preFilterTime.toFixed(2)}ms)`);
+    console.log(`  ├─ [PREFILTER] Complete: {ready: ${readyFiles.length}, dupe: ${preFilterResult.duplicateFiles.length}, copy: ${preFilterResult.copyFiles.length}} (${preFilterTime.toFixed(2)}ms)`);
 
     if (readyFiles.length === 0) {
       console.log('  └─ [HASH] Skipped - all files pre-filtered');
@@ -280,8 +280,13 @@ export function useUploadTable() {
       return newQueueItems;
     }
 
+    // Count how many files actually need hashing (don't already have a hash)
+    const filesNeedingHash = filesToHash.filter(({ queueItem }) => !queueItem.hash).length;
+
     // Hash all files that need it (skip files that already have hashes)
-    console.log(`  ├─ [HASH] Hashing ${filesToHash.length} files...`);
+    if (filesNeedingHash > 0) {
+      console.log(`  ├─ [HASH] Hashing ${filesNeedingHash} files...`);
+    }
     const hashT0 = performance.now();
     const hashGroups = new Map();
     let hashedCount = 0;

@@ -270,10 +270,6 @@ export function useQueueCore() {
    */
   const preFilterByMetadataAndPath = (newQueueItems, existingQueue) => {
     const t0 = performance.now();
-    console.log('[PREFILTER] Starting metadata pre-filter:', {
-      newFiles: newQueueItems.length,
-      existingFiles: existingQueue.length,
-    });
 
     const readyFiles = [];
     const duplicateFiles = [];
@@ -358,15 +354,6 @@ export function useQueueCore() {
           referenceFileId: bestMatch.id,
         });
       }
-    });
-
-    const preFilterTime = performance.now() - t0;
-    console.log('[PREFILTER] Pre-filter complete:', {
-      ready: readyFiles.length,
-      duplicates: duplicateFiles.length,
-      copies: copyFiles.length,
-      promotions: promotions.length,
-      preFilterTimeMs: preFilterTime.toFixed(2),
     });
 
     return { readyFiles, duplicateFiles, copyFiles, promotions };

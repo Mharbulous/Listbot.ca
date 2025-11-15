@@ -368,7 +368,7 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     // Sort queue one final time to ensure everything is in the right place
     sortQueueByGroupTimestamp();
 
-    console.log(`  └─ [CLEANUP] Removed ${duplicatesRemoved} duplicates, verified ${copiesVerified} copies, promoted ${promotedToReady} to ready`);
+    console.log(`  └─ [CLEANUP] Removed ${duplicatesRemoved} dupes, verified ${copiesVerified} copies, promoted ${promotedToReady} to ready`);
 
     const totalTime = performance.now() - verifyT0;
     console.log(`📊 [VERIFY] T=${totalTime.toFixed(2)}ms - Complete\n`);
