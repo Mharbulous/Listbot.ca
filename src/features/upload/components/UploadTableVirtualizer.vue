@@ -20,7 +20,7 @@
 ║    ❌ Selection state management (belongs in UploadTable.vue)                ║
 ║    ❌ Footer stats computation (belongs in UploadTable.vue)                  ║
 ║    ❌ Drag-and-drop file traversal (belongs in UploadTable.vue)              ║
-║    ❌ Upload orchestration logic (belongs in Testing.vue/composable)         ║
+║    ❌ Upload orchestration logic (belongs in Uploadv2.vue/composable)        ║
 ║                                                                               ║
 ║  RESPONSIBILITIES (What MUST be in this file):                               ║
 ║    ✅ Scroll container management                                            ║
@@ -191,7 +191,7 @@ const scrollContainerRef = ref(null);
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
 // ============================================================================
-// NOTE: queueT0 is stored in window.queueT0 (set in Testing.vue when user selects files)
+// NOTE: queueT0 is stored in window.queueT0 (set in Uploadv2.vue when user selects files)
 
 // Row height configuration (48px matches UploadTableRow height)
 const ROW_HEIGHT = 48;
