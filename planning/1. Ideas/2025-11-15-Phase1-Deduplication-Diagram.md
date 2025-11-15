@@ -2,7 +2,7 @@
 
 **Phase 1 ONLY** - Pre-Upload Queue Organization (happens BEFORE user clicks "Upload" button)
 
-This diagram shows the 3-layer constraint deduplication algorithm that runs on the client-side using FAST operations only (size grouping + XXH3 hashing). BLAKE3 hashing happens later in Phase 2 during network upload.
+This diagram shows the 3-layer constraint deduplication algorithm that runs on the client-side using FAST operations only (size grouping + direct string comparison). Content hashing (XXH3 or BLAKE3) only happens when needed, and BLAKE3 server-side hashing happens in Phase 2 during network upload.
 
 ```mermaid
 flowchart TD
@@ -12,12 +12,12 @@ flowchart TD
     Layer1 --> UniqueSize{Unique<br/>Size?}
 
     UniqueSize -->|Yes| MarkReady[Mark: READY<br/>Skip to Output]
-    UniqueSize -->|No| Layer3[Layer 3: XXH3 Metadata Hash<br/>XXH3-firmID + modDate + name + ext]
+    UniqueSize -->|No| Layer3[Layer 3: Direct String Comparison<br/>firmID + modDate + name + ext + folderPath]
 
-    Layer3 --> MetaExists{Metadata Hash<br/>in Queue?}
+    Layer3 --> MetaExists{Metadata Match<br/>in Queue?}
 
     MetaExists -->|Yes| MarkDuplicate[Mark: DUPLICATE<br/>Stop Processing<br/>Purpose: Catch 'same folder twice' scenario]
-    MetaExists -->|No| Layer2[Layer 2: XXH3 Content Hash<br/>XXH3-file content]
+    MetaExists -->|No| Layer2[Layer 2: Content Hash<br/>XXH3 or BLAKE3 - file content]
 
     Layer2 --> ContentExists{Content Hash<br/>in Queue?}
 
@@ -31,7 +31,7 @@ flowchart TD
 
     Output --> Summary[Queue Status:<br/>ready - Primary files to upload<br/>copy - Same content, store metadata only<br/>duplicate - Filtered out, not uploaded]
 
-    Summary --> Performance[Performance Insight:<br/>When user uploads same 5,000-file folder twice,<br/>Layer 3 catches all 5,000 duplicates with cheap<br/>XXH3 metadata hash, avoiding expensive content hashing]
+    Summary --> Performance[Performance Insight:<br/>When user uploads same 5,000-file folder twice,<br/>Layer 3 catches all 5,000 duplicates with direct<br/>string comparison ~1-2μs, avoiding expensive content hashing]
 
     Performance --> Phase2Note[Next: Phase 2 Upload<br/>BLAKE3 hash during network upload<br/>Server-side deduplication]
 
@@ -56,14 +56,14 @@ flowchart TD
    - Files with unique sizes → Mark `ready`, skip to output
    - Files with size collisions → Proceed to Layer 3
 
-2. **Layer 3 - XXH3 Metadata Hash** (Cheap hash: ~10-50μs)
-   - Hash = XXH3(firmID + modDate + name + ext)
-   - Purpose: Catch "user uploaded same folder twice" with cheap hash
-   - If metadata hash exists → Mark `duplicate`, stop
-   - If metadata hash new → Proceed to Layer 2
+2. **Layer 3 - Direct String Comparison** (Ultra-fast: ~1-2μs)
+   - Key = firmID + modDate + name + ext + folderPath
+   - Purpose: Catch "user uploaded same folder twice" with direct string comparison
+   - If metadata match exists → Mark `duplicate`, stop
+   - If metadata match new → Proceed to Layer 2
 
-3. **Layer 2 - XXH3 Content Hash** (More expensive: ~1-5ms per file)
-   - Hash = XXH3(file content)
+3. **Layer 2 - Content Hash** (More expensive: ~1-5ms per file)
+   - Hash = XXH3 or BLAKE3(file content)
    - Purpose: Detect same content with different metadata
    - If content hash exists → Mark `copy`
    - If content hash new → Mark `ready`
@@ -81,12 +81,13 @@ flowchart TD
 ### Key Optimization: Layer 3 First
 When user uploads the same 5,000-file folder twice:
 - **Without Layer 3**: Would need 5,000 expensive content hashes
-- **With Layer 3**: Catches all 5,000 duplicates with cheap metadata hash
-- **Time saved**: ~4,950ms (5,000 × ~1ms content hash avoided)
+- **With Layer 3**: Catches all 5,000 duplicates with direct string comparison
+- **Time saved**: ~4,990ms (5,000 × ~1ms content hash avoided, only ~10ms spent on string comparison)
 
-### Hash Performance (Typical)
-- **XXH3 Metadata Hash**: 10-50μs (string concat + hash)
-- **XXH3 Content Hash**: 1-5ms per MB (depends on file size)
+### Operation Performance (Typical)
+- **Direct String Comparison**: 1-2μs (string concat + Map lookup)
+- **Content Hash (XXH3)**: 1-5ms per MB (depends on file size)
+- **Content Hash (BLAKE3)**: 2-10ms per MB (cryptographic, slower than XXH3)
 - **Size Grouping**: O(1) Map lookup
 
 ## Terminology Requirements (CLAUDE.md Directive #4)
@@ -101,10 +102,32 @@ Must use precise terminology per `/docs/architecture/file-lifecycle.md`:
 
 - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value.
 
+## Performance Reality Check: Why Direct String Comparison Instead of Hashing?
+
+**Direct string comparison + Map lookup:**
+```javascript
+const key = `${firmId}|${modDate}|${name}|${ext}|${folderPath}`;  // ~0.1μs
+const match = metadataIndex.get(key);                             // ~1-2μs
+// Total: ~1-2μs
+```
+
+**XXH3 metadata hash (alternative approach):**
+```javascript
+const hash = await XXH3(`${firmId}|${modDate}|${name}|${ext}|${folderPath}`);  // ~10-50μs
+const match = metadataIndex.get(hash);                                         // ~1-2μs
+// Total: ~11-52μs
+```
+
+**Winner: Direct string comparison** (5-50x faster)
+
+The hash adds overhead without benefit since we're doing the same string concatenation either way. Map lookups work just as efficiently with string keys as with hash keys.
+
+---
+
 ## What This Diagram Does NOT Show
 
 This diagram is **Phase 1 ONLY** - it does NOT include:
-- ❌ BLAKE3 hashing (that's Phase 2)
+- ❌ BLAKE3 hashing (that's Phase 2 - server-side)
 - ❌ Server-side operations (that's Phase 2)
 - ❌ Database queries (that's Phase 2)
 - ❌ File upload process (that's Phase 2)
