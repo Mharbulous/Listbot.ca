@@ -283,9 +283,6 @@ const getUploadButtonText = () => {
   if (props.verificationState.isVerifying) {
     return 'Deduplicating...';
   }
-  if (props.stats.duplicates > 0) {
-    return 'Clear duplicates b4 uploading';
-  }
   return `Upload ${props.stats.checkedCount} ${props.stats.checkedCount === 1 ? 'file' : 'files'} (${props.stats.checkedSize})`;
 };
 </script>
@@ -382,7 +379,7 @@ const getUploadButtonText = () => {
   left: 0;
   height: 100%;
   width: var(--progress, 0);
-  background: #4caf50;
+  background: #10b981;
   transition: width 0.3s ease;
   z-index: 0;
 }
@@ -394,7 +391,7 @@ const getUploadButtonText = () => {
 }
 
 .upload-btn-progress:disabled::before {
-  background: #4caf50;
+  background: #10b981;
 }
 
 .retry-btn {
