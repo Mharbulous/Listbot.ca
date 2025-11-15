@@ -11,7 +11,7 @@
       class="filename-text"
       :class="{
         'filename-bold': fileStatus === 'ready' && !isCopy,
-        'filename-normal': fileStatus === 'copy' || isCopy,
+        'filename-normal': fileStatus === 'copy' || fileStatus === 'duplicate' || isCopy,
       }"
       >{{ fileName }}</span
     >
@@ -90,7 +90,7 @@ const handlePreview = (event) => {
   font-weight: 700;
 }
 
-/* Phase 3: Normal filename for copies */
+/* Phase 3: Normal filename for copies and duplicates */
 .filename-text.filename-normal {
   font-weight: 400;
 }
