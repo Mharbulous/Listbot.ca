@@ -239,14 +239,24 @@ export function useConstraintTable() {
 
       if (metadataIndex.has(metadataHash)) {
         // Metadata collision → this is a duplicate
+        // Get the reference file (the first file with this metadata hash)
+        const referenceFile = metadataIndex.get(metadataHash);
+
         // Only update if this is a new file
         if (newQueueItems.includes(file)) {
+          // Generate xxh3Hash for the duplicate (needed to prevent tentative verification)
+          const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
+          file.xxh3Hash = contentHash;
+
+          // Set reference to the original file
+          file.referenceFileId = referenceFile.id;
+
           file.status = 'duplicate';
           file.canUpload = false;
           file.isDuplicate = true;
           console.log('[DEDUP-PHASE1] Layer 3: Duplicate caught by metadata hash:', file.name);
         }
-        // Skip Layer 2 (content hash) - already know it's a duplicate
+        // Skip Layer 2 processing - we already have the content hash
         continue;
       }
 
