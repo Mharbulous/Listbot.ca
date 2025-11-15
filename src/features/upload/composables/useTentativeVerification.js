@@ -5,7 +5,7 @@
  *
  * This composable:
  * 1. Auto-starts verification when queue addition is complete
- * 2. Processes files by size (smallest first for quick wins)
+ * 2. Processes files in REVERSE order (bottom to top) to prevent table jiggling
  * 3. Throttles hashing (one file at a time to avoid CPU spikes)
  * 4. Removes verified duplicates immediately
  * 5. Updates copy status from "Copy?" to "Copy"
@@ -169,8 +169,10 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     verificationState.value.processed = 0;
     verificationState.value.total = tentativeFiles.length;
 
-    // Sort tentative files by size (smallest first for quick wins)
-    const sortedTentativeFiles = [...tentativeFiles].sort((a, b) => a.size - b.size);
+    // Process files in REVERSE order (bottom to top)
+    // This prevents table jiggling - deletions happen below the viewport
+    // so the visible portion of the table stays stable
+    const sortedTentativeFiles = [...tentativeFiles].reverse();
 
     // Process files one at a time (throttled to avoid CPU spikes)
     for (const file of sortedTentativeFiles) {
