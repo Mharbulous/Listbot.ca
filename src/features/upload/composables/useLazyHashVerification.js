@@ -74,6 +74,8 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
+        // Relocate to top since user was told it was duplicate but it's actually unique
+        queueItem.groupTimestamp = Date.now();
         return false;
       }
 
@@ -96,6 +98,8 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
           // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
           delete queueItem.tentativeGroupId;
           delete queueItem.referenceFileId;
+          // Relocate to top since user was told it was duplicate but it's actually unique
+          queueItem.groupTimestamp = Date.now();
           return false;
         }
       }
@@ -115,6 +119,8 @@ export function useLazyHashVerification(uploadQueue, virtualItems) {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
+        // Relocate to top since user was told it was duplicate but it's actually unique
+        queueItem.groupTimestamp = Date.now();
         return false;
       }
 
