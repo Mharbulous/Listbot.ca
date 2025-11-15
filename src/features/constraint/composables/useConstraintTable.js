@@ -393,6 +393,9 @@ export function useConstraintTable() {
    * @param {Object} metrics - Performance metrics object to track Layer 2 and Layer 3 stats
    */
   const processSizeCollisions = async (filesWithSize, firmId, newQueueItems, metrics) => {
+    // Create O(1) lookup set for newQueueItems (performance optimization)
+    const newQueueSet = new Set(newQueueItems);
+
     // ════════════════════════════════════════════════════════════════
     // LAYER 3: Metadata Hash (BEFORE content hash)
     // Purpose: Catch "same folder twice" with cheap metadata hash
@@ -401,7 +404,7 @@ export function useConstraintTable() {
     const newFilesNeedingContentHash = []; // Track NEW files that need Layer 2
 
     for (const file of filesWithSize) {
-      const isNewFile = newQueueItems.includes(file);
+      const isNewFile = newQueueSet.has(file);
       let metadataHash;
 
       // Track new vs existing files
@@ -498,7 +501,7 @@ export function useConstraintTable() {
 
     // First, populate content hash index with EXISTING files (skip hashing)
     for (const file of filesWithSize) {
-      const isNewFile = newQueueItems.includes(file);
+      const isNewFile = newQueueSet.has(file);
       if (!isNewFile && file.xxh3Hash) {
         // Existing file with content hash → add to index
         contentHashIndex.set(file.xxh3Hash, file);
@@ -507,7 +510,7 @@ export function useConstraintTable() {
 
     // Now process only NEW files that passed Layer 3 (unique metadata hash)
     for (const file of newFilesNeedingContentHash) {
-      const isNewFile = newQueueItems.includes(file);  // Should always be true!
+      const isNewFile = newQueueSet.has(file);  // Should always be true!
 
       if (!isNewFile) {
         console.error('[DEDUP-PHASE1] ❌ CRITICAL: Existing file in Layer 2 queue:', {
