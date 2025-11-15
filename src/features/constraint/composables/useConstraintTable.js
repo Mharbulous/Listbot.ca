@@ -2,6 +2,7 @@ import { ref, nextTick } from 'vue';
 import { isUnsupportedFileType } from '../utils/fileTypeChecker.js';
 import { useQueueCore } from './useQueueCore.js';
 import { extractFolderPath } from '../utils/filePathExtractor.js';
+import { useAuthStore } from '@/core/stores/auth.js';
 
 /**
  * Composable for managing constraint table state
@@ -49,29 +50,15 @@ export function useConstraintTable() {
     const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
 
     // Helper to get grouping key for a file
-    // STABILITY: Prioritizes tentativeGroupId over hash to prevent groups from shifting
-    // position when lazy hash verification completes (prevents zebra pattern flashing)
+    // Phase 1: Use xxh3Hash for grouping (all hashes calculated immediately)
     const getGroupingKey = (file) => {
-      // PRIORITY 1: tentativeGroupId (stable group identifier)
-      // This ensures groups maintain their position even after hash calculation
-      if (file.tentativeGroupId) return file.tentativeGroupId;
+      // Use xxh3Hash for Phase 1 deduplication
+      if (file.xxh3Hash) return file.xxh3Hash;
 
-      // PRIORITY 2: hash (for files that were hashed immediately)
+      // Fallback: use legacy hash (for compatibility during migration)
       if (file.hash) return file.hash;
 
-      // PRIORITY 3: referenceFileId (for tentative duplicates/copies)
-      // Use the reference file's grouping key for grouping
-      if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
-        const referenceFile = uploadQueue.value.find((f) => f.id === file.referenceFileId);
-        if (referenceFile) {
-          // Use reference file's tentativeGroupId if available, otherwise hash, otherwise referenceFileId
-          return referenceFile.tentativeGroupId || referenceFile.hash || file.referenceFileId;
-        }
-        // Fallback: use referenceFileId if reference file not found
-        return file.referenceFileId;
-      }
-
-      // No hash and no referenceFileId - use empty string (sorts to end)
+      // No hash - use empty string (sorts to end)
       return '';
     };
 
@@ -143,229 +130,160 @@ export function useConstraintTable() {
   };
 
   /**
-   * Deduplicate files against existing queue
-   * Phase 3a: Pre-filter by metadata BEFORE hash calculation for performance
-   * Checks for redundant files (same content + metadata)
+   * Helper function to extract file extension
+   * @param {string} filename - File name
+   * @returns {string} - File extension (lowercase, without dot)
+   */
+  const getFileExtension = (filename) => {
+    const lastDot = filename.lastIndexOf('.');
+    if (lastDot === -1) return ''; // No extension
+    return filename.substring(lastDot + 1).toLowerCase();
+  };
+
+  /**
+   * Deduplicate files against existing queue - Phase 1 Implementation
+   * Uses 3-layer XXH3-based deduplication with metadata-first optimization
+   *
+   * Layer 1: Size-based index (O(1) grouping)
+   * Layer 3: XXH3 Metadata hash (BEFORE content) - catches "same folder twice"
+   * Layer 2: XXH3 Content hash (only if metadata hash is new)
+   *
    * @param {Array} newQueueItems - New queue items to check
    * @param {Array} existingQueueSnapshot - Snapshot of queue BEFORE new items were added
-   * @returns {Promise<Array>} - Queue items with duplicate status updated
+   * @returns {Promise<Array>} - Queue items with final status ('ready', 'copy', or 'duplicate')
    */
   const deduplicateAgainstExisting = async (newQueueItems, existingQueueSnapshot) => {
-    console.log('[DEDUP-TABLE] Starting deduplication check:', {
+    const t0 = performance.now();
+    console.log('[DEDUP-PHASE1] Starting Phase 1 deduplication:', {
       newFiles: newQueueItems.length,
       existingFiles: existingQueueSnapshot.length,
     });
 
-    // ========================================================================
-    // PHASE 3a: Metadata Pre-Filter (BEFORE hash calculation)
-    // Mark files as tentative duplicates/copies based on metadata + folder path
-    // Hash calculation deferred to verification trigger points
-    // ========================================================================
-    const preFilterResult = queueCore.preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
+    // Get firmId from auth store (Solo Firm: firmId === userId)
+    const authStore = useAuthStore();
+    const firmId = authStore.currentUser?.uid;
 
-    // OPTIMIZATION: Build queue index once (O(M+N)), then O(1) lookups
-    // Prevents O(N×M) from repeated uploadQueue.value.find() calls
-    // CRITICAL: Include BOTH existing queue AND new items (reference file might be in new batch)
-    const queueIndex = new Map();
-    uploadQueue.value.forEach((file) => {
-      queueIndex.set(file.id, file);
-    });
-    newQueueItems.forEach((file) => {
-      queueIndex.set(file.id, file);
-    });
-
-    // Mark ready files
-    preFilterResult.readyFiles.forEach((newFile) => {
-      newFile.status = 'ready';
-      newFile.canUpload = true;
-    });
-
-    // Mark tentative duplicates (NO hash yet - will be verified on hover/delete/upload)
-    preFilterResult.duplicateFiles.forEach((item) => {
-      item.file.status = 'duplicate';
-      item.file.canUpload = false;
-      item.file.isDuplicate = true;
-      item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
-
-      // Update the reference file to know it's part of a tentative group (O(1) lookup)
-      const refFile = queueIndex.get(item.referenceFileId);
-      if (refFile && !refFile.hash) {
-        refFile.tentativeGroupId = refFile.id; // Use own ID as group key
-      }
-    });
-
-    // Mark tentative copies (NO hash yet - will be verified on hover/delete/upload)
-    preFilterResult.copyFiles.forEach((item) => {
-      item.file.status = 'copy';
-      item.file.canUpload = true;
-      item.file.isCopy = true;
-      item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
-
-      // Update the reference file to know it's part of a tentative group (O(1) lookup)
-      const refFile = queueIndex.get(item.referenceFileId);
-      if (refFile && !refFile.hash) {
-        refFile.tentativeGroupId = refFile.id; // Use own ID as group key
-      }
-    });
-
-    // Handle promotions - demote existing files when new file is more specific
-    preFilterResult.promotions.forEach((promo) => {
-      const existingFile = queueIndex.get(promo.existingFileId);
-      if (existingFile) {
-        existingFile.status = 'duplicate'; // Demote from 'ready' to 'duplicate'
-        existingFile.canUpload = false;
-        existingFile.isDuplicate = true;
-        existingFile.referenceFileId = promo.newPrimaryId; // Point to new primary
-
-        // Update the new primary file to know it's part of a tentative group (O(1) lookup)
-        const newPrimary = queueIndex.get(promo.newPrimaryId);
-        if (newPrimary && !newPrimary.hash) {
-          newPrimary.tentativeGroupId = newPrimary.id; // Use own ID as group key
-        }
-
-        console.log('[PREFILTER] Demoted existing file to duplicate:', {
-          fileName: existingFile.name,
-          newPrimaryId: promo.newPrimaryId,
-        });
-      }
-    });
-
-    // ========================================================================
-    // Hash-based deduplication (fallback for files marked as 'ready')
-    // Only hash files that weren't pre-filtered as duplicates/copies
-    // This ensures existing behavior is preserved for files that need it
-    // ========================================================================
-    const readyFiles = newQueueItems.filter((f) => f.status === 'ready');
-
-    if (readyFiles.length === 0) {
-      console.log('[DEDUP-TABLE] All files pre-filtered, no hash calculation needed');
+    if (!firmId) {
+      console.error('[DEDUP-PHASE1] CRITICAL: No firmId available from auth store');
+      // Fallback: mark all as ready
+      newQueueItems.forEach((file) => {
+        file.status = 'ready';
+        file.canUpload = true;
+      });
       return newQueueItems;
     }
 
-    // Get all files that need to be checked (existing + ready new files)
-    const allFiles = [...existingQueueSnapshot, ...readyFiles];
+    // ════════════════════════════════════════════════════════════════
+    // LAYER 1: Size-Based Index (O(1) grouping)
+    // ════════════════════════════════════════════════════════════════
+    const allFiles = [...existingQueueSnapshot, ...newQueueItems];
+    const sizeIndex = new Map();
 
-    // Group by size first (optimization - files with unique sizes can't be duplicates)
-    const sizeGroups = new Map();
-    allFiles.forEach((item, index) => {
-      if (!sizeGroups.has(item.size)) {
-        sizeGroups.set(item.size, []);
+    allFiles.forEach((file) => {
+      if (!sizeIndex.has(file.size)) {
+        sizeIndex.set(file.size, []);
       }
-      sizeGroups.get(item.size).push({
-        queueItem: item,
-        isExisting: index < existingQueueSnapshot.length,
-        index,
-      });
+      sizeIndex.get(file.size).push(file);
     });
 
-    console.log('[DEDUP-TABLE] Size groups for ready files:', sizeGroups.size);
+    console.log('[DEDUP-PHASE1] Layer 1: Created size index with', sizeIndex.size, 'size groups');
 
-    // Find files that need hashing (multiple files with same size)
-    const filesToHash = [];
-    for (const [, items] of sizeGroups) {
-      if (items.length > 1) {
-        filesToHash.push(...items);
-      }
-    }
-
-    if (filesToHash.length === 0) {
-      console.log('[DEDUP-TABLE] No ready files need hashing (all unique sizes)');
-      return newQueueItems;
-    }
-
-    console.log('[DEDUP-TABLE] Hashing', filesToHash.length, 'ready files');
-
-    // Hash all files that need it (skip files that already have hashes)
-    const hashGroups = new Map();
-    for (const { queueItem, isExisting } of filesToHash) {
-      try {
-        if (!queueItem.hash) {
-          // Only hash if file doesn't already have a hash (performance optimization)
-          // Files from previous uploads already have hashes - no need to re-hash
-          const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-          queueItem.hash = hash;
+    // Process each size group
+    for (const [size, filesWithSize] of sizeIndex) {
+      if (filesWithSize.length === 1) {
+        // Unique size → mark 'ready', skip layers 2 & 3
+        const file = filesWithSize[0];
+        // Only update status if this is a new file (not existing)
+        if (newQueueItems.includes(file)) {
+          file.status = 'ready';
+          file.canUpload = true;
         }
-
-        // Use existing or newly generated hash
-        const hash = queueItem.hash;
-
-        if (!hashGroups.has(hash)) {
-          hashGroups.set(hash, []);
-        }
-        hashGroups.get(hash).push({
-          queueItem,
-          isExisting,
-        });
-      } catch (error) {
-        console.error('[DEDUP-TABLE] Hash failed for', queueItem.name, error);
-        queueItem.status = 'read error';
-        queueItem.canUpload = false;
-      }
-    }
-
-    console.log('[DEDUP-TABLE] Hash groups:', hashGroups.size);
-
-    // Check for duplicates within hash groups
-    for (const [, items] of hashGroups) {
-      if (items.length === 1) continue; // No duplicates
-
-      // Group by metadata key (filename_size_modified_path)
-      // MUST include folderPath to distinguish copies in different folders
-      const metadataGroups = new Map();
-      items.forEach(({ queueItem, isExisting }) => {
-        const metadataKey = `${queueItem.name}_${queueItem.size}_${queueItem.sourceLastModified}_${queueItem.folderPath}`;
-
-        if (!metadataGroups.has(metadataKey)) {
-          metadataGroups.set(metadataKey, []);
-        }
-        metadataGroups.get(metadataKey).push({ queueItem, isExisting });
-      });
-
-      // Mark redundant files
-      for (const [, metadataItems] of metadataGroups) {
-        if (metadataItems.length === 1) continue; // No redundant files
-
-        // Keep first instance, mark others as duplicate
-        for (let i = 1; i < metadataItems.length; i++) {
-          const { queueItem } = metadataItems[i];
-          queueItem.status = 'duplicate';
-          queueItem.canUpload = false;
-          queueItem.isDuplicate = true;
-        }
+        continue;
       }
 
-      // Handle copies (same hash, different metadata - e.g., different folders)
-      if (metadataGroups.size > 1) {
-        // Get first file from each metadata group (excluding redundant files)
-        const uniqueFiles = Array.from(metadataGroups.values()).map((group) => group[0]);
-
-        // Choose best file using priority rules
-        const bestFile = queueCore.chooseBestFile(
-          uniqueFiles.map(({ queueItem }) => ({
-            metadata: {
-              sourceFileName: queueItem.name,
-              sourceFileSize: queueItem.size,
-              lastModified: queueItem.sourceLastModified,
-            },
-            path: queueItem.folderPath + queueItem.name,
-            originalIndex: queueItem.id,
-          }))
-        );
-
-        // Mark all others as copies
-        uniqueFiles.forEach(({ queueItem }) => {
-          const filePath = queueItem.folderPath + queueItem.name;
-          if (filePath !== bestFile.path) {
-            queueItem.status = 'copy';
-            queueItem.isCopy = true;
-          }
-        });
-      }
+      // Multiple files with same size → proceed to Layer 3
+      await processSizeCollisions(filesWithSize, firmId, newQueueItems);
     }
 
-    console.log('[DEDUP-TABLE] Deduplication complete');
+    const elapsed = performance.now() - t0;
+    console.log(`[DEDUP-PHASE1] Deduplication complete in ${elapsed.toFixed(2)}ms`);
 
     return newQueueItems;
+  };
+
+  /**
+   * Process files with size collisions using Layer 3 (metadata) and Layer 2 (content) hashing
+   * @param {Array} filesWithSize - Files with the same size
+   * @param {string} firmId - Firm ID for metadata hash
+   * @param {Array} newQueueItems - New queue items (to identify which files to update)
+   */
+  const processSizeCollisions = async (filesWithSize, firmId, newQueueItems) => {
+    // ════════════════════════════════════════════════════════════════
+    // LAYER 3: Metadata Hash (BEFORE content hash)
+    // Purpose: Catch "same folder twice" with cheap metadata hash
+    // ════════════════════════════════════════════════════════════════
+    const metadataIndex = new Map(); // metadataHash -> file
+
+    for (const file of filesWithSize) {
+      // Generate XXH3 Metadata Hash = XXH3(firmID + modDate + name + ext)
+      const metadataHash = await queueCore.generateMetadataHash({
+        firmId: firmId,
+        modDate: file.sourceLastModified,
+        name: file.name,
+        extension: getFileExtension(file.name),
+      });
+
+      file.metadataHash = metadataHash;
+
+      if (metadataIndex.has(metadataHash)) {
+        // Metadata collision → this is a duplicate
+        // Only update if this is a new file
+        if (newQueueItems.includes(file)) {
+          file.status = 'duplicate';
+          file.canUpload = false;
+          file.isDuplicate = true;
+          console.log('[DEDUP-PHASE1] Layer 3: Duplicate caught by metadata hash:', file.name);
+        }
+        // Skip Layer 2 (content hash) - already know it's a duplicate
+        continue;
+      }
+
+      // New metadata hash → store in index and proceed to Layer 2
+      metadataIndex.set(metadataHash, file);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // LAYER 2: Content Hash (only for files with unique metadata)
+    // ════════════════════════════════════════════════════════════════
+    const contentHashIndex = new Map(); // contentHash -> file
+
+    // Only process files that passed Layer 3 (unique metadata hash)
+    const filesForContentHash = Array.from(metadataIndex.values());
+
+    for (const file of filesForContentHash) {
+      // Generate XXH3 Content Hash
+      const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
+      file.xxh3Hash = contentHash;
+
+      if (contentHashIndex.has(contentHash)) {
+        // Content hash collision → this is a copy (same content, different metadata)
+        // Only update if this is a new file
+        if (newQueueItems.includes(file)) {
+          file.status = 'copy';
+          file.canUpload = false; // Don't upload content (already exists)
+          file.isCopy = true;
+          console.log('[DEDUP-PHASE1] Layer 2: Copy detected (same content, different metadata):', file.name);
+        }
+      } else {
+        // Unique content → mark as 'ready'
+        // Only update if this is a new file
+        if (newQueueItems.includes(file)) {
+          file.status = 'ready';
+          file.canUpload = true;
+        }
+        contentHashIndex.set(contentHash, file);
+      }
+    }
   };
 
   /**
@@ -438,25 +356,21 @@ export function useConstraintTable() {
     // PHASE 1.6: Update group timestamps
     // For each unique hash in the new batch, update groupTimestamp for ALL
     // files with that hash (both new and existing) to move the group to the top
-    // Also handle tentative duplicates (no hash yet) via referenceFileId
+    // Phase 1: Uses xxh3Hash (all hashes calculated immediately)
     // ========================================================================
     const currentTimestamp = Date.now();
-    const newHashes = new Set(phase1Batch.filter((f) => f.hash).map((f) => f.hash));
-    const newReferenceIds = new Set(phase1Batch.filter((f) => f.referenceFileId && !f.hash).map((f) => f.referenceFileId));
+    const newHashes = new Set(phase1Batch.filter((f) => f.xxh3Hash).map((f) => f.xxh3Hash));
 
-    if (newHashes.size > 0 || newReferenceIds.size > 0) {
-      // Update groupTimestamp for all files in the queue that match any of the new hashes or referenceFileIds
+    if (newHashes.size > 0) {
+      // Update groupTimestamp for all files in the queue that match any of the new hashes
       uploadQueue.value.forEach((file) => {
-        const matchesHash = file.hash && newHashes.has(file.hash);
-        const matchesReferenceId = file.id && newReferenceIds.has(file.id); // This file is referenced by a tentative duplicate
-        const isTentativeInGroup = file.referenceFileId && newReferenceIds.has(file.referenceFileId); // Tentative duplicate in same group
-
-        if (matchesHash || matchesReferenceId || isTentativeInGroup) {
+        const matchesHash = file.xxh3Hash && newHashes.has(file.xxh3Hash);
+        if (matchesHash) {
           file.groupTimestamp = currentTimestamp;
         }
       });
 
-      // Update groupTimestamp for all files in the new batch (hashed or tentative)
+      // Update groupTimestamp for all files in the new batch
       phase1Batch.forEach((file) => {
         file.groupTimestamp = currentTimestamp;
       });
@@ -556,24 +470,21 @@ export function useConstraintTable() {
         // Deduplicate this batch against existing queue BEFORE adding to queue
         await deduplicateAgainstExisting(processedBatch, phase2Snapshot);
 
-        // Update group timestamps for files with matching hashes or referenceFileIds
+        // Update group timestamps for files with matching hashes
+        // Phase 1: Uses xxh3Hash (all hashes calculated immediately)
         const currentTimestamp = Date.now();
-        const newHashes = new Set(processedBatch.filter((f) => f.hash).map((f) => f.hash));
-        const newReferenceIds = new Set(processedBatch.filter((f) => f.referenceFileId && !f.hash).map((f) => f.referenceFileId));
+        const newHashes = new Set(processedBatch.filter((f) => f.xxh3Hash).map((f) => f.xxh3Hash));
 
-        if (newHashes.size > 0 || newReferenceIds.size > 0) {
-          // Update groupTimestamp for all files in the queue that match any of the new hashes or referenceFileIds
+        if (newHashes.size > 0) {
+          // Update groupTimestamp for all files in the queue that match any of the new hashes
           uploadQueue.value.forEach((file) => {
-            const matchesHash = file.hash && newHashes.has(file.hash);
-            const matchesReferenceId = file.id && newReferenceIds.has(file.id); // This file is referenced by a tentative duplicate
-            const isTentativeInGroup = file.referenceFileId && newReferenceIds.has(file.referenceFileId); // Tentative duplicate in same group
-
-            if (matchesHash || matchesReferenceId || isTentativeInGroup) {
+            const matchesHash = file.xxh3Hash && newHashes.has(file.xxh3Hash);
+            if (matchesHash) {
               file.groupTimestamp = currentTimestamp;
             }
           });
 
-          // Update groupTimestamp for all files in the new batch (hashed or tentative)
+          // Update groupTimestamp for all files in the new batch
           processedBatch.forEach((file) => {
             file.groupTimestamp = currentTimestamp;
           });
@@ -766,13 +677,17 @@ export function useConstraintTable() {
       return;
     }
 
-    if (!copyFile.hash) {
+    // Phase 1: Use xxh3Hash instead of hash
+    const hashToUse = copyFile.xxh3Hash || copyFile.hash;
+    if (!hashToUse) {
       console.error('[QUEUE] Cannot swap: file has no hash:', fileId);
       return;
     }
 
-    // Find all files with the same hash
-    const sameHashFiles = uploadQueue.value.filter((f) => f.hash === copyFile.hash);
+    // Find all files with the same hash (check both xxh3Hash and legacy hash)
+    const sameHashFiles = uploadQueue.value.filter((f) =>
+      (f.xxh3Hash && f.xxh3Hash === hashToUse) || (f.hash && f.hash === hashToUse)
+    );
 
     // Find the current primary file (status = 'ready' or 'skip')
     // Check for 'ready' first, then 'skip' if the group is skipped
@@ -782,7 +697,7 @@ export function useConstraintTable() {
     }
 
     if (!primaryFile) {
-      console.warn('[QUEUE] No primary file found for hash group, making copy the primary:', copyFile.hash.substring(0, 8));
+      console.warn('[QUEUE] No primary file found for hash group, making copy the primary:', hashToUse.substring(0, 8));
       copyFile.status = 'ready';
       copyFile.isCopy = false;
     } else {
@@ -798,7 +713,7 @@ export function useConstraintTable() {
         newPrimary: copyFile.name,
         oldPrimary: primaryFile.name,
         oldPrimaryWasSkipped,
-        hash: copyFile.hash.substring(0, 8) + '...',
+        hash: hashToUse.substring(0, 8) + '...',
       });
     }
 
@@ -824,203 +739,6 @@ export function useConstraintTable() {
     cancelQueueingFlag = true;
   };
 
-  /**
-   * Phase 3a: Hash verification on status hover
-   * Verifies tentative duplicate/copy status when user hovers over status column
-   * @param {Object} queueItem - Queue item to verify
-   * @returns {Promise<Object>} - { verified: boolean, hash: string, error: string }
-   */
-  const verifyHashOnHover = async (queueItem) => {
-    // Only verify if status is duplicate/copy and no hash exists
-    if (!queueItem.hash && (queueItem.status === 'duplicate' || queueItem.status === 'copy')) {
-      // Race condition check: Hash might have been calculated by another trigger
-      if (queueItem.hash) {
-        return { verified: true, hash: queueItem.hash };
-      }
-
-      // Calculate hash with error handling
-      try {
-        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-        queueItem.hash = hash;
-      } catch (error) {
-        console.error('[HASH-VERIFY] Hash calculation failed:', {
-          file: queueItem.name,
-          error: error.message,
-        });
-        queueItem.status = 'read error';
-        queueItem.errorMessage = error.message;
-        queueItem.canUpload = false;
-        return { verified: false, error: error.message };
-      }
-
-      // Find best/primary copy using referenceFileId (set during pre-filter)
-      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
-
-      // ERROR CHECK: Best copy MUST have hash
-      if (!bestCopy?.hash) {
-        console.error('[HASH-VERIFY] CRITICAL: Best copy has no hash', {
-          tentativeFile: queueItem.name,
-          referenceFileId: queueItem.referenceFileId,
-          bestCopyFound: !!bestCopy,
-        });
-        return {
-          verified: false,
-          error: 'Cannot verify duplicate status - best copy has no hash. Please report this issue.',
-        };
-      }
-
-      // Compare hashes
-      if (queueItem.hash !== bestCopy.hash) {
-        queueItem.status = 'ready';
-        queueItem.canUpload = true;
-        queueItem.isDuplicate = false;
-        queueItem.isCopy = false;
-        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
-        delete queueItem.tentativeGroupId;
-        delete queueItem.referenceFileId;
-        console.warn('[HASH-VERIFY] Hash mismatch - promoting to ready', {
-          file: queueItem.name,
-          tentativeHash: queueItem.hash,
-          bestCopyHash: bestCopy.hash,
-        });
-        return {
-          verified: false,
-          hash: queueItem.hash,
-          mismatch: true,
-          message: `File "${queueItem.name}" was incorrectly marked as duplicate. Status changed to Ready.`,
-        };
-      }
-
-      return { verified: true, hash: queueItem.hash };
-    }
-
-    // Already has hash or not a tentative status
-    return { verified: true, hash: queueItem.hash || 'No hash' };
-  };
-
-  /**
-   * Phase 3a: Hash verification before deletion
-   * Verifies tentative duplicate status before allowing deletion
-   * @param {Object} queueItem - Queue item to verify before deletion
-   * @returns {Promise<Object>} - { allowDeletion: boolean, message: string }
-   */
-  const verifyHashBeforeDelete = async (queueItem) => {
-    if (queueItem.status === 'duplicate' && !queueItem.hash) {
-      // Race condition check
-      if (queueItem.hash) {
-        return { allowDeletion: true };
-      }
-
-      // Calculate hash with error handling
-      try {
-        const hash = await queueCore.generateFileHash(queueItem.sourceFile);
-        queueItem.hash = hash;
-      } catch (error) {
-        console.error('[DELETE-VERIFY] Hash calculation failed:', {
-          file: queueItem.name,
-          error: error.message,
-        });
-        return {
-          allowDeletion: false,
-          error: `Cannot verify file "${queueItem.name}": ${error.message}`,
-        };
-      }
-
-      // Find best/primary copy using referenceFileId
-      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
-
-      if (!bestCopy?.hash) {
-        console.error('[DELETE-VERIFY] CRITICAL: Best copy has no hash', {
-          tentativeFile: queueItem.name,
-          referenceFileId: queueItem.referenceFileId,
-        });
-        return {
-          allowDeletion: false,
-          error: 'Cannot verify duplicate status - best copy has no hash. Please report this issue.',
-        };
-      }
-
-      if (queueItem.hash !== bestCopy.hash) {
-        queueItem.status = 'ready';
-        queueItem.canUpload = true;
-        queueItem.isDuplicate = false;
-        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
-        delete queueItem.tentativeGroupId;
-        delete queueItem.referenceFileId;
-        console.warn('[DELETE-VERIFY] Hash mismatch - blocking deletion', {
-          file: queueItem.name,
-        });
-        return {
-          allowDeletion: false,
-          mismatch: true,
-          message: `File "${queueItem.name}" is actually unique content, not a duplicate. Deletion blocked and status changed to Ready.`,
-        };
-      }
-    }
-
-    return { allowDeletion: true };
-  };
-
-  /**
-   * Phase 3a: Hash verification before upload
-   * Verifies tentative duplicate/copy status before upload
-   * @param {Object} queueItem - Queue item to verify before upload
-   * @returns {Promise<Object>} - { shouldSkip: boolean, message: string }
-   */
-  const verifyHashBeforeUpload = async (queueItem) => {
-    // Always calculate hash if missing (required for Firestore document ID)
-    if (!queueItem.hash) {
-      try {
-        queueItem.hash = await queueCore.generateFileHash(queueItem.sourceFile);
-      } catch (error) {
-        console.error('[UPLOAD-VERIFY] Hash calculation failed:', {
-          file: queueItem.name,
-          error: error.message,
-        });
-        queueItem.status = 'error';
-        queueItem.errorMessage = error.message;
-        return { shouldSkip: true, error: error.message }; // Don't upload files that can't be hashed
-      }
-    }
-
-    // If this was tentatively marked as duplicate/copy, verify now
-    if (queueItem.status === 'duplicate' || queueItem.status === 'copy') {
-      const bestCopy = uploadQueue.value.find((f) => f.id === queueItem.referenceFileId);
-
-      if (!bestCopy?.hash) {
-        console.error('[UPLOAD-VERIFY] CRITICAL: Best copy has no hash', {
-          tentativeFile: queueItem.name,
-          referenceFileId: queueItem.referenceFileId,
-        });
-        // Fail-safe: treat as ready to avoid data loss
-        queueItem.status = 'ready';
-        queueItem.canUpload = true;
-        queueItem.isDuplicate = false;
-        queueItem.isCopy = false;
-        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
-        delete queueItem.tentativeGroupId;
-        delete queueItem.referenceFileId;
-      } else if (queueItem.hash !== bestCopy.hash) {
-        queueItem.status = 'ready';
-        queueItem.canUpload = true;
-        queueItem.isDuplicate = false;
-        queueItem.isCopy = false;
-        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
-        delete queueItem.tentativeGroupId;
-        delete queueItem.referenceFileId;
-        console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
-          file: queueItem.name,
-        });
-      }
-    }
-
-    // Proceed with normal upload logic
-    if (queueItem.status === 'duplicate' || queueItem.status === 'copy') {
-      return { shouldSkip: true }; // Confirmed duplicate/copy - don't upload
-    }
-
-    return { shouldSkip: false };
-  };
 
   return {
     uploadQueue,
@@ -1039,11 +757,6 @@ export function useConstraintTable() {
     swapCopyToPrimary,
     toggleDuplicatesVisibility,
     cancelQueue,
-    sortQueueByGroupTimestamp, // Exposed for tentative verification
-
-    // Phase 3a: Hash verification functions
-    verifyHashOnHover,
-    verifyHashBeforeDelete,
-    verifyHashBeforeUpload,
+    sortQueueByGroupTimestamp,
   };
 }
