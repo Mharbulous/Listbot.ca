@@ -77,12 +77,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
-import UploadTable from '../features/upload/components/UploadTable.vue';
-import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
-import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
-import { useNotification } from '../core/composables/useNotification.js';
-import { useTentativeVerification } from '../features/upload/composables/useTentativeVerification.js';
+import QueueProgressIndicator from '../upload/components/QueueProgressIndicator.vue';
+import UploadTable from '../upload/components/UploadTable.vue';
+import { useUploadTable } from '../upload/composables/useUploadTable.js';
+import { useUploadAdapter } from '../upload/composables/useUploadAdapter.js';
+import { useNotification } from '../../core/composables/useNotification.js';
+import { useTentativeVerification } from '../upload/composables/useTentativeVerification.js';
 
 // Component configuration
 defineOptions({
