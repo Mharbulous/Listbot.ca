@@ -142,7 +142,7 @@ const availableDemos = computed(() => [
   {
     title: 'Second Upload Interface',
     description:
-      'Alternative upload interface design for testing different UX patterns and workflows. Experiment with file selection, upload options, and progress visualization.',
+      'Second attempt at a client side deduplication interface that displayed files in a virtual table as either Ready, Copy, Duplicate or Skip. Decently optimized. Struggled when uses upload same folder multiple times.',
     route: '/dev/second-upload',
     tags: ['Upload', 'UI Design', 'UX Testing', 'Interface', 'Vue 3'],
     status: 'Active',
