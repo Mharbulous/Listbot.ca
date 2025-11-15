@@ -60,9 +60,26 @@ export function useConstraintTable() {
       if (file.xxh3Hash) return file.xxh3Hash;
 
       // Fallback: use legacy hash (for compatibility during migration)
-      if (file.hash) return file.hash;
+      // WARNING: This fallback indicates incomplete XXH3 migration or hash generation failure
+      if (file.hash) {
+        console.warn('[DEDUP-PHASE1] FALLBACK: Using legacy BLAKE3 hash for file (xxh3Hash missing)', {
+          fileName: file.name,
+          fileSize: file.size,
+          legacyHash: file.hash.substring(0, 16) + '...',
+          status: file.status,
+        });
+        return file.hash;
+      }
 
       // No hash - use empty string (sorts to end)
+      // This should only happen for files that failed hash generation entirely
+      if (file.status !== 'n/a' && file.status !== 'read error') {
+        console.warn('[DEDUP-PHASE1] MISSING HASH: File has no xxh3Hash or legacy hash', {
+          fileName: file.name,
+          fileSize: file.size,
+          status: file.status,
+        });
+      }
       return '';
     };
 
@@ -882,9 +899,18 @@ export function useConstraintTable() {
     uploadQueue.value.forEach((file) => {
       if (file.status === 'skip') {
         // Check both xxh3Hash (Phase 1) and legacy hash
+        // WARNING: Fallback to legacy hash indicates incomplete XXH3 migration
         const hashToUse = file.xxh3Hash || file.hash;
         if (hashToUse) {
           skippedHashes.add(hashToUse);
+          // Log warning if using legacy hash fallback
+          if (!file.xxh3Hash && file.hash) {
+            console.warn('[DEDUP-PHASE1] FALLBACK in clearSkipped(): Using legacy BLAKE3 hash (xxh3Hash missing)', {
+              fileName: file.name,
+              fileSize: file.size,
+              legacyHash: file.hash.substring(0, 16) + '...',
+            });
+          }
         }
       }
     });
@@ -896,7 +922,16 @@ export function useConstraintTable() {
 
       // Remove if file is a copy and its hash matches a skipped file's hash
       if (file.status === 'copy') {
+        // WARNING: Fallback to legacy hash indicates incomplete XXH3 migration
         const hashToUse = file.xxh3Hash || file.hash;
+        // Log warning if using legacy hash fallback
+        if (!file.xxh3Hash && file.hash) {
+          console.warn('[DEDUP-PHASE1] FALLBACK in clearSkipped(): Copy file using legacy BLAKE3 hash (xxh3Hash missing)', {
+            fileName: file.name,
+            fileSize: file.size,
+            legacyHash: file.hash.substring(0, 16) + '...',
+          });
+        }
         if (hashToUse && skippedHashes.has(hashToUse)) {
           return false;
         }
@@ -1006,13 +1041,24 @@ export function useConstraintTable() {
     }
 
     // Phase 1: Use xxh3Hash instead of hash
+    // WARNING: Fallback to legacy hash indicates incomplete XXH3 migration
     const hashToUse = copyFile.xxh3Hash || copyFile.hash;
     if (!hashToUse) {
       console.error('[QUEUE] Cannot swap: file has no hash:', fileId);
       return;
     }
 
+    // Log warning if using legacy hash fallback
+    if (!copyFile.xxh3Hash && copyFile.hash) {
+      console.warn('[DEDUP-PHASE1] FALLBACK in swapCopyToPrimary(): Using legacy BLAKE3 hash (xxh3Hash missing)', {
+        fileName: copyFile.name,
+        fileSize: copyFile.size,
+        legacyHash: copyFile.hash.substring(0, 16) + '...',
+      });
+    }
+
     // Find all files with the same hash (check both xxh3Hash and legacy hash)
+    // WARNING: This allows matching files with different hash types (xxh3Hash vs legacy BLAKE3)
     const sameHashFiles = uploadQueue.value.filter((f) =>
       (f.xxh3Hash && f.xxh3Hash === hashToUse) || (f.hash && f.hash === hashToUse)
     );
