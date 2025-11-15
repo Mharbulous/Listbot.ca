@@ -157,9 +157,13 @@ export function useConstraintTable() {
    */
   const deduplicateAgainstExisting = async (newQueueItems, existingQueueSnapshot) => {
     const t0 = performance.now();
-    console.log('[DEDUP-PHASE1] Starting Phase 1 deduplication:', {
+    console.log('[DEDUP-PHASE1] ═══════════════════════════════════════════════════════');
+    console.log('[DEDUP-PHASE1] Starting Phase 1 Deduplication');
+    console.log('[DEDUP-PHASE1] ═══════════════════════════════════════════════════════');
+    console.log('[DEDUP-PHASE1] Input:', {
       newFiles: newQueueItems.length,
       existingFiles: existingQueueSnapshot.length,
+      totalFiles: newQueueItems.length + existingQueueSnapshot.length,
     });
 
     // Get firmId from auth store (Solo Firm: firmId === userId)
@@ -178,6 +182,7 @@ export function useConstraintTable() {
     // ════════════════════════════════════════════════════════════════
     // LAYER 1: Size-Based Index (O(1) grouping)
     // ════════════════════════════════════════════════════════════════
+    const layer1Start = performance.now();
     const allFiles = [...existingQueueSnapshot, ...newQueueItems];
     const sizeIndex = new Map();
 
@@ -188,7 +193,43 @@ export function useConstraintTable() {
       sizeIndex.get(file.size).push(file);
     });
 
-    console.log('[DEDUP-PHASE1] Layer 1: Created size index with', sizeIndex.size, 'size groups');
+    // Count unique size files (will skip hashing)
+    let uniqueSizeCount = 0;
+    let sizeCollisionGroups = 0;
+    let sizeCollisionFiles = 0;
+
+    for (const [size, filesWithSize] of sizeIndex) {
+      if (filesWithSize.length === 1) {
+        uniqueSizeCount++;
+      } else {
+        sizeCollisionGroups++;
+        sizeCollisionFiles += filesWithSize.length;
+      }
+    }
+
+    const layer1Time = performance.now() - layer1Start;
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 1: Size-Based Index (O(1) grouping)');
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 1 Results:', {
+      totalSizeGroups: sizeIndex.size,
+      uniqueSizeFiles: uniqueSizeCount,
+      sizeCollisionGroups: sizeCollisionGroups,
+      sizeCollisionFiles: sizeCollisionFiles,
+      timeMs: layer1Time.toFixed(2),
+    });
+    console.log(`[DEDUP-PHASE1] ✓ Layer 1: ${uniqueSizeCount} files skip hashing (unique sizes)`);
+
+    // Metrics for Layer 2 and Layer 3
+    const metrics = {
+      layer2ContentHashCount: 0,
+      layer2ContentHashTime: 0,
+      layer2CopiesDetected: 0,
+      layer2UniqueFiles: 0,
+      layer3MetadataHashCount: 0,
+      layer3MetadataHashTime: 0,
+      layer3DuplicatesDetected: 0,
+    };
 
     // Process each size group
     for (const [size, filesWithSize] of sizeIndex) {
@@ -204,11 +245,73 @@ export function useConstraintTable() {
       }
 
       // Multiple files with same size → proceed to Layer 3
-      await processSizeCollisions(filesWithSize, firmId, newQueueItems);
+      await processSizeCollisions(filesWithSize, firmId, newQueueItems, metrics);
     }
 
     const elapsed = performance.now() - t0;
-    console.log(`[DEDUP-PHASE1] Deduplication complete in ${elapsed.toFixed(2)}ms`);
+
+    // Calculate performance insights
+    const totalHashingTime = metrics.layer2ContentHashTime + metrics.layer3MetadataHashTime;
+    const avgMetadataHashTime = metrics.layer3MetadataHashCount > 0
+      ? (metrics.layer3MetadataHashTime / metrics.layer3MetadataHashCount)
+      : 0;
+    const avgContentHashTime = metrics.layer2ContentHashCount > 0
+      ? (metrics.layer2ContentHashTime / metrics.layer2ContentHashCount)
+      : 0;
+
+    // Calculate time saved by Layer 3 optimization
+    // Without Layer 3, we would have had to content-hash all duplicates
+    const contentHashesAvoided = metrics.layer3DuplicatesDetected;
+    const timeSavedByLayer3 = contentHashesAvoided * avgContentHashTime;
+
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 3: Metadata Hash (firmID + modDate + name + ext)');
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 3 Results:', {
+      filesProcessed: metrics.layer3MetadataHashCount,
+      duplicatesDetected: metrics.layer3DuplicatesDetected,
+      passedToLayer2: metrics.layer2ContentHashCount,
+      totalTimeMs: metrics.layer3MetadataHashTime.toFixed(2),
+      avgTimePerHashUs: (avgMetadataHashTime * 1000).toFixed(2) + 'μs',
+    });
+    console.log(`[DEDUP-PHASE1] ✓ Layer 3: ${metrics.layer3DuplicatesDetected} duplicates caught (same metadata)`);
+
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 2: Content Hash (XXH3 file content)');
+    console.log('[DEDUP-PHASE1] ─────────────────────────────────────────────────────────');
+    console.log('[DEDUP-PHASE1] Layer 2 Results:', {
+      filesProcessed: metrics.layer2ContentHashCount,
+      copiesDetected: metrics.layer2CopiesDetected,
+      uniqueFiles: metrics.layer2UniqueFiles,
+      totalTimeMs: metrics.layer2ContentHashTime.toFixed(2),
+      avgTimePerHashMs: avgContentHashTime.toFixed(2),
+    });
+    console.log(`[DEDUP-PHASE1] ✓ Layer 2: ${metrics.layer2CopiesDetected} copies detected (same content, different metadata)`);
+    console.log(`[DEDUP-PHASE1] ✓ Layer 2: ${metrics.layer2UniqueFiles} unique files (ready to upload)`);
+
+    console.log('[DEDUP-PHASE1] ═══════════════════════════════════════════════════════');
+    console.log('[DEDUP-PHASE1] Deduplication Complete');
+    console.log('[DEDUP-PHASE1] ═══════════════════════════════════════════════════════');
+    console.log('[DEDUP-PHASE1] Summary:', {
+      totalTimeMs: elapsed.toFixed(2),
+      layer1TimeMs: layer1Time.toFixed(2),
+      layer3TimeMs: metrics.layer3MetadataHashTime.toFixed(2),
+      layer2TimeMs: metrics.layer2ContentHashTime.toFixed(2),
+      totalHashingTimeMs: totalHashingTime.toFixed(2),
+      filesSkippedByLayer1: uniqueSizeCount,
+      duplicatesCaughtByLayer3: metrics.layer3DuplicatesDetected,
+      copiesCaughtByLayer2: metrics.layer2CopiesDetected,
+      uniqueFilesReady: metrics.layer2UniqueFiles,
+    });
+
+    if (timeSavedByLayer3 > 0) {
+      console.log('[DEDUP-PHASE1] 🚀 Performance Insight:', {
+        contentHashesAvoidedByLayer3: contentHashesAvoided,
+        estimatedTimeSavedMs: timeSavedByLayer3.toFixed(2),
+        speedupRatio: timeSavedByLayer3 > 0 ? `~${(timeSavedByLayer3 / elapsed).toFixed(1)}x faster`,
+      });
+      console.log(`[DEDUP-PHASE1] 🎯 Layer 3 optimization saved ~${timeSavedByLayer3.toFixed(2)}ms by catching duplicates with cheap metadata hash`);
+    }
 
     return newQueueItems;
   };
@@ -218,8 +321,9 @@ export function useConstraintTable() {
    * @param {Array} filesWithSize - Files with the same size
    * @param {string} firmId - Firm ID for metadata hash
    * @param {Array} newQueueItems - New queue items (to identify which files to update)
+   * @param {Object} metrics - Performance metrics object to track Layer 2 and Layer 3 stats
    */
-  const processSizeCollisions = async (filesWithSize, firmId, newQueueItems) => {
+  const processSizeCollisions = async (filesWithSize, firmId, newQueueItems, metrics) => {
     // ════════════════════════════════════════════════════════════════
     // LAYER 3: Metadata Hash (BEFORE content hash)
     // Purpose: Catch "same folder twice" with cheap metadata hash
@@ -228,12 +332,18 @@ export function useConstraintTable() {
 
     for (const file of filesWithSize) {
       // Generate XXH3 Metadata Hash = XXH3(firmID + modDate + name + ext)
+      const layer3Start = performance.now();
       const metadataHash = await queueCore.generateMetadataHash({
         firmId: firmId,
         modDate: file.sourceLastModified,
         name: file.name,
         extension: getFileExtension(file.name),
       });
+      const layer3Time = performance.now() - layer3Start;
+
+      // Track Layer 3 metrics
+      metrics.layer3MetadataHashCount++;
+      metrics.layer3MetadataHashTime += layer3Time;
 
       file.metadataHash = metadataHash;
 
@@ -245,7 +355,13 @@ export function useConstraintTable() {
         // Only update if this is a new file
         if (newQueueItems.includes(file)) {
           // Generate xxh3Hash for the duplicate (needed to prevent tentative verification)
+          const layer2Start = performance.now();
           const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
+          const layer2Time = performance.now() - layer2Start;
+
+          // Track content hash time (even for duplicates, since we still hash them)
+          metrics.layer2ContentHashTime += layer2Time;
+
           file.xxh3Hash = contentHash;
 
           // Set reference to the original file
@@ -254,7 +370,9 @@ export function useConstraintTable() {
           file.status = 'duplicate';
           file.canUpload = false;
           file.isDuplicate = true;
-          console.log('[DEDUP-PHASE1] Layer 3: Duplicate caught by metadata hash:', file.name);
+
+          // Track duplicate detection
+          metrics.layer3DuplicatesDetected++;
         }
         // Skip Layer 2 processing - we already have the content hash
         continue;
@@ -274,7 +392,14 @@ export function useConstraintTable() {
 
     for (const file of filesForContentHash) {
       // Generate XXH3 Content Hash
+      const layer2Start = performance.now();
       const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
+      const layer2Time = performance.now() - layer2Start;
+
+      // Track Layer 2 metrics
+      metrics.layer2ContentHashCount++;
+      metrics.layer2ContentHashTime += layer2Time;
+
       file.xxh3Hash = contentHash;
 
       if (contentHashIndex.has(contentHash)) {
@@ -284,7 +409,9 @@ export function useConstraintTable() {
           file.status = 'copy';
           file.canUpload = false; // Don't upload content (already exists)
           file.isCopy = true;
-          console.log('[DEDUP-PHASE1] Layer 2: Copy detected (same content, different metadata):', file.name);
+
+          // Track copy detection
+          metrics.layer2CopiesDetected++;
         }
       } else {
         // Unique content → mark as 'ready'
@@ -292,6 +419,9 @@ export function useConstraintTable() {
         if (newQueueItems.includes(file)) {
           file.status = 'ready';
           file.canUpload = true;
+
+          // Track unique files
+          metrics.layer2UniqueFiles++;
         }
         contentHashIndex.set(contentHash, file);
       }
