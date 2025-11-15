@@ -1,0 +1,176 @@
+I. PERFORMANCE METRICS BEFORE 3A double drop optimizations:
+
+📊 [METRICS] Performance tracking initialized
+Testing.vue:177 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): Object
+useUploadTable.js?t=1763148690153:266 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js?t=1763148690153:83 [DEDUP-TABLE] Starting deduplication check: Object
+useUploadTable.js?t=1763148690153:105 [DEDUP-TABLE] Size groups: 200
+useUploadTable.js?t=1763148690153:116 [DEDUP-TABLE] No files need hashing (all unique sizes)
+useUploadTable.js?t=1763148690153:271 📊 [QUEUE METRICS] T=1.40ms - Deduplication complete for Phase 1
+useUploadTable.js?t=1763148690153:72 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js?t=1763148690153:326 📊 [QUEUE METRICS] T=2.20ms - Initial batch complete (200 files)
+useUploadTable.js?t=1763148690153:337 📊 [QUEUE METRICS] T=22.40ms - Initial table PAINTED (visible to user)
+useUploadTable.js?t=1763148690153:83 [DEDUP-TABLE] Starting deduplication check: Object
+useUploadTable.js?t=1763148690153:105 [DEDUP-TABLE] Size groups: 760
+useUploadTable.js?t=1763148690153:120 [DEDUP-TABLE] Hashing 38 files
+useUploadTable.js?t=1763148690153:143 [DEDUP-TABLE] Hash groups: 38
+useUploadTable.js?t=1763148690153:203 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js?t=1763148690153:72 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js?t=1763148690153:439 [QUEUE] Added 781 files to queue (with deduplication)
+useUploadTable.js?t=1763148690153:444 📊 [QUEUE METRICS] T=184.80ms - All files finished adding to queue (781 files) Object
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=184.80ms - All files rendered (781 files) Object
+
+📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): Object
+useUploadTable.js?t=1763148690153:266 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js?t=1763148690153:83 [DEDUP-TABLE] Starting deduplication check: Object
+useUploadTable.js?t=1763148690153:105 [DEDUP-TABLE] Size groups: 760
+useUploadTable.js?t=1763148690153:120 [DEDUP-TABLE] Hashing 431 files
+useUploadTable.js?t=1763148690153:143 [DEDUP-TABLE] Hash groups: 231
+useUploadTable.js?t=1763148690153:203 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js?t=1763148690153:271 📊 [QUEUE METRICS] T=2369.50ms - Deduplication complete for Phase 1
+useUploadTable.js?t=1763148690153:72 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js?t=1763148690153:326 📊 [QUEUE METRICS] T=2373.40ms - Initial batch complete (200 files)
+useUploadTable.js?t=1763148690153:337 📊 [QUEUE METRICS] T=2393.00ms - Initial table PAINTED (visible to user)
+useUploadTable.js?t=1763148690153:83 [DEDUP-TABLE] Starting deduplication check: Object
+useUploadTable.js?t=1763148690153:105 [DEDUP-TABLE] Size groups: 760
+useUploadTable.js?t=1763148690153:120 [DEDUP-TABLE] Hashing 1562 files
+Testing.vue:226 [TESTING] Cancel queue
+useUploadTable.js?t=1763148690153:653 [QUEUE] Cancel requested
+useUploadTable.js?t=1763148690153:143 [DEDUP-TABLE] Hash groups: 781
+useUploadTable.js?t=1763148690153:203 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js?t=1763148690153:72 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js?t=1763148690153:439 [QUEUE] Added 781 files to queue (with deduplication)
+useUploadTable.js?t=1763148690153:444 📊 [QUEUE METRICS] T=12560.30ms - All files finished adding to queue (781 files) Object
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=12560.30ms - All files rendered (1562 files) Object
+
+
+II. PERFORMANCE METRICS AFTER 3A double drop optimizations:
+
+📊 [METRICS] Performance tracking initialized
+Testing.vue:177 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): {filesSelected: 781}
+useUploadTable.js:353 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js:108 [DEDUP-TABLE] Starting deduplication check: {newFiles: 200, existingFiles: 0}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 200, existingFiles: 0}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 200, duplicates: 0, copies: 0, promotions: 0, uniqueSizeCount: 200, …}
+useUploadTable.js:185 [DEDUP-TABLE] Size groups for ready files: 200
+useUploadTable.js:196 [DEDUP-TABLE] No ready files need hashing (all unique sizes)
+useUploadTable.js:358 📊 [QUEUE METRICS] T=2.80ms - Deduplication complete for Phase 1
+useUploadTable.js:96 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:417 📊 [QUEUE METRICS] T=6.30ms - Initial batch complete (200 files)
+useUploadTable.js:428 📊 [QUEUE METRICS] T=32.00ms - Initial table PAINTED (visible to user)
+useUploadTable.js:108 [DEDUP-TABLE] Starting deduplication check: {newFiles: 581, existingFiles: 200}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 581, existingFiles: 200}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 581, duplicates: 0, copies: 0, promotions: 0, uniqueSizeCount: 570, …}
+useUploadTable.js:185 [DEDUP-TABLE] Size groups for ready files: 760
+useUploadTable.js:200 [DEDUP-TABLE] Hashing 38 ready files
+useUploadTable.js:230 [DEDUP-TABLE] Hash groups: 38
+useUploadTable.js:290 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:96 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:533 [QUEUE] Added 781 files to queue (with deduplication)
+useUploadTable.js:538 📊 [QUEUE METRICS] T=266.10ms - All files finished adding to queue (781 files) {averageTimePerFile: '0.34ms'}
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=266.20ms - All files rendered (781 files) {renderedRows: 23, firstVisible: 0, lastVisible: 22}
+Testing.vue:177 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): {filesSelected: 781}
+useUploadTable.js:353 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js:108 [DEDUP-TABLE] Starting deduplication check: {newFiles: 200, existingFiles: 781}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 200, existingFiles: 781}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 200, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:165 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:358 📊 [QUEUE METRICS] T=2.40ms - Deduplication complete for Phase 1
+useUploadTable.js:96 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:417 📊 [QUEUE METRICS] T=215.20ms - Initial batch complete (200 files)
+useUploadTable.js:428 📊 [QUEUE METRICS] T=245.10ms - Initial table PAINTED (visible to user)
+useUploadTable.js:108 [DEDUP-TABLE] Starting deduplication check: {newFiles: 581, existingFiles: 981}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 581, existingFiles: 981}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 581, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:165 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:96 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:533 [QUEUE] Added 781 files to queue (with deduplication)
+useUploadTable.js:538 📊 [QUEUE METRICS] T=820.10ms - All files finished adding to queue (781 files) {averageTimePerFile: '1.05ms'}
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=820.30ms - All files rendered (1562 files) {renderedRows: 23, firstVisible: 0, lastVisible: 22}
+
+
+III. PERFORMANCE METRICS AFTER 3A double drop optimization and larger set size:
+
+📊 [METRICS] Performance tracking initialized
+Testing.vue:177 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): {filesSelected: 3431}
+useUploadTable.js:375 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 200, existingFiles: 0}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 200, existingFiles: 0}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 200, duplicates: 0, copies: 0, promotions: 0, uniqueSizeCount: 200, …}
+useUploadTable.js:207 [DEDUP-TABLE] Size groups for ready files: 192
+useUploadTable.js:222 [DEDUP-TABLE] Hashing 15 ready files
+useUploadTable.js:252 [DEDUP-TABLE] Hash groups: 15
+useUploadTable.js:312 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:380 📊 [QUEUE METRICS] T=101.00ms - Deduplication complete for Phase 1
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:439 📊 [QUEUE METRICS] T=103.30ms - Initial batch complete (200 files)
+useUploadTable.js:450 📊 [QUEUE METRICS] T=129.30ms - Initial table PAINTED (visible to user)
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 200}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 200}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 999, duplicates: 0, copies: 1, promotions: 0, uniqueSizeCount: 995, …}
+useUploadTable.js:207 [DEDUP-TABLE] Size groups for ready files: 1163
+useUploadTable.js:222 [DEDUP-TABLE] Hashing 64 ready files
+useUploadTable.js:252 [DEDUP-TABLE] Hash groups: 64
+useUploadTable.js:312 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 1200}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 1200}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 1000, duplicates: 0, copies: 0, promotions: 0, uniqueSizeCount: 982, …}
+useUploadTable.js:207 [DEDUP-TABLE] Size groups for ready files: 2120
+useUploadTable.js:222 [DEDUP-TABLE] Hashing 139 ready files
+useUploadTable.js:252 [DEDUP-TABLE] Hash groups: 134
+useUploadTable.js:312 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 2200}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 2200}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 1000, duplicates: 0, copies: 0, promotions: 0, uniqueSizeCount: 992, …}
+useUploadTable.js:207 [DEDUP-TABLE] Size groups for ready files: 2925
+useUploadTable.js:222 [DEDUP-TABLE] Hashing 459 ready files
+useUploadTable.js:252 [DEDUP-TABLE] Hash groups: 277
+useUploadTable.js:312 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 231, existingFiles: 3200}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 231, existingFiles: 3200}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 200, duplicates: 0, copies: 31, promotions: 0, uniqueSizeCount: 142, …}
+useUploadTable.js:207 [DEDUP-TABLE] Size groups for ready files: 3060
+useUploadTable.js:222 [DEDUP-TABLE] Hashing 564 ready files
+useUploadTable.js:252 [DEDUP-TABLE] Hash groups: 319
+useUploadTable.js:312 [DEDUP-TABLE] Deduplication complete
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:555 [QUEUE] Added 3431 files to queue (with deduplication)
+useUploadTable.js:560 📊 [QUEUE METRICS] T=6051.60ms - All files finished adding to queue (3431 files) {averageTimePerFile: '1.76ms'}
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=6051.70ms - All files rendered (3431 files) {renderedRows: 23, firstVisible: 0, lastVisible: 22}
+Testing.vue:177 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): {filesSelected: 3431}
+useUploadTable.js:375 [QUEUE] Running deduplication for Phase 1 files
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 200, existingFiles: 3431}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 200, existingFiles: 3431}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 200, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:187 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:380 📊 [QUEUE METRICS] T=144.70ms - Deduplication complete for Phase 1
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:439 📊 [QUEUE METRICS] T=1497.80ms - Initial batch complete (200 files)
+useUploadTable.js:450 📊 [QUEUE METRICS] T=1608.10ms - Initial table PAINTED (visible to user)
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 3631}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 3631}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 1000, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:187 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 4631}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 4631}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 1000, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:187 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 1000, existingFiles: 5631}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 1000, existingFiles: 5631}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 1000, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:187 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:111 [DEDUP-TABLE] Starting deduplication check: {newFiles: 231, existingFiles: 6631}
+useQueueCore.js:272 [PREFILTER] Starting metadata pre-filter: {newFiles: 231, existingFiles: 6631}
+useQueueCore.js:359 [PREFILTER] Pre-filter complete: {ready: 0, duplicates: 231, copies: 0, promotions: 0, uniqueSizeCount: 0, …}
+useUploadTable.js:187 [DEDUP-TABLE] All files pre-filtered, no hash calculation needed
+useUploadTable.js:99 [QUEUE] Queue sorted by group timestamp
+useUploadTable.js:555 [QUEUE] Added 3431 files to queue (with deduplication)
+useUploadTable.js:560 📊 [QUEUE METRICS] T=37652.50ms - All files finished adding to queue (3431 files) {averageTimePerFile: '10.97ms'}
+UploadTableVirtualizer.vue:242 📊 [QUEUE METRICS] T=37652.70ms - All files rendered (6862 files) {renderedRows: 23, firstVisible: 0, lastVisible: 22}
+
