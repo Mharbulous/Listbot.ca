@@ -7,7 +7,7 @@
  * 1. Auto-starts verification when queue addition is complete
  * 2. PHASE 1: Hashes reference files (those with tentativeGroupId) first
  * 3. PHASE 2: Verifies tentative files against their hashed references
- * 4. Processes files by size (smallest first for quick wins)
+ * 4. Processes files in REVERSE order (bottom to top) to prevent table jiggling
  * 5. Throttles hashing (one file at a time to avoid CPU spikes)
  * 6. Removes verified duplicates immediately
  * 7. Updates copy status from "Copy?" to "Copy"
@@ -234,8 +234,10 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     await hashReferenceFiles();
 
     // PHASE 2: Verify tentative files against their references
-    // Sort tentative files by size (smallest first for quick wins)
-    const sortedTentativeFiles = [...tentativeFiles].sort((a, b) => a.size - b.size);
+    // Process files in REVERSE order (bottom to top)
+    // This prevents table jiggling - deletions happen below the viewport
+    // so the visible portion of the table stays stable
+    const sortedTentativeFiles = [...tentativeFiles].reverse();
 
     // Process files one at a time (throttled to avoid CPU spikes)
     for (const file of sortedTentativeFiles) {
