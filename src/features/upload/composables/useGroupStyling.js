@@ -36,9 +36,14 @@ export function getGroupBackgroundColor(file, files) {
   }
 
   // Files WITH hashes → count groups to determine color
+  // IMPORTANT: Skip tentative files (no hash) when counting groups
+  // since they inherit color and shouldn't be counted as separate groups
   let groupIndex = 0;
 
   for (let i = 0; i <= fileIndex; i++) {
+    // Skip tentative files - they don't form their own groups
+    if (!files[i].hash) continue;
+
     if (isFirstInGroup(files[i], i, files)) {
       groupIndex++;
     }
