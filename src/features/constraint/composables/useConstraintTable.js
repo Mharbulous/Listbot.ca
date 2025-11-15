@@ -279,8 +279,14 @@ export function useConstraintTable() {
 
       if (contentHashIndex.has(contentHash)) {
         // Content hash collision → this is a copy (same content, different metadata)
+        // Get the reference file (the first file with this content hash)
+        const referenceFile = contentHashIndex.get(contentHash);
+
         // Only update if this is a new file
         if (newQueueItems.includes(file)) {
+          // Set reference to the original file
+          file.referenceFileId = referenceFile.id;
+
           file.status = 'copy';
           file.canUpload = false; // Don't upload content (already exists)
           file.isCopy = true;
