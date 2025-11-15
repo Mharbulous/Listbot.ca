@@ -837,8 +837,6 @@ export function useUploadTable() {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
-        // Relocate to top since user was told it was duplicate but it's actually unique
-        queueItem.groupTimestamp = Date.now();
         console.warn('[HASH-VERIFY] Hash mismatch - promoting to ready', {
           file: queueItem.name,
           tentativeHash: queueItem.hash,
@@ -908,8 +906,6 @@ export function useUploadTable() {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
-        // Relocate to top since user was told it was duplicate but it's actually unique
-        queueItem.groupTimestamp = Date.now();
         console.warn('[DELETE-VERIFY] Hash mismatch - blocking deletion', {
           file: queueItem.name,
         });
@@ -963,8 +959,6 @@ export function useUploadTable() {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
-        // Relocate to top since user was told it was duplicate but it's actually unique
-        queueItem.groupTimestamp = Date.now();
       } else if (queueItem.hash !== bestCopy.hash) {
         queueItem.status = 'ready';
         queueItem.canUpload = true;
@@ -973,8 +967,6 @@ export function useUploadTable() {
         // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
         delete queueItem.tentativeGroupId;
         delete queueItem.referenceFileId;
-        // Relocate to top since user was told it was duplicate but it's actually unique
-        queueItem.groupTimestamp = Date.now();
         console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
           file: queueItem.name,
         });
