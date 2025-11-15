@@ -574,14 +574,42 @@ export function useConstraintTable() {
 
   /**
    * Clear skipped files from queue (files with status 'skip')
+   * Also removes copy files that share the same hash as skipped primary files
    */
   const clearSkipped = () => {
     const beforeCount = uploadQueue.value.length;
-    uploadQueue.value = uploadQueue.value.filter((file) =>
-      file.status !== 'skip'
-    );
+
+    // Collect hashes from all skipped files
+    const skippedHashes = new Set();
+    uploadQueue.value.forEach((file) => {
+      if (file.status === 'skip') {
+        // Check both xxh3Hash (Phase 1) and legacy hash
+        const hashToUse = file.xxh3Hash || file.hash;
+        if (hashToUse) {
+          skippedHashes.add(hashToUse);
+        }
+      }
+    });
+
+    // Remove files with status 'skip' AND copy files with matching hashes
+    uploadQueue.value = uploadQueue.value.filter((file) => {
+      // Remove if file is skipped
+      if (file.status === 'skip') return false;
+
+      // Remove if file is a copy and its hash matches a skipped file's hash
+      if (file.status === 'copy') {
+        const hashToUse = file.xxh3Hash || file.hash;
+        if (hashToUse && skippedHashes.has(hashToUse)) {
+          return false;
+        }
+      }
+
+      // Keep all other files
+      return true;
+    });
+
     const removedCount = beforeCount - uploadQueue.value.length;
-    console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
+    console.log(`[QUEUE] Cleared ${removedCount} skipped files (including associated copies)`);
   };
 
   /**
