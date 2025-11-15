@@ -43,7 +43,7 @@ export function useUploadTable() {
    * - Within each group: ready → copy → duplicate
    * - Files with same hash are grouped together (primary duplicate immediately above 'duplicate' file)
    * - Tentative duplicates (no hash yet) group with their reference file via referenceFileId
-   * - Maintains stable sort within same status
+   * - Copies and duplicates are sorted by the same metadata criteria (ensuring matching order)
    */
   const sortQueueByGroupTimestamp = () => {
     const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
@@ -75,6 +75,42 @@ export function useUploadTable() {
       return '';
     };
 
+    // Helper to compare metadata for copy/duplicate sorting
+    // Uses same priority logic as chooseBestFile() to ensure consistent ordering
+    const compareMetadata = (a, b) => {
+      // Only apply metadata sorting to copy/duplicate status files
+      if ((a.status !== 'copy' && a.status !== 'duplicate') ||
+          (b.status !== 'copy' && b.status !== 'duplicate')) {
+        return 0;
+      }
+
+      // Priority 1: Earliest modification date (ascending)
+      const lastModifiedA = a.sourceLastModified || 0;
+      const lastModifiedB = b.sourceLastModified || 0;
+      if (lastModifiedA !== lastModifiedB) {
+        return lastModifiedA - lastModifiedB;
+      }
+
+      // Priority 2: Longest folder path (descending)
+      const folderPathLengthA = (a.folderPath || '').length;
+      const folderPathLengthB = (b.folderPath || '').length;
+      if (folderPathLengthA !== folderPathLengthB) {
+        return folderPathLengthB - folderPathLengthA;
+      }
+
+      // Priority 3: Shortest filename (ascending)
+      const fileNameLengthA = (a.name || '').length;
+      const fileNameLengthB = (b.name || '').length;
+      if (fileNameLengthA !== fileNameLengthB) {
+        return fileNameLengthA - fileNameLengthB;
+      }
+
+      // Priority 4: Alphanumeric filename sort (ascending)
+      const fileNameA = a.name || '';
+      const fileNameB = b.name || '';
+      return fileNameA.localeCompare(fileNameB);
+    };
+
     uploadQueue.value.sort((a, b) => {
       // Primary sort: group timestamp (descending - most recent first)
       const timestampDiff = (b.groupTimestamp || 0) - (a.groupTimestamp || 0);
@@ -94,7 +130,12 @@ export function useUploadTable() {
       const statusDiff = statusA - statusB;
       if (statusDiff !== 0) return statusDiff;
 
-      // Quaternary sort: maintain original add order (stable sort by id)
+      // Quaternary sort: metadata comparison (for copy/duplicate files only)
+      // Ensures copies and duplicates are sorted in the same order based on metadata
+      const metadataDiff = compareMetadata(a, b);
+      if (metadataDiff !== 0) return metadataDiff;
+
+      // Quinary sort: maintain original add order (stable sort)
       return 0;
     });
 
