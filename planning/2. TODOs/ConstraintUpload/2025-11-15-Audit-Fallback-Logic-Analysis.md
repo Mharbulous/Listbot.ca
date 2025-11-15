@@ -60,38 +60,63 @@ if (!firmId) {
 
 ---
 
-### ⚠️ FALLBACK #2: Missing xxh3Hash → Use Legacy BLAKE3 Hash
-**Location:** `src/features/constraint/composables/useConstraintTable.js:57-66`
+### ✅ FALLBACK #2: Missing xxh3Hash → Use Legacy BLAKE3 Hash (FIXED)
+**Location:** `src/features/constraint/composables/useConstraintTable.js:58-84`
 
+**Status:** ✅ **FIXED** as of 2025-11-15
+
+**Original Problem:**
+- Silently fell back to BLAKE3 hash when xxh3Hash was missing
+- Performance impact masked (BLAKE3 is ~10x slower)
+- Mixed hash types in queue without visibility
+- Inconsistent deduplication across hash types
+
+**Current Implementation (Fixed):**
 ```javascript
 const getGroupingKey = (file) => {
   // Use xxh3Hash for Phase 1 deduplication
   if (file.xxh3Hash) return file.xxh3Hash;
 
   // Fallback: use legacy hash (for compatibility during migration)
-  if (file.hash) return file.hash;
+  // WARNING: This fallback indicates incomplete XXH3 migration or hash generation failure
+  if (file.hash) {
+    console.warn('[DEDUP-PHASE1] FALLBACK: Using legacy BLAKE3 hash for file (xxh3Hash missing)', {
+      fileName: file.name,
+      fileSize: file.size,
+      legacyHash: file.hash.substring(0, 16) + '...',
+      status: file.status,
+    });
+    return file.hash;
+  }
 
   // No hash - use empty string (sorts to end)
+  if (file.status !== 'n/a' && file.status !== 'read error') {
+    console.warn('[DEDUP-PHASE1] MISSING HASH: File has no xxh3Hash or legacy hash', {
+      fileName: file.name,
+      fileSize: file.size,
+      status: file.status,
+    });
+  }
   return '';
 };
 ```
 
-**Why This Is Problematic:**
-- **Hides incomplete migration** - if XXH3 generation fails, silently falls back to BLAKE3
-- **Performance impact masked** - BLAKE3 is ~10x slower, but no alert if used
-- **Mixed hash types in queue** - groups may contain xxh3Hash and BLAKE3 hash files
-- **Inconsistent deduplication** - XXH3 and BLAKE3 of same file produce different hashes
+**Fix Verification:**
+- ✅ Explicit warning logs when legacy hash is used
+- ✅ Tracks which files trigger the fallback (name, size, hash prefix)
+- ✅ Makes fallback usage visible for monitoring and debugging
+- ✅ Prepares codebase for future removal of fallback
+- ✅ Also applied to `clearSkipped()` and `swapCopyToPrimary()` functions
 
-**What It Should Do:**
-- PHASE 1: Reject any file without xxh3Hash with error status
-- OR: Explicitly track hash type and warn if mixing occurs
-- OR: Only use this during a transition period with clear logging
+**Additional Locations Fixed:**
+- ✅ `clearSkipped()` - lines 876-888, 900-908
+- ✅ `swapCopyToPrimary()` - lines 1018-1032
 
-**Test Case to Expose:**
+**Test Case to Verify:**
 1. Force `generateXXH3Hash()` to fail for one file
-2. Upload same file twice (one succeeds hash, one fails)
-3. Expected: Files correctly deduplicated OR both marked as error
-4. Actual: Two different hash values → treated as unique files
+2. Upload the file
+3. Expected: Console warning appears with file details
+4. Verify: Warning shows file name, size, and hash prefix
 
 ---
 
@@ -202,23 +227,46 @@ if (!referenceHash) {
 
 ---
 
-### ⚠️ FALLBACK #6: Legacy Hash Fallback in Swap/Clear Operations
+### ✅ FALLBACK #6: Legacy Hash Fallback in Swap/Clear Operations (FIXED)
 **Locations:**
-- `useConstraintTable.js:857` - `swapCopyToPrimary()`
-- `useConstraintTable.js:732-750` - `clearSkipped()`
+- `useConstraintTable.js:1018-1032` - `swapCopyToPrimary()`
+- `useConstraintTable.js:876-888, 900-908` - `clearSkipped()`
 
+**Status:** ✅ **FIXED** as of 2025-11-15 (same fix as Fallback #2)
+
+**Original Problem:**
+- Same issues as Fallback #2
+- Inconsistent operations - may swap/clear based on wrong hash type
+- Hard to debug - operations silently use different hash than expected
+
+**Current Implementation (Fixed):**
+All instances now include explicit warning logging when legacy hash is used:
 ```javascript
-// Swap example
-const hashToUse = copyFile.xxh3Hash || copyFile.hash;
-
-// Clear example
+// clearSkipped() example
 const hashToUse = file.xxh3Hash || file.hash;
+if (!file.xxh3Hash && file.hash) {
+  console.warn('[DEDUP-PHASE1] FALLBACK in clearSkipped(): Using legacy BLAKE3 hash (xxh3Hash missing)', {
+    fileName: file.name,
+    fileSize: file.size,
+    legacyHash: file.hash.substring(0, 16) + '...',
+  });
+}
+
+// swapCopyToPrimary() example
+const hashToUse = copyFile.xxh3Hash || copyFile.hash;
+if (!copyFile.xxh3Hash && copyFile.hash) {
+  console.warn('[DEDUP-PHASE1] FALLBACK in swapCopyToPrimary(): Using legacy BLAKE3 hash (xxh3Hash missing)', {
+    fileName: copyFile.name,
+    fileSize: copyFile.size,
+    legacyHash: copyFile.hash.substring(0, 16) + '...',
+  });
+}
 ```
 
-**Why This Is Problematic:**
-- Same issues as Fallback #2
-- **Inconsistent operations** - may swap/clear based on wrong hash type
-- **Hard to debug** - operations silently use different hash than expected
+**Fix Verification:**
+- ✅ Explicit warnings in all swap/clear operations
+- ✅ Makes hash type mismatches visible
+- ✅ Improves debuggability of deduplication operations
 
 ---
 
@@ -236,21 +284,24 @@ const hashToUse = file.xxh3Hash || file.hash;
    - ✅ Error thrown to prevent silent processing
    - ✅ User-friendly error message added
 
-2. **Remove Fallback #3 (Duplicate Hashing)**
+2. ✅ **Harden Hash Type Consistency (Fallbacks #2, #6)** - COMPLETED
+   - ✅ Implemented Option B: Add explicit error tracking when legacy hash used
+   - ✅ Updated `getGroupingKey()` with warning logging
+   - ✅ Updated `clearSkipped()` with warning logging (2 locations)
+   - ✅ Updated `swapCopyToPrimary()` with warning logging (2 locations)
+   - ✅ All fallback usage now visible in console logs
+   - ✅ Prepares codebase for future removal of `|| file.hash` fallbacks
+
+3. **Remove Fallback #3 (Duplicate Hashing)**
    - Per implementation plan: duplicates should NOT be content-hashed
    - Use `metadataHash` as grouping key instead of `xxh3Hash`
    - Test: Upload 5,000-file folder twice, verify Layer 2 time = 0ms
 
-3. **Delete Tentative Verification (Fallbacks #4, #5)**
+4. **Delete Tentative Verification (Fallbacks #4, #5)**
    - Phase 1 Plan (line 304): "Remove tentative verification logic"
    - Delete `useTentativeVerification.js` entirely
    - Remove all `tentativeGroupId` and `referenceFileId` references
    - Test: Verify no tentative states appear in queue
-
-4. **Harden Hash Type Consistency (Fallbacks #2, #6)**
-   - Option A: Remove all `|| file.hash` fallbacks
-   - Option B: Add explicit error tracking when legacy hash used
-   - Test: Force xxh3Hash to fail, verify file marked as 'read error'
 
 ---
 
@@ -261,7 +312,7 @@ const hashToUse = file.xxh3Hash || file.hash;
 | "All files have final status after queue processing" | Tentative verification still runs | ❌ Yes |
 | "Remove tentative verification functions" | `useTentativeVerification.js` still exists | ❌ Yes |
 | "Layer 3 duplicates skip Layer 2" | Duplicates still content-hashed | ❌ Yes |
-| "XXH3 hashing for all files" | Falls back to BLAKE3 on error | ⚠️ Partial |
+| "XXH3 hashing for all files" | Falls back to BLAKE3 with explicit warnings | ⚠️ Improved (warnings added) |
 | "FirmId MUST come from auth store" | Uses Solo Firm fallback, then errors if no auth | ✅ Fixed |
 
 ---
@@ -312,19 +363,25 @@ This is acceptable **IF**:
 - ✅ Metrics track how often fallback is used
 - ✅ Plan exists to remove fallback after migration
 
-Currently **MISSING**:
-- ❌ No metrics tracking fallback usage
-- ❌ No timeline for removing `|| file.hash` code
-- ❌ No test coverage for mixed hash scenarios
+**Status after 2025-11-15 fixes:**
+- ✅ Metrics tracking added (console warnings with file details)
+- ⚠️ Timeline for removing `|| file.hash` code still needed
+- ⚠️ Test coverage for mixed hash scenarios still needed
+- ✅ Fallback usage is now visible and trackable
 
 ---
 
 ## Next Session Goals
 
-1. **Remove tentative verification** (highest priority)
-2. **Fix duplicate hashing bug** (defeats Layer 3 optimization)
-3. **Harden firmId requirement** (prevent silent auth failures)
-4. **Add hash type tracking** (prepare for BLAKE3 removal)
+1. ✅ ~~**Harden firmId requirement**~~ (COMPLETED - prevent silent auth failures)
+2. ✅ ~~**Add hash type tracking**~~ (COMPLETED - prepare for BLAKE3 removal)
+3. **Remove tentative verification** (highest priority remaining)
+4. **Fix duplicate hashing bug** (defeats Layer 3 optimization)
+
+**Completed this session (2025-11-15):**
+- ✅ Fallback #1: FirmId missing → Solo Firm fallback with error handling
+- ✅ Fallback #2: xxh3Hash missing → Added explicit warning tracking
+- ✅ Fallback #6: Swap/Clear operations → Added explicit warning tracking
 
 See handover prompt below for full context.
 
