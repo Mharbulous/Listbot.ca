@@ -98,11 +98,11 @@
           variant="elevated"
           size="large"
           class="upload-btn"
-          :disabled="stats.checkedCount === 0"
+          :disabled="stats.checkedCount === 0 || stats.duplicates > 0"
           @click="handleUpload"
         >
           <v-icon start>mdi-cloud-upload-outline</v-icon>
-          Upload {{ stats.checkedCount }} {{ stats.checkedCount === 1 ? 'file' : 'files' }} ({{ stats.checkedSize }})
+          {{ stats.duplicates > 0 ? 'Clear duplicates b4 uploading' : `Upload ${stats.checkedCount} ${stats.checkedCount === 1 ? 'file' : 'files'} (${stats.checkedSize})` }}
         </v-btn>
 
         <!-- Pause Button (shown during active upload) -->
