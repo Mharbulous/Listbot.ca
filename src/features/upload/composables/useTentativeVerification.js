@@ -14,7 +14,7 @@
  * 6. Moves newly discovered unique files to the top
  */
 
-import { ref, watch } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import { useQueueCore } from './useQueueCore.js';
 
 /**
@@ -376,30 +376,40 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   /**
    * Watch for queue addition completion to auto-start verification
    * Polls window.queueAdditionComplete every 100ms
+   * The interval persists throughout the component lifecycle to handle multiple drops
    */
   const setupAutoStart = () => {
+    let lastFlagState = false; // Track flag state to detect transitions
+
     const checkInterval = setInterval(() => {
-      if (window.queueAdditionComplete && !isVerificationRunning) {
+      const currentFlagState = window.queueAdditionComplete;
+
+      // Detect transition from false -> true (new drop completed)
+      if (currentFlagState && !lastFlagState && !isVerificationRunning) {
         const tentativeFiles = getTentativeFiles();
         if (tentativeFiles.length > 0) {
           console.log('[TENTATIVE-VERIFY] Queue addition complete, auto-starting verification');
-          clearInterval(checkInterval);
           // Use setTimeout to ensure this runs after the current call stack clears
           setTimeout(() => {
             startVerification();
           }, 100);
         }
       }
+
+      lastFlagState = currentFlagState;
     }, 100);
 
-    // Cleanup after 30 seconds (safety timeout)
-    setTimeout(() => {
-      clearInterval(checkInterval);
-    }, 30000);
+    // Return cleanup function for component unmount
+    return () => clearInterval(checkInterval);
   };
 
-  // Set up auto-start on mount
-  setupAutoStart();
+  // Set up auto-start on mount and store cleanup function
+  const cleanupAutoStart = setupAutoStart();
+
+  // Clean up interval on component unmount
+  onUnmounted(() => {
+    cleanupAutoStart();
+  });
 
   // Also watch the upload queue for changes to tentative files
   // This handles the case where files are added after initial queue is rendered
