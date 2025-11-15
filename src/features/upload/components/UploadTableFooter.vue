@@ -101,7 +101,11 @@
           :disabled="stats.checkedCount === 0 || stats.duplicates > 0 || verificationState.isVerifying"
           @click="handleUpload"
         >
-          <v-icon start>mdi-cloud-upload-outline</v-icon>
+          <!-- Show broom icon when deduplicating, otherwise cloud upload icon -->
+          <template v-if="verificationState.isVerifying">
+            <span class="broom-icon" v-html="broomIconSvg"></span>
+          </template>
+          <v-icon v-else start>mdi-cloud-upload-outline</v-icon>
           {{ getUploadButtonText() }}
         </v-btn>
 
@@ -259,11 +263,14 @@ const handleToggleDuplicates = () => {
   emit('toggle-duplicates');
 };
 
+// Broom icon SVG for deduplication state
+const broomIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><path fill="currentColor" fill-rule="evenodd" d="M7.543 1.209A.875.875 0 0 0 5.925.542l-2.847 6.91A3.2 3.2 0 0 0 .827 8.84c-.634.915-.85 2.104-.825 3.138c.032 1.295 1.198 2.02 2.277 2.02h6.416a.625.625 0 1 0 0-1.25q.015.001-.005-.004a1.4 1.4 0 0 1-.282-.11a2.7 2.7 0 0 1-.645-.452a2.56 2.56 0 0 1-.82-1.925c0-.918-.468-1.608-1.035-2.061a3.6 3.6 0 0 0-1.012-.563zM1.854 9.55c-.433.627-.624 1.525-.602 2.396c.01.412.4.8 1.027.8h4.303a3.8 3.8 0 0 1-.889-2.49c0-.45-.218-.807-.565-1.084a2.4 2.4 0 0 0-1.162-.487c-1.067-.114-1.708.282-2.112.865m9.436-1.07c0 .345-.28.625-.625.625H8.4a.625.625 0 1 1 0-1.25h2.264c.345 0 .625.28.625.625m.821 3.067a.625.625 0 1 0 0-1.25H9.847a.625.625 0 0 0 0 1.25zM13.375 14a.625.625 0 1 0 0-1.25h-2.264a.625.625 0 1 0 0 1.25z" clip-rule="evenodd"/></svg>';
+
 // Get upload button text based on current state
 const getUploadButtonText = () => {
   if (props.verificationState.isVerifying) {
     const remaining = props.verificationState.total - props.verificationState.processed;
-    return `Deduplicating ${remaining} of ${props.verificationState.total} files`;
+    return `Deduplicating... (${remaining} remaining)`;
   }
   if (props.stats.duplicates > 0) {
     return 'Clear duplicates b4 uploading';
@@ -343,6 +350,17 @@ const getUploadButtonText = () => {
 
 .upload-btn:disabled :deep(.v-icon) {
   color: #d1d5db !important;
+}
+
+.broom-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.broom-icon :deep(svg) {
+  display: block;
 }
 
 .retry-btn {
