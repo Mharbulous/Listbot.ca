@@ -48,12 +48,12 @@ const router = createRouter({
       component: () => import('../views/Analyze.vue'),
       meta: { requiresAuth: true, title: 'Analyze' },
     },
-    {
-      path: '/testing',
-      name: 'testing',
-      component: () => import('../views/Testing.vue'),
-      meta: { requiresAuth: true, title: 'Upload Queue' },
-    },
+    // {
+    //   path: '/testing',
+    //   name: 'testing',
+    //   component: () => import('../views/Testing.vue'),
+    //   meta: { requiresAuth: true, title: 'Upload Queue' },
+    // },
     {
       path: '/list',
       name: 'list',

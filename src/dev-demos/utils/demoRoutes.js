@@ -69,6 +69,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/Uploadv2',
+    name: 'SecondUploadInterface',
+    component: () => import('../../views/Testing.vue'),
+    meta: {
+      requiresAuth: false,
+      devOnly: true,
+      title: 'Second Upload Interface',
+      description: 'Second attempt at a client side deduplication interface that displayed files in a virtual table as either Ready, Copy, Duplicate or Skip. Decently optimized. Struggled when uses upload same folder multiple times.',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),
