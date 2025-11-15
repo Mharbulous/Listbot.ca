@@ -120,10 +120,14 @@ export function useUploadTable() {
     // ========================================================================
     const preFilterResult = queueCore.preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
 
-    // OPTIMIZATION: Build queue index once (O(M)), then O(1) lookups
+    // OPTIMIZATION: Build queue index once (O(M+N)), then O(1) lookups
     // Prevents O(N×M) from repeated uploadQueue.value.find() calls
+    // CRITICAL: Include BOTH existing queue AND new items (reference file might be in new batch)
     const queueIndex = new Map();
     uploadQueue.value.forEach((file) => {
+      queueIndex.set(file.id, file);
+    });
+    newQueueItems.forEach((file) => {
       queueIndex.set(file.id, file);
     });
 
