@@ -86,7 +86,7 @@ import { useTentativeVerification } from '../features/upload/composables/useTent
 
 // Component configuration
 defineOptions({
-  name: 'TestingView',
+  name: 'Uploadv2View',
 });
 
 // Composables
@@ -150,13 +150,13 @@ const folderRecursiveInput = ref(null);
 
 // Listen for events from AppHeader
 onMounted(() => {
-  window.addEventListener('testing-trigger-file-select', triggerFileSelect);
-  window.addEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+  window.addEventListener('uploadv2-trigger-file-select', triggerFileSelect);
+  window.addEventListener('uploadv2-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('testing-trigger-file-select', triggerFileSelect);
-  window.removeEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+  window.removeEventListener('uploadv2-trigger-file-select', triggerFileSelect);
+  window.removeEventListener('uploadv2-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
 });
 
 // File selection handlers
@@ -190,103 +190,103 @@ const handleFolderRecursiveSelected = async (files) => {
 
 // File management handlers
 const handleCancelFile = (fileId) => {
-  console.log('[TESTING] Skip file:', fileId);
+  console.log('[UPLOADV2] Skip file:', fileId);
   skipFile(fileId);
 };
 
 const handleUndoFile = (fileId) => {
-  console.log('[TESTING] Undo skip file:', fileId);
+  console.log('[UPLOADV2] Undo skip file:', fileId);
   undoSkip(fileId);
 };
 
 const handleRemoveFile = (fileId) => {
-  console.log('[TESTING] Remove file from queue:', fileId);
+  console.log('[UPLOADV2] Remove file from queue:', fileId);
   removeFromQueue(fileId);
 };
 
 const handleSwapFile = (fileId) => {
-  console.log('[TESTING] Swap copy to primary:', fileId);
+  console.log('[UPLOADV2] Swap copy to primary:', fileId);
   swapCopyToPrimary(fileId);
 };
 
 const handleClearQueue = () => {
-  console.log('[TESTING] Clear queue');
+  console.log('[UPLOADV2] Clear queue');
   clearQueue();
 };
 
 const handleClearDuplicates = () => {
-  console.log('[TESTING] Clear duplicates');
+  console.log('[UPLOADV2] Clear duplicates');
   clearDuplicates();
 };
 
 const handleClearSkipped = () => {
-  console.log('[TESTING] Clear skipped files');
+  console.log('[UPLOADV2] Clear skipped files');
   clearSkipped();
 };
 
 const handleToggleDuplicates = () => {
-  console.log('[TESTING] Toggle duplicates visibility');
+  console.log('[UPLOADV2] Toggle duplicates visibility');
   toggleDuplicatesVisibility();
 };
 
 const handleCancelQueue = () => {
-  console.log('[TESTING] Cancel queue');
+  console.log('[UPLOADV2] Cancel queue');
   cancelQueue();
 };
 const handleCloseModal = () => {
-  console.log('[TESTING] Close modal');
+  console.log('[UPLOADV2] Close modal');
   queueProgress.value.cancelled = false;
   queueProgress.value.isQueueing = false;
 };
 
 const handleUpload = async () => {
-  console.log('[TESTING] Upload clicked');
+  console.log('[UPLOADV2] Upload clicked');
   try {
     const result = await uploadAdapter.uploadQueueFiles();
-    console.log('[TESTING] Upload result:', result);
+    console.log('[UPLOADV2] Upload result:', result);
   } catch (error) {
-    console.error('[TESTING] Upload error:', error);
+    console.error('[UPLOADV2] Upload error:', error);
   }
 };
 
 const handleSelectAll = () => {
-  console.log('[TESTING] Select all files');
+  console.log('[UPLOADV2] Select all files');
   selectAll();
 };
 
 const handleDeselectAll = () => {
-  console.log('[TESTING] Deselect all files');
+  console.log('[UPLOADV2] Deselect all files');
   deselectAll();
 };
 
 // Upload control handlers
 const handlePause = () => {
-  console.log('[TESTING] Pause upload');
+  console.log('[UPLOADV2] Pause upload');
   uploadAdapter.pauseUpload();
 };
 
 const handleResume = async () => {
-  console.log('[TESTING] Resume upload');
+  console.log('[UPLOADV2] Resume upload');
   try {
     const result = await uploadAdapter.resumeUpload();
-    console.log('[TESTING] Resume result:', result);
+    console.log('[UPLOADV2] Resume result:', result);
   } catch (error) {
-    console.error('[TESTING] Resume error:', error);
+    console.error('[UPLOADV2] Resume error:', error);
   }
 };
 
 const handleCancelUpload = () => {
-  console.log('[TESTING] Cancel upload');
+  console.log('[UPLOADV2] Cancel upload');
   uploadAdapter.cancelUpload();
 };
 
 const handleRetryFailed = async () => {
-  console.log('[TESTING] Retry failed uploads');
+  console.log('[UPLOADV2] Retry failed uploads');
   try {
     const result = await uploadAdapter.retryFailedUploads();
-    console.log('[TESTING] Retry result:', result);
+    console.log('[UPLOADV2] Retry result:', result);
   } catch (error) {
-    console.error('[TESTING] Retry error:', error);
+    console.error('[UPLOADV2] Retry error:', error);
   }
 };
 
