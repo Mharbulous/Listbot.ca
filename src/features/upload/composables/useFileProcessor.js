@@ -1,9 +1,10 @@
 /**
  * File Processor Composable
  * Handles core file processing operations including hashing, uploading, and deduplication
+ * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
  */
 
-import { blake3 } from 'hash-wasm';
+import { xxh128 } from 'hash-wasm';
 import { storage, db } from '../../../services/firebase.js';
 import {
   ref as storageRef,
@@ -41,9 +42,10 @@ export const useFileProcessor = ({
   mainFolderAnalysis,
 }) => {
   /**
-   * Calculate BLAKE3 hash for a file
+   * Calculate XXH128 hash for a file
    * Uses 128-bit output (32 hex characters)
    * Wrapped with network error detection
+   * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
    */
   const calculateFileHash = async (file) => {
     try {
@@ -54,13 +56,17 @@ export const useFileProcessor = ({
         throw error;
       }
 
+      const hashStartTime = performance.now();
       const buffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
-      // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
-      const hash = await blake3(uint8Array, 128);
+      // Generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+      const hash = await xxh128(uint8Array);
 
-      // Return BLAKE3 hash of file content (32 hex characters)
+      const hashDuration = performance.now() - hashStartTime;
+      console.log(`[HASH-PERF-PROCESSOR] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+      // Return XXH128 hash of file content (32 hex characters)
       return hash;
     } catch (error) {
       // Tag network errors for special handling

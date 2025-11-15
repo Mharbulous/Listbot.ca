@@ -1,5 +1,5 @@
 import { createApplicationError } from '../../../utils/errorMessages';
-import { blake3 } from 'hash-wasm';
+import { xxh128 } from 'hash-wasm';
 
 /**
  * Queue Core Composable
@@ -11,6 +11,8 @@ import { blake3 } from 'hash-wasm';
  *
  * It works with file reference objects containing Browser File objects and metadata
  * from the user's filesystem.
+ *
+ * NOTE: Switched from BLAKE3 to XXH128 for performance comparison
  */
 export function useQueueCore() {
   // Helper function to get source file path consistently from various file reference formats
@@ -30,14 +32,19 @@ export function useQueueCore() {
   };
 
   // Legacy hash generation (kept for fallback compatibility)
+  // NOTE: Switched from BLAKE3 to XXH128 for performance comparison
   const generateFileHash = async (file) => {
+    const hashStartTime = performance.now();
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
-    const hash = await blake3(uint8Array, 128);
+    // Generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+    const hash = await xxh128(uint8Array);
 
-    // Return BLAKE3 hash of source file content (32 hex characters)
+    const hashDuration = performance.now() - hashStartTime;
+    console.log(`[HASH-PERF-FALLBACK] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+    // Return XXH128 hash of source file content (32 hex characters)
     return hash;
   };
 

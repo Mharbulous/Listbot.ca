@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue';
-import { blake3 } from 'hash-wasm';
+import { xxh128 } from 'hash-wasm';
 
+// NOTE: Switched from BLAKE3 to XXH128 for performance comparison
 export function useLazyHashTooltip() {
   // Cache for calculated hashes - maps fileId to hash value
   const hashCache = reactive(new Map());
@@ -15,15 +16,20 @@ export function useLazyHashTooltip() {
   // const HOVER_DELAY = 0 // Removed delay
 
   // Hash generation function (extracted from useQueueDeduplication.js)
+  // NOTE: Switched from BLAKE3 to XXH128 for performance comparison
   const generateFileHash = async (file) => {
     try {
+      const hashStartTime = performance.now();
       const buffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
-      // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
-      const hash = await blake3(uint8Array, 128);
+      // Generate XXH128 hash with 128-bit output (16 bytes = 32 hex characters)
+      const hash = await xxh128(uint8Array);
 
-      // Return BLAKE3 hash of file content (32 hex characters)
+      const hashDuration = performance.now() - hashStartTime;
+      console.log(`[HASH-PERF-TOOLTIP] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+      // Return XXH128 hash of file content (32 hex characters)
       return hash;
     } catch (error) {
       console.error('Error generating hash for tooltip:', error);
