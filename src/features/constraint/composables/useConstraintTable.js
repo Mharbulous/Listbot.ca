@@ -260,6 +260,14 @@ export function useConstraintTable() {
       layer3MetadataHashCount: 0,
       layer3MetadataHashTime: 0,
       layer3DuplicatesDetected: 0,
+
+      // New vs existing file tracking
+      layer3NewFilesProcessed: 0,
+      layer3ExistingFilesProcessed: 0,
+      layer3ExistingFilesSkipped: 0,  // Had hash cached, didn't recompute
+
+      layer2NewFilesProcessed: 0,
+      layer2ExistingFilesProcessed: 0,  // Should always be 0 after fix!
     };
 
     // Process each size group
@@ -302,6 +310,14 @@ export function useConstraintTable() {
       filesProcessed: metrics.layer3MetadataHashCount,
       duplicatesDetected: metrics.layer3DuplicatesDetected,
       passedToLayer2: metrics.layer2ContentHashCount,
+
+      // NEW BREAKDOWN:
+      breakdown: {
+        newFiles: metrics.layer3NewFilesProcessed,
+        existingFiles: metrics.layer3ExistingFilesProcessed,
+        existingCacheHits: metrics.layer3ExistingFilesSkipped,
+      },
+
       totalTimeMs: metrics.layer3MetadataHashTime.toFixed(2),
       avgTimePerHashUs: (avgMetadataHashTime * 1000).toFixed(2) + 'μs',
     });
@@ -314,9 +330,22 @@ export function useConstraintTable() {
       filesProcessed: metrics.layer2ContentHashCount,
       copiesDetected: metrics.layer2CopiesDetected,
       uniqueFiles: metrics.layer2UniqueFiles,
+
+      // NEW BREAKDOWN:
+      breakdown: {
+        newFiles: metrics.layer2NewFilesProcessed,
+        existingFiles: metrics.layer2ExistingFilesProcessed,  // Should be 0!
+      },
+
       totalTimeMs: metrics.layer2ContentHashTime.toFixed(2),
       avgTimePerHashMs: avgContentHashTime.toFixed(2),
     });
+
+    // ADD WARNING if existing files processed:
+    if (metrics.layer2ExistingFilesProcessed > 0) {
+      console.error(`[DEDUP-PHASE1] ❌ WARNING: ${metrics.layer2ExistingFilesProcessed} existing files were content-hashed (should be 0)`);
+    }
+
     console.log(`[DEDUP-PHASE1] ✓ Layer 2: ${metrics.layer2CopiesDetected} copies detected (same content, different metadata)`);
     console.log(`[DEDUP-PHASE1] ✓ Layer 2: ${metrics.layer2UniqueFiles} unique files (ready to upload)`);
 
@@ -333,6 +362,15 @@ export function useConstraintTable() {
       duplicatesCaughtByLayer3: metrics.layer3DuplicatesDetected,
       copiesCaughtByLayer2: metrics.layer2CopiesDetected,
       uniqueFilesReady: metrics.layer2UniqueFiles,
+
+      // NEW: Overall breakdown
+      fileBreakdown: {
+        totalNew: newQueueItems.length,
+        totalExisting: existingQueueSnapshot.length,
+        newDuplicates: metrics.layer3DuplicatesDetected,
+        newCopies: metrics.layer2CopiesDetected,
+        newUnique: metrics.layer2UniqueFiles,
+      },
     });
 
     if (timeSavedByLayer3 > 0) {
@@ -366,6 +404,13 @@ export function useConstraintTable() {
       const isNewFile = newQueueItems.includes(file);
       let metadataHash;
 
+      // Track new vs existing files
+      if (isNewFile) {
+        metrics.layer3NewFilesProcessed++;
+      } else {
+        metrics.layer3ExistingFilesProcessed++;
+      }
+
       if (isNewFile) {
         // NEW file: Compute metadata hash
         const layer3Start = performance.now();
@@ -386,6 +431,7 @@ export function useConstraintTable() {
         // EXISTING file: Use existing metadata hash if available
         // (if not available, compute it once to populate the index)
         if (!file.metadataHash) {
+          // First time processing this existing file - compute once
           const layer3Start = performance.now();
           metadataHash = await queueCore.generateMetadataHash({
             firmId: firmId,
@@ -396,9 +442,11 @@ export function useConstraintTable() {
           const layer3Time = performance.now() - layer3Start;
           file.metadataHash = metadataHash;
 
-          // Don't track metrics for existing files
+          // Don't track in metrics (existing file)
         } else {
+          // Hash already cached - skip computation
           metadataHash = file.metadataHash;
+          metrics.layer3ExistingFilesSkipped++;  // Track cache hits
         }
       }
 
@@ -458,6 +506,19 @@ export function useConstraintTable() {
 
     // Now process only NEW files that passed Layer 3 (unique metadata hash)
     for (const file of newFilesNeedingContentHash) {
+      const isNewFile = newQueueItems.includes(file);  // Should always be true!
+
+      if (!isNewFile) {
+        console.error('[DEDUP-PHASE1] ❌ CRITICAL: Existing file in Layer 2 queue:', {
+          file: file.name,
+          size: file.size,
+          metadataHash: file.metadataHash,
+        });
+        metrics.layer2ExistingFilesProcessed++;  // Track the bug
+      } else {
+        metrics.layer2NewFilesProcessed++;
+      }
+
       // Generate XXH3 Content Hash
       const layer2Start = performance.now();
       const contentHash = await queueCore.generateXXH3Hash(file.sourceFile);
