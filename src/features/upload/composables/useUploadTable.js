@@ -48,22 +48,24 @@ export function useUploadTable() {
   const sortQueueByGroupTimestamp = () => {
     const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
 
-    // Helper to get grouping key for a file (hash or reference file's hash)
+    // Helper to get grouping key for a file
+    // STABILITY: Prioritizes tentativeGroupId over hash to prevent groups from shifting
+    // position when lazy hash verification completes (prevents zebra pattern flashing)
     const getGroupingKey = (file) => {
-      // If file has hash, use it directly
-      if (file.hash) return file.hash;
-
-      // If this file is referenced by tentative duplicates but not hashed yet
+      // PRIORITY 1: tentativeGroupId (stable group identifier)
+      // This ensures groups maintain their position even after hash calculation
       if (file.tentativeGroupId) return file.tentativeGroupId;
 
-      // If file is tentative duplicate/copy (no hash but has referenceFileId)
-      // Use the reference file's hash for grouping
+      // PRIORITY 2: hash (for files that were hashed immediately)
+      if (file.hash) return file.hash;
+
+      // PRIORITY 3: referenceFileId (for tentative duplicates/copies)
+      // Use the reference file's grouping key for grouping
       if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
         const referenceFile = uploadQueue.value.find((f) => f.id === file.referenceFileId);
         if (referenceFile) {
-          // Reference file might also be tentative initially, but will get hashed first
-          // Use reference file's hash if available, otherwise tentativeGroupId, otherwise referenceFileId as fallback
-          return referenceFile.hash || referenceFile.tentativeGroupId || file.referenceFileId;
+          // Use reference file's tentativeGroupId if available, otherwise hash, otherwise referenceFileId
+          return referenceFile.tentativeGroupId || referenceFile.hash || file.referenceFileId;
         }
         // Fallback: use referenceFileId if reference file not found
         return file.referenceFileId;
@@ -832,6 +834,9 @@ export function useUploadTable() {
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
         queueItem.isCopy = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
         console.warn('[HASH-VERIFY] Hash mismatch - promoting to ready', {
           file: queueItem.name,
           tentativeHash: queueItem.hash,
@@ -898,6 +903,9 @@ export function useUploadTable() {
         queueItem.status = 'ready';
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
         console.warn('[DELETE-VERIFY] Hash mismatch - blocking deletion', {
           file: queueItem.name,
         });
@@ -948,11 +956,17 @@ export function useUploadTable() {
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
         queueItem.isCopy = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
       } else if (queueItem.hash !== bestCopy.hash) {
         queueItem.status = 'ready';
         queueItem.canUpload = true;
         queueItem.isDuplicate = false;
         queueItem.isCopy = false;
+        // Clear tentativeGroupId so file can form its own group (zebra pattern stability)
+        delete queueItem.tentativeGroupId;
+        delete queueItem.referenceFileId;
         console.warn('[UPLOAD-VERIFY] Hash mismatch - promoting to ready and uploading', {
           file: queueItem.name,
         });
