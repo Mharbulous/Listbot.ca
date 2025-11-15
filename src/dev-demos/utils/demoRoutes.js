@@ -71,7 +71,7 @@ export const demoRoutes = [
   {
     path: '/dev/Uploadv2',
     name: 'SecondUploadInterface',
-    component: () => import('../../views/Testing.vue'),
+    component: () => import('../../views/Uploadv2.vue'),
     meta: {
       requiresAuth: false,
       devOnly: true,
