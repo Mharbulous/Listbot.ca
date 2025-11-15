@@ -84,15 +84,15 @@ import { useFileDragDrop } from './composables/useFileDragDrop.js';
 import { useQueueDeduplication } from './composables/useQueueDeduplication.js';
 import { useFolderOptions } from './composables/useFolderOptions.js';
 import { useTimeBasedWarning } from './composables/useTimeBasedWarning.js';
-import { useAuthStore } from '../../core/stores/auth.js';
-import { useMatterViewStore } from '../../stores/matterView.js';
+import { useAuthStore } from '../../../core/stores/auth.js';
+import { useMatterViewStore } from '../../../stores/matterView.js';
 import { useLazyHashTooltip } from './composables/useLazyHashTooltip.js';
 import { useUploadLogger } from './composables/useUploadLogger.js';
-import { useFileMetadata } from './composables/useFileMetadata.js';
-import { useFileProcessor } from './composables/useFileProcessor.js';
+import { useFileMetadata } from '../../constraint/composables/useFileMetadata.js';
+import { useFileProcessor } from '../../constraint/composables/useFileProcessor.js';
 import { useFileUploadHandlers } from './composables/useFileUploadHandlers.js';
 import { useUploadOrchestration } from './composables/useUploadOrchestration.js';
-import { createFolderOptionsProps, createQueueProps } from './utils/uploadHelpers.js';
+import { createFolderOptionsProps, createQueueProps } from '../../constraint/utils/uploadHelpers.js';
 
 // Component configuration
 defineOptions({
