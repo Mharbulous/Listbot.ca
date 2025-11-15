@@ -55,7 +55,7 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
    * @returns {Promise<Object>} Verification result
    */
   const verifyTentativeFile = async (file) => {
-    console.log('[TENTATIVE-VERIFY] Verifying file:', file.name);
+    // Verbose logging removed - see summary logs in startVerification()
 
     // Calculate hash with error handling
     let hash;
@@ -132,11 +132,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     // Hash matches - verify the status
     if (file.status === 'duplicate') {
       // Verified duplicate - should be removed
-      console.log('[TENTATIVE-VERIFY] Verified duplicate:', file.name);
       return { verified: true, statusChange: 'duplicate', shouldRemove: true };
     } else if (file.status === 'copy') {
       // Verified copy - just update status (remove "?")
-      console.log('[TENTATIVE-VERIFY] Verified copy:', file.name);
       // Status stays as 'copy', but now it has a hash so the "?" will disappear
       return { verified: true, statusChange: 'copy', shouldRemove: false };
     }
@@ -147,7 +145,7 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   /**
    * Hash all reference files that need hashing
    * Reference files are identified by having a tentativeGroupId set
-   * @returns {Promise<number>} Number of reference files hashed
+   * @returns {Promise<Object>} { hashedCount, totalTime }
    */
   const hashReferenceFiles = async () => {
     // Find all reference files (files with tentativeGroupId) that need hashing
@@ -156,17 +154,16 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     );
 
     if (referenceFiles.length === 0) {
-      return 0;
+      return { hashedCount: 0, totalTime: 0 };
     }
-
-    console.log('[TENTATIVE-VERIFY] Hashing reference files:', {
-      totalReferenceFiles: referenceFiles.length,
-    });
 
     // Hash reference files one at a time (smallest first for quick wins)
     const sortedReferenceFiles = [...referenceFiles].sort((a, b) => a.size - b.size);
 
+    const hashT0 = performance.now();
     let hashedCount = 0;
+    let errorCount = 0;
+
     for (const refFile of sortedReferenceFiles) {
       // Re-check if file still exists and still needs hashing
       const currentFile = uploadQueue.value.find((f) => f.id === refFile.id);
@@ -178,15 +175,9 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
         const hash = await queueCore.generateFileHash(currentFile.sourceFile);
         currentFile.hash = hash;
         hashedCount++;
-        console.log('[TENTATIVE-VERIFY] Hashed reference file:', {
-          name: currentFile.name,
-          hash: hash.substring(0, 8) + '...',
-        });
       } catch (error) {
-        console.error('[TENTATIVE-VERIFY] Failed to hash reference file:', {
-          name: currentFile.name,
-          error: error.message,
-        });
+        errorCount++;
+        console.error('  │  [HASH-ERROR] Reference file:', currentFile.name, error.message);
         // Mark as error so verification can handle it
         currentFile.status = 'read error';
         currentFile.errorMessage = error.message;
@@ -194,12 +185,10 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       }
     }
 
-    console.log('[TENTATIVE-VERIFY] Reference file hashing complete:', {
-      hashedCount,
-      totalReferenceFiles: referenceFiles.length,
-    });
+    const totalTime = performance.now() - hashT0;
+    const avgTime = hashedCount > 0 ? (totalTime / hashedCount).toFixed(2) : '0.00';
 
-    return hashedCount;
+    return { hashedCount, totalTime, avgTime, errorCount };
   };
 
   /**
@@ -209,7 +198,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   const getVisibleFileIds = () => {
     const scrollContainer = document.querySelector('.scrollable-content');
     if (!scrollContainer) {
-      console.log('[TENTATIVE-VERIFY] Scroll container not found');
       return new Set();
     }
 
@@ -228,7 +216,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       }
     });
 
-    console.log('[TENTATIVE-VERIFY] Detected visible files:', visibleIds.size);
     return visibleIds;
   };
 
@@ -257,20 +244,23 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   const startVerification = async () => {
     // Prevent multiple verification processes
     if (isVerificationRunning) {
-      console.log('[TENTATIVE-VERIFY] Verification already running, skipping');
       return;
     }
 
     const tentativeFiles = getTentativeFiles();
 
     if (tentativeFiles.length === 0) {
-      console.log('[TENTATIVE-VERIFY] No tentative files to verify');
       return;
     }
 
-    console.log('[TENTATIVE-VERIFY] Starting verification process:', {
-      totalTentativeFiles: tentativeFiles.length,
-    });
+    const verifyT0 = performance.now();
+
+    // Count reference files
+    const referenceFileCount = uploadQueue.value.filter(
+      (file) => file.tentativeGroupId && !file.hash
+    ).length;
+
+    console.log(`📊 [VERIFY] T=0.00ms - Starting: {tentative: ${tentativeFiles.length}, reference: ${referenceFileCount}}`);
 
     isVerificationRunning = true;
     verificationState.value.isVerifying = true;
@@ -279,17 +269,14 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
 
     // PHASE 1: Hash all reference files first
     // This ensures reference files have hashes before we verify tentative files against them
-    await hashReferenceFiles();
+    const hashResult = await hashReferenceFiles();
+    if (hashResult.hashedCount > 0) {
+      console.log(`  ├─ [HASH-REF] Hashed ${hashResult.hashedCount} files (avg: ${hashResult.avgTime}ms/file, total: ${hashResult.totalTime.toFixed(2)}ms)`);
+    }
 
     // PHASE 2: Verify tentative files with two-phase deletion strategy
     // Detect which files are currently visible in the viewport
     const visibleFileIds = getVisibleFileIds();
-
-    console.log('[TENTATIVE-VERIFY] Two-phase deletion strategy:', {
-      totalTentativeFiles: tentativeFiles.length,
-      visibleFiles: visibleFileIds.size,
-      nonVisibleFiles: tentativeFiles.length - visibleFileIds.size,
-    });
 
     // Separate files into visible and non-visible
     const visibleFiles = [];
@@ -303,14 +290,18 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       }
     });
 
+    // Track verification stats
+    let duplicatesRemoved = 0;
+    let copiesVerified = 0;
+    let promotedToReady = 0;
+    const verifyHashT0 = performance.now();
+
     // PHASE 2A: Process visible files with animation feedback
     // These get individual animated deletions so user sees progress
-    console.log('[TENTATIVE-VERIFY] Phase 2A: Processing visible files with animation');
     for (const file of visibleFiles) {
       // Re-check if file still exists and is still tentative
       const currentFile = uploadQueue.value.find((f) => f.id === file.id);
       if (!currentFile || currentFile.hash) {
-        console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
         verificationState.value.processed++;
         continue;
       }
@@ -321,9 +312,13 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
         // Apply fade-out animation before removing
         await animateFileDeletion(currentFile.id);
         removeFromQueue(currentFile.id);
+        duplicatesRemoved++;
       } else if (result.statusChange === 'ready') {
         // File was promoted to ready - resort queue to move it to top
         sortQueueByGroupTimestamp();
+        promotedToReady++;
+      } else if (result.statusChange === 'copy') {
+        copiesVerified++;
       }
 
       verificationState.value.processed++;
@@ -331,7 +326,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
 
     // PHASE 2B: Process non-visible files (batched deletion)
     // Process bottom-to-top to minimize impact, batch all deletions at end
-    console.log('[TENTATIVE-VERIFY] Phase 2B: Processing non-visible files (batched)');
     const sortedNonVisibleFiles = [...nonVisibleFiles].reverse();
     const filesToRemove = [];
 
@@ -339,7 +333,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       // Re-check if file still exists and is still tentative
       const currentFile = uploadQueue.value.find((f) => f.id === file.id);
       if (!currentFile || currentFile.hash) {
-        console.log('[TENTATIVE-VERIFY] File no longer tentative, skipping:', file.name);
         verificationState.value.processed++;
         continue;
       }
@@ -349,25 +342,36 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       if (result.shouldRemove) {
         // Collect for batch deletion (no animation needed - not visible)
         filesToRemove.push(currentFile.id);
+        duplicatesRemoved++;
       } else if (result.statusChange === 'ready') {
         // File was promoted to ready - resort queue to move it to top
         sortQueueByGroupTimestamp();
+        promotedToReady++;
+      } else if (result.statusChange === 'copy') {
+        copiesVerified++;
       }
 
       verificationState.value.processed++;
     }
 
+    const verifyHashTime = performance.now() - verifyHashT0;
+    const avgVerifyTime = tentativeFiles.length > 0 ? (verifyHashTime / tentativeFiles.length).toFixed(2) : '0.00';
+
+    console.log(`  ├─ [VERIFY] Checked ${tentativeFiles.length} files (avg: ${avgVerifyTime}ms/file, total: ${verifyHashTime.toFixed(2)}ms)`);
+
     // Batch remove all non-visible verified duplicates
     // This causes only ONE re-render instead of many
-    console.log('[TENTATIVE-VERIFY] Batch removing non-visible files:', filesToRemove.length);
-    filesToRemove.forEach((id) => removeFromQueue(id));
+    if (filesToRemove.length > 0) {
+      filesToRemove.forEach((id) => removeFromQueue(id));
+    }
 
     // Sort queue one final time to ensure everything is in the right place
     sortQueueByGroupTimestamp();
 
-    console.log('[TENTATIVE-VERIFY] Verification complete:', {
-      totalProcessed: verificationState.value.processed,
-    });
+    console.log(`  └─ [CLEANUP] Removed ${duplicatesRemoved} duplicates, verified ${copiesVerified} copies, promoted ${promotedToReady} to ready`);
+
+    const totalTime = performance.now() - verifyT0;
+    console.log(`📊 [VERIFY] T=${totalTime.toFixed(2)}ms - Complete\n`);
 
     verificationState.value.isVerifying = false;
     isVerificationRunning = false;
@@ -388,7 +392,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       if (currentFlagState && !lastFlagState && !isVerificationRunning) {
         const tentativeFiles = getTentativeFiles();
         if (tentativeFiles.length > 0) {
-          console.log('[TENTATIVE-VERIFY] Queue addition complete, auto-starting verification');
           // Use setTimeout to ensure this runs after the current call stack clears
           setTimeout(() => {
             startVerification();
@@ -420,7 +423,6 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       if (window.queueAdditionComplete && !isVerificationRunning) {
         const tentativeFiles = getTentativeFiles();
         if (tentativeFiles.length > 0) {
-          console.log('[TENTATIVE-VERIFY] New tentative files detected, starting verification');
           setTimeout(() => {
             startVerification();
           }, 500); // Small delay to batch rapid changes
