@@ -9,7 +9,7 @@ import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { useFileProcessor } from './useFileProcessor.js';
 import { useFileMetadata } from './useFileMetadata.js';
-import { useUploadOrchestration } from './useUploadOrchestration.js';
+import { useUploadOrchestration } from '../../../dev-demos/upload/composables/useUploadOrchestration.js';
 import { useWebWorker } from './useWebWorker.js';
 import { isNetworkError } from '../utils/networkUtils.js';
 import { safeLog, safeMetadata, createFileMetadataRecord } from '../utils/uploadHelpers.js';
