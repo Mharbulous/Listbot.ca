@@ -1,4 +1,4 @@
-import { useQueueCore } from './useQueueCore';
+import { useQueueCore } from '../../../features/constraint/composables/useQueueCore';
 import { useQueueWorkers } from './useQueueWorkers';
 import { useQueueProgress } from './useQueueProgress';
 

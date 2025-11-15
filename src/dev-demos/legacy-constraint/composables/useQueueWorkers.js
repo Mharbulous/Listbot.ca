@@ -1,4 +1,4 @@
-import { useWebWorker } from './useWebWorker';
+import { useWebWorker } from '../../../features/constraint/composables/useWebWorker';
 import { useWorkerManager } from './useWorkerManager';
 import { createApplicationError, isRecoverableError } from '../../../utils/errorMessages';
 

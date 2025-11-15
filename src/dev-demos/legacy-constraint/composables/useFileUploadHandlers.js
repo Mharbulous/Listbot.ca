@@ -8,8 +8,8 @@ import {
   safeMetadata,
   createFileMetadataRecord,
   logFileEvent,
-} from '../utils/uploadHelpers.js';
-import { isNetworkError, getNetworkErrorMessage } from '../utils/networkUtils.js';
+} from '../../../features/constraint/utils/uploadHelpers.js';
+import { isNetworkError, getNetworkErrorMessage } from '../../../features/constraint/utils/networkUtils.js';
 
 /**
  * File Upload Handlers Composable
