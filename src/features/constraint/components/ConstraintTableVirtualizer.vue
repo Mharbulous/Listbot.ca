@@ -1,0 +1,376 @@
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     UploadTableVirtualizer.vue                                ║
+║                                                                               ║
+║  PURPOSE: Isolate virtualization complexity from business logic              ║
+║                                                                               ║
+║  WHY THIS FILE EXISTS:                                                       ║
+║  Virtual scrolling requires TIGHT COUPLING between:                          ║
+║    - Scroll position calculations                                            ║
+║    - Visible item detection                                                  ║
+║    - DOM element positioning (CSS transforms)                                ║
+║    - Row recycling during scroll                                             ║
+║                                                                               ║
+║  This coupling CANNOT be decomposed further without breaking virtualization. ║
+║  Therefore, this file is ALLOWED to exceed 300 lines when Phase 1.5 adds    ║
+║  TanStack Virtual integration.                                               ║
+║                                                                               ║
+║  SCOPE DEFENSE (What MUST NOT be in this file):                             ║
+║    ❌ Empty state rendering (belongs in UploadTable.vue)                     ║
+║    ❌ Selection state management (belongs in UploadTable.vue)                ║
+║    ❌ Footer stats computation (belongs in UploadTable.vue)                  ║
+║    ❌ Drag-and-drop file traversal (belongs in UploadTable.vue)              ║
+║    ❌ Upload orchestration logic (belongs in Uploadv2.vue/composable)        ║
+║                                                                               ║
+║  RESPONSIBILITIES (What MUST be in this file):                               ║
+║    ✅ Scroll container management                                            ║
+║    ✅ Row rendering (standard in Phase 1.0, virtual in Phase 1.5)            ║
+║    ✅ TanStack Virtual integration (Phase 1.5)                               ║
+║    ✅ Visible item calculation (Phase 1.5)                                   ║
+║    ✅ Row positioning with CSS transforms (Phase 1.5)                        ║
+║    ✅ Overscan configuration (Phase 1.5)                                     ║
+║                                                                               ║
+║  PHASE EVOLUTION:                                                            ║
+║    Phase 1.0 (Current): Standard rendering with v-for (~100 lines)          ║
+║    Phase 1.5 (Next):    Virtual scrolling with TanStack (~300-400 lines)    ║
+║                                                                               ║
+║  ARCHITECTURAL NOTE:                                                         ║
+║  By creating this boundary NOW (before virtualization), we prevent scope     ║
+║  creep and ensure the virtualizer stays focused ONLY on performance.         ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+
+<template>
+  <!-- Wrapper for table (no drag-drop - that's handled by parent UploadTable.vue) -->
+  <div class="table-wrapper">
+    <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
+    <div ref="scrollContainerRef" class="scroll-container">
+      <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
+      <ConstraintTableHeader
+        :all-selected="props.allSelected"
+        :some-selected="props.someSelected"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
+      />
+
+      <!-- Content wrapper for rows (no flex properties) -->
+      <div class="content-wrapper">
+        <!-- Virtual container with dynamic height based on total content size -->
+        <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+          <!-- Only render visible rows + overscan buffer -->
+          <div
+            v-for="virtualRow in virtualItems"
+            :key="virtualRow.key"
+            class="virtual-row"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: virtualRow.size + 'px',
+              transform: `translateY(${virtualRow.start}px)`,
+            }"
+          >
+            <ConstraintTableRow
+              :file="props.files[virtualRow.index]"
+              :scrollbar-width="0"
+              :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
+              :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+              :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+              @cancel="handleCancel"
+              @undo="handleUndo"
+              @remove="handleRemove"
+              @swap="handleSwap"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
+      <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
+      <div class="dropzone-cell">
+        <ConstraintTableDropzone />
+      </div>
+
+      <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
+      <ConstraintTableFooter
+        :stats="props.footerStats"
+        :is-uploading="props.isUploading"
+        :is-paused="props.isPaused"
+        :duplicates-hidden="props.duplicatesHidden"
+        :verification-state="props.verificationState"
+        @upload="handleUpload"
+        @clear-queue="handleClearQueue"
+        @clear-duplicates="handleClearDuplicates"
+        @clear-skipped="handleClearSkipped"
+        @toggle-duplicates="handleToggleDuplicates"
+        @pause="handlePause"
+        @resume="handleResume"
+        @cancel="handleCancel"
+        @retry-failed="handleRetryFailed"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch, nextTick } from 'vue';
+import { useVirtualizer } from '@tanstack/vue-virtual';
+import ConstraintTableHeader from './ConstraintTableHeader.vue';
+import ConstraintTableRow from './ConstraintTableRow.vue';
+import ConstraintTableFooter from './ConstraintTableFooter.vue';
+import ConstraintTableDropzone from './ConstraintTableDropzone.vue';
+
+// Component configuration
+defineOptions({
+  name: 'UploadTableVirtualizer',
+});
+
+// Props
+const props = defineProps({
+  files: {
+    type: Array,
+    required: true,
+    default: () => [],
+  },
+  allSelected: {
+    type: Boolean,
+    default: false,
+  },
+  someSelected: {
+    type: Boolean,
+    default: false,
+  },
+  footerStats: {
+    type: Object,
+    required: true,
+    default: () => ({}),
+  },
+  isUploading: {
+    type: Boolean,
+    default: false,
+  },
+  isPaused: {
+    type: Boolean,
+    default: false,
+  },
+  duplicatesHidden: {
+    type: Boolean,
+    default: false,
+  },
+  verificationState: {
+    type: Object,
+    default: () => ({
+      isVerifying: false,
+      processed: 0,
+      total: 0,
+    }),
+  },
+  // Group styling functions (PASS-THROUGH ONLY - business logic in composable)
+  getGroupBackground: {
+    type: Function,
+    default: null,
+  },
+  isFirstInGroup: {
+    type: Function,
+    default: null,
+  },
+  isLastInGroup: {
+    type: Function,
+    default: null,
+  },
+});
+
+// Emits
+const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'clear-duplicates', 'clear-skipped', 'toggle-duplicates', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
+
+// Scroll container ref for virtual scrolling
+const scrollContainerRef = ref(null);
+
+// ============================================================================
+// PERFORMANCE METRICS TRACKING
+// ============================================================================
+// NOTE: queueT0 is stored in window.queueT0 (set in Uploadv2.vue when user selects files)
+
+// Row height configuration (48px matches UploadTableRow height)
+const ROW_HEIGHT = 48;
+
+// CRITICAL: Use computed options wrapper pattern for TanStack Virtual
+// This ensures count is a plain number, not a ComputedRef
+// See: docs/TanStackAndVue3.md - "The Critical Pattern"
+const virtualizerOptions = computed(() => ({
+  count: props.files?.length || 0, // Plain number, NOT computed()!
+  getScrollElement: () => scrollContainerRef.value,
+  estimateSize: () => ROW_HEIGHT,
+  overscan: 5, // Render 5 extra rows above/below viewport for smooth scrolling
+  enableSmoothScroll: true,
+  scrollPaddingStart: 0,
+  scrollPaddingEnd: 0,
+}));
+
+// Create virtualizer instance with computed options wrapper
+const rowVirtualizer = useVirtualizer(virtualizerOptions);
+
+// Computed properties for virtual items and total size
+const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+
+// ============================================================================
+// QUEUE METRICS: Track when files are ready for rendering
+// Note: Initial paint timing is now tracked in useUploadTable.js using RAF
+// ============================================================================
+let finalRenderLogged = false; // Track if we've logged the final render
+
+watch(
+  () => props.files.length,
+  (newLength, oldLength) => {
+    // Only track when files are ADDED (not removed/cleared)
+    if (newLength > (oldLength || 0)) {
+      // Reset render flag when new files are added
+      finalRenderLogged = false;
+    }
+  }
+);
+
+// ============================================================================
+// RENDER METRICS: Track final rendering after all files are queued
+// ============================================================================
+watch(
+  virtualItems,
+  () => {
+    // Track render completion relative to current active T=0
+    nextTick(() => {
+      // Track FINAL render after Phase 2 completes (all files added)
+      if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged) {
+        const elapsed = performance.now() - window.queueT0;
+        console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - All files rendered (${props.files.length} files)`, {
+          renderedRows: virtualItems.value.length,
+          firstVisible: virtualItems.value[0]?.index ?? 'none',
+          lastVisible: virtualItems.value[virtualItems.value.length - 1]?.index ?? 'none',
+        });
+        finalRenderLogged = true; // Mark as logged
+
+        // Clear queue metrics flags after final render is complete
+        window.queueT0 = null;
+        window.queueAdditionComplete = false;
+      }
+    });
+  },
+  { flush: 'post' } // Run after DOM updates
+);
+
+// Event handlers
+const handleCancel = (fileId) => {
+  emit('cancel', fileId);
+};
+
+const handleUndo = (fileId) => {
+  emit('undo', fileId);
+};
+
+const handleRemove = (fileId) => {
+  emit('remove', fileId);
+};
+
+const handleSwap = (fileId) => {
+  emit('swap', fileId);
+};
+
+const handleSelectAll = () => {
+  emit('select-all');
+};
+
+const handleDeselectAll = () => {
+  emit('deselect-all');
+};
+
+const handleUpload = () => {
+  emit('upload');
+};
+
+const handleClearQueue = () => {
+  emit('clear-queue');
+};
+
+const handleClearDuplicates = () => {
+  emit('clear-duplicates');
+};
+
+const handleClearSkipped = () => {
+  emit('clear-skipped');
+};
+
+const handleToggleDuplicates = () => {
+  emit('toggle-duplicates');
+};
+
+const handlePause = () => {
+  emit('pause');
+};
+
+const handleResume = () => {
+  emit('resume');
+};
+
+const handleCancelUpload = () => {
+  emit('cancel-upload');
+};
+
+const handleRetryFailed = () => {
+  emit('retry-failed');
+};
+
+// Expose scroll container ref for parent component
+defineExpose({
+  scrollContainerRef,
+});
+</script>
+
+<style scoped>
+/* Wrapper for table + overlay - enables absolute positioning of overlay */
+.table-wrapper {
+  flex: 1;
+  position: relative; /* Creates positioning context for absolute overlay */
+  min-height: 0; /* Allow flex shrinking */
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-container {
+  flex: 1;
+  position: relative;
+  overflow-y: auto;
+  min-height: 0; /* Allow flex shrinking and enable scrolling */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content wrapper for virtual rows (no flex properties) */
+.content-wrapper {
+  width: 100%;
+}
+
+/* Virtual scrolling container - contains all virtualized rows */
+.virtual-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Virtual row wrapper - absolutely positioned using CSS transform */
+.virtual-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  will-change: transform; /* Optimize for GPU-accelerated transforms */
+}
+
+/* Dropzone cell wrapper - adds padding around the dropzone */
+/* This is a VISUAL ONLY indicator - drag-drop is handled by parent UploadTable.vue */
+.dropzone-cell {
+  flex: 1; /* Fill remaining space to push footer to bottom */
+  display: flex; /* Allow dropzone to flex and fill space */
+  padding: 1rem 0; /* Vertical padding above and below dropzone */
+}
+</style>
