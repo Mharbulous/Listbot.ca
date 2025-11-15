@@ -32,7 +32,7 @@ export function useLazyHashTooltip() {
   };
 
   // Start hash calculation immediately on hover
-  const onTooltipHover = async (fileId, file) => {
+  const onTooltipHover = async (fileId, file, queueFile = null) => {
     // If hash is already cached, no need to do anything
     if (hashCache.has(fileId)) {
       return;
@@ -52,6 +52,16 @@ export function useLazyHashTooltip() {
 
       // Cache the result
       hashCache.set(fileId, hash);
+
+      // IMPORTANT: Also store hash on the queue file object if provided
+      // This prevents wasteful re-hashing during upload or verification
+      if (queueFile && !queueFile.hash && hash !== 'Error calculating hash') {
+        queueFile.hash = hash;
+        console.log('[HASH-TOOLTIP] Stored hash on queue file:', {
+          name: queueFile.name || queueFile.sourceName,
+          hash: hash.substring(0, 8) + '...',
+        });
+      }
     } catch (error) {
       console.error(`Failed to calculate hash for file ${fileId}:`, error);
       hashCache.set(fileId, 'Hash calculation failed');

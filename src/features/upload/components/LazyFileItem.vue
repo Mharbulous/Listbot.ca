@@ -5,7 +5,7 @@
         <template #activator="{ props: tooltipProps }">
           <v-avatar
             v-bind="tooltipProps"
-            @mouseenter="onTooltipHover(file.id || file.sourceName, file.sourceFile || file)"
+            @mouseenter="onTooltipHover(file.id || file.sourceName, file.sourceFile || file, file)"
             @mouseleave="onTooltipLeave(file.id || file.sourceName)"
             color="grey-lighten-3"
             size="48"
