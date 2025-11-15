@@ -94,11 +94,12 @@ const calculateHorizontalPosition = (buttonRect, tooltipWidth, buffer) => {
  * @param {Object} router - Vue Router instance
  * @param {Object} authStore - Authentication store
  * @param {Object} sortedData - Computed ref containing sorted table data
+ * @param {Function} showNotification - Optional notification function for error messages
  * @returns {Object} Peek functionality interface
  */
-export function useDocumentTablePeek(route, router, authStore, sortedData) {
+export function useDocumentTablePeek(route, router, authStore, sortedData, showNotification = null) {
   // Initialize core composables
-  const documentPeek = useDocumentPeek();
+  const documentPeek = useDocumentPeek(showNotification);
   const tooltipTiming = useTooltipTiming();
 
   // Refs for peek button positioning

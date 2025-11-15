@@ -1,4 +1,4 @@
-import { analyzeFiles } from '@/features/upload/utils/fileAnalysis.js';
+import { analyzeFiles } from '../utils/fileAnalysis.js';
 
 /**
  * Folder Analysis Composable

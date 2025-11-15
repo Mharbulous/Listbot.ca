@@ -2,8 +2,8 @@ import { db } from '../../../services/firebase.js';
 import { doc, setDoc, getDoc, Timestamp, updateDoc, increment } from 'firebase/firestore';
 import { useAuthStore } from '../../../core/stores/auth.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
-import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
-import { EvidenceService } from '../../organizer/services/evidenceService.js';
+import { updateFolderPaths } from '../utils/folderPathUtils.js';
+import { EvidenceService } from '../../../features/organizer/services/evidenceService.js';
 import xxhash from 'xxhash-wasm';
 
 // Initialize xxHash hasher (singleton pattern for performance)

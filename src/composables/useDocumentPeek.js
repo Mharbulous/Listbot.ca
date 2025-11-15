@@ -11,9 +11,10 @@ import { useThumbnailRenderer } from '@/features/organizer/composables/useThumbn
  * Handles loading PDFs, generating thumbnails, page cycling, and LRU caching.
  * Integrates with existing thumbnail rendering and PDF loading infrastructure.
  *
+ * @param {Function} showNotification - Optional notification function (message, color)
  * @returns {Object} Peek state and methods
  */
-export function useDocumentPeek() {
+export function useDocumentPeek(showNotification = null) {
   // Thumbnail renderer
   const thumbnailRenderer = useThumbnailRenderer();
 
@@ -166,6 +167,14 @@ export function useDocumentPeek() {
       return pdfDocument;
     } catch (err) {
       console.error('[Peek] Failed to load PDF document:', err);
+      // Show user-friendly notification for storage errors
+      if (showNotification && err.code === 'storage/object-not-found') {
+        showNotification(
+          'File not found in storage. The file may have been deleted or never uploaded.',
+          'error'
+        );
+      }
+
       throw err;
     }
   };
@@ -193,7 +202,13 @@ export function useDocumentPeek() {
       let pageCount = null;
 
       if (isPdf(metadata.fileType)) {
-        pdfDocument = await loadPdfDocument(firmId, matterId, fileHash, metadata.displayName, metadata.fileType);
+        pdfDocument = await loadPdfDocument(
+          firmId,
+          matterId,
+          fileHash,
+          metadata.displayName,
+          metadata.fileType
+        );
         pageCount = pdfDocument.numPages;
         // IMPORTANT: Use markRaw() to prevent Vue from making the PDF.js document reactive
         // PDF.js uses private class members that break when wrapped in a Proxy
@@ -273,9 +288,7 @@ export function useDocumentPeek() {
     }
 
     // Generate thumbnails in parallel (non-blocking)
-    Promise.all(
-      pagesToGenerate.map(page => generateThumbnail(fileHash, page))
-    ).catch(err => {
+    Promise.all(pagesToGenerate.map((page) => generateThumbnail(fileHash, page))).catch((err) => {
       console.warn('[Peek] Pre-generation failed:', err);
       // Silent failure - pre-generation is a performance optimization
     });

@@ -22,7 +22,7 @@ import { safeLog, safeMetadata, createFileMetadataRecord } from '../utils/upload
  * @param {Function} params.showNotification - Function to show notifications (optional)
  * @returns {Object} Upload adapter functions
  */
-export function useUploadAdapter({ uploadQueue, updateFileStatus, showNotification }) {
+export function useConstraintAdapter({ uploadQueue, updateFileStatus, showNotification }) {
   const authStore = useAuthStore();
   const matterStore = useMatterViewStore();
 

@@ -160,8 +160,29 @@ const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 
+// Column definitions
+const COLUMNS = [
+  { key: 'fileType', label: 'Type', defaultWidth: 100 },
+  { key: 'fileName', label: 'File Name', defaultWidth: 300 },
+  { key: 'size', label: 'Size', defaultWidth: 100 },
+  { key: 'date', label: 'Date', defaultWidth: 150 },
+  { key: 'privilege', label: 'Privilege', defaultWidth: 120 },
+  { key: 'description', label: 'Description', defaultWidth: 250 },
+  { key: 'documentType', label: 'Doc Type', defaultWidth: 120 },
+  { key: 'author', label: 'Author', defaultWidth: 150 },
+  { key: 'custodian', label: 'Custodian', defaultWidth: 150 },
+  { key: 'modifiedDate', label: 'Modified', defaultWidth: 150 },
+  { key: 'status', label: 'Status', defaultWidth: 100 },
+];
+
+// Create default column widths object
+const defaultColumnWidths = COLUMNS.reduce((acc, col) => {
+  acc[col.key] = col.defaultWidth;
+  return acc;
+}, {});
+
 // Use column resize composable
-const { columnWidths, totalTableWidth, startResize } = useColumnResize();
+const { columnWidths, totalTableWidth, startResize } = useColumnResize(defaultColumnWidths);
 
 // Use column drag-drop composable
 const {
@@ -173,7 +194,7 @@ const {
   onDragEnd,
   isColumnDragging,
   isDragGap
-} = useColumnDragDrop();
+} = useColumnDragDrop(COLUMNS);
 
 // Use column visibility composable
 const {

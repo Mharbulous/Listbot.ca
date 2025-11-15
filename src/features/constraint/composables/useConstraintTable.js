@@ -4,10 +4,10 @@ import { useQueueCore } from './useQueueCore.js';
 import { extractFolderPath } from '../utils/filePathExtractor.js';
 
 /**
- * Composable for managing upload table state
+ * Composable for managing constraint table state
  * Handles queue management, file processing, status updates, and deduplication
  */
-export function useUploadTable() {
+export function useConstraintTable() {
   // Upload queue
   const uploadQueue = ref([]);
 

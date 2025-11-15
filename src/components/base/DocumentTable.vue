@@ -30,7 +30,11 @@
       <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
-          <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
+          <button
+            ref="columnSelectorBtn"
+            class="column-selector-btn"
+            @click="showColumnSelector = !showColumnSelector"
+          >
             <span>{{ columnSelectorLabel }}</span>
             <span class="dropdown-icon">▼</span>
           </button>
@@ -63,8 +67,12 @@
 
           <!-- Sort Indicator with priority - positioned relative to header cell for proper centering -->
           <span class="sort-indicator" v-if="isSorted(column.key)">
-            <span class="sort-arrow">{{ getSortInfo(column.key)?.direction === 'asc' ? '↑' : '↓' }}</span>
-            <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo(column.key)?.priority }}</span>
+            <span class="sort-arrow">{{
+              getSortInfo(column.key)?.direction === 'asc' ? '↑' : '↓'
+            }}</span>
+            <span class="sort-priority" v-if="sortColumns.length > 1">{{
+              getSortInfo(column.key)?.priority
+            }}</span>
           </span>
 
           <!-- Sortable Column Label (Clickable Button) -->
@@ -130,7 +138,10 @@
             @dblclick="peek.handleViewDocument(sortedData[virtualItem.index])"
           >
             <!-- Action Buttons Cell -->
-            <div class="row-cell column-selector-spacer action-buttons-cell" :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }">
+            <div
+              class="row-cell column-selector-spacer action-buttons-cell"
+              :style="{ width: COLUMN_SELECTOR_WIDTH + 'px' }"
+            >
               <button
                 class="process-ai-button"
                 @click.stop="handleProcessWithAI(sortedData[virtualItem.index])"
@@ -162,8 +173,22 @@
               }"
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
-              @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
-              @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
+              @click="
+                (e) =>
+                  cellTooltip.handleCellClick(
+                    e,
+                    e.currentTarget,
+                    getRowBackgroundColor(virtualItem.index)
+                  )
+              "
+              @mouseenter="
+                (e) =>
+                  cellTooltip.handleCellMouseEnter(
+                    e,
+                    e.currentTarget,
+                    getRowBackgroundColor(virtualItem.index)
+                  )
+              "
               @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
               <!-- Cell content via slot -->
@@ -228,12 +253,7 @@
     />
 
     <!-- Snackbar for notifications -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="5000"
-      location="bottom"
-    >
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="5000" location="bottom">
       {{ snackbar.message }}
       <template #actions>
         <v-btn variant="text" @click="snackbar.show = false">Close</v-btn>
@@ -263,39 +283,39 @@ const props = defineProps({
   data: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   // Column definitions: [{key: string, label: string, defaultWidth: number}]
   columns: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   // Loading state
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   // Error message
   error: {
     type: String,
-    default: null
+    default: null,
   },
   // Virtual row height in pixels
   rowHeight: {
     type: Number,
-    default: 48
+    default: 48,
   },
   // Overscan rows for virtual scrolling
   overscan: {
     type: Number,
-    default: 5
+    default: 5,
   },
   // Column selector button label
   columnSelectorLabel: {
     type: String,
-    default: 'Cols'
-  }
+    default: 'Cols',
+  },
 });
 
 // Emits
@@ -335,7 +355,7 @@ const getRowClasses = (index, row) => ({
   even: index % 2 === 0,
   '!bg-blue-50': peek.isDocumentSelected(row),
   'cursor-pointer hover:!bg-blue-50': !peek.isPeekActive || peek.isRowPeeked(row),
-  'cursor-default': peek.isPeekActive && !peek.isRowPeeked(row)
+  'cursor-default': peek.isPeekActive && !peek.isRowPeeked(row),
 });
 
 // Column Management
@@ -369,28 +389,32 @@ const {
 // Uses Map for O(n) lookup instead of O(n²) find operation
 const orderedColumns = computed(() => {
   // Create O(n) lookup map once per computation
-  const columnMap = new Map(props.columns.map(col => [col.key, col]));
+  const columnMap = new Map(props.columns.map((col) => [col.key, col]));
 
   // Then O(1) lookup for each key = O(n) total
-  return columnOrder.value
-    .map(key => columnMap.get(key))
-    .filter(Boolean);
+  return columnOrder.value.map((key) => columnMap.get(key)).filter(Boolean);
 });
 
 // Watch for new columns and add to order
-watch(() => props.columns, (newColumns, oldColumns) => {
-  if (newColumns.length > oldColumns.length) {
-    const currentOrderKeys = new Set(columnOrder.value);
-    const newColumnKeys = newColumns.map(col => col.key).filter(key => !currentOrderKeys.has(key));
-    if (newColumnKeys.length > 0) columnOrder.value = [...columnOrder.value, ...newColumnKeys];
-  }
-}, { immediate: false });
+watch(
+  () => props.columns,
+  (newColumns, oldColumns) => {
+    if (newColumns.length > oldColumns.length) {
+      const currentOrderKeys = new Set(columnOrder.value);
+      const newColumnKeys = newColumns
+        .map((col) => col.key)
+        .filter((key) => !currentOrderKeys.has(key));
+      if (newColumnKeys.length > 0) columnOrder.value = [...columnOrder.value, ...newColumnKeys];
+    }
+  },
+  { immediate: false }
+);
 
 // Snackbar state for max columns notification
 const snackbar = ref({
   show: false,
   message: '',
-  color: 'warning'
+  color: 'warning',
 });
 
 // Handler for when max sort columns is exceeded
@@ -398,7 +422,7 @@ const handleMaxColumnsExceeded = () => {
   snackbar.value = {
     show: true,
     message: `Sorting is limited to a maximum of 5 columns at a time. Disable sorting for one of the existing columns before selecting this column for sorting.`,
-    color: 'warning'
+    color: 'warning',
   };
 };
 
@@ -414,7 +438,7 @@ const {
   isSorted,
   getSortInfo,
   removeColumnFromSort,
-  MAX_SORT_COLUMNS
+  MAX_SORT_COLUMNS,
 } = useColumnSort(
   computed(() => props.data),
   columnOrder,
@@ -427,15 +451,25 @@ const handleColumnHidden = (columnKey) => {
 };
 
 // Use column visibility composable with callback for hidden columns
-const { isColumnVisible, toggleColumnVisibility, resetToDefaults } = useColumnVisibility(handleColumnHidden);
+const { isColumnVisible, toggleColumnVisibility, resetToDefaults } =
+  useColumnVisibility(handleColumnHidden);
 
 // Watch sort changes and emit event
 watch([sortColumn, sortDirection], ([column, direction]) => {
   emit('sort-change', { column, direction });
 });
 
+// Notification helper for document peek errors
+const showPeekNotification = (message, color = 'info') => {
+  snackbar.value = {
+    show: true,
+    message,
+    color,
+  };
+};
+
 // Initialize document peek functionality
-const peek = useDocumentTablePeek(route, router, authStore, sortedData);
+const peek = useDocumentTablePeek(route, router, authStore, sortedData, showPeekNotification);
 
 // Initialize virtual table
 const {
@@ -465,13 +499,17 @@ const { columnWidths, totalTableWidth, startResize } = useColumnResize(
 );
 
 // Watch defaultColumnWidths and sync to columnWidths when columns change
-watch(defaultColumnWidths, (newWidths) => {
-  Object.keys(newWidths).forEach(key => {
-    if (columnWidths.value[key] === undefined) {
-      columnWidths.value[key] = newWidths[key];
-    }
-  });
-}, { immediate: false });
+watch(
+  defaultColumnWidths,
+  (newWidths) => {
+    Object.keys(newWidths).forEach((key) => {
+      if (columnWidths.value[key] === undefined) {
+        columnWidths.value[key] = newWidths[key];
+      }
+    });
+  },
+  { immediate: false }
+);
 
 // Compute total footer width (includes column selector width)
 const totalFooterWidth = computed(() => {
@@ -488,7 +526,10 @@ watch(showColumnSelector, async (isOpen) => {
 
 const handleFocusOut = (event) => {
   const clickedButton = event.relatedTarget === columnSelectorBtn.value;
-  if (!clickedButton && (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))) {
+  if (
+    !clickedButton &&
+    (!event.relatedTarget || !columnSelectorPopover.value?.contains(event.relatedTarget))
+  ) {
     showColumnSelector.value = false;
   }
 };
