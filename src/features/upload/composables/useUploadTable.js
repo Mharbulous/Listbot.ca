@@ -120,6 +120,13 @@ export function useUploadTable() {
     // ========================================================================
     const preFilterResult = queueCore.preFilterByMetadataAndPath(newQueueItems, existingQueueSnapshot);
 
+    // OPTIMIZATION: Build queue index once (O(M)), then O(1) lookups
+    // Prevents O(N×M) from repeated uploadQueue.value.find() calls
+    const queueIndex = new Map();
+    uploadQueue.value.forEach((file) => {
+      queueIndex.set(file.id, file);
+    });
+
     // Mark ready files
     preFilterResult.readyFiles.forEach((newFile) => {
       newFile.status = 'ready';
@@ -133,8 +140,8 @@ export function useUploadTable() {
       item.file.isDuplicate = true;
       item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
 
-      // Update the reference file to know it's part of a tentative group
-      const refFile = uploadQueue.value.find((f) => f.id === item.referenceFileId);
+      // Update the reference file to know it's part of a tentative group (O(1) lookup)
+      const refFile = queueIndex.get(item.referenceFileId);
       if (refFile && !refFile.hash) {
         refFile.tentativeGroupId = refFile.id; // Use own ID as group key
       }
@@ -147,8 +154,8 @@ export function useUploadTable() {
       item.file.isCopy = true;
       item.file.referenceFileId = item.referenceFileId; // Track reference for hash verification
 
-      // Update the reference file to know it's part of a tentative group
-      const refFile = uploadQueue.value.find((f) => f.id === item.referenceFileId);
+      // Update the reference file to know it's part of a tentative group (O(1) lookup)
+      const refFile = queueIndex.get(item.referenceFileId);
       if (refFile && !refFile.hash) {
         refFile.tentativeGroupId = refFile.id; // Use own ID as group key
       }
@@ -156,15 +163,15 @@ export function useUploadTable() {
 
     // Handle promotions - demote existing files when new file is more specific
     preFilterResult.promotions.forEach((promo) => {
-      const existingFile = uploadQueue.value.find((f) => f.id === promo.existingFileId);
+      const existingFile = queueIndex.get(promo.existingFileId);
       if (existingFile) {
         existingFile.status = 'duplicate'; // Demote from 'ready' to 'duplicate'
         existingFile.canUpload = false;
         existingFile.isDuplicate = true;
         existingFile.referenceFileId = promo.newPrimaryId; // Point to new primary
 
-        // Update the new primary file to know it's part of a tentative group
-        const newPrimary = uploadQueue.value.find((f) => f.id === promo.newPrimaryId);
+        // Update the new primary file to know it's part of a tentative group (O(1) lookup)
+        const newPrimary = queueIndex.get(promo.newPrimaryId);
         if (newPrimary && !newPrimary.hash) {
           newPrimary.tentativeGroupId = newPrimary.id; // Use own ID as group key
         }
