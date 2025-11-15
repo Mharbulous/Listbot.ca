@@ -307,16 +307,12 @@ export function useQueueCore() {
       metadataIndicesBySize.set(size, metadataIndex);
     }
 
-    let uniqueSizeCount = 0;
-    let metadataComparisons = 0;
-
     // Process each new file (O(N) with O(1) metadata lookups)
     newQueueItems.forEach((newFile) => {
       // EARLY EXIT: If size is unique, skip all metadata checks
       const existingSizeGroup = existingSizeMap.get(newFile.size);
       if (!existingSizeGroup || existingSizeGroup.length === 0) {
         readyFiles.push(newFile);
-        uniqueSizeCount++;
         return;
       }
 
@@ -326,8 +322,6 @@ export function useQueueCore() {
       // Check for metadata matches within same-size group
       const metadataKey = `${newFile.name}_${newFile.size}_${newFile.sourceLastModified}`;
       const existingMatches = metadataIndex.get(metadataKey);
-
-      metadataComparisons += existingSizeGroup.length;
 
       // No metadata matches → mark as ready
       if (!existingMatches || existingMatches.length === 0) {
@@ -372,11 +366,6 @@ export function useQueueCore() {
       duplicates: duplicateFiles.length,
       copies: copyFiles.length,
       promotions: promotions.length,
-      uniqueSizeCount,
-      sizeGroups: existingSizeMap.size,
-      metadataComparisons,
-      avgComparisonsPerFile: (metadataComparisons / newQueueItems.length).toFixed(2),
-      optimizationRatio: `${((existingQueue.length * newQueueItems.length) / (existingQueue.length + metadataComparisons)).toFixed(1)}x faster`,
       preFilterTimeMs: preFilterTime.toFixed(2),
     });
 
