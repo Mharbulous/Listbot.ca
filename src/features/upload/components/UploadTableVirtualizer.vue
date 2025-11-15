@@ -99,6 +99,7 @@
         :is-uploading="props.isUploading"
         :is-paused="props.isPaused"
         :duplicates-hidden="props.duplicatesHidden"
+        :verification-state="props.verificationState"
         @upload="handleUpload"
         @clear-queue="handleClearQueue"
         @clear-duplicates="handleClearDuplicates"
@@ -157,6 +158,14 @@ const props = defineProps({
   duplicatesHidden: {
     type: Boolean,
     default: false,
+  },
+  verificationState: {
+    type: Object,
+    default: () => ({
+      isVerifying: false,
+      processed: 0,
+      total: 0,
+    }),
   },
   // Group styling functions (PASS-THROUGH ONLY - business logic in composable)
   getGroupBackground: {

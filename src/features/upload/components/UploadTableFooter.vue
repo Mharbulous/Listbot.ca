@@ -98,11 +98,11 @@
           variant="elevated"
           size="large"
           class="upload-btn"
-          :disabled="stats.checkedCount === 0 || stats.duplicates > 0"
+          :disabled="stats.checkedCount === 0 || stats.duplicates > 0 || verificationState.isVerifying"
           @click="handleUpload"
         >
           <v-icon start>mdi-cloud-upload-outline</v-icon>
-          {{ stats.duplicates > 0 ? 'Clear duplicates b4 uploading' : `Upload ${stats.checkedCount} ${stats.checkedCount === 1 ? 'file' : 'files'} (${stats.checkedSize})` }}
+          {{ getUploadButtonText() }}
         </v-btn>
 
         <!-- Pause Button (shown during active upload) -->
@@ -168,7 +168,7 @@ defineOptions({
 });
 
 // Props
-defineProps({
+const props = defineProps({
   stats: {
     type: Object,
     required: true,
@@ -200,6 +200,14 @@ defineProps({
   duplicatesHidden: {
     type: Boolean,
     default: false,
+  },
+  verificationState: {
+    type: Object,
+    default: () => ({
+      isVerifying: false,
+      processed: 0,
+      total: 0,
+    }),
   },
 });
 
@@ -249,6 +257,18 @@ const handleClearSkipped = () => {
 // Handle toggle duplicates visibility
 const handleToggleDuplicates = () => {
   emit('toggle-duplicates');
+};
+
+// Get upload button text based on current state
+const getUploadButtonText = () => {
+  if (props.verificationState.isVerifying) {
+    const remaining = props.verificationState.total - props.verificationState.processed;
+    return `Deduplicating ${remaining} of ${props.verificationState.total} files`;
+  }
+  if (props.stats.duplicates > 0) {
+    return 'Clear duplicates b4 uploading';
+  }
+  return `Upload ${props.stats.checkedCount} ${props.stats.checkedCount === 1 ? 'file' : 'files'} (${props.stats.checkedSize})`;
 };
 </script>
 

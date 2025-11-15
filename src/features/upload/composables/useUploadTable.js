@@ -1039,6 +1039,7 @@ export function useUploadTable() {
     swapCopyToPrimary,
     toggleDuplicatesVisibility,
     cancelQueue,
+    sortQueueByGroupTimestamp, // Exposed for tentative verification
 
     // Phase 3a: Hash verification functions
     verifyHashOnHover,
