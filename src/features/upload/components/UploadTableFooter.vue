@@ -110,7 +110,7 @@
           :disabled="stats.checkedCount === 0 || stats.duplicates > 0 || verificationState.isVerifying"
           @click="handleUpload"
         >
-          <v-icon v-if="!verificationState.isVerifying" start>mdi-cloud-upload-outline</v-icon>
+          <v-icon start>mdi-cloud-upload-outline</v-icon>
           {{ getUploadButtonText() }}
         </v-btn>
 
@@ -281,7 +281,7 @@ const deduplicationProgress = computed(() => {
 // Get upload button text based on current state
 const getUploadButtonText = () => {
   if (props.verificationState.isVerifying) {
-    return '🧹 Deduplicating...';
+    return 'Deduplicating...';
   }
   if (props.stats.duplicates > 0) {
     return 'Clear duplicates b4 uploading';
@@ -372,6 +372,7 @@ const getUploadButtonText = () => {
 .upload-btn-progress {
   position: relative;
   overflow: hidden;
+  background-color: #1a2e1a !important;
 }
 
 .upload-btn-progress::before {
@@ -381,7 +382,7 @@ const getUploadButtonText = () => {
   left: 0;
   height: 100%;
   width: var(--progress, 0);
-  background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+  background: #4caf50;
   transition: width 0.3s ease;
   z-index: 0;
 }
@@ -393,7 +394,7 @@ const getUploadButtonText = () => {
 }
 
 .upload-btn-progress:disabled::before {
-  background: linear-gradient(90deg, #81c784 0%, #a5d6a7 100%);
+  background: #4caf50;
 }
 
 .retry-btn {
