@@ -7,7 +7,7 @@
 ## File Dependency Tree
 
 ```
-📁 /testing Page Dependencies (35 files, 8,614 code lines)
+📁 /testing Page Dependencies (41 files, 8,914 code lines)
 │
 ├── 📁 src
 │   ├── 📁 views
@@ -28,10 +28,18 @@
 │   │   │   │   └── 📄 FileNameCell.vue [110]
 │   │   │   │
 │   │   │   ├── 📁 composables
-│   │   │   │   ├── 📄 useUploadTable.js [1068]
+│   │   │   │   ├── 📄 useUploadTable.js [97]
+│   │   │   │   ├── 📄 useUploadTable-addition.js [287]
+│   │   │   │   ├── 📄 useUploadTable-deduplication.js [320]
+│   │   │   │   ├── 📄 useUploadTable-hashVerification.js [214]
+│   │   │   │   ├── 📄 useUploadTable-management.js [214]
+│   │   │   │   ├── 📄 useUploadTable-sorting.js [118]
 │   │   │   │   ├── 📄 useUploadAdapter.js [441]
 │   │   │   │   ├── 📄 useTentativeVerification.js [439]
-│   │   │   │   ├── 📄 useQueueCore.js [520]
+│   │   │   │   ├── 📄 useQueueCore.js [51]
+│   │   │   │   ├── 📄 useQueueHashProcessing.js [258]
+│   │   │   │   ├── 📄 useQueueHelpers.js [159]
+│   │   │   │   ├── 📄 useQueueMetadataFilter.js [170]
 │   │   │   │   ├── 📄 useFileDropHandler.js [263]
 │   │   │   │   ├── 📄 useGroupStyling.js [122]
 │   │   │   │   ├── 📄 useFileProcessor.js [373]
@@ -86,11 +94,14 @@
 
 ## Summary Statistics
 
-- **Total Files:** 35
-- **Total Code Lines:** 8,614 (excluding SVG assets)
+- **Total Files:** 41
+- **Total Code Lines:** 8,914 (excluding SVG assets)
 - **Main View:** Testing.vue (363 lines)
 - **Components:** 10 files (2,467 lines)
-- **Composables:** 13 files (4,419 lines)
+- **Composables:** 19 files (4,719 lines)
+  - useUploadTable family: 6 files (1,250 lines)
+  - useQueue family: 4 files (638 lines)
+  - Other composables: 9 files (2,831 lines)
 - **Utilities:** 8 files (1,504 lines)
 - **Stores & Services:** 4 files (861 lines)
 - **Assets (SVG Icons):** 7 files
