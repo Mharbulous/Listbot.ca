@@ -436,7 +436,15 @@ All issues identified in this phase have been successfully resolved in the subse
 
 ### Test Suite Standards
 
-1. **Naming Convention**: `[componentName].test.js` for unit tests, `[componentName].integration.test.js` for integration tests
+1. **File Naming Convention**:
+   - **Store/Service/Composable Tests**: Use `.test.js` extension
+     - Examples: `virtualFolderStore.test.js`, `aiMetadataExtractionService.test.js`, `useFolderAnalysis.test.js`
+     - Applied to: Pinia stores, services, composables, utilities, integration tests, E2E tests
+   - **Component Tests**: Use `.spec.js` extension
+     - Examples: `ViewModeToggle.spec.js`, `FolderBreadcrumbs.spec.js`
+     - Applied to: Vue components, UI elements
+   - **Integration Tests**: Use `.integration.test.js` for cross-module integration testing
+     - Example: `organizer.integration.test.js`
 2. **Structure**: Use clear describe blocks and descriptive test names
 3. **Documentation**: Include comments explaining complex test scenarios
 4. **Performance**: Include performance assertions for critical operations
