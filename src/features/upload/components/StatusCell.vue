@@ -1,5 +1,10 @@
 <template>
-  <div class="status-cell" :title="tooltipText">
+  <div
+    class="status-cell"
+    :title="tooltipText"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+  >
     <span class="status-dot" :class="`status-${status}`"></span>
     <span class="status-text">{{ displayStatusText }}</span>
   </div>
@@ -7,6 +12,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useLazyHashTooltip } from '../composables/useLazyHashTooltip.js';
 
 // Component configuration
 defineOptions({
@@ -45,7 +51,14 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  file: {
+    type: Object,
+    default: null,
+  },
 });
+
+// Lazy hash tooltip composable
+const { onTooltipHover, onTooltipLeave, getHashDisplay, hasHash } = useLazyHashTooltip();
 
 // Status text mapping
 const statusTextMap = {
@@ -82,10 +95,16 @@ const displayStatusText = computed(() => {
   return baseStatusText.value;
 });
 
-// Tooltip text
+// Tooltip text - enhanced with lazy hash calculation
 const tooltipText = computed(() => {
+  // If hash is already available, show it
   if (props.hash) {
     return props.hash;
+  }
+
+  // If file is provided and hash has been calculated via hover, show it
+  if (props.file && hasHash(props.file.id)) {
+    return getHashDisplay(props.file.id);
   }
 
   // Phase 3a: Show helpful tooltip for tentative statuses
@@ -95,6 +114,22 @@ const tooltipText = computed(() => {
 
   return '';
 });
+
+// Handle mouse enter - trigger hash calculation if needed
+const handleMouseEnter = () => {
+  // Only calculate hash if:
+  // 1. File object is provided
+  // 2. Hash is not already available on the file
+  // 3. File has a sourceFile (the browser File object needed for hashing)
+  if (props.file && !props.hash && props.file.sourceFile && props.file.id) {
+    onTooltipHover(props.file.id, props.file.sourceFile, props.file);
+  }
+};
+
+// Handle mouse leave
+const handleMouseLeave = () => {
+  onTooltipLeave();
+};
 </script>
 
 <style scoped>
