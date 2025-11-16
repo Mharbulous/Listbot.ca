@@ -69,8 +69,8 @@ export function useUploadTableDeduplicationSequential(uploadQueue) {
     const totalTime = performance.now() - dedupT0;
     console.log(`📊 [DEDUP-SEQUENTIAL] T=${totalTime.toFixed(2)}ms - Stage 1 Complete\n`);
 
-    // NOTE: Stage 2 (Hash Verification) will be triggered separately
-    // by the hash verification composable when needed (hover, delete, upload)
+    // NOTE: Stage 2 (Hash Verification) is triggered automatically after queue addition
+    // by useSequentialVerification composable, which calls verifyHashesForCopiesAndDuplicates()
 
     return newQueueItems;
   };
