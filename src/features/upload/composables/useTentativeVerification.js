@@ -187,6 +187,28 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
           hashedCount++;
         }
       });
+
+      // FALLBACK: Worker may skip hashing files with unique sizes (deduplication optimization)
+      // But tentative verification needs ALL files to have hashes for comparison
+      const unhashedFiles = referenceFiles.filter((f) => !f.hash);
+      if (unhashedFiles.length > 0) {
+        console.warn(
+          `  │  [HASH-FALLBACK] Worker skipped ${unhashedFiles.length} reference files, using main thread`
+        );
+        for (const refFile of unhashedFiles) {
+          try {
+            const hash = await queueCore.generateFileHash(refFile.sourceFile);
+            refFile.hash = hash;
+            hashedCount++;
+          } catch (error) {
+            errorCount++;
+            console.error('  │  [HASH-ERROR]', refFile.name, error.message);
+            refFile.status = 'read error';
+            refFile.errorMessage = error.message;
+            refFile.canUpload = false;
+          }
+        }
+      }
     } else {
       // Fallback to main thread processing
       console.warn('  │  [HASH-FALLBACK] Worker unavailable, using main thread for reference files');
@@ -258,6 +280,28 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
           hashedCount++;
         }
       });
+
+      // FALLBACK: Worker may skip hashing files with unique sizes (deduplication optimization)
+      // But tentative verification needs ALL files to have hashes for comparison
+      const unhashedFiles = filesToHash.filter((f) => !f.hash);
+      if (unhashedFiles.length > 0) {
+        console.warn(
+          `  │  [HASH-FALLBACK] Worker skipped ${unhashedFiles.length} tentative files, using main thread`
+        );
+        for (const file of unhashedFiles) {
+          try {
+            const hash = await queueCore.generateFileHash(file.sourceFile);
+            file.hash = hash;
+            hashedCount++;
+          } catch (error) {
+            errorCount++;
+            console.error('  │  [HASH-ERROR]', file.name, error.message);
+            file.status = 'read error';
+            file.errorMessage = error.message;
+            file.canUpload = false;
+          }
+        }
+      }
     } else {
       // Fallback to main thread processing
       console.warn('  │  [HASH-FALLBACK] Worker unavailable, using main thread for tentative files');
