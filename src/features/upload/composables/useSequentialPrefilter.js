@@ -74,6 +74,24 @@ export function applySequentialPrefilter(allFiles) {
     return a.name.localeCompare(b.name);
   });
 
+  // Step 1.5: Remove files marked as 'redundant' from previous Stage 2 processing
+  const redundantFiles = sortedFiles.filter(file => file.status === 'redundant');
+  if (redundantFiles.length > 0) {
+    console.log(
+      `[SEQUENTIAL-PREFILTER] Removing ${redundantFiles.length} redundant files from previous processing`
+    );
+    redundantFiles.forEach(file => {
+      console.log(`  - Removing: ${file.name}`);
+    });
+  }
+
+  // Filter out redundant files
+  const filteredFiles = sortedFiles.filter(file => file.status !== 'redundant');
+
+  // Replace sortedFiles with filtered list
+  sortedFiles.length = 0;
+  sortedFiles.push(...filteredFiles);
+
   // Step 2: Edge case - first file is always "Primary"
   if (sortedFiles.length > 0) {
     sortedFiles[0].status = 'ready'; // "Primary" files have status 'ready'
@@ -176,6 +194,7 @@ export function applySequentialPrefilter(allFiles) {
   // Step 10: Log completion
   console.log('[SEQUENTIAL-PREFILTER] Stage 1 complete:', {
     totalFiles: sortedFiles.length,
+    redundantFilesRemoved: redundantFiles.length,
     primaryFiles: primaryCount,
     copyFiles: copyCount,
     duplicateFiles: duplicateCount,
@@ -187,6 +206,7 @@ export function applySequentialPrefilter(allFiles) {
     sortedFiles, // Return sorted files for hash verification stage
     stats: {
       totalFiles: sortedFiles.length,
+      redundantFilesRemoved: redundantFiles.length,
       primaryCount,
       copyCount,
       duplicateCount,
@@ -242,6 +262,7 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
   let verifiedCount = 0;
   let upgradedToPrimaryCount = 0;
   let hashedCount = 0;
+  let redundantCount = 0;
 
   for (let i = 1; i < sortedFiles.length; i++) {
     const currentFile = sortedFiles[i];
@@ -306,7 +327,7 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
 
     // Compare hashes
     if (currentFile.hash !== referenceFile.hash) {
-      // Step 14: Hashes differ → upgrade current file to "Primary"
+      // Step 15: Hashes differ → upgrade current file to "Primary"
       console.log(`[HASH-VERIFICATION] Hash mismatch, upgrading to Primary:`, {
         fileName: currentFile.name,
         currentHash: currentFile.hash,
@@ -322,12 +343,27 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
       delete currentFile.referenceFileId;
       upgradedToPrimaryCount++;
     } else {
-      // Hashes match - status remains as Copy or Duplicate
-      console.log(`[HASH-VERIFICATION] Hash match confirmed:`, {
-        fileName: currentFile.name,
-        status: currentFile.status,
-        hash: currentFile.hash,
-      });
+      // Step 15: Hashes match - check if we should mark as redundant
+      if (currentFile.status === 'duplicate') {
+        // Same hash + Duplicate status → mark as Redundant
+        currentFile.status = 'redundant';
+        currentFile.canUpload = false;
+        currentFile.isDuplicate = false;
+        currentFile.isRedundant = true;
+        redundantCount++;
+        console.log(`[HASH-VERIFICATION] Hash match confirmed, marking as redundant:`, {
+          fileName: currentFile.name,
+          hash: currentFile.hash,
+          referenceFileName: referenceFile.name,
+        });
+      } else {
+        // Status is 'copy' - keep as is
+        console.log(`[HASH-VERIFICATION] Hash match confirmed (copy):`, {
+          fileName: currentFile.name,
+          status: currentFile.status,
+          hash: currentFile.hash,
+        });
+      }
     }
 
     verifiedCount++;
@@ -340,6 +376,7 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
     verifiedCount,
     hashedCount,
     upgradedToPrimaryCount,
+    redundantCount,
     verificationTime: `${verificationTime.toFixed(2)}ms`,
   });
 
@@ -349,6 +386,7 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
       verifiedCount,
       hashedCount,
       upgradedToPrimaryCount,
+      redundantCount,
       verificationTime,
     },
   };
