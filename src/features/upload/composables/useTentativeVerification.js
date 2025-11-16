@@ -16,6 +16,7 @@
 
 import { ref, watch, onUnmounted } from 'vue';
 import { useQueueCore } from './useQueueCore.js';
+import { useQueueWorkers } from './useQueueWorkers.js';
 
 /**
  * Composable for background tentative file verification
@@ -25,8 +26,10 @@ import { useQueueCore } from './useQueueCore.js';
  * @returns {Object} Verification state and controls
  */
 export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueueByGroupTimestamp) {
-  // Get hash generation function
+  // Get hash generation function (fallback only)
   const queueCore = useQueueCore();
+  // Get web worker for batch hash processing
+  const queueWorkers = useQueueWorkers();
 
   // Verification state
   const verificationState = ref({
@@ -50,27 +53,26 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   };
 
   /**
-   * Verify a single tentative file
+   * Verify a single tentative file (assumes file already has hash from batch processing)
    * @param {Object} file - The file to verify
    * @returns {Promise<Object>} Verification result
    */
   const verifyTentativeFile = async (file) => {
     // Verbose logging removed - see summary logs in startVerification()
 
-    // Calculate hash with error handling
-    let hash;
-    try {
-      hash = await queueCore.generateFileHash(file.sourceFile);
-      file.hash = hash;
-    } catch (error) {
-      console.error('[TENTATIVE-VERIFY] Hash calculation failed:', {
+    // File should already have hash from batch processing
+    if (!file.hash) {
+      console.error('[TENTATIVE-VERIFY] File missing hash (should have been hashed in batch):', {
         file: file.name,
-        error: error.message,
       });
-      file.status = 'read error';
-      file.errorMessage = error.message;
-      file.canUpload = false;
-      return { verified: false, error: error.message };
+      // Fail-safe: treat as ready to avoid data loss
+      file.status = 'ready';
+      file.canUpload = true;
+      file.isDuplicate = false;
+      file.isCopy = false;
+      delete file.tentativeGroupId;
+      delete file.referenceFileId;
+      return { verified: false, error: 'missing hash', statusChange: 'ready' };
     }
 
     // Find the reference file (the primary file this was tentatively matching)
@@ -108,6 +110,7 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     }
 
     // Compare hashes
+    const hash = file.hash;
     if (hash !== referenceFile.hash) {
       // Hash mismatch - this is actually a unique file!
       console.log('[TENTATIVE-VERIFY] Hash mismatch - promoting to ready:', {
@@ -143,7 +146,7 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
   };
 
   /**
-   * Hash all reference files that need hashing
+   * Hash all reference files that need hashing using web worker batch processing
    * Reference files are identified by having a tentativeGroupId set
    * @returns {Promise<Object>} { hashedCount, totalTime }
    */
@@ -157,31 +160,126 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
       return { hashedCount: 0, totalTime: 0 };
     }
 
-    // Hash reference files one at a time (smallest first for quick wins)
-    const sortedReferenceFiles = [...referenceFiles].sort((a, b) => a.size - b.size);
+    const hashT0 = performance.now();
+    let hashedCount = 0;
+    let errorCount = 0;
+
+    // Try web worker batch processing first
+    const sourceFiles = referenceFiles.map((f) => f.sourceFile);
+    const workerResult = await queueWorkers.processFilesWithWorker(sourceFiles);
+
+    if (workerResult.success) {
+      // Map worker results back to queue items
+      const allWorkerFiles = [
+        ...workerResult.result.readyFiles,
+        ...workerResult.result.duplicateFiles,
+      ];
+
+      allWorkerFiles.forEach((fileResult) => {
+        // Find corresponding queue item by matching file properties
+        const queueItem = referenceFiles.find(
+          (f) =>
+            f.sourceFile.name === fileResult.file.name &&
+            f.sourceFile.size === fileResult.file.size
+        );
+        if (queueItem && fileResult.hash) {
+          queueItem.hash = fileResult.hash;
+          hashedCount++;
+        }
+      });
+    } else {
+      // Fallback to main thread processing
+      console.warn('  │  [HASH-FALLBACK] Worker unavailable, using main thread for reference files');
+      for (const refFile of referenceFiles) {
+        // Re-check if file still exists and still needs hashing
+        const currentFile = uploadQueue.value.find((f) => f.id === refFile.id);
+        if (!currentFile || currentFile.hash) {
+          continue;
+        }
+
+        try {
+          const hash = await queueCore.generateFileHash(currentFile.sourceFile);
+          currentFile.hash = hash;
+          hashedCount++;
+        } catch (error) {
+          errorCount++;
+          console.error('  │  [HASH-ERROR] Reference file:', currentFile.name, error.message);
+          // Mark as error so verification can handle it
+          currentFile.status = 'read error';
+          currentFile.errorMessage = error.message;
+          currentFile.canUpload = false;
+        }
+      }
+    }
+
+    const totalTime = performance.now() - hashT0;
+    const avgTime = hashedCount > 0 ? (totalTime / hashedCount).toFixed(2) : '0.00';
+
+    return { hashedCount, totalTime, avgTime, errorCount };
+  };
+
+  /**
+   * Hash all tentative files that need hashing using web worker batch processing
+   * @param {Array} tentativeFiles - Array of tentative files to hash
+   * @returns {Promise<Object>} { hashedCount, totalTime }
+   */
+  const hashTentativeFiles = async (tentativeFiles) => {
+    // Filter to only files without hashes
+    const filesToHash = tentativeFiles.filter((file) => !file.hash);
+
+    if (filesToHash.length === 0) {
+      return { hashedCount: 0, totalTime: 0 };
+    }
 
     const hashT0 = performance.now();
     let hashedCount = 0;
     let errorCount = 0;
 
-    for (const refFile of sortedReferenceFiles) {
-      // Re-check if file still exists and still needs hashing
-      const currentFile = uploadQueue.value.find((f) => f.id === refFile.id);
-      if (!currentFile || currentFile.hash) {
-        continue;
-      }
+    // Try web worker batch processing first
+    const sourceFiles = filesToHash.map((f) => f.sourceFile);
+    const workerResult = await queueWorkers.processFilesWithWorker(sourceFiles);
 
-      try {
-        const hash = await queueCore.generateFileHash(currentFile.sourceFile);
-        currentFile.hash = hash;
-        hashedCount++;
-      } catch (error) {
-        errorCount++;
-        console.error('  │  [HASH-ERROR] Reference file:', currentFile.name, error.message);
-        // Mark as error so verification can handle it
-        currentFile.status = 'read error';
-        currentFile.errorMessage = error.message;
-        currentFile.canUpload = false;
+    if (workerResult.success) {
+      // Map worker results back to queue items
+      const allWorkerFiles = [
+        ...workerResult.result.readyFiles,
+        ...workerResult.result.duplicateFiles,
+      ];
+
+      allWorkerFiles.forEach((fileResult) => {
+        // Find corresponding queue item by matching file properties
+        const queueItem = filesToHash.find(
+          (f) =>
+            f.sourceFile.name === fileResult.file.name &&
+            f.sourceFile.size === fileResult.file.size
+        );
+        if (queueItem && fileResult.hash) {
+          queueItem.hash = fileResult.hash;
+          hashedCount++;
+        }
+      });
+    } else {
+      // Fallback to main thread processing
+      console.warn('  │  [HASH-FALLBACK] Worker unavailable, using main thread for tentative files');
+      for (const file of filesToHash) {
+        // Re-check if file still exists and still needs hashing
+        const currentFile = uploadQueue.value.find((f) => f.id === file.id);
+        if (!currentFile || currentFile.hash) {
+          continue;
+        }
+
+        try {
+          const hash = await queueCore.generateFileHash(currentFile.sourceFile);
+          currentFile.hash = hash;
+          hashedCount++;
+        } catch (error) {
+          errorCount++;
+          console.error('  │  [HASH-ERROR] Tentative file:', currentFile.name, error.message);
+          // Mark as error so verification can handle it
+          currentFile.status = 'read error';
+          currentFile.errorMessage = error.message;
+          currentFile.canUpload = false;
+        }
       }
     }
 
@@ -267,11 +365,19 @@ export function useTentativeVerification(uploadQueue, removeFromQueue, sortQueue
     verificationState.value.processed = 0;
     verificationState.value.total = tentativeFiles.length;
 
-    // PHASE 1: Hash all reference files first
-    // This ensures reference files have hashes before we verify tentative files against them
-    const hashResult = await hashReferenceFiles();
-    if (hashResult.hashedCount > 0) {
-      console.log(`  ├─ [HASH-REF] Hashed ${hashResult.hashedCount} files (avg: ${hashResult.avgTime}ms/file, total: ${hashResult.totalTime.toFixed(2)}ms)`);
+    // PHASE 1: Hash all files (reference files + tentative files) using batch processing
+    // This ensures ALL files have hashes before we verify tentative files against them
+
+    // PHASE 1A: Hash reference files
+    const refHashResult = await hashReferenceFiles();
+    if (refHashResult.hashedCount > 0) {
+      console.log(`  ├─ [HASH-REF] Hashed ${refHashResult.hashedCount} reference files (avg: ${refHashResult.avgTime}ms/file, total: ${refHashResult.totalTime.toFixed(2)}ms)`);
+    }
+
+    // PHASE 1B: Hash tentative files
+    const tentativeHashResult = await hashTentativeFiles(tentativeFiles);
+    if (tentativeHashResult.hashedCount > 0) {
+      console.log(`  ├─ [HASH-TENT] Hashed ${tentativeHashResult.hashedCount} tentative files (avg: ${tentativeHashResult.avgTime}ms/file, total: ${tentativeHashResult.totalTime.toFixed(2)}ms)`);
     }
 
     // PHASE 2: Verify tentative files with two-phase deletion strategy
