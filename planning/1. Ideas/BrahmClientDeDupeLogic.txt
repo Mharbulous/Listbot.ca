@@ -4,7 +4,7 @@ Stage 1:  Pre-filter (main branch)
 
 2. Edge case.  Set status of first file to "Primary"
 
-3. Go to next file.  
+3. Go to next file.  If that files status is "Redundant" then delete the file and repeat this step.
 
 4. Compare size to previous file. If size is different then set status to "Primary" and go to step 3.  Otherwise go to step 5.
 
@@ -35,7 +35,7 @@ Stage 2:  Hash sort (web worker)
 
 14.  If a file has status = "Duplicate" or "Copy", and on file hash value, then calculate BLAKE3 file hash for this file and the previous file.  
 
-15. Compare hash values with hash value of previous file.  If they are different, then change the status of this file to = "Primary".  If they are the same and the status of the file is "Duplicate" then delete the duplicate file. 
+15. Compare hash values with hash value of previous file.  If they are different, then change the status of this file to = "Primary".  If they are the same and the status of the file is "Duplicate" then change the status to "Redundant". 
 
 16.  If files remain, go to step 3. 
 
