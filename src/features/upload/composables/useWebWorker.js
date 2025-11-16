@@ -1,37 +1,53 @@
-import { ref, onUnmounted } from 'vue';
-import { useAsyncRegistry } from '../../../composables/useAsyncRegistry';
+import { onUnmounted } from 'vue';
+import { useWebWorkerState } from './webWorker/useWebWorkerState';
+import { useWebWorkerHealth } from './webWorker/useWebWorkerHealth';
+import { useWebWorkerMessages } from './webWorker/useWebWorkerMessages';
+import { HEALTH_CHECK_GRACE_PERIOD } from './webWorker/webWorkerConstants';
 
 /**
  * Generic Web Worker communication composable
  * Provides a clean API for worker lifecycle management and message passing
+ *
+ * @param {string} workerPath - Path to the worker script
+ * @returns {Object} Worker API with methods and reactive state
  */
 export function useWebWorker(workerPath) {
-  // Reactive state
-  const isWorkerSupported = ref(typeof Worker !== 'undefined');
-  const worker = ref(null);
-  const isWorkerReady = ref(false);
-  const workerError = ref(null);
-  const isWorkerHealthy = ref(true);
+  // Initialize state management
+  const state = useWebWorkerState();
 
-  // Message handling
-  const pendingMessages = new Map(); // batchId -> { resolve, reject, timeout, startTime }
-  const messageListeners = new Map(); // messageType -> callback[]
+  // Initialize message handling (needs to be created before health checks)
+  const messageHandling = useWebWorkerMessages(state);
 
-  // Health monitoring
-  let healthCheckInterval = null;
-  let lastHealthCheck = null;
-  let consecutiveHealthFailures = 0;
-  const MAX_HEALTH_FAILURES = 3;
-  const HEALTH_CHECK_INTERVAL = 15000; // 15 seconds - less aggressive
-  const HEALTH_CHECK_TIMEOUT = 8000; // 8 seconds - more time for response
-  const HEALTH_CHECK_GRACE_PERIOD = 30000; // 30 seconds before first health check
+  // Initialize health monitoring (depends on addMessageListener)
+  const healthMonitoring = useWebWorkerHealth(state, messageHandling.addMessageListener);
 
-  // Registry integration
-  const registry = useAsyncRegistry();
-  let workerRegistryId = null;
-  let healthCheckRegistryId = null;
+  // Destructure commonly used state
+  const {
+    isWorkerSupported,
+    worker,
+    isWorkerReady,
+    workerError,
+    isWorkerHealthy,
+    pendingMessages,
+    messageListeners,
+    registry,
+    workerRegistryId,
+    getWorkerStatus,
+    resetHealthState,
+  } = state;
 
-  // Initialize worker
+  // Destructure message handling methods
+  const { handleWorkerMessage, sendMessage, addMessageListener, removeMessageListener } =
+    messageHandling;
+
+  // Destructure health monitoring methods
+  const { startHealthChecking, stopHealthChecking, forceHealthCheck } = healthMonitoring;
+
+  /**
+   * Initialize the web worker
+   * Sets up worker instance, event handlers, and health monitoring
+   * @returns {boolean} Success status
+   */
   const initializeWorker = () => {
     if (!isWorkerSupported.value) {
       workerError.value = new Error('Web Workers are not supported in this browser');
@@ -69,10 +85,10 @@ export function useWebWorker(workerPath) {
       isWorkerReady.value = true;
       isWorkerHealthy.value = true;
       workerError.value = null;
-      consecutiveHealthFailures = 0;
+      resetHealthState();
 
       // Register worker with registry
-      workerRegistryId = registry.register(
+      const registryId = registry.register(
         registry.generateId('worker'),
         'worker',
         () => {
@@ -94,8 +110,10 @@ export function useWebWorker(workerPath) {
         }
       );
 
+      workerRegistryId.set(registryId);
+
       if (import.meta.env.DEV) {
-        console.debug('[WebWorker] Main worker registered with ID:', workerRegistryId);
+        console.debug('[WebWorker] Main worker registered with ID:', registryId);
       }
 
       // Start health monitoring after grace period
@@ -114,262 +132,17 @@ export function useWebWorker(workerPath) {
     }
   };
 
-  // Health check functionality
-  const startHealthChecking = () => {
-    if (healthCheckInterval) {
-      clearInterval(healthCheckInterval);
-      if (healthCheckRegistryId) {
-        registry.unregister(healthCheckRegistryId);
-      }
-    }
-
-    healthCheckInterval = setInterval(async () => {
-      try {
-        await performHealthCheck();
-      } catch (error) {
-        console.warn('Health check failed:', error.message);
-        handleHealthCheckFailure();
-      }
-    }, HEALTH_CHECK_INTERVAL);
-
-    // Register health check interval with registry
-    healthCheckRegistryId = registry.register(
-      registry.generateId('health-check'),
-      'health-monitor',
-      () => {
-        if (healthCheckInterval) {
-          clearInterval(healthCheckInterval);
-          healthCheckInterval = null;
-        }
-      },
-      {
-        component: 'WebWorker',
-        interval: HEALTH_CHECK_INTERVAL,
-        purpose: 'worker-health-monitoring',
-      }
-    );
-
-    if (import.meta.env.DEV) {
-      console.debug('[WebWorker] Health monitor registered with ID:', healthCheckRegistryId);
-    }
-  };
-
-  const stopHealthChecking = () => {
-    if (import.meta.env.DEV) {
-      console.debug(
-        '[WebWorker] Stopping health monitoring. Interval exists:',
-        !!healthCheckInterval,
-        'Registry ID exists:',
-        !!healthCheckRegistryId
-      );
-    }
-
-    if (healthCheckInterval) {
-      clearInterval(healthCheckInterval);
-      healthCheckInterval = null;
-
-      if (import.meta.env.DEV) {
-        console.debug('[WebWorker] Health check interval cleared');
-      }
-    }
-
-    if (healthCheckRegistryId) {
-      if (import.meta.env.DEV) {
-        console.debug('[WebWorker] Unregistering health monitor with ID:', healthCheckRegistryId);
-      }
-
-      registry.unregister(healthCheckRegistryId);
-      healthCheckRegistryId = null;
-
-      if (import.meta.env.DEV) {
-        console.debug('[WebWorker] Health monitor unregistered successfully');
-      }
-    }
-  };
-
-  const performHealthCheck = () => {
-    return new Promise((resolve, reject) => {
-      if (!isWorkerReady.value || !worker.value) {
-        reject(new Error('Worker not ready for health check'));
-        return;
-      }
-
-      const healthCheckId = `health_${Date.now()}`;
-      const timeout = setTimeout(() => {
-        reject(new Error('Health check timeout'));
-      }, HEALTH_CHECK_TIMEOUT);
-
-      // Listen for health check response
-      const healthResponseHandler = (data) => {
-        if (data.type === 'HEALTH_CHECK_RESPONSE' && data.batchId === healthCheckId) {
-          clearTimeout(timeout);
-          lastHealthCheck = Date.now();
-          consecutiveHealthFailures = 0;
-          isWorkerHealthy.value = true;
-          resolve();
-        }
-      };
-
-      const unsubscribe = addMessageListener('HEALTH_CHECK_RESPONSE', healthResponseHandler);
-
-      // Clean up listener after timeout
-      setTimeout(() => {
-        unsubscribe();
-      }, HEALTH_CHECK_TIMEOUT + 1000);
-
-      // Send health check
-      worker.value.postMessage({
-        type: 'HEALTH_CHECK',
-        batchId: healthCheckId,
-        timestamp: Date.now(),
-      });
-    });
-  };
-
-  const handleHealthCheckFailure = () => {
-    consecutiveHealthFailures++;
-    console.warn(
-      `Worker health check failed (${consecutiveHealthFailures}/${MAX_HEALTH_FAILURES})`
-    );
-
-    // Only mark unhealthy after MAX_HEALTH_FAILURES consecutive failures
-    if (consecutiveHealthFailures >= MAX_HEALTH_FAILURES) {
-      console.error(
-        `Worker failed ${MAX_HEALTH_FAILURES} consecutive health checks, marking as unhealthy`
-      );
-      isWorkerHealthy.value = false;
-    } else {
-      // Keep worker healthy until max failures reached
-      console.info(
-        `Worker still healthy despite health check failure (${consecutiveHealthFailures}/${MAX_HEALTH_FAILURES})`
-      );
-    }
-  };
-
-  // Handle incoming messages from worker
-  const handleWorkerMessage = (data) => {
-    const { type, batchId } = data;
-
-    // Handle completion/error messages that resolve promises
-    if (batchId && pendingMessages.has(batchId)) {
-      const { resolve, reject, timeout } = pendingMessages.get(batchId);
-
-      if (type === 'PROCESSING_COMPLETE') {
-        clearTimeout(timeout);
-        const { startTime } = pendingMessages.get(batchId);
-        const duration = Date.now() - startTime;
-        console.debug(`Worker operation completed in ${duration}ms`);
-        pendingMessages.delete(batchId);
-        resolve(data.result);
-        return;
-      }
-
-      if (type === 'ERROR') {
-        clearTimeout(timeout);
-        const { startTime } = pendingMessages.get(batchId);
-        const duration = Date.now() - startTime;
-        console.error(`Worker operation failed after ${duration}ms:`, data.error);
-        pendingMessages.delete(batchId);
-        reject(new Error(data.error.message || 'Worker processing failed'));
-        return;
-      }
-    }
-
-    // Handle progress and other message types with listeners
-    if (messageListeners.has(type)) {
-      const listeners = messageListeners.get(type);
-      listeners.forEach((callback) => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`Error in message listener for ${type}:`, error);
-        }
-      });
-    }
-  };
-
-  // Send message to worker and return promise
-  const sendMessage = (message, options = {}) => {
-    return new Promise((resolve, reject) => {
-      if (!isWorkerReady.value || !worker.value) {
-        reject(new Error('Worker is not ready'));
-        return;
-      }
-
-      if (!isWorkerHealthy.value && !options.ignoreHealth) {
-        reject(new Error('Worker is not healthy'));
-        return;
-      }
-
-      const batchId = message.batchId || generateBatchId();
-      const timeout = options.timeout || 30000; // 30 second default timeout
-      const startTime = Date.now();
-
-      // Set up timeout with enhanced error message
-      const timeoutId = setTimeout(() => {
-        const operation = message.type || 'operation';
-        pendingMessages.delete(batchId);
-        reject(new Error(`Worker ${operation} timed out after ${timeout}ms`));
-      }, timeout);
-
-      // Store promise handlers with start time for performance tracking
-      pendingMessages.set(batchId, { resolve, reject, timeout: timeoutId, startTime });
-
-      try {
-        // Send message with batchId
-        worker.value.postMessage({ ...message, batchId });
-      } catch (error) {
-        clearTimeout(timeoutId);
-        pendingMessages.delete(batchId);
-        reject(new Error(`Failed to send message to worker: ${error.message}`));
-      }
-    });
-  };
-
-  // Add message listener for specific message types
-  const addMessageListener = (messageType, callback) => {
-    if (!messageListeners.has(messageType)) {
-      messageListeners.set(messageType, []);
-    }
-    messageListeners.get(messageType).push(callback);
-
-    // Return unsubscribe function
-    return () => {
-      const listeners = messageListeners.get(messageType);
-      if (listeners) {
-        const index = listeners.indexOf(callback);
-        if (index > -1) {
-          listeners.splice(index, 1);
-        }
-        if (listeners.length === 0) {
-          messageListeners.delete(messageType);
-        }
-      }
-    };
-  };
-
-  // Remove message listener
-  const removeMessageListener = (messageType, callback) => {
-    const listeners = messageListeners.get(messageType);
-    if (listeners) {
-      const index = listeners.indexOf(callback);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-      if (listeners.length === 0) {
-        messageListeners.delete(messageType);
-      }
-    }
-  };
-
-  // Terminate worker
+  /**
+   * Terminate the worker and clean up all resources
+   * Stops health checks, unregisters from registry, and cleans up state
+   */
   const terminateWorker = () => {
     if (import.meta.env.DEV) {
       console.debug(
         '[WebWorker] Terminating worker. Main registry ID:',
-        workerRegistryId,
+        workerRegistryId.get(),
         'Health registry ID:',
-        healthCheckRegistryId
+        state.healthCheckRegistryId.get()
       );
     }
 
@@ -377,13 +150,13 @@ export function useWebWorker(workerPath) {
     stopHealthChecking();
 
     // Unregister worker from registry
-    if (workerRegistryId) {
+    if (workerRegistryId.get()) {
       if (import.meta.env.DEV) {
-        console.debug('[WebWorker] Unregistering main worker with ID:', workerRegistryId);
+        console.debug('[WebWorker] Unregistering main worker with ID:', workerRegistryId.get());
       }
 
-      registry.unregister(workerRegistryId);
-      workerRegistryId = null;
+      registry.unregister(workerRegistryId.get());
+      workerRegistryId.set(null);
 
       if (import.meta.env.DEV) {
         console.debug('[WebWorker] Main worker unregistered successfully');
@@ -407,11 +180,14 @@ export function useWebWorker(workerPath) {
     messageListeners.clear();
 
     // Reset health state
-    consecutiveHealthFailures = 0;
-    lastHealthCheck = null;
+    resetHealthState();
   };
 
-  // Restart worker
+  /**
+   * Restart the worker
+   * Terminates existing worker and initializes a new one
+   * @returns {boolean} Success status
+   */
   const restartWorker = () => {
     console.info('Restarting worker...');
     terminateWorker();
@@ -422,34 +198,6 @@ export function useWebWorker(workerPath) {
       console.error('Worker restart failed');
     }
     return success;
-  };
-
-  // Generate unique batch ID
-  const generateBatchId = () => {
-    return `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  // Get worker status
-  const getWorkerStatus = () => {
-    return {
-      supported: isWorkerSupported.value,
-      ready: isWorkerReady.value,
-      healthy: isWorkerHealthy.value,
-      error: workerError.value,
-      pendingMessages: pendingMessages.size,
-      consecutiveHealthFailures,
-      lastHealthCheck: lastHealthCheck ? new Date(lastHealthCheck).toISOString() : null,
-    };
-  };
-
-  // Force health check (for debugging/testing)
-  const forceHealthCheck = async () => {
-    try {
-      await performHealthCheck();
-      return { success: true, message: 'Health check passed' };
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
   };
 
   // Auto-cleanup on unmount
