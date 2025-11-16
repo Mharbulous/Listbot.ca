@@ -1,7 +1,12 @@
 /**
  * Sequential Pre-filter for File Deduplication
  *
+ * Algorithm source: planning/1. Ideas/BrahmClientDeDupeLogic.txt
+ * Implementation tests: tests/unit/features/upload/composables/useSequentialPrefilter.test.js
+ * Documentation: docs/architecture/file-processing.md (File Deduplication Strategy)
+ *
  * STAGE 1: Pre-filter (main thread)
+ * - Remove files with status='redundant' from previous runs
  * - Sort files by size (ascending), modified date (ascending), name (alphabetically)
  * - Sequential comparison with previous file
  * - Mark files as "Primary", "Copy", or "Duplicate" based on metadata + path
@@ -11,11 +16,16 @@
  * - Only hash files marked "Copy" or "Duplicate"
  * - Compare hash with previous file to verify
  * - Upgrade to "Primary" if hashes differ
+ * - Mark hash-verified duplicates as "Redundant" for removal in next batch
+ *
+ * TWO-PHASE CLEANUP LIFECYCLE:
+ * Duplicate → (hash match) → Redundant → (next batch Stage 1) → Removed
  *
  * DEDUPLICATION TERMINOLOGY:
  * - "Primary": Files that will be uploaded (unique or best version)
  * - "Copy": Files with same content but different meaningful metadata
  * - "Duplicate": Files with identical content and metadata (folder path variations only)
+ * - "Redundant": Hash-verified duplicates awaiting removal in next batch
  */
 
 /**
