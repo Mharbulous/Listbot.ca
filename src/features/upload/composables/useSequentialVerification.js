@@ -143,6 +143,50 @@ export function useSequentialVerification(
       );
     }
 
+    // ========================================================================
+    // Update groupTimestamp for verified duplicate groups
+    // This ensures the primary file moves to the top when duplicates are verified
+    // Similar to Phase 1.6 logic in useUploadTable-addition.js
+    // ========================================================================
+    const verifiedHashes = new Set();
+
+    // Collect hashes from redundant files (verified duplicates)
+    redundantFiles.forEach(file => {
+      if (file.hash) {
+        verifiedHashes.add(file.hash);
+      }
+    });
+
+    // Also collect hashes from verified copies (files that stayed as 'copy' after hash verification)
+    const verifiedCopies = uploadQueue.value.filter(
+      file =>
+        file.status === 'copy' &&
+        file.hash &&
+        filesNeedingVerification.some(f => f.id === file.id)
+    );
+    verifiedCopies.forEach(file => {
+      if (file.hash) {
+        verifiedHashes.add(file.hash);
+      }
+    });
+
+    if (verifiedHashes.size > 0) {
+      const currentTimestamp = Date.now();
+      let groupTimestampUpdateCount = 0;
+
+      // Update groupTimestamp for all files with verified hashes
+      uploadQueue.value.forEach(file => {
+        if (file.hash && verifiedHashes.has(file.hash)) {
+          file.groupTimestamp = currentTimestamp;
+          groupTimestampUpdateCount++;
+        }
+      });
+
+      console.log(
+        `  ├─ [GROUPING] Updated groupTimestamp for ${groupTimestampUpdateCount} files in ${verifiedHashes.size} verified groups`
+      );
+    }
+
     // Get files that were upgraded to primary (hash mismatch)
     const upgradedFiles = uploadQueue.value.filter(
       file =>
@@ -150,8 +194,8 @@ export function useSequentialVerification(
         filesNeedingVerification.some(f => f.id === file.id && !f.isPrimary)
     );
 
-    // Sort queue to move upgraded files to the top
-    if (upgradedFiles.length > 0) {
+    // Sort queue to move groups with updated timestamps to the top
+    if (verifiedHashes.size > 0 || upgradedFiles.length > 0) {
       sortQueueByGroupTimestamp();
     }
 
