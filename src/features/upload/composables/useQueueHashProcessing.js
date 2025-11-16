@@ -5,7 +5,7 @@ import { useQueueHelpers } from './useQueueHelpers';
  * Queue Hash Processing Composable
  *
  * Provides core hash-based deduplication logic for SOURCE FILES.
- * Handles size-based pre-filtering and XXH32 hash calculation for duplicate detection.
+ * Handles size-based pre-filtering and BLAKE3 hash calculation for duplicate detection.
  *
  * DEDUPLICATION TERMINOLOGY:
  * - "duplicate": Files with identical content (hash) and core metadata where folder path variations

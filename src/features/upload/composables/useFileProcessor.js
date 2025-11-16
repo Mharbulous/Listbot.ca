@@ -1,10 +1,9 @@
 /**
  * File Processor Composable
  * Handles core file processing operations including hashing, uploading, and deduplication
- * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
  */
 
-import xxhash from 'xxhash-wasm';
+import { blake3 } from 'hash-wasm';
 import { storage, db } from '../../../services/firebase.js';
 import {
   ref as storageRef,
@@ -24,15 +23,6 @@ import {
   isOnline,
 } from '../utils/networkUtils.js';
 
-// Initialize xxHash hasher (singleton pattern for performance)
-let xxhashInstance = null;
-const getXxHash = async () => {
-  if (!xxhashInstance) {
-    xxhashInstance = await xxhash();
-  }
-  return xxhashInstance;
-};
-
 /**
  * File Processor Composable
  * @param {Object} params - Configuration parameters
@@ -51,10 +41,9 @@ export const useFileProcessor = ({
   mainFolderAnalysis,
 }) => {
   /**
-   * Calculate XXH32 hash for a file
-   * Uses 32-bit output (8 hex characters)
+   * Calculate BLAKE3 hash for a file
+   * Uses 128-bit output (32 hex characters)
    * Wrapped with network error detection
-   * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
    */
   const calculateFileHash = async (file) => {
     try {
@@ -69,14 +58,13 @@ export const useFileProcessor = ({
       const buffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
-      // Get xxHash instance and generate XXH32 hash with 32-bit output (4 bytes = 8 hex characters)
-      const hasher = await getXxHash();
-      const hash = hasher.h32ToString(uint8Array); // Returns zero-padded hex string
+      // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
+      const hash = await blake3(uint8Array, 128);
 
       const hashDuration = performance.now() - hashStartTime;
       console.log(`[HASH-PERF-PROCESSOR] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
-      // Return XXH32 hash of file content (8 hex characters)
+      // Return BLAKE3 hash of file content (32 hex characters)
       return hash;
     } catch (error) {
       // Tag network errors for special handling
