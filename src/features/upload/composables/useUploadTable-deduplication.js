@@ -1,4 +1,5 @@
 import { useQueueCore } from './useQueueCore.js';
+import { useQueueWorkers } from './useQueueWorkers.js';
 
 /**
  * Composable for managing upload queue deduplication
@@ -7,6 +8,7 @@ import { useQueueCore } from './useQueueCore.js';
 export function useUploadTableDeduplication(uploadQueue) {
   // Initialize deduplication logic
   const queueCore = useQueueCore();
+  const queueWorkers = useQueueWorkers();
 
   /**
    * Deduplicate files against existing queue
@@ -151,32 +153,91 @@ export function useUploadTableDeduplication(uploadQueue) {
 
     // Hash all files that need it (skip files that already have hashes)
     if (filesNeedingHash > 0) {
-      console.log(`  ├─ [HASH] Hashing ${filesNeedingHash} files...`);
+      console.log(`  ├─ [HASH] Hashing ${filesNeedingHash} files using Web Worker...`);
     }
     const hashT0 = performance.now();
     const hashGroups = new Map();
     let hashedCount = 0;
 
-    for (const { queueItem, isExisting } of filesToHash) {
-      try {
-        if (!queueItem.hash) {
-          // Only hash if file doesn't already have a hash (performance optimization)
-          // Files from previous uploads already have hashes - no need to re-hash
+    // Extract files that need hashing and create mapping
+    const filesToHashArray = [];
+    const fileIndexMap = new Map(); // Maps array index -> { queueItem, isExisting }
+
+    filesToHash.forEach(({ queueItem, isExisting }) => {
+      if (!queueItem.hash) {
+        // Store file with index for mapping results back
+        const fileWithPath = queueItem.sourceFile;
+        // Preserve custom path property if it exists
+        if (queueItem.folderPath || queueItem.name) {
+          fileWithPath.path = queueItem.folderPath + queueItem.name;
+        }
+        // Map the array index to queue item (worker returns originalIndex = position in array)
+        const arrayIndex = filesToHashArray.length;
+        fileIndexMap.set(arrayIndex, { queueItem, isExisting });
+        filesToHashArray.push(fileWithPath);
+      }
+    });
+
+    // Try to use Web Worker for batch hashing
+    let workerSuccess = false;
+    if (filesToHashArray.length > 0) {
+      const workerResult = await queueWorkers.processFilesWithWorker(filesToHashArray);
+
+      if (workerResult.success) {
+        workerSuccess = true;
+        // Map worker results back to queue items
+        const allWorkerFiles = [
+          ...workerResult.result.readyFiles,
+          ...workerResult.result.duplicateFiles,
+        ];
+
+        allWorkerFiles.forEach((fileResult) => {
+          // Find the corresponding queue item by originalIndex
+          const mappingEntry = fileIndexMap.get(fileResult.originalIndex);
+          if (mappingEntry && fileResult.hash) {
+            mappingEntry.queueItem.hash = fileResult.hash;
+            hashedCount++;
+          }
+        });
+      }
+    }
+
+    // Fallback to main thread if worker failed
+    if (!workerSuccess && filesToHashArray.length > 0) {
+      console.log(`  │  [HASH] Worker unavailable, falling back to main thread...`);
+      for (const { queueItem } of fileIndexMap.values()) {
+        try {
           const hash = await queueCore.generateFileHash(queueItem.sourceFile);
           queueItem.hash = hash;
           hashedCount++;
+        } catch (error) {
+          console.error('  │  [HASH-ERROR]', queueItem.name, error.message);
+          queueItem.status = 'read error';
+          queueItem.canUpload = false;
         }
+      }
+    }
 
-        // Use existing or newly generated hash
-        const hash = queueItem.hash;
+    // Build hash groups from all files (both newly hashed and already hashed)
+    for (const { queueItem, isExisting } of filesToHash) {
+      try {
+        if (queueItem.hash) {
+          // Use existing or newly generated hash
+          const hash = queueItem.hash;
 
-        if (!hashGroups.has(hash)) {
-          hashGroups.set(hash, []);
+          if (!hashGroups.has(hash)) {
+            hashGroups.set(hash, []);
+          }
+          hashGroups.get(hash).push({
+            queueItem,
+            isExisting,
+          });
+        } else if (queueItem.status !== 'read error') {
+          // File wasn't hashed and isn't marked as error - this shouldn't happen
+          console.error('  │  [HASH-ERROR]', queueItem.name, 'No hash generated');
+          queueItem.status = 'read error';
+          queueItem.canUpload = false;
         }
-        hashGroups.get(hash).push({
-          queueItem,
-          isExisting,
-        });
       } catch (error) {
         console.error('  │  [HASH-ERROR]', queueItem.name, error.message);
         queueItem.status = 'read error';
