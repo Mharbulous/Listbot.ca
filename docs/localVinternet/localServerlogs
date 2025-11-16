@@ -1,0 +1,131 @@
+firebase.js:47 [Firebase] AI Logic initialized with default backend
+useAsyncRegistry.js:26 [AsyncTracker] Registered async-monitoring: async-monitoring-1-1763324023855
+useAsyncRegistry.js:117 [AsyncTracker] Global cleanup async-monitoring: async-monitoring-1-1763324023855
+Testing.vue:191 📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive): {filesSelected: 34}
+useUploadTable-addition.js:80 [QUEUE] Running deduplication: 34 new files vs 0 existing
+useUploadTable-deduplication-sequential.js:34 📊 [DEDUP-SEQUENTIAL] T=0.00ms - Starting: {new: 34, existing: 0}
+useUploadTable-deduplication-sequential.js:40   │  [DEDUP-DEBUG] New files in batch: 2025-02-25 LF IMPARK re CC expiry.pdf, 2025-03-04 RBC STMT BSNS ACC $713.00.pdf, 2025-03-06 IMPARK CC renewal notice.pdf, 2025-03-06 LF Impark re CC expiry notice .pdf, 2025-03-13 New RBC CC PKG.pdf ... and 29 more
+useSequentialPrefilter.js:68 [SEQUENTIAL-PREFILTER] Starting Stage 1: Pre-filter by metadata
+useSequentialPrefilter.js:69 [SEQUENTIAL-PREFILTER] Processing 34 files
+useSequentialPrefilter.js:89 [SEQUENTIAL-PREFILTER] First 3 files after sorting:
+useSequentialPrefilter.js:91   [0] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx (size: 25331, date: 2022-01-14)
+useSequentialPrefilter.js:91   [1] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx (size: 31418, date: 2022-01-14)
+useSequentialPrefilter.js:91   [2] 2025-03-06 LF Impark re CC expiry notice .pdf (size: 34091, date: 2025-06-19)
+useSequentialPrefilter.js:213 [SEQUENTIAL-PREFILTER] Stage 1 complete: {totalFiles: 34, redundantFilesRemoved: 0, primaryFiles: 29, copyFiles: 5, duplicateFiles: 0, …}
+useUploadTable-deduplication-sequential.js:65   ├─ [PREFILTER] Complete: {primary: 29, copy: 5, duplicate: 0} (0.30ms)
+useUploadTable-deduplication-sequential.js:70 📊 [DEDUP-SEQUENTIAL] T=0.70ms - Stage 1 Complete
+
+useUploadTable-addition.js:85 📊 [QUEUE METRICS] T=1.50ms - Deduplication complete for Phase 1
+useUploadTable-sorting.js:123 [QUEUE] Queue sorted by group timestamp
+useUploadTable-addition.js:144 📊 [QUEUE METRICS] T=2.20ms - Initial batch complete (34 files)
+useUploadTable-addition.js:155 📊 [QUEUE METRICS] T=37.40ms - Initial table PAINTED (visible to user)
+useUploadTable-addition.js:260 [QUEUE] Added 34 files to queue (with deduplication)
+useUploadTable-addition.js:265 📊 [QUEUE METRICS] T=37.60ms - All files finished adding to queue (34 files) {averageTimePerFile: '1.11ms'}
+useSequentialVerification.js:116 📊 [SEQUENTIAL-VERIFY] T=0.00ms - Starting Stage 2 hash verification: {files: 5}
+useUploadTable-deduplication-sequential.js:84 [DEDUP-SEQUENTIAL] Starting Stage 2: Hash verification
+useSequentialPrefilter.js:252 [HASH-VERIFICATION] Starting Stage 2: Hash verification
+useSequentialPrefilter.js:253 [HASH-VERIFICATION] Processing 34 files
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-08-27 STMT RBC Avion Visa $587.17.pdf: 7.70ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-08-27 STMT RBC Avion Visa $587.75.pdf: 5.60ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 12.00ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 5.20ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 6.60ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-15 RCPT IMPARK $14.00.pdf: 4.00ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-27 STMT RBC Avion re Visa $270.pdf: 10.10ms (0.68 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-27 STMT RBC Avion re Visa $270.00.pdf: 8.80ms (0.68 MB)
+useSequentialPrefilter.js:372 [HASH-VERIFICATION] Stage 2 complete: {totalFiles: 34, verifiedCount: 5, hashedCount: 8, upgradedToPrimaryCount: 0, redundantCount: 0, …}
+useSequentialVerification.js:185   ├─ [GROUPING] Updated groupTimestamp for 8 files in 3 verified groups
+useUploadTable-sorting.js:123 [QUEUE] Queue sorted by group timestamp
+useSequentialVerification.js:202   └─ [VERIFICATION] Upgraded 0 files to primary (hash mismatch)
+useSequentialVerification.js:207 📊 [SEQUENTIAL-VERIFY] T=62.50ms - Complete
+
+useLazyHashTooltip.js:28 [HASH-PERF-TOOLTIP] 2025-03-06 LF Impark re CC expiry notice .pdf: 2.20ms (0.03 MB)
+useLazyHashTooltip.js:64 [HASH-TOOLTIP] Stored hash on queue file: {name: '2025-03-06 LF Impark re CC expiry notice .pdf', hash: '34e6330f...'}
+useUploadTable-addition.js:80 [QUEUE] Running deduplication: 34 new files vs 34 existing
+useUploadTable-deduplication-sequential.js:34 📊 [DEDUP-SEQUENTIAL] T=0.00ms - Starting: {new: 34, existing: 34}
+useUploadTable-deduplication-sequential.js:40   │  [DEDUP-DEBUG] New files in batch: 2025-02-25 LF IMPARK re CC expiry.pdf, 2025-03-04 RBC STMT BSNS ACC $713.00.pdf, 2025-03-06 IMPARK CC renewal notice.pdf, 2025-03-06 LF Impark re CC expiry notice .pdf, 2025-03-13 New RBC CC PKG.pdf ... and 29 more
+useSequentialPrefilter.js:68 [SEQUENTIAL-PREFILTER] Starting Stage 1: Pre-filter by metadata
+useSequentialPrefilter.js:69 [SEQUENTIAL-PREFILTER] Processing 68 files
+useSequentialPrefilter.js:89 [SEQUENTIAL-PREFILTER] First 3 files after sorting:
+useSequentialPrefilter.js:91   [0] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx (size: 25331, date: 2022-01-14)
+useSequentialPrefilter.js:91   [1] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx (size: 25331, date: 2022-01-14)
+useSequentialPrefilter.js:91   [2] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx (size: 31418, date: 2022-01-14)
+useSequentialPrefilter.js:213 [SEQUENTIAL-PREFILTER] Stage 1 complete: {totalFiles: 68, redundantFilesRemoved: 0, primaryFiles: 29, copyFiles: 8, duplicateFiles: 31, …}
+useUploadTable-deduplication-sequential.js:65   ├─ [PREFILTER] Complete: {primary: 29, copy: 8, duplicate: 31} (0.40ms)
+useUploadTable-deduplication-sequential.js:70 📊 [DEDUP-SEQUENTIAL] T=0.70ms - Stage 1 Complete
+
+useUploadTable-addition.js:85 📊 [QUEUE METRICS] T=2443.10ms - Deduplication complete for Phase 1
+useUploadTable-sorting.js:123 [QUEUE] Queue sorted by group timestamp
+useUploadTable-addition.js:144 📊 [QUEUE METRICS] T=2444.10ms - Initial batch complete (34 files)
+UploadTableVirtualizer.vue:247 📊 [QUEUE METRICS] T=2450.60ms - All files rendered (68 files) {renderedRows: 29, firstVisible: 0, lastVisible: 28}
+useUploadTable-addition.js:260 [QUEUE] Added 34 files to queue (with deduplication)
+useSequentialVerification.js:116 📊 [SEQUENTIAL-VERIFY] T=0.00ms - Starting Stage 2 hash verification: {files: 34}
+useUploadTable-deduplication-sequential.js:84 [DEDUP-SEQUENTIAL] Starting Stage 2: Hash verification
+useSequentialPrefilter.js:252 [HASH-VERIFICATION] Starting Stage 2: Hash verification
+useSequentialPrefilter.js:253 [HASH-VERIFICATION] Processing 68 files
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx: 4.00ms (0.02 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx: 1.30ms (0.02 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx: 2.40ms (0.03 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.xlsx: 1.50ms (0.03 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-06 LF Impark re CC expiry notice .pdf: 5.50ms (0.03 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-25 LF IMPARK re CC expiry.pdf: 3.60ms (0.04 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-25 LF IMPARK re CC expiry.pdf: 2.60ms (0.04 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-21 RBC SLIP.pdf: 6.30ms (0.04 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-21 RBC SLIP.pdf: 9.00ms (0.04 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-08 LF RBC re past due amount.pdf: 3.40ms (0.05 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-08 LF RBC re past due amount.pdf: 2.80ms (0.05 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-09-29 STMT Scotia BSNS ACC $36646.81.pdf: 4.00ms (0.06 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-09-29 STMT Scotia BSNS ACC $36646.81.pdf: 21.60ms (0.06 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-06-02 LF RBC re past due amount.pdf: 13.40ms (0.06 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-06-02 LF RBC re past due amount.pdf: 5.50ms (0.06 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.pdf: 7.90ms (0.09 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] DRAFT TEMPLATE Pay Stubs and Batch Deductions.pdf: 14.10ms (0.09 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-06 IMPARK CC renewal notice.pdf: 3.50ms (0.09 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-06 IMPARK CC renewal notice.pdf: 8.70ms (0.09 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-04-04 DEP CHQ#1899.pdf: 4.40ms (0.10 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-04-04 DEP CHQ#1899.pdf: 4.40ms (0.10 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-30 STMT Scotia Polled Trust $36646.81.pdf: 9.30ms (0.11 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-30 STMT Scotia Polled Trust $36646.81.pdf: 5.10ms (0.11 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-04 RBC STMT BSNS ACC $713.00.pdf: 14.30ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-04 RBC STMT BSNS ACC $713.00.pdf: 3.70ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-02 STMT RBC BSNS ACC $10,452.85.pdf: 18.70ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-02 STMT RBC BSNS ACC $10,452.85.pdf: 5.60ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-30 STMT Scotia Deposit INT $36647.pdf: 5.80ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-30 STMT Scotia Deposit INT $36647.pdf: 3.80ms (0.12 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-27 STMT RBC Avion Visa $1703.79.pdf: 11.10ms (0.16 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-27 STMT RBC Avion Visa $1703.79.pdf: 3.80ms (0.16 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-04 STMT RBC BSNS ACC $7058.36.pdf: 12.40ms (0.17 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-02-04 STMT RBC BSNS ACC $7058.36.pdf: 3.80ms (0.17 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-21 RBC CC package.pdf: 11.60ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-21 RBC CC package.pdf: 5.60ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-08-27 STMT RBC Avion Visa $587.75.pdf: 17.10ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-08-27 STMT RBC Avion Visa $587.17.pdf: 5.60ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-04-04 STMT RBC BSNS ACC $16,800.pdf: 4.30ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-04-04 STMT RBC BSNS ACC $16,800.pdf: 4.30ms (0.18 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-09-29 STMT RBC Avion Visa $823.43.pdf: 16.20ms (0.21 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-09-29 STMT RBC Avion Visa $823.43.pdf: 4.50ms (0.21 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 13.70ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 6.80ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] Rcpt 2025-10-15 Parking.pdf: 6.60ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-15 RCPT IMPARK $14.00.pdf: 6.30ms (0.24 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-23 STMT RBC VISA AVION $7560.06.pdf: 5.10ms (0.27 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-05-23 STMT RBC VISA AVION $7560.06.pdf: 6.80ms (0.27 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-30 RCPT IMPARK $14.00.pdf: 8.30ms (0.27 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-30 RCPT IMPARK $14.00.pdf: 4.30ms (0.27 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-13 New RBC CC PKG.pdf: 6.30ms (0.31 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-13 New RBC CC PKG.pdf: 8.50ms (0.31 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-06-27 STMT RBC VISA AVION $4828.37.pdf: 5.80ms (0.36 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-06-27 STMT RBC VISA AVION $4828.37.pdf: 16.10ms (0.36 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-01-03 STMT RBC BSNS ACC $107.92.pdf: 12.30ms (0.37 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-01-03 STMT RBC BSNS ACC $107.92.pdf: 5.80ms (0.37 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-27 STMT RBC Avion Visa $40.62.pdf: 14.50ms (0.41 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-10-27 STMT RBC Avion Visa $40.62.pdf: 8.10ms (0.41 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-27 STMT RBC Avion re Visa $270.00.pdf: 10.40ms (0.68 MB)
+useQueueHelpers.js:99 [HASH-PERF-FALLBACK] 2025-03-27 STMT RBC Avion re Visa $270.pdf: 14.80ms (0.68 MB)
+useSequentialPrefilter.js:372 [HASH-VERIFICATION] Stage 2 complete: {totalFiles: 68, verifiedCount: 39, hashedCount: 59, upgradedToPrimaryCount: 0, redundantCount: 31, …}
+useSequentialVerification.js:141   ├─ [LIFECYCLE] Marked 31 files as redundant (will be removed in next batch Stage 1)
+useSequentialVerification.js:185   ├─ [GROUPING] Updated groupTimestamp for 68 files in 29 verified groups
+useUploadTable-sorting.js:123 [QUEUE] Queue sorted by group timestamp
+useSequentialVerification.js:202   └─ [VERIFICATION] Upgraded 0 files to primary (hash mismatch)
+useSequentialVerification.js:207 📊 [SEQUENTIAL-VERIFY] T=465.10ms - Complete
+
