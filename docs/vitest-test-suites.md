@@ -466,10 +466,25 @@ All issues identified in this phase have been successfully resolved in the subse
 
 #### Virtual Folder System
 
-- **Folder Structure Generation**: <50ms for 1000+ documents
-- **Cache Operations**: <5ms for repeated folder generation
-- **Evidence Filtering**: <10ms for complex multi-level filtering
+**Operation Performance:**
+- **Folder Structure Generation**: <50ms for 1000+ documents ✅
+- **Cache Operations**: <5ms for repeated folder generation ✅
+- **Evidence Filtering (Complex Hierarchies)**: <25ms for multi-level path-based filtering
+- **Navigation Operations**: <10ms for folder navigation (navigate, back, root)
 - **Store Integration**: <10ms for combined facade operations
+
+**Memory Limits:**
+- **Memory Leak Prevention**: <5MB increase after extended usage (100 iterations)
+  - Test validates memory cleanup after repeated operations (generate, navigate, clear cache)
+  - Requires garbage collection (`global.gc`) to verify proper cleanup
+- **Virtual Folder Overhead**: <5MB maximum memory overhead
+  - Measured across 10 folder structure generations with 1000+ documents
+  - Includes full hierarchy setup and navigation state
+
+**UI Responsiveness:**
+- **Component Render**: Main thread should not block during folder operations
+  - Heavy operations (5x folder generation + navigation) must complete without blocking >100ms
+  - Ensures UI remains responsive during intensive operations
 
 ### Benchmark Maintenance
 
