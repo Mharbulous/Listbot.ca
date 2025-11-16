@@ -84,6 +84,14 @@ export function applySequentialPrefilter(allFiles) {
     return a.name.localeCompare(b.name);
   });
 
+  // Log first 3 files after sorting for debugging
+  if (sortedFiles.length > 0) {
+    console.log('[SEQUENTIAL-PREFILTER] First 3 files after sorting:');
+    sortedFiles.slice(0, 3).forEach((file, idx) => {
+      console.log(`  [${idx}] ${file.name} (size: ${file.size}, date: ${new Date(file.sourceLastModified).toISOString().split('T')[0]})`);
+    });
+  }
+
   // Step 1.5: Remove files marked as 'redundant' from previous Stage 2 processing
   const redundantFiles = sortedFiles.filter(file => file.status === 'redundant');
   if (redundantFiles.length > 0) {
