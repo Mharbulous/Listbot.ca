@@ -82,7 +82,7 @@ import UploadTable from '../features/upload/components/UploadTable.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
 import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
 import { useNotification } from '../core/composables/useNotification.js';
-import { useTentativeVerification } from '../features/upload/composables/useTentativeVerification.js';
+import { useSequentialVerification } from '../features/upload/composables/useSequentialVerification.js';
 
 // Component configuration
 defineOptions({
@@ -91,7 +91,7 @@ defineOptions({
 
 // Composables
 // Enable sequential deduplication for testing
-const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue, sortQueueByGroupTimestamp } =
+const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue, sortQueueByGroupTimestamp, verifyHashesForCopiesAndDuplicates } =
   useUploadTable({ useSequentialDedup: true });
 const { snackbar, showNotification } = useNotification();
 
@@ -142,8 +142,14 @@ const uploadAdapter = useUploadAdapter({
   showNotification,
 });
 
-// Tentative file verification (auto-starts after queue rendering is complete)
-const { verificationState } = useTentativeVerification(uploadQueue, removeFromQueue, sortQueueByGroupTimestamp);
+// Sequential hash verification (auto-starts after queue rendering is complete)
+// Calls Stage 2 hash verification to properly verify Copy/Duplicate files
+const { verificationState } = useSequentialVerification(
+  uploadQueue,
+  removeFromQueue,
+  sortQueueByGroupTimestamp,
+  verifyHashesForCopiesAndDuplicates
+);
 
 // Refs for file inputs
 const fileInput = ref(null);

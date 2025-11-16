@@ -70,7 +70,7 @@ export function useUploadTable(options = {}) {
   // Public API
   // ========================================================================
 
-  return {
+  const api = {
     // State
     uploadQueue,
     duplicatesHidden,
@@ -101,4 +101,11 @@ export function useUploadTable(options = {}) {
     verifyHashBeforeDelete: hashVerification.verifyHashBeforeDelete,
     verifyHashBeforeUpload: hashVerification.verifyHashBeforeUpload,
   };
+
+  // Add sequential dedup Stage 2 hash verification if enabled
+  if (useSequentialDedup && deduplication.verifyHashesForCopiesAndDuplicates) {
+    api.verifyHashesForCopiesAndDuplicates = deduplication.verifyHashesForCopiesAndDuplicates;
+  }
+
+  return api;
 }
