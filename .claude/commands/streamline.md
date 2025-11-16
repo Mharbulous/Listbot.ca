@@ -45,7 +45,10 @@ First, read the file and count its lines of code.
    - Build each new file from scratch in the most elegant and simple way possible
    - Strictly preserve appearance, functionality, and behavior exactly as the original
 
-4. **Provide Test Suggestions**
+4. **Update documentation**
+   -Upon completion, update the file: docs\2025-11-15-Folder-Structure.md
+
+5. **Provide Test Suggestions**
    - Upon completion, suggest specific tests for the user to try on the local server
    - Assume the local server is already running unless explicitly told otherwise
 
