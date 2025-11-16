@@ -7,8 +7,11 @@ export function useUploadTableSorting(uploadQueue) {
    * Helper to get grouping key for a file
    * STABILITY: Prioritizes tentativeGroupId over hash to prevent groups from shifting
    * position when lazy hash verification completes (prevents zebra pattern flashing)
+   *
+   * @param {Object} file - The file object
+   * @param {Map<string, Object>} fileIndex - Map of fileId → file for O(1) lookups
    */
-  const getGroupingKey = (file) => {
+  const getGroupingKey = (file, fileIndex) => {
     // PRIORITY 1: tentativeGroupId (stable group identifier)
     // This ensures groups maintain their position even after hash calculation
     if (file.tentativeGroupId) return file.tentativeGroupId;
@@ -19,7 +22,7 @@ export function useUploadTableSorting(uploadQueue) {
     // PRIORITY 3: referenceFileId (for tentative duplicates/copies)
     // Use the reference file's grouping key for grouping
     if (file.referenceFileId && (file.status === 'duplicate' || file.status === 'copy')) {
-      const referenceFile = uploadQueue.value.find((f) => f.id === file.referenceFileId);
+      const referenceFile = fileIndex.get(file.referenceFileId);
       if (referenceFile) {
         // Use reference file's tentativeGroupId if available, otherwise hash, otherwise referenceFileId
         return referenceFile.tentativeGroupId || referenceFile.hash || file.referenceFileId;
@@ -77,9 +80,17 @@ export function useUploadTableSorting(uploadQueue) {
    * - Files with same hash are grouped together (primary duplicate immediately above 'duplicate' file)
    * - Tentative duplicates (no hash yet) group with their reference file via referenceFileId
    * - Copies and duplicates are sorted by the same metadata criteria (ensuring matching order)
+   *
+   * PERFORMANCE: Uses O(T) index build + O(T log T) sort instead of O(T² log T)
+   * - Builds fileId → file Map once before sorting for O(1) lookups
+   * - Prevents O(T) linear search on every comparison (previously ~300M operations at 5k files)
    */
   const sortQueueByGroupTimestamp = () => {
     const statusOrder = { ready: 0, copy: 1, duplicate: 2, 'n/a': 3, skip: 4, 'read error': 5 };
+
+    // Build fileId → file index for O(1) lookups during sort
+    // This eliminates O(T) find() calls inside the comparator
+    const fileIndex = new Map(uploadQueue.value.map(file => [file.id, file]));
 
     uploadQueue.value.sort((a, b) => {
       // Primary sort: group timestamp (descending - most recent first)
@@ -89,8 +100,8 @@ export function useUploadTableSorting(uploadQueue) {
       // Secondary sort: group by hash or referenceFileId (ensures files with same content appear together)
       // This ensures the primary file appears immediately above its "duplicate"/"copy" files
       // Tentative duplicates (no hash) will group with their reference file
-      const groupKeyA = getGroupingKey(a);
-      const groupKeyB = getGroupingKey(b);
+      const groupKeyA = getGroupingKey(a, fileIndex);
+      const groupKeyB = getGroupingKey(b, fileIndex);
       const hashDiff = groupKeyA.localeCompare(groupKeyB);
       if (hashDiff !== 0) return hashDiff;
 
