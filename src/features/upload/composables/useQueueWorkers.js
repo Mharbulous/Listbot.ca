@@ -160,7 +160,7 @@ export function useQueueWorkers() {
         );
 
         // Map worker results back to source File objects (from user's device)
-        // Note: shortcut files are included in readyFiles/duplicateFiles with skipReason='shortcut'
+        // Note: shortcut files are included in readyFiles/copyFiles with skipReason='shortcut'
         const readyFiles = workerResult.readyFiles.map((fileRef) => ({
           ...fileRef,
           file: fileMapping.get(fileRef.id), // Restore source File object
@@ -168,7 +168,7 @@ export function useQueueWorkers() {
           status: 'ready',
         }));
 
-        const duplicateFiles = workerResult.duplicateFiles.map((fileRef) => ({
+        const copyFiles = workerResult.copyFiles.map((fileRef) => ({
           ...fileRef,
           file: fileMapping.get(fileRef.id), // Restore source File object
           path: fileRef.path, // Preserve path from worker result
@@ -177,7 +177,7 @@ export function useQueueWorkers() {
 
         return {
           success: true,
-          result: { readyFiles, duplicateFiles },
+          result: { readyFiles, duplicateFiles: copyFiles },
         };
       } finally {
         // Clean up progress listener
