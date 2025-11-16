@@ -1,6 +1,8 @@
 # Bookkeeper
 
-Vue 3 bookkeeping app with file upload/processing. Part of a multi-app SSO architecture.
+Vue 3 + Vuetify 3 + Vite + Firebase + Pinia + Tailwind + Vitest
+
+Part of a multi-app SSO architecture with file upload/processing.
 
 ## Critical: Know Before You Code
 
@@ -16,32 +18,6 @@ Vue 3 bookkeeping app with file upload/processing. Part of a multi-app SSO archi
 
 6. **Tests Location**: All Vitest tests go in `/tests` folder (not alongside source).
 
-## Quick Start
-
-```bash
-npm install
-npm run dev          # localhost:5173
-```
-
-**Working on auth/SSO?** Use:
-```bash
-npm run dev:bookkeeping  # bookkeeping.localhost:3001
-```
-
-## Before You Commit
-
-```bash
-npm run lint
-npm run test:run
-npm run build
-```
-
 ## Documentation
 
-- **Start here**: `CLAUDE.md` - Development directives and workflow
-- **Architecture**: `docs/architecture/` - Auth, file lifecycle, processing
-- **Component docs**: `docs/front-end/` - DocumentTable, layouts, views
-
-## Tech Stack
-
-Vue 3 + Vuetify 3 + Vite + Firebase + Pinia + Tailwind + Vitest
+**Hub and Spoke Model**: `CLAUDE.md` is the hub - start there for development directives, workflow, and pointers to all detailed documentation. Detailed docs in `/docs` are the spokes, referenced from `CLAUDE.md` as needed.
