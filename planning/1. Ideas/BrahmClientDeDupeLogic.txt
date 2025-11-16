@@ -1,0 +1,45 @@
+Stage 1:  Pre-filter (main branch)
+
+1. Set pre-filter flag = TRUE.  Sort files by size, smallest first; then by date modified, oldest first; then by file name, alphabetically;
+
+2. Edge case.  Set status of first file to "Primary"
+
+3. Go to next file.  
+
+4. Compare size to previous file. If size is different then set status to "Primary" and go to step 3.  Otherwise go to step 5.
+
+5. Set status of file to "Copy"
+
+6. Compare date modified to previous file. If date modified is not identical, go to step 3.
+
+7. Compare file name to previous file.  If file name is not identical, go to step 3.
+
+8. Compare folder path to previous file folder path.
+   a. if previous file folder path is identical, then set status of file to "Duplicate."  Go to step 6.
+   b. if folder path endsWith(previous file folder path), then set previous file folder path == folder path, and status of file to "Duplicate."  Go to step 6.
+   c. if previous file folder path endsWith(folder path), then set folder path == previous file folder path, and status of file to "Duplicate."  Go to step 6.
+
+9. If files remain, go to step 3. 
+
+10.  Set pre-sort flag = FLASE
+
+
+  
+Stage 2:  Hash sort (web worker)
+
+11.  Use Web Worker to loop through all files from top to bottom, starting from second file. 
+
+12.  If pre-filter flag = TRUE.  Wait 1000ms then repeat this step.  After 10 repeats, abort Hash sort worker and display a console warning message.
+
+13. If a file has status = "", the web worker has gotten ahead of a pre-sort.  Wait 1000ms then repeat this step.  After 10 repeats, abort Hash sort worker and display a console warning message.
+
+14.  If a file has status = "Duplicate" or "Copy", and on file hash value, then calculate BLAKE3 file hash for this file and the previous file.  
+
+15. Compare hash values with hash value of previous file.  If they are different, then change the status of this file to = "Primary".  If they are the same and the status of the file is "Duplicate" then delete the duplicate file. 
+
+16.  If files remain, go to step 3. 
+
+
+NOTE:  Whenever calculating hash value we always first check that the file doesn't already have a hash before calculating, and after calculating, we always save the hash value for that file.
+
+
