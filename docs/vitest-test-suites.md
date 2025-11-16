@@ -51,8 +51,8 @@
 **Test Files:**
 | File Path | Test Count | Purpose |
 |-----------|------------|---------|
-| `src/features/organizer/stores/virtualFolderStore.test.js` | 53 | Core virtual folder store functionality |
-| `src/features/organizer/stores/organizer.integration.test.js` | 28 | Integration testing with organizer facade |
+| `/tests/unit/features/organizer/stores/virtualFolderStore.test.js` | 53 | Core virtual folder store functionality |
+| `/tests/unit/features/organizer/stores/organizer.integration.test.js` | 28 | Integration testing with organizer facade |
 | `src/test-utils/virtualFolderTestUtils.js` | N/A | Supporting test utilities and mock data |
 
 **Coverage Areas:**
@@ -91,7 +91,7 @@
 **Test Files:**
 | File Path | Test Count | Status | Coverage |
 |-----------|------------|---------|---------|
-| `src/composables/memoryLeak.test.js` | 16 | ✅ Active | AbortController tracking, event listener management, timer cleanup, integration scenarios |
+| `/tests/unit/composables/memoryLeak.test.js` | 16 | ✅ Active | AbortController tracking, event listener management, timer cleanup, integration scenarios |
 
 **All Issues Resolved:** ✅
 | Issue | Resolution | Status |
@@ -117,8 +117,8 @@
 **Test Files:**
 | File Path | Purpose | Status |
 |-----------|---------|--------|
-| `src/features/upload/composables/useFolderAnalysis.test.js` | Folder analysis functionality | ✅ Active |
-| `src/features/upload/composables/useFolderTimeouts.test.js` | Timeout management systems | ✅ Active |
+| `/tests/unit/features/upload/composables/useFolderAnalysis.test.js` | Folder analysis functionality | ✅ Active |
+| `/tests/unit/features/upload/composables/useFolderTimeouts.test.js` | Timeout management systems | ✅ Active |
 
 ---
 
@@ -189,10 +189,12 @@
 
 ### Vitest Configuration
 
-**File**: `vite.config.js`  
-**Test Environment**: jsdom  
-**Globals**: Enabled  
-**Include Pattern**: `src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}`
+**File**: `vite.config.js`
+**Test Environment**: jsdom
+**Globals**: Enabled
+**Include Patterns**:
+- `src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}`
+- `tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}`
 
 ### Test Commands
 
@@ -223,7 +225,7 @@
 **Files Modified:**
 | File Path | Type | Change | Result |
 |-----------|------|--------|--------|
-| `src/composables/memoryLeak.test.js` | Test Suite | Fixed AbortController tracking, event listener mocking, timer cleanup, integration test performance | All 16 tests now passing (100% pass rate) |
+| `/tests/unit/composables/memoryLeak.test.js` | Test Suite | Fixed AbortController tracking, event listener mocking, timer cleanup, integration test performance | All 16 tests now passing (100% pass rate) |
 | `src/test-utils/mockFileAPI.js` | Test Utility | Enhanced controller tracking with proper vi.fn().mockImplementation() | Improved AbortController interception |
 
 **Specific Issues Resolved:**
@@ -259,7 +261,7 @@
 **Files Modified:**
 | File Path | Type | Change | Result |
 |-----------|------|--------|--------|
-| `src/composables/memoryLeak.test.js` | Test Suite | Vitest API update | 12 of 16 tests now passing |
+| `/tests/unit/composables/memoryLeak.test.js` | Test Suite | Vitest API update | 12 of 16 tests now passing |
 
 **API Changes Made:**
 | Old API | New API | Status |
@@ -287,8 +289,8 @@ All issues identified in this phase have been successfully resolved in the subse
 **Files Added:**
 | File Path | Type | Test Count | Purpose |
 |-----------|------|------------|---------|
-| `src/features/organizer/stores/virtualFolderStore.test.js` | Test Suite | 53 | Comprehensive tests for virtual folder store core functionality |
-| `src/features/organizer/stores/organizer.integration.test.js` | Integration Test | 28 | Integration tests for organizer store facade pattern |
+| `/tests/unit/features/organizer/stores/virtualFolderStore.test.js` | Test Suite | 53 | Comprehensive tests for virtual folder store core functionality |
+| `/tests/unit/features/organizer/stores/organizer.integration.test.js` | Integration Test | 28 | Integration tests for organizer store facade pattern |
 | `src/test-utils/virtualFolderTestUtils.js` | Utility | N/A | Supporting test utilities and mock data generators |
 
 **Impact Analysis:**
