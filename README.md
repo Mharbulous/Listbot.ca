@@ -18,6 +18,8 @@ Part of a multi-app SSO architecture with file upload/processing.
 
 6. **Tests Location**: All Vitest tests go in `/tests` folder (not alongside source).
 
+7. **Two-Branch Model**: All PRs/merges go to `main` (because Claude Code on the Web can only merge with Main branch). The `production` branch is manually promoted from `main` - never commit or PR to it. See `docs/hosting/2025-11-16-Promotion.md`.
+
 ## Documentation
 
 **Hub and Spoke Model**: `CLAUDE.md` is the hub - start there for development directives, workflow, and pointers to all detailed documentation. Detailed docs in `/docs` are the spokes, referenced from `CLAUDE.md` as needed.
