@@ -78,9 +78,15 @@ function prepareFilesForWorker(filesToHash) {
  * @returns {Promise<number>} - Number of files successfully hashed
  */
 async function hashWithWorker(filesToHashArray, fileIndexMap, queueWorkers) {
+  console.log(`  │  [HASH-DEBUG] Attempting worker hash for ${filesToHashArray.length} files`);
   const workerResult = await queueWorkers.processFilesWithWorker(filesToHashArray);
 
   if (!workerResult.success) {
+    console.warn(`  │  [HASH-DEBUG] Worker failed:`, {
+      fallback: workerResult.fallback,
+      error: workerResult.error?.message || 'Unknown error',
+      errorType: workerResult.error?.type,
+    });
     return 0;
   }
 
@@ -193,6 +199,13 @@ export async function calculateHashGroups(
   // Hash all files that need it
   if (filesNeedingHash > 0) {
     console.log(`  ├─ [HASH] Hashing ${filesNeedingHash} files using Web Worker...`);
+
+    // DEBUG: Log file names being hashed
+    const fileNames = filesToHash
+      .filter(({ queueItem }) => !queueItem.hash)
+      .map(({ queueItem }) => queueItem.name)
+      .slice(0, 5); // Show first 5
+    console.log(`  │  [HASH-DEBUG] Files to hash: ${fileNames.join(', ')}${filesNeedingHash > 5 ? ` ... and ${filesNeedingHash - 5} more` : ''}`);
   }
 
   const hashT0 = performance.now();
