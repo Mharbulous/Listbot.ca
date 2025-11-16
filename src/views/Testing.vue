@@ -90,8 +90,9 @@ defineOptions({
 });
 
 // Composables
+// Enable sequential deduplication for testing
 const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue, sortQueueByGroupTimestamp } =
-  useUploadTable();
+  useUploadTable({ useSequentialDedup: true });
 const { snackbar, showNotification } = useNotification();
 
 // Enhanced upload queue with computed displayed status

@@ -1,13 +1,4 @@
-import xxhash from 'xxhash-wasm';
-
-// Initialize xxHash hasher (singleton pattern for performance)
-let xxhashInstance = null;
-const getXxHash = async () => {
-  if (!xxhashInstance) {
-    xxhashInstance = await xxhash();
-  }
-  return xxhashInstance;
-};
+import { blake3 } from 'hash-wasm';
 
 /**
  * Queue Helpers Composable
@@ -92,24 +83,22 @@ export function useQueueHelpers() {
   };
 
   /**
-   * Generate XXH32 hash for a file (legacy fallback compatibility)
-   * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
+   * Generate BLAKE3 hash for a file (legacy fallback compatibility)
    * @param {File} file - Browser File object
-   * @returns {Promise<string>} - 8-character hex hash string
+   * @returns {Promise<string>} - 32-character hex hash string
    */
   const generateFileHash = async (file) => {
     const hashStartTime = performance.now();
     const buffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(buffer);
 
-    // Get xxHash instance and generate XXH32 hash with 32-bit output (4 bytes = 8 hex characters)
-    const hasher = await getXxHash();
-    const hash = hasher.h32ToString(uint8Array); // Returns zero-padded hex string
+    // Generate BLAKE3 hash with 128-bit output (16 bytes = 32 hex characters)
+    const hash = await blake3(uint8Array, 128);
 
     const hashDuration = performance.now() - hashStartTime;
     console.log(`[HASH-PERF-FALLBACK] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
-    // Return XXH32 hash of source file content (8 hex characters)
+    // Return BLAKE3 hash of source file content (32 hex characters)
     return hash;
   };
 
