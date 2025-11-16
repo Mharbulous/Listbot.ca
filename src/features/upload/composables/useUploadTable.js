@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { useUploadTableSorting } from './useUploadTable-sorting.js';
 import { useUploadTableDeduplication } from './useUploadTable-deduplication.js';
+import { useUploadTableDeduplicationSequential } from './useUploadTable-deduplication-sequential.js';
 import { useUploadTableAddition } from './useUploadTable-addition.js';
 import { useUploadTableManagement } from './useUploadTable-management.js';
 import { useUploadTableHashVerification } from './useUploadTable-hashVerification.js';
@@ -16,7 +17,10 @@ import { useUploadTableHashVerification } from './useUploadTable-hashVerificatio
  * - Management: CRUD operations and bulk actions
  * - Hash Verification: Lazy verification on hover/delete/upload
  */
-export function useUploadTable() {
+export function useUploadTable(options = {}) {
+  // Options for deduplication strategy
+  const useSequentialDedup = options.useSequentialDedup || false;
+
   // ========================================================================
   // Core State
   // ========================================================================
@@ -46,7 +50,10 @@ export function useUploadTable() {
 
   const sorting = useUploadTableSorting(uploadQueue);
 
-  const deduplication = useUploadTableDeduplication(uploadQueue);
+  // Choose deduplication strategy based on options
+  const deduplication = useSequentialDedup
+    ? useUploadTableDeduplicationSequential(uploadQueue)
+    : useUploadTableDeduplication(uploadQueue);
 
   const addition = useUploadTableAddition(
     uploadQueue,
