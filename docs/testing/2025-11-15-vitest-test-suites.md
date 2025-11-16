@@ -451,6 +451,635 @@ All issues identified in this phase have been successfully resolved in the subse
 5. **Coverage**: Aim for comprehensive edge case coverage
 6. **Mocking**: Use appropriate mocking for external dependencies
 
+### Component Testing Standards
+
+#### Vue Test Utils Best Practices
+
+**1. Component Mounting**
+```javascript
+import { mount, shallowMount } from '@vue/test-utils'
+
+// Use mount() for full component rendering with child components
+const wrapper = mount(MyComponent, {
+  props: { ... },
+  global: {
+    plugins: [createPinia(), router],
+    stubs: { ... }
+  }
+})
+
+// Use shallowMount() to stub child components for unit testing
+const wrapper = shallowMount(MyComponent, { ... })
+```
+
+**2. Component Wrapper API**
+```javascript
+// Finding elements - prefer test-specific attributes
+wrapper.find('[data-testid="submit-button"]')  // ✅ Preferred
+wrapper.find('.submit-button')                  // ⚠️ Fragile (CSS changes break tests)
+
+// Triggering events
+await wrapper.find('button').trigger('click')
+await wrapper.find('input').setValue('test value')
+
+// Checking component state
+expect(wrapper.vm.someData).toBe(expectedValue)
+expect(wrapper.emitted()).toHaveProperty('custom-event')
+expect(wrapper.emitted('custom-event')[0]).toEqual([expectedPayload])
+```
+
+**3. Testing Props and Reactive Data**
+```javascript
+describe('MyComponent props', () => {
+  it('should reactively update when props change', async () => {
+    const wrapper = mount(MyComponent, {
+      props: { count: 0 }
+    })
+
+    expect(wrapper.text()).toContain('Count: 0')
+
+    await wrapper.setProps({ count: 5 })
+    expect(wrapper.text()).toContain('Count: 5')
+  })
+})
+```
+
+**4. Asynchronous Updates**
+```javascript
+// Always await async operations
+await wrapper.trigger('click')
+await wrapper.vm.$nextTick()
+
+// Wait for specific conditions
+await vi.waitFor(() => {
+  expect(wrapper.find('[data-testid="result"]').text()).toBe('Expected')
+})
+```
+
+**5. Component Lifecycle Testing**
+```javascript
+it('should call lifecycle hooks', () => {
+  const onMountedSpy = vi.fn()
+  const onUnmountedSpy = vi.fn()
+
+  const wrapper = mount(MyComponent, {
+    global: {
+      mocks: {
+        onMounted: onMountedSpy,
+        onUnmounted: onUnmountedSpy
+      }
+    }
+  })
+
+  expect(onMountedSpy).toHaveBeenCalled()
+  wrapper.unmount()
+  expect(onUnmountedSpy).toHaveBeenCalled()
+})
+```
+
+#### Vuetify Component Mocking
+
+**1. Global Vuetify Plugin Configuration**
+```javascript
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
+// Create test vuetify instance
+const vuetify = createVuetify({
+  components,
+  directives
+})
+
+// Mount component with Vuetify
+const wrapper = mount(MyComponent, {
+  global: {
+    plugins: [vuetify]
+  }
+})
+```
+
+**2. Stubbing Vuetify Components**
+```javascript
+// Stub specific Vuetify components to simplify tests
+const wrapper = mount(MyComponent, {
+  global: {
+    stubs: {
+      VBtn: { template: '<button><slot /></button>' },
+      VCard: { template: '<div class="v-card"><slot /></div>' },
+      VTextField: {
+        template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />'
+      }
+    }
+  }
+})
+```
+
+**3. Testing Vuetify Form Components**
+```javascript
+it('should handle VTextField input', async () => {
+  const wrapper = mount(MyForm, {
+    global: { plugins: [createVuetify()] }
+  })
+
+  const textField = wrapper.findComponent({ name: 'VTextField' })
+  await textField.setValue('test input')
+
+  expect(wrapper.vm.formData.fieldName).toBe('test input')
+})
+```
+
+**4. Testing Vuetify Dialogs and Overlays**
+```javascript
+it('should open dialog on button click', async () => {
+  const wrapper = mount(MyComponent, {
+    global: { plugins: [createVuetify()] },
+    attachTo: document.body  // Required for overlay components
+  })
+
+  expect(wrapper.vm.dialogVisible).toBe(false)
+
+  await wrapper.find('[data-testid="open-dialog"]').trigger('click')
+  await wrapper.vm.$nextTick()
+
+  expect(wrapper.vm.dialogVisible).toBe(true)
+
+  wrapper.unmount()  // Clean up attached elements
+})
+```
+
+**5. Mocking Vuetify Theme and Display**
+```javascript
+const wrapper = mount(MyComponent, {
+  global: {
+    plugins: [
+      createVuetify({
+        theme: {
+          defaultTheme: 'light',
+          themes: {
+            light: { /* ... */ }
+          }
+        },
+        display: {
+          mobileBreakpoint: 'sm',
+          thresholds: { xs: 0, sm: 600, md: 960, lg: 1280, xl: 1920 }
+        }
+      })
+    ]
+  }
+})
+```
+
+#### Store Integration Patterns
+
+**1. Pinia Store Setup**
+```javascript
+import { createPinia, setActivePinia } from 'pinia'
+import { useMyStore } from '@/stores/myStore'
+
+describe('Component with Pinia store', () => {
+  let pinia
+  let store
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    store = useMyStore()
+  })
+
+  it('should interact with store', () => {
+    const wrapper = mount(MyComponent, {
+      global: { plugins: [pinia] }
+    })
+
+    expect(store.someState).toBe(expectedValue)
+  })
+})
+```
+
+**2. Testing Store State Updates**
+```javascript
+it('should update store state on user action', async () => {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const store = useMyStore()
+
+  const wrapper = mount(MyComponent, {
+    global: { plugins: [pinia] }
+  })
+
+  // Initial state
+  expect(store.count).toBe(0)
+
+  // Trigger action
+  await wrapper.find('[data-testid="increment"]').trigger('click')
+
+  // Verify store update
+  expect(store.count).toBe(1)
+})
+```
+
+**3. Mocking Store Actions and Getters**
+```javascript
+it('should call store action', async () => {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const store = useMyStore()
+
+  // Spy on store action
+  const fetchDataSpy = vi.spyOn(store, 'fetchData')
+
+  const wrapper = mount(MyComponent, {
+    global: { plugins: [pinia] }
+  })
+
+  await wrapper.vm.$nextTick()
+  expect(fetchDataSpy).toHaveBeenCalled()
+})
+```
+
+**4. Testing Multiple Store Integration**
+```javascript
+import { useAuthStore } from '@/stores/auth'
+import { useDocumentStore } from '@/stores/documents'
+
+it('should coordinate multiple stores', async () => {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+
+  const authStore = useAuthStore()
+  const documentStore = useDocumentStore()
+
+  // Set up auth state
+  authStore.userId = 'test-user-id'
+  authStore.firmId = 'test-firm-id'
+
+  const wrapper = mount(MyComponent, {
+    global: { plugins: [pinia] }
+  })
+
+  // Component should use auth context for document operations
+  await wrapper.vm.loadDocuments()
+
+  expect(documentStore.filters.firmId).toBe('test-firm-id')
+})
+```
+
+**5. Store State Isolation Between Tests**
+```javascript
+describe('MyComponent store integration', () => {
+  let pinia
+
+  beforeEach(() => {
+    // Create fresh Pinia instance for each test
+    pinia = createPinia()
+    setActivePinia(pinia)
+  })
+
+  afterEach(() => {
+    // Ensure cleanup
+    pinia = null
+  })
+
+  it('test 1 - isolated state', () => {
+    const store = useMyStore()
+    store.value = 'test1'
+    expect(store.value).toBe('test1')
+  })
+
+  it('test 2 - clean state', () => {
+    const store = useMyStore()
+    // Store state is reset, not carried over from test 1
+    expect(store.value).toBe('') // default value
+  })
+})
+```
+
+#### Accessibility Testing Requirements
+
+**1. ARIA Attributes Testing**
+```javascript
+describe('Accessibility - ARIA attributes', () => {
+  it('should have proper ARIA labels', () => {
+    const wrapper = mount(MyComponent)
+
+    // Button labels
+    expect(wrapper.find('button').attributes('aria-label')).toBe('Submit form')
+
+    // Form fields
+    const input = wrapper.find('input')
+    expect(input.attributes('aria-required')).toBe('true')
+    expect(input.attributes('aria-invalid')).toBe('false')
+
+    // Regions and landmarks
+    expect(wrapper.find('nav').attributes('aria-label')).toBe('Main navigation')
+  })
+
+  it('should have proper ARIA roles', () => {
+    const wrapper = mount(MyComponent)
+
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+    expect(wrapper.find('[role="status"]').exists()).toBe(true)
+  })
+
+  it('should manage ARIA live regions', async () => {
+    const wrapper = mount(MyComponent)
+
+    const liveRegion = wrapper.find('[aria-live="polite"]')
+    expect(liveRegion.exists()).toBe(true)
+
+    await wrapper.vm.showNotification('Update complete')
+    expect(liveRegion.text()).toContain('Update complete')
+  })
+})
+```
+
+**2. Keyboard Navigation Testing**
+```javascript
+describe('Accessibility - Keyboard navigation', () => {
+  it('should support Tab navigation', async () => {
+    const wrapper = mount(MyComponent)
+
+    const focusableElements = wrapper.findAll('button, input, a, [tabindex]')
+
+    // First element should be focusable
+    focusableElements[0].element.focus()
+    expect(document.activeElement).toBe(focusableElements[0].element)
+
+    // Tab to next element
+    await wrapper.trigger('keydown', { key: 'Tab' })
+    expect(document.activeElement).toBe(focusableElements[1].element)
+  })
+
+  it('should support Enter key for button activation', async () => {
+    const wrapper = mount(MyComponent)
+    const button = wrapper.find('button')
+
+    const clickSpy = vi.fn()
+    button.element.addEventListener('click', clickSpy)
+
+    await button.trigger('keydown', { key: 'Enter' })
+    expect(clickSpy).toHaveBeenCalled()
+  })
+
+  it('should support Escape key for dialog closing', async () => {
+    const wrapper = mount(MyDialog, {
+      props: { modelValue: true }
+    })
+
+    expect(wrapper.vm.modelValue).toBe(true)
+
+    await wrapper.trigger('keydown', { key: 'Escape' })
+
+    expect(wrapper.emitted('update:modelValue')[0]).toEqual([false])
+  })
+
+  it('should support Arrow key navigation in menus', async () => {
+    const wrapper = mount(MyMenu)
+    const menuItems = wrapper.findAll('[role="menuitem"]')
+
+    // Open menu
+    await wrapper.find('[data-testid="menu-trigger"]').trigger('click')
+
+    // First item should be focused
+    expect(document.activeElement).toBe(menuItems[0].element)
+
+    // Arrow down to next item
+    await wrapper.trigger('keydown', { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(menuItems[1].element)
+
+    // Arrow up to previous item
+    await wrapper.trigger('keydown', { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(menuItems[0].element)
+  })
+})
+```
+
+**3. Focus Management Testing**
+```javascript
+describe('Accessibility - Focus management', () => {
+  it('should trap focus within modal dialog', async () => {
+    const wrapper = mount(MyModal, {
+      props: { open: true },
+      attachTo: document.body
+    })
+
+    const focusableElements = wrapper.findAll('button, input, a')
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
+
+    // Tab from last element should cycle to first
+    lastElement.element.focus()
+    await wrapper.trigger('keydown', { key: 'Tab' })
+    expect(document.activeElement).toBe(firstElement.element)
+
+    // Shift+Tab from first should cycle to last
+    firstElement.element.focus()
+    await wrapper.trigger('keydown', { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(lastElement.element)
+
+    wrapper.unmount()
+  })
+
+  it('should restore focus after dialog closes', async () => {
+    const triggerButton = document.createElement('button')
+    document.body.appendChild(triggerButton)
+    triggerButton.focus()
+
+    const wrapper = mount(MyDialog, {
+      props: { open: true },
+      attachTo: document.body
+    })
+
+    // Focus should be in dialog
+    expect(document.activeElement).not.toBe(triggerButton)
+
+    // Close dialog
+    await wrapper.setProps({ open: false })
+    await wrapper.vm.$nextTick()
+
+    // Focus should return to trigger button
+    expect(document.activeElement).toBe(triggerButton)
+
+    wrapper.unmount()
+    document.body.removeChild(triggerButton)
+  })
+
+  it('should set initial focus on autofocus element', async () => {
+    const wrapper = mount(MyForm, {
+      attachTo: document.body
+    })
+
+    const autofocusInput = wrapper.find('[autofocus]')
+    await wrapper.vm.$nextTick()
+
+    expect(document.activeElement).toBe(autofocusInput.element)
+
+    wrapper.unmount()
+  })
+})
+```
+
+**4. Screen Reader Compatibility Testing**
+```javascript
+describe('Accessibility - Screen reader support', () => {
+  it('should announce dynamic content changes', async () => {
+    const wrapper = mount(MyComponent)
+
+    // Find live region for announcements
+    const announcer = wrapper.find('[role="status"][aria-live="polite"]')
+    expect(announcer.exists()).toBe(true)
+
+    // Trigger content change
+    await wrapper.vm.updateStatus('Processing complete')
+
+    // Verify announcement text
+    expect(announcer.text()).toBe('Processing complete')
+  })
+
+  it('should provide descriptive labels for form controls', () => {
+    const wrapper = mount(MyForm)
+
+    // Each input should have associated label
+    const inputs = wrapper.findAll('input')
+    inputs.forEach(input => {
+      const id = input.attributes('id')
+      const ariaLabel = input.attributes('aria-label')
+      const ariaLabelledBy = input.attributes('aria-labelledby')
+
+      // Should have either: id with matching label, aria-label, or aria-labelledby
+      if (!ariaLabel && !ariaLabelledBy) {
+        expect(id).toBeTruthy()
+        expect(wrapper.find(`label[for="${id}"]`).exists()).toBe(true)
+      }
+    })
+  })
+
+  it('should provide error messages via aria-describedby', async () => {
+    const wrapper = mount(MyForm)
+    const input = wrapper.find('input[name="email"]')
+
+    // Submit invalid form
+    await wrapper.find('form').trigger('submit')
+    await wrapper.vm.$nextTick()
+
+    // Error message should be associated via aria-describedby
+    const describedBy = input.attributes('aria-describedby')
+    expect(describedBy).toBeTruthy()
+
+    const errorMessage = wrapper.find(`#${describedBy}`)
+    expect(errorMessage.exists()).toBe(true)
+    expect(errorMessage.text()).toContain('valid email')
+  })
+})
+```
+
+**5. Color Contrast and Visual Accessibility**
+```javascript
+describe('Accessibility - Visual requirements', () => {
+  it('should not rely solely on color for information', () => {
+    const wrapper = mount(MyComponent)
+
+    // Error states should have icon or text, not just red color
+    const errorElement = wrapper.find('[data-testid="error-message"]')
+    expect(
+      errorElement.find('[role="img"]').exists() ||
+      errorElement.text().includes('Error')
+    ).toBe(true)
+  })
+
+  it('should provide text alternatives for icons', () => {
+    const wrapper = mount(MyComponent)
+
+    // Icon-only buttons must have aria-label
+    wrapper.findAll('button').forEach(button => {
+      if (!button.text().trim()) {
+        expect(button.attributes('aria-label')).toBeTruthy()
+      }
+    })
+  })
+
+  it('should maintain visible focus indicators', async () => {
+    const wrapper = mount(MyComponent, {
+      attachTo: document.body
+    })
+
+    const button = wrapper.find('button')
+    button.element.focus()
+
+    // Should have visible focus state (via CSS class or outline)
+    const computedStyle = window.getComputedStyle(button.element)
+    const hasFocusIndicator =
+      computedStyle.outline !== 'none' ||
+      button.classes().some(cls => cls.includes('focus'))
+
+    expect(hasFocusIndicator).toBe(true)
+
+    wrapper.unmount()
+  })
+})
+```
+
+**6. Accessibility Test Checklist**
+
+Every component test suite should include:
+- ✅ ARIA labels and roles for all interactive elements
+- ✅ Keyboard navigation support (Tab, Enter, Escape, Arrows)
+- ✅ Focus management (initial focus, focus trapping, focus restoration)
+- ✅ Screen reader announcements for dynamic changes
+- ✅ Form field labels and error associations
+- ✅ Text alternatives for non-text content
+- ✅ No reliance on color alone for information
+- ✅ Visible focus indicators
+
+**Example Comprehensive Component Test:**
+```javascript
+describe('MyAccessibleComponent', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(MyAccessibleComponent, {
+      attachTo: document.body,
+      global: {
+        plugins: [createPinia(), createVuetify()]
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.unmount()
+  })
+
+  describe('ARIA attributes', () => {
+    it('should have proper ARIA labels', () => {
+      expect(wrapper.find('button').attributes('aria-label')).toBe('Submit')
+    })
+  })
+
+  describe('Keyboard navigation', () => {
+    it('should support Enter key', async () => {
+      await wrapper.find('button').trigger('keydown', { key: 'Enter' })
+      expect(wrapper.emitted('submit')).toBeTruthy()
+    })
+  })
+
+  describe('Focus management', () => {
+    it('should set initial focus', async () => {
+      await wrapper.vm.$nextTick()
+      expect(document.activeElement).toBe(wrapper.find('input').element)
+    })
+  })
+
+  describe('Screen reader support', () => {
+    it('should announce status changes', async () => {
+      await wrapper.vm.updateStatus('Complete')
+      expect(wrapper.find('[role="status"]').text()).toBe('Complete')
+    })
+  })
+})
+```
+
 ### Documentation Updates
 
 - Update this document when creating, modifying, or removing test suites
