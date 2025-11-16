@@ -25,8 +25,9 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
 3.  **TERMINOLOGY:** The file processing lifecycle has very specific terminology (Original, Source, Upload, Batesed, etc.). You MUST consult `@docs/architecture/file-lifecycle.md` to ensure you use this terminology correctly in all code, comments, and UI text.
 4.  **DEDUPLICATION TERMINOLOGY:** File deduplication uses precise terminology that you MUST follow:
     - **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value.  Duplicates are not uploaded and their metadata is not copied.
+    - **"redundant"**: Hash-verified duplicates awaiting removal. Files transition from "duplicate" status to "redundant" after hash verification confirms identical content. Redundant files are removed during Stage 1 pre-filter of the next batch, creating a two-phase cleanup lifecycle.
     - **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful.  Copies are not uploaded to storage, but their metadata is recorded for informational value.
-    - **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value. 
+    - **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value.
     - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value    
 5.  **TESTS:** All Vitest unit/component tests MUST be located in the `/tests` folder.
 

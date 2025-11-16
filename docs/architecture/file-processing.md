@@ -58,13 +58,22 @@ The system uses hardware-specific calibration to provide accurate time predictio
 
 ### Terminology
 - **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value. Duplicates are not uploaded and their metadata is not copied.
+- **"redundant"**: Hash-verified duplicates awaiting removal. Files transition from "duplicate" status to "redundant" after hash verification confirms identical content. Redundant files are removed during Stage 1 pre-filter of the next batch, creating a two-phase cleanup lifecycle.
 - **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful. Copies are not uploaded to storage, but their metadata is recorded for informational value.
 - **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value.
 - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
 
 ### Strategy
-- **Size-based pre-filtering**: Files with unique sizes skip hash calculation entirely
-- **Hash-based verification**: Only files with matching sizes undergo BLAKE3 hashing
+- **Sequential two-stage deduplication**: Implemented in `src/features/upload/composables/useSequentialPrefilter.js`
+  - **Stage 1 (Pre-filter)**: Metadata-based comparison to identify potential duplicates/copies
+    - Removes files with `status='redundant'` from previous runs
+    - Sorts files by size, modified date, and name
+    - Sequential comparison marks files as "Primary", "Copy", or "Duplicate"
+  - **Stage 2 (Hash verification)**: BLAKE3 hashing to verify suspected duplicates/copies
+    - Only hashes files marked "Copy" or "Duplicate" from Stage 1
+    - Confirms true duplicates by comparing hash values
+    - Marks hash-verified duplicates as "redundant" for removal in next batch
+- **Two-phase cleanup lifecycle**: Duplicate → (hash match) → Redundant → (next batch Stage 1) → Removed
 - **Firestore integration**: Hashes serve as document IDs for automatic database-level deduplication
 - **Efficient processing**: Typically 60-80% of files skip expensive hash calculation
 

@@ -75,6 +75,8 @@ This app is designed for **litigation document discovery**, which requires speci
 - **"duplicate"** or **"duplicates"**: Files with identical content (hash value) and core metadata (name, size, modified date) where folder path variations have no informational value. Duplicates are not uploaded and their metadata is not copied.
   - Marked with status "duplicate" in the queue (gray/white dot, checkbox disabled)
   - Visible in queue for transparency but not selectable for upload
+- **"redundant"**: Hash-verified duplicates awaiting removal. Files transition from "duplicate" status to "redundant" after hash verification confirms identical content. Redundant files are removed during Stage 1 pre-filter of the next batch, creating a two-phase cleanup lifecycle.
+  - Lifecycle: Duplicate → (hash match) → Redundant → (next batch Stage 1) → Removed
 - **"copy"** or **"copies"**: Files with the same hash value but different file metadata that IS meaningful. Copies are not uploaded to storage, but their metadata is recorded for informational value.
 - **"best"** or **"primary"**: The file with the most meaningful metadata that will be uploaded to storage their metadata recorded for informational value.
 - **"file metadata"**: Filesystem metadata (name, size, modified date, path) that does not affect hash value
@@ -348,6 +350,7 @@ The following enhancements improve user experience WITHOUT changing the core arc
 - `ready` - Ready to upload (includes unique files and best files from copy groups)
 - `copy` - Copy detected (same hash, different metadata) - metadata will be saved, file content skipped
 - `duplicate` - Duplicate file (same hash, same metadata) - shown in queue but not selectable (checkbox disabled)
+- `redundant` - Hash-verified duplicate awaiting removal in next batch (not visible to users - removed during Stage 1 pre-filter)
 - `uploading` - Currently uploading
 - `uploaded` - Successfully uploaded
 - `read error` - Hash failure or file read error (checkbox disabled)

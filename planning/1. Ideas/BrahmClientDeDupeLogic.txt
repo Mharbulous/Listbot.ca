@@ -1,3 +1,24 @@
+IMPLEMENTATION STATUS: ✓ COMPLETED
+Implemented: 2025-11-16
+Branch: claude/review-deduplication-logic-01Qpinr47AnqJyY7uhKMixvM
+
+Implementation Files:
+- src/features/upload/composables/useSequentialPrefilter.js
+- tests/unit/features/upload/composables/useSequentialPrefilter.test.js (12 tests, all passing)
+
+Documentation:
+- CLAUDE.md (DEDUPLICATION TERMINOLOGY section)
+- docs/architecture/file-processing.md (File Deduplication Strategy section)
+
+Key Changes from Original Plan:
+- Added "redundant" status as lifecycle stage between duplicate and deletion
+- Stage 1 now removes files with status='redundant' from previous runs (step 3)
+- Stage 2 marks hash-verified duplicates as 'redundant' instead of immediate deletion (step 15)
+- New lifecycle: Duplicate → (hash match) → Redundant → (next batch Stage 1) → Removed
+- Stats objects now include redundantCount and redundantFilesRemoved
+
+================================================================================
+
 Stage 1:  Pre-filter (main branch)
 
 1. Set pre-filter flag = TRUE.  Sort files by size, smallest first; then by date modified, oldest first; then by file name, alphabetically;
