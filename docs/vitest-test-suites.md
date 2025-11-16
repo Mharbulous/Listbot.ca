@@ -13,8 +13,8 @@
 
 | Metric                       | Status             | Count               |
 | ---------------------------- | ------------------ | ------------------- |
-| **Total Active Test Suites** | ✅ All Operational | 4 suites            |
-| **Total Tests**              | ✅ All Passing     | ~137 tests          |
+| **Total Active Test Suites** | ✅ All Operational | 7 suites            |
+| **Total Tests**              | ✅ All Passing     | ~450 tests          |
 | **Recent Issues**            | ✅ All Resolved    | 0 outstanding       |
 | **Performance Benchmarks**   | ✅ Meeting Targets | 4 active benchmarks |
 
@@ -33,6 +33,8 @@
 | Suite Name             | Status    | Files              | Test Count                 | Created      | Last Updated | Phase/Feature                       |
 | ---------------------- | --------- | ------------------ | -------------------------- | ------------ | ------------ | ----------------------------------- |
 | Virtual Folder System  | ✅ Active | 2 main + 1 utility | 81                         | 2025-01-20   | 2025-01-20   | Phase 1 - Virtual Folder Foundation |
+| Component Tests (Phase 2) | ✅ Active | 5                  | 227                        | Pre-existing | -            | Phase 2 - UI Components             |
+| Utility & Service Tests | ✅ Active | 2                  | 86                         | Pre-existing | -            | Core Utilities & AI Services        |
 | Memory Leak Prevention | ✅ Active | 1                  | 16 (0 failing, 16 passing) | Pre-existing | 2025-01-20   | Upload System                       |
 | Upload System          | ✅ Active | 2                  | ~30                        | Pre-existing | -            | File Upload Features                |
 | SSO Integration        | ✅ Active | 1                  | ~10                        | Pre-existing | -            | Multi-App Authentication            |
@@ -79,7 +81,87 @@
 
 ---
 
-#### 2. Memory Leak Prevention Tests ✅
+#### 2. Component Tests (Phase 2) ✅
+
+| **Attribute**   | **Details**                   |
+| --------------- | ----------------------------- |
+| **Created**     | Pre-existing                  |
+| **Status**      | Active                        |
+| **Phase**       | Phase 2 - UI Components       |
+| **Total Tests** | 227 (across 5 component files)|
+
+**Test Files:**
+| File Path | Test Count | Purpose |
+|-----------|------------|---------|
+| `/tests/unit/components/Phase2Components.test.js` | 15 | Phase 2 component testing suite |
+| `/tests/unit/components/ViewModeToggle.spec.js` | 57 | View mode toggle component with store integration |
+| `/tests/unit/components/TagContextMenu.spec.js` | 56 | Tag context menu with AI features and keyboard navigation |
+| `/tests/unit/components/FolderHierarchySelector.spec.js` | 61 | Folder hierarchy selector with drag-and-drop |
+| `/tests/unit/components/FolderBreadcrumbs.spec.js` | 38 | Folder breadcrumbs with responsive behavior |
+
+**Coverage Areas:**
+| Category | Description | Test Count |
+|----------|-------------|------------|
+| ViewModeToggle | Store integration, localStorage persistence, reactive watchers | 57 |
+| - Compact Mode | Compact mode rendering, accessibility, tooltips | 15 |
+| - Store Integration | Reactive state updates, store actions | 20 |
+| - Persistence | localStorage save/restore, cross-session state | 12 |
+| - Accessibility | ARIA labels, keyboard navigation, screen readers | 10 |
+| TagContextMenu | Context menu functionality and AI integration | 56 |
+| - Menu Actions | Show in folders, filter, search, copy, edit, statistics | 20 |
+| - AI Integration | AI tag approve/reject, confidence indicators | 12 |
+| - Menu Positioning | Viewport collision detection, dynamic positioning | 8 |
+| - Keyboard Shortcuts | Arrow navigation, Enter/Escape, modifier keys | 16 |
+| FolderHierarchySelector | Category and folder management | 61 |
+| - Category Management | Add/remove/reorder categories, validation | 15 |
+| - Auto-save | localStorage persistence, debounced saves | 10 |
+| - Keyboard Navigation | Arrow keys, Ctrl+arrow, Delete, multi-select | 20 |
+| - Drag-and-Drop | Reordering, visual feedback, touch support | 16 |
+| FolderBreadcrumbs | Navigation breadcrumbs | 38 |
+| - Responsive Behavior | Mobile collapse, ellipsis, overflow handling | 12 |
+| - Click Navigation | Path navigation, folder selection | 10 |
+| - Resize Listeners | Window resize handling, debouncing | 8 |
+| - Accessibility | ARIA navigation, semantic HTML, focus management | 8 |
+
+---
+
+#### 3. Utility & Service Tests ✅
+
+| **Attribute**   | **Details**                     |
+| --------------- | ------------------------------- |
+| **Created**     | Pre-existing                    |
+| **Status**      | Active                          |
+| **Total Tests** | 86 (26 + 60)                    |
+
+**Test Files:**
+| File Path | Test Count | Purpose |
+|-----------|------------|---------|
+| `/tests/unit/dateFormatter.test.js` | 26 | Date and time formatting utilities |
+| `/tests/unit/services/aiMetadataExtractionService.test.js` | 60 | AI-powered document classification service |
+
+**Coverage Areas - Date Formatter (26 tests):**
+| Function | Test Coverage | Test Count |
+|----------|---------------|------------|
+| `formatDate()` | Multiple format variants, edge cases, null handling | 8 |
+| `formatTime()` | 12/24 hour formats, timezones, AM/PM handling | 9 |
+| `formatDateTime()` | Combined date/time, custom separators, localization | 9 |
+
+**Coverage Areas - AI Metadata Extraction Service (60 tests):**
+| Category | Description | Test Count |
+|----------|-------------|------------|
+| Document Classification | AI-powered document type identification | 15 |
+| Prompt Engineering | Template generation, context injection, token optimization | 12 |
+| Response Parsing | JSON extraction, validation, error handling | 10 |
+| Token Usage Tracking | Input/output/caching token metrics | 8 |
+| Document Type Hierarchy | 3-tier system (matter → firm → global) | 10 |
+| - Matter-Specific Types | Client-specific document classification | 3 |
+| - Firm-Level Types | Organization-wide document types | 3 |
+| - Global Types | Universal document categories | 4 |
+| Error Handling | API failures, rate limiting, timeout handling | 5 |
+
+---
+
+#### 4. Memory Leak Prevention Tests ✅
 
 | **Attribute**    | **Details**                      |
 | ---------------- | -------------------------------- |
@@ -106,7 +188,7 @@
 
 ---
 
-#### 3. Upload System Tests ✅
+#### 5. Upload System Tests ✅
 
 | **Attribute**   | **Details**  |
 | --------------- | ------------ |
@@ -122,7 +204,7 @@
 
 ---
 
-#### 4. SSO Integration Tests ✅
+#### 6. SSO Integration Tests ✅
 
 | **Attribute**   | **Details**  |
 | --------------- | ------------ |
