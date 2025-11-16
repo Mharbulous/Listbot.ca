@@ -309,7 +309,6 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
 
     // Check if we need to calculate hash for current file
     if (!currentFile.hash) {
-      console.log(`[HASH-VERIFICATION] Hashing file: ${currentFile.name}`);
       try {
         currentFile.hash = await hashFunction(currentFile.sourceFile);
         hashedCount++;
@@ -323,7 +322,6 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
 
     // Check if we need to calculate hash for reference file
     if (!referenceFile.hash) {
-      console.log(`[HASH-VERIFICATION] Hashing reference file: ${referenceFile.name}`);
       try {
         referenceFile.hash = await hashFunction(referenceFile.sourceFile);
         hashedCount++;
@@ -338,13 +336,6 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
     // Compare hashes
     if (currentFile.hash !== referenceFile.hash) {
       // Step 15: Hashes differ → upgrade current file to "Primary"
-      console.log(`[HASH-VERIFICATION] Hash mismatch, upgrading to Primary:`, {
-        fileName: currentFile.name,
-        currentHash: currentFile.hash,
-        referenceFileName: referenceFile.name,
-        referenceHash: referenceFile.hash,
-      });
-
       currentFile.status = 'ready';
       currentFile.canUpload = true;
       currentFile.isPrimary = true;
@@ -361,19 +352,8 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
         currentFile.isDuplicate = false;
         currentFile.isRedundant = true;
         redundantCount++;
-        console.log(`[HASH-VERIFICATION] Hash match confirmed, marking as redundant:`, {
-          fileName: currentFile.name,
-          hash: currentFile.hash,
-          referenceFileName: referenceFile.name,
-        });
-      } else {
-        // Status is 'copy' - keep as is
-        console.log(`[HASH-VERIFICATION] Hash match confirmed (copy):`, {
-          fileName: currentFile.name,
-          status: currentFile.status,
-          hash: currentFile.hash,
-        });
       }
+      // else: Status is 'copy' - keep as is
     }
 
     verifiedCount++;
