@@ -77,7 +77,7 @@ export function useUploadTableAddition(
     // Check Phase 1 files for duplicates (against existing queue + themselves)
     // This ensures files have correct statuses when first rendered
     // ========================================================================
-    console.log('[QUEUE] Running deduplication for Phase 1 files');
+    console.log(`[QUEUE] Running deduplication: ${phase1Batch.length} new files vs ${existingQueueSnapshot.length} existing`);
     await deduplicateAgainstExisting(phase1Batch, existingQueueSnapshot);
 
     if (window.queueT0) {

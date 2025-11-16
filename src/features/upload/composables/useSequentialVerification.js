@@ -132,32 +132,15 @@ export function useSequentialVerification(
       return;
     }
 
-    // Get files marked as "redundant" (hash-verified duplicates)
+    // NOTE: Redundant files are NOT removed immediately
+    // They will be removed in Stage 1 of the next batch (two-phase cleanup lifecycle)
+    // Lifecycle: Duplicate → (hash match) → Redundant → (next batch Stage 1) → Removed
     const redundantFiles = uploadQueue.value.filter(file => file.status === 'redundant');
 
-    // Separate redundant files into visible and non-visible for two-phase deletion
-    const visibleFileIds = getVisibleFileIds();
-    const visibleRedundant = redundantFiles.filter(file => visibleFileIds.has(file.id));
-    const nonVisibleRedundant = redundantFiles.filter(file => !visibleFileIds.has(file.id));
-
-    let redundantRemoved = 0;
-
-    // PHASE 2A: Process visible redundant files with animation feedback
-    for (const file of visibleRedundant) {
-      // Apply fade-out animation before removing
-      await animateFileDeletion(file.id);
-      removeFromQueue(file.id);
-      redundantRemoved++;
-      verificationState.value.processed++;
-    }
-
-    // PHASE 2B: Batch remove non-visible redundant files (no animation needed)
-    if (nonVisibleRedundant.length > 0) {
-      nonVisibleRedundant.forEach(file => {
-        removeFromQueue(file.id);
-        redundantRemoved++;
-        verificationState.value.processed++;
-      });
+    if (redundantFiles.length > 0) {
+      console.log(
+        `  ├─ [LIFECYCLE] Marked ${redundantFiles.length} files as redundant (will be removed in next batch Stage 1)`
+      );
     }
 
     // Get files that were upgraded to primary (hash mismatch)
@@ -173,7 +156,7 @@ export function useSequentialVerification(
     }
 
     console.log(
-      `  └─ [CLEANUP] Removed ${redundantRemoved} redundant files, upgraded ${verificationResult.stats.upgradedToPrimaryCount || 0} to primary`
+      `  └─ [VERIFICATION] Upgraded ${verificationResult.stats.upgradedToPrimaryCount || 0} files to primary (hash mismatch)`
     );
 
     const totalTime = performance.now() - verifyT0;
