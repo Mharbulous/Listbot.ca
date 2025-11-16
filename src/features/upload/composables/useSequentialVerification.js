@@ -217,18 +217,30 @@ export function useSequentialVerification(
    */
   const setupAutoStart = () => {
     let lastFlagState = false; // Track flag state to detect transitions
+    let pollCount = 0;
 
     const checkInterval = setInterval(() => {
       const currentFlagState = window.queueAdditionComplete;
+      pollCount++;
+
+      // Debug logging every 10 polls (~1 second) if waiting for flag
+      if (pollCount % 10 === 0 && !currentFlagState) {
+        const filesNeedingVerification = getFilesNeedingVerification();
+        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Poll ${pollCount}: queueAdditionComplete=${currentFlagState}, filesNeedingVerification=${filesNeedingVerification.length}, isVerificationRunning=${isVerificationRunning}`);
+      }
 
       // Detect transition from false -> true (new drop completed)
       if (currentFlagState && !lastFlagState && !isVerificationRunning) {
         const filesNeedingVerification = getFilesNeedingVerification();
+        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Flag transition detected! filesNeedingVerification=${filesNeedingVerification.length}`);
         if (filesNeedingVerification.length > 0) {
+          console.log(`[SEQUENTIAL-VERIFY-DEBUG] Starting verification in 100ms...`);
           // Use setTimeout to ensure this runs after the current call stack clears
           setTimeout(() => {
             startVerification();
           }, 100);
+        } else {
+          console.log(`[SEQUENTIAL-VERIFY-DEBUG] No files need verification - skipping Stage 2`);
         }
       }
 

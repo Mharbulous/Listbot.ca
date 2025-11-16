@@ -83,7 +83,13 @@ export function useQueueHelpers() {
   };
 
   /**
-   * Generate BLAKE3 hash for a file (legacy fallback compatibility)
+   * Generate BLAKE3 hash for a file (MAIN THREAD FALLBACK)
+   *
+   * WARNING: This function runs on the main thread and can block the UI for large files.
+   * It should ONLY be used as a fallback when the Web Worker is unavailable.
+   *
+   * Preferred method: Use useSequentialHashWorker composable for non-blocking hashing.
+   *
    * @param {File} file - Browser File object
    * @returns {Promise<string>} - 32-character hex hash string
    */
@@ -96,16 +102,20 @@ export function useQueueHelpers() {
     const hash = await blake3(uint8Array, 128);
 
     const hashDuration = performance.now() - hashStartTime;
-    console.log(`[HASH-PERF-FALLBACK] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    console.warn(`[HASH-PERF-FALLBACK] ${file.name}: ${hashDuration.toFixed(2)}ms (${(file.size / 1024 / 1024).toFixed(2)} MB) - Using main thread fallback (Web Worker unavailable)`);
 
     // Return BLAKE3 hash of source file content (32 hex characters)
     return hash;
   };
 
   /**
-   * Choose best file from array based on priority rules (legacy fallback compatibility)
+   * Choose best file from array based on priority rules
    * Priority: 1) Earliest modification date, 2) Longest folder path, 3) Shortest filename,
    *           4) Alphanumeric sort, 5) Original selection order
+   *
+   * Used by legacy deduplication systems and the Web Worker.
+   * Sequential deduplication uses metadata comparison in useUploadTable-sorting.js instead.
+   *
    * @param {Array} fileRefs - Array of file reference objects
    * @returns {Object} - Best file reference
    */
