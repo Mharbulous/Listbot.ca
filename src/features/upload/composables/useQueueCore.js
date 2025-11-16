@@ -13,8 +13,6 @@ import { useQueueHashProcessing } from './useQueueHashProcessing';
  * It works with file reference objects containing Browser File objects and metadata
  * from the user's filesystem.
  *
- * NOTE: Switched from BLAKE3 to XXH32 for performance comparison
- *
  * ARCHITECTURE:
  * =============
  * This composable has been decomposed into focused modules:
