@@ -1,71 +1,47 @@
 # Bookkeeper
 
-A Vue 3 bookkeeping application with advanced file upload and processing capabilities.
+Vue 3 bookkeeping app with file upload/processing. Part of a multi-app SSO architecture.
 
-## Tech Stack
+## Critical: Know Before You Code
 
-- **Frontend**: Vue 3 (Composition API) + Vuetify 3
-- **Build**: Vite
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **State**: Pinia
-- **Styling**: Tailwind CSS
-- **Testing**: Vitest
+1. **Pre-Alpha Stage**: NO user data exists. NO migrations needed. Firestore/Storage can be wiped anytime. Focus on optimal architecture, not backward compatibility.
+
+2. **Multi-App SSO**: Shares Firebase Auth with Intranet and Coryphaeus apps. **Never change Firebase config without coordinating across all apps.**
+
+3. **Terminology is Enforced**: File lifecycle uses specific terms (Original, Source, Upload, Batesed, etc.). See `docs/architecture/file-lifecycle.md` before coding file features.
+
+4. **Auth State Machine**: Always check `authStore.isInitialized` before `authStore.isAuthenticated`. See `docs/architecture/authentication.md`.
+
+5. **Solo Firm Architecture**: All data scoped by `firmId`. For solo users: `firmId === userId` (always).
+
+6. **Tests Location**: All Vitest tests go in `/tests` folder (not alongside source).
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev          # Standard dev server (localhost:5173)
-npm run dev:bookkeeping  # SSO testing (bookkeeping.localhost:3001)
+npm run dev          # localhost:5173
 ```
 
-## Development
+**Working on auth/SSO?** Use:
+```bash
+npm run dev:bookkeeping  # bookkeeping.localhost:3001
+```
 
-This project is part of a multi-app SSO architecture. See `CLAUDE.md` for detailed development guidelines and `docs/` for architecture documentation.
-
-### Key Commands
-
-- `npm run lint` - Lint code
-- `npm run test:run` - Run tests
-- `npm run build` - Production build
-
-## Deployment Model
-
-**Two-branch promotion model:**
-- **main** - Development/integration (receives all merges from Claude Code)
-- **production** - Stable releases (manually promoted from main)
-
-### Promotion Workflow
+## Before You Commit
 
 ```bash
-# Promote main to production
-git checkout production
-git merge origin/main
-git tag -a v1.2.0 -m "Release version 1.2.0"
-git push origin production
-git push origin v1.2.0
+npm run lint
+npm run test:run
+npm run build
 ```
-
-### Hotfix Strategy
-
-```bash
-# Apply specific fix to production without unreleased features
-git checkout production
-git cherry-pick <commit-hash>
-git tag -a v1.2.1 -m "Hotfix for critical bug"
-git push origin production
-git push origin v1.2.1
-```
-
-See `docs/hosting/2025-11-16-Promotion.md` for full deployment details.
 
 ## Documentation
 
-- `CLAUDE.md` - Development directives and workflow
-- `docs/architecture/` - System architecture and design
-- `docs/testing/` - Testing guidelines and performance analysis
-- `docs/hosting/` - Deployment and hosting documentation
+- **Start here**: `CLAUDE.md` - Development directives and workflow
+- **Architecture**: `docs/architecture/` - Auth, file lifecycle, processing
+- **Component docs**: `docs/front-end/` - DocumentTable, layouts, views
 
-## License
+## Tech Stack
 
-Private project - All rights reserved
+Vue 3 + Vuetify 3 + Vite + Firebase + Pinia + Tailwind + Vitest
