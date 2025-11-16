@@ -32,6 +32,10 @@ export function useUploadTableDeduplication(uploadQueue) {
       `📊 [DEDUP] T=0.00ms - Starting: {new: ${newQueueItems.length}, existing: ${existingQueueSnapshot.length}}`
     );
 
+    // DEBUG: Log file names in this deduplication batch
+    const newFileNames = newQueueItems.map(item => item.name).slice(0, 5);
+    console.log(`  │  [DEDUP-DEBUG] New files in batch: ${newFileNames.join(', ')}${newQueueItems.length > 5 ? ` ... and ${newQueueItems.length - 5} more` : ''}`);
+
     // ========================================================================
     // PHASE 1: Metadata Pre-Filter (BEFORE hash calculation)
     // Mark files as tentative duplicates/copies based on metadata + folder path

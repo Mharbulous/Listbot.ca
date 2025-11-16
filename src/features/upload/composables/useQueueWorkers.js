@@ -68,13 +68,16 @@ export function useQueueWorkers() {
 
   // Process files using web worker
   const processFilesWithWorker = async (files, onProgress = null) => {
+    console.log(`  │  [WORKER-DEBUG] processFilesWithWorker called with ${files.length} files`);
+
     // Check if Web Workers are supported
     if (!workerInstance.isWorkerSupported) {
       console.warn(
-        'Web Workers not supported in this browser, falling back to main thread processing'
+        '[WORKER-DEBUG] Web Workers not supported in this browser, falling back to main thread processing'
       );
       return { success: false, fallback: true };
     }
+    console.log(`  │  [WORKER-DEBUG] Workers supported: true`);
 
     // Check worker manager state if available
     if (workerState) {
@@ -83,16 +86,23 @@ export function useQueueWorkers() {
     }
 
     // Initialize worker if needed
+    console.log(`  │  [WORKER-DEBUG] Initializing worker...`);
     const initResult = await initializeWorkerIfNeeded();
+    console.log(`  │  [WORKER-DEBUG] Init result:`, initResult);
     if (!initResult.success) {
+      console.warn(`  │  [WORKER-DEBUG] Worker initialization failed, using fallback`);
       return { success: false, fallback: true };
     }
 
     // Check worker health
+    console.log(`  │  [WORKER-DEBUG] Checking worker health...`);
     const healthResult = await checkWorkerHealth(initResult.justInitialized);
+    console.log(`  │  [WORKER-DEBUG] Health result:`, healthResult);
     if (!healthResult.healthy) {
+      console.warn(`  │  [WORKER-DEBUG] Worker unhealthy, using fallback`);
       return { success: false, fallback: true };
     }
+    console.log(`  │  [WORKER-DEBUG] Worker ready and healthy, proceeding with worker processing`);
 
     try {
       // Create mapping structure that preserves source File objects (from user's device)
