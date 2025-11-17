@@ -234,7 +234,7 @@ export function applySequentialPrefilter(allFiles) {
 }
 
 /**
- * Stage 2: Hash verification (main thread or web worker)
+ * Stage 2: Hash verification (Web Worker preferred, main thread fallback)
  * Only hashes files marked "Copy" or "Duplicate" to verify they truly match
  *
  * IMPORTANT: Uses referenceFileId to find the file to compare with (not necessarily previous in array)
@@ -242,14 +242,19 @@ export function applySequentialPrefilter(allFiles) {
  * IMPORTANT: Always save hash value after calculating
  *
  * @param {Array} sortedFiles - Files in sorted order from Stage 1
- * @param {Function} hashFunction - Function to generate hash for a file
+ * @param {Function} hashFunction - Fallback function to generate hash (main thread)
  * @param {Function} preFilterCompleteCheck - Function to check if pre-filter is complete
+ * @param {Object} hashWorker - Optional Web Worker for hashing (preferred)
  * @returns {Promise<Object>} - { verificationComplete: boolean, stats: Object }
  */
-export async function verifyWithHashing(sortedFiles, hashFunction, preFilterCompleteCheck) {
+export async function verifyWithHashing(sortedFiles, hashFunction, preFilterCompleteCheck, hashWorker = null) {
   const t0 = performance.now();
 
-  console.log('[HASH-VERIFICATION] Starting Stage 2: Hash verification');
+  // Determine hash method
+  const useWorker = hashWorker && hashWorker.isWorkerReady && hashWorker.isWorkerReady.value;
+  const hashMethod = useWorker ? 'Web Worker' : 'Main Thread (fallback)';
+
+  console.log(`[HASH-VERIFICATION] Starting Stage 2: Hash verification (${hashMethod})`);
   console.log(`[HASH-VERIFICATION] Processing ${sortedFiles.length} files`);
 
   // Step 12: Wait for pre-filter to complete (with timeout)
@@ -318,7 +323,14 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
     // Check if we need to calculate hash for current file
     if (!currentFile.hash) {
       try {
-        currentFile.hash = await hashFunction(currentFile.sourceFile);
+        if (useWorker) {
+          currentFile.hash = await hashWorker.hashFile(currentFile.sourceFile);
+          if (!currentFile.hash) {
+            throw new Error('Worker returned null hash');
+          }
+        } else {
+          currentFile.hash = await hashFunction(currentFile.sourceFile);
+        }
         hashedCount++;
       } catch (error) {
         console.error(`[HASH-VERIFICATION] Hash failed for ${currentFile.name}:`, error);
@@ -331,7 +343,14 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
     // Check if we need to calculate hash for reference file
     if (!referenceFile.hash) {
       try {
-        referenceFile.hash = await hashFunction(referenceFile.sourceFile);
+        if (useWorker) {
+          referenceFile.hash = await hashWorker.hashFile(referenceFile.sourceFile);
+          if (!referenceFile.hash) {
+            throw new Error('Worker returned null hash');
+          }
+        } else {
+          referenceFile.hash = await hashFunction(referenceFile.sourceFile);
+        }
         hashedCount++;
       } catch (error) {
         console.error(`[HASH-VERIFICATION] Hash failed for ${referenceFile.name}:`, error);

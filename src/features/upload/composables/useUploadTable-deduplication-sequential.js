@@ -1,5 +1,6 @@
 import { useQueueCore } from './useQueueCore.js';
 import { applySequentialPrefilter, verifyWithHashing } from './useSequentialPrefilter.js';
+import { useSequentialHashWorker } from './useSequentialHashWorker.js';
 
 /**
  * Sequential Deduplication Composable
@@ -16,6 +17,9 @@ import { applySequentialPrefilter, verifyWithHashing } from './useSequentialPref
 export function useUploadTableDeduplicationSequential(uploadQueue) {
   // Initialize core utilities
   const queueCore = useQueueCore();
+
+  // Initialize Web Worker for hash verification
+  const hashWorker = useSequentialHashWorker();
 
   // Flag to track if pre-filter is complete
   let preFilterComplete = false;
@@ -83,6 +87,12 @@ export function useUploadTableDeduplicationSequential(uploadQueue) {
   const verifyHashesForCopiesAndDuplicates = async () => {
     console.log('[DEDUP-SEQUENTIAL] Starting Stage 2: Hash verification');
 
+    // Initialize Web Worker if not already done
+    if (!hashWorker.isWorkerReady || !hashWorker.isWorkerReady.value) {
+      console.log('[DEDUP-SEQUENTIAL] Initializing Web Worker for hash verification...');
+      await hashWorker.initWorker();
+    }
+
     // Check if pre-filter is complete
     const checkPreFilterComplete = () => preFilterComplete;
 
@@ -90,10 +100,12 @@ export function useUploadTableDeduplicationSequential(uploadQueue) {
     const filesToVerify = sortedFilesCache.length > 0 ? sortedFilesCache : uploadQueue.value;
 
     // Verify hashes using the sequential verification approach
+    // Pass Web Worker as 4th parameter (will fall back to main thread if worker unavailable)
     const verificationResult = await verifyWithHashing(
       filesToVerify,
       queueCore.generateFileHash,
-      checkPreFilterComplete
+      checkPreFilterComplete,
+      hashWorker
     );
 
     return verificationResult;
