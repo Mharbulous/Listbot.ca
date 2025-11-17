@@ -113,14 +113,19 @@ async function processFiles(files, batchId) {
     const duplicateCandidates = [];
 
     // Step 2: Separate unique-sized files from potential duplicates
+    // SPECIAL CASE: If there's only 1 file total in the batch, we're likely being called
+    // by the sequential hash worker for verification purposes, so we MUST hash it
+    const isSingleFileVerification = files.length === 1;
+
     for (const [, fileRefs] of fileSizeGroups) {
-      if (fileRefs.length === 1) {
-        // Unique file size - definitely not a duplicate
+      if (fileRefs.length === 1 && !isSingleFileVerification) {
+        // Unique file size - definitely not a duplicate (unless we're in single-file mode)
         uniqueFiles.push(fileRefs[0]);
         processedCount++;
         sendProgressUpdate();
       } else {
         // Multiple files with same size - need hash verification
+        // OR single file verification mode - hash it
         duplicateCandidates.push(...fileRefs);
       }
     }
