@@ -82,8 +82,9 @@ export function useSequentialHashWorker() {
       });
 
       // Extract hash from result
-      if (result && result.result) {
-        const { readyFiles, copyFiles } = result.result;
+      // Note: sendMessage already unwraps and returns data.result, not the full message
+      if (result) {
+        const { readyFiles, copyFiles } = result;
 
         // Find our file in the results
         const allFiles = [...(readyFiles || []), ...(copyFiles || [])];
@@ -136,8 +137,9 @@ export function useSequentialHashWorker() {
       });
 
       // Extract hashes from result
-      if (result && result.result) {
-        const { readyFiles, copyFiles } = result.result;
+      // Note: sendMessage already unwraps and returns data.result, not the full message
+      if (result) {
+        const { readyFiles, copyFiles } = result;
         const allFiles = [...(readyFiles || []), ...(copyFiles || [])];
 
         // Map results back to original files
