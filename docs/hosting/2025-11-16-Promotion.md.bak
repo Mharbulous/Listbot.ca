@@ -27,18 +27,20 @@ This decouples continuous integration (what the tool does) from release manageme
 - The `production` branch maintains its own linear history independent of `main`'s detailed history
 
 **Trade-off**: GitHub will show "`production` is X commits behind `main`" - this is **expected and cosmetic** (see "Understanding the 'Behind Main' Warning" section below).
-## Quick Reference
 
-**Checklist for promoting main → production:**
-- [ ] Ensure main is stable and ready for release
-- [ ] Create PR: `gh pr create --base production --head main --title "Release vX.X.X"`
-- [ ] Get 1 approval on GitHub
-- [ ] Use "Squash and merge" dropdown (NOT regular merge or rebase)
-- [ ] Pull locally: `git fetch origin && git checkout production && git pull`
-- [ ] Tag: `git tag -a vX.X.X -m "Release version X.X.X" && git push origin vX.X.X`
-- [ ] Switch back: `git checkout main`
-- [ ] Verify: Check releases page on GitHub
+## Critical Non-Obvious Details
 
+### Initial Setup (One-Time)
+
+```bash
+git checkout -b production
+git push origin production
+```
+
+The production branch starts as a copy of main. From this point forward:
+- `main` continues to accumulate detailed commit history
+- `production` receives only squashed commits via promotions
+- The two histories diverge and become independent
 
 ### Promotion Workflow
 
@@ -71,31 +73,22 @@ gh pr create \
 - [ ] Ready for production deployment"
 ```
 
-**Alternative (using GitHub web interface)** - Recommended for first-time users:
+**Alternative (using GitHub web interface)**:
 1. Go to your repository on GitHub
 2. Click "Pull requests" → "New pull request"
-3. **Important**: Click "compare across forks" if the base branch selector doesn't show production
-4. Set **base** branch to `production` (left dropdown)
-5. Set **compare** branch to `main` (right dropdown)
-6. Fill in title: "Release v1.2.0"
-7. Fill in description with changes and testing checklist
-8. Click "Create pull request"
-9. **If you're a solo developer**: You can approve your own PR and merge
+3. Set base branch to `production`
+4. Set compare branch to `main`
+5. Fill in title and description
+6. Create pull request
 
 #### Step 2: Get Approval and Squash Merge
 
-1. **Get required approval**
-   - Minimum 1 reviewer approval required
-   - **Solo developers**: You can approve your own PR via the GitHub web interface (branch protection allows this for administrators)
-     - Click "Files changed" tab → "Review changes" → "Approve" → "Submit review"
-   - **Team developers**: Get approval from another team member
-
-2. **Use "Squash and merge"** on GitHub (NOT regular merge or rebase)
+1. Wait for required approval (minimum 1 reviewer)
+2. **Use "Squash and merge"** on GitHub (NOT regular merge)
    - Click the dropdown arrow next to "Merge pull request"
    - Select "Squash and merge"
    - Edit the commit message to summarize the release (title becomes commit message)
    - Confirm the squash merge
-
 3. Pull the updated production branch locally
 
 ```bash
@@ -105,18 +98,6 @@ git pull origin production
 ```
 
 **Critical**: Always use **Squash and merge** to keep production history clean and separate from main's detailed commit history.
-
-#### Important: Why "Squash and Merge" (Not "Rebase and Merge")
-
-GitHub offers three merge options. Here's why you must use **Squash and merge**:
-
-| Option | Effect | Production History | "Behind Main" Warning |
-|--------|--------|-------------------|---------------------|
-| **Squash and merge** ✅ | Collapses all commits into 1 | Clean release commits | Yes (expected) |
-| Rebase and merge ❌ | Replays all commits individually | Identical to main's detailed history | No |
-| Regular merge ❌ | Creates merge commit | Preserves all main commits + merge commit | No |
-
-**Why squash is correct**: The "behind main" warning is the intentional trade-off for clean production history. Using rebase defeats the entire purpose of the promotion model.
 
 #### Step 3: Tag the Release
 
@@ -131,21 +112,6 @@ git push origin v1.2.0  # Tags require separate push
 **Non-obvious**: Tags are not pushed with branches by default. You must push them explicitly.
 
 **Non-obvious**: The PR-based workflow provides an audit trail and review point before production deployment.
-
-#### Step 4: Verify and Return to Main
-
-```bash
-# Verify the tag exists
-git tag -l "v1.2.0"
-
-# Check GitHub releases page
-# Visit: https://github.com/yourusername/yourrepo/releases/tag/v1.2.0
-
-# Switch back to main for continued development
-git checkout main
-```
-
-**Expected**: GitHub will show "production is X commits behind main" - this is correct and intentional.
 
 ### Hotfix Strategy
 
@@ -247,25 +213,6 @@ git push origin production --force
 - After this, you're back to having production mirror main's history
 
 **Best practice**: Accept the "behind" warning as the cost of clean production history.
-
-### Troubleshooting
-
-**"production branch not found in base selector"**
-- Click "compare across forks" link to reveal all branches
-- Ensure production branch exists: `git branch -r | grep production`
-
-**"No approval from reviewer despite being admin"**
-- As admin, you can approve your own PR via the web interface
-- Click "Files changed" tab → "Review changes" → "Approve" → "Submit review"
-
-**"Tag already exists"**
-- List tags: `git tag -l`
-- Delete if needed: `git tag -d v1.2.0 && git push origin :refs/tags/v1.2.0`
-- Recreate tag with correct commit
-
-**"Production shows 'X commits behind main'"**
-- This is expected and intentional (see "Understanding the 'Behind Main' Warning")
-- Production has all the code, just in squashed commits
 
 ### Key Invariants
 
