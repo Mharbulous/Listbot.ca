@@ -29,16 +29,18 @@ This decouples continuous integration (what the tool does) from release manageme
 **Trade-off**: GitHub will show "`production` is X commits behind `main`" - this is **expected and cosmetic** (see "Understanding the 'Behind Main' Warning" section below).
 ## Quick Reference
 
-**Checklist for promoting main → production:**
+**Complete checklist for promoting and deploying:**
 - [ ] Ensure main is stable and ready for release
 - [ ] Create PR: `gh pr create --base production --head main --title "Release vX.X.X"`
 - [ ] Get 1 approval on GitHub
 - [ ] Use "Squash and merge" dropdown (NOT regular merge or rebase)
 - [ ] Pull locally: `git fetch origin && git checkout production && git pull`
 - [ ] Tag: `git tag -a vX.X.X -m "Release version X.X.X" && git push origin vX.X.X`
-- [ ] Switch back: `git checkout main`
-- [ ] Verify: Check releases page on GitHub
-
+- [ ] Verify production is clean: `git status` (no uncommitted changes)
+- [ ] Build: `npm run build` (from production branch)
+- [ ] Deploy: `firebase deploy --only hosting:TARGET_NAME` (or your hosting command)
+- [ ] Verify deployment succeeded (visit live URL)
+- [ ] Return to main: `git checkout main`
 
 ### Promotion Workflow
 
@@ -146,6 +148,132 @@ git checkout main
 ```
 
 **Expected**: GitHub will show "production is X commits behind main" - this is correct and intentional.
+
+### Deployment Workflow
+
+**Critical Principle**: ALWAYS deploy from the `production` branch, NEVER from `main`.
+
+The `production` branch represents your stable, released code. Deploying from `main` defeats the entire purpose of the promotion model.
+
+#### Step 5: Prepare for Deployment
+
+**Before deploying, ensure production branch is clean:**
+
+```bash
+# Switch to production
+git checkout production
+
+# Check for uncommitted changes
+git status
+```
+
+**If you have uncommitted changes on production:**
+
+This violates the promotion model. Production should only receive changes via PR from main.
+
+```bash
+# Stash changes on production
+git stash push -m "Description of changes"
+
+# Switch to main and apply them
+git checkout main
+git stash pop
+
+# Commit to main
+git add .
+git commit -m "Your commit message"
+
+# Push to main (will be in next promotion)
+git push origin main
+
+# Return to production for deployment
+git checkout production
+```
+
+**Why this matters**: The production branch must remain a clean reflection of what was promoted via PR. Any direct modifications bypass your review process.
+
+#### Step 6: Build Production Application
+
+```bash
+# Ensure you're on production branch
+git branch --show-current  # Should show: production
+
+# Build the application
+npm run build
+```
+
+**Non-obvious**: Build from `production`, not `main`. This ensures you're deploying exactly what was promoted and tagged.
+
+#### Step 7: Deploy to Hosting
+
+```bash
+# For Firebase hosting (example)
+firebase deploy --only hosting:TARGET_NAME
+
+# For other hosting providers, use their deployment command
+```
+
+**Non-obvious**: The `dist/` folder (build output) should be in `.gitignore`. You build fresh on the production branch for each deployment.
+
+#### Step 8: Verify Deployment
+
+1. Visit the live URL to confirm deployment succeeded
+2. Check critical functionality works
+3. Verify the version matches your tag (if displayed in app)
+
+```bash
+# Return to main for continued development
+git checkout main
+```
+
+### Post-Deployment Checklist
+
+After successful deployment:
+
+1. **Verify live site**: Visit the hosting URL and test critical functionality
+2. **Check version**: Confirm the deployed version matches your tag
+3. **Monitor errors**: Watch Firebase Console / error tracking for issues
+4. **Document**: Update any deployment logs or release notes
+5. **Return to main**: `git checkout main` for continued development
+
+**If deployment fails:**
+- Check build output for errors
+- Verify Firebase/hosting configuration
+- Ensure all environment variables are set
+- Review hosting provider's deployment logs
+- Do NOT modify production branch - fix on main and re-promote if needed
+
+### Handling Uncommitted Changes on Production
+
+**Scenario**: You're on the production branch and `git status` shows uncommitted changes.
+
+**Why this happens**: 
+- Build artifacts not in `.gitignore`
+- Manual edits made directly on production (don't do this!)
+- Files pulled from remote that shouldn't be tracked
+
+**Correct response**: Move changes to main branch via commit, not via PR.
+
+```bash
+# On production with uncommitted changes
+git stash push -m "Infrastructure: Description of changes"
+git checkout main
+git stash pop
+git add <files>
+git commit -m "Infrastructure: Description"
+git push origin main
+
+# Clean production is now ready for deployment
+git checkout production
+```
+
+**Why not create a PR from production to main?** 
+- Violates the one-way flow (main → production only)
+- Creates merge conflicts and confusion
+- Production should only receive, never send
+
+**Prevention**: Keep production pristine. Only touch it for promotion and deployment.
+
 
 ### Hotfix Strategy
 
@@ -276,6 +404,7 @@ git push origin production --force
 5. **All PRs to production use squash merge** - Maintains clean, consolidated production history separate from main
 6. **production will always show "behind main"** - Expected result of squash merges; purely cosmetic
 7. **Claude Code touches main only** - All other branch operations are manual
+8. **Always deploy from production, never from main** - Production branch is the source of truth for deployed code9. **Production branch must be clean before deployment** - No uncommitted changes allowed; move them to main
 
 ## Rationale
 
