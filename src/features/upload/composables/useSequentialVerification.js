@@ -224,10 +224,13 @@ export function useSequentialVerification(
       pollCount++;
 
       // Debug logging every 10 polls (~1 second) if waiting for flag
-      // Only log if there are files in the queue to avoid spam when page is idle
-      if (pollCount % 10 === 0 && !currentFlagState && uploadQueue.value.length > 0) {
+      // Only log if there are files that actually need verification to avoid spam when page is idle
+      if (pollCount % 10 === 0 && !currentFlagState) {
         const filesNeedingVerification = getFilesNeedingVerification();
-        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Poll ${pollCount}: queueAdditionComplete=${currentFlagState}, filesNeedingVerification=${filesNeedingVerification.length}, isVerificationRunning=${isVerificationRunning}`);
+        // Only log if there are files needing verification
+        if (filesNeedingVerification.length > 0) {
+          console.log(`[SEQUENTIAL-VERIFY-DEBUG] Poll ${pollCount}: queueAdditionComplete=${currentFlagState}, filesNeedingVerification=${filesNeedingVerification.length}, isVerificationRunning=${isVerificationRunning}`);
+        }
       }
 
       // Detect transition from false -> true (new drop completed)
