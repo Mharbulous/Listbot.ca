@@ -44,14 +44,42 @@ export function useUploadTableManagement(uploadQueue, duplicatesHidden) {
 
   /**
    * Clear skipped files from queue (files with status 'skip')
+   * Also removes copy/duplicate files whose primary file has been removed
    */
   const clearSkipped = () => {
     const beforeCount = uploadQueue.value.length;
-    uploadQueue.value = uploadQueue.value.filter((file) =>
-      file.status !== 'skip'
+
+    // Collect hashes of files being removed (status 'skip')
+    // This must be done BEFORE filtering to avoid race condition
+    const removedHashes = new Set(
+      uploadQueue.value
+        .filter((file) => file.status === 'skip')
+        .filter((file) => file.hash) // Only files with hashes
+        .map((file) => file.hash)
     );
+
+    // Remove files with status 'skip' AND copy/duplicate files with matching hashes
+    uploadQueue.value = uploadQueue.value.filter((file) => {
+      // Remove if status is 'skip'
+      if (file.status === 'skip') {
+        return false;
+      }
+
+      // Remove if this is a copy/duplicate with a hash that matches a removed file
+      if (
+        (file.status === 'copy' || file.status === 'duplicate') &&
+        file.hash &&
+        removedHashes.has(file.hash)
+      ) {
+        return false;
+      }
+
+      // Keep all other files
+      return true;
+    });
+
     const removedCount = beforeCount - uploadQueue.value.length;
-    console.log(`[QUEUE] Cleared ${removedCount} skipped files`);
+    console.log(`[QUEUE] Cleared ${removedCount} skipped files and their copies`);
   };
 
   /**

@@ -12,7 +12,8 @@
  * 4. Marks hash-verified duplicates as "redundant" for removal in next batch
  */
 
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch } from 'vue';
+import { useQueueState } from './useQueueState.js';
 
 /**
  * Composable for background sequential hash verification
@@ -37,6 +38,9 @@ export function useSequentialVerification(
 
   // Flag to prevent multiple verification processes
   let isVerificationRunning = false;
+
+  // Get shared queue state for reactive auto-start
+  const { queueAdditionComplete } = useQueueState();
 
   /**
    * Get all files that need hash verification
@@ -212,27 +216,19 @@ export function useSequentialVerification(
 
   /**
    * Watch for queue addition completion to auto-start verification
-   * Polls window.queueAdditionComplete every 100ms
-   * The interval persists throughout the component lifecycle to handle multiple drops
+   * Uses Vue reactive ref instead of polling for better performance
+   * Detects transitions from false -> true to trigger verification
    */
-  const setupAutoStart = () => {
-    let lastFlagState = false; // Track flag state to detect transitions
-    let pollCount = 0;
+  let lastQueueState = false;
 
-    const checkInterval = setInterval(() => {
-      const currentFlagState = window.queueAdditionComplete;
-      pollCount++;
-
-      // Debug logging every 10 polls (~1 second) if waiting for flag
-      if (pollCount % 10 === 0 && !currentFlagState) {
-        const filesNeedingVerification = getFilesNeedingVerification();
-        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Poll ${pollCount}: queueAdditionComplete=${currentFlagState}, filesNeedingVerification=${filesNeedingVerification.length}, isVerificationRunning=${isVerificationRunning}`);
-      }
-
+  watch(
+    queueAdditionComplete,
+    (currentState) => {
       // Detect transition from false -> true (new drop completed)
-      if (currentFlagState && !lastFlagState && !isVerificationRunning) {
+      if (currentState && !lastQueueState && !isVerificationRunning) {
         const filesNeedingVerification = getFilesNeedingVerification();
-        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Flag transition detected! filesNeedingVerification=${filesNeedingVerification.length}`);
+        console.log(`[SEQUENTIAL-VERIFY-DEBUG] Queue addition complete! filesNeedingVerification=${filesNeedingVerification.length}`);
+
         if (filesNeedingVerification.length > 0) {
           console.log(`[SEQUENTIAL-VERIFY-DEBUG] Starting verification in 100ms...`);
           // Use setTimeout to ensure this runs after the current call stack clears
@@ -244,20 +240,10 @@ export function useSequentialVerification(
         }
       }
 
-      lastFlagState = currentFlagState;
-    }, 100);
-
-    // Return cleanup function for component unmount
-    return () => clearInterval(checkInterval);
-  };
-
-  // Set up auto-start on mount and store cleanup function
-  const cleanupAutoStart = setupAutoStart();
-
-  // Clean up interval on component unmount
-  onUnmounted(() => {
-    cleanupAutoStart();
-  });
+      lastQueueState = currentState;
+    },
+    { immediate: true } // Run immediately to catch initial state
+  );
 
   // Also watch the upload queue for changes
   // This handles the case where files are added after initial queue is rendered
@@ -265,7 +251,7 @@ export function useSequentialVerification(
     () => uploadQueue.value.length,
     () => {
       // Only auto-start if queue addition is complete and not already running
-      if (window.queueAdditionComplete && !isVerificationRunning) {
+      if (queueAdditionComplete.value && !isVerificationRunning) {
         const filesNeedingVerification = getFilesNeedingVerification();
         if (filesNeedingVerification.length > 0) {
           setTimeout(() => {
