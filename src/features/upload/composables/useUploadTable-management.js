@@ -44,31 +44,42 @@ export function useUploadTableManagement(uploadQueue, duplicatesHidden) {
 
   /**
    * Clear skipped files from queue (files with status 'skip')
-   * Also removes copy files whose primary file has been removed
+   * Also removes copy/duplicate files whose primary file has been removed
    */
   const clearSkipped = () => {
     const beforeCount = uploadQueue.value.length;
 
-    // First, remove all files with status 'skip'
-    uploadQueue.value = uploadQueue.value.filter((file) =>
-      file.status !== 'skip'
+    // Collect hashes of files being removed (status 'skip')
+    // This must be done BEFORE filtering to avoid race condition
+    const removedHashes = new Set(
+      uploadQueue.value
+        .filter((file) => file.status === 'skip')
+        .filter((file) => file.hash) // Only files with hashes
+        .map((file) => file.hash)
     );
 
-    // Then, remove copy files whose primary file no longer exists
-    // A copy file should be removed if there's no 'ready' or 'skip' file with the same hash
+    // Remove files with status 'skip' AND copy/duplicate files with matching hashes
     uploadQueue.value = uploadQueue.value.filter((file) => {
-      if (file.status === 'copy' && file.hash) {
-        // Check if there's still a primary file (ready or skip) with this hash
-        const hasPrimary = uploadQueue.value.some(
-          (f) => f.hash === file.hash && (f.status === 'ready' || f.status === 'skip')
-        );
-        return hasPrimary; // Keep copy only if primary exists
+      // Remove if status is 'skip'
+      if (file.status === 'skip') {
+        return false;
       }
-      return true; // Keep all non-copy files
+
+      // Remove if this is a copy/duplicate with a hash that matches a removed file
+      if (
+        (file.status === 'copy' || file.status === 'duplicate') &&
+        file.hash &&
+        removedHashes.has(file.hash)
+      ) {
+        return false;
+      }
+
+      // Keep all other files
+      return true;
     });
 
     const removedCount = beforeCount - uploadQueue.value.length;
-    console.log(`[QUEUE] Cleared ${removedCount} skipped files and orphaned copies`);
+    console.log(`[QUEUE] Cleared ${removedCount} skipped files and their copies`);
   };
 
   /**
