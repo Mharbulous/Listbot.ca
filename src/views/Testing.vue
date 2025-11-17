@@ -83,6 +83,7 @@ import { useUploadTable } from '../features/upload/composables/useUploadTable.js
 import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
 import { useNotification } from '../core/composables/useNotification.js';
 import { useSequentialVerification } from '../features/upload/composables/useSequentialVerification.js';
+import { useQueueState } from '../features/upload/composables/useQueueState.js';
 
 // Component configuration
 defineOptions({
@@ -94,6 +95,7 @@ defineOptions({
 const { uploadQueue, duplicatesHidden, queueProgress, addFilesToQueue, skipFile, undoSkip, removeFromQueue, clearQueue, clearDuplicates, clearSkipped, updateFileStatus, selectAll, deselectAll, swapCopyToPrimary, toggleDuplicatesVisibility, cancelQueue, sortQueueByGroupTimestamp, verifyHashesForCopiesAndDuplicates } =
   useUploadTable({ useSequentialDedup: true });
 const { snackbar, showNotification } = useNotification();
+const { queueAdditionComplete } = useQueueState();
 
 // Enhanced upload queue with computed displayed status
 // Copy files should show 'skip' status when their primary is skipped
@@ -174,7 +176,8 @@ const handleFilesSelected = async (files) => {
   if (!window.queueT0) {
     window.queueT0 = performance.now();
     window.initialBatchComplete = false;
-    window.queueAdditionComplete = false;
+    queueAdditionComplete.value = false;
+    window.queueAdditionComplete = false; // Keep for backward compatibility with metrics logging
     console.log('📊 [QUEUE METRICS] T=0.00ms - File selection started:', {
       filesSelected: files.length,
     });
@@ -187,7 +190,8 @@ const handleFolderRecursiveSelected = async (files) => {
   if (!window.queueT0) {
     window.queueT0 = performance.now();
     window.initialBatchComplete = false;
-    window.queueAdditionComplete = false;
+    queueAdditionComplete.value = false;
+    window.queueAdditionComplete = false; // Keep for backward compatibility with metrics logging
     console.log('📊 [QUEUE METRICS] T=0.00ms - Folder selection started (recursive):', {
       filesSelected: files.length,
     });
@@ -311,7 +315,8 @@ const handleFileSelect = (event) => {
   // Set T=0 IMMEDIATELY when change event fires (before Array.from which can be slow)
   window.queueT0 = performance.now();
   window.initialBatchComplete = false;
-  window.queueAdditionComplete = false;
+  queueAdditionComplete.value = false;
+  window.queueAdditionComplete = false; // Keep for backward compatibility with metrics logging
 
   const files = Array.from(event.target.files);
   if (files.length > 0) {
@@ -328,7 +333,8 @@ const handleFolderRecursiveSelect = (event) => {
   // Set T=0 IMMEDIATELY when change event fires (before Array.from which can be slow)
   window.queueT0 = performance.now();
   window.initialBatchComplete = false;
-  window.queueAdditionComplete = false;
+  queueAdditionComplete.value = false;
+  window.queueAdditionComplete = false; // Keep for backward compatibility with metrics logging
 
   const allFiles = Array.from(event.target.files);
   if (allFiles.length === 0) return;

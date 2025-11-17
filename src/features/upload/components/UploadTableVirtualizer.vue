@@ -121,6 +121,7 @@ import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
 import UploadTableDropzone from './UploadTableDropzone.vue';
+import { useQueueState } from '../composables/useQueueState.js';
 
 // Component configuration
 defineOptions({
@@ -185,6 +186,9 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'deselect-all', 'upload', 'clear-queue', 'clear-duplicates', 'clear-skipped', 'toggle-duplicates', 'pause', 'resume', 'cancel-upload', 'retry-failed']);
 
+// Get shared queue state for resetting completion flag
+const { queueAdditionComplete } = useQueueState();
+
 // Scroll container ref for virtual scrolling
 const scrollContainerRef = ref(null);
 
@@ -242,7 +246,7 @@ watch(
     // Track render completion relative to current active T=0
     nextTick(() => {
       // Track FINAL render after Phase 2 completes (all files added)
-      if (window.queueT0 && window.queueAdditionComplete && !finalRenderLogged) {
+      if (window.queueT0 && queueAdditionComplete.value && !finalRenderLogged) {
         const elapsed = performance.now() - window.queueT0;
         console.log(`📊 [QUEUE METRICS] T=${elapsed.toFixed(2)}ms - All files rendered (${props.files.length} files)`, {
           renderedRows: virtualItems.value.length,
@@ -253,7 +257,8 @@ watch(
 
         // Clear queue metrics flags after final render is complete
         window.queueT0 = null;
-        window.queueAdditionComplete = false;
+        queueAdditionComplete.value = false;
+        window.queueAdditionComplete = false; // Keep for backward compatibility with metrics logging
       }
     });
   },

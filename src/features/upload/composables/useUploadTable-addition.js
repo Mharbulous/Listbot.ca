@@ -1,6 +1,7 @@
 import { nextTick } from 'vue';
 import { isUnsupportedFileType } from '../utils/fileTypeChecker.js';
 import { extractFolderPath } from '../utils/filePathExtractor.js';
+import { useQueueState } from './useQueueState.js';
 
 /**
  * Composable for managing file addition to upload queue
@@ -12,6 +13,9 @@ export function useUploadTableAddition(
   deduplicateAgainstExisting,
   sortQueueByGroupTimestamp
 ) {
+  // Get shared queue state for setting completion flag
+  const { queueAdditionComplete } = useQueueState();
+
   // Batch order counter (increments each time addFilesToQueue is called)
   // Used for sorting: files are sorted by batch order, then by folder path
   let batchOrderCounter = 0;
@@ -266,8 +270,9 @@ export function useUploadTableAddition(
         averageTimePerFile: `${(elapsed / totalFiles).toFixed(2)}ms`,
       });
 
-      // Signal that queue addition is complete (for virtualizer to detect)
-      window.queueAdditionComplete = true;
+      // Signal that queue addition is complete (for verification to detect)
+      queueAdditionComplete.value = true;
+      window.queueAdditionComplete = true; // Keep for backward compatibility with metrics logging
     }
   };
 
