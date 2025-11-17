@@ -175,4 +175,4 @@ If emojis aren't essential, use plain text:
 - **Windows with Git Bash**: Use forward slashes with drive letter: `C:/Users/name/file.md`
 - **Relative paths**: `./planning/file.md` (from project root)
 - **Absolute paths preferred** for reliability in Windows environments
-- DO NOT modify any files from the production branch!  Explanation is provided here:  docs\hosting\2025-11-16-Promotion.md
+- DO NOT modify any files from the production branch!  If asked to commit changes from the production branch you should instead switch to the main branch and commit from the main branch. Fuller explanation is provided here:  docs\hosting\2025-11-16-Promotion.md
