@@ -322,6 +322,14 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
 
     // Check if we need to calculate hash for current file
     if (!currentFile.hash) {
+      // Verify sourceFile is available before attempting hash
+      if (!currentFile.sourceFile) {
+        console.error(`[HASH-VERIFICATION] Cannot hash - sourceFile missing for ${currentFile.name}`);
+        currentFile.status = 'read error';
+        currentFile.canUpload = false;
+        continue;
+      }
+
       try {
         if (useWorker) {
           currentFile.hash = await hashWorker.hashFile(currentFile.sourceFile);
@@ -342,6 +350,14 @@ export async function verifyWithHashing(sortedFiles, hashFunction, preFilterComp
 
     // Check if we need to calculate hash for reference file
     if (!referenceFile.hash) {
+      // Verify sourceFile is available before attempting hash
+      if (!referenceFile.sourceFile) {
+        console.error(`[HASH-VERIFICATION] Cannot hash - sourceFile missing for reference file ${referenceFile.name}`);
+        referenceFile.status = 'read error';
+        referenceFile.canUpload = false;
+        continue;
+      }
+
       try {
         if (useWorker) {
           referenceFile.hash = await hashWorker.hashFile(referenceFile.sourceFile);
