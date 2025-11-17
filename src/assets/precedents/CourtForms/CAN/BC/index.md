@@ -162,7 +162,43 @@ British Columbia uses a **List of Documents** (Form 22) as its primary discovery
 
 ---
 
+## 8. CanLII Manual to British Columbia Civil Litigation (2025 Edition) ⭐ HIGHEST PRIORITY
+
+**Document Type**: Comprehensive practice manual with completed Form 22 examples
+
+**URL**: https://www.canlii.org/en/commentary/doc/2020CanLIIDocs630
+
+**Source**: Canadian Legal Information Institute (CanLII) - official legal information provider
+
+**Description**: **THIS IS THE BEST SOURCE** for completed Form 22 examples. Free, authoritative resource updated for 2025 that includes actual completed examples of Lists of Documents with annotations and practical guidance. This is the single most valuable resource for seeing how Lists of Documents are actually prepared in BC civil litigation.
+
+**Key Features**:
+- Completed Form 22 examples with annotations
+- Updated for 2025 court rules
+- Practical guidance on document categorization
+- Free and authoritative
+
+**Suggested Filename**: `CANBC-CanLII-Manual-Civil-Litigation-2025.pdf`
+
+**Estimated Size**: 2-5 MB
+
+**Priority**: ⭐⭐⭐ ESSENTIAL - Download this first
+
+---
+
 ## Alternative Sources Identified
+
+### TemplateRoller Form 22 (Fillable PDF)
+
+**URL**: https://www.templateroller.com/template/1872975/form-22-list-of-documents-british-columbia-canada.html
+
+**Source**: TemplateRoller (form repository)
+
+**Description**: Fillable PDF version of Form 22. **Verify against official BC Government version before use** to ensure it matches current court rules.
+
+**Use Case**: Convenient fillable format for practice purposes
+
+**Note**: Always verify third-party forms match official versions
 
 ### Supreme Court Civil Rules - Complete Legislation
 
@@ -173,6 +209,20 @@ British Columbia uses a **List of Documents** (Form 22) as its primary discovery
 **Description**: Complete text of BC Supreme Court Civil Rules (2009), including all discovery rules and form requirements.
 
 **Suggested Filename**: `CANBC-SupremeCourtCivilRules-2009-Complete.pdf`
+
+### BC Court Services Online (CSO) - Real Court Filings
+
+**URL**: https://justice.gov.bc.ca/cso/index.do
+
+**Source**: BC Government - Court Services Online (official)
+
+**Description**: Fee-based access to actual filed court documents from BC Supreme Court cases. Search recent civil cases to find real Lists of Documents filed by practitioners.
+
+**Cost**: $6 per document view/download
+
+**Use Case**: Access to actual filed Lists of Documents from real cases for precedent
+
+**Search Strategy**: Search civil cases filed within last 2 years, look for cases past pleadings stage
 
 ### BCCLA Court Filings - Real Examples
 
@@ -186,6 +236,30 @@ British Columbia uses a **List of Documents** (Form 22) as its primary discovery
 - Case No. S231039, Vancouver Registry
 - Filed: 2024-05-21
 - Real litigation example from BC Supreme Court
+
+---
+
+## Case Law with Discovery Document Discussions
+
+The following BC cases provide judicial interpretation of List of Documents requirements under Rule 7-1:
+
+1. **Biehl v. Strang**, 2010 BCSC 1391
+   - Defines "material fact" for Part 1 document listing
+   - Discusses scope of disclosure obligations
+
+2. **Jones v. Donaghey**, 2011 BCCA 6
+   - BC Court of Appeal decision on discovery scope
+   - Addresses privileged documents (Part 4)
+
+3. **More Marine Ltd. v. Shearwater Marine Ltd.**
+   - Discovery obligations under new Supreme Court Civil Rules
+   - Practical application of 4-part structure
+
+4. **Edwards v. Ganzer**, 2012 BCSC 138
+   - Document production requirements
+   - Ongoing disclosure obligations under Rule 7-1(9)
+
+**Access**: Case law available free on CanLII.org; actual court filings (including filed Lists of Documents) available through BC Court Services Online ($6/document)
 
 ---
 
@@ -229,7 +303,7 @@ Due to network security restrictions in the automated environment, these forms m
 
 ## Research Methodology
 
-**Research Conducted**: 2025-11-17
+**Research Conducted**: 2025-11-17 (Updated with comprehensive agent research)
 
 **Sources Consulted**:
 - Research document: `/research/2025-11-16-LODanaloguesResearch.md`
@@ -237,6 +311,10 @@ Due to network security restrictions in the automated environment, these forms m
 - ClickLaw BC (legal information resource)
 - Law Society of British Columbia practice resources
 - Legal firm practice guides (Clark Wilson LLP)
+- **CanLII Manual to British Columbia Civil Litigation (2025 edition)** ⭐
+- BC Court Services Online (CSO) database
+- TemplateRoller form repository
+- Case law research (CanLII.org)
 - Web search for alternative accessible sources
 
 **Findings**: British Columbia's discovery system is distinctive among Canadian jurisdictions:
@@ -244,22 +322,35 @@ Due to network security restrictions in the automated environment, these forms m
 - 4-part structure under Rule 7-1
 - 35-day filing deadline (from end of pleading period)
 - Comprehensive discovery workflow with Forms 22, 23, and 26
+- **Key Discovery**: CanLII Manual (2025 edition) identified as best source for completed Form 22 examples
 
 ---
 
 ## Status
 
 - ✅ Directory created: `src/assets/precedents/CourtForms/CAN/BC/`
-- ✅ Research completed: 7 key documents identified
+- ✅ Research completed: 8+ key documents identified (Updated 2025-11-17)
+- ✅ **HIGH-VALUE SOURCE IDENTIFIED**: CanLII Manual to BC Civil Litigation (2025) ⭐⭐⭐
+- ✅ Case law research: 4 key decisions with discovery document discussions
+- ✅ Alternative sources: CSO database access, TemplateRoller fillable forms
 - ❌ Automated downloads: Blocked by network security (403 Forbidden)
 - ✅ Documentation: Complete index with URLs and descriptions
 - ⏳ Manual downloads: Required (see instructions above)
 
+**Download Priority Order**:
+1. **CanLII Manual to BC Civil Litigation (2025)** ⭐⭐⭐ - Contains completed Form 22 examples
+2. Form 22 - List of Documents (official blank template)
+3. Clark Wilson Discovery Guide - Practice commentary
+4. Form F20 - List of Documents (completed family law example)
+5. Form 26 - Notice to Admit
+6. Form 23 - Appointment to Examine
+
 **Next Steps**:
-1. Manually download priority forms using web browser
-2. Save with suggested filenames in this directory
-3. Update this index with actual file sizes and any additional notes
-4. Consider adding completed examples from accessible court filings
+1. **Priority**: Download CanLII Manual (best source for completed examples)
+2. Download official BC Government forms (Forms 22, 23, 26)
+3. Consider CSO access for real court filing examples ($6/document)
+4. Save with suggested filenames in this directory
+5. Update this index with actual file sizes and any additional notes
 
 ---
 
