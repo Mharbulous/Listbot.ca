@@ -27,19 +27,31 @@ Part of a multi-app SSO architecture with file upload/processing.
 CLAUDE.md (HUB)
 │
 ├── docs/architecture/
+
 │   ├── overview.md ✓
+
 │   ├── authentication.md ✓
+
 │   ├── file-lifecycle.md ✓
+
 │   └── file-processing.md ✓
+
 │
+
 ├── docs/front-end/
+
 │   └── DocumentTable.md ✓
+
 │
 ├── docs/testing/
+
 │   └── performance-analysis.md ✗ (MISSING - referenced but not found)
+
 │
 ├── docs/
+
 │   └── 2025-11-10-New-Upload-Page.md ✓
+
 │
 └── src/dev-demos/
     └── README.md ✓
