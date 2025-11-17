@@ -11,14 +11,17 @@ The following files are **EXEMPT** from the 300-line limit and should **NEVER** 
 - Explain why it's on the exception list
 - Do NOT proceed with decomposition
 
-## File Analysis
+## File Selection
 
-First, read the file and count its lines of code.
+First, count the number of lines of code (excluding comments).  Compare the documentation file, docs\2025-11-15-Folder-Structure.md, and update if needed.
+
+If the user has not specified a specific file, then review the files in the documentation file, docs\2025-11-15-Folder-Structure.md, and identify the three best candidate files that would benefit most from decomposition and refactoring.  However once you find a file that would obviously benefit, stop searching and select that file.  If you find no obvious candidate, then choose one file from the three identified candidate files, based on which file looks like it would benefit most from decompoistion or refactoring, and select that file.
+
 
 **Virtual Scrolling Detection:**
 - Check if the file contains virtual scrolling implementation (e.g., `virtual-scroller`, `virtual-scroll`, Vuetify's `v-virtual-scroll`)
 - Virtual scrolling requires tight coupling between template, logic, and state that CANNOT be safely decomposed
-- If virtual scrolling is detected, **WARN the user** before proceeding
+- If virtual scrolling logic is detected, **WARN the user** before proceeding
 
 ## Decomposition Decision
 
@@ -54,8 +57,8 @@ First, read the file and count its lines of code.
 
 **If the file has 300 lines or LESS:**
 
-- Inform the user that the file is already streamlined and doesn't require decomposition
-- Optionally offer to perform a simple refactoring to improve code quality (if you see opportunities)
+- Instead of decomposing the selected file, rebuild the selected file from scratch in a more elegant way.
+- Count the number of lines of code (excluding comments) of the rebuilt file.  If the rebuilt file uses less lines of code (excluding comments) the issue a PR.  Otherwise, if the file has an equal or greater number of lines of code, then report to the user that you were unable to streamline the file, and offer to lengthen the file instead.
 
 ## Important Constraints
 
@@ -63,6 +66,7 @@ First, read the file and count its lines of code.
 - **NO design changes** - preserve visual appearance exactly
 - **NO behavioral changes** - maintain all existing behavior
 - Prioritize readability and maintainability
+- Look for opportunities to apply the DRY principle unless doing so would compromise readability or maintainability.
 - Follow the project's existing patterns and conventions
 - Consult `@docs/architecture/overview.md` for project structure guidelines
 - Delegate linting to the beautifier agent after file creation
