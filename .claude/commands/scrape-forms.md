@@ -22,34 +22,25 @@
 
 ## Step 2: Define Document Types to Search
 
-Search for these types of court forms (prioritize in this order):
-1. **Summons** - Document notifying defendant of lawsuit
-2. **Complaint/Statement of Claim** - Initial filing outlining plaintiff's case
-3. **Answer** - Defendant's response to complaint
-4. **Motion for Summary Judgment** - Request for judgment without trial
-5. **Subpoena** - Order to produce documents or testify
+Search for precedent of forms comparable to what in BC is known as a List of Documents, such as:
+1. **Affidavit of Documents** 
+2. **Affidavit of Records**
+3. **List of Documents**
+4. **Initial Disclosures**
+5. **Response to Requests for Production of Documents**
 
-## Step 3: Web Search Strategy
-
-For the target jurisdiction, perform web searches for:
+## Step 3: Research Strategy
 
 **Search Query Pattern**:
-```
-"[jurisdiction] court forms" filetype:pdf [document type]
-OR
-"[jurisdiction] [document type] template" site:.gov
-OR
-"[jurisdiction] superior court [document type] sample"
-```
+For information about the forms used in the selected jurisdiction start by reviewing this document:
+research\2025-11-16-LODanaloguesResearch.md
 
-**Example for California Summons**:
-```
-"California court forms" filetype:pdf summons site:.courts.ca.gov
-```
+**Use Research Agent**
+Pass the actual research off to a specialized deep research agent.
 
 **Search Guidelines**:
 - Prioritize official government sources (.gov, .courts, official court websites)
-- Look for actual completed examples, not blank templates
+- Look for a mix of completed examples and blank templates
 - Prefer recent documents (last 5 years)
 - Aim to find 3-5 different examples for variety
 
@@ -58,7 +49,7 @@ OR
 For each document found:
 
 1. **Use WebFetch** to retrieve the document content
-2. **Verify** it's a legitimate example (not just a form, but a filled example)
+2. **Verify** it's a legitimate example
 3. **Extract key information**:
    - Document type (Summons, Complaint, etc.)
    - Court name
@@ -72,8 +63,8 @@ For each document found:
 src/assets/precedents/CourtForms/
 ├── USA/
 │   ├── [State]/
-│   │   ├── [DocumentType]-example-01.pdf
-│   │   ├── [DocumentType]-example-02.pdf
+│   │   ├── [CountryCode][State/Prov][DocumentType]-example-01.pdf
+│   │   ├── [CountryCode][State/Prov]-example-02.pdf
 │   │   └── ...
 └── CAN/
     ├── [Province]/
@@ -88,72 +79,38 @@ src/assets/precedents/CourtForms/
 ```
 
 Examples:
-- `Summons-example-01.pdf`
-- `Complaint-example-02.pdf`
-- `Motion-Summary-Judgment-example-01.pdf`
+- `CANBC-List-of-Documents-04.pdf`
+- `USACA-Initial-Disclosures-02.pdf`
+- `CANFD-Affidavit-of-Documents-01.pdf`
 
 **Save Process**:
 1. Create jurisdiction subfolder if it doesn't exist
 2. Save each document with descriptive filename
-3. Use WebFetch to download the PDF content
+3. Use WebFetch to download the content
 4. Write the file using the Write tool
 
 ## Step 6: Create Index File
 
-After collecting documents, create/update an `index.md` file in the jurisdiction folder:
+After collecting documents, create/update an `index.md` file in the folder: src\assets\forms\Counter\StateProvince
 
-**Format**:
-```markdown
-# [Jurisdiction] Court Forms
-
+# Court Forms of Document Discovery
 Last updated: [Date]
 
 ## Collected Documents
 
-### Summons
-- `Summons-example-01.pdf` - [Court Name], Case #[number] ([date])
-- `Summons-example-02.pdf` - [Court Name], Case #[number] ([date])
-
-### Complaint/Statement of Claim
-- `Complaint-example-01.pdf` - [Court Name], Case #[number] ([date])
-
-## Sources
-- [URL 1] - Official court website
-- [URL 2] - Court forms repository
+- `Summons-example-01.pdf` - [CountryCode], [State/Prov], [Court Name], Case #[number] ([date])
+- `Summons-example-02.pdf` - [CountryCode], [State/Prov], [Court Name], Case #[number] ([date])
 
 ## Notes
 [Any relevant notes about jurisdiction-specific requirements]
-```
-
-## Step 7: Report Results
-
-Provide a summary to the user:
-
-```
-✓ Collected court forms for: [Jurisdiction]
-✓ Documents saved: [count]
-✓ Document types: [list types collected]
-✓ Location: src/assets/precedents/CourtForms/[Country]/[Jurisdiction]/
-
-Files created:
-- [filename 1]
-- [filename 2]
-- [filename 3]
-- index.md
-
-Next steps:
-- Review documents for quality
-- Consider collecting forms for: [suggest 2-3 other jurisdictions that need documents]
 ```
 
 ## Important Constraints
 
 1. **Only collect 3-5 documents per command invocation** - Don't overwhelm the folder
 2. **Verify source legitimacy** - Only use official court/government sources when possible
-3. **Respect copyright** - These should be public domain court documents
-4. **Check file size** - Warn if any PDF is over 5MB
-5. **Avoid duplicates** - Check existing files before saving
-6. **Privacy** - Ensure any example documents are from public court records
+3. **Check file size** - Warn if any PDF is over 10MB
+4. **Avoid duplicates** - Check existing files before saving
 
 ## Error Handling
 
@@ -165,10 +122,10 @@ Next steps:
 ## Jurisdiction Reference Lists
 
 **US States** (abbreviations accepted):
-CA/California, NY/New York, TX/Texas, FL/Florida, IL/Illinois, PA/Pennsylvania, OH/Ohio, GA/Georgia, NC/North Carolina, MI/Michigan, etc.
+CA/California, NY/New York, TX/Texas, FL/Florida, IL/Illinois, PA/Pennsylvania, OH/Ohio, GA/Georgia, NC/North Carolina, MI/Michigan, FD/Federal
 
 **Canadian Provinces** (abbreviations accepted):
-ON/Ontario, QC/Quebec, BC/British Columbia, AB/Alberta, MB/Manitoba, SK/Saskatchewan, NS/Nova Scotia, NB/New Brunswick, NL/Newfoundland and Labrador, PE/Prince Edward Island
+ON/Ontario, QC/Quebec, BC/British Columbia, AB/Alberta, MB/Manitoba, SK/Saskatchewan, NS/Nova Scotia, NB/New Brunswick, NL/Newfoundland and Labrador, PE/Prince Edward Island, FD/Federal
 
 ## Usage Examples
 
@@ -177,7 +134,8 @@ ON/Ontario, QC/Quebec, BC/British Columbia, AB/Alberta, MB/Manitoba, SK/Saskatch
 /scrape-forms California
 /scrape-forms Ontario
 /scrape-forms NY
+/scrape-forms Federal
 
 # Auto-select jurisdiction that needs documents
-/scrape-forms
+/scrape-forms 
 ```
