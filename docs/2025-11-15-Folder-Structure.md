@@ -7,7 +7,7 @@
 ## File Dependency Tree
 
 ```
-📁 /testing Page Dependencies (41 files, 8,914 code lines)
+📁 /testing Page Dependencies (44 files, 9,069 code lines)
 │
 ├── 📁 src
 │   ├── 📁 views
@@ -22,7 +22,10 @@
 │   │   │   │   ├── 📄 UploadTableHeader.vue [187]
 │   │   │   │   ├── 📄 UploadTableRow.vue [240]
 │   │   │   │   ├── 📄 UploadTableDropzone.vue [117]
-│   │   │   │   ├── 📄 UploadTableFooter.vue [492]
+│   │   │   │   ├── 📄 UploadTableFooter.vue [145]
+│   │   │   │   ├── 📄 UploadTableFooterStats.vue [84]
+│   │   │   │   ├── 📄 ClearFilesMenu.vue [145]
+│   │   │   │   ├── 📄 UploadControlButtons.vue [273]
 │   │   │   │   ├── 📄 SelectCell.vue [222]
 │   │   │   │   ├── 📄 FileTypeIcon.vue [63]
 │   │   │   │   └── 📄 FileNameCell.vue [110]
@@ -94,10 +97,10 @@
 
 ## Summary Statistics
 
-- **Total Files:** 41
-- **Total Code Lines:** 8,914 (excluding SVG assets)
+- **Total Files:** 44
+- **Total Code Lines:** 9,069 (excluding SVG assets)
 - **Main View:** Testing.vue (363 lines)
-- **Components:** 10 files (2,467 lines)
+- **Components:** 13 files (2,622 lines)
 - **Composables:** 19 files (4,719 lines)
   - useUploadTable family: 6 files (1,250 lines)
   - useQueue family: 4 files (638 lines)
