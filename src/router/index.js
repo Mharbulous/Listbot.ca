@@ -9,19 +9,19 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/Home.vue'),
+      component: () => import('../views/About.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
       path: '/home',
       name: 'home-explicit',
-      component: () => import('../views/Home.vue'),
+      component: () => import('../views/About.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
       path: '/about',
       name: 'about',
-      component: () => import('../views/About.vue'),
+      component: () => import('../views/Home.vue'),
       meta: { requiresAuth: true, title: 'About' },
     },
     {
