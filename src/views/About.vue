@@ -1,115 +1,107 @@
 <template>
   <div class="p-8">
     <div class="max-w-6xl mx-auto">
-      <!-- Features Section -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-        <h2 class="text-2xl font-semibold text-slate-800 mb-6">Template Features</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Firebase Authentication</h3>
-              <p class="text-slate-600 text-sm">Ready-to-use authentication with Firebase</p>
-            </div>
-          </div>
+      <!-- Welcome Section -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-slate-800 mb-4">Multi-App SSO Template</h1>
+        <p class="text-xl text-slate-600 max-w-2xl mx-auto">
+          A Vue 3 template with Multi-App Single Sign-On (SSO) capabilities. Create multiple
+          independent applications that share seamless authentication and firm contexts.
+        </p>
+      </div>
 
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Firestore Integration</h3>
-              <p class="text-slate-600 text-sm">Document database for user profiles and app data</p>
-            </div>
+      <!-- Setup Instructions with Tabs -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 mt-8">
+        <!-- Tab Header -->
+        <div class="border-b border-slate-200">
+          <div class="flex flex-wrap">
+            <button
+              @click="activeTab = 'features'"
+              :class="[
+                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'features'
+                  ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              ]"
+            >
+              <span class="flex items-center">
+                <span class="mr-2 text-lg">✨</span>
+                Features
+              </span>
+            </button>
+            <button
+              @click="activeTab = 'first-app'"
+              :class="[
+                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'first-app'
+                  ? 'border-blue-500 text-blue-600 bg-blue-50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              ]"
+            >
+              <span class="flex items-center">
+                <span class="mr-2 text-lg">🆕</span>
+                First SSO App
+              </span>
+            </button>
+            <button
+              @click="activeTab = 'add-app'"
+              :class="[
+                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'add-app'
+                  ? 'border-green-500 text-green-600 bg-green-50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              ]"
+            >
+              <span class="flex items-center">
+                <span class="mr-2 text-lg">➕</span>
+                Add to Network
+              </span>
+            </button>
+            <button
+              @click="activeTab = 'local-dev'"
+              :class="[
+                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'local-dev'
+                  ? 'border-purple-500 text-purple-600 bg-purple-50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              ]"
+            >
+              <span class="flex items-center">
+                <span class="mr-2 text-lg">🛠️</span>
+                Local Development
+              </span>
+            </button>
           </div>
+        </div>
 
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Pinia State Management</h3>
-              <p class="text-slate-600 text-sm">
-                Modern state management with stores for authentication and user data
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Vue Router with Guards</h3>
-              <p class="text-slate-600 text-sm">
-                Protected routes with authentication guards and timing safety
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Vite Build System</h3>
-              <p class="text-slate-600 text-sm">
-                Modern fast build tool with hot module replacement
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Vitest Testing Suite</h3>
-              <p class="text-slate-600 text-sm">Unit testing framework with UI interface</p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Responsive Design</h3>
-              <p class="text-slate-600 text-sm">Mobile-first design with Tailwind CSS</p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Navigation Sidebar</h3>
-              <p class="text-slate-600 text-sm">Collapsible sidebar with hover expansion</p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Code Quality Tools</h3>
-              <p class="text-slate-600 text-sm">ESLint and Prettier with Vue plugin support</p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Component Architecture</h3>
-              <p class="text-slate-600 text-sm">
-                Organized structure with base, feature, and layout components
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-start space-x-3">
-            <div class="text-green-500 text-xl">✅</div>
-            <div>
-              <h3 class="font-medium text-slate-800">Development Tooling</h3>
-              <p class="text-slate-600 text-sm">
-                Vue DevTools plugin and PostCSS with Autoprefixer
-              </p>
-            </div>
-          </div>
+        <!-- Tab Content -->
+        <div class="p-8">
+          <FeaturesTab v-if="activeTab === 'features'" />
+          <FirstAppTab v-if="activeTab === 'first-app'" />
+          <AddAppTab v-if="activeTab === 'add-app'" />
+          <LocalDevTab v-if="activeTab === 'local-dev'" />
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
+<script setup>
+import { ref } from 'vue';
+import FeaturesTab from '@/components/home/FeaturesTab.vue';
+import FirstAppTab from '@/components/home/FirstAppTab.vue';
+import AddAppTab from '@/components/home/AddAppTab.vue';
+import LocalDevTab from '@/components/home/LocalDevTab.vue';
+
+// Component configuration
+defineOptions({
   name: 'AboutUsView',
-};
+});
+
+// Tab state management - default to features tab
+const activeTab = ref('features');
 </script>
+
+<style scoped>
+/* AboutUsView component styles */
+</style>
