@@ -48,9 +48,34 @@ Pass the actual research off to a specialized deep research agent.
 
 For each document found:
 
-1. **Use WebFetch** to retrieve the document content
-2. **Verify** it's a legitimate example
-3. **Extract key information**:
+1. **Download PDFs using human-like requests**:
+   - When a direct PDF URL is found, use `curl` or `wget` with proper browser headers
+   - Simulate a legitimate browser visit to respect server policies
+   - Wait 2-3 seconds between each download to avoid overwhelming servers
+   - Use proper User-Agent headers to identify the request honestly
+
+   **Example download command**:
+   ```bash
+   curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+        -H "Accept: application/pdf,*/*" \
+        -H "Referer: [source-website]" \
+        --max-time 30 \
+        -o "filename.pdf" \
+        "[URL]"
+   ```
+
+   **Important principles**:
+   - Make only ONE request per document (never retry-loop)
+   - Add 2-3 second delays between downloads: `sleep 3`
+   - Use standard HTTP methods (GET) - no evasion techniques
+   - Respect robots.txt if present
+   - If you receive 403/429 errors, stop and report to user
+
+2. **For HTML pages**: Use WebFetch to retrieve and analyze content
+
+3. **Verify** the downloaded document is legitimate
+
+4. **Extract key information**:
    - Document type (Summons, Complaint, etc.)
    - Court name
    - Case number (if visible)
@@ -91,18 +116,43 @@ Examples:
 
 ## Step 6: Create Index File
 
-After collecting documents, create/update an `index.md` file in the folder: src\assets\forms\Counter\StateProvince
+After collecting documents, create/update an `index.md` file in the jurisdiction folder (e.g., `src/assets/precedents/CourtForms/CAN/BC/index.md`)
 
-# Court Forms of Document Discovery
+**Index file should include**:
+
+```markdown
+# [Jurisdiction] Court Forms - Document Discovery
 Last updated: [Date]
+
+## Overview
+[Brief description of jurisdiction's discovery document types]
 
 ## Collected Documents
 
-- `Summons-example-01.pdf` - [CountryCode], [State/Prov], [Court Name], Case #[number] ([date])
-- `Summons-example-02.pdf` - [CountryCode], [State/Prov], [Court Name], Case #[number] ([date])
+### Successfully Downloaded
+1. **[Document Name]**
+   - **File**: `filename.pdf`
+   - **Source**: [URL]
+   - **Description**: [Brief description]
+   - **Court**: [Court name]
+   - **Type**: [Template/Example/Guide]
 
-## Notes
-[Any relevant notes about jurisdiction-specific requirements]
+### Manual Download Required
+2. **[Document Name]**
+   - **URL**: [Direct URL]
+   - **Source**: [Website name]
+   - **Description**: [Brief description]
+   - **Status**: Network restrictions - manual download required
+   - **Suggested Filename**: `proposed-filename.pdf`
+   - **Estimated Size**: [If known]
+
+## Research Notes
+[Any relevant notes about jurisdiction-specific requirements, terminology, or procedures]
+
+## Status
+- ✅ Successfully downloaded: X documents
+- ⏳ Manual download required: Y documents
+- ✅ Research completed
 ```
 
 ## Important Constraints
@@ -118,6 +168,24 @@ Last updated: [Date]
 - If WebFetch fails, try alternative sources
 - If fewer than 3 documents found, save what was found and report shortage
 - If jurisdiction is ambiguous, ask user for clarification
+
+**Network Restriction Handling**:
+- **403 Forbidden**: Government sites often block requests without browser headers
+  - First attempt: Retry with full browser headers (User-Agent, Accept, Referer)
+  - If still blocked: Document the URL in index.md with note "Manual download required"
+  - Report to user which URLs need manual download
+- **429 Too Many Requests**: You've made too many requests too quickly
+  - Stop immediately (do not retry)
+  - Report which documents were successfully downloaded
+  - Inform user they can retry later or manually download remaining files
+- **Timeout**: Some PDFs are large and may take time
+  - Allow up to 30 seconds per download (--max-time 30)
+  - If timeout occurs, document URL for manual download
+
+**Rate Limiting Protocol**:
+- Always wait 2-3 seconds between download requests
+- Maximum 5 downloads per command execution (respect server resources)
+- If downloading from same domain, extend delay to 3-5 seconds between requests
 
 ## Jurisdiction Reference Lists
 
