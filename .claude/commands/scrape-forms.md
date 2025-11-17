@@ -33,7 +33,7 @@ Search for precedent of forms comparable to what in BC is known as a List of Doc
 
 **Search Query Pattern**:
 For information about the forms used in the selected jurisdiction start by reviewing this document:
-research\2025-11-16-LODanaloguesResearch.md
+`research\2025-11-16-LODanaloguesResearch.md`
 
 **Use Research Agent**
 Pass the actual research off to a specialized deep research agent.
@@ -134,7 +134,7 @@ ON/Ontario, QC/Quebec, BC/British Columbia, AB/Alberta, MB/Manitoba, SK/Saskatch
 /scrape-forms California
 /scrape-forms Ontario
 /scrape-forms NY
-/scrape-forms Federal
+/scrape-forms US Federal
 
 # Auto-select jurisdiction that needs documents
 /scrape-forms 
