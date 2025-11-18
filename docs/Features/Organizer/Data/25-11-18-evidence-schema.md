@@ -1,5 +1,16 @@
 # Evidence Document Structure
 
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+- `src/features/organizer/services/evidenceService.js` - Main evidence CRUD operations
+- `src/features/organizer/services/tagSubcollectionService.js` - Tag subcollection operations and dual storage sync
+- `src/features/organizer/services/evidenceDocumentService.js` - Evidence document access and AI tag storage
+- `src/features/organizer/services/evidenceQueryService.js` - Evidence query operations
+- `src/features/upload/composables/useFileMetadata.js` - Metadata hash generation (xxHash)
+- `src/services/fileService.js` - File operations and storage references
+
 ## Database Path
 
 ```
@@ -28,7 +39,7 @@
   hasAllPages: boolean | null,   // null until processing complete
   processingStage: string,       // ENUM: 'uploaded' | 'splitting' | 'merging' | 'complete'
 
-  // Tag Counters - REQUIRED
+  // Tag Counters - REQUIRED (NOTE: Currently not maintained by tag operations - see Tag Management section)
   tagCount: number,              // Default: 0, increment on tag add
   autoApprovedCount: number,     // Default: 0, tags with confidence >= 95%
   reviewRequiredCount: number,   // Default: 0, tags with confidence < 95%
@@ -81,7 +92,7 @@
 - **MUST** be a valid metadataHash (xxHash, 16 characters)
 - **USE** hash-based lookup for metadata retrieval
 
-**Note**: For understanding the critical distinction between source file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [FileMetadata.md](FileMetadata.md).
+**Note**: For understanding the critical distinction between source file metadata and storage file references, including how sourceMetadata is stored as a subcollection under evidence documents, see [@docs/Features/Organizer/Data/file-metadata-schema.md](@docs/Features/Organizer/Data/file-metadata-schema.md).
 
 **processingStage:**
 
@@ -91,8 +102,10 @@
 
 **Tag Counters:**
 
-- **INCREMENT** counters atomically using FieldValue.increment()
-- **NEVER** manually calculate from subcollection
+- **DOCUMENTED BEHAVIOR**: Counters should be incremented atomically using FieldValue.increment()
+- **CURRENT IMPLEMENTATION NOTE**: Tag counters (`tagCount`, `autoApprovedCount`, `reviewRequiredCount`) are currently NOT maintained by `tagSubcollectionService.js` (lines 124-148). The service only updates embedded tags map via batch writes. Counter maintenance gap exists between documentation and implementation.
+- **WORKAROUND**: Query subcollection for accurate counts, or implement counter updates in tag operations
+- **NEVER** manually calculate from subcollection if counters are maintained
 - **UPDATE** uploadDate whenever counters change
 
 **uploadDate Timestamp:**
@@ -107,6 +120,7 @@
 **Embedded Source Metadata (Performance Optimization):**
 
 - **PURPOSE**: Denormalized data from sourceMetadata subcollection for single-query table rendering
+- **FIELDS USED**: Individual denormalized fields (`sourceFileName`, `sourceLastModified`, `sourceFolderPath`)
 - **UPDATED**: Automatically updated when sourceMetadata is created or sourceID is changed
 - **SOURCE**: Copied from the sourceMetadata document referenced by sourceID field
 - **PRIMARY METADATA**: Represents the "selected" metadata variant for display
@@ -134,7 +148,7 @@
 - **DUAL STORAGE**: Full metadata in subcollection, simplified data in embedded map
 - **PERFORMANCE**: Enables DocumentTable to load 10,000+ documents in single query
 
-**Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [CategoryTags.md](CategoryTags.md).
+**Note**: For complete tag subcollection architecture, validation rules, and Categories patterns, see [@docs/Features/Organizer/Categories/category-system-overview.md](@docs/Features/Organizer/Categories/category-system-overview.md).
 
 ## Source Metadata Subcollection
 
@@ -294,7 +308,7 @@ function validateTagDocument(data) {
 }
 ```
 
-**Note**: For complete security rule patterns, custom claims structure, and firm-based access control implementation, see [security-rules.md](security-rules.md).
+**Note**: For complete security rule patterns, custom claims structure, and firm-based access control implementation, see [@docs/Data/Security/25-11-18-firestore-security-rules.md](@docs/Data/Security/25-11-18-firestore-security-rules.md).
 
 ```javascript
 
@@ -318,7 +332,8 @@ const evidenceDoc = await db
 if (!evidenceDoc.exists) throw new Error('Evidence not found');
 
 const data = evidenceDoc.data();
-// USE counters from document, DO NOT query subcollection for counts
+// NOTE: Tag counters may not be maintained by current implementation
+// Consider querying subcollection for accurate counts
 const tagMetrics = {
   total: data.tagCount,
   autoApproved: data.autoApprovedCount,
@@ -326,7 +341,7 @@ const tagMetrics = {
 };
 ```
 
-**Note**: For firm member management and data migration workflows that affect evidence document access patterns, see [firm-workflows.md](firm-workflows.md).
+**Note**: For firm member management and data migration workflows that affect evidence document access patterns, see [@docs/Features/Matters/firm-workflows.md](@docs/Features/Matters/firm-workflows.md).
 
 ```javascript
 
@@ -362,7 +377,11 @@ const pendingTags = await db
 ### Add Tag to Evidence
 
 ```javascript
-// MUST use transaction to maintain counter integrity
+// DOCUMENTED: Transaction-based approach with counter maintenance
+// NOTE: Current tagSubcollectionService.js implementation (lines 124-148)
+// uses batch writes for embedded tags map but does NOT update counters
+// The code example below shows the INTENDED pattern for counter maintenance
+
 await db.runTransaction(async (transaction) => {
   const evidenceRef = db
     .collection('firms')
@@ -390,7 +409,7 @@ await db.runTransaction(async (transaction) => {
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  // Update counters atomically
+  // Update counters atomically (NOT currently implemented in tagSubcollectionService)
   const counterUpdates = {
     tagCount: FieldValue.increment(1),
     uploadDate: FieldValue.serverTimestamp(),
@@ -449,9 +468,11 @@ Collection: tags
 
 ### Counter Maintenance
 
-- **NEVER** recalculate counters from subcollection queries
-- **ALWAYS** use FieldValue.increment() for atomic updates
-- **USE** counters for UI display without subcollection reads
+- **DOCUMENTED**: Counters should never be recalculated from subcollection queries
+- **CURRENT IMPLEMENTATION**: Tag counters are NOT updated by `tagSubcollectionService.js`
+- **WORKAROUND**: Query tags subcollection directly for accurate counts
+- **ALWAYS** use FieldValue.increment() for atomic updates (when implemented)
+- **USE** counters for UI display without subcollection reads (once implemented)
 
 ### Batch Operations
 
@@ -459,7 +480,7 @@ Collection: tags
 - **USE** BulkWriter for large tag imports
 - **IMPLEMENT** exponential backoff for retries
 
-**Note**: For complete storage path organization, processing folder architecture, and Firebase Storage optimization strategies, see [firebase-storage.md](firebase-storage.md).
+**Note**: For complete storage path organization, processing folder architecture, and Firebase Storage optimization strategies, see [@docs/Features/Upload/Storage/firebase-storage.md](@docs/Features/Upload/Storage/firebase-storage.md).
 
 ## Critical Constraints
 
@@ -468,7 +489,7 @@ Collection: tags
 - **NEVER** delete evidence documents
 - **NEVER** modify document ID (fileHash) after creation
 - **AUTOMATIC DEDUPLICATION**: Same fileHash = same document (setDoc overwrites safely)
-- **ALWAYS** maintain counter accuracy with transactions
+- **ALWAYS** maintain counter accuracy with transactions (when counter maintenance is implemented)
 - **NEVER** allow orphaned tags (evidence deleted but tags remain)
 
 ### File References
@@ -479,7 +500,7 @@ Collection: tags
 - **ALWAYS** verify metadata hash exists in sourceMetadata collection
 - **ACCESS** file using: `evidence.id` (which is the fileHash)
 
-**Note**: For understanding firm-based data isolation including solo user patterns where firmId === userId, see [SoloFirmMatters.md](SoloFirmMatters.md).
+**Note**: For understanding firm-based data isolation including solo user patterns where firmId === userId, see [@docs/Features/Matters/solo-firm-matters.md](@docs/Features/Matters/solo-firm-matters.md).
 
 ### Processing Workflow
 
@@ -501,4 +522,4 @@ Collection: tags
 - **ENFORCE** confidence thresholds: 95% for auto-approval
 - **NEVER** allow confidence values outside 0-100 range
 - **ALWAYS** track reviewer identity for manual approvals
-- **MAINTAIN** accurate counts through atomic transactions
+- **MAINTAIN** accurate counts through atomic transactions (when counter maintenance is implemented)
