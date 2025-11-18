@@ -35,22 +35,21 @@ export function useUploadState({ uploadQueue, showNotification }) {
    * Phase 3b: Includes both 'ready' (primary) and 'copy' files
    */
   const getUploadableFiles = () => {
-    // Build set of excluded fileHashes (user unchecked primaries)
+    // Build set of excluded fileHashes (user skipped primaries)
+    // When a primary file is skipped, all copy files with the same hash should also be excluded
     const excludedHashes = new Set();
     for (const file of uploadQueue.value) {
-      if (!file.selected && file.status === 'ready') {
+      if (file.status === 'skip' && file.hash) {
         excludedHashes.add(file.hash);
       }
     }
 
     return uploadQueue.value.filter((file) => {
-      // Skip if user unchecked this file
-      if (!file.selected) return false;
-
-      // Skip if this file's hash is in the excluded set (primary unchecked)
+      // Skip if this file's hash is in the excluded set (primary skipped)
       if (file.hash && excludedHashes.has(file.hash)) return false;
 
       // Include ready (primary) and copy files
+      // Copy files will only be included if their primary is not skipped (checked above)
       if ((file.status === 'ready' || file.status === 'copy') && !file.skipReason) {
         return true;
       }
