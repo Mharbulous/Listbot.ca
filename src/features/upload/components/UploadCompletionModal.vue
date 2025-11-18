@@ -26,29 +26,6 @@
           </div>
         </div>
 
-        <v-divider class="my-4"></v-divider>
-
-        <div class="dedup-metrics">
-          <div v-if="metrics.storageSaved > 0" class="metric-highlight">
-            <div class="metric-icon">💾</div>
-            <div class="metric-content">
-              <div class="metric-label">Storage Saved</div>
-              <div class="metric-value">{{ formatBytes(metrics.storageSaved) }}</div>
-            </div>
-          </div>
-
-          <div
-            v-if="metrics.deduplicationRate && parseFloat(metrics.deduplicationRate) > 0"
-            class="metric-highlight"
-          >
-            <div class="metric-icon">📊</div>
-            <div class="metric-content">
-              <div class="metric-label">Deduplication Rate</div>
-              <div class="metric-value">{{ metrics.deduplicationRate }}</div>
-            </div>
-          </div>
-        </div>
-
         <div v-if="hasErrors" class="error-notice">
           <v-icon icon="mdi-alert-circle" color="error" class="mr-2"></v-icon>
           <span>{{ metrics.failedFiles || 0 }} file(s) failed to upload</span>
@@ -86,8 +63,6 @@ const props = defineProps({
       filesUploaded: 0,
       filesCopies: 0,
       totalFiles: 0,
-      storageSaved: 0,
-      deduplicationRate: '0%',
       failedFiles: 0,
     }),
   },
@@ -95,18 +70,6 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['close']);
-
-// Format bytes
-const formatBytes = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = bytes / Math.pow(k, i);
-
-  // Always show 3 significant digits
-  return value.toFixed(1) + ' ' + sizes[i];
-};
 
 // Check if there are errors
 const hasErrors = computed(() => {
@@ -153,48 +116,6 @@ const handleClose = () => {
 .summary-value {
   font-size: 1.1rem;
   color: #1f2937;
-  font-weight: 700;
-}
-
-.dedup-metrics {
-  display: flex;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.metric-highlight {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-  border-radius: 8px;
-  border: 2px solid #4caf50;
-}
-
-.metric-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.metric-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metric-label {
-  font-size: 0.85rem;
-  color: #2e7d32;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.metric-value {
-  font-size: 1.25rem;
-  color: #1b5e20;
   font-weight: 700;
 }
 

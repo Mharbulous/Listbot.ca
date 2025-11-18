@@ -45,11 +45,6 @@
             <span class="summary-label">Metadata Only:</span>
             <span class="summary-value">{{ summary.metadataOnly }} files</span>
           </div>
-
-          <div v-if="summary.storageSaved > 0" class="summary-row highlight">
-            <span class="summary-label">Storage Saved:</span>
-            <span class="summary-value">~{{ formatBytes(summary.storageSaved) }}</span>
-          </div>
         </div>
       </v-card-text>
 
@@ -87,25 +82,12 @@ defineProps({
       readErrors: 0,
       toUpload: 0,
       metadataOnly: 0,
-      storageSaved: 0,
     }),
   },
 });
 
 // Emits
 const emit = defineEmits(['confirm', 'cancel']);
-
-// Format bytes
-const formatBytes = (bytes) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = bytes / Math.pow(k, i);
-
-  // Always show 3 significant digits
-  return value.toFixed(1) + ' ' + sizes[i];
-};
 
 // Handlers
 const handleConfirm = () => {
@@ -171,13 +153,6 @@ const handleCancel = () => {
   align-items: center;
 }
 
-.summary-row.highlight {
-  background-color: #e8f5e9;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-top: 8px;
-}
-
 .summary-label {
   font-size: 0.95rem;
   color: #4b5563;
@@ -188,10 +163,5 @@ const handleCancel = () => {
   font-size: 1.05rem;
   color: #1f2937;
   font-weight: 700;
-}
-
-.summary-row.highlight .summary-label,
-.summary-row.highlight .summary-value {
-  color: #2e7d32; /* Green for storage saved */
 }
 </style>
