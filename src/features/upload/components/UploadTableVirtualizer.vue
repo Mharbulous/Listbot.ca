@@ -50,6 +50,7 @@
       <UploadTableHeader
         :all-selected="props.allSelected"
         :some-selected="props.someSelected"
+        :is-uploading="props.isUploading"
         @select-all="handleSelectAll"
         @deselect-all="handleDeselectAll"
       />
@@ -78,6 +79,7 @@
               :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
               :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
               :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+              :disabled="props.isUploading"
               @cancel="handleCancel"
               @undo="handleUndo"
               @remove="handleRemove"

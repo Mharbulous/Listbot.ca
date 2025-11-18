@@ -32,13 +32,31 @@ export function useUploadState({ uploadQueue, showNotification }) {
   /**
    * Get uploadable files from queue
    * Filters out skipped, n/a, and already completed files
+   * Phase 3b: Includes both 'ready' (primary) and 'copy' files
    */
   const getUploadableFiles = () => {
-    return uploadQueue.value.filter(
-      (file) =>
-        file.status === 'ready' &&
-        !file.skipReason // Exclude .lnk files marked by worker
-    );
+    // Build set of excluded fileHashes (user unchecked primaries)
+    const excludedHashes = new Set();
+    for (const file of uploadQueue.value) {
+      if (!file.selected && file.status === 'ready') {
+        excludedHashes.add(file.hash);
+      }
+    }
+
+    return uploadQueue.value.filter((file) => {
+      // Skip if user unchecked this file
+      if (!file.selected) return false;
+
+      // Skip if this file's hash is in the excluded set (primary unchecked)
+      if (file.hash && excludedHashes.has(file.hash)) return false;
+
+      // Include ready (primary) and copy files
+      if ((file.status === 'ready' || file.status === 'copy') && !file.skipReason) {
+        return true;
+      }
+
+      return false;
+    });
   };
 
   /**
