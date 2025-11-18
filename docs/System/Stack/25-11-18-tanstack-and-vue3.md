@@ -1,10 +1,20 @@
 # TanStack Virtual with Vue 3: Nuances and Common Pitfalls
 
+**Reconciled up to**: 2025-11-18
+
 ## Overview
 
 This document captures critical patterns and common pitfalls when implementing TanStack Virtual (`@tanstack/vue-virtual`) with Vue 3's Composition API for virtual scrolling tables. These lessons were learned through actual implementation and debugging of a virtualized table with column management features.
 
 **Context**: Implementing virtual scrolling for a 1,000-row table with dynamic columns (resize, drag-drop, visibility toggle) while maintaining <100ms initial render and 60 FPS scrolling performance.
+
+---
+
+## Key Files
+
+- `src/composables/useVirtualTable.js` - Core composable implementing TanStack Virtual wrapper with Vue 3 reactivity patterns
+- `src/components/base/DocumentTable.vue` - Production-ready reusable table component that uses useVirtualTable internally with column management features
+- `src/views/Documents.vue` - Example usage demonstrating DocumentTable integration in a real application
 
 ---
 
@@ -515,13 +525,31 @@ Improvement factor: 43x DOM node reduction
 
 ## Complete Working Example
 
-See `src/composables/useVirtualTable.js` and `src/views/Documents.vue` for the full implementation that powers a production-ready virtual table with:
+### Production Architecture
+
+The production codebase uses a layered architecture:
+
+1. **`src/composables/useVirtualTable.js`** - Core composable that wraps TanStack Virtual with Vue 3 reactivity patterns (documented in this guide)
+2. **`src/components/base/DocumentTable.vue`** - Reusable table component that uses `useVirtualTable` internally and adds column management features (resize, drag-drop, visibility, sorting)
+3. **`src/views/Documents.vue`** - Application view that uses `DocumentTable` component with custom data and templates
+
+This provides a clean separation of concerns:
+- `useVirtualTable`: Low-level virtualization logic
+- `DocumentTable`: Reusable table UI with features
+- Application views: Business-specific data and formatting
+
+### Key Features
+
+The production implementation demonstrates:
 - 1,000 rows rendered with only ~23 DOM nodes
 - Column resize with composable pattern
 - Column drag-and-drop reordering
 - Column visibility toggle
+- Multi-column sorting
 - Performance monitoring and FPS tracking
 - <100ms initial render, 60 FPS scrolling
+
+**Note**: While this guide shows direct usage of `useVirtualTable` for learning purposes, production code typically uses the `DocumentTable` component abstraction. Refer to `DocumentTable.vue` to see how `useVirtualTable` is integrated with column management and other features.
 
 ---
 
@@ -541,4 +569,5 @@ See `src/composables/useVirtualTable.js` and `src/views/Documents.vue` for the f
 - [TanStack Virtual Documentation](https://tanstack.com/virtual/latest)
 - [TanStack Vue Virtual Examples](https://tanstack.com/virtual/latest/docs/framework/vue/vue-virtual)
 - Project Implementation: `src/composables/useVirtualTable.js`
+- Production Component: `src/components/base/DocumentTable.vue`
 - Example Usage: `src/views/Documents.vue`
