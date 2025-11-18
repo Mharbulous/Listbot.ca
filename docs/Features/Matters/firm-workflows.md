@@ -43,7 +43,7 @@ async function createNewUser(userId, email, displayName) {
         },
       },
       pendingInvites: {},
-      apps: ['intranet', 'bookkeeper'],
+      apps: ['intranet', 'listbot'],
       settings: { timezone: 'UTC', maxMembers: 100 },
       isPersonal: true, // Flag for solo firms
       createdAt: new Date(),

@@ -1,4 +1,4 @@
-# Bookkeeper
+# ListBot
 
 Vue 3 + Vuetify 3 + Vite + Firebase + Pinia + Tailwind + Vitest
 

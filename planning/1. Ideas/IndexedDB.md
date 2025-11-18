@@ -112,10 +112,10 @@ Older matters evicted automatically, re-fetch from Firestore when needed
 ### IndexedDB Schema (via Dexie.js)
 
 ```javascript
-// Database name: BookkeeperCache
+// Database name: ListBotCache
 // Version: 1
 
-const db = new Dexie('BookkeeperCache');
+const db = new Dexie('ListBotCache');
 
 db.version(1).stores({
   // Matter cache table
@@ -169,7 +169,7 @@ import Dexie from 'dexie';
 
 class MatterCacheService {
   constructor() {
-    this.db = new Dexie('BookkeeperCache');
+    this.db = new Dexie('ListBotCache');
 
     this.db.version(1).stores({
       matters: 'matterId, firmId, timestamp, dataSize'

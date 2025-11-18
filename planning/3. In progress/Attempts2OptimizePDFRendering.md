@@ -1,6 +1,6 @@
 # PDF Rendering Optimization Attempts
 
-This document tracks all attempts to optimize PDF page rendering performance in the Bookkeeper application.
+This document tracks all attempts to optimize PDF page rendering performance in the ListBot application.
 
 **Goal**: Achieve <50ms first page render timing (instant feel)
 

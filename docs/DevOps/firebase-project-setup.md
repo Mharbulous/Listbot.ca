@@ -22,7 +22,7 @@ Since the project is in pre-alpha with no user data:
 ## Multi-App SSO Considerations
 
 **CRITICAL**: This project is part of a multi-app SSO architecture with three applications:
-- Listbot.ca (Bookkeeper)
+- Listbot.ca (ListBot)
 - Coryphaeus
 - Intranet
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Create comprehensive documentation of all asynchronous processes currently running in the Bookkeeper application. This documentation is essential for implementing the Asynchronous Task Registry Manager system.
+Create comprehensive documentation of all asynchronous processes currently running in the ListBot application. This documentation is essential for implementing the Asynchronous Task Registry Manager system.
 
 ## Purpose
 

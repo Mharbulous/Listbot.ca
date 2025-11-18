@@ -15,67 +15,67 @@
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/src/components/base/DocumentTable.vue` | 711 |
-| `/home/user/Bookkeeper/src/views/MatterDetail.vue` | 682 |
-| `/home/user/Bookkeeper/src/features/organizer/components/FolderHierarchySelector.vue` | 651 |
-| `/home/user/Bookkeeper/src/views/EditMatter.vue` | 595 |
-| `/home/user/Bookkeeper/src/features/upload/components/FileUploadQueue.vue` | 576 |
-| `/home/user/Bookkeeper/src/dev-demos/views/NewSystemCategory.vue` | 513 |
-| `/home/user/Bookkeeper/src/features/organizer/views/CategoryCreationWizard.vue` | 512 |
-| `/home/user/Bookkeeper/src/views/Matters.vue` | 499 |
-| `/home/user/Bookkeeper/src/components/document/tabs/DigitalFileTab.vue` | 494 |
-| `/home/user/Bookkeeper/src/components/base/DocumentPeekTooltip.vue` | 480 |
-| `/home/user/Bookkeeper/src/features/upload/components/FileUploadStatus.vue` | 455 |
-| `/home/user/Bookkeeper/src/views/Profile.vue` | 441 |
-| `/home/user/Bookkeeper/src/features/organizer/views/ViewDocument.vue` | 439 |
-| `/home/user/Bookkeeper/src/components/AppSwitcher.vue` | 421 |
-| `/home/user/Bookkeeper/src/features/upload/components/ProcessingProgressModal.vue` | 413 |
-| `/home/user/Bookkeeper/src/features/organizer/views/CategoryManager.vue` | 397 |
-| `/home/user/Bookkeeper/src/views/Documents.vue` | 396 |
-| `/home/user/Bookkeeper/src/views/NewMatter.vue` | 353 |
-| `/home/user/Bookkeeper/src/dev-demos/views/LazyLoadingDemo.vue` | 327 |
-| `/home/user/Bookkeeper/src/features/organizer/components/AITagChip.vue` | 326 |
-| `/home/user/Bookkeeper/src/components/document/DocumentMetadataPanel.vue` | 317 |
-| `/home/user/Bookkeeper/src/features/organizer/components/FolderBreadcrumbs.vue` | 316 |
-| `/home/user/Bookkeeper/src/features/upload/components/CloudFileWarningModal.vue` | 313 |
-| `/home/user/Bookkeeper/src/features/upload/components/UploadSummaryCard.vue` | 309 |
+| `/home/user/ListBot/src/components/base/DocumentTable.vue` | 711 |
+| `/home/user/ListBot/src/views/MatterDetail.vue` | 682 |
+| `/home/user/ListBot/src/features/organizer/components/FolderHierarchySelector.vue` | 651 |
+| `/home/user/ListBot/src/views/EditMatter.vue` | 595 |
+| `/home/user/ListBot/src/features/upload/components/FileUploadQueue.vue` | 576 |
+| `/home/user/ListBot/src/dev-demos/views/NewSystemCategory.vue` | 513 |
+| `/home/user/ListBot/src/features/organizer/views/CategoryCreationWizard.vue` | 512 |
+| `/home/user/ListBot/src/views/Matters.vue` | 499 |
+| `/home/user/ListBot/src/components/document/tabs/DigitalFileTab.vue` | 494 |
+| `/home/user/ListBot/src/components/base/DocumentPeekTooltip.vue` | 480 |
+| `/home/user/ListBot/src/features/upload/components/FileUploadStatus.vue` | 455 |
+| `/home/user/ListBot/src/views/Profile.vue` | 441 |
+| `/home/user/ListBot/src/features/organizer/views/ViewDocument.vue` | 439 |
+| `/home/user/ListBot/src/components/AppSwitcher.vue` | 421 |
+| `/home/user/ListBot/src/features/upload/components/ProcessingProgressModal.vue` | 413 |
+| `/home/user/ListBot/src/features/organizer/views/CategoryManager.vue` | 397 |
+| `/home/user/ListBot/src/views/Documents.vue` | 396 |
+| `/home/user/ListBot/src/views/NewMatter.vue` | 353 |
+| `/home/user/ListBot/src/dev-demos/views/LazyLoadingDemo.vue` | 327 |
+| `/home/user/ListBot/src/features/organizer/components/AITagChip.vue` | 326 |
+| `/home/user/ListBot/src/components/document/DocumentMetadataPanel.vue` | 317 |
+| `/home/user/ListBot/src/features/organizer/components/FolderBreadcrumbs.vue` | 316 |
+| `/home/user/ListBot/src/features/upload/components/CloudFileWarningModal.vue` | 313 |
+| `/home/user/ListBot/src/features/upload/components/UploadSummaryCard.vue` | 309 |
 
 ### JavaScript/TypeScript Files (.js, .ts)
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/src/features/organizer/stores/organizerCore.js` | 616 |
-| `/home/user/Bookkeeper/src/features/organizer/services/tagSubcollectionService.js` | 586 |
-| `/home/user/Bookkeeper/src/dev-demos/services/devTagService.js` | 572 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useFileQueue.js` | 512 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useWebWorker.js` | 477 |
-| `/home/user/Bookkeeper/src/features/organizer/services/categoryService.js` | 477 |
-| `/home/user/Bookkeeper/transforms/file-to-upload.transform.js` | 472 |
-| `/home/user/Bookkeeper/src/composables/useDocumentPeek.js` | 459 |
-| `/home/user/Bookkeeper/src/features/organizer/services/evidenceQueryService.js` | 455 |
-| `/home/user/Bookkeeper/src/utils/seedMatters.js` | 412 |
-| `/home/user/Bookkeeper/src/utils/errorMessages.js` | 394 |
-| `/home/user/Bookkeeper/src/services/aiMetadataExtractionService.js` | 392 |
-| `/home/user/Bookkeeper/src/services/matterService.js` | 378 |
-| `/home/user/Bookkeeper/src/features/organizer/composables/usePdfCache.js` | 377 |
-| `/home/user/Bookkeeper/src/features/organizer/composables/useCanvasPreloader.js` | 374 |
-| `/home/user/Bookkeeper/src/features/organizer/stores/virtualFolderStore.js` | 373 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useFolderAnalysis.js` | 372 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useFolderOptions.js` | 358 |
-| `/home/user/Bookkeeper/src/features/organizer/composables/useNavigationPerformanceTracker.js` | 358 |
-| `/home/user/Bookkeeper/src/features/upload/utils/hardwareCalibration.js` | 355 |
-| `/home/user/Bookkeeper/src/test-utils/virtualFolderTestUtils.js` | 350 |
-| `/home/user/Bookkeeper/src/features/organizer/services/aiTagService.js` | 350 |
-| `/home/user/Bookkeeper/src/core/stores/auth.js` | 344 |
-| `/home/user/Bookkeeper/src/composables/useMatters.js` | 344 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useWorkerManager.js` | 341 |
-| `/home/user/Bookkeeper/src/test-utils/mockFileAPI.js` | 336 |
-| `/home/user/Bookkeeper/src/features/upload/composables/useFolderTimeouts.js` | 335 |
-| `/home/user/Bookkeeper/src/features/organizer/services/evidenceService.js` | 328 |
-| `/home/user/Bookkeeper/src/dev-demos/composables/useDevTags.js` | 320 |
-| `/home/user/Bookkeeper/src/features/organizer/composables/useEvidenceLoader.js` | 319 |
-| `/home/user/Bookkeeper/src/components/features/tags/composables/useTagEditing.js` | 313 |
-| `/home/user/Bookkeeper/src/features/upload/workers/fileHashWorker.js` | 311 |
+| `/home/user/ListBot/src/features/organizer/stores/organizerCore.js` | 616 |
+| `/home/user/ListBot/src/features/organizer/services/tagSubcollectionService.js` | 586 |
+| `/home/user/ListBot/src/dev-demos/services/devTagService.js` | 572 |
+| `/home/user/ListBot/src/features/upload/composables/useFileQueue.js` | 512 |
+| `/home/user/ListBot/src/features/upload/composables/useWebWorker.js` | 477 |
+| `/home/user/ListBot/src/features/organizer/services/categoryService.js` | 477 |
+| `/home/user/ListBot/transforms/file-to-upload.transform.js` | 472 |
+| `/home/user/ListBot/src/composables/useDocumentPeek.js` | 459 |
+| `/home/user/ListBot/src/features/organizer/services/evidenceQueryService.js` | 455 |
+| `/home/user/ListBot/src/utils/seedMatters.js` | 412 |
+| `/home/user/ListBot/src/utils/errorMessages.js` | 394 |
+| `/home/user/ListBot/src/services/aiMetadataExtractionService.js` | 392 |
+| `/home/user/ListBot/src/services/matterService.js` | 378 |
+| `/home/user/ListBot/src/features/organizer/composables/usePdfCache.js` | 377 |
+| `/home/user/ListBot/src/features/organizer/composables/useCanvasPreloader.js` | 374 |
+| `/home/user/ListBot/src/features/organizer/stores/virtualFolderStore.js` | 373 |
+| `/home/user/ListBot/src/features/upload/composables/useFolderAnalysis.js` | 372 |
+| `/home/user/ListBot/src/features/upload/composables/useFolderOptions.js` | 358 |
+| `/home/user/ListBot/src/features/organizer/composables/useNavigationPerformanceTracker.js` | 358 |
+| `/home/user/ListBot/src/features/upload/utils/hardwareCalibration.js` | 355 |
+| `/home/user/ListBot/src/test-utils/virtualFolderTestUtils.js` | 350 |
+| `/home/user/ListBot/src/features/organizer/services/aiTagService.js` | 350 |
+| `/home/user/ListBot/src/core/stores/auth.js` | 344 |
+| `/home/user/ListBot/src/composables/useMatters.js` | 344 |
+| `/home/user/ListBot/src/features/upload/composables/useWorkerManager.js` | 341 |
+| `/home/user/ListBot/src/test-utils/mockFileAPI.js` | 336 |
+| `/home/user/ListBot/src/features/upload/composables/useFolderTimeouts.js` | 335 |
+| `/home/user/ListBot/src/features/organizer/services/evidenceService.js` | 328 |
+| `/home/user/ListBot/src/dev-demos/composables/useDevTags.js` | 320 |
+| `/home/user/ListBot/src/features/organizer/composables/useEvidenceLoader.js` | 319 |
+| `/home/user/ListBot/src/components/features/tags/composables/useTagEditing.js` | 313 |
+| `/home/user/ListBot/src/features/upload/workers/fileHashWorker.js` | 311 |
 
 ---
 
@@ -83,18 +83,18 @@
 
 | Filepath | No of Lines |
 |----------|-------------|
-| `/home/user/Bookkeeper/tests/unit/services/aiMetadataExtractionService.test.js` | 1301 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/components/FolderHierarchySelector.spec.js` | 877 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/components/TagContextMenu.spec.js` | 828 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/stores/virtualFolderStore.test.js` | 751 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/components/ViewModeToggle.spec.js` | 741 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/components/FolderBreadcrumbs.spec.js` | 629 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/stores/errorHandling.test.js` | 510 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/stores/organizer.integration.test.js` | 498 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/stores/performanceOptimization.test.js` | 404 |
-| `/home/user/Bookkeeper/tests/unit/composables/memoryLeak.test.js` | 377 |
-| `/home/user/Bookkeeper/tests/unit/features/upload/composables/useFolderTimeouts.test.js` | 337 |
-| `/home/user/Bookkeeper/tests/unit/features/organizer/stores/backwardCompatibility.test.js` | 311 |
+| `/home/user/ListBot/tests/unit/services/aiMetadataExtractionService.test.js` | 1301 |
+| `/home/user/ListBot/tests/unit/features/organizer/components/FolderHierarchySelector.spec.js` | 877 |
+| `/home/user/ListBot/tests/unit/features/organizer/components/TagContextMenu.spec.js` | 828 |
+| `/home/user/ListBot/tests/unit/features/organizer/stores/virtualFolderStore.test.js` | 751 |
+| `/home/user/ListBot/tests/unit/features/organizer/components/ViewModeToggle.spec.js` | 741 |
+| `/home/user/ListBot/tests/unit/features/organizer/components/FolderBreadcrumbs.spec.js` | 629 |
+| `/home/user/ListBot/tests/unit/features/organizer/stores/errorHandling.test.js` | 510 |
+| `/home/user/ListBot/tests/unit/features/organizer/stores/organizer.integration.test.js` | 498 |
+| `/home/user/ListBot/tests/unit/features/organizer/stores/performanceOptimization.test.js` | 404 |
+| `/home/user/ListBot/tests/unit/composables/memoryLeak.test.js` | 377 |
+| `/home/user/ListBot/tests/unit/features/upload/composables/useFolderTimeouts.test.js` | 337 |
+| `/home/user/ListBot/tests/unit/features/organizer/stores/backwardCompatibility.test.js` | 311 |
 
 ---
 

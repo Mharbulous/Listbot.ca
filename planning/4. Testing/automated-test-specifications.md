@@ -542,7 +542,7 @@ describe('Backward Compatibility', () => {
 describe('Multi-App SSO Integration', () => {
   
   test('should preserve virtual folder state across app navigation', () => {
-    // Setup: Navigate to folder view in Bookkeeper
+    // Setup: Navigate to folder view in ListBot
     // Action: Switch to different SSO app and back
     // Expected: Virtual folder state preserved
   });
