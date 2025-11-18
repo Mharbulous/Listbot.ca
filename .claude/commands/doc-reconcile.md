@@ -13,14 +13,55 @@ This command analyzes the target documentation file, compares it with the curren
 
 ---
 
+## YOLO Mode
+
+**Activation**: When `$ARGUMENTS` equals "YOLO" (case-insensitive), the command enters autonomous reconciliation mode.
+
+**YOLO Mode Behavior**:
+1. **Auto-select target file**: Automatically selects the first valid documentation file that needs reconciliation
+2. **Make judgment calls**: Answers all questions automatically based on best practices and codebase patterns
+3. **Skip user approval**: Proceeds directly to reconciliation without waiting for user confirmation
+4. **Auto-reconcile**: Continues working until completion, technical block, or timeout
+
+**CRITICAL CONSTRAINTS for YOLO Mode**:
+- **ONE FILE ONLY**: YOLO mode can ONLY modify the single target documentation file selected
+- **NO OTHER FILES**: MUST NOT modify any other files in the repository, including:
+  - Source code files
+  - Other documentation files
+  - Configuration files
+  - Test files
+- **Time limit**: Stop if more than 20 minutes have passed since command started
+- **Technical blocks**: Stop if unable to proceed (e.g., cannot determine correct terminology, missing critical source files)
+
+**YOLO Mode Judgment Guidelines**:
+- **Terminology conflicts**: Always defer to canonical definitions in `@docs/architecture/file-lifecycle.md`
+- **Ambiguous cross-references**: Choose the most likely current file path based on git history
+- **Missing Key Files section**: Create it with all files extensively discussed in the documentation
+- **Decomposition decisions**: Apply the 50% rule strictly - if uncertain, err toward listing children
+- **Code misalignments**: Update documentation to match current code (code is source of truth)
+- **Broken references**: Fix to point to current file locations, or remove if file no longer exists
+
+---
+
 ## Step 1: Validate Target Documentation File
+
+**Check for YOLO Mode:**
+- **If `$ARGUMENTS` equals "YOLO" (case-insensitive)**:
+  - Set `yoloMode = true`
+  - Record start time for 20-minute timeout tracking
+  - Display: "🚀 YOLO MODE ACTIVATED - Autonomous reconciliation starting..."
+  - Display: "⚠️ CONSTRAINT: Will modify ONLY ONE documentation file"
+  - Proceed to auto-select target file (see "If $ARGUMENTS is empty" below)
+- **Otherwise**:
+  - Set `yoloMode = false`
+  - Proceed with normal validation
 
 **Documentation Naming Convention:**
 - All documentation files MUST begin with a date in `YY-MM-DD` format (e.g., `25-11-18-feature-name.md`)
 - Files without this date prefix are in need of reconciliation
 - Files with today's date should NOT be reconciled (too recent, not enough time for drift)
 
-**If $ARGUMENTS is provided:**
+**If $ARGUMENTS is provided (and not "YOLO"):**
 - Verify the file path exists (use Read tool)
 - Confirm it's a markdown documentation file (`.md` extension)
 - **REJECT if filename is `CLAUDE.md`** - these are not valid targets for reconciliation
@@ -28,7 +69,7 @@ This command analyzes the target documentation file, compares it with the curren
 - Store the file path as `targetDoc`
 - Display: "Reconciling documentation: `$ARGUMENTS`"
 
-**If $ARGUMENTS is empty:**
+**If $ARGUMENTS is empty or "YOLO":**
 1. Search for markdown files in `docs/` directory that need reconciliation:
    ```bash
    # Find docs without YY-MM-DD date prefix
@@ -103,6 +144,12 @@ Extract for later validation:
 
 ## Step 3: Check Recent Code Changes (Limited by Last Reconciled Date)
 
+**Check timeout (YOLO Mode only):**
+- If `yoloMode = true` and more than 20 minutes have elapsed since start:
+  - Display: "⏱️ YOLO MODE TIMEOUT - Stopping at Step 3"
+  - Display partial findings gathered so far
+  - Exit command without modifying files
+
 ### 3.1 Determine Git Log Date Range
 
 **If `lastReconciledDate` exists:**
@@ -140,6 +187,12 @@ For remaining reconciliation work:
 ---
 
 ## Step 4: Reconciliation Analysis
+
+**Check timeout (YOLO Mode only):**
+- If `yoloMode = true` and more than 20 minutes have elapsed since start:
+  - Display: "⏱️ YOLO MODE TIMEOUT - Stopping at Step 4"
+  - Display partial findings gathered so far
+  - Exit command without modifying files
 
 Perform four types of checks:
 
@@ -329,14 +382,31 @@ Create a structured summary with the following sections:
 
 ---
 
-## Step 6: Present Findings and Await Approval
+## Step 6: Present Findings and Await Approval (or Auto-Proceed in YOLO Mode)
 
+**Check timeout (YOLO Mode only):**
+- If `yoloMode = true` and more than 20 minutes have elapsed:
+  - Display: "⏱️ YOLO MODE TIMEOUT - 20 minutes exceeded"
+  - Display the reconciliation report
+  - Stop without modifying files
+  - Exit command
+
+**Normal Mode (yoloMode = false):**
 1. **Display the reconciliation report** to the user
 2. **Do NOT modify any files** without explicit approval
 3. **Offer to make updates**:
    - "I found [N] issues in [targetDoc]. Would you like me to update the documentation to fix these?"
+4. Wait for user approval before proceeding
 
-**If approved, follow the Post-Reconciliation Workflow:**
+**YOLO Mode (yoloMode = true):**
+1. **Display the reconciliation report** to the user
+2. **Display YOLO mode decision**:
+   - "🤖 YOLO MODE: Auto-proceeding with reconciliation"
+   - "📝 Updating: [targetDoc]"
+   - "🔒 ONE FILE CONSTRAINT: No other files will be modified"
+3. **Automatically proceed** to Post-Reconciliation Workflow (no approval needed)
+
+**If approved (Normal Mode) or YOLO Mode active, follow the Post-Reconciliation Workflow:**
 
 ### Post-Reconciliation Workflow
 
@@ -398,8 +468,11 @@ Create a structured summary with the following sections:
 ## Important Constraints
 
 - **MODIFY TARGET FILE ONLY**: This command modifies ONLY the target documentation file. Source code files and other documentation files MUST NOT be modified during reconciliation.
+  - **YOLO MODE**: This constraint is CRITICAL in YOLO mode - only ONE file may be modified
 - **NO CLAUDE.md files**: Reject any attempt to reconcile files named `CLAUDE.md`
 - **NO files dated today**: Reject files with today's date prefix (YY-MM-DD) - too recent for reconciliation
+- **YOLO MODE TIME LIMIT**: YOLO mode has a strict 20-minute timeout from command start
+- **YOLO MODE TECHNICAL BLOCKS**: YOLO mode stops if unable to make judgment calls (see Technical Blocks below)
 - **Date-based naming convention**: All documentation files MUST begin with `YY-MM-DD` format
 - **Files without dates need reconciliation**: Any file lacking the `YY-MM-DD` prefix requires reconciliation
 - **Date-limited search**: Only look at commits since `lastReconciledDate`
@@ -422,6 +495,43 @@ Create a structured summary with the following sections:
 
 ---
 
+## Technical Blocks (YOLO Mode)
+
+**YOLO mode stops immediately if any of these occur:**
+
+1. **Ambiguous terminology with no canonical source**:
+   - Cannot find definition in `@docs/architecture/file-lifecycle.md` or other canonical docs
+   - Multiple conflicting definitions exist without clear precedence
+   - Action: Display error, show partial reconciliation report, exit
+
+2. **Missing critical source files**:
+   - Key Files reference files that no longer exist AND cannot determine replacement
+   - No git history available to trace file moves/renames
+   - Action: Display error, show partial reconciliation report, exit
+
+3. **Circular or broken cross-references**:
+   - Documentation references file A, which references file B, which references file A
+   - Cannot resolve which version is correct
+   - Action: Display error, show partial reconciliation report, exit
+
+4. **Corrupted or unreadable target file**:
+   - Target documentation file cannot be read or parsed
+   - File encoding issues prevent reliable edits
+   - Action: Display error, exit immediately
+
+5. **Git operations fail**:
+   - Cannot access git history when needed for reconciliation
+   - Repository state prevents reliable analysis
+   - Action: Continue with holistic comparison only, note limitation in report
+
+**When technical block occurs:**
+- Display: "🛑 YOLO MODE TECHNICAL BLOCK - Cannot proceed"
+- Explain the specific block encountered
+- Show all findings gathered up to the blocking point
+- Exit without modifying any files
+
+---
+
 ## Usage Examples
 
 ```bash
@@ -434,19 +544,24 @@ Create a structured summary with the following sections:
 # Auto-select a file that needs reconciliation (no user prompt)
 # Will automatically choose the first valid candidate
 /doc-reconcile
+
+# YOLO MODE: Auto-select file and reconcile without approval
+# Continues until complete, blocked, or 20 minutes elapsed
+/doc-reconcile YOLO
 ```
 
 ---
 
 ## Error Handling
 
-**If no candidates found when $ARGUMENTS is empty**:
+**If no candidates found when $ARGUMENTS is empty or "YOLO"**:
 - Display: "No documentation files found that need reconciliation"
 - Explain: "All markdown files in docs/ either:"
   - Have today's date prefix (too recent)"
   - Are named CLAUDE.md (configuration files, not reconcilable)"
   - Already have date prefixes from previous reconciliations"
 - Suggest: "Specify a target file explicitly if you want to reconcile a specific dated file"
+- **YOLO MODE**: Exit immediately if no candidates found
 
 **If target file doesn't exist**:
 - Display: "File not found: `$ARGUMENTS`"
@@ -468,8 +583,13 @@ Create a structured summary with the following sections:
 **If verification fails during post-reconciliation**:
 - Display: "⚠️ Verification failed - important information may be missing from reconciled file"
 - Show comparison report highlighting missing content
-- Ask: "Do you want to manually review before deleting the original file?"
-- **Do NOT delete original file** until user confirms it's safe
+- **Normal Mode**: Ask: "Do you want to manually review before deleting the original file?"
+- **YOLO MODE**:
+  - Display: "🛑 YOLO MODE SAFETY STOP - Verification failed"
+  - Keep both files (original and reconciled)
+  - Display: "Original file preserved due to verification failure"
+  - Exit command
+- **Do NOT delete original file** until verified safe (or user confirms in Normal Mode)
 
 **If no Key Files section exists**:
 - Note in report: "Key Files section missing - will suggest creation"
@@ -479,8 +599,29 @@ Create a structured summary with the following sections:
 **If no recent code changes found**:
 - Display: "No commits found since [lastReconciledDate] affecting relevant files"
 - Continue with holistic comparison, cross-reference, and terminology checks
+- **YOLO MODE**: Continue to completion - this is not a blocking error
 
 **If git is not available**:
 - Skip Step 3 (recent changes check)
 - Perform holistic comparison (Step 4.1) using current file state only
 - Note in report: "Git history not checked - git not available"
+- **YOLO MODE**: Continue to completion - this is not a blocking error
+
+---
+
+## YOLO Mode Completion Summary
+
+**When YOLO mode completes successfully:**
+1. Display: "✅ YOLO MODE COMPLETE"
+2. Show reconciliation statistics:
+   - Time elapsed: [X minutes]
+   - Target file: [path to reconciled file with YY-MM-DD prefix]
+   - Issues fixed: [count]
+   - ONE FILE MODIFIED: ✅ (constraint satisfied)
+3. Confirm: "Ready for commit and push to branch"
+
+**When YOLO mode exits early:**
+1. Display reason: Timeout / Technical Block / Verification Failure / No Candidates
+2. Show all findings gathered up to exit point
+3. Files modified: **NONE** (if exited before reconciliation) or **ONE** (if verification failed)
+4. Next steps: Suggest manual intervention or normal mode retry
