@@ -68,36 +68,41 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
 
 ---
 
-## 4. Documentation & Architecture (@-Imports)
+## 4. Documentation Organization (@-Imports)
 
-This `CLAUDE.md` is lean. You MUST reference the files below using `@path/to/file` when you need detailed context on architecture or implementation.
+This `CLAUDE.md` is lean by design. Documentation is organized using a **CLAUDE.md indexed feature-module structure**, where each folder contains a `CLAUDE.md` index file that points to detailed documentation within that module.
 
-- `@docs/architecture/overview.md`
-  - High-level component architecture (Layouts, Views, Base vs. Feature).
-  - High-level data flow patterns.
-- `@docs/architecture/authentication.md`
-  - **CRITICAL**: The full "Auth State Machine" logic (`uninitialized` -> `initializing` -> ...).
-  - **CRITICAL**: The "Solo Firm" architecture (`firmId === userId`).
-  - Route guards and Pinia store integration.
-- `@docs/architecture/file-lifecycle.md`
-  - **CRITICAL**: The definitive guide to all file terminology (Original, Source, Upload, Batesed, Page, Redacted, Production, Storage).
-  - **You MUST use this exact terminology.**
-- `@docs/architecture/file-processing.md`
-  - The 3-phase hardware-calibrated time estimation formulas.
-  - Deduplication strategy (size-pre-filter, BLAKE3 hash as ID).
-  - Path parsing optimization logic.
-  - Hardware performance calibration (H-Factor system).
-- `@src/dev-demos/README.md`
-  - Overview of the demo system, routes (`/dev/*`), and components.
-- `@docs/testing/performance-analysis.md`
-  - Instructions for performance data collection (`parse_console_log.py`).
-  - Details on the H-Factor (Hardware Calibration) system.
-- `@docs/front-end/DocumentTable.md`
-  - DocumentTable architecture and the 4 column data sources (Built-in, System, Firm, Matter categories).
-- `@docs/2025-11-10-New-Upload-Page.md`
-  - **NEW UPLOAD PAGE**: Development plan for the new upload page at `/testing` route.
-  - Both old (`/upload`) and new (`/testing`) pages will coexist during development.
-  - **For any coding tasks on the new upload page, consult this document.**
+### Documentation Structure Overview
+
+Documentation is organized into feature-based modules that mirror the codebase structure. For full details on the organization philosophy and structure, see:
+
+- `@docs/System/Documentation/documentation-hierarchy.md` - The feature-module organization philosophy
+- `@docs/System/Documentation/documentation-structure.md` - Visual structure diagrams and discovery patterns
+
+### Primary Documentation Modules
+
+**System-Wide Documentation**
+- `@docs/System/CLAUDE.md` - System architecture, stack, conventions, and shared components
+
+**Feature Documentation (Vertical Slices)**
+- `@docs/Features/Authentication/CLAUDE.md` - Multi-app SSO authentication, auth state machine, security
+- `@docs/Features/Upload/CLAUDE.md` - File upload, processing, deduplication, workers
+  - **CRITICAL**: Contains file lifecycle terminology and deduplication terminology
+- `@docs/Features/Organizer/CLAUDE.md` - Document table, viewer, categories, AI analysis
+- `@docs/Features/Matters/CLAUDE.md` - Matter/case management
+- `@docs/Features/Profile/CLAUDE.md` - User profile and settings
+
+**Cross-Feature Documentation**
+- `@docs/Data/CLAUDE.md` - Firestore schema, security rules, query patterns
+- `@docs/Testing/CLAUDE.md` - Testing strategy, Vitest setup, test patterns
+- `@docs/DevOps/CLAUDE.md` - Local development, SSO setup, deployment
+
+### How to Use This Structure
+
+1. **Feature-scoped work**: Navigate to the relevant feature module (e.g., `@docs/Features/Upload/CLAUDE.md` for upload-related tasks)
+2. **System-wide concepts**: Reference `@docs/System/CLAUDE.md` for architecture, stack, and conventions
+3. **Progressive disclosure**: Each folder's `CLAUDE.md` provides an overview and points to detailed documentation
+4. **Vertical slices**: All documentation for a feature (UI, logic, state, data) is grouped together in that feature's folder
 
 ---
 
