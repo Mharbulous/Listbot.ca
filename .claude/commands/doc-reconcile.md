@@ -1,8 +1,15 @@
 # Documentation Reconciliation
 
-Sync documentation file with recent code changes, validate cross-references, and check terminology consistency.
+**Purpose**: Reconcile documentation files that have drifted from the actual codebase by:
+- Creating a **Key Files** section if missing
+- Fixing **broken cross-references** to source code and other documentation
+- Updating **terminology definitions** to match canonical sources
+
+This command analyzes the target documentation file, compares it with the current state of the codebase, and generates a reconciliation report.
 
 **Target file**: `$ARGUMENTS`
+
+**Key Constraint**: This command modifies ONLY the target documentation file. No other files (source code, other documentation) will be changed.
 
 ---
 
@@ -390,6 +397,7 @@ Create a structured summary with the following sections:
 
 ## Important Constraints
 
+- **MODIFY TARGET FILE ONLY**: This command modifies ONLY the target documentation file. Source code files and other documentation files MUST NOT be modified during reconciliation.
 - **NO CLAUDE.md files**: Reject any attempt to reconcile files named `CLAUDE.md`
 - **NO files dated today**: Reject files with today's date prefix (YY-MM-DD) - too recent for reconciliation
 - **Date-based naming convention**: All documentation files MUST begin with `YY-MM-DD` format
@@ -402,6 +410,9 @@ Create a structured summary with the following sections:
 - **Create dated file on reconciliation**: After successful reconciliation, create new file with `YY-MM-DD` prefix
 - **Verify before deletion**: MUST verify all important info is preserved before deleting original file
 - **Preserve all accurate info**: Remove ONLY obsolete/incorrect information during reconciliation
+- **Key Files section required**: MUST create Key Files section if it is missing from the target documentation
+- **Fix all cross-references**: MUST validate and fix all `@path` references to ensure they point to existing files
+- **Update all terminology**: MUST align all technical terms with canonical definitions from architecture documentation
 - **Single source of truth**: When terminology conflicts, defer to `@docs/architecture/file-lifecycle.md`
 - **Exact terminology**: MUST use canonical terms from architecture docs
 - **Verify before suggesting**: Only flag issues that are confirmed by reading source code
