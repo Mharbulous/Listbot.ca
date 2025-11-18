@@ -32,6 +32,7 @@ const props = defineProps({
         'uploading',
         'creating_metadata',
         'completed',
+        'copied', // Copy file with metadata copied (not uploaded to Storage)
         'skipped',
         'skip',
         'error',
@@ -69,6 +70,7 @@ const statusTextMap = {
   creating_metadata: 'Saving...',
   completed: 'Uploaded',
   uploaded: 'Uploaded',
+  copied: 'Copied',
   skipped: 'Duplicate',
   skip: 'Skip',
   error: 'Failed',
@@ -186,6 +188,10 @@ const handleMouseLeave = () => {
 
 .status-completed {
   background-color: #4caf50; /* Green */
+}
+
+.status-copied {
+  background-color: #4caf50; /* Green - copy file with metadata copied */
 }
 
 .status-skipped {

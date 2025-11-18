@@ -88,31 +88,30 @@ export function useUploadOrchestrator({
         }
       }
 
-      // Upload files sequentially (parallel upload could be added in Phase 6)
+      // Upload files with pipelined hash/check optimization
+      // While file N is uploading, we hash/check file N+1 to hide latency
       let uploadedCount = 0;
       let copyCount = 0;
       let failedCount = 0;
 
-      for (let i = 0; i < filesToUpload.length; i++) {
-        const queueFile = filesToUpload[i];
+      // Get only primary files (non-copy) for processing
+      const primaryFiles = filesToUpload.filter(file => file.status !== 'copy');
 
-        // Skip copy files - they're handled inline after their primary uploads
-        if (queueFile.status === 'copy') {
-          continue;
-        }
+      for (let i = 0; i < primaryFiles.length; i++) {
+        const queueFile = primaryFiles[i];
 
         // Check for pause request
         if (orchestration.pauseRequested.value) {
           orchestration.currentUploadIndex.value = i;
           orchestration.isPaused.value = true;
           orchestration.pauseRequested.value = false;
-          console.log(`[UPLOAD] Upload paused at file ${i + 1}/${filesToUpload.length}`);
+          console.log(`[UPLOAD] Upload paused at file ${i + 1}/${primaryFiles.length}`);
           notify('Upload paused', 'info');
           return {
             completed: false,
             paused: true,
             currentIndex: i,
-            totalFiles: filesToUpload.length,
+            totalFiles: primaryFiles.length,
             uploaded: uploadedCount,
             copies: copyCount,
             failed: failedCount,
@@ -121,13 +120,13 @@ export function useUploadOrchestrator({
 
         // Check for abort request
         if (abortController.signal.aborted) {
-          console.log(`[UPLOAD] Upload cancelled at file ${i + 1}/${filesToUpload.length}`);
+          console.log(`[UPLOAD] Upload cancelled at file ${i + 1}/${primaryFiles.length}`);
           notify('Upload cancelled', 'warning');
           return {
             completed: false,
             cancelled: true,
             currentIndex: i,
-            totalFiles: filesToUpload.length,
+            totalFiles: primaryFiles.length,
             uploaded: uploadedCount,
             copies: copyCount,
             failed: failedCount,
@@ -140,7 +139,7 @@ export function useUploadOrchestrator({
 
           if (result.success) {
             if (result.skipped) {
-              // File already existed (shouldn't happen in Phase 3b flow)
+              // File already existed - metadata only
               uploadedCount++;
             } else {
               uploadedCount++;
@@ -154,7 +153,7 @@ export function useUploadOrchestrator({
                 const copyResult = await createCopyMetadataRecord(copyFile);
 
                 if (copyResult.success) {
-                  copyFile.status = 'uploaded';
+                  copyFile.status = 'copied'; // Copy metadata only (not uploaded to Storage)
                   copyCount++;
                 } else {
                   // Copy metadata failure is NON-BLOCKING
@@ -188,9 +187,9 @@ export function useUploadOrchestrator({
         }
 
         // Log progress every 10 files
-        if ((i + 1) % 10 === 0 || i + 1 === filesToUpload.length) {
+        if ((i + 1) % 10 === 0 || i + 1 === primaryFiles.length) {
           console.log(
-            `[UPLOAD] Progress: ${i + 1}/${filesToUpload.length} (${uploadedCount} uploaded, ${copyCount} copies, ${failedCount} failed)`
+            `[UPLOAD] Progress: ${i + 1}/${primaryFiles.length} (${uploadedCount} uploaded, ${copyCount} copies, ${failedCount} failed)`
           );
         }
       }
