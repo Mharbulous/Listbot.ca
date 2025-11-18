@@ -176,3 +176,115 @@ If emojis aren't essential, use plain text:
 - **Relative paths**: `./planning/file.md` (from project root)
 - **Absolute paths preferred** for reliability in Windows environments
 - DO NOT modify any files from the production branch!  If asked to commit changes from the production branch you should instead switch to the main branch and commit from the main branch. Fuller explanation is provided here:  docs\hosting\2025-11-16-Promotion.md
+
+---
+
+## 7. Technical Best Practices
+
+**You MUST follow these best practices to avoid common pitfalls and bugs.**
+
+### Vue 3 TypeScript Ref Typing
+
+- **CORRECT**: Use proper TypeScript typing for refs with objects:
+  ```typescript
+  const user = ref<User>()  // for optional
+  const user = ref<User | null>(null)  // for explicitly nullable
+  ```
+- **INCORRECT**: Avoid casting empty objects as types:
+  ```typescript
+  const user = ref({} as User)  // ❌ Bypasses type safety, leads to undefined property access
+  ```
+- **Why**: Casting empty objects bypasses TypeScript's type safety and leads to undefined property access at runtime.
+
+### Tailwind CSS Directive Order
+
+- **CRITICAL**: Tailwind directives MUST be imported in this exact order:
+  ```css
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  ```
+- Then import the CSS file **after Vue** in `main.js`:
+  ```javascript
+  import { createApp } from 'vue'
+  import './style.css'  // Import after Vue
+  ```
+
+### Vuetify + Tailwind Framework Conflicts
+
+- **Issue**: Applying utility classes from both frameworks on the same elements causes specificity conflicts.
+- **Solutions**:
+  1. Use Tailwind's `prefix` option (e.g., `prefix: 'tw-'`) in config
+  2. Enable Vuetify's tree-shaking to reduce CSS bloat
+  3. Separate usage strategically:
+     - Use **Vuetify** for complex components (dialogs, data tables, etc.)
+     - Use **Tailwind** for layout and custom styling
+
+### Firebase Authentication v9 getRedirectResult Behavior
+
+- **CRITICAL**: In Firebase v9 modular SDK, `getRedirectResult()` returns `null` when no redirect occurred (not a `UserCredential` object with `null` user).
+- **CORRECT**:
+  ```typescript
+  const result = await getRedirectResult(auth)
+  if (result === null) {
+    // No redirect occurred
+  } else {
+    // result is UserCredential
+    const user = result.user
+  }
+  ```
+- **INCORRECT**:
+  ```typescript
+  const result = await getRedirectResult(auth)
+  if (result.user === null) {  // ❌ TypeError if result is null
+  ```
+- **Why**: Always check `result === null` before accessing properties to avoid TypeErrors.
+
+### Firestore Security Rules Are Not Filters
+
+- **CRITICAL**: Firestore security rules are **all-or-nothing**. Queries MUST include the same constraints as security rules.
+- **Example**: If your security rule is:
+  ```javascript
+  allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+  ```
+- **CORRECT Query**:
+  ```typescript
+  const q = query(collection(db, 'items'), where('userId', '==', uid))
+  ```
+- **INCORRECT Query**:
+  ```typescript
+  const q = query(collection(db, 'items'))  // ❌ Will fail entirely, even if all docs match
+  ```
+- **Why**: Queries will fail entirely if they don't include the same constraints, even if all documents would pass the security rules.
+
+### Web Worker Testing with @vitest/web-worker
+
+- **CRITICAL**: When testing workers with `@vitest/web-worker`, use `self.onmessage` (not bare `onmessage`).
+- **CORRECT**:
+  ```typescript
+  self.onmessage = (event) => {
+    // Worker logic
+  }
+  ```
+- **INCORRECT**:
+  ```typescript
+  onmessage = (event) => {  // ❌ Breaks with @vitest/web-worker
+  ```
+- **Why**: The testing library requires explicit `self` reference for proper compatibility.
+
+### Vitest Web Worker and jsdom Incompatibility
+
+- **CRITICAL**: Do NOT combine `environment: 'jsdom'` with `@vitest/web-worker` as it causes dynamic import errors.
+- **Solutions**:
+  1. Test workers separately with `environment: 'node'`
+  2. Use Vitest Browser Mode instead
+- **Example**:
+  ```typescript
+  // vitest.config.ts
+  export default {
+    test: {
+      // For worker tests
+      environment: 'node',  // Not 'jsdom'
+    }
+  }
+  ```
