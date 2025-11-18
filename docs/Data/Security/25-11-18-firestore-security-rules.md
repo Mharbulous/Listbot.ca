@@ -1,14 +1,80 @@
 # Security Rules and Access Control
 
+**Reconciled up to**: 2025-11-18
 Last Updated: 2025-08-31
+
+> **⚠️ CRITICAL NOTICE: This document describes the PLANNED production security architecture.**
+> **The current codebase implements MVP-level security rules for development.**
+> See [Current Implementation vs. Planned Architecture](#current-implementation-vs-planned-architecture) below.
+
+## Key Files
+
+- `firestore.rules` - Firestore security rules (current: development mode)
+- `storage.rules` - Firebase Storage security rules (current: solo-firm only)
+- `src/core/stores/auth/` - Authentication state management (decomposed module)
+  - `authStore.js` - Main auth state machine
+  - `authFirmSetup.js` - Firm setup logic
+  - `authStateHandlers.js` - Auth state handlers
 
 ## Overview
 
-This document defines the security rules for Firestore and Firebase Storage, ensuring proper access control for our multi-tenant firm-based architecture. The security model follows the principle of least privilege with clear firm-based isolation.
+This document defines the **planned production** security rules for Firestore and Firebase Storage, ensuring proper access control for our multi-tenant firm-based architecture. The security model follows the principle of least privilege with clear firm-based isolation.
 
-## Firestore Security Rules
+## Current Implementation vs. Planned Architecture
+
+### Current MVP Implementation (as of 2025-11-18)
+
+**Firestore Rules** - ❌ Development Mode:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+- Wide-open access for all authenticated users
+- No firm isolation
+- No role-based access control
+- **Status**: Development/testing only - NOT production ready
+
+**Storage Rules** - ⚠️ Solo Firm Only:
+```javascript
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /firms/{firmId}/matters/{matterId}/{allPaths=**} {
+      allow read, write: if request.auth != null &&
+                           request.auth.uid == firmId;  // Solo firm
+    }
+  }
+}
+```
+- Works only for solo users (where `firmId === userId`)
+- No multi-tenant firm support
+- No custom claims validation
+- **Status**: Partially implemented - covers solo firm use case
+
+**Custom Claims** - ❌ Not Implemented:
+- No custom claims (`firmId`, `role`) in auth tokens
+- No server-side claim management
+- Auth store uses basic Firebase Authentication only
+
+**Migration Path**: See [Migration Roadmap](#migration-roadmap) section below.
+
+---
+
+## Planned Production Security Rules
+
+The following sections describe the **target architecture** for production deployment.
+
+## Firestore Security Rules (Planned)
 
 ### Simple, Consistent Pattern
+
+**Implementation Status**: ❌ Not Implemented
 
 ```javascript
 rules_version = '2';
@@ -40,9 +106,11 @@ service cloud.firestore {
 }
 ```
 
-## Firebase Storage Security Rules
+## Firebase Storage Security Rules (Planned)
 
 ### Firm-Based File Access
+
+**Implementation Status**: ⚠️ Partially Implemented (solo firm only)
 
 ```javascript
 rules_version = '2';
@@ -57,9 +125,11 @@ service firebase.storage {
 }
 ```
 
-## Custom Claims Structure
+## Custom Claims Structure (Planned)
 
 ### Authentication Claims
+
+**Implementation Status**: ❌ Not Implemented
 
 Keep it **dead simple**. Solo users have `firmId === userId`:
 
@@ -71,6 +141,8 @@ Keep it **dead simple**. Solo users have `firmId === userId`:
 ```
 
 ### Role-Based Access Control
+
+**Implementation Status**: ❌ Not Implemented
 
 **Admin Role Permissions**:
 
@@ -92,18 +164,22 @@ Keep it **dead simple**. Solo users have `firmId === userId`:
 - Full control over their workspace
 - Can invite others (converting to multi-user firm)
 
-## Access Control Matrix
+## Access Control Matrix (Planned)
 
 ### Collection-Level Permissions
 
-| Collection                                                           | Solo User (Admin) | Firm Admin               | Firm Member       |
-| -------------------------------------------------------------------- | ----------------- | ------------------------ | ----------------- |
-| `/users/{userId}`                                                    | Own document only | Own document only        | Own document only |
-| `/firms/{firmId}`                                                    | Full access       | Read all, Write settings | Read only         |
-| `/firms/{firmId}/matters`                                            | Full access       | Full access              | Full access       |
-| File metadata collections (see [FileMetadata.md](./FileMetadata.md)) | Full access       | Full access              | Full access       |
+**Implementation Status**: ❌ Not Implemented
 
-### Data Isolation Guarantees
+| Collection                                                                                  | Solo User (Admin) | Firm Admin               | Firm Member       |
+| ------------------------------------------------------------------------------------------- | ----------------- | ------------------------ | ----------------- |
+| `/users/{userId}`                                                                           | Own document only | Own document only        | Own document only |
+| `/firms/{firmId}`                                                                           | Full access       | Read all, Write settings | Read only         |
+| `/firms/{firmId}/matters`                                                                   | Full access       | Full access              | Full access       |
+| File metadata collections (see @docs/Features/Organizer/Data/file-metadata-schema.md) | Full access       | Full access              | Full access       |
+
+### Data Isolation Guarantees (Planned)
+
+**Implementation Status**: ❌ Not Implemented
 
 **Firm Isolation**:
 
@@ -121,9 +197,11 @@ Keep it **dead simple**. Solo users have `firmId === userId`:
 - Same security rules apply across all apps (Intranet, ListBot, etc.)
 - Consistent firm-based access control model
 
-## Security Implementation Details
+## Security Implementation Details (Planned)
 
 ### Custom Claims Validation
+
+**Implementation Status**: ❌ Not Implemented
 
 ```javascript
 // Custom claims are set server-side only
@@ -140,7 +218,9 @@ const firmId = token.claims.firmId;
 const role = token.claims.role;
 ```
 
-### Security Rule Testing
+### Security Rule Testing (Planned)
+
+**Implementation Status**: ❌ Not Implemented
 
 **Valid Access Examples**:
 
@@ -168,9 +248,11 @@ match /firms/firm-xyz/matters with token.firmId === 'firm-abc'
 match /firms/firm-abc with token.firmId === 'firm-abc' && token.role === 'member'
 ```
 
-## Security Best Practices
+## Security Best Practices (Planned)
 
 ### Token Management
+
+**Implementation Status**: ⚠️ Partial (basic Firebase auth only)
 
 **Automatic Token Refresh**:
 
@@ -184,7 +266,9 @@ match /firms/firm-abc with token.firmId === 'firm-abc' && token.role === 'member
 - Handle cases where claims might be null during initialization
 - Use defensive programming for claim access
 
-### Solo User to Firm Transition
+### Solo User to Firm Transition (Planned)
+
+**Implementation Status**: ❌ Not Implemented
 
 **Security During Migration**:
 
@@ -209,6 +293,8 @@ async function migrateSoloUserToFirm(userId, newFirmId, role) {
 ```
 
 ### Error Handling
+
+**Implementation Status**: ⚠️ Partial (basic permission errors only)
 
 **Common Security Errors**:
 
@@ -247,7 +333,9 @@ try {
 
 ## Development and Testing
 
-### Security Rule Testing
+### Security Rule Testing (Planned)
+
+**Implementation Status**: ❌ Not Implemented
 
 ```javascript
 // Test authenticated user access
@@ -272,6 +360,8 @@ await assertFails(authedDb.doc('firms/firm-xyz').get());
 
 ### Emulator Configuration
 
+**Implementation Status**: ✅ Implemented (basic emulator setup)
+
 **Firebase Emulator Setup**:
 
 ```json
@@ -289,9 +379,11 @@ await assertFails(authedDb.doc('firms/firm-xyz').get());
 }
 ```
 
-## Security Monitoring
+## Security Monitoring (Planned)
 
 ### Access Logging
+
+**Implementation Status**: ❌ Not Implemented
 
 **Important Access Events**:
 
@@ -313,7 +405,9 @@ db.collection('security-log').add({
 });
 ```
 
-### Audit Trail
+### Audit Trail (Planned)
+
+**Implementation Status**: ❌ Not Implemented
 
 **Key Security Events to Track**:
 
@@ -324,3 +418,44 @@ db.collection('security-log').add({
 - Custom claims modifications
 
 **Implementation Note**: Audit logging is not implemented in MVP but should be added for production systems handling sensitive data.
+
+---
+
+## Migration Roadmap
+
+### Phase 1: Custom Claims Infrastructure
+- [ ] Implement server-side custom claims management (Cloud Functions)
+- [ ] Add `firmId` and `role` to auth tokens
+- [ ] Update auth store to read and validate custom claims
+- [ ] Add claim refresh logic to auth state machine
+
+### Phase 2: Firestore Security Rules
+- [ ] Replace development rules with production firm-based rules
+- [ ] Implement user document isolation
+- [ ] Add firm-level read/write rules with claim validation
+- [ ] Add role-based write restrictions (admin vs. member)
+- [ ] Test with Firebase emulator and rule testing framework
+
+### Phase 3: Storage Security Rules
+- [ ] Update storage rules to use custom claims (`token.firmId`)
+- [ ] Remove solo-firm-only restriction
+- [ ] Test multi-tenant file access
+
+### Phase 4: RBAC Implementation
+- [ ] Implement admin vs. member permission checks in UI
+- [ ] Add role validation in composables (e.g., `useFirmMembers`)
+- [ ] Create admin-only components and routes
+- [ ] Add role-based feature flags
+
+### Phase 5: Testing & Monitoring
+- [ ] Write comprehensive security rule tests
+- [ ] Implement access logging for security events
+- [ ] Add audit trail for critical operations
+- [ ] Perform security audit and penetration testing
+
+### Phase 6: Solo-to-Firm Migration
+- [ ] Implement secure migration function
+- [ ] Test data migration with security rules
+- [ ] Add UI for firm invitations and member management
+
+**Estimated Timeline**: 6-8 weeks for full production security implementation
