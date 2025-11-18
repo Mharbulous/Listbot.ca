@@ -1,6 +1,6 @@
 import { db } from '../../../services/firebase.js';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuthStore } from '../../../core/stores/auth.js';
+import { useAuthStore } from '../../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 
 export function useUploadLogger() {

@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { useAuthStore } from '../../../core/stores/auth.js';
+import { useAuthStore } from '../../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { systemcategoriesService } from '../services/systemCategoriesService.js';
 import { CategoryService } from '../services/categoryService.js';

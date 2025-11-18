@@ -353,7 +353,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
-import { useAuthStore } from '../core/stores/auth.js';
+import { useAuthStore } from '../core/stores/auth/index.js';
 import { useMatterViewStore } from '../stores/matterView.js';
 
 // Component configuration

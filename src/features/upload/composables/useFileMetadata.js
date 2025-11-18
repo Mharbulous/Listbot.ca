@@ -1,6 +1,6 @@
 import { db } from '../../../services/firebase.js';
 import { doc, setDoc, getDoc, Timestamp, updateDoc, increment } from 'firebase/firestore';
-import { useAuthStore } from '../../../core/stores/auth.js';
+import { useAuthStore } from '../../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
 import { EvidenceService } from '../../organizer/services/evidenceService.js';

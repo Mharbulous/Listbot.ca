@@ -8,14 +8,126 @@
  * for the sequential verification use case.
  */
 
-import { ref } from 'vue';
-import { useWebWorker } from './useWebWorker.js';
+import { ref, onUnmounted } from 'vue';
+import { useWebWorkerState } from './webWorker/useWebWorkerState';
+import { useWebWorkerHealth } from './webWorker/useWebWorkerHealth';
+import { useWebWorkerMessages } from './webWorker/useWebWorkerMessages';
+import { HEALTH_CHECK_GRACE_PERIOD } from './webWorker/webWorkerConstants';
 
 export function useSequentialHashWorker() {
-  const workerPath = '../workers/fileHashWorker.js';
+  // Initialize state management
+  const state = useWebWorkerState();
 
-  // Initialize Web Worker
-  const worker = useWebWorker(workerPath);
+  // Initialize message handling
+  const messageHandling = useWebWorkerMessages(state);
+
+  // Initialize health monitoring
+  const healthMonitoring = useWebWorkerHealth(state, messageHandling.addMessageListener);
+
+  const { worker, isWorkerReady, isWorkerSupported, workerError, isWorkerHealthy, pendingMessages, workerRegistryId, registry, resetHealthState } = state;
+  const { handleWorkerMessage, sendMessage } = messageHandling;
+  const { startHealthChecking, stopHealthChecking } = healthMonitoring;
+
+  /**
+   * Initialize the worker
+   * IMPORTANT: Worker URL must be a literal string for Vite bundling
+   */
+  const initWorker = () => {
+    if (!isWorkerSupported.value) {
+      workerError.value = new Error('Web Workers are not supported in this browser');
+      return false;
+    }
+
+    try {
+      // CRITICAL: Path must be a literal string for Vite's static analysis
+      worker.value = new Worker(
+        new URL('../workers/fileHashWorker.js', import.meta.url),
+        { type: 'module' }
+      );
+
+      worker.value.onmessage = (event) => {
+        handleWorkerMessage(event.data);
+      };
+
+      worker.value.onerror = (error) => {
+        workerError.value = error;
+        isWorkerReady.value = false;
+        isWorkerHealthy.value = false;
+        console.error('Worker error:', error);
+        stopHealthChecking();
+        for (const [batchId, { reject }] of pendingMessages) {
+          reject(new Error(`Worker error: ${error.message}`));
+          pendingMessages.delete(batchId);
+        }
+      };
+
+      worker.value.onmessageerror = (error) => {
+        workerError.value = new Error(`Message error: ${error}`);
+      };
+
+      isWorkerReady.value = true;
+      isWorkerHealthy.value = true;
+      workerError.value = null;
+      resetHealthState();
+
+      // Register worker
+      const registryId = registry.register(
+        registry.generateId('worker'),
+        'worker',
+        () => {
+          if (worker.value) {
+            worker.value.terminate();
+            worker.value = null;
+            isWorkerReady.value = false;
+            isWorkerHealthy.value = false;
+          }
+        },
+        {
+          component: 'SequentialHashWorker',
+          initialized: Date.now(),
+        }
+      );
+
+      workerRegistryId.set(registryId);
+
+      // Start health monitoring
+      setTimeout(() => {
+        if (isWorkerReady.value) {
+          startHealthChecking();
+        }
+      }, HEALTH_CHECK_GRACE_PERIOD);
+
+      return true;
+    } catch (error) {
+      workerError.value = error;
+      isWorkerReady.value = false;
+      isWorkerHealthy.value = false;
+      return false;
+    }
+  };
+
+  const terminateWorker = () => {
+    stopHealthChecking();
+    if (workerRegistryId.get()) {
+      registry.unregister(workerRegistryId.get());
+      workerRegistryId.set(null);
+    }
+    if (worker.value) {
+      worker.value.terminate();
+      worker.value = null;
+      isWorkerReady.value = false;
+      isWorkerHealthy.value = false;
+    }
+    for (const [batchId, { reject }] of pendingMessages) {
+      reject(new Error('Worker was terminated'));
+      pendingMessages.delete(batchId);
+    }
+    resetHealthState();
+  };
+
+  onUnmounted(() => {
+    terminateWorker();
+  });
 
   // Track if worker is initialized
   const isWorkerInitialized = ref(false);
@@ -29,15 +141,15 @@ export function useSequentialHashWorker() {
   };
 
   /**
-   * Initialize the worker
+   * Initialize the worker wrapper
    * @returns {Promise<boolean>} Success status
    */
-  const initWorker = async () => {
+  const initializeWorker = async () => {
     if (isWorkerInitialized.value) {
       return true;
     }
 
-    const success = worker.initializeWorker();
+    const success = initWorker();
     if (success) {
       isWorkerInitialized.value = true;
       console.log('[SEQUENTIAL-HASH-WORKER] Worker initialized successfully');
@@ -56,7 +168,7 @@ export function useSequentialHashWorker() {
   const hashFile = async (file) => {
     // Ensure worker is initialized
     if (!isWorkerInitialized.value) {
-      const success = await initWorker();
+      const success = await initializeWorker();
       if (!success) {
         console.error('[SEQUENTIAL-HASH-WORKER] Cannot hash - worker not available');
         return null;
@@ -75,7 +187,7 @@ export function useSequentialHashWorker() {
       };
 
       // Send to worker and wait for response
-      const result = await worker.sendMessage({
+      const result = await sendMessage({
         type: MESSAGE_TYPES.PROCESS_FILES,
         files: [fileData],
         batchId: batchId,
@@ -111,7 +223,7 @@ export function useSequentialHashWorker() {
   const hashFiles = async (files) => {
     // Ensure worker is initialized
     if (!isWorkerInitialized.value) {
-      const success = await initWorker();
+      const success = await initializeWorker();
       if (!success) {
         console.error('[SEQUENTIAL-HASH-WORKER] Cannot hash - worker not available');
         return new Map();
@@ -130,7 +242,7 @@ export function useSequentialHashWorker() {
       }));
 
       // Send to worker and wait for response
-      const result = await worker.sendMessage({
+      const result = await sendMessage({
         type: MESSAGE_TYPES.PROCESS_FILES,
         files: filesData,
         batchId: batchId,
@@ -161,11 +273,11 @@ export function useSequentialHashWorker() {
   };
 
   /**
-   * Terminate the worker
+   * Terminate the worker wrapper
    */
-  const terminateWorker = () => {
+  const terminate = () => {
     if (isWorkerInitialized.value) {
-      worker.terminateWorker();
+      terminateWorker();
       isWorkerInitialized.value = false;
       console.log('[SEQUENTIAL-HASH-WORKER] Worker terminated');
     }
@@ -173,14 +285,14 @@ export function useSequentialHashWorker() {
 
   return {
     // State
-    isWorkerReady: worker.isWorkerReady,
-    isWorkerHealthy: worker.isWorkerHealthy,
-    workerError: worker.workerError,
+    isWorkerReady,
+    isWorkerHealthy,
+    workerError,
 
     // Methods
-    initWorker,
+    initWorker: initializeWorker,
     hashFile,
     hashFiles,
-    terminateWorker,
+    terminateWorker: terminate,
   };
 }

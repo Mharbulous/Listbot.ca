@@ -172,7 +172,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuthStore } from '../../core/stores/auth.js';
+import { useAuthStore } from '../../core/stores/auth/index.js';
 import { seedMatters, clearMatters } from '../../utils/seedMatters.js';
 
 // Auth store

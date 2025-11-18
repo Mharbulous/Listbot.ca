@@ -84,7 +84,7 @@ import { useFileDragDrop } from './composables/useFileDragDrop.js';
 import { useQueueDeduplication } from './composables/useQueueDeduplication.js';
 import { useFolderOptions } from './composables/useFolderOptions.js';
 import { useTimeBasedWarning } from './composables/useTimeBasedWarning.js';
-import { useAuthStore } from '../../core/stores/auth.js';
+import { useAuthStore } from '../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../stores/matterView.js';
 import { useLazyHashTooltip } from './composables/useLazyHashTooltip.js';
 import { useUploadLogger } from './composables/useUploadLogger.js';

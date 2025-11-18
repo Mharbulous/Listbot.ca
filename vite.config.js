@@ -12,6 +12,23 @@ export default defineConfig({
   ],
   build: {
     assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        // Ensure workers are bundled as separate chunks
+        manualChunks: undefined,
+      },
+    },
+  },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      output: {
+        // Keep workers as ES modules
+        format: 'es',
+        // Ensure proper file naming for workers
+        entryFileNames: 'assets/[name].[hash].js',
+      },
+    },
   },
   resolve: {
     alias: {
