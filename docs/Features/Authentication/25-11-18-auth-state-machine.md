@@ -1,12 +1,44 @@
 # Authentication System Documentation
 
-Updated: 2025-08-21
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+### Auth Store (Modular Architecture)
+- `src/core/stores/auth/authStore.js` - Core Pinia store, state, getters, actions
+- `src/core/stores/auth/authStateHandlers.js` - State machine lifecycle handlers
+- `src/core/stores/auth/authFirmSetup.js` - Solo Firm architecture implementation
+- `src/core/stores/auth/index.js` - Re-export for backward compatibility
+
+### Services
+- `src/services/authService.js` - Authentication operations (login, logout)
+- `src/services/userService.js` - User profile data management and caching
+- `src/services/firmService.js` - Firm operations and membership management
+
+### Router & Guards
+- `src/router/index.js` - Route definitions
+- `src/router/guards/auth.js` - Authentication guard implementation
+- `src/router/guards/matter.js` - Matter-specific route guard
+
+### Configuration
+- `src/services/firebase.js` - Firebase initialization and config
 
 ## Overview
 
 This document provides a comprehensive reference for the authentication system implemented in this Vue 3 template. The system uses Firebase Authentication with Firestore for user data, implemented through a Pinia store with a robust state machine pattern that handles timing and reactivity issues common in Firebase Auth integrations.
 
 ## Architecture
+
+### Modular Auth Store Design
+
+The auth store follows a **modular decomposition pattern** for better maintainability and separation of concerns:
+
+- **`authStore.js`**: Core Pinia store containing state, getters, and public actions (`login`, `logout`, `initialize`, `waitForInit`)
+- **`authStateHandlers.js`**: Authentication lifecycle handlers that respond to Firebase events (`_handleUserAuthenticated`, `_handleUserUnauthenticated`, `_initializeFirebase`)
+- **`authFirmSetup.js`**: Solo Firm architecture implementation (`_createSoloFirm`, `_getUserFirmId`, `_getUserRole`, `_initializeUserPreferences`)
+- **`index.js`**: Re-exports for backward compatibility with existing imports
+
+This modular structure keeps the core store clean while organizing related functionality into cohesive modules.
 
 ### Core Components
 
@@ -271,9 +303,10 @@ The system generates user display names with fallback logic:
 Solo firm creation happens **once** when a user first logs in without a firm:
 
 ```javascript
-async _handleUserAuthenticated(firebaseUser) {
+// From src/core/stores/auth/authStateHandlers.js
+async _handleUserAuthenticated(store, firebaseUser) {
   // Set user identity from Firebase Auth
-  this.user = {
+  store.user = {
     uid: firebaseUser.uid,
     email: firebaseUser.email,
     displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
@@ -281,28 +314,29 @@ async _handleUserAuthenticated(firebaseUser) {
   }
 
   // Check if user has a firm
-  const firmId = await this._getUserFirmId(firebaseUser.uid)
+  const firmId = await _getUserFirmId(firebaseUser.uid)
 
   if (!firmId) {
     // First-time user - create solo firm once
-    await this._createSoloFirm(firebaseUser)
-    this.firmId = firebaseUser.uid
-    this.userRole = 'admin'
+    await _createSoloFirm(firebaseUser)
+    store.firmId = firebaseUser.uid
+    store.userRole = 'admin'
   } else {
     // Existing user - load firm info
-    this.firmId = firmId
-    this.userRole = await this._getUserRole(firmId, firebaseUser.uid)
+    store.firmId = firmId
+    store.userRole = await _getUserRole(firmId, firebaseUser.uid)
   }
 
-  this.authState = 'authenticated'
+  store.authState = 'authenticated'
 }
 ```
 
 ### Solo Firm Creation
 
 ```javascript
+// From src/core/stores/auth/authFirmSetup.js
 async _createSoloFirm(firebaseUser) {
-  const batch = db.batch()
+  const batch = writeBatch(db)
 
   // Create firm document
   const firmRef = doc(db, 'firms', firebaseUser.uid)
@@ -340,6 +374,7 @@ async _createSoloFirm(firebaseUser) {
 Route guards use the store's state machine to control access:
 
 ```javascript
+// From src/router/guards/auth.js
 export const createAuthGuard = () => {
   return async (to, from, next) => {
     const authStore = useAuthStore();
@@ -498,7 +533,7 @@ if (authStore.user) {
   Loading...
 </div>
 <div v-else-if="authStore.isAuthenticated">
-  <!-- User content -->  
+  <!-- User content -->
 </div>
 ```
 
