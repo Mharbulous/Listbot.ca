@@ -1,5 +1,19 @@
 # Design System Documentation
 
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+This documentation references the following key implementation files:
+
+- `tailwind.config.js` - Tailwind CSS configuration with custom brand colors
+- `src/plugins/vuetify.js` - Vuetify 3 Material Design theme configuration
+- `src/main.js` - Application entry point and framework initialization
+- `src/styles/tailwind.css` - Tailwind directive imports and base styles
+- `src/styles/main.css` - Main stylesheet with sidebar theme variables
+
+---
+
 ## Overview
 
 This document serves as the definitive guide for maintaining visual consistency and design standards across the Vue Template application. All new features and components should adhere to these guidelines to ensure a cohesive user experience.
@@ -110,16 +124,37 @@ This document serves as the definitive guide for maintaining visual consistency 
 
 ### Icon System
 
-- **Style**: Heroicons (outline and solid variants)
-- **Size**: `w-4 h-4` (16px) for UI icons, `w-5 h-5` (20px) for primary actions
-- **Color**: `text-gray-400` default, matches text color on hover
-- **Format**: SVG with `fill="currentColor"`
+The application uses a **dual icon system** to balance Material Design components with custom branding:
+
+#### Material Design Icons (MDI)
+
+- **Library**: `@mdi/font` - Material Design Icons for Vuetify components
+- **Usage**: Vuetify components (buttons, menus, lists) via `mdi-*` prefixes
+- **Size**: Controlled by Vuetify's `size` prop or MDI classes
+- **Color**: `color` prop on Vuetify components, or `text-*` classes
+- **Examples**:
+  - `mdi-plus` - Add/create actions
+  - `mdi-chevron-down` - Dropdown indicators
+  - `mdi-file-multiple` - File-related actions
+  - `mdi-folder-multiple` - Folder operations
+
+#### Emoji Icons
+
+- **Usage**: Navigation sidebar and primary app navigation
+- **Size**: Inherits from parent text size
+- **Color**: Single-color (uses font color)
+- **Examples**:
+  - 🗄️ Matters
+  - 🗃️ Categories
+  - 📤 Upload
+  - 📁 Documents
+  - 🕵️ Analyze
 
 ### Icon Usage Guidelines
 
-- Use outline icons for default states
-- Use solid icons for active/selected states
-- Icons should always be accompanied by text labels for accessibility
+- Use **MDI icons** for all Vuetify Material Design components
+- Use **emoji icons** for navigation and branding elements where custom personality is desired
+- Icons should always be accompanied by text labels or tooltips for accessibility
 - Maintain consistent sizing within component groups
 
 ## Interactive States
@@ -207,7 +242,11 @@ This document serves as the definitive guide for maintaining visual consistency 
 ### Sidebar
 
 - **Width**: `w-[60px]` collapsed, `w-[280px]` expanded
-- **Background**: `bg-gradient-to-b from-slate-800 to-slate-700`
+- **Background**: Custom CSS variables with "Starry Night" theme (see `src/styles/main.css`)
+  - Primary: `theme('colors.blue.900')`
+  - Secondary: `theme('colors.indigo.950')`
+  - Text: `theme('colors.slate.100')` with yellow accents
+- **Theme Variables**: Van Gogh "Starry Night" inspired color scheme with deep night blues and bright yellow accents
 
 ## Accessibility Guidelines
 
@@ -278,6 +317,18 @@ This document serves as the definitive guide for maintaining visual consistency 
 - Extend Tailwind's theme rather than overriding defaults
 - Use CSS custom properties for dynamic theming if needed
 
+### CSS Import Order
+
+**Note**: Modern Vite prefers CSS imports before Vue for optimal build performance:
+
+```javascript
+// src/main.js
+import './styles/main.css'  // Import CSS first (Vite best practice)
+import { createApp } from 'vue'
+```
+
+This differs from traditional guidance but follows Vite's optimization strategy for faster HMR and build times.
+
 ### Component Organization
 
 - Group related utilities together
@@ -292,22 +343,31 @@ This document serves as the definitive guide for maintaining visual consistency 
 
 ## Material Design Integration Strategy
 
-### Component Library Preference
+### Component Library Approach
 
-**Primary Strategy**: Use Material Design prebuilt components whenever possible to ensure consistency, accessibility, and reduced development time.
+**Current Stack**: The application uses a **dual framework approach** combining Vuetify 3 and Element Plus to leverage strengths of each:
 
-#### Recommended Material Design Library
+#### Vuetify 3 (Primary Material Design Framework)
 
-- **Vuetify 3**: The recommended Material Design framework for Vue 3
-  - Fully compatible with Vue 3 and Material Design 2 specifications
-  - 80+ prebuilt components with excellent accessibility support
-  - Consistent design system and theming capabilities
-  - Active community support and comprehensive documentation
+- **Purpose**: Material Design components, theming, and design system foundation
+- **Version**: Vuetify 3.x (Vue 3 compatible)
+- **Configuration**: `src/plugins/vuetify.js` with custom theme aligned to brand colors
+- **Strengths**:
+  - 80+ Material Design components with excellent accessibility
+  - Robust theming system with light/dark mode support
+  - First-class TypeScript support
+  - Active community and comprehensive documentation
 
-#### When to Use Material Design Components
+#### Element Plus (Complementary UI Library)
 
-✅ **Always prefer Material Design components for:**
+- **Purpose**: Supplementary components for specific use cases
+- **Version**: Latest stable
+- **Registration**: Global registration in `src/main.js`
+- **Use Cases**: [Document specific scenarios where Element Plus is preferred]
 
+#### When to Use Each Framework
+
+**Prefer Vuetify for:**
 - Form inputs (text fields, selects, checkboxes, radio buttons)
 - Buttons and action components
 - Navigation elements (tabs, menus, breadcrumbs)
@@ -315,38 +375,44 @@ This document serves as the definitive guide for maintaining visual consistency 
 - Feedback components (alerts, snackbars, progress indicators)
 - Layout components (grids, containers, dividers)
 
-#### When Custom Components Are Acceptable
-
-⚠️ **Only create custom components when:**
-
-- Material Design component customization would be overly complex
-- Specific business logic requires unique functionality not available in Material Design
-- Brand-specific visual elements that must deviate from Material Design
-- Performance optimization requires a lightweight custom solution
+**Use Element Plus when:**
+- Specific component not available or overly complex in Vuetify
+- Performance optimization requires lightweight alternative
+- Existing Element Plus component already integrated
 
 #### Integration Guidelines
 
-1. **Installation**: Add Vuetify 3 to projects using `npm install vuetify@next`
-2. **Theme Configuration**: Align Vuetify theme with existing color palette
-3. **Migration Strategy**: Gradually replace custom components with Material Design equivalents
-4. **Customization**: Use Vuetify's theming system rather than overriding CSS
-5. **Documentation**: Document any custom Material Design component modifications
+1. **Theming**: Vuetify theme (in `src/plugins/vuetify.js`) serves as primary design system
+2. **Consistency**: When using Element Plus, apply Tailwind utilities to match Vuetify's Material Design aesthetic
+3. **Migration Strategy**: Gradually consolidate to single framework where feasible to reduce bundle size
+4. **Documentation**: Document component choice rationale in component comments
 
-#### Material Design vs Custom Component Decision Matrix
+### Dark Mode Support
 
-```
-High Complexity Customization Needed?
-├── Yes → Consider custom component (with Material Design styling)
-└── No → Use prebuilt Material Design component
+**Status**: ✅ **Fully Implemented**
 
-Business Logic Unique?
-├── Yes → Custom wrapper around Material Design base component
-└── No → Use standard Material Design component
+Dark mode is production-ready with complete theme configuration in `src/plugins/vuetify.js`:
 
-Performance Critical?
-├── Yes → Evaluate Material Design vs custom implementation
-└── No → Default to Material Design component
-```
+#### Current Implementation
+
+- **Light Theme**: Default theme with brand blue primary and slate neutrals
+- **Dark Theme**: Complete dark color palette with adjusted surface and text colors
+- **Vuetify Theme System**: Leverages Vuetify's built-in theme switching
+- **Color Tokens**:
+  - Surface colors auto-adjust for dark backgrounds
+  - Text colors (`on-surface`, `on-surface-variant`) ensure proper contrast
+  - All semantic colors (success, warning, error, info) maintain visibility
+
+#### Theme Toggle
+
+- **Integration Point**: Theme switcher can be added to user preferences or header
+- **API**: `vuetify.theme.global.name.value = 'dark'` or `'light'`
+- **Persistence**: Consider storing preference in localStorage for user sessions
+
+#### Tailwind Integration
+
+- Tailwind's `dark:` variant can complement Vuetify theme for custom components
+- Ensure both systems stay synchronized when implementing dark mode toggles
 
 ## Future Considerations
 
@@ -356,17 +422,18 @@ Performance Critical?
 - Plan for future migration when officially supported in Vuetify
 - Consider design token structure that supports both Material Design 2 and 3
 
-### Dark Mode
-
-- Prepare for dark mode implementation using Tailwind's dark mode utilities
-- Consider color semantics that work in both light and dark themes
-- Leverage Material Design's dark theme specifications
-
 ### Theming
 
 - Structure color tokens to support multiple brand themes
 - Use CSS custom properties for runtime theme switching
 - Integrate with Vuetify's theming system for consistency
+
+### Framework Consolidation
+
+- **Long-term goal**: Evaluate consolidating to single component library
+- **Analysis needed**: Identify Element Plus components in use and Vuetify equivalents
+- **Migration plan**: Gradual replacement to minimize disruption
+- **Bundle optimization**: Removing duplicate framework code will improve performance
 
 ### Component Library
 
@@ -377,7 +444,7 @@ Performance Critical?
 
 ---
 
-_Last updated: [Current Date]_
-_Version: 1.0_
+_Last updated: 2025-11-18_
+_Version: 2.0_
 
-For questions or suggestions regarding this design system, please refer to the development firm.
+For questions or suggestions regarding this design system, please refer to the development team.
