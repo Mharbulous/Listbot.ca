@@ -196,10 +196,11 @@ const footerStats = computed(() => {
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
   const naFiles = props.files.filter((f) => f.status === 'n/a').length;
   const readErrors = props.files.filter((f) => f.status === 'read error').length;
-  // Uploadable = total - duplicates - removed - n/a files - read errors
-  const uploadable = total - duplicates - removed - naFiles - readErrors;
+  const copies = props.files.filter((f) => f.status === 'copy').length;
+  // Uploadable = total - duplicates - removed - n/a files - read errors - copies
+  const uploadable = total - duplicates - removed - naFiles - readErrors - copies;
 
-  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not redundant, not n/a, not read errors)
+  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not redundant, not n/a, not read errors, not copies)
   const checkedFiles = props.files.filter(
     (f) =>
       f.status !== 'skip' &&
@@ -207,7 +208,8 @@ const footerStats = computed(() => {
       f.status !== 'duplicate' &&
       f.status !== 'redundant' &&
       f.status !== 'n/a' &&
-      f.status !== 'read error'
+      f.status !== 'read error' &&
+      f.status !== 'copy'
   );
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
