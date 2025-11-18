@@ -1,8 +1,31 @@
 # Build Performance Technical Debt
 
+**Reconciled up to**: 2025-11-18
+
 **Date Identified**: 2025-11-16
 **Status**: Tracked (Not Urgent)
 **Priority**: Medium - Address before production launch
+
+---
+
+## Key Files
+
+This documentation references the following source files:
+
+**Build Configuration:**
+- `vite.config.js` - Vite build configuration (Phase 4 manual chunks)
+- `src/router/index.js` - Router configuration with lazy loading
+
+**Core Services:**
+- `src/services/firebase.js` - Firebase service with mixed import patterns
+- `src/core/stores/auth/` - Auth store directory (3 focused modules)
+
+**Feature Views:**
+- `src/features/upload/FileUpload.vue` - Upload view component
+- `src/features/organizer/views/ViewDocument.vue` - Document viewer component
+- `src/views/Documents.vue` - Documents list view
+
+---
 
 ## Summary
 
@@ -22,7 +45,7 @@ The production build completes successfully but has performance optimization war
 
 **Affected Modules**:
 - `firebase/firestore/dist/esm/index.esm.js` - Mixed import pattern across 30+ files
-- `src/services/firebase.js` - Mixed import pattern in auth store
+- `src/services/firebase.js` - Mixed import pattern in auth modules
 
 **Root Cause**:
 - Firebase Firestore is imported both statically (`import { ... }`) and dynamically (`import(...)`) across different files
@@ -35,7 +58,7 @@ The production build completes successfully but has performance optimization war
 
 **Files with Mixed Patterns**:
 - Static imports: Most service files, composables, stores
-- Dynamic imports: `src/core/stores/auth.js`, `src/features/organizer/services/evidenceService.js`, `src/utils/seedMatters.js`
+- Dynamic imports: `src/core/stores/auth/` modules, `src/features/organizer/services/evidenceService.js`, `src/utils/seedMatters.js`
 
 ### 2. Large Chunk Size
 
@@ -46,7 +69,6 @@ The production build completes successfully but has performance optimization war
 - Thumbnail renderer (`useThumbnailRenderer-CaiCspAJ.js`): 401 KB > 500 KB threshold
 
 **Root Cause**:
-- No route-level code-splitting implemented
 - PDF.js worker bundled in main chunk (1,046 KB)
 - All feature code loaded upfront instead of on-demand
 
@@ -71,23 +93,32 @@ The production build completes successfully but has performance optimization war
 
 ## Recommended Solutions
 
-### Phase 1: Route-Level Code Splitting (High Impact, Low Effort)
+### Phase 1: Route-Level Code Splitting ✅ ALREADY IMPLEMENTED
 
-Implement lazy loading for route components:
+**Status**: Complete - Router already uses lazy loading for all routes.
+
+Current implementation in `src/router/index.js`:
 
 ```javascript
-// router/index.js - Current
-import Documents from '@/views/Documents.vue'
-import FileUpload from '@/views/FileUpload.vue'
-import ViewDocument from '@/views/ViewDocument.vue'
-
-// Recommended
-const Documents = () => import('@/views/Documents.vue')
-const FileUpload = () => import('@/views/FileUpload.vue')
-const ViewDocument = () => import('@/views/ViewDocument.vue')
+// Already implemented - all routes use lazy loading
+{
+  path: '/upload',
+  component: () => import('../features/upload/FileUpload.vue'),
+  // ...
+},
+{
+  path: '/matters/:matterId/documents',
+  component: () => import('../views/Documents.vue'),
+  // ...
+},
+{
+  path: '/matters/:matterId/documents/view/:fileHash',
+  component: () => import('../features/organizer/views/ViewDocument.vue'),
+  // ...
+}
 ```
 
-**Expected Impact**: Reduce initial bundle by ~200-300 KB
+**Actual Impact**: Already reducing initial bundle through route-based code splitting.
 
 ### Phase 2: Standardize Firebase Imports (Medium Impact, Medium Effort)
 
@@ -113,11 +144,11 @@ Defer loading of large libraries until needed:
 
 1. **PDF.js Worker** (1,046 KB):
    - Only load when user opens a PDF for viewing
-   - Implement in ViewDocument.vue with dynamic import
+   - Implement in `src/features/organizer/views/ViewDocument.vue` with dynamic import
 
 2. **Thumbnail Renderer** (401 KB):
    - Only load when Documents view mounts
-   - Implement in Documents.vue with dynamic import
+   - Implement in `src/views/Documents.vue` with dynamic import
 
 3. **Feature Module Splitting**:
    - Split upload feature into separate chunk
@@ -154,7 +185,7 @@ export default {
 ## Implementation Timeline
 
 ### Milestone 1: Before Beta Testing
-- [ ] Phase 1: Route-level code splitting
+- [x] Phase 1: Route-level code splitting (ALREADY COMPLETE)
 - [ ] Measure and document bundle size improvements
 
 ### Milestone 2: Before Production Launch
@@ -201,3 +232,4 @@ When implementing fixes:
 - No functionality is broken or at risk
 - Optimization should be data-driven based on real user metrics
 - Consider implementing Web Vitals tracking before optimizing
+- **Phase 1 (route-level code splitting) is already implemented** in current router configuration
