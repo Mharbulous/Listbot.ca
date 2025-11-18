@@ -1,5 +1,44 @@
 # Asynchronous Processes Documentation Table
 
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+This documentation references the following source files:
+
+**Core Async Systems:**
+- `src/features/upload/workers/fileHashWorker.js` - BLAKE3 file hashing web worker
+- `src/features/upload/composables/useWebWorker.js` - Generic web worker management (decomposed into webWorker/ modules)
+- `src/features/upload/composables/useWorkerManager.js` - Worker lifecycle and health monitoring
+- `src/App.vue` - AsyncTracker monitoring interval
+
+**Upload Feature Composables:**
+- `src/features/upload/composables/useFolderTimeouts.js` - Folder processing timeout management with AbortController
+- `src/features/upload/composables/useTimeBasedWarning.js` - Time-based warning monitors
+- `src/features/upload/composables/useFileQueue.js` - File queue processing coordination
+- `src/features/upload/composables/useQueueDeduplication.js` - Deduplication processing coordination
+- `src/features/upload/composables/useFolderProgress.js` - Progress yield points for UI responsiveness
+- `src/features/upload/composables/useFolderAnalysis.js` - Folder analysis abort handling
+- `src/features/upload/composables/useFolderOptions.js` - Folder options analysis delay
+
+**Upload Feature Components:**
+- `src/features/upload/components/CloudFileWarningModal.vue` - Modal focus trap and visibility watchers
+- `src/features/upload/components/FolderOptionsDialog.vue` - Upload completion watcher
+- `src/features/upload/components/FileUploadQueue.vue` - File queue watchers (deep watching)
+- `src/features/upload/components/FileQueuePlaceholder.vue` - Intersection observer and idle callbacks
+
+**Authentication & Core Systems:**
+- `src/core/stores/auth/` - Auth store (decomposed into authStore.js, authFirmSetup.js, authStateHandlers.js)
+- `src/core/stores/firm.js` - Firm store service lazy loading
+- `src/services/authService.js` - Firebase auth state monitoring
+- `src/components/features/auth/LoginForm.vue` - Login success delay
+- `src/router/guards/auth.js` - Route guard auth waiting
+
+**UI & Navigation:**
+- `src/components/AppSwitcher.vue` - Document click listeners, hover watchers, DOM updates
+- `src/composables/useFavicon.js` - Favicon route watcher
+- `src/router/index.js` - Route component lazy loading
+
 ## Overview
 
 Create comprehensive documentation of all asynchronous processes currently running in the ListBot application. This documentation is essential for implementing the Asynchronous Task Registry Manager system.
@@ -39,10 +78,10 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Hash Web Worker**
 
-- **Location**: `src/workers/fileHashWorker.js:1-300`
+- **Location**: `src/features/upload/workers/fileHashWorker.js:1-300`
 - **Type**: Web Worker
 - **Trigger**: File deduplication process initiation
-- **Cleanup**: `worker.terminate()` in `useWebWorker.js:215`
+- **Cleanup**: `worker.terminate()` in `src/features/upload/composables/useWebWorker.js:215`
 - **Dependencies**: Browser Web Worker support, File API
 - **Risk Level**: Medium (improper termination blocks resources)
 - **Parent Process**: File Deduplication System
@@ -50,10 +89,10 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Worker Manager Health Check**
 
-- **Location**: `src/composables/useWebWorker.js:90`
+- **Location**: `src/features/upload/composables/useWebWorker.js:90`
 - **Type**: setInterval
 - **Trigger**: Worker initialization
-- **Cleanup**: `clearInterval()` in `useWebWorker.js:87,102`
+- **Cleanup**: `clearInterval()` in `src/features/upload/composables/useWebWorker.js:87,102`
 - **Dependencies**: Web Worker lifecycle
 - **Risk Level**: Low (auto-cleanup on unmount)
 - **Parent Process**: Web Worker Management
@@ -61,7 +100,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Worker Message Timeout**
 
-- **Location**: `src/composables/useWebWorker.js:115,220`
+- **Location**: `src/features/upload/composables/useWebWorker.js:115,220`
 - **Type**: setTimeout
 - **Trigger**: Worker message sending
 - **Cleanup**: `clearTimeout()` on response or cleanup
@@ -72,7 +111,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Worker Restart Delay**
 
-- **Location**: `src/composables/useWorkerManager.js:155`
+- **Location**: `src/features/upload/composables/useWorkerManager.js:155`
 - **Type**: setTimeout
 - **Trigger**: Worker failure detection
 - **Cleanup**: Natural completion (1 second)
@@ -90,7 +129,7 @@ Each async process is documented using the following structured template:
 - **Location**: `src/App.vue:54-61`
 - **Type**: setInterval
 - **Trigger**: Application startup (component mount)
-- **Cleanup**: `clearInterval()` in `App.vue:78-82` on unmount
+- **Cleanup**: `clearInterval()` in `src/App.vue:78-82` on unmount
 - **Dependencies**: AsyncTracker system, development environment
 - **Risk Level**: Low (expected system monitoring process)
 - **Parent Process**: Application Lifecycle
@@ -99,7 +138,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Folder Analysis Timeout Controller**
 
-- **Location**: `src/composables/useFolderTimeouts.js:32`
+- **Location**: `src/features/upload/composables/useFolderTimeouts.js:32`
 - **Type**: setTimeout with AbortController
 - **Trigger**: Folder processing initiation
 - **Cleanup**: `clearTimeout()` or `controller.abort()`
@@ -110,10 +149,10 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Global Processing Timeout**
 
-- **Location**: `src/composables/useFolderTimeouts.js:102`
+- **Location**: `src/features/upload/composables/useFolderTimeouts.js:102`
 - **Type**: setTimeout
 - **Trigger**: Folder analysis start
-- **Cleanup**: `clearTimeout()` in `useFolderTimeouts.js:247`
+- **Cleanup**: `clearTimeout()` in `src/features/upload/composables/useFolderTimeouts.js:247`
 - **Dependencies**: Folder processing pipeline
 - **Risk Level**: Low (explicit cleanup)
 - **Parent Process**: Folder Analysis Controller
@@ -121,10 +160,10 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Time-Based Warning Monitor**
 
-- **Location**: `src/composables/useTimeBasedWarning.js:101`
+- **Location**: `src/features/upload/composables/useTimeBasedWarning.js:101`
 - **Type**: setInterval
 - **Trigger**: File processing start
-- **Cleanup**: `clearInterval()` in `useTimeBasedWarning.js:106`
+- **Cleanup**: `clearInterval()` in `src/features/upload/composables/useTimeBasedWarning.js:106`
 - **Dependencies**: Processing time estimation
 - **Risk Level**: Medium (continuous monitoring)
 - **Parent Process**: Progress Monitoring System
@@ -143,7 +182,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Folder Options Analysis Delay**
 
-- **Location**: `src/composables/useFolderOptions.js:166`
+- **Location**: `src/features/upload/composables/useFolderOptions.js:166`
 - **Type**: setTimeout
 - **Trigger**: UI completion message display
 - **Cleanup**: Auto-cleanup after 500ms
@@ -169,7 +208,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Modal Focus Trap**
 
-- **Location**: `src/components/features/upload/CloudFileWarningModal.vue:257,276,284`
+- **Location**: `src/features/upload/components/CloudFileWarningModal.vue:257,276,284`
 - **Type**: Document Event Listener (keydown)
 - **Trigger**: Modal visibility
 - **Cleanup**: `removeEventListener()` on unmount/hide
@@ -180,7 +219,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: AbortController Signal Listeners**
 
-- **Location**: `src/composables/useFolderTimeouts.js:65,99`
+- **Location**: `src/features/upload/composables/useFolderTimeouts.js:65,99`
 - **Type**: AbortSignal Event Listener
 - **Trigger**: AbortController creation
 - **Cleanup**: `removeEventListener()` in cleanup
@@ -191,7 +230,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Folder Analysis Abort Handler**
 
-- **Location**: `src/composables/useFolderAnalysis.js:184`
+- **Location**: `src/features/upload/composables/useFolderAnalysis.js:184`
 - **Type**: AbortSignal Event Listener
 - **Trigger**: Analysis start with timeout
 - **Cleanup**: Automatic on signal abort
@@ -228,7 +267,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Folder Options Completion Watcher**
 
-- **Location**: `src/components/features/upload/FolderOptionsDialog.vue:240`
+- **Location**: `src/features/upload/components/FolderOptionsDialog.vue:240`
 - **Type**: Vue watch
 - **Trigger**: Props.allFilesComplete change
 - **Cleanup**: Automatic on component unmount
@@ -239,7 +278,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Upload Queue File Watcher**
 
-- **Location**: `src/components/features/upload/FileUploadQueue.vue:243,326`
+- **Location**: `src/features/upload/components/FileUploadQueue.vue:243,326`
 - **Type**: Vue watch (deep)
 - **Trigger**: Props.files changes
 - **Cleanup**: Automatic on component unmount
@@ -250,7 +289,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Cloud Warning Modal Visibility Watcher**
 
-- **Location**: `src/components/features/upload/CloudFileWarningModal.vue:249`
+- **Location**: `src/features/upload/components/CloudFileWarningModal.vue:249`
 - **Type**: Vue watch
 - **Trigger**: Props.isVisible changes
 - **Cleanup**: Automatic on component unmount
@@ -261,7 +300,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Auth Store State Watcher**
 
-- **Location**: `src/core/stores/auth.js:303`
+- **Location**: `src/core/stores/auth/authStore.js:303`
 - **Type**: Vue watch with unwatch
 - **Trigger**: Auth state monitoring
 - **Cleanup**: Explicit `unwatch()` call
@@ -287,7 +326,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Cloud Modal DOM Updates**
 
-- **Location**: `src/components/features/upload/CloudFileWarningModal.vue:251,268`
+- **Location**: `src/features/upload/components/CloudFileWarningModal.vue:251,268`
 - **Type**: Vue nextTick
 - **Trigger**: Modal rendering
 - **Cleanup**: Automatic (single execution)
@@ -298,7 +337,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Queue Intersection Observer**
 
-- **Location**: `src/components/features/upload/FileQueuePlaceholder.vue:28`
+- **Location**: `src/features/upload/components/FileQueuePlaceholder.vue:28`
 - **Type**: IntersectionObserver (VueUse)
 - **Trigger**: Component mount
 - **Cleanup**: `stop()` method on unmount
@@ -309,7 +348,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Idle Callback Observer Setup**
 
-- **Location**: `src/components/features/upload/FileQueuePlaceholder.vue:47`
+- **Location**: `src/features/upload/components/FileQueuePlaceholder.vue:47`
 - **Type**: requestIdleCallback
 - **Trigger**: Component initialization
 - **Cleanup**: Browser-managed
@@ -335,7 +374,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Queue Processing Chain**
 
-- **Location**: `src/composables/useFileQueue.js:34,118,229`
+- **Location**: `src/features/upload/composables/useFileQueue.js:34,118,229`
 - **Type**: Promise chains with async/await
 - **Trigger**: File upload initiation
 - **Cleanup**: Abortable via queue state management
@@ -346,7 +385,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Deduplication Processing Coordination**
 
-- **Location**: `src/composables/useQueueDeduplication.js:26`
+- **Location**: `src/features/upload/composables/useQueueDeduplication.js:26`
 - **Type**: Promise chains with Worker coordination
 - **Trigger**: File deduplication start
 - **Cleanup**: `terminateWorker()` in cleanup
@@ -357,7 +396,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Progress Yield Points**
 
-- **Location**: `src/composables/useFolderProgress.js:58`
+- **Location**: `src/features/upload/composables/useFolderProgress.js:58`
 - **Type**: Promise with setTimeout
 - **Trigger**: Progress reporting loops
 - **Cleanup**: Natural completion (10ms yields)
@@ -394,7 +433,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: Firebase Services Lazy Loading**
 
-- **Location**: `src/core/stores/auth.js:187,269,284`
+- **Location**: `src/core/stores/auth/authStore.js:187,269,284`
 - **Type**: Dynamic imports
 - **Trigger**: First auth operation
 - **Cleanup**: Module cache persistence
@@ -420,7 +459,7 @@ Each async process is documented using the following structured template:
 
 **ASYNC PROCESS: File Queue nextTick Synchronization**
 
-- **Location**: `src/composables/useFileQueue.js:81,145,201`
+- **Location**: `src/features/upload/composables/useFileQueue.js:81,145,201`
 - **Type**: Vue nextTick
 - **Trigger**: Queue state updates
 - **Cleanup**: Automatic (single execution)
@@ -566,8 +605,8 @@ The structured documentation format enables systematic Task Registry development
 
 ---
 
-**Dependencies**: None (foundational research task)  
-**Enables**: `AsynchronousTaskRegistry.md` implementation  
-**Priority**: High (blocks Task Registry implementation)  
-**Effort**: Medium (enhanced research and comprehensive documentation)  
+**Dependencies**: None (foundational research task)
+**Enables**: `AsynchronousTaskRegistry.md` implementation
+**Priority**: High (blocks Task Registry implementation)
+**Effort**: Medium (enhanced research and comprehensive documentation)
 **Status**: ✅ **COMPLETE** - Ready for Task Registry implementation
