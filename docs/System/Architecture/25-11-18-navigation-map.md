@@ -1,10 +1,23 @@
 # ListBot App - Navigation Map
 
+**Reconciled up to**: 2025-11-18
+
 This document provides a comprehensive navigation map of the entire ListBot application, showing all routes, views, and the navigation hierarchy.
 
 **Last Updated**: 2025-11-09
 **Router Mode**: Hash-based (`createWebHashHistory`)
 **Framework**: Vue Router 4
+
+---
+
+## Key Files
+
+- `src/router/index.js` - Main router configuration
+- `src/router/guards/auth.js` - Authentication guard
+- `src/router/guards/matter.js` - Matter context guard
+- `src/components/layout/AppSideBar.vue` - Sidebar navigation component
+- `src/components/layout/AppHeader.vue` - Header component
+- `src/App.vue` - Root component with layout logic
 
 ---
 
@@ -41,6 +54,7 @@ ListBot App
 │
 ├── 📤 File Operations
 │   ├── /upload .......................... File Upload (requires active matter)
+│   ├── /testing ......................... Upload Queue (dev testing)
 │   ├── /analyze ......................... File Analysis
 │   └── /list ............................ Evidence List (🚧 Under Construction)
 │
@@ -109,6 +123,7 @@ The app uses a fixed sidebar (`AppSideBar.vue`) with the following navigation it
 | `/matters/:matterId/documents` | ✅ | ✅ | ❌ |
 | `/matters/:matterId/categories` | ✅ | ✅ | ❌ |
 | `/upload` | ✅ | ❌ | ✅ |
+| `/testing` | ✅ | ❌ | ❌ |
 | `/profile` | ✅ | ❌ | ❌ |
 | `/settings` | ✅ | ❌ | ❌ |
 | `/about` | ✅ | ❌ | ❌ |
@@ -163,8 +178,9 @@ The router applies two global `beforeEach` guards:
 ```
 /upload ──────────► Upload files (requires active matter)
     │
-    ├─► /analyze ─► Analyze uploaded files
-    └─► /list ────► View evidence list (🚧 Under Construction)
+    ├─► /testing ──► Upload Queue (dev testing)
+    ├─► /analyze ──► Analyze uploaded files
+    └─► /list ─────► View evidence list (🚧 Under Construction)
 ```
 
 ---
@@ -173,23 +189,26 @@ The router applies two global `beforeEach` guards:
 
 ### Layout Components
 - **App.vue**: Root component with conditional layout rendering
-- **AppSideBar.vue**: Fixed sidebar navigation (60px width)
-- **AppHeader.vue**: Top header bar (hidden on login page)
+- **AppSideBar.vue**: Fixed sidebar navigation (60px width) - located at `src/components/layout/AppSideBar.vue`
+- **AppHeader.vue**: Top header bar (hidden on login page) - located at `src/components/layout/AppHeader.vue`
+
+**Note**: In App.vue, the sidebar is rendered as `<NewSideBar />` but the file is still named `AppSideBar.vue`.
 
 ### View Components Location
 ```
 src/views/
-├── About.vue .......................... /about
+├── About.vue .......................... / and /home (shows app features)
 ├── Analyze.vue ........................ /analyze
-├── Documents.vue .......................... /matters/:matterId/documents
+├── Documents.vue ...................... /matters/:matterId/documents
 ├── EditMatter.vue ..................... /matters/edit/:matterId
-├── Home.vue ........................... / and /home
+├── Home.vue ........................... /about (shows template info)
 ├── MatterDetail.vue ................... /matters/:id
 ├── MatterImport.vue ................... /matters/import
 ├── Matters.vue ........................ /matters
 ├── NewMatter.vue ...................... /matters/new
 ├── Profile.vue ........................ /profile
 ├── Settings.vue ....................... /settings
+├── Testing.vue ........................ /testing
 └── defaults/
     ├── PageNotFound.vue ............... /404
     └── UnderConstruction.vue .......... /under-construction and /list
@@ -274,9 +293,9 @@ The `/dev` route provides an index page listing all available development demos 
 
 ## Related Documentation
 
-- **Architecture Overview**: `@docs/architecture/overview.md`
-- **Authentication**: `@docs/architecture/authentication.md`
-- **File Lifecycle**: `@docs/architecture/file-lifecycle.md`
+- **Architecture Overview**: `@docs/System/Architecture/overview.md`
+- **Authentication**: `@docs/Features/Authentication/25-11-18-auth-state-machine.md`
+- **File Lifecycle**: `@docs/Features/Upload/Processing/file-lifecycle.md`
 - **Dev Demos**: `@src/dev-demos/README.md`
 
 ---
@@ -288,3 +307,4 @@ The `/dev` route provides an index page listing all available development demos 
 - The **sidebar navigation** is fixed and always visible (except on `/login`)
 - **Mobile menu** functionality exists but requires JavaScript interaction
 - **App Switcher** component in sidebar footer enables SSO navigation between multiple apps
+- **Route swap (2025-11-09)**: The `/` and `/home` routes now show app features (About.vue), while `/about` shows template information (Home.vue)
