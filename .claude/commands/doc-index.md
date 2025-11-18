@@ -2,6 +2,14 @@
 
 Generate or update CLAUDE.md index files throughout the `docs/` folder to maintain the feature-module documentation structure.
 
+**CRITICAL**: CLAUDE.md files are **lightweight indexes**, not comprehensive documentation. They are navigation aids that help Claude find detailed documentation efficiently. See `@Research/2025-11-17-CLAUDEmdIndexing.md` for the research-backed approach and templates.
+
+**Core Principles**:
+- **Index, not information**: Point to content, don't duplicate it
+- **Progressive disclosure**: Brief descriptions that help Claude decide which files to load
+- **Keep it lean**: Root CLAUDE.md = 200-300 lines, folder indexes = 50-150 lines
+- **Focus on navigation**: Every line should answer "where should Claude look for X?"
+
 **Target folder**: $ARGUMENTS (optional - defaults to entire `docs/` folder)
 
 ---
@@ -54,100 +62,117 @@ For each folder, determine which template to use:
 
 ## Step 4: Generate/Update Top-Level Module CLAUDE.md
 
-**Template structure**:
+**Target length**: 200-300 lines maximum. Remember: this is a map, not a manual.
+
+**Template structure** (based on `@Research/2025-11-17-CLAUDEmdIndexing.md`):
 
 ```markdown
 # [Module Name]
 
-[Auto-generate 1-2 sentence description based on folder name and contents]
+[1-2 sentence description - what this module covers]
 
-## Submodules
+## Documentation Organization
 
 [For each subfolder with documentation:]
 ### [Subfolder Name]
-[Auto-generate brief description]
-- See `@docs/[relative path]/CLAUDE.md` for details
+@docs/[relative path]/CLAUDE.md - [One-line description of what's in this subfolder]
 
-## Overview
-[Preserve if exists, otherwise leave placeholder for manual editing]
+## Quick Navigation
+- [Common task 1]: See @docs/[path]/[file].md
+- [Common task 2]: See @docs/[path]/[file].md
+- [Common task 3]: See @docs/[path]/[file].md
 
-## Documentation Files
-[List any .md files directly in this folder:]
-- `filename.md` - [Auto-generate brief description from first heading or leave for manual entry]
+## Documentation Files in This Folder
+[Only if .md files exist directly in this folder:]
+@filename.md - [One-line description - what question does this file answer?]
 
 ## Related Documentation
-[Preserve if exists, otherwise leave placeholder for manual cross-references]
+[Preserve if exists - cross-references to other modules]
 ```
 
 ### Auto-generation Rules:
-1. **Module name**: Convert folder name from PascalCase/kebab-case to Title Case
-2. **Description**: Generate from folder name context (e.g., "System" → "System-wide architecture, conventions, and technical stack")
-3. **Subfolder descriptions**: Generate from subfolder name
-4. **File descriptions**: Read first heading or first paragraph, create 1-line summary
+1. **Module name**: Convert folder name to Title Case (e.g., "Features" → "Features", "System" → "System")
+2. **Description**: Context-aware, concise (e.g., "System" → "System-wide architecture, conventions, and technical stack")
+3. **Subfolder descriptions**: One line focusing on what questions it answers, not what it contains
+4. **File descriptions**: Answer "what question does this file help with?" not "what topics are in this file?"
+5. **Quick Navigation**: Extract 3-5 most common use cases from file content
 
 ### Preservation Rules:
-- If CLAUDE.md exists, preserve content in "Overview" and "Related Documentation" sections
-- Only update "Submodules" and "Documentation Files" lists
-- Preserve any custom sections not in the template
+- Preserve "Related Documentation" section if it exists
+- Preserve any custom sections added manually
+- **Replace** auto-generated sections (Organization, Quick Navigation, Files) with fresh content
+- Keep custom content that provides navigational value
 
 ---
 
 ## Step 5: Generate/Update Feature/Subfolder CLAUDE.md
 
-**Template structure**:
+**Target length**: 50-150 lines maximum. Be ruthlessly concise.
+
+**Template structure** (based on `@Research/2025-11-17-CLAUDEmdIndexing.md`):
 
 ```markdown
 # [Feature Name]
 
-[Auto-generate 1-2 sentence description]
+[1-2 sentence description focusing on what problems this documentation helps solve]
 
-## Documentation in This Folder
+## Available Documentation
 
-[For each .md file:]
-- `filename.md` - [Brief description]
+[For each .md file, answer "what question does this answer?"]
+@filename.md - [One-line description (max 80 characters)]
+- [Optional: 2-3 sub-bullets for major sections, only if file is long]
 
 [If has subfolders with documentation:]
 ### Subfolders
-- `@docs/[subfolder path]/CLAUDE.md` - [Subfolder name]
+@docs/[subfolder path]/CLAUDE.md - [What's in this subfolder?]
 
-## Key Concepts
-[Preserve if exists, otherwise leave placeholder]
+## Quick Reference
+[3-5 bullets answering: "What would someone commonly need from this area?"]
+- [Most common use case]: See @[file].md [section reference if helpful]
+- [Second common use case]: See @[file].md
 
 ## Related Documentation
-[Preserve if exists, otherwise add intelligent cross-references based on folder location]
-
-## Implementation Notes
-[Preserve if exists, otherwise omit section]
+[Preserve if exists - only cross-references that genuinely help navigation]
 ```
 
 ### Auto-generation Rules:
-1. **Feature name**: Convert from folder name (e.g., "Deduplication" → "File Deduplication")
-2. **Description**: Contextual based on parent folders
-3. **File descriptions**: Read file and create 1-line summary from content
-4. **Cross-references**: Intelligently suggest related docs:
-   - Features reference System/Architecture
-   - Upload subfolders reference parent Upload/CLAUDE.md
-   - Organizer features reference Data/CLAUDE.md
+1. **Feature name**: Convert from folder name, add context (e.g., "Deduplication" → "File Deduplication")
+2. **Description**: Focus on problems solved, not topics covered
+3. **File descriptions**: Maximum 80 characters, focus on the question it answers
+4. **Quick Reference**: Extract most common queries this area addresses (analyze file content for typical use cases)
+5. **Cross-references**: Add only if genuinely helpful for navigation:
+   - Features reference System/Architecture for patterns used
+   - Upload subfolders reference parent Upload/CLAUDE.md for context
+   - Any feature using Firestore references Data/CLAUDE.md
 
 ### Preservation Rules:
-- Preserve "Key Concepts", "Related Documentation", "Implementation Notes" sections if they exist
-- Only update file lists and subfolder references
-- Keep any custom sections
+- Preserve "Related Documentation" if it exists and adds value
+- Preserve any custom sections that help navigation
+- **Replace** auto-generated sections (Available Documentation, Quick Reference)
+- Remove sections that don't add navigational value
 
 ---
 
 ## Step 6: Generate File Descriptions
 
+**Goal**: Create descriptions that help Claude decide "should I load this file for the current query?"
+
 For each .md file that needs a description:
 
-1. **Read the file** using the `Read` tool (first 50 lines only)
-2. **Extract description** using this priority:
-   - First H1 heading followed by first paragraph
-   - First H2 heading if no H1
-   - First paragraph if no headings
-   - Filename as fallback
-3. **Summarize** to 1 line (max 80 characters)
-4. **Cache** descriptions to avoid re-reading files
+1. **Read the file** using the `Read` tool (first 50 lines only to minimize tokens)
+2. **Identify the key question** this file answers:
+   - Look at H1/H2 headings to understand scope
+   - Read first paragraph for context
+   - Identify the primary use case or problem being addressed
+3. **Write description** following this formula:
+   - **Format**: "[What question/problem] - [Key topics covered]"
+   - **Length**: Maximum 80 characters (ruthlessly concise)
+   - **Examples**:
+     - ✅ "How authentication works - OAuth flow, token management, security"
+     - ✅ "File upload process - Workers, deduplication, storage"
+     - ❌ "This document describes the authentication system and provides..." (too verbose)
+     - ❌ "Authentication" (too vague - doesn't help Claude decide)
+4. **Cache** descriptions to avoid re-reading files on subsequent runs
 
 ---
 
@@ -191,26 +216,41 @@ Updated Index Files:
 [...]
 
 Next Steps:
-1. Review generated CLAUDE.md files
-2. Add custom content to "Overview" and "Key Concepts" sections
-3. Verify cross-references are accurate
-4. Run '/doc-index' again after adding new documentation
+1. Review generated CLAUDE.md files for brevity (root: 200-300 lines, folders: 50-150 lines)
+2. Verify descriptions focus on "what question does this answer?" not "what content is in this?"
+3. Check that cross-references have navigational value (not just topical similarity)
+4. Test with Claude: ask questions and observe which files get loaded
+5. Run '/doc-index' again after adding new documentation
+
+Remember: Index, not information. See @Research/2025-11-17-CLAUDEmdIndexing.md for principles.
 ```
 
 ---
 
 ## Important Constraints
 
-1. **Never overwrite custom content**: Preserve manually-written sections (Overview, Key Concepts, Implementation Notes, Related Documentation)
-2. **Only update auto-generated sections**: File lists, subfolder references, and basic structure
-3. **Follow conventions**:
-   - Use `@docs/` notation for cross-references
-   - Keep descriptions to 1-2 sentences max
-   - Maintain progressive disclosure (index → details)
-   - No content duplication (reference, don't copy)
-4. **Respect single source of truth**: When docs overlap, reference the primary doc
-5. **Lean by design**: Optimize for Sonnet 4.5 (omit obvious details)
-6. **Feature-module alignment**: Follow the structure in `docs/System/Documentation/documentation-hierarchy.md`
+**CRITICAL - Index, Not Information**:
+CLAUDE.md files are navigation aids, not documentation. Every line must help Claude find information, not contain information itself. See `@Research/2025-11-17-CLAUDEmdIndexing.md` for the research backing this approach.
+
+1. **Never overwrite custom content**: Preserve manually-written navigational content
+2. **Only update auto-generated sections**: File lists, subfolder references, Quick Navigation
+3. **Ruthless brevity**:
+   - Root CLAUDE.md: 200-300 lines maximum
+   - Folder CLAUDE.md: 50-150 lines maximum
+   - File descriptions: 80 characters maximum
+   - If you can't fit in these limits, you're including information instead of indexing it
+4. **Follow conventions** (from research report):
+   - Use `@docs/` notation for cross-references (enables progressive disclosure)
+   - Focus descriptions on "what question does this answer?" not "what topics are in this?"
+   - No content duplication - point to the single source of truth
+   - Progressive disclosure: CLAUDE.md shows map → detailed files contain information
+5. **Quality over quantity**:
+   - Better to have 5 precise, helpful cross-references than 20 vague ones
+   - Remove sections that don't add navigational value
+   - Each description must help Claude make a loading decision
+6. **Architectural alignment**:
+   - Follow feature-module structure in `docs/System/Documentation/documentation-hierarchy.md`
+   - Respect the hierarchical discovery pattern Claude Code uses
 
 ---
 
@@ -261,31 +301,41 @@ Using filename as description instead.
 
 ## Implementation Notes
 
+**Core Philosophy** (from `@Research/2025-11-17-CLAUDEmdIndexing.md`):
+- "You're writing for Claude, not onboarding a junior dev"
+- Each description must answer: "Should Claude load this file for the current query?"
+- CLAUDE.md files that exceed target length (200-300 root, 50-150 folder) consistently show context confusion
+- Token efficiency: Properly organized indexes reduce token usage 60-80% versus full documentation dumps
+
 **File reading optimization**:
-- Only read first 50 lines of each file for description extraction
-- Cache file descriptions to avoid re-reading
+- Only read first 50 lines of each file for description extraction (minimize token usage)
+- Cache descriptions to avoid re-reading on subsequent runs
 - Process folders in parallel where possible
 
-**Intelligent cross-referencing**:
-- Features/Upload references → System/Architecture, Data/CLAUDE.md
-- Features/Organizer references → Features/Upload (for file processing flow)
-- System/* references → Related system concerns
-- Testing references → Relevant features being tested
+**Description writing pattern**:
+❌ **Wrong**: "This document contains information about authentication including OAuth, tokens, and security"
+✅ **Right**: "How authentication works - OAuth flow, token management, security"
+
+The difference: helping Claude navigate vs. describing content. Focus on the question answered, not topics covered.
+
+**Intelligent cross-referencing** (add only if genuinely helpful):
+- Features/Upload references → System/Architecture (for patterns used), Data/CLAUDE.md (for Firestore schema)
+- Features/Organizer references → Features/Upload (for file processing flow context)
+- System/* references → Related system concerns only if there's genuine overlap
+- Testing references → Relevant features being tested (helps Claude find implementation when reading tests)
 
 **Custom section detection**:
-When parsing existing CLAUDE.md files, detect these custom sections and preserve them:
-- "## Overview" (any content after heading)
-- "## Key Concepts" (any content)
-- "## Implementation Notes" (any content)
-- "## Related Documentation" (any content)
-- Any ## heading not in the standard template
+When parsing existing CLAUDE.md files, preserve these sections if they exist:
+- "## Related Documentation" (if it has navigational value)
+- Any custom ## heading that helps navigation
+- **Remove** sections that duplicate information from detailed docs (violates "index not information" principle)
 
 **Template selection logic**:
 ```
 if folder is direct child of docs/:
-    use Module template
+    use Module template (200-300 lines)
 else if folder has subfolders with docs:
-    use Module template (nested)
+    use Module template (nested, 100-200 lines)
 else:
-    use Feature template
+    use Feature template (50-150 lines)
 ```
