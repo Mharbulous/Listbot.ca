@@ -1,5 +1,18 @@
 # Firebase Hosting Deployment - Tips That Actually Work
 
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+- `firebase.json` - Multi-site hosting configuration with array format
+- `.firebaserc` - Firebase targets and project configuration
+
+---
+
+## Context
+
+This document provides troubleshooting tips for Firebase hosting deployment issues encountered during the deployment process. For the complete promotion and deployment workflow, see @docs/DevOps/deployment-promotion.md.
+
 This document contains ONLY the non-obvious solutions that required research to discover.
 
 ---
