@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-**Problem Statement**: The Bookkeeper application has 33 distinct async processes across the codebase that lack centralized tracking and emergency cleanup capabilities. While 29 processes have verified cleanup mechanisms, there is no visibility into active async operations or safety net for hanging processes during errors or route changes.
+**Problem Statement**: The ListBot application has 33 distinct async processes across the codebase that lack centralized tracking and emergency cleanup capabilities. While 29 processes have verified cleanup mechanisms, there is no visibility into active async operations or safety net for hanging processes during errors or route changes.
 
 **Proposed Solution**: Implement a lightweight, non-intrusive async process registry that provides visibility and safety net capabilities without disrupting existing, well-functioning AbortController patterns. The tracker acts as a bookkeeping layer alongside current code rather than replacing it.
 

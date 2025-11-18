@@ -76,7 +76,7 @@ The Solo Firm Architecture is a design pattern that treats solo users as single-
   },
 
   // Which apps this firm has access to
-  apps: ['intranet', 'bookkeeper'],  // Simple array
+  apps: ['intranet', 'listbot'],  // Simple array
 
   // Basic settings
   settings: {

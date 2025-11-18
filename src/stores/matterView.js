@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
-const STORAGE_KEY = 'bookkeeper_selected_matter';
-const LEGACY_STORAGE_KEY = 'bookkeeper_active_matter'; // For migration
+const STORAGE_KEY = 'listbot_selected_matter';
+const LEGACY_STORAGE_KEY = 'listbot_active_matter'; // For migration
 
 /**
  * Matter View Store

@@ -1,9 +1,9 @@
-# Bookkeeper Layout Refactoring Plan
+# ListBot Layout Refactoring Plan
 
 ## Executive Summary
 
 **Problem Statement:**
-The Bookkeeper application suffers from inconsistent and fragile layout systems across pages. Currently, different pages use mixed approaches (Tailwind CSS vs Vuetify, manual height calculations with `calc(100vh - 80px)`, inconsistent padding patterns) that make responsive design difficult and content positioning unreliable. The FileUpload page's dropzone centering issues exemplify the broader problem of ad hoc layout solutions that break easily during modifications.
+The ListBot application suffers from inconsistent and fragile layout systems across pages. Currently, different pages use mixed approaches (Tailwind CSS vs Vuetify, manual height calculations with `calc(100vh - 80px)`, inconsistent padding patterns) that make responsive design difficult and content positioning unreliable. The FileUpload page's dropzone centering issues exemplify the broader problem of ad hoc layout solutions that break easily during modifications.
 
 **Proposed Solution:**
 Replace the current mixed layout approach with a standardized CSS Grid-based layout system. Create reusable layout components (AppLayoutManager, StandardPageLayout, FullViewportLayout) that handle all spacing, sizing, and positioning automatically. This eliminates manual calculations and provides consistent, robust layout behavior across all pages.

@@ -1,6 +1,6 @@
 # Lazy UI Rendering Implementation Plan
 
-**Project**: Bookkeeper File Upload Queue Optimization  
+**Project**: ListBot File Upload Queue Optimization  
 **Goal**: Reduce Phase 3 UI rendering time from 78% of total processing time to <5%  
 **Expected Performance Gain**: 95%+ reduction in initial render time (13,200ms � <500ms)
 

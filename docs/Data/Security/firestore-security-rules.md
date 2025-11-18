@@ -118,7 +118,7 @@ Keep it **dead simple**. Solo users have `firmId === userId`:
 
 **Multi-App Consistency**:
 
-- Same security rules apply across all apps (Intranet, Bookkeeper, etc.)
+- Same security rules apply across all apps (Intranet, ListBot, etc.)
 - Consistent firm-based access control model
 
 ## Security Implementation Details

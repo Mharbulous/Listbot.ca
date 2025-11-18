@@ -5,9 +5,9 @@
 
 <!-- DO NOT EDIT ABOVE THIS LINE -->
 
-# CLAUDE.md - Bookkeeper App
+# CLAUDE.md - ListBot App
 
-This file provides high-level directives for working on the Bookkeeper repository.
+This file provides high-level directives for working on the ListBot repository.
 This file is **lean by design**. Detailed documentation is in the `/docs` directory.
 
 ## 1. CRITICAL: Core Directives
@@ -35,7 +35,7 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
 
 ## 2. Project Overview & Tech Stack
 
-- **Project**: **Bookkeeper** - A Vue 3 bookkeeping app with file upload/processing.
+- **Project**: **ListBot** - A Vue 3 app with file upload/processing.
 - **Architecture**: Part of a multi-app SSO architecture sharing Firebase Auth.
 - **Frontend**: Vue 3 (Composition API)
 - **Build Tool**: Vite
@@ -112,7 +112,7 @@ This is a brief overview of core concepts. For details, see the `@docs` above.
   1.  Files with unique sizes _skip_ hashing.
   2.  Only files with matching sizes are hashed.
   3.  The final BLAKE3 hash is used as the document ID in Firestore, providing automatic, database-level deduplication.
-- **Multi-App SSO**: All apps (Bookkeeper, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
+- **Multi-App SSO**: All apps (ListBot, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
 
 ---
 

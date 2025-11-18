@@ -126,7 +126,7 @@ export function analyzeFiles(files, totalDirectoryCount = 0, avgDirectoryDepth =
 **Files to update:**
 - `src/utils/fileAnalysis.js` - Update JSDoc comments
 - `README.md` - Update any references to old prediction system
-- Remove Trial 5 analysis files from `docs/plans/Bookkeeper/speed_tests/`
+- Remove Trial 5 analysis files from `docs/plans/ListBot/speed_tests/`
 
 **Update JSDoc:**
 ```javascript
@@ -143,8 +143,8 @@ export function analyzeFiles(files, totalDirectoryCount = 0, avgDirectoryDepth =
 ### Phase 6: Clean Up Analysis Files
 
 **Remove obsolete analysis files:**
-- `docs/plans/Bookkeeper/speed_tests/trial5_*` - Old Trial 5 analysis
-- `docs/plans/Bookkeeper/speed_tests/3_*` through `docs/plans/Bookkeeper/speed_tests/7_*` - Old test data
+- `docs/plans/ListBot/speed_tests/trial5_*` - Old Trial 5 analysis
+- `docs/plans/ListBot/speed_tests/3_*` through `docs/plans/ListBot/speed_tests/7_*` - Old test data
 - Keep only the H-factor analysis files and current implementation
 
 **Files to keep:**

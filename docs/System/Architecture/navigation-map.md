@@ -1,6 +1,6 @@
-# Bookkeeper App - Navigation Map
+# ListBot App - Navigation Map
 
-This document provides a comprehensive navigation map of the entire Bookkeeper application, showing all routes, views, and the navigation hierarchy.
+This document provides a comprehensive navigation map of the entire ListBot application, showing all routes, views, and the navigation hierarchy.
 
 **Last Updated**: 2025-11-09
 **Router Mode**: Hash-based (`createWebHashHistory`)
@@ -11,7 +11,7 @@ This document provides a comprehensive navigation map of the entire Bookkeeper a
 ## ASCII Navigation Tree
 
 ```
-Bookkeeper App
+ListBot App
 │
 ├── 🏠 Home & Dashboard
 │   ├── / ................................ Home (default landing)

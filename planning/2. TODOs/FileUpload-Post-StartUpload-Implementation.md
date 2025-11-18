@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the detailed implementation plan for the 14 user stories covering the complete post-upload experience in the Bookkeeper application, from progress visibility to completion handling.
+This document outlines the detailed implementation plan for the 14 user stories covering the complete post-upload experience in the ListBot application, from progress visibility to completion handling.
 
 ## User Stories Addressed
 

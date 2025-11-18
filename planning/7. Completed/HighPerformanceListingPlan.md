@@ -1,6 +1,6 @@
 # High-Performance Evidence Files Listing - Implementation Plan
 
-**Project:** Bookkeeper Evidence Files List View
+**Project:** ListBot Evidence Files List View
 **Objective:** Create an ultra-fast, responsive file listing interface capable of handling 10,000+ files with imperceptible load times
 **Target Page:** `http://localhost:5173/#/list`
 
@@ -567,7 +567,7 @@ npm install idb
 **Database Schema:**
 
 ```javascript
-// Database: 'bookkeeper-cache'
+// Database: 'listbot-cache'
 // Version: 1
 
 // Store: 'file-metadata'

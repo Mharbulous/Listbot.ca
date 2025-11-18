@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-The recent implementation of cloud file detection in `docs\plans\Bookkeeper\CloudFileDetection.md` successfully resolved the folder analysis hanging issue, but revealed a new bottleneck in the file processing pipeline.
+The recent implementation of cloud file detection in `docs\plans\ListBot\CloudFileDetection.md` successfully resolved the folder analysis hanging issue, but revealed a new bottleneck in the file processing pipeline.
 
 ### Current Behavior
 - **Folder Analysis**: ✅ Works correctly, completes quickly (1-6 seconds for 689-3398 files)
