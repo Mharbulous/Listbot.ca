@@ -1,6 +1,22 @@
 # Categories and Tags System
 
-Last Updated: 2025-09-20
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+This documentation primarily references the following source files:
+
+- `src/components/features/tags/EditableTag.vue` - Main editable tag UI component
+- `src/components/features/tags/composables/useTagEditing.js` - Tag editing logic composable
+- `src/features/organizer/services/systemCategoryService.js` - System category initialization and management
+- `src/features/organizer/services/tagSubcollectionService.js` - Tag CRUD operations with atomic batch writes
+- `src/features/organizer/services/categoryService.js` - Category operations
+- `src/features/organizer/services/tagOperationService.js` - Tag operation utilities
+- `src/features/organizer/constants/systemCategories.js` - System category definitions and IDs
+- `src/features/organizer/stores/categoryStore.js` - Main category store
+- `src/features/organizer/stores/categoryCore.js` - Category core logic
+- `src/features/organizer/stores/categoryValidation.js` - Category validation logic
+- `src/features/organizer/stores/categoryComposables.js` - Category composable utilities
 
 ## Critical Architecture Context
 
@@ -384,10 +400,11 @@ const tagDoc = await db
 
 ## Cross-Reference to Other Documentation
 
-For authentication and firm validation rules, see Authentication documentation.
-For evidence document structure and lifecycle, see Evidence Management documentation.
-For real-time synchronization patterns, see Real-Time Updates documentation.
-For AI processing pipeline and confidence scoring, see AI Integration documentation.
+For authentication and firm validation rules, see `@docs/Features/Authentication/25-11-18-auth-state-machine.md`.
+
+For evidence document structure and lifecycle, see `@docs/Features/Organizer/Data/25-11-18-evidence-schema.md`.
+
+For AI processing pipeline and confidence scoring, see `@docs/Features/Organizer/AIAnalysis/ai-analysis-overview.md`.
 
 ## Migration and Backward Compatibility
 
