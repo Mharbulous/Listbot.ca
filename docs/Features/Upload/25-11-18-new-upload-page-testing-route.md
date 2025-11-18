@@ -1,7 +1,24 @@
 # New Upload Page - Development Plan
 
+**Reconciled up to**: 2025-11-18
+
 **Date**: 2025-11-10
 **Status**: Planning Phase
+
+---
+
+## Key Files
+
+This documentation references the following source files:
+
+**Upload Components:**
+- `src/features/upload/FileUpload.vue` - Old upload page (production route)
+- `src/views/Testing.vue` - New upload page (testing route)
+
+**Router Configuration:**
+- `src/router/index.js` - Route configuration for both upload pages
+
+---
 
 ## Overview
 
@@ -27,6 +44,6 @@ We are creating a complete remake of the file upload page. During the transition
 
 ## Related Files
 
-- Old: `src/views/FileUpload.vue`
+- Old: `src/features/upload/FileUpload.vue`
 - New: `src/views/Testing.vue`
 - Route: Configured in `src/router/index.js`
