@@ -34,9 +34,11 @@ Sync documentation file with recent code changes, validate cross-references, and
 3. Filter out:
    - Files named `CLAUDE.md`
    - Files with today's date prefix (YY-MM-DD)
-4. Present the top 3-5 candidates to the user
-5. Use AskUserQuestion to let user select which file to reconcile
-6. Store selected file as `targetDoc`
+4. **Automatically select the first valid candidate**:
+   - Take the first file from the search results
+   - If multiple candidates exist, prioritize files without date prefixes over older dated files
+   - Store the selected file as `targetDoc`
+   - Display: "Auto-selected for reconciliation: `[targetDoc]`"
 
 **Validation checks:**
 - File must exist and be readable
@@ -418,13 +420,22 @@ Create a structured summary with the following sections:
 # Reconcile authentication documentation
 /doc-reconcile docs/architecture/authentication.md
 
-# Auto-select from recently modified docs
+# Auto-select a file that needs reconciliation (no user prompt)
+# Will automatically choose the first valid candidate
 /doc-reconcile
 ```
 
 ---
 
 ## Error Handling
+
+**If no candidates found when $ARGUMENTS is empty**:
+- Display: "No documentation files found that need reconciliation"
+- Explain: "All markdown files in docs/ either:"
+  - Have today's date prefix (too recent)"
+  - Are named CLAUDE.md (configuration files, not reconcilable)"
+  - Already have date prefixes from previous reconciliations"
+- Suggest: "Specify a target file explicitly if you want to reconcile a specific dated file"
 
 **If target file doesn't exist**:
 - Display: "File not found: `$ARGUMENTS`"
