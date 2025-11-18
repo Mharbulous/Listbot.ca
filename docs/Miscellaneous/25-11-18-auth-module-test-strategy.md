@@ -1,8 +1,18 @@
 # Auth Module Test Strategy
 
-**Date**: 2025-11-18
+**Reconciled up to**: 2025-11-18
 **Module**: Authentication (decomposed into 3 modules)
 **Location**: `src/core/stores/auth/`
+
+## Key Files
+
+- `src/core/stores/auth/index.js` - Module entry point, re-exports authStore
+- `src/core/stores/auth/authStore.js` - Core Pinia store (state, getters, actions)
+- `src/core/stores/auth/authFirmSetup.js` - Firm management, Solo Firm creation
+- `src/core/stores/auth/authStateHandlers.js` - Auth lifecycle handlers, state machine
+- `src/services/authService.js` - Firebase authentication service wrapper
+- `src/services/userService.js` - User document CRUD operations
+- `src/core/stores/userPreferences.js` - User preferences store
 
 ## Overview
 
