@@ -8,28 +8,42 @@ Sync documentation file with recent code changes, validate cross-references, and
 
 ## Step 1: Validate Target Documentation File
 
+**Documentation Naming Convention:**
+- All documentation files MUST begin with a date in `YY-MM-DD` format (e.g., `25-11-18-feature-name.md`)
+- Files without this date prefix are in need of reconciliation
+- Files with today's date should NOT be reconciled (too recent, not enough time for drift)
+
 **If $ARGUMENTS is provided:**
 - Verify the file path exists (use Read tool)
 - Confirm it's a markdown documentation file (`.md` extension)
 - **REJECT if filename is `CLAUDE.md`** - these are not valid targets for reconciliation
+- **REJECT if filename starts with today's date (YY-MM-DD)** - too recent for reconciliation
 - Store the file path as `targetDoc`
 - Display: "Reconciling documentation: `$ARGUMENTS`"
 
 **If $ARGUMENTS is empty:**
-1. Search for recently modified markdown files in `docs/` directory using Bash:
+1. Search for markdown files in `docs/` directory that need reconciliation:
+   ```bash
+   # Find docs without YY-MM-DD date prefix
+   find docs/ -type f -name "*.md" ! -name "CLAUDE.md" ! -name "[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.md"
+   ```
+2. Also check for older dated files (not from today):
    ```bash
    git log --since="2 weeks ago" --name-only --pretty=format: -- docs/**/*.md | sort -u | head -10
    ```
-2. Filter out any files named `CLAUDE.md`
-3. Present the top 3-5 candidates to the user
-4. Use AskUserQuestion to let user select which file to reconcile
-5. Store selected file as `targetDoc`
+3. Filter out:
+   - Files named `CLAUDE.md`
+   - Files with today's date prefix (YY-MM-DD)
+4. Present the top 3-5 candidates to the user
+5. Use AskUserQuestion to let user select which file to reconcile
+6. Store selected file as `targetDoc`
 
 **Validation checks:**
 - File must exist and be readable
 - File must be in the `docs/` directory
 - File extension must be `.md`
 - **File must NOT be named `CLAUDE.md`** (configuration files are not valid reconciliation targets)
+- **File must NOT start with today's date** (too recent for meaningful reconciliation)
 
 ---
 
@@ -312,22 +326,80 @@ Create a structured summary with the following sections:
 2. **Do NOT modify any files** without explicit approval
 3. **Offer to make updates**:
    - "I found [N] issues in [targetDoc]. Would you like me to update the documentation to fix these?"
-   - If approved, use Edit tool to make changes including:
-     - Updating "Reconciled up to: [date]" at top of file
-     - Fixing Key Files section
-     - Correcting terminology, cross-references, and code examples
-   - If not approved, save report for user review
+
+**If approved, follow the Post-Reconciliation Workflow:**
+
+### Post-Reconciliation Workflow
+
+1. **Create new reconciled file with date prefix:**
+   - Generate new filename: `YY-MM-DD-[original-name].md` (using today's date)
+   - If original already has a date prefix, replace it with today's date
+   - Example: `architecture.md` → `25-11-18-architecture.md`
+   - Example: `24-10-15-auth.md` → `25-11-18-auth.md`
+
+2. **Write the reconciled content to the new file:**
+   - Use Write tool to create the new dated file
+   - Include ALL updates from the reconciliation:
+     - Updated "Reconciled up to: [date]" at top
+     - Fixed Key Files section
+     - Corrected terminology, cross-references, and code examples
+     - Remove ONLY obsolete/inaccurate information
+     - Preserve ALL accurate and important information
+
+3. **Double-check preservation of important information:**
+   - Read both the original file and the new reconciled file
+   - Compare section by section to ensure:
+     - ✅ All important concepts are preserved
+     - ✅ All accurate technical details remain
+     - ✅ All valid cross-references are maintained
+     - ✅ Only outdated/incorrect information was removed
+   - Create a comparison report:
+     ```markdown
+     ## Reconciliation Verification
+
+     ### Content Preserved
+     - [List key sections/concepts that were preserved]
+
+     ### Content Removed
+     - [List only obsolete/incorrect content that was removed]
+
+     ### Content Updated
+     - [List sections that were corrected/improved]
+
+     ### Verification Status
+     - ✅ All important information preserved
+     - ✅ Only obsolete information removed
+     - ✅ Safe to delete original file
+     ```
+
+4. **Delete original file only after verification:**
+   - **CRITICAL**: Only proceed if verification confirms all important info is preserved
+   - Use Bash to remove the original file:
+     ```bash
+     rm "path/to/original-file.md"
+     ```
+   - Confirm deletion: "Original file deleted. Reconciliation complete."
+
+5. **If NOT approved:**
+   - Save report for user review
+   - Do not create new file or delete original
 
 ---
 
 ## Important Constraints
 
 - **NO CLAUDE.md files**: Reject any attempt to reconcile files named `CLAUDE.md`
+- **NO files dated today**: Reject files with today's date prefix (YY-MM-DD) - too recent for reconciliation
+- **Date-based naming convention**: All documentation files MUST begin with `YY-MM-DD` format
+- **Files without dates need reconciliation**: Any file lacking the `YY-MM-DD` prefix requires reconciliation
 - **Date-limited search**: Only look at commits since `lastReconciledDate`
 - **5-commit limit**: Stop commit-by-commit analysis after finding 5 relevant changes
 - **Holistic comparison**: Always compare documentation to CURRENT code state, not just recent commits
 - **50% Key Files rule**: Apply parent vs. children logic when files are decomposed
-- **READ-ONLY by default**: This command only analyzes and reports, does not modify files
+- **READ-ONLY by default**: This command only analyzes and reports, does not modify files without approval
+- **Create dated file on reconciliation**: After successful reconciliation, create new file with `YY-MM-DD` prefix
+- **Verify before deletion**: MUST verify all important info is preserved before deleting original file
+- **Preserve all accurate info**: Remove ONLY obsolete/incorrect information during reconciliation
 - **Single source of truth**: When terminology conflicts, defer to `@docs/architecture/file-lifecycle.md`
 - **Exact terminology**: MUST use canonical terms from architecture docs
 - **Verify before suggesting**: Only flag issues that are confirmed by reading source code
@@ -362,9 +434,20 @@ Create a structured summary with the following sections:
 - Display: "Cannot reconcile CLAUDE.md files - these are configuration files, not documentation"
 - Suggest: "Did you mean a file in the docs/ directory?"
 
+**If file has today's date prefix**:
+- Display: "Cannot reconcile `$ARGUMENTS` - file dated today (YY-MM-DD)"
+- Explain: "Files with today's date are too recent for meaningful reconciliation"
+- Suggest: "Wait at least one day after creation before reconciling"
+
 **If not a markdown file**:
 - Display: "Not a markdown file: `$ARGUMENTS`"
 - Ask: "Did you want to reconcile documentation for this source file instead?"
+
+**If verification fails during post-reconciliation**:
+- Display: "⚠️ Verification failed - important information may be missing from reconciled file"
+- Show comparison report highlighting missing content
+- Ask: "Do you want to manually review before deleting the original file?"
+- **Do NOT delete original file** until user confirms it's safe
 
 **If no Key Files section exists**:
 - Note in report: "Key Files section missing - will suggest creation"
