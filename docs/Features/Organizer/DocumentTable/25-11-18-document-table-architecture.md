@@ -1,12 +1,29 @@
 # DocumentTable - Cloud View
 
+**Reconciled up to**: 2025-11-18
+
 Last Updated: 2025-10-27
+
+## Key Files
+
+- `src/views/Documents.vue` - Cloud view page component that uses DocumentTable
+- `src/components/base/DocumentTable.vue` - Reusable table component with virtual scrolling
+- `src/services/uploadService.js` - Evidence document and tag data fetching
+- `src/features/organizer/services/categoryService.js` - Category CRUD operations
+- `src/features/organizer/services/systemCategoryService.js` - System category initialization and management
+- `src/composables/useColumnResize.js` - Column width management and persistence
+- `src/composables/useColumnDragDrop.js` - Drag-and-drop column reordering
+- `src/composables/useColumnVisibility.js` - Show/hide column toggles
+- `src/composables/useVirtualTable.js` - TanStack Virtual integration for performance
+- `src/composables/useColumnSort.js` - Multi-column sorting logic
 
 ## Overview
 
 The DocumentTable is the primary data display component shown on the Cloud view (`/#/cloud`). It presents evidence documents with columns from four distinct data sources, all rendered with a unified, consistent appearance.
 
-**Component Location**: `src/views/Documents.vue`
+**Component Architecture**:
+- **View Component**: `src/views/Documents.vue` - Page component that fetches data and manages state
+- **Table Component**: `src/components/base/DocumentTable.vue` - Reusable presentational table with virtual scrolling
 
 ## Table Architecture
 
@@ -18,7 +35,7 @@ The DocumentTable aggregates column data from four sources, displayed with consi
 
 These columns are hardcoded in the component and display file metadata that is not associated with dynamic categories.
 
-**Hardcoded Columns** (defined in `NON_SYSTEM_COLUMNS` array):
+**Hardcoded Columns** (defined in `NON_SYSTEM_COLUMNS` array in Documents.vue:144-152):
 - **File Size** - Size of the uploaded file (formatted, e.g., "2.4 MB")
 - **Source File Name** - Original filename from the source system
 - **Upload Date** - Timestamp when the file was uploaded to the evidence collection
@@ -27,7 +44,7 @@ These columns are hardcoded in the component and display file metadata that is n
 - **Source Folder** - Original folder path from the source system
 - **Multiple Source Files** - Indicator if multiple source files deduplicated to this evidence
 
-**Data Source**: Evidence documents at `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}` and their `sourceMetadata` subcollection.
+**Data Source**: Evidence documents at `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}` with embedded source metadata fields.
 
 #### 2. System Categories
 
@@ -50,7 +67,7 @@ Global categories defined by developers and used across all firms and matters.
 - `Author` - Open List for document authors
 - `Custodian` - Open List for document custodians
 
-**Implementation Status**: ✅ Fully implemented in Documents.vue (lines 531-549)
+**Implementation Status**: ✅ Fully implemented (Documents.vue:186-190)
 
 #### 3. Firm Categories
 
@@ -65,7 +82,7 @@ Categories common to all matters within a firm. These are stored in the special 
 - Can be created, edited, and soft-deleted by authorized users
 - Include both system categories (copied during initialization) and custom firm categories
 
-**Implementation Status**: ⚠️ Planned but not yet implemented in Documents.vue
+**Implementation Status**: ✅ Fully implemented (Documents.vue:192-197, 334-347)
 
 #### 4. Matter Categories
 
@@ -80,7 +97,7 @@ Categories specific to a single matter.
 - Can be created, edited, and soft-deleted by authorized users
 - Include both system categories (copied during initialization) and custom matter categories
 
-**Implementation Status**: ⚠️ Planned but not yet implemented in Documents.vue
+**Implementation Status**: ✅ Fully implemented (Documents.vue:199-204, 349-366)
 
 ### Category Hierarchy and Data Model
 
@@ -131,9 +148,9 @@ All columns support:
 
 Category columns display tag values from the **embedded tags map** (`evidence.tags[categoryId]`) for performance. The subcollection at `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}/tags/{categoryId}` contains full metadata and is accessed only in detail views.
 
-**Display Logic**:
+**Display Logic** (uploadService.js:48):
 - If tag exists: Display the `tagName` value from `evidence.tags[categoryId].tagName`
-- If no tag exists: Display "t.b.d." in italics (indicating no tag assigned)
+- If no tag exists: Returns `null` (displayed as empty cell)
 - If error: Display error message prefixed with "ERROR:"
 
 ## Current Implementation
@@ -142,14 +159,14 @@ Category columns display tag values from the **embedded tags map** (`evidence.ta
 
 ✅ **Built-in Data Columns**: All hardcoded columns fully functional
 ✅ **System Categories**: Fetched from `/systemcategories` and displayed as columns
-✅ **Tag Values**: System category tag values loaded from embedded `evidence.tags` map (not subcollection)
+✅ **Firm Categories**: Fetched from `/firms/{firmId}/matters/general/categories` and displayed as columns
+✅ **Matter Categories**: Fetched from `/firms/{firmId}/matters/{matterId}/categories` and displayed as columns
+✅ **Tag Values**: Category tag values loaded from embedded `evidence.tags` map (not subcollection)
 ✅ **Virtual Scrolling**: High-performance rendering with TanStack Virtual
 ✅ **Column Management**: Reordering, resizing, visibility, sorting all functional
 
 ### What's Not Yet Implemented
 
-⚠️ **Firm Categories**: Fetching and displaying columns from `/firms/{firmId}/matters/general/categories`
-⚠️ **Matter Categories**: Fetching and displaying columns from `/firms/{firmId}/matters/{matterId}/categories`
 ⚠️ **Category Hierarchy Logic**: Determining which categories take precedence when same category exists at multiple levels
 
 ## Data Flow
@@ -158,21 +175,20 @@ Category columns display tag values from the **embedded tags map** (`evidence.ta
 
 1. User navigates to `/#/cloud`
 2. `Documents.vue` checks authentication (authStore) and matter selection (matterViewStore)
-3. System categories fetched from `/systemcategories` (sorted alphabetically by name)
+3. **Three parallel category fetches**:
+   - System categories from `/systemcategories` (sorted alphabetically by name)
+   - Firm categories from `/firms/{firmId}/matters/general/categories`
+   - Matter categories from `/firms/{firmId}/matters/{matterId}/categories`
 4. Evidence documents fetched from `/firms/{firmId}/matters/{matterId}/evidence`
 5. For each evidence document:
-   - Fetch `sourceMetadata` subcollection for built-in column data
-   - Fetch `tags` subcollection for system category tag values
-6. Data rendered in virtual table with column management features
+   - Embedded source metadata fields used for built-in columns
+   - Embedded `tags` map used for category tag values (no subcollection queries)
+6. All categories merged into `allColumns` computed property (Documents.vue:179-207)
+7. Data rendered in virtual table with column management features
 
-### Planned Flow (Future Implementation)
+### Future Enhancement
 
-1-3. Same as current flow
-4. **Firm categories** fetched from `/firms/{firmId}/matters/general/categories`
-5. **Matter categories** fetched from `/firms/{firmId}/matters/{matterId}/categories`
-6. All categories (system, firm, matter) merged into `allColumns` computed property
-7. Evidence documents and tags fetched as in current flow
-8. Data rendered with all category types available as columns
+**Category Hierarchy Logic**: When the same category ID exists at multiple levels (system, firm, matter), implement precedence rules to determine which category definition takes priority.
 
 ## Performance Considerations
 
@@ -185,15 +201,16 @@ The table uses TanStack Vue Virtual for high-performance rendering:
 
 ### Category Loading Strategy
 
-**Current** (System Categories Only):
-- Single query to `/systemcategories` with orderBy name
-- Parallel tag fetches for all system categories per evidence document
-- ~10-50 categories typical
-
-**Future** (All Category Types):
+**Current Implementation** (All Category Types):
 - Three parallel queries: system, firm, matter categories
-- Merge results with deduplication logic (prefer more specific scope)
+- Single optimized query for evidence documents with embedded tags (uploadService.js:28-33)
+- No subcollection queries - all tag values from embedded `evidence.tags` map
 - ~50-200 categories possible
+- Performance optimization: embedded tags eliminate N×M subcollection queries (uploadService.js:43-50)
+
+**Future Optimization** (if needed for 200+ categories):
+- Implement category column virtualization
+- Add category search/filter in column selector
 - Consider pagination or lazy-loading for very large category sets
 
 ## Composables Used
@@ -211,13 +228,12 @@ The DocumentTable leverages several composables for table functionality:
 ## Related Services
 
 - **`uploadService.js`** (`src/services/uploadService.js`): Fetches evidence documents and tags
-  - `fetchFiles()`: Main query function for table data
-  - `fetchSystemTags()`: Fetches tag values for system categories
+  - `fetchFiles()`: Main optimized query function for table data (single query with embedded tags)
 - **`categoryService.js`** (`src/features/organizer/services/categoryService.js`): Category CRUD operations
   - `getActiveCategories()`: Fetch categories for a matter
   - Uses `matterId='general'` for firm-wide categories
 - **`systemCategoryService.js`** (`src/features/organizer/services/systemCategoryService.js`): System category management
-  - `initializesystemcategories()`: Copies system categories to matter on first access
+  - `getsystemcategories()`: Fetches all system categories from global collection
 
 ## Column Definition Structure
 
@@ -238,10 +254,10 @@ The DocumentTable leverages several composables for table functionality:
 // System category column
 { key: 'DocumentDate', label: 'Document Date', defaultWidth: 180 }
 
-// Future: Firm category column
+// Firm category column
 { key: 'ClientName', label: 'Client Name', defaultWidth: 180 }
 
-// Future: Matter category column
+// Matter category column
 { key: 'ExhibitNumber', label: 'Exhibit Number', defaultWidth: 150 }
 ```
 
@@ -255,8 +271,8 @@ The DocumentTable leverages several composables for table functionality:
 **Test Scenarios**:
 1. Verify all built-in columns display correctly
 2. Verify system category columns appear and show tag values
-3. (Future) Verify firm category columns appear when implemented
-4. (Future) Verify matter category columns appear when implemented
+3. Verify firm category columns appear and show tag values
+4. Verify matter category columns appear and show tag values
 5. Test column reordering, resizing, visibility toggling
 6. Test sorting by different column types
 7. Test performance with 1000+ documents
@@ -266,7 +282,7 @@ The DocumentTable leverages several composables for table functionality:
 **DO NOT**:
 - Assume categories are stored at firm level (they're at matter level)
 - Hardcode `matterId='general'` everywhere (use from matterViewStore)
-- Forget to handle missing tag values (show 🤖 emoji)
+- Forget to handle missing tag values (returns `null` from uploadService)
 - Load all category types synchronously (use parallel fetching)
 - Skip virtual scrolling for large datasets
 
@@ -302,8 +318,8 @@ For very large category sets (200+):
 
 ## Cross-References
 
-- **Category Architecture**: `@docs/architecture/CategoryTags.md`
-- **Evidence Document Structure**: `@docs/architecture/Evidence.md`
-- **File Lifecycle**: `@docs/architecture/file-lifecycle.md`
-- **Authentication & Firm Context**: `@docs/architecture/authentication.md`
-- **Solo Firm Matters**: `@docs/architecture/SoloFirmMatters.md`
+- **Category Architecture**: `@docs/Features/Organizer/Categories/25-11-18-category-system-overview.md`
+- **Evidence Document Structure**: `@docs/Features/Organizer/Data/25-11-18-evidence-schema.md`
+- **File Lifecycle**: `@docs/Features/Upload/Processing/file-lifecycle.md`
+- **Authentication & Firm Context**: `@docs/Features/Authentication/25-11-18-auth-state-machine.md`
+- **Solo Firm Matters**: `@docs/Features/Matters/solo-firm-matters.md`
