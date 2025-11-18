@@ -1,10 +1,31 @@
 # Client-Side Deduplication: Architecture Rationale & Enhancement Guide
 
+**Reconciled up to**: 2025-11-18
+
 ## Executive Summary
 
 This document explains the architectural rationale behind the original client-side deduplication design and provides guidance on how to enhance it with UX improvements WITHOUT sacrificing its performance characteristics.
 
 **Key Insight:** The original design is architecturally superior to the "improved" proposal. This document preserves the reasoning behind the design decisions to prevent future regressions.
+
+---
+
+## Key Files
+
+This documentation references the following source files:
+
+**Core Deduplication Modules:**
+- `src/features/upload/composables/deduplication/detection.js` - Duplicate and copy detection logic
+- `src/features/upload/composables/deduplication/hashing.js` - Hash calculation with worker/fallback
+- `src/features/upload/composables/deduplication/prefilter.js` - Metadata-based pre-filtering (Phase 3a)
+
+**Queue Management:**
+- `src/features/upload/composables/useQueueCore.js` - Main entry point for queue deduplication
+- `src/features/upload/composables/useQueueHelpers.js` - Utility functions (chooseBestFile, generateFileHash)
+- `src/features/upload/composables/useQueueDeduplication.js` - Coordinates worker/main thread processing
+
+**Worker:**
+- `src/features/upload/workers/fileHashWorker.js` - Web worker for BLAKE3 hashing
 
 ---
 
@@ -18,17 +39,17 @@ This document is part of a three-document set for deduplication:
    - Performance optimization strategies
    - Testing strategy
 
-2. **`@docs/architecture/client-deduplication-stories.md`**
+2. **`@docs/Features/Upload/Deduplication/client-deduplication-stories.md`**
    - User stories and implementation requirements
    - Complete checklist of features to implement
    - UX enhancement requirements
 
-3. **`@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3-DuplicateManagement.md`**
+3. **`@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3b-UploadingDeDup.md`**
    - Implementation planning for Phase 3
    - Task breakdown and timeline
    - Testing scenarios
 
-**Also see:** `@docs/architecture/file-lifecycle.md` for definitive file terminology.
+**Also see:** `@docs/Features/Upload/Processing/file-lifecycle.md` for definitive file terminology.
 
 ---
 
@@ -36,13 +57,19 @@ This document is part of a three-document set for deduplication:
 
 ### The Smart Performance Optimization
 
-The original deduplication design uses a two-phase approach that **hides expensive operations behind unavoidable wait time**:
+The original deduplication design uses a multi-phase approach that **hides expensive operations behind unavoidable wait time**:
 
-**Phase 1: Client-Side Deduplication (Instant)**
+**Phase 0: Metadata Pre-Filter (Tentative Deduplication)**
+- Group files by metadata (name, size, modified date, path)
+- Mark files as tentative duplicates/copies BEFORE hash calculation
+- Hash verification is deferred until needed (hover, delete, upload)
+- Result: Hides hash cost behind user interactions, instant queue feedback
+
+**Phase 1: Client-Side Deduplication (Size-Based Optimization)**
 - Group files by size
 - Only hash files with duplicate sizes
 - No database queries
-- Result: Instant feedback, minimal CPU usage
+- Result: Instant feedback, minimal CPU usage (skip hashing 50-70% of files)
 
 **Phase 2: Upload with Hash Verification (During Upload)**
 - Hash files as they're about to upload
@@ -91,6 +118,8 @@ This app is designed for **litigation document discovery**, which requires speci
 ---
 
 ## Original Architecture: Detailed Walkthrough
+
+**Note**: The code examples below illustrate the deduplication algorithm. The actual implementation has been decomposed into focused modules (`detection.js`, `hashing.js`, `prefilter.js`) but follows the same principles described here.
 
 ### Step 1: Size-Based Pre-Filtering (Client-Side Only)
 
@@ -163,6 +192,8 @@ for (const fileRef of duplicateCandidates) {
 
 **Rationale:** Only hash files that might be duplicates (same size). Use BLAKE3 for speed and security.
 
+**Implementation Note:** The actual `generateFileHash` function (in `useQueueHelpers.js`) includes web worker coordination for non-blocking hashing.
+
 ### Step 3: Group by Metadata for Duplicate Detection
 
 ```javascript
@@ -225,6 +256,8 @@ for (const [hash, fileRefs] of hashGroups) {
 - Copies (same content, different metadata) all get their metadata saved, but only one file uploaded
 - Best file selection uses priority rules for deterministic, sensible behavior
 
+**Implementation Note:** This logic is implemented in `detection.js` with the same algorithm.
+
 ### Step 4: Priority Rules for Best File Selection
 
 When multiple copies exist (same hash, different metadata), choose the best file:
@@ -267,6 +300,8 @@ const chooseBestFile = (fileRefs) => {
 ```
 
 **Rationale:** These rules provide deterministic, sensible selection that users would generally agree with. The order matters - earlier modified date trumps all other factors.
+
+**Implementation Note:** This function is implemented in `useQueueHelpers.js:122-148` with identical logic.
 
 ### Step 5: Upload Phase (Hash-Based Database Deduplication)
 
@@ -634,7 +669,7 @@ Sorting by folder path:
 ## Implementation Requirements
 
 For user stories and implementation checklist, see:
-- `@docs/architecture/client-deduplication-stories.md` - Complete user stories and requirements
+- `@docs/Features/Upload/Deduplication/client-deduplication-stories.md` - Complete user stories and requirements
 
 ---
 
