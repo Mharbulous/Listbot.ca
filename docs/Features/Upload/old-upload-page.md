@@ -13,7 +13,7 @@ Understanding this distinction is critical for the deduplication system, which d
 
 ## Overview
 
-The Bookkeeper application's original upload page (at `/upload` route) is a sophisticated file upload system designed for law firms and professional services. It provides efficient file processing, deduplication, real-time progress tracking, and comprehensive audit logging with power-outage detection capabilities.
+The ListBot application's original upload page (at `/upload` route) is a sophisticated file upload system designed for law firms and professional services. It provides efficient file processing, deduplication, real-time progress tracking, and comprehensive audit logging with power-outage detection capabilities.
 
 This document describes the **current/old implementation** as it exists before the development of the new upload page (at `/testing` route). For the new upload page development plan, see `docs/2025-11-10-New-Upload-Page.md`.
 

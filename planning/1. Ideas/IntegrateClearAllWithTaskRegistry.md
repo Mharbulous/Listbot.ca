@@ -45,7 +45,7 @@ This task involves refactoring the existing comprehensive cleanup system, not re
 
 ---
 
-**Dependencies**: `docs/plans/Bookkeeper/2. TODOs/AsynchronousTaskRegistry.md` implementation  
+**Dependencies**: `docs/plans/ListBot/2. TODOs/AsynchronousTaskRegistry.md` implementation  
 **Related Plans**: `ClearAllComprehensiveCleanup.md`  
 **Priority**: Medium (post-MVP enhancement)  
 **Effort**: Low-Medium (primarily refactoring existing working system)

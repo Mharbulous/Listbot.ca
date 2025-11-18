@@ -1,6 +1,6 @@
 # Vitest Test Suites Documentation
 
-**Document Purpose**: Track all Vitest test suites in the Bookkeeper application, including creation, modification, and deletion history.
+**Document Purpose**: Track all Vitest test suites in the ListBot application, including creation, modification, and deletion history.
 
 **Last Updated**: 2025-01-20 (Memory Leak Tests - Complete Resolution)  
 **Maintained By**: Development Firm
@@ -453,7 +453,7 @@ All issues identified in this phase have been successfully resolved in the subse
 
 ### Component Testing Standards
 
-This section defines the standards and best practices for testing Vue components using Vue Test Utils and Vitest in the Bookkeeper application.
+This section defines the standards and best practices for testing Vue components using Vue Test Utils and Vitest in the ListBot application.
 
 #### 1. Vue Test Utils Best Practices
 

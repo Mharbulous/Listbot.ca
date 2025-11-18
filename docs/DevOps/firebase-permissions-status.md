@@ -3,7 +3,7 @@
 ## Current Firebase Project: coryphaeus-ed11a
 
 This is the **development** Firebase project shared across all three applications:
-- Listbot.ca (Bookkeeper)
+- Listbot.ca (ListBot)
 - Coryphaeus
 - Intranet
 
@@ -46,7 +46,7 @@ roles/editor  user:matthew@manuel.ca
 
 Matthew has Write access to all three repositories in the multi-app SSO architecture:
 
-### 1. Listbot.ca (Bookkeeper)
+### 1. Listbot.ca (ListBot)
 - **Repository**: https://github.com/Mharbulous/Listbot.ca
 - **Matthew's Role**: Write (collaborator)
 - **Status**: Invitation accepted ✓

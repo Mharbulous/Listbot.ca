@@ -1,6 +1,6 @@
 # Documentation Index
 
-This file maps the documentation structure for the Bookkeeper project, following a hub-and-spoke model with `CLAUDE.md` as the central hub.
+This file maps the documentation structure for the ListBot project, following a hub-and-spoke model with `CLAUDE.md` as the central hub.
 
 ## Hub-and-Spoke Structure
 

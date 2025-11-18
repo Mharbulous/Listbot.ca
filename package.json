@@ -12,7 +12,7 @@
     "test:ui": "vitest --ui",
     "test:sso": "vitest run tests/sso-e2e.test.js",
     "dev:intranet": "npm run dev -- --host intranet.localhost --port 3000",
-    "dev:bookkeeping": "npm run dev -- --host bookkeeping.localhost --port 3001",
+    "dev:listbot": "npm run dev -- --host listbot.localhost --port 3001",
     "dev:files": "npm run dev -- --host files.localhost --port 3002"
   },
   "dependencies": {

@@ -77,7 +77,7 @@ Implement AI-powered extraction of Document Date and Document Type metadata usin
 **Rule**: Client-side web apps MUST use default backend
 
 ```javascript
-// ✅ CORRECT - For client-side web apps (Bookkeeper)
+// ✅ CORRECT - For client-side web apps (ListBot)
 import { getAI } from 'firebase/ai';
 const firebaseAI = getAI(app);
 

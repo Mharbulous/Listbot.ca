@@ -1,6 +1,6 @@
 # PDF Caching Optimization Attempts
 
-This document tracks all attempts to optimize PDF document **pre-loading and caching** in the Bookkeeper application.
+This document tracks all attempts to optimize PDF document **pre-loading and caching** in the ListBot application.
 
 **Goal**: Achieve <50ms data loading timing for cached documents (instant feel)
 
