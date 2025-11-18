@@ -87,3 +87,106 @@ const documentDate = extractDateFromContent(ocrText);
 // Use source file's modified date as fallback
 const fallbackDate = sourceFile.lastModifiedDate;
 ```
+
+## Upload Workflow Terminology
+
+The application uses a two-step upload process where users first queue files and then explicitly start the upload operation. **Consistent use of compound terminology is critical** to avoid ambiguity with the **Upload** file lifecycle stage.
+
+### Upload Workflow Terms
+
+1. **Queue** (verb: "to queue") - The action of selecting and staging **Source** files for processing
+
+   - Files are analyzed, deduplicated, and validated locally
+   - Files remain on the user's device/filesystem
+   - Users can review, add, or remove files before uploading
+   - No data is transferred to Firebase Storage
+   - UI: "Add to Queue", "Queue Files"
+   - Code: `queueFiles()`, `addToQueue()`
+
+2. **Upload queue** or **queue** (noun) - The collection of **Source** files staged and ready for upload
+
+   - Contains files awaiting the upload process
+   - UI: "3 files in queue", "Queue is empty"
+   - Code: `uploadQueue`, `queuedFiles`, `queueStatus`
+
+3. **Upload process** or **upload operation** (noun) - The process of transferring queued files to Firebase Storage
+
+   - Initiated by explicit user action (e.g., "Start Upload" button)
+   - Transfers file content and metadata to Firebase Storage
+   - Creates Firestore documents and Storage objects
+   - Transitions files from **Source** stage to **Upload** stage
+   - UI: "Start Upload", "Upload in progress", "Upload complete"
+   - Code: `uploadProcess`, `uploadStatus`, `uploadProgress`
+
+4. **Uploading** (verb, present continuous) - Actively performing the upload operation
+
+   - UI: "Uploading files...", "Currently uploading"
+   - Code: `isUploading`, `startUploading()`
+
+### Lifecycle Stage vs. Workflow Action
+
+To distinguish between the **Upload** file lifecycle stage and upload workflow actions, always use compound terms for workflow references:
+
+**Lifecycle Stage (File at rest in Storage):**
+- **Upload file** or **Upload files** - Files stored in Firebase Storage '../uploads' subfolder
+- **Upload stage** - The lifecycle stage where files exist in Firebase Storage
+- Example: "The Upload file is deduplicated using BLAKE3 hash"
+
+**Workflow Actions (Process of moving files):**
+- **Upload queue** - Files staged for upload
+- **Upload process** - The operation transferring files
+- **Uploading** - Active file transfer
+- Example: "The upload process transfers queued files to Storage"
+
+### Usage Examples
+
+**Variable Naming:**
+
+```javascript
+// Lifecycle stage references (files in Storage)
+const uploadFile = doc.data(); // File at Upload stage
+const uploadFilePath = 'firms/123/uploads/abc123.pdf'; // Path to Upload file
+const uploadFileHash = 'abc123...'; // Upload file's BLAKE3 hash
+
+// Workflow action references (process/operation)
+const uploadQueue = []; // Files queued for uploading
+const queuedFiles = await getQueuedFiles(); // Files in the queue
+const uploadProcess = { status: 'active', progress: 50 }; // The upload operation
+const isUploading = ref(false); // Currently performing upload operation
+
+// Functions
+function addToQueue(files) { ... } // Add files to upload queue
+function startUploadProcess() { ... } // Begin uploading queued files
+function clearQueue() { ... } // Empty the upload queue
+```
+
+**UI/UX Text:**
+
+```javascript
+// Lifecycle stage
+"Upload file location: ../uploads/abc123.pdf"
+"View Upload files in Storage"
+"Upload stage: Files are deduplicated"
+
+// Workflow actions
+"Add to Queue" // Button
+"3 files in queue" // Status
+"Start Upload" // Button
+"Upload in progress..." // Status
+"Uploading 2 of 10 files" // Progress
+"Upload complete" // Success
+"Clear queue" // Action
+```
+
+**Code Comments:**
+
+```javascript
+// Add source files to upload queue for analysis
+function addToQueue(files) { ... }
+
+// Start upload process: transfer queued files to Storage (Source → Upload stage)
+async function startUploadProcess(queuedFiles) { ... }
+
+// Retrieve Upload file metadata from Firestore
+async function getUploadFile(fileHash) { ... }
+```
