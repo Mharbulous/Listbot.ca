@@ -1,5 +1,16 @@
 # Firebase Permissions Status
 
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+This document references the following documentation:
+- `docs/DevOps/firebase-project-setup.md` - Complete Firebase project architecture
+- `docs/DevOps/firebase-add-user-steps.md` - Quick reference guide for adding users
+- `docs/DevOps/deployment-promotion.md` - Promotion and deployment workflow
+
+---
+
 ## Current Firebase Project: coryphaeus-ed11a
 
 This is the **development** Firebase project shared across all three applications:
@@ -87,7 +98,7 @@ When ready for production:
 - A separate production Firebase project will be created
 - Matthew will be added with **Viewer** role (read-only)
 - This mirrors the GitHub `production` branch protection model
-- See `docs/firebase-project-setup.md` for details
+- See `docs/DevOps/firebase-project-setup.md` for details
 
 ### GitHub Branch Protection
 For Coryphaeus and Intranet repositories, when ready for production:
@@ -111,5 +122,5 @@ All three applications MUST use the same Firebase project for SSO to work:
 ## Documentation
 
 For full setup details, see:
-- `docs/firebase-project-setup.md` - Complete Firebase project architecture
-- `docs/firebase-add-matthew-steps.md` - Quick reference guide (manual steps)
+- `docs/DevOps/firebase-project-setup.md` - Complete Firebase project architecture
+- `docs/DevOps/firebase-add-user-steps.md` - Quick reference guide (manual steps)
