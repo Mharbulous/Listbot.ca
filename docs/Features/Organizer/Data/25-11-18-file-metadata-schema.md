@@ -1,6 +1,24 @@
 # File Metadata Data Structures
 
+**Reconciled up to**: 2025-11-18
 Last Updated: 2025-10-17
+
+## Key Files
+
+**UI Display & Extraction:**
+- `src/features/organizer/views/ViewDocument.vue` - Main document viewer, displays all metadata categories
+- `src/features/organizer/composables/usePdfMetadata.js` - PDF metadata extraction composable
+- `src/config/pdfWorker.js` - PDF.js worker configuration
+
+**Upload & Processing:**
+- `src/features/upload/FileUpload.vue` - Main upload interface
+- `src/features/upload/workers/fileHashWorker.js` - BLAKE3 hash calculation worker
+- `src/features/upload/composables/useFileMetadata.js` - Source file metadata capture
+- `src/features/upload/composables/useUploadLogger.js` - Upload event logging
+
+**Data Management:**
+- `src/features/organizer/services/evidenceService.js` - Evidence CRUD operations
+- `src/features/organizer/stores/organizerCore.js` - Organizer state management with metadata fetching
 
 ## Critical Concept: Source Files vs Storage Files
 
@@ -104,7 +122,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **xmpMM:InstanceID**: Unique instance identifier (tracks specific version)
 - **xmpMM:History**: **Complete audit trail** - array of all editing operations, timestamps, and software used
 
-**Forensic Significance** (per MetadataSpecs.md):
+**Forensic Significance** (per metadata-specs.md):
 
 - **Time zone offsets** reveal editing location (e.g., -07:00 = Pacific Daylight Time)
 - **DocumentID/InstanceID** track version lineage across document edits
@@ -132,7 +150,7 @@ When the same file (identified by fileHash) has been uploaded with different met
 - **PDF (Current)**: Client-side extraction via pdfjs-dist (not persisted)
 - **Future**: May be stored in `evidence` collection fields or dedicated subcollections
 
-**Technical Reference**: See `docs/architecture/MetadataSpecs.md` for detailed specifications of embedded metadata standards for 17+ file types.
+**Technical Reference**: See `docs/Features/Organizer/Data/metadata-specs.md` for detailed specifications of embedded metadata standards for 17+ file types.
 
 **Purpose**: Provides forensically valuable metadata embedded within files for authenticity verification and chain of custody.
 
@@ -171,7 +189,7 @@ Embedded Metadata (Other Formats - Future):
   Office Docs        → Author, Revision history (not yet implemented)
   Media Files        → Device info, GPS tracks (not yet implemented)
   Storage            → TBD: evidence collection fields or subcollections
-                       (See MetadataSpecs.md for extraction targets)
+                       (See metadata-specs.md for extraction targets)
 
 Cloud:
   Date Uploaded      → Firebase Storage metadata.timeCreated
@@ -265,7 +283,7 @@ Cloud:
 
 **Important**: The `sourceFileName` field is the ONLY place where the source file extension case is preserved. Everywhere else in the codebase, file extensions are standardized to lowercase.
 
-**Metadata Capture Implementation**: For detailed information about how source file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../2025-11-10-Old-Upload-Page.md#metadata-management)**.
+**Metadata Capture Implementation**: For detailed information about how source file metadata is captured, processed, and saved to this collection—including the smart folder path pattern recognition algorithm and upload workflow—see **[File Upload System Documentation - Metadata Management](../Upload/old-upload-page.md#metadata-management)**.
 
 ### 2. evidence Collection
 
@@ -314,7 +332,7 @@ Cloud:
 
 ### 3. uploadEvents Collection
 
-**Path**: `/firms/{firmId}/matters/{matterId}/uploadEvents/{eventId}`  
+**Path**: `/firms/{firmId}/matters/{matterId}/uploadEvents/{eventId}`
 **Current**: `/firms/{firmId}/matters/general/uploadEvents/{eventId}`
 
 **Purpose**: Audit trail of every upload attempt (successful or duplicate)
@@ -426,10 +444,10 @@ The `sourceFolderPath` field captures folder structure from webkitdirectory uplo
 
 **Need to find where files are processed?**
 
-- **Upload workflow and implementation details**: See **[2025-11-10-Old-Upload-Page.md](../2025-11-10-Old-Upload-Page.md)** for complete upload process flow, smart folder path pattern recognition, and metadata capture algorithms
+- **Upload workflow and implementation details**: See **[old-upload-page.md](../Upload/old-upload-page.md)** for complete upload process flow, smart folder path pattern recognition, and metadata capture algorithms
 - **Code locations**:
   - Upload logic: `src/features/upload/FileUpload.vue`
-  - Hash calculation: `src/workers/fileHashWorker.js`
+  - Hash calculation: `src/features/upload/workers/fileHashWorker.js`
   - Metadata management: `src/features/upload/composables/useFileMetadata.js`
   - Evidence management: `src/features/organizer/services/evidenceService.js`
   - Display components: `src/features/organizer/stores/organizerCore.js`, `src/features/organizer/views/ViewDocument.vue`
