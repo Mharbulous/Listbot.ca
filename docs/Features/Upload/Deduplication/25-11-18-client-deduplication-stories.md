@@ -1,6 +1,33 @@
 # Client-Side Deduplication: User Stories
 
+**Reconciled up to**: 2025-11-18
+
 This document contains all user stories and implementation requirements for the client-side deduplication feature.
+
+---
+
+## Key Files
+
+This documentation references the following source files:
+
+**UI Components (User Stories 6-10):**
+- `src/features/upload/components/StatusCell.vue` - Status indicators (US-10)
+- `src/features/upload/components/SelectCell.vue` - Copy grouping visual (US-9)
+- `src/features/upload/components/UploadTableRow.vue` - Table row with visual grouping
+- `src/features/upload/components/UploadProgressModal.vue` - Progress feedback (US-6)
+- `src/features/upload/components/UploadPreviewModal.vue` - Preview before upload (US-7)
+- `src/features/upload/components/UploadCompletionModal.vue` - Completion summary (US-8)
+
+**Core Deduplication (User Stories 1-5):**
+- `src/features/upload/composables/useSequentialPrefilter.js` - Stage 1 metadata filtering (US-2)
+- `src/features/upload/composables/useSequentialVerification.js` - Stage 2 hash verification (US-1)
+- `src/features/upload/composables/useSequentialHashWorker.js` - Web worker integration (US-12)
+- `src/features/upload/workers/fileHashWorker.js` - BLAKE3 hashing worker (US-12)
+
+**Upload Processing (User Stories 4-5, 11, 13):**
+- `src/features/upload/composables/useUploadState.js` - Upload state and file filtering
+- `src/features/upload/composables/useUploadProcessor.js` - Upload pipeline (US-11)
+- `src/features/upload/composables/useQueueHelpers.js` - Best file selection (US-4)
 
 ---
 
@@ -8,7 +35,7 @@ This document contains all user stories and implementation requirements for the 
 
 This document is part of a three-document set for deduplication:
 
-1. **`@docs/architecture/client-deduplication-logic.md`**
+1. **`@docs/Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md`**
    - Architectural rationale and design philosophy
    - Detailed implementation guide with code examples
    - Performance optimization strategies
@@ -19,12 +46,9 @@ This document is part of a three-document set for deduplication:
    - Complete checklist of features to implement
    - Anti-requirements (what NOT to do)
 
-3. **`@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3-DuplicateManagement.md`**
-   - Implementation planning for Phase 3
-   - Task breakdown and timeline
-   - Testing scenarios
+3. **Implementation planning** (if needed, see `@planning/2. TODOs/New_Upload_Queue/` for related docs)
 
-**Also see:** `@docs/architecture/file-lifecycle.md` for definitive file terminology.
+**Also see:** `@docs/Features/Upload/Processing/file-lifecycle.md` for definitive file terminology.
 
 ---
 
@@ -95,7 +119,7 @@ As a system enforcing litigation discovery rules, I must save metadata from ALL 
 
 ## Implementation Checklist
 
-**NOTE:** Detailed implementation tasks are in `@planning/2. TODOs/New_Upload_Queue/2025-11-10-Phase3-DuplicateManagement.md`. This section contains high-level requirements only.
+**NOTE:** Detailed implementation tasks may be in planning documents under `@planning/2. TODOs/New_Upload_Queue/`. This section contains high-level requirements only.
 
 ### Anti-Requirements (What NOT to Do)
 - ❌ **No user override** of deduplication decisions (users CAN exclude files from queue, but CANNOT cherry-pick which copy to upload)
@@ -111,6 +135,6 @@ As a system enforcing litigation discovery rules, I must save metadata from ALL 
 ## Related Documentation
 
 For architectural context and implementation details, see:
-- `@docs/architecture/client-deduplication-logic.md` - Architecture rationale and detailed implementation guide
-- `@docs/architecture/file-lifecycle.md` - File terminology and lifecycle
-- `@docs/architecture/file-processing.md` - File processing and deduplication strategy
+- `@docs/Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md` - Architecture rationale and detailed implementation guide
+- `@docs/Features/Upload/Processing/file-lifecycle.md` - File terminology and lifecycle
+- `@docs/Features/Upload/Processing/file-processing.md` - File processing and deduplication strategy
