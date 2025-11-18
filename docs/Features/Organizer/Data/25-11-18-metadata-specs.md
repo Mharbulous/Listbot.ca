@@ -1,6 +1,75 @@
 # File Metadata for Evidence Management Applications
 
-**Digital evidence metadata is crucial for establishing authenticity, chain of custody, and forensic integrity in legal proceedings.** This report provides technical specifications for 17 common file types lawyers encounter, covering metadata standards, reliability during transfers, and forensic value. Understanding which metadata survives email attachments, cloud uploads, and format conversions is essential for preserving evidentiary value.
+**Reconciled up to**: 2025-11-18
+
+## Key Files
+
+- `src/features/organizer/composables/usePdfMetadata.js` - PDF embedded metadata extraction (XMP + Document Information Dictionary)
+- `src/services/aiMetadataExtractionService.js` - AI-powered document metadata extraction (date, type)
+- `src/features/upload/composables/useFileMetadata.js` - Source file metadata tracking and hash generation
+- `src/components/document/DocumentMetadataPanel.vue` - Metadata display UI with tabs (AI, Review, Document, File)
+
+## Document Purpose
+
+This document serves as a **reference guide for legal professionals** to understand file metadata standards across common file types encountered in legal proceedings. It describes:
+
+- What metadata fields exist in different file formats (PDF, images, Office documents, email, media, archives)
+- How reliable that metadata is during transfers (email attachments, cloud uploads, social media)
+- Forensic value of various metadata fields for establishing authenticity and chain of custody
+- Tools available for extracting metadata from different file types
+
+**IMPORTANT**: This is NOT a specification of what ListBot currently extracts. See "Current Implementation" section below for actual extraction capabilities.
+
+## Current Implementation
+
+ListBot currently implements metadata extraction for a **subset** of the file types described in this reference guide:
+
+### Implemented Features
+
+✅ **PDF Files** - Full embedded metadata extraction
+- Document Information Dictionary (8 fields: Title, Author, Subject, Keywords, Creator, Producer, CreationDate, ModDate)
+- XMP Metadata (11 forensically valuable fields: DocumentID, InstanceID, xmpMM:History revision tracking)
+- Implementation: `src/features/organizer/composables/usePdfMetadata.js`
+- Extraction: Client-side using pdfjs-dist library (~100-300ms)
+- UI: Displayed in "Document" tab of DocumentMetadataPanel.vue
+
+✅ **All File Types** - AI-powered document metadata extraction
+- Document Date (the date the original document was created/signed)
+- Document Type (classified from matter-specific/firm-wide/global category lists)
+- Implementation: `src/services/aiMetadataExtractionService.js`
+- Model: Gemini 2.5 Flash Lite with structured JSON output
+- UI: Displayed in "AI" tab of DocumentMetadataPanel.vue
+
+✅ **All File Types** - Source file metadata tracking
+- Source filename, last modified timestamp, folder path
+- File size, MIME type, BLAKE3 content hash
+- Implementation: `src/features/upload/composables/useFileMetadata.js`
+- Storage: Firestore evidence/sourceMetadata collections
+- UI: Displayed in "File" tab of DocumentMetadataPanel.vue
+
+### Not Yet Implemented
+
+❌ **Image Files (JPG/PNG/TIFF)** - EXIF, GPS, camera metadata extraction
+❌ **Office Documents (DOC/XLS/PPT)** - Embedded metadata extraction
+❌ **Email Files (MSG/EML)** - Header parsing and routing chain analysis
+❌ **Media Files (MP3/MP4/MOV/WAV)** - ID3 tags, recording metadata, device info
+❌ **Archive Files (ZIP)** - Timestamp and compression metadata
+❌ **Forensic Tool Integration** - ExifTool, FTK Imager, BWF MetaEdit
+
+**Future Roadmap**: The file types and metadata standards described in this reference guide represent potential future features. Implementation priority will be determined by user needs and legal requirements.
+
+## Related Documentation
+
+For implementation details and data structures:
+- [@docs/Features/Organizer/Data/25-11-18-evidence-schema.md](@docs/Features/Organizer/Data/25-11-18-evidence-schema.md) - Evidence document schema and embedded metadata storage
+- [@docs/Features/Organizer/Data/file-metadata-schema.md](@docs/Features/Organizer/Data/file-metadata-schema.md) - Source file metadata vs embedded metadata distinction
+- [@docs/Features/Organizer/AIAnalysis/](@docs/Features/Organizer/AIAnalysis/) - AI-powered metadata extraction using Gemini
+
+---
+
+## Reference Guide: File Metadata Standards
+
+**Digital evidence metadata is crucial for establishing authenticity, chain of custody, and forensic integrity in legal proceedings.** This reference provides technical specifications for 17 common file types lawyers encounter, covering metadata standards, reliability during transfers, and forensic value. Understanding which metadata survives email attachments, cloud uploads, and format conversions is essential for preserving evidentiary value.
 
 ## Metadata comparison table
 
