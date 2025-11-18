@@ -49,7 +49,7 @@ const emit = defineEmits(['toggle', 'remove', 'swap']);
 // Compute checkbox checked state - checked means file will be uploaded (NOT skipped)
 // For 'redundant' files: checkbox is checked (to show red X) but disabled (can't toggle)
 // For 'copy' files: checkbox is unchecked (can be clicked to make it the primary)
-// Unchecked means: skip, n/a, read error, copy
+// Unchecked means: skip, n/a, read error, completed, copied, copy
 const isChecked = computed(() => {
   // 'redundant' files are checked (but disabled) to show red X
   if (props.fileStatus === 'redundant') {
@@ -60,6 +60,7 @@ const isChecked = computed(() => {
     props.fileStatus !== 'n/a' &&
     props.fileStatus !== 'read error' &&
     props.fileStatus !== 'completed' &&
+    props.fileStatus !== 'copied' &&
     props.fileStatus !== 'copy'
   );
 });
@@ -73,6 +74,7 @@ const isDisabled = computed(() => {
 
   return (
     props.fileStatus === 'completed' ||
+    props.fileStatus === 'copied' ||
     props.fileStatus === 'duplicate' ||
     props.fileStatus === 'read error'
   );
@@ -82,6 +84,8 @@ const isDisabled = computed(() => {
 const checkboxTitle = computed(() => {
   if (props.fileStatus === 'completed') {
     return 'Already uploaded';
+  } else if (props.fileStatus === 'copied') {
+    return 'Metadata copied - file not uploaded to storage';
   } else if (props.fileStatus === 'redundant') {
     return 'Click to remove redundant file from queue';
   } else if (props.fileStatus === 'copy') {

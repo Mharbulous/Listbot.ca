@@ -92,8 +92,9 @@ export const useFileProcessor = ({
    * Check if file already exists in Firestore
    * Uses direct document lookup with fileHash as document ID
    * Wrapped with network error detection and retry logic
+   * Returns: { existsInFirestore: boolean, existsInStorage: boolean }
    */
-  const checkFileExists = async (fileHash, retryCallback = null) => {
+  const checkFileExists = async (fileHash, originalFileName, retryCallback = null) => {
     try {
       // Check network connectivity before starting
       if (!isOnline()) {
@@ -107,8 +108,8 @@ export const useFileProcessor = ({
         throw new Error('No matter selected. Please select a matter before checking files.');
       }
 
-      // Wrap in retry logic for network errors
-      return await retryOnNetworkError(
+      // Stage 1: Check Firestore Evidence document
+      const existsInFirestore = await retryOnNetworkError(
         async () => {
           const evidenceRef = doc(
             db,
@@ -127,6 +128,14 @@ export const useFileProcessor = ({
           onRetry: retryCallback,
         }
       );
+
+      // Stage 2: If Firestore doc exists, check if Storage file also exists
+      let existsInStorage = false;
+      if (existsInFirestore) {
+        existsInStorage = await checkStorageFileExists(fileHash, originalFileName, retryCallback);
+      }
+
+      return { existsInFirestore, existsInStorage };
     } catch (error) {
       // Tag network errors for special handling
       if (isNetworkError(error)) {
@@ -134,6 +143,58 @@ export const useFileProcessor = ({
         throw error;
       }
       // For non-network errors, return false to continue processing
+      return { existsInFirestore: false, existsInStorage: false };
+    }
+  };
+
+  /**
+   * Check if file exists in Firebase Storage
+   * Returns true if the file exists, false otherwise
+   * Wrapped with network error detection and retry logic
+   */
+  const checkStorageFileExists = async (fileHash, originalFileName, retryCallback = null) => {
+    try {
+      // Check network connectivity before starting
+      if (!isOnline()) {
+        const error = new Error('No internet connection available');
+        error.isNetworkError = true;
+        throw error;
+      }
+
+      const storagePath = generateStoragePath(fileHash, originalFileName);
+      const storageReference = storageRef(storage, storagePath);
+
+      // Wrap in retry logic for network errors
+      const exists = await retryOnNetworkError(
+        async () => {
+          try {
+            // Try to get metadata - if it succeeds, file exists
+            await getMetadata(storageReference);
+            return true;
+          } catch (error) {
+            // If error code is 'storage/object-not-found', file doesn't exist
+            if (error.code === 'storage/object-not-found') {
+              return false;
+            }
+            // For other errors, rethrow to trigger retry logic
+            throw error;
+          }
+        },
+        {
+          maxRetries: 4,
+          onRetry: retryCallback,
+        }
+      );
+
+      return exists;
+    } catch (error) {
+      // Tag network errors for special handling
+      if (isNetworkError(error)) {
+        error.isNetworkError = true;
+        throw error;
+      }
+      // For non-network errors, assume file doesn't exist (safer to re-upload)
+      console.warn(`Error checking storage for ${originalFileName}:`, error);
       return false;
     }
   };

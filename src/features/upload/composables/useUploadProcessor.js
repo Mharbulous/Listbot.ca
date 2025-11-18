@@ -41,10 +41,10 @@ export function useUploadProcessor({ updateFileStatus }) {
 
   /**
    * Process single file upload
-   * Handles: Hash → Check Exists → Upload → Create Metadata
+   * Handles: Hash → Check Exists (Firestore + Storage) → Upload (if needed) → Create Metadata
    * @param {Object} queueFile - File from upload queue
    * @param {AbortSignal} abortSignal - Abort signal for cancellation
-   * @returns {Object} Result with success status
+   * @returns {Object} Result with success status and metadata about what was done
    */
   const processSingleFile = async (queueFile, abortSignal) => {
     try {
@@ -56,13 +56,17 @@ export function useUploadProcessor({ updateFileStatus }) {
       const fileHash = await fileProcessor.calculateFileHash(queueFile.sourceFile);
       queueFile.hash = fileHash;
 
-      // Step 3: Check if file exists in Firestore
+      // Step 3: Two-stage existence check (Firestore + Storage)
       updateFileStatus(queueFile.id, 'checking');
-      const existsResult = await fileProcessor.checkFileExists(fileHash);
+      const existsResult = await fileProcessor.checkFileExists(fileHash, queueFile.name);
 
-      if (existsResult.exists) {
-        // File already exists - create metadata only
-        console.log(`[UPLOAD] File already exists, creating metadata only: ${queueFile.name}`);
+      // Determine if we need to upload to Storage
+      const needsStorageUpload = !existsResult.existsInStorage;
+      const needsMetadataOnly = existsResult.existsInFirestore && existsResult.existsInStorage;
+
+      if (needsMetadataOnly) {
+        // File exists in both Firestore and Storage - create metadata only
+        console.log(`[UPLOAD] File already exists in Storage and Firestore, creating metadata only: ${queueFile.name}`);
         updateFileStatus(queueFile.id, 'skipped');
 
         await safeMetadata(
@@ -81,53 +85,63 @@ export function useUploadProcessor({ updateFileStatus }) {
           `for existing file ${queueFile.name}`
         );
 
-        return { success: true, skipped: true };
+        return { success: true, skipped: true, uploaded: false };
       }
 
-      // Step 4: Upload file to storage
-      updateFileStatus(queueFile.id, 'uploading');
-      queueFile.uploadProgress = 0;
-
-      console.log(`[UPLOAD] Uploading file: ${queueFile.name}`);
-
-      // Upload with progress tracking
-      const uploadResult = await fileProcessor.uploadSingleFile(
-        queueFile.sourceFile,
-        fileHash,
-        queueFile.name,
-        abortSignal,
-        (progress) => {
-          // Update progress in queue
-          queueFile.uploadProgress = progress;
+      if (needsStorageUpload) {
+        // File needs to be uploaded to Storage (either new or missing from Storage)
+        if (existsResult.existsInFirestore) {
+          console.log(`[UPLOAD] File exists in Firestore but missing from Storage, re-uploading: ${queueFile.name}`);
+        } else {
+          console.log(`[UPLOAD] New file, uploading: ${queueFile.name}`);
         }
-      );
 
-      // Step 5: Create metadata record
-      updateFileStatus(queueFile.id, 'creating_metadata');
-      console.log(`[UPLOAD] Creating metadata for: ${queueFile.name}`);
+        // Step 4: Upload file to storage
+        updateFileStatus(queueFile.id, 'uploading');
+        queueFile.uploadProgress = 0;
 
-      await safeMetadata(
-        async () => {
-          await createMetadataRecord({
-            sourceFileName: queueFile.name,
-            lastModified: queueFile.sourceLastModified,
-            fileHash,
-            size: queueFile.size,
-            originalPath: queueFile.folderPath
-              ? `${queueFile.folderPath}/${queueFile.name}`
-              : queueFile.name,
-            sourceFileType: queueFile.sourceFile.type,
-            storageCreatedTimestamp: uploadResult.timeCreated,
-          });
-        },
-        `for new file ${queueFile.name}`
-      );
+        // Upload with progress tracking
+        const uploadResult = await fileProcessor.uploadSingleFile(
+          queueFile.sourceFile,
+          fileHash,
+          queueFile.name,
+          abortSignal,
+          (progress) => {
+            // Update progress in queue
+            queueFile.uploadProgress = progress;
+          }
+        );
 
-      // Step 6: Mark as completed
-      updateFileStatus(queueFile.id, 'completed');
-      console.log(`[UPLOAD] Completed: ${queueFile.name}`);
+        // Step 5: Create metadata record
+        updateFileStatus(queueFile.id, 'creating_metadata');
+        console.log(`[UPLOAD] Creating metadata for: ${queueFile.name}`);
 
-      return { success: true, skipped: false };
+        await safeMetadata(
+          async () => {
+            await createMetadataRecord({
+              sourceFileName: queueFile.name,
+              lastModified: queueFile.sourceLastModified,
+              fileHash,
+              size: queueFile.size,
+              originalPath: queueFile.folderPath
+                ? `${queueFile.folderPath}/${queueFile.name}`
+                : queueFile.name,
+              sourceFileType: queueFile.sourceFile.type,
+              storageCreatedTimestamp: uploadResult.timeCreated,
+            });
+          },
+          `for new file ${queueFile.name}`
+        );
+
+        // Step 6: Mark as completed
+        updateFileStatus(queueFile.id, 'completed');
+        console.log(`[UPLOAD] Completed: ${queueFile.name}`);
+
+        return { success: true, skipped: false, uploaded: true };
+      }
+
+      // This shouldn't happen, but handle it gracefully
+      throw new Error('Unexpected state in file upload logic');
     } catch (error) {
       // Handle errors
       console.error(`[UPLOAD] Error uploading ${queueFile.name}:`, error);
