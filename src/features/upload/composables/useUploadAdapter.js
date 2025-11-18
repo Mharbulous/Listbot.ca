@@ -36,6 +36,7 @@ export function useUploadAdapter({ uploadQueue, updateFileStatus, showNotificati
     notify: state.notify,
     getUploadableFiles: state.getUploadableFiles,
     processSingleFile: processor.processSingleFile,
+    createCopyMetadataRecord: processor.createCopyMetadataRecord,
     startUpload: state.startUpload,
     completeUpload: state.completeUpload,
     uploadStartTime: state.uploadStartTime,

@@ -11,6 +11,9 @@ import { useFileMetadata } from './useFileMetadata.js';
 import { isNetworkError } from '../utils/networkUtils.js';
 import { safeMetadata } from '../utils/uploadHelpers.js';
 import { ref } from 'vue';
+import { db } from '../../../services/firebase.js';
+import { doc, getDoc, updateDoc, setDoc, Timestamp, increment } from 'firebase/firestore';
+import { updateFolderPaths } from '../utils/folderPathUtils.js';
 
 /**
  * Upload Processor Composable
@@ -142,7 +145,109 @@ export function useUploadProcessor({ updateFileStatus }) {
     }
   };
 
+  /**
+   * Create copy metadata record (metadata-only upload for files with same hash but different metadata)
+   * Assumes Evidence document already exists from primary file upload
+   * @param {Object} queueFile - File from upload queue with status='copy'
+   * @returns {Object} Result with success status
+   */
+  const createCopyMetadataRecord = async (queueFile) => {
+    try {
+      const authStore = useAuthStore();
+      const matterStore = useMatterViewStore();
+      const { generateMetadataHash } = useFileMetadata();
+
+      const firmId = authStore.currentFirm;
+      const matterId = matterStore.currentMatterId;
+
+      if (!firmId || !matterId) {
+        throw new Error('Missing firmId or matterId for copy metadata record');
+      }
+
+      // Generate metadata hash for this variant
+      const metadataHash = await generateMetadataHash(
+        queueFile.name,
+        queueFile.sourceLastModified,
+        queueFile.hash
+      );
+
+      // Extract folder path
+      let currentFolderPath = '';
+      if (queueFile.folderPath) {
+        currentFolderPath = queueFile.folderPath;
+      }
+
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', queueFile.hash);
+
+      // Check if Evidence doc exists (should exist from primary upload)
+      const evidenceSnap = await getDoc(evidenceRef);
+
+      if (!evidenceSnap.exists()) {
+        // Evidence doc doesn't exist - this shouldn't happen in normal flow
+        // Fall back to creating full metadata record
+        console.warn(`[COPY] Evidence doc doesn't exist for copy file, creating full record: ${queueFile.name}`);
+        await createMetadataRecord({
+          sourceFileName: queueFile.name,
+          lastModified: queueFile.sourceLastModified,
+          fileHash: queueFile.hash,
+          size: queueFile.size,
+          originalPath: queueFile.folderPath
+            ? `${queueFile.folderPath}/${queueFile.name}`
+            : queueFile.name,
+          sourceFileType: queueFile.sourceFile.type,
+          storageCreatedTimestamp: undefined, // No storage upload for copy
+        });
+        return { success: true };
+      }
+
+      // Get existing folder paths for pattern recognition
+      let existingFolderPaths = '';
+      try {
+        const metadataRef = doc(evidenceRef, 'sourceMetadata', metadataHash);
+        const existingDoc = await getDoc(metadataRef);
+        if (existingDoc.exists()) {
+          existingFolderPaths = existingDoc.data().sourceFolderPath || '';
+        }
+      } catch (error) {
+        // Silently catch errors when retrieving existing folder paths
+      }
+
+      // Update folder paths using pattern recognition
+      const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
+
+      // Create sourceMetadata subcollection document
+      const metadataRecord = {
+        sourceFileName: queueFile.name,
+        sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
+        fileHash: queueFile.hash,
+        sourceFolderPath: pathUpdate.folderPaths,
+      };
+
+      const metadataRef = doc(evidenceRef, 'sourceMetadata', metadataHash);
+      await setDoc(metadataRef, metadataRecord);
+
+      // Update Evidence document with embedded metadata variant
+      await updateDoc(evidenceRef, {
+        [`sourceMetadataVariants.${metadataHash}`]: {
+          sourceFileName: queueFile.name,
+          sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
+          sourceFolderPath: pathUpdate.folderPaths,
+          uploadDate: Timestamp.now(),
+        },
+        sourceMetadataCount: increment(1),
+      });
+
+      console.log(`[COPY] Metadata variant created for: ${queueFile.name} (hash: ${metadataHash})`);
+
+      return { success: true };
+    } catch (error) {
+      console.error(`[COPY] Error creating copy metadata for ${queueFile.name}:`, error);
+      return { success: false, error };
+    }
+  };
+
   return {
     processSingleFile,
+    createCopyMetadataRecord,
   };
 }

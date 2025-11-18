@@ -37,6 +37,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Emits
@@ -62,6 +66,11 @@ const isChecked = computed(() => {
 
 // Compute disabled state
 const isDisabled = computed(() => {
+  // Phase 3b: Respect parent disabled prop (e.g., during upload)
+  if (props.disabled) {
+    return true;
+  }
+
   return (
     props.fileStatus === 'completed' ||
     props.fileStatus === 'duplicate' ||

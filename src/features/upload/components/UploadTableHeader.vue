@@ -7,6 +7,7 @@
         class="select-all-checkbox"
         :checked="allSelected"
         :indeterminate="someSelected"
+        :disabled="isUploading"
         @change="handleSelectAllToggle"
         title="Select one from each group / Deselect all primary files"
         aria-label="Select one from each group or deselect all primary files"
@@ -50,6 +51,10 @@ const props = defineProps({
     default: false,
   },
   someSelected: {
+    type: Boolean,
+    default: false,
+  },
+  isUploading: {
     type: Boolean,
     default: false,
   },
