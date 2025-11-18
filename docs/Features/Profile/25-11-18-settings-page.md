@@ -1,5 +1,7 @@
 # User Settings and Preferences System
 
+**Reconciled up to**: 2025-11-18 (commit: eb26733)
+
 Last Updated: 2025-10-15
 
 ## Overview
@@ -7,6 +9,16 @@ Last Updated: 2025-10-15
 The Settings system manages user-specific display and behavior preferences that persist to Firestore and are accessible across all authenticated sessions. Preferences are automatically loaded during authentication and reactively update the UI when changed.
 
 **Access Point**: `http://localhost:5173/#/settings`
+
+## Key Files
+
+The following source files are central to the Settings and Preferences system:
+
+1. **`src/core/stores/userPreferences.js`** - User preferences Pinia store with state management, getters, and persistence actions
+2. **`src/core/stores/auth/`** - Authentication module that integrates preference initialization (decomposed from monolithic auth.js)
+3. **`src/views/Settings.vue`** - Settings page UI component with reactive preference controls
+4. **`src/features/organizer/utils/categoryFormOptions.js`** - Centralized date and time format option definitions
+5. **`src/utils/dateFormatter.js`** - Date formatting utility that consumes user preferences
 
 ## Database Path
 
@@ -16,6 +28,7 @@ The Settings system manages user-specific display and behavior preferences that 
         dateFormat: string,
         timeFormat: string,
         darkMode: boolean,
+        metadataBoxVisible: boolean,
         theme: string,          // Legacy field
         notifications: boolean, // Legacy field
         language: string        // Legacy field
@@ -40,6 +53,7 @@ The Settings system manages user-specific display and behavior preferences that 
   dateFormat: string,        // Date display format (default: 'YYYY-MM-DD')
   timeFormat: string,        // Time display format (default: 'HH:mm')
   darkMode: boolean,         // Dark mode toggle (default: false)
+  metadataBoxVisible: boolean, // Metadata box visibility in ViewDocument (default: true)
 
   // Legacy Fields - MAINTAINED FOR COMPATIBILITY
   theme: string,             // Always 'light' (legacy)
@@ -69,6 +83,14 @@ The Settings system manages user-specific display and behavior preferences that 
 - **TYPE**: Boolean only (true/false)
 - **DEFAULT**: false if not set or user document doesn't exist
 - **FUTURE FEATURE**: Toggle present in UI but theme switching not yet implemented
+- **VALIDATION**: Must be boolean type
+
+**metadataBoxVisible:**
+
+- **TYPE**: Boolean only (true/false)
+- **DEFAULT**: true if not set or user document doesn't exist
+- **PURPOSE**: Controls visibility of metadata information box in ViewDocument page
+- **REACTIVE**: Changes immediately update ViewDocument UI
 - **VALIDATION**: Must be boolean type
 
 ## Format Options
@@ -118,6 +140,7 @@ Defined in `src/features/organizer/utils/categoryFormOptions.js`:
   dateFormat: 'YYYY-MM-DD',    // Current date format
   timeFormat: 'HH:mm',          // Current time format
   darkMode: false,              // Dark mode enabled
+  metadataBoxVisible: true,     // Metadata box visibility in ViewDocument
 
   // Store lifecycle
   isInitialized: false,         // Preferences loaded from Firestore
@@ -135,6 +158,7 @@ Defined in `src/features/organizer/utils/categoryFormOptions.js`:
 currentDateFormat: (state) => state.dateFormat;
 currentTimeFormat: (state) => state.timeFormat;
 isDarkMode: (state) => state.darkMode;
+isMetadataBoxVisible: (state) => state.metadataBoxVisible;
 isReady: (state) => state.isInitialized && !state.isLoading;
 ```
 
@@ -144,6 +168,7 @@ isReady: (state) => state.isInitialized && !state.isLoading;
 - `updateDateFormat(format)` - Update and persist date format
 - `updateTimeFormat(format)` - Update and persist time format
 - `updateDarkMode(enabled)` - Update and persist dark mode
+- `updateMetadataBoxVisible(visible)` - Update and persist metadata box visibility
 - `resetToDefaults()` - Reset all preferences to defaults
 - `clear()` - Clear store state (called on logout)
 
@@ -153,22 +178,30 @@ isReady: (state) => state.isInitialized && !state.isLoading;
 
 Preferences are automatically initialized during user authentication:
 
-**Location**: `src/core/stores/auth.js` line 122
+**Location**: `src/core/stores/auth/authStateHandlers.js` line 53
 
 ```javascript
-// In auth store's _handleUserAuthenticated method:
-async _handleUserAuthenticated(firebaseUser) {
+// In auth module's _handleUserAuthenticated function:
+async _handleUserAuthenticated(store, firebaseUser) {
   // 1. Set user identity
-  this.user = { uid, email, displayName, photoURL };
+  store.user = { uid, email, displayName, photoURL };
 
   // 2. Setup firm (solo firm for new users)
-  this.firmId = await this._getUserFirmId(uid);
+  const firmId = await _getUserFirmId(firebaseUser.uid);
+  if (firmId) {
+    store.firmId = firmId;
+    store.userRole = await _getUserRole(firmId, firebaseUser.uid);
+  } else {
+    await _createSoloFirm(firebaseUser);
+    store.firmId = firebaseUser.uid;
+    store.userRole = 'admin';
+  }
 
   // 3. Initialize user preferences (AUTOMATIC)
-  await this._initializeUserPreferences(firebaseUser.uid);
+  await _initializeUserPreferences(firebaseUser.uid);
 
   // 4. Mark authenticated
-  this.authState = 'authenticated';
+  store.authState = 'authenticated';
 }
 ```
 
@@ -186,7 +219,8 @@ When a new user creates an account:
        language: 'en',
        dateFormat: 'YYYY-MM-DD',
        timeFormat: 'HH:mm',
-       darkMode: false
+       darkMode: false,
+       metadataBoxVisible: true
      }
    }
    ```
@@ -280,7 +314,8 @@ async updateDateFormat(format) {
     await this._savePreferences(this._userId, {
       dateFormat: format,
       timeFormat: this.timeFormat,
-      darkMode: this.darkMode
+      darkMode: this.darkMode,
+      metadataBoxVisible: this.metadataBoxVisible
     });
   } catch (error) {
     // 5. Revert on error
@@ -310,6 +345,7 @@ await setDoc(
       dateFormat: preferences.dateFormat,
       timeFormat: preferences.timeFormat,
       darkMode: preferences.darkMode,
+      metadataBoxVisible: preferences.metadataBoxVisible,
       // Legacy fields preserved
       theme: 'light',
       notifications: true,
@@ -339,7 +375,7 @@ const formattedDate = formatDate(timestamp, preferencesStore.dateFormat);
 
 ### Organizer Page Integration
 
-**Location**: `src/features/organizer/components/FileListItemContent.vue`
+**Location**: File components in `src/features/organizer/components/`
 
 File dates automatically use user's selected format:
 
@@ -358,7 +394,7 @@ const formattedDate = computed(() => {
 
 - User changes format in Settings
 - Store updates automatically
-- All FileListItemContent components re-render
+- All file components re-render
 - Dates display in new format instantly
 - No page refresh required
 
@@ -379,6 +415,9 @@ if (userDoc.exists()) {
   const dateFormat = preferences.dateFormat || 'YYYY-MM-DD';
   const timeFormat = preferences.timeFormat || 'HH:mm';
   const darkMode = preferences.darkMode || false;
+  const metadataBoxVisible = preferences.metadataBoxVisible !== undefined
+    ? preferences.metadataBoxVisible
+    : true;
 }
 ```
 
@@ -395,6 +434,7 @@ await setDoc(
       dateFormat: 'DD/MM/YYYY',
       timeFormat: 'HH:mm',
       darkMode: false,
+      metadataBoxVisible: true,
       // Legacy fields
       theme: 'light',
       notifications: true,
@@ -416,6 +456,7 @@ await setDoc(
       dateFormat: 'YYYY-MM-DD',
       timeFormat: 'HH:mm',
       darkMode: false,
+      metadataBoxVisible: true,
       theme: 'light',
       notifications: true,
       language: 'en',
@@ -457,11 +498,14 @@ function validateUserPreferences(data) {
           ]) &&
          // Validate dark mode (if present)
          (!('darkMode' in data.preferences) ||
-          data.preferences.darkMode is bool);
+          data.preferences.darkMode is bool) &&
+         // Validate metadata box visibility (if present)
+         (!('metadataBoxVisible' in data.preferences) ||
+          data.preferences.metadataBoxVisible is bool);
 }
 ```
 
-**Note**: For complete authentication flow and firm-based access control, see [security-rules.md](security-rules.md).
+**Note**: For complete authentication flow and firm-based access control, see @docs/Data/Security/25-11-18-firestore-security-rules.md.
 
 ## Performance Considerations
 
@@ -522,11 +566,11 @@ function validateUserPreferences(data) {
 
 ## Cross-Reference to Other Documentation
 
-- For authentication initialization flow, see Authentication documentation
+- For authentication initialization flow, see @docs/Features/Authentication/CLAUDE.md
 - For date formatting implementation, see `src/utils/dateFormatter.js`
-- For Organizer page date display, see [Evidence.md](Evidence.md)
-- For solo firm patterns, see [SoloFirmMatters.md](SoloFirmMatters.md)
-- For Firestore security rules, see [security-rules.md](security-rules.md)
+- For evidence/file schema and display, see @docs/Features/Organizer/Data/25-11-18-evidence-schema.md
+- For solo firm patterns, see @docs/Features/Matters/solo-firm-matters.md
+- For Firestore security rules, see @docs/Data/Security/25-11-18-firestore-security-rules.md
 
 ## Common Pitfalls
 
@@ -538,6 +582,7 @@ function validateUserPreferences(data) {
 **DO NOT** forget to preserve legacy fields when saving preferences.
 **DO NOT** allow invalid format strings to be persisted.
 **DO NOT** implement dark mode theme switching yet (feature incomplete).
+**DO NOT** forget to include metadataBoxVisible when saving preferences.
 
 ## Future Enhancements
 
@@ -549,6 +594,7 @@ function validateUserPreferences(data) {
 - **Date Range Formats**: Quarter/week display options
 - **Time Zone Selection**: Explicit timezone preference
 - **Export Preferences**: Backup/restore settings across devices
+- **Metadata Box Customization**: Configurable metadata fields visibility
 
 ### Migration Considerations
 
