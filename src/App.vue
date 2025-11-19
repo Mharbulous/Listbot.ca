@@ -12,14 +12,14 @@
     <template v-else>
       <template v-if="$route.path !== '/login'">
         <AppHeader @toggle-sidebar="toggleSidebar" />
-        <NewSideBar :is-collapsed="isSidebarCollapsed" />
+        <NewSideBar :is-collapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
       </template>
       <div
-        class="flex-grow flex flex-col"
+        class="flex-grow flex flex-col transition-all duration-300"
         :class="{
           'justify-center items-center': $route.path === '/login',
-          'ml-0': $route.path !== '/login' && isSidebarCollapsed,
-          'ml-[60px]': $route.path !== '/login' && !isSidebarCollapsed,
+          'ml-[60px]': $route.path !== '/login' && isSidebarCollapsed,
+          'ml-[240px]': $route.path !== '/login' && !isSidebarCollapsed,
           'pt-20': $route.path !== '/login',
         }"
         style="min-width: 0"
@@ -97,7 +97,7 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
-      isSidebarCollapsed: false,
+      isSidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
     };
   },
   methods: {
@@ -106,6 +106,7 @@ export default {
     },
     toggleSidebar() {
       this.isSidebarCollapsed = !this.isSidebarCollapsed;
+      localStorage.setItem('sidebarCollapsed', this.isSidebarCollapsed);
     },
   },
 };

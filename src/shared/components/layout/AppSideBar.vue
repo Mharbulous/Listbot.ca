@@ -12,21 +12,32 @@
         @mouseleave="handleMouseLeave"
       >
         <span class="nav-icon">{{ getItemIcon(item) }}</span>
+        <span v-if="!props.isCollapsed" class="nav-label">{{ item.label }}</span>
       </RouterLink>
     </nav>
 
-    <!-- Flexible spacer to push AppSwitcher to bottom -->
+    <!-- Flexible spacer to push controls to bottom -->
     <div class="sidebar-flex-spacer"></div>
+
+    <!-- Toggle Button -->
+    <button
+      class="sidebar-toggle"
+      @click="$emit('toggle')"
+      :title="props.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <span class="toggle-icon">{{ props.isCollapsed ? '▶' : '◀' }}</span>
+      <span v-if="!props.isCollapsed" class="nav-label">Collapse</span>
+    </button>
 
     <!-- App Switcher -->
     <div class="sidebar-section">
       <AppSwitcher :is-hovered="false" />
     </div>
 
-    <!-- Floating Tooltip (rendered to body) -->
+    <!-- Floating Tooltip (only shown when collapsed) -->
     <Teleport to="body">
       <div
-        v-if="hoveredItem"
+        v-if="hoveredItem && props.isCollapsed"
         class="sidebar-tooltip"
         :style="tooltipStyle"
       >
@@ -49,6 +60,9 @@ const props = defineProps({
     default: false,
   },
 })
+
+// Emits
+const emit = defineEmits(['toggle'])
 
 // Get current route for active state
 const route = useRoute()
@@ -117,7 +131,7 @@ const getItemIcon = (item) => {
   position: fixed;
   left: 0;
   top: 80px;
-  width: 60px;
+  width: 240px;
   height: calc(100vh - 80px);
   z-index: 50;
   background: linear-gradient(
@@ -128,12 +142,13 @@ const getItemIcon = (item) => {
   color: var(--sidebar-text-primary);
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
 }
 
 /* Sidebar Collapsed State */
 .sidebar-collapsed {
-  transform: translateX(-60px);
+  width: 60px;
 }
 
 /* Section Container */
@@ -156,12 +171,19 @@ const getItemIcon = (item) => {
 .nav-item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 12px;
+  gap: 12px;
   color: var(--sidebar-text-secondary);
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms ease-in-out;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .nav-item {
+  justify-content: center;
+  gap: 0;
 }
 
 .nav-item:hover {
@@ -183,6 +205,55 @@ const getItemIcon = (item) => {
   width: 30px;
   height: 30px;
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* Text Label */
+.nav-label {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle Button */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px;
+  gap: 12px;
+  color: var(--sidebar-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  white-space: nowrap;
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 /* Floating Tooltip - Rendered to Body */
