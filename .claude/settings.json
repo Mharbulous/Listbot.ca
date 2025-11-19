@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir *)",
+      "Bash(ls -R)",
+      "Bash(git status)"
+    ]
+  }
+}
