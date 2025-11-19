@@ -15,10 +15,11 @@
         <AppHeader />
       </template>
       <div
-        class="flex-grow flex flex-col"
+        class="flex-grow flex flex-col transition-all duration-300"
         :class="{
           'justify-center items-center': $route.path === '/login',
-          'ml-[60px]': $route.path !== '/login',
+          'ml-[60px]': $route.path !== '/login' && !isSidebarCollapsed,
+          'ml-0': $route.path !== '/login' && isSidebarCollapsed,
           'pt-20': $route.path !== '/login',
         }"
         style="min-width: 0"
@@ -96,12 +97,22 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
+      isSidebarCollapsed: false,
     };
   },
   methods: {
     closeMobileMenu() {
       this.isMobileMenuOpen = false;
     },
+    handleSidebarToggle() {
+      this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    },
+  },
+  mounted() {
+    window.addEventListener('toggle-sidebar', this.handleSidebarToggle);
+  },
+  beforeUnmount() {
+    window.removeEventListener('toggle-sidebar', this.handleSidebarToggle);
   },
 };
 </script>

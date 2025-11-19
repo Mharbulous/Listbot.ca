@@ -140,7 +140,7 @@ onUnmounted(() => {
   top: 80px;
   width: 60px;
   height: calc(100vh - 80px);
-  z-index: 50;
+  z-index: 40;
   background: linear-gradient(
     to bottom,
     var(--sidebar-bg-primary),
@@ -239,7 +239,7 @@ onUnmounted(() => {
   white-space: nowrap;
   font-size: 14px;
   font-weight: 500;
-  z-index: 10000;
+  z-index: 200;
   pointer-events: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transform: translateY(-50%);

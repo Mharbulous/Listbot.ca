@@ -1,6 +1,6 @@
 <template>
   <header
-    class="fixed top-0 left-0 right-0 z-[1001] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
+    class="fixed top-0 left-0 right-0 z-50 bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
   >
     <!-- Left Section: Hamburger + Page Title -->
     <div class="flex items-center gap-4 flex-shrink-0">
@@ -126,7 +126,7 @@
           <span v-else>{{ authStore.userInitials }}</span>
         </div>
         <div
-          class="user-dropdown-menu hidden group-focus-within:block absolute top-full right-0 bg-white border border-gray-200/50 rounded-xl shadow-xl backdrop-blur-sm z-[1000] min-w-[200px] overflow-hidden mt-2"
+          class="user-dropdown-menu hidden group-focus-within:block absolute top-full right-0 bg-white border border-gray-200/50 rounded-xl shadow-xl backdrop-blur-sm z-[100] min-w-[200px] overflow-hidden mt-2"
         >
           <div class="py-1">
             <router-link
