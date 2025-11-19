@@ -214,20 +214,63 @@ export function useUploadProcessor({ updateFileStatus }) {
         return { success: true };
       }
 
-      // Get existing folder paths for pattern recognition
-      let existingFolderPaths = '';
-      try {
-        const metadataRef = doc(evidenceRef, 'sourceMetadata', metadataHash);
-        const existingDoc = await getDoc(metadataRef);
-        if (existingDoc.exists()) {
-          existingFolderPaths = existingDoc.data().sourceFolderPath || '';
+      // Check if metadata already exists for deduplication
+      const metadataRef = doc(evidenceRef, 'sourceMetadata', metadataHash);
+      const existingDoc = await getDoc(metadataRef);
+
+      if (existingDoc.exists()) {
+        // Metadata document exists - check if uploaded by same user
+        const existingData = existingDoc.data();
+        const currentUserId = authStore.user?.uid;
+
+        if (existingData.uploadedBy === currentUserId) {
+          // Same user re-uploading same metadata - this is a duplicate
+          console.log(`[COPY] Duplicate copy metadata detected (same user): ${queueFile.name} (hash: ${metadataHash})`);
+          return { success: true, duplicate: true };
         }
-      } catch (error) {
-        // Silently catch errors when retrieving existing folder paths
+
+        // Different user or no uploadedBy field - continue with copy
+        // Get existing folder paths for pattern recognition
+        const existingFolderPaths = existingData.sourceFolderPath || '';
+
+        // Update folder paths using pattern recognition
+        const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
+
+        // Create metadata record with uploadedBy
+        const metadataRecord = {
+          sourceFileName: queueFile.name,
+          sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
+          fileHash: queueFile.hash,
+          sourceFolderPath: pathUpdate.folderPaths,
+          uploadedBy: currentUserId,
+          uploadDate: Timestamp.now(),
+        };
+
+        await setDoc(metadataRef, metadataRecord);
+
+        // Update Evidence document with embedded metadata variant
+        await updateDoc(evidenceRef, {
+          [`sourceMetadataVariants.${metadataHash}`]: {
+            sourceFileName: queueFile.name,
+            sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
+            sourceFolderPath: pathUpdate.folderPaths,
+            uploadedBy: currentUserId,
+            uploadDate: Timestamp.now(),
+          },
+          sourceMetadataCount: increment(1),
+        });
+
+        console.log(`[COPY] Metadata variant created for: ${queueFile.name} (hash: ${metadataHash})`);
+        return { success: true };
       }
+
+      // Metadata doesn't exist - create new record
+      let existingFolderPaths = '';
 
       // Update folder paths using pattern recognition
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
+
+      const currentUserId = authStore.user?.uid;
 
       // Create sourceMetadata subcollection document
       const metadataRecord = {
@@ -235,9 +278,10 @@ export function useUploadProcessor({ updateFileStatus }) {
         sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
         fileHash: queueFile.hash,
         sourceFolderPath: pathUpdate.folderPaths,
+        uploadedBy: currentUserId,
+        uploadDate: Timestamp.now(),
       };
 
-      const metadataRef = doc(evidenceRef, 'sourceMetadata', metadataHash);
       await setDoc(metadataRef, metadataRecord);
 
       // Update Evidence document with embedded metadata variant
@@ -246,6 +290,7 @@ export function useUploadProcessor({ updateFileStatus }) {
           sourceFileName: queueFile.name,
           sourceLastModified: Timestamp.fromMillis(queueFile.sourceLastModified),
           sourceFolderPath: pathUpdate.folderPaths,
+          uploadedBy: currentUserId,
           uploadDate: Timestamp.now(),
         },
         sourceMetadataCount: increment(1),

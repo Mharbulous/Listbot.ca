@@ -153,8 +153,15 @@ export function useUploadOrchestrator({
                 const copyResult = await createCopyMetadataRecord(copyFile);
 
                 if (copyResult.success) {
-                  copyFile.status = 'copied'; // Copy metadata only (not uploaded to Storage)
-                  copyCount++;
+                  if (copyResult.duplicate) {
+                    // Copy metadata already exists from same user - duplicate
+                    copyFile.status = 'skipped'; // Shows as "Duplicate" with orange dot
+                    // Don't increment copyCount - this is a duplicate
+                  } else {
+                    // Copy metadata created successfully
+                    copyFile.status = 'copied'; // Copy metadata only (not uploaded to Storage)
+                    copyCount++;
+                  }
                 } else {
                   // Copy metadata failure is NON-BLOCKING
                   copyFile.status = 'error';

@@ -195,7 +195,7 @@ const handleMouseLeave = () => {
 }
 
 .status-skipped {
-  background-color: #9c27b0; /* Purple */
+  background-color: #ff9800; /* Orange */
 }
 
 .status-skip {
