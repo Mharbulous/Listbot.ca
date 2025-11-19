@@ -10,18 +10,18 @@
 
       <v-card-text class="pa-4">
         <div class="metrics-list">
-          <!-- Files Uploaded -->
+          <!-- new files uploaded -->
           <div v-if="metrics.filesUploaded > 0" class="metric-row">
             <span class="status-dot green"></span>
             <span class="metric-value">{{ metrics.filesUploaded }}</span>
-            <span class="metric-label">files uploaded</span>
+            <span class="metric-label">new files uploaded</span>
           </div>
 
           <!-- Identical Variants (Copies) -->
           <div v-if="metrics.filesCopies > 0" class="metric-row">
             <span class="status-dot green"></span>
             <span class="metric-value">{{ metrics.filesCopies }}</span>
-            <span class="metric-label">identical variant files found</span>
+            <span class="metric-label">facsimile copies recorded</span>
           </div>
 
           <!-- Previously Uploaded Files Skipped (Duplicates) -->
@@ -35,7 +35,7 @@
           <div v-if="metrics.copiesSkipped > 0" class="metric-row">
             <span class="status-dot orange"></span>
             <span class="metric-value">{{ metrics.copiesSkipped }}</span>
-            <span class="metric-label">previously documented variants skipped</span>
+            <span class="metric-label">known facsimiles skipped</span>
           </div>
 
           <!-- Failed Uploads -->
