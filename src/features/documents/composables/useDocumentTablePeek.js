@@ -11,8 +11,8 @@
  */
 
 import { ref, computed } from 'vue';
-import { useDocumentPeek } from '@/composables/useDocumentPeek';
-import { useTooltipTiming } from '@/composables/useTooltipTiming';
+import { useDocumentPeek } from '@/features/documents/composables/useDocumentPeek';
+import { useTooltipTiming } from '@/features/documents/composables/useTooltipTiming';
 
 /**
  * Tooltip dimensions and spacing constants

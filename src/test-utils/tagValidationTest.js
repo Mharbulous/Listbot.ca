@@ -3,9 +3,9 @@
  * Tests the category validation and orphaned tag cleanup system
  */
 
-import { useOrganizerCoreStore } from '../features/organizer/stores/organizerCore.js';
-import { useCategoryStore } from '../features/organizer/stores/categoryStore.js';
-import tagSubcollectionService from '../features/organizer/services/tagSubcollectionService.js';
+import { useOrganizerCoreStore } from '../features/documents/stores/organizerCore.js';
+import { useCategoryStore } from '../features/documents/stores/categoryStore.js';
+import tagSubcollectionService from '../features/documents/services/tagSubcollectionService.js';
 
 export class TagValidationTest {
   /**

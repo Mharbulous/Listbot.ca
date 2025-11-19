@@ -73,9 +73,9 @@
 
 <script setup>
 import { ref } from 'vue';
-import FirstAppTab from '@/components/home/FirstAppTab.vue';
-import AddAppTab from '@/components/home/AddAppTab.vue';
-import LocalDevTab from '@/components/home/LocalDevTab.vue';
+import FirstAppTab from '../shared/components/home/FirstAppTab.vue';
+import AddAppTab from '../shared/components/home/AddAppTab.vue';
+import LocalDevTab from '../shared/components/home/LocalDevTab.vue';
 
 // Component configuration
 defineOptions({

@@ -106,7 +106,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '../core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 import { ProfileService } from '../services/profileService';
 
 // Component configuration

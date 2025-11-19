@@ -1,4 +1,4 @@
-import { useAuthStore } from '../../../core/stores/auth/index.js';
+import { useAuthStore } from '@/core/auth/stores/index.js';
 import { AIProcessingService } from './aiProcessingService.js';
 import { EvidenceDocumentService } from './evidenceDocumentService.js';
 import { TagOperationService } from './tagOperationService.js';

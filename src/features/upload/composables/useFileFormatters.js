@@ -1,5 +1,5 @@
 import { storeToRefs } from 'pinia';
-import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
+import { useUserPreferencesStore } from '@/features/profile/stores/userPreferences.js';
 import { formatDate, formatTime } from '@/utils/dateFormatter.js';
 
 /**

@@ -258,12 +258,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { useCategoryEditState } from '../../features/organizer/composables/useCategoryEditState.js';
-import { useCategoryEditValidation } from '../../features/organizer/composables/useCategoryEditValidation.js';
-import { currencyOptions } from '../../features/organizer/utils/currencyOptions.js';
-import { sequenceFormatOptions } from '../../features/organizer/utils/categoryFormOptions.js';
-import TagOptionsManager from '../../features/organizer/components/TagOptionsManager.vue';
-import HoldToConfirmButton from '../../components/base/HoldToConfirmButton.vue';
+import { useCategoryEditState } from '../../features/documents/composables/useCategoryEditState.js';
+import { useCategoryEditValidation } from '../../features/documents/composables/useCategoryEditValidation.js';
+import { currencyOptions } from '../../features/documents/utils/currencyOptions.js';
+import { sequenceFormatOptions } from '../../features/documents/utils/categoryFormOptions.js';
+import TagOptionsManager from '../../features/documents/components/TagOptionsManager.vue';
+import HoldToConfirmButton from '@/shared/components/base/HoldToConfirmButton.vue';
 
 const route = useRoute();
 

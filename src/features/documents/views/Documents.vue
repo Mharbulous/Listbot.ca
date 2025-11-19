@@ -109,15 +109,15 @@ import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { fetchFiles } from '@/services/uploadService';
-import { useAuthStore } from '@/core/stores/auth';
-import { useMatterViewStore } from '@/stores/matterView';
-import { useUserPreferencesStore } from '@/core/stores/userPreferences';
+import { fetchFiles } from '@/features/upload/services/uploadService';
+import { useAuthStore } from '@/core/auth/stores';
+import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useUserPreferencesStore } from '@/features/profile/stores/userPreferences';
 import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
 import { getDisplayPath } from '@/features/upload/utils/folderPathUtils';
-import DocumentTable from '@/components/base/DocumentTable.vue';
+import DocumentTable from '@/features/documents/components/table/DocumentTable.vue';
 
 // Get route for accessing params
 const route = useRoute();

@@ -16,7 +16,7 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, getMetadata, getDownloadURL, getStorage } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
-import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
+import { EvidenceService } from '@/features/documents/services/evidenceService.js';
 
 /**
  * Check if a file is a PDF based on its display name

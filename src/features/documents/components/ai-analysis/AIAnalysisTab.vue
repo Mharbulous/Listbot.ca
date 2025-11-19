@@ -53,10 +53,10 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { useAIAnalysis } from '@/composables/useAIAnalysis';
-import AIAnalysisError from './ai-analysis/AIAnalysisError.vue';
-import AIAnalysisFieldItem from './ai-analysis/AIAnalysisFieldItem.vue';
-import AIAnalysisButton from './ai-analysis/AIAnalysisButton.vue';
+import { useAIAnalysis } from '@/features/documents/composables/useAIAnalysis';
+import AIAnalysisError from './AIAnalysisError.vue';
+import AIAnalysisFieldItem from './AIAnalysisFieldItem.vue';
+import AIAnalysisButton from './AIAnalysisButton.vue';
 
 // Props
 const props = defineProps({

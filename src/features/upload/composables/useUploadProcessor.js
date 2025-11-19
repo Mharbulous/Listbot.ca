@@ -4,8 +4,8 @@
  * Pipeline: Hash → Check Exists → Upload → Create Metadata
  */
 
-import { useAuthStore } from '../../../core/stores/auth/authStore.js';
-import { useMatterViewStore } from '../../../stores/matterView.js';
+import { useAuthStore } from '@/core/auth/stores/authStore.js';
+import { useMatterViewStore } from '@/features/matters/stores/matterView.js';
 import { useFileProcessor } from './useFileProcessor.js';
 import { useFileMetadata } from './useFileMetadata.js';
 import { isNetworkError } from '../utils/networkUtils.js';

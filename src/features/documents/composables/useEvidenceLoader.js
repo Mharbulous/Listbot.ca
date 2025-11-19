@@ -16,7 +16,7 @@ import { ref } from 'vue';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref as storageRef, getMetadata, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
-import { EvidenceService } from '@/features/organizer/services/evidenceService.js';
+import { EvidenceService } from '@/features/documents/services/evidenceService.js';
 
 export function useEvidenceLoader(
   authStore,

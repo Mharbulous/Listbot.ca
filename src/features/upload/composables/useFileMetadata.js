@@ -1,9 +1,9 @@
 import { db } from '../../../services/firebase.js';
 import { doc, setDoc, getDoc, Timestamp, updateDoc, increment } from 'firebase/firestore';
-import { useAuthStore } from '../../../core/stores/auth/index.js';
-import { useMatterViewStore } from '../../../stores/matterView.js';
+import { useAuthStore } from '../../../core/auth/stores/index.js';
+import { useMatterViewStore } from '../../../features/matters/stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
-import { EvidenceService } from '../../organizer/services/evidenceService.js';
+import { EvidenceService } from '../../documents/services/evidenceService.js';
 import { generateMetadataHashInput } from '../utils/deduplicationLogic.js';
 import xxhash from 'xxhash-wasm';
 

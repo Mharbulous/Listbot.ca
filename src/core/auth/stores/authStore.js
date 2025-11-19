@@ -149,7 +149,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.error = null;
         // Import auth service dynamically to avoid circular imports
-        const { authService } = await import('../../../services/authService');
+        const { authService } = await import('../../../features/authentication/services/authService');
         await authService.signIn(email, password);
         // The onAuthStateChanged listener will handle the state transition
       } catch (error) {
@@ -168,7 +168,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.error = null;
         // Import auth service dynamically to avoid circular imports
-        const { authService } = await import('../../../services/authService');
+        const { authService } = await import('../../../features/authentication/services/authService');
         await authService.signOut();
         // The onAuthStateChanged listener will handle the state transition
       } catch (error) {

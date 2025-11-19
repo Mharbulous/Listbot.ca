@@ -1,4 +1,4 @@
-import { useAuthStore } from '../../core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 
 export function createAuthGuard() {
   return async (to, from, next) => {

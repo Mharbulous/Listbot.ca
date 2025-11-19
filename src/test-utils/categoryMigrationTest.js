@@ -3,7 +3,7 @@
  * This simulates categories without isActive field to test fallback behavior
  */
 
-import { CategoryService } from '../features/organizer/services/categoryService.js';
+import { CategoryService } from '../features/documents/services/categoryService.js';
 
 export class CategoryMigrationTest {
   /**

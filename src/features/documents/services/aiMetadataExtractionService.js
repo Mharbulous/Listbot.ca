@@ -1,5 +1,5 @@
 import { getGenerativeModel } from 'firebase/ai';
-import { firebaseAI, db } from './firebase.js';
+import { firebaseAI, db } from '@/services/firebase.js';
 import { doc, getDoc } from 'firebase/firestore';
 
 /**
@@ -12,7 +12,7 @@ import { doc, getDoc } from 'firebase/firestore';
  * @rationale This service is stateless - all methods are pure functions that take
  *            parameters and return results. No instance state needed between calls.
  *            Exported as singleton to avoid unnecessary instantiation overhead.
- * @usage import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
+ * @usage import aiMetadataExtractionService from '@/features/documents/services/aiMetadataExtractionService';
  *        const result = await aiMetadataExtractionService.analyzeDocument(...);
  */
 class AIMetadataExtractionService {

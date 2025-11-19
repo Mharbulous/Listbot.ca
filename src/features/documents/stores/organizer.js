@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, watch } from 'vue';
 import { db } from '../../../services/firebase.js';
-import { useAuthStore } from '../../../core/stores/auth/index.js';
+import { useAuthStore } from '@/core/auth/stores/index.js';
 
 // Import decomposed stores
 import { useOrganizerCoreStore } from './organizerCore.js';

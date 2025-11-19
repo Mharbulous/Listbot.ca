@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import PdfPageCanvas from '@/features/organizer/components/PdfPageCanvas.vue';
+import PdfPageCanvas from '@/features/documents/components/PdfPageCanvas.vue';
 
 // Props
 defineProps({

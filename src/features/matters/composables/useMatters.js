@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { MatterService } from '../services/matterService.js';
-import { useAuthStore } from '../core/stores/auth/index.js';
+import { useAuthStore } from '@/core/auth/stores/index.js';
 
 /**
  * Composable for managing matter data

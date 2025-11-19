@@ -5,7 +5,7 @@
  * This allows existing imports to continue working:
  *
  * ```js
- * import { useAuthStore } from '@/core/stores/auth'
+ * import { useAuthStore } from '@/core/auth/stores'
  * ```
  *
  * Internal modules:

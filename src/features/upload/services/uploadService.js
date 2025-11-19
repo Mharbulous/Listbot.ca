@@ -4,8 +4,8 @@
  */
 
 import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
-import { db } from './firebase';
-import { getCategoryFieldName } from '../utils/categoryFieldMapping';
+import { db } from '@/services/firebase';
+import { getCategoryFieldName } from '@/features/documents/utils/categoryFieldMapping';
 
 /**
  * Fetch evidence documents from Firestore with embedded source file metadata and tags

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { db } from '@/services/firebase';
 
 /**
  * User Preferences Store
