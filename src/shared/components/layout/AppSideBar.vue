@@ -19,16 +19,6 @@
     <!-- Flexible spacer to push controls to bottom -->
     <div class="sidebar-flex-spacer"></div>
 
-    <!-- Toggle Button -->
-    <button
-      class="sidebar-toggle"
-      @click="$emit('toggle')"
-      :title="props.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-    >
-      <span class="toggle-icon">{{ props.isCollapsed ? '▶' : '◀' }}</span>
-      <span v-if="!props.isCollapsed" class="nav-label">Collapse</span>
-    </button>
-
     <!-- App Switcher -->
     <div class="sidebar-section">
       <AppSwitcher :is-hovered="false" />
@@ -61,8 +51,8 @@ const props = defineProps({
   },
 })
 
-// Emits
-const emit = defineEmits(['toggle'])
+// Emits (none currently used)
+// const emit = defineEmits([])
 
 // Get current route for active state
 const route = useRoute()
@@ -216,44 +206,6 @@ const getItemIcon = (item) => {
   transition: opacity 0.2s ease-in-out;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Toggle Button */
-.sidebar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px;
-  gap: 12px;
-  color: var(--sidebar-text-secondary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all 200ms ease-in-out;
-  white-space: nowrap;
-  width: 100%;
-  text-align: left;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-collapsed .sidebar-toggle {
-  justify-content: center;
-  gap: 0;
-}
-
-.sidebar-toggle:hover {
-  background-color: var(--sidebar-hover-bg);
-  color: var(--sidebar-hover-text);
-}
-
-.toggle-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  font-size: 16px;
-  flex-shrink: 0;
 }
 
 /* Floating Tooltip - Rendered to Body */
