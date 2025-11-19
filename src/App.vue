@@ -11,14 +11,15 @@
     <!-- Normal app content -->
     <template v-else>
       <template v-if="$route.path !== '/login'">
-        <NewSideBar />
-        <AppHeader />
+        <AppHeader @toggle-sidebar="toggleSidebar" />
+        <NewSideBar :is-collapsed="isSidebarCollapsed" />
       </template>
       <div
         class="flex-grow flex flex-col"
         :class="{
           'justify-center items-center': $route.path === '/login',
-          'ml-[60px]': $route.path !== '/login',
+          'ml-0': $route.path !== '/login' && isSidebarCollapsed,
+          'ml-[60px]': $route.path !== '/login' && !isSidebarCollapsed,
           'pt-20': $route.path !== '/login',
         }"
         style="min-width: 0"
@@ -96,11 +97,15 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
+      isSidebarCollapsed: false,
     };
   },
   methods: {
     closeMobileMenu() {
       this.isMobileMenuOpen = false;
+    },
+    toggleSidebar() {
+      this.isSidebarCollapsed = !this.isSidebarCollapsed;
     },
   },
 };
