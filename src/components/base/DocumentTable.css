@@ -281,6 +281,12 @@
   display: flex;
   align-items: center; /* Center content vertically within the cell */
   transition: background 0.2s ease-in-out, opacity 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  cursor: default; /* Default cursor for the cell itself */
+}
+
+/* Help cursor only on text content within cells (excluding empty cells) */
+.row-cell span:not(.tbd-text) {
+  cursor: help;
 }
 
 .column-selector-spacer {

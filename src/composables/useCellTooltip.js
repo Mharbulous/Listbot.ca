@@ -125,13 +125,8 @@ export function useCellTooltip() {
     // Get the text content
     const text = getTextContent(cellElement);
     if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
-      // Reset cursor for empty cells or t.b.d. cells
-      cellElement.style.cursor = '';
       return;
     }
-
-    // Set help cursor to indicate content can be viewed in tooltip
-    cellElement.style.cursor = 'help';
 
     // If tooltip is already visible for this cell, just update hover state
     if (isVisible.value && currentCellElement === cellElement) {
@@ -221,11 +216,6 @@ export function useCellTooltip() {
   const handleCellMouseLeave = (cellElement) => {
     // Mark that cell is no longer being hovered
     isCellHovered = false;
-
-    // Reset cursor
-    if (cellElement) {
-      cellElement.style.cursor = '';
-    }
 
     // Clear any pending show timers
     if (showTimer) {
