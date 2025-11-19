@@ -1,5 +1,5 @@
 <template>
-  <nav class="sidebar" id="app-sidebar">
+  <nav class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }" id="app-sidebar">
     <!-- Header with Logo -->
     <div class="sidebar-header">
       <img
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatterViewStore } from '@/features/matters/stores/matterView'
 import AppSwitcher from '../navigation/AppSwitcher.vue'
@@ -57,6 +57,9 @@ import AppSwitcher from '../navigation/AppSwitcher.vue'
 // Get current route for active state
 const route = useRoute()
 const matterViewStore = useMatterViewStore()
+
+// Sidebar visibility state
+const isCollapsed = ref(false)
 
 // Navigation items configuration
 const navItems = [
@@ -113,6 +116,20 @@ const getItemIcon = (item) => {
   }
   return item.icon
 }
+
+// Toggle sidebar visibility
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+// Event listeners for toggle-sidebar event
+onMounted(() => {
+  window.addEventListener('toggle-sidebar', toggleSidebar)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('toggle-sidebar', toggleSidebar)
+})
 </script>
 
 <style scoped>
@@ -120,10 +137,10 @@ const getItemIcon = (item) => {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 80px;
   width: 60px;
-  height: 100vh;
-  z-index: 1000;
+  height: calc(100vh - 80px);
+  z-index: 50;
   background: linear-gradient(
     to bottom,
     var(--sidebar-bg-primary),
@@ -132,6 +149,12 @@ const getItemIcon = (item) => {
   color: var(--sidebar-text-primary);
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Sidebar Collapsed State */
+.sidebar-collapsed {
+  transform: translateX(-60px);
 }
 
 /* Header Section */
