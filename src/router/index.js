@@ -49,12 +49,6 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Analyze' },
     },
     {
-      path: '/testing',
-      name: 'testing',
-      component: () => import('../features/upload/FileUpload.vue'),
-      meta: { requiresAuth: true, title: 'Upload Queue' },
-    },
-    {
       path: '/list',
       name: 'list',
       component: () => import('../views/defaults/UnderConstruction.vue'),
