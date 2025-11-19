@@ -7,7 +7,7 @@
 <script setup>
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useUserPreferencesStore } from '@/core/stores/userPreferences';
+import { useUserPreferencesStore } from '@/features/profile/stores/userPreferences';
 import { formatDate as formatDateUtil } from '@/utils/dateFormatter';
 
 const props = defineProps({

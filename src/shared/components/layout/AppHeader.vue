@@ -156,9 +156,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '../../core/stores/auth';
-import { useDocumentViewStore } from '../../stores/documentView';
-import { useMatterViewStore } from '../../stores/matterView';
+import { useAuthStore } from '@/core/auth/stores';
+import { useDocumentViewStore } from '@/features/documents/stores/documentView';
+import { useMatterViewStore } from '@/features/matters/stores/matterView';
 
 const router = useRouter();
 const route = useRoute();

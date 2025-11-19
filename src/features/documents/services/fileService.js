@@ -4,7 +4,7 @@
  */
 
 import { collection, query, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '@/services/firebase';
 
 /**
  * Fetch evidence documents from Firestore with source file metadata

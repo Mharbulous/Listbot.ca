@@ -2,7 +2,7 @@ import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { FileProcessingService } from '@/features/organizer/services/fileProcessingService';
 import aiMetadataExtractionService from '@/services/aiMetadataExtractionService';
-import { useAuthStore } from '@/core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 import { formatDate } from '@/utils/dateFormatter';
 

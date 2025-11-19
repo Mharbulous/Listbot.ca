@@ -38,12 +38,12 @@
 
 <script>
 import { onUnmounted } from 'vue';
-import { useAuthStore } from './core/stores/auth';
-import NewSideBar from './components/layout/AppSideBar.vue';
-import AppHeader from './components/layout/AppHeader.vue';
-import { useFavicon } from './composables/useFavicon';
-import { useAsyncInspector } from './composables/useAsyncInspector';
-import { useAsyncRegistry } from './composables/useAsyncRegistry';
+import { useAuthStore } from '@/core/auth/stores';
+import NewSideBar from './shared/components/layout/AppSideBar.vue';
+import AppHeader from './shared/components/layout/AppHeader.vue';
+import { useFavicon } from './core/composables/useFavicon';
+import { useAsyncInspector } from './core/composables/useAsyncInspector';
+import { useAsyncRegistry } from './core/composables/useAsyncRegistry';
 
 export default {
   name: 'App',

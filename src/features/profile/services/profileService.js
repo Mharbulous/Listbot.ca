@@ -1,6 +1,6 @@
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile as updateFirebaseProfile } from 'firebase/auth';
-import { db, auth } from './firebase';
+import { db, auth } from '@/services/firebase';
 
 /**
  * ProfileService - Manages user profile operations

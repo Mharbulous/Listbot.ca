@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
-import { useAuthStore } from '../core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '../services/firebase';
+import { db, auth } from '@/services/firebase';
 import { ProfileService } from '../services/profileService';
 
 /**

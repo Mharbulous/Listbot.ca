@@ -245,17 +245,17 @@
 <script setup>
 import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/core/stores/auth';
-import { useColumnResize } from '@/composables/useColumnResize';
-import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
-import { useColumnVisibility } from '@/composables/useColumnVisibility';
-import { useVirtualTable } from '@/composables/useVirtualTable';
-import { useColumnSort } from '@/composables/useColumnSort';
-import { useDocumentTablePeek, getRowBackgroundColor } from '@/composables/useDocumentTablePeek';
-import { useCellTooltip } from '@/composables/useCellTooltip';
-import DocumentPeekTooltip from '@/components/base/DocumentPeekTooltip.vue';
-import CellContentTooltip from '@/components/base/CellContentTooltip.vue';
-import DragHandle from '@/components/base/DragHandle.vue';
+import { useAuthStore } from '@/core/auth/stores';
+import { useColumnResize } from '@/features/documents/composables/useColumnResize';
+import { useColumnDragDrop } from '@/features/documents/composables/useColumnDragDrop';
+import { useColumnVisibility } from '@/features/documents/composables/useColumnVisibility';
+import { useVirtualTable } from '@/features/documents/composables/useVirtualTable';
+import { useColumnSort } from '@/features/documents/composables/useColumnSort';
+import { useDocumentTablePeek, getRowBackgroundColor } from '@/features/documents/composables/useDocumentTablePeek';
+import { useCellTooltip } from '@/features/documents/composables/useCellTooltip';
+import DocumentPeekTooltip from './DocumentPeekTooltip.vue';
+import CellContentTooltip from './CellContentTooltip.vue';
+import DragHandle from './DragHandle.vue';
 
 // Props
 const props = defineProps({

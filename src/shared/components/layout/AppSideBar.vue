@@ -51,8 +51,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMatterViewStore } from '../../stores/matterView'
-import AppSwitcher from '../AppSwitcher.vue'
+import { useMatterViewStore } from '@/features/matters/stores/matterView'
+import AppSwitcher from '../navigation/AppSwitcher.vue'
 
 // Get current route for active state
 const route = useRoute()

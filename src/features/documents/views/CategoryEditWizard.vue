@@ -280,7 +280,7 @@ import { useCategoryFormHelpers } from '../composables/useCategoryFormHelpers.js
 import { currencyOptions } from '../utils/currencyOptions.js';
 import { sequenceFormatOptions, booleanFormatOptions } from '../utils/categoryFormOptions.js';
 import TagOptionsManager from '../components/TagOptionsManager.vue';
-import HoldToConfirmButton from '../../../components/base/HoldToConfirmButton.vue';
+import HoldToConfirmButton from '@/shared/components/base/HoldToConfirmButton.vue';
 
 const route = useRoute();
 

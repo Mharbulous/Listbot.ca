@@ -4,7 +4,7 @@
  */
 
 import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '@/services/firebase';
 import { getCategoryFieldName } from '../utils/categoryFieldMapping';
 
 /**

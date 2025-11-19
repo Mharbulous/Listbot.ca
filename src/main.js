@@ -5,9 +5,9 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import vuetify from './plugins/vuetify';
-import { useAuthStore } from './core/stores/auth';
-import { useMatterViewStore } from './stores/matterView';
-import { useGlobalAsyncRegistry } from './composables/useAsyncRegistry';
+import { useAuthStore } from './core/auth/stores';
+import { useMatterViewStore } from './features/matters/stores/matterView';
+import { useGlobalAsyncRegistry } from './core/composables/useAsyncRegistry';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 

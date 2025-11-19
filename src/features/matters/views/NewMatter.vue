@@ -135,9 +135,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useFirmMembers } from '../composables/useFirmMembers';
+import { useFirmMembers } from '@/features/profile/composables/useFirmMembers';
 import { useMatters } from '../composables/useMatters';
-import { useAuthStore } from '../core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 
 // Component configuration
 defineOptions({

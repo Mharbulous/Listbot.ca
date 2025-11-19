@@ -183,7 +183,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from '@/core/stores/auth';
+import { useAuthStore } from '@/core/auth/stores';
 import tagSubcollectionService from '@/features/organizer/services/tagSubcollectionService';
 import { formatDate } from '@/utils/dateFormatter';
 

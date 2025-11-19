@@ -1,4 +1,4 @@
-import { useMatterViewStore } from '../../stores/matterView';
+import { useMatterViewStore } from '../stores/matterView';
 
 /**
  * Matter Guard
