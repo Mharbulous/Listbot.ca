@@ -1,17 +1,5 @@
 <template>
   <nav class="sidebar" :class="{ 'sidebar-collapsed': props.isCollapsed }" id="app-sidebar">
-    <!-- Header with Logo -->
-    <div class="sidebar-header">
-      <img
-        src="/src/assets/images/BDLC-Logo-transparent.png"
-        alt="Logo"
-        class="sidebar-logo"
-      />
-    </div>
-
-    <!-- Spacer -->
-    <div class="sidebar-spacer"></div>
-
     <!-- Navigation Items -->
     <nav class="sidebar-nav">
       <RouterLink
@@ -148,31 +136,9 @@ const getItemIcon = (item) => {
   transform: translateX(-60px);
 }
 
-/* Header Section */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80px;
-  padding: 20px;
-  border-bottom: 1px solid var(--sidebar-border);
-}
-
-.sidebar-logo {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
 /* Section Container */
 .sidebar-section {
   padding: 0;
-}
-
-/* Spacer */
-.sidebar-spacer {
-  height: 32px;
 }
 
 /* Flexible Spacer - Pushes AppSwitcher to bottom */
