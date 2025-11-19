@@ -1,9 +1,36 @@
 # Vitest Test Suites Documentation
 
+**Reconciled up to**: 2025-11-18
+
 **Document Purpose**: Track all Vitest test suites in the ListBot application, including creation, modification, and deletion history.
 
-**Last Updated**: 2025-01-20 (Memory Leak Tests - Complete Resolution)  
+**Last Updated**: 2025-01-20 (Memory Leak Tests - Complete Resolution)
 **Maintained By**: Development Firm
+
+---
+
+## Key Files
+
+This documentation extensively covers the following test infrastructure files:
+
+**Test Configuration:**
+- `vite.config.js` - Vitest test environment configuration (jsdom, globals, test patterns)
+
+**Core Test Suites:**
+- `tests/unit/features/organizer/stores/virtualFolderStore.test.js` - Virtual folder store core functionality (53 tests)
+- `tests/unit/features/organizer/stores/organizer.integration.test.js` - Organizer facade integration (28 tests)
+- `tests/unit/features/organizer/stores/performanceOptimization.test.js` - Performance thresholds (15 tests)
+- `tests/unit/features/organizer/stores/backwardCompatibility.test.js` - Legacy API compatibility (20 tests)
+- `tests/unit/features/organizer/stores/errorHandling.test.js` - Error handling coverage (21 tests)
+- `tests/unit/components/ViewModeToggle.spec.js` - View mode toggle component (57 tests)
+- `tests/unit/composables/memoryLeak.test.js` - Memory leak prevention (16 tests)
+- `tests/unit/features/upload/composables/useSequentialPrefilter.test.js` - Sequential deduplication (12 tests)
+
+**Test Utilities:**
+- `src/test-utils/virtualFolderTestUtils.js` - Mock data generators and validation utilities
+- `src/test-utils/mockFileAPI.js` - File API mocking for upload/memory tests
+- `src/test-utils/tagValidationTest.js` - Manual tag validation testing utility
+- `src/test-utils/categoryMigrationTest.js` - Manual category migration testing utility
 
 ---
 
@@ -13,16 +40,18 @@
 
 | Metric                       | Status             | Count               |
 | ---------------------------- | ------------------ | ------------------- |
-| **Total Active Test Suites** | ✅ All Operational | 7 suites            |
-| **Total Tests**              | ✅ All Passing     | ~450 tests          |
+| **Total Active Test Suites** | ✅ All Operational | 9 suites            |
+| **Total Tests**              | ✅ All Passing     | ~518 tests          |
 | **Recent Issues**            | ✅ All Resolved    | 0 outstanding       |
 | **Performance Benchmarks**   | ✅ Meeting Targets | 4 active benchmarks |
 
 **Recent Achievements (2025-01-20):**
 
 - ✅ **Memory Leak Prevention Tests**: Complete resolution of all 4 remaining failures (100% pass rate achieved)
-- ✅ **Virtual Folder System Tests**: Full automation of Phase 1 testing (81 new tests added)
+- ✅ **Virtual Folder System Tests**: Full automation of Phase 1 testing (96 tests across 3 files)
 - ✅ **Test Infrastructure**: Enhanced mocking capabilities and performance optimization
+- ✅ **Backward Compatibility Suite**: Comprehensive legacy API testing (20 tests)
+- ✅ **Error Handling Suite**: Comprehensive error scenario coverage (21 tests)
 
 ---
 
@@ -32,12 +61,14 @@
 
 | Suite Name             | Status    | Files              | Test Count                 | Created      | Last Updated | Phase/Feature                       |
 | ---------------------- | --------- | ------------------ | -------------------------- | ------------ | ------------ | ----------------------------------- |
-| Virtual Folder System  | ✅ Active | 2 main + 1 utility | 81                         | 2025-01-20   | 2025-01-20   | Phase 1 - Virtual Folder Foundation |
+| Virtual Folder System  | ✅ Active | 3 main + 1 utility | 96                         | 2025-01-20   | 2025-01-20   | Phase 1 - Virtual Folder Foundation |
 | Component Tests (Phase 2) | ✅ Active | 5                  | 227                        | Pre-existing | -            | Phase 2 - UI Components             |
 | Utility & Service Tests | ✅ Active | 2                  | 86                         | Pre-existing | -            | Core Utilities & AI Services        |
 | Memory Leak Prevention | ✅ Active | 1                  | 16 (0 failing, 16 passing) | Pre-existing | 2025-01-20   | Upload System                       |
-| Upload System          | ✅ Active | 2                  | ~30                        | Pre-existing | -            | File Upload Features                |
+| Upload System          | ✅ Active | 3                  | ~42                        | Pre-existing | 2025-01-20   | File Upload & Deduplication         |
 | SSO Integration        | ✅ Active | 1                  | ~10                        | Pre-existing | -            | Multi-App Authentication            |
+| Backward Compatibility | ✅ Active | 1                  | 20                         | 2025-01-20   | 2025-01-20   | Legacy API Support                  |
+| Error Handling         | ✅ Active | 1                  | 21                         | 2025-01-20   | 2025-01-20   | Comprehensive Error Scenarios       |
 
 ### Detailed Test Suite Information
 
@@ -48,13 +79,14 @@
 | **Created**     | 2025-01-20                          |
 | **Status**      | Active                              |
 | **Phase**       | Phase 1 - Virtual Folder Foundation |
-| **Total Tests** | 81 (53 + 28)                        |
+| **Total Tests** | 96 (53 + 28 + 15)                   |
 
 **Test Files:**
 | File Path | Test Count | Purpose |
 |-----------|------------|---------|
 | `/tests/unit/features/organizer/stores/virtualFolderStore.test.js` | 53 | Core virtual folder store functionality |
 | `/tests/unit/features/organizer/stores/organizer.integration.test.js` | 28 | Integration testing with organizer facade |
+| `/tests/unit/features/organizer/stores/performanceOptimization.test.js` | 15 | Performance threshold validation for large datasets |
 | `src/test-utils/virtualFolderTestUtils.js` | N/A | Supporting test utilities and mock data |
 
 **Coverage Areas:**
@@ -67,7 +99,7 @@
 | Evidence Filtering | Path-based evidence filtering | 7 |
 | Folder Structure | Generation and validation | 7 |
 | Cache Management | Performance and memory optimization | 4 |
-| Performance Tests | Large dataset and timing validation | 3 |
+| Performance Tests | Large dataset and timing validation | 18 |
 | Error Handling | Edge cases and invalid data | 3 |
 | Integration Tests | Cross-store communication | 28 |
 
@@ -78,6 +110,7 @@
 | Cache lookup | <5ms | ✅ Passing |
 | Deep navigation | <10ms | ✅ Passing |
 | Integrated operations | <10ms | ✅ Passing |
+| Evidence filtering (complex hierarchies) | <25ms | ✅ Passing |
 
 ---
 
@@ -93,11 +126,11 @@
 **Test Files:**
 | File Path | Test Count | Purpose |
 |-----------|------------|---------|
-| `/tests/unit/components/Phase2Components.test.js` | 15 | Phase 2 component testing suite |
-| `/tests/unit/components/ViewModeToggle.spec.js` | 57 | View mode toggle component with store integration |
-| `/tests/unit/components/TagContextMenu.spec.js` | 56 | Tag context menu with AI features and keyboard navigation |
-| `/tests/unit/components/FolderHierarchySelector.spec.js` | 61 | Folder hierarchy selector with drag-and-drop |
-| `/tests/unit/components/FolderBreadcrumbs.spec.js` | 38 | Folder breadcrumbs with responsive behavior |
+| `/tests/unit/features/organizer/components/Phase2Components.test.js` | 15 | Phase 2 component testing suite |
+| `/tests/unit/features/organizer/components/ViewModeToggle.spec.js` | 57 | View mode toggle component with store integration |
+| `/tests/unit/features/organizer/components/TagContextMenu.spec.js` | 56 | Tag context menu with AI features and keyboard navigation |
+| `/tests/unit/features/organizer/components/FolderHierarchySelector.spec.js` | 61 | Folder hierarchy selector with drag-and-drop |
+| `/tests/unit/features/organizer/components/FolderBreadcrumbs.spec.js` | 38 | Folder breadcrumbs with responsive behavior |
 
 **Coverage Areas:**
 | Category | Description | Test Count |
@@ -194,13 +227,27 @@
 | --------------- | ------------ |
 | **Created**     | Pre-existing |
 | **Status**      | ✅ Active    |
-| **Total Tests** | ~30          |
+| **Total Tests** | ~42          |
 
 **Test Files:**
 | File Path | Purpose | Status |
 |-----------|---------|--------|
 | `/tests/unit/features/upload/composables/useFolderAnalysis.test.js` | Folder analysis functionality | ✅ Active |
 | `/tests/unit/features/upload/composables/useFolderTimeouts.test.js` | Timeout management systems | ✅ Active |
+| `/tests/unit/features/upload/composables/useSequentialPrefilter.test.js` | Sequential deduplication and redundant file lifecycle | ✅ Active |
+
+**Coverage Areas - Sequential Deduplication (12 tests):**
+| Category | Description | Test Count |
+|----------|-------------|------------|
+| Stage 1 Pre-filter | Redundant file removal from previous processing | 3 |
+| Stage 2 Hash Verification | Hash-based duplicate detection and marking | 4 |
+| Two-Phase Lifecycle | Duplicate → Redundant → Removal workflow | 3 |
+| Edge Cases | Empty arrays, null handling, malformed data | 2 |
+
+**Key Concepts Tested:**
+- **Redundant file lifecycle**: Files marked as "duplicate" transition to "redundant" status after hash verification, then are removed in Stage 1 pre-filter of next batch
+- **Two-phase cleanup**: Separation of duplicate detection (Stage 2) from redundant file removal (Stage 1 of next batch)
+- **Sequential deduplication**: Optimized algorithm for processing files in batches without re-hashing
 
 ---
 
@@ -219,6 +266,57 @@
 
 ---
 
+#### 7. Backward Compatibility Tests ✅
+
+| **Attribute**   | **Details**                  |
+| --------------- | ---------------------------- |
+| **Created**     | 2025-01-20                   |
+| **Status**      | ✅ Active                    |
+| **Total Tests** | 20                           |
+| **Phase**       | Organizer Store API Versions |
+
+**Test Files:**
+| File Path | Test Count | Purpose |
+|-----------|------------|---------|
+| `/tests/unit/features/organizer/stores/backwardCompatibility.test.js` | 20 | Legacy organizer store method preservation across v1.0/v1.1/v1.2 |
+
+**Coverage Areas:**
+| Category | Description | Test Count |
+|----------|-------------|------------|
+| v1.0 Core Methods | setFilter, clearFilters, reset | 6 |
+| v1.1 Category Methods | addCategory, updateCategory, deleteCategory | 7 |
+| v1.2 AI Methods | processAICategorization, approveAITag, rejectAITag | 7 |
+
+**Purpose**: Ensures that organizer store refactoring and facade pattern implementation preserves all legacy API methods for backward compatibility.
+
+---
+
+#### 8. Error Handling Tests ✅
+
+| **Attribute**   | **Details**                        |
+| --------------- | ---------------------------------- |
+| **Created**     | 2025-01-20                         |
+| **Status**      | ✅ Active                          |
+| **Total Tests** | 21                                 |
+| **Phase**       | Comprehensive Error Scenario Coverage |
+
+**Test Files:**
+| File Path | Test Count | Purpose |
+|-----------|------------|---------|
+| `/tests/unit/features/organizer/stores/errorHandling.test.js` | 21 | Comprehensive error handling in organizer store |
+
+**Coverage Areas:**
+| Category | Description | Test Count |
+|----------|-------------|------------|
+| Network Failure Handling | Network errors, timeouts, graceful degradation | 6 |
+| Invalid Data Handling | Null, undefined, malformed data structures | 7 |
+| Edge Cases | Empty arrays, circular references, missing fields | 5 |
+| Error Recovery | State restoration, cleanup after errors | 3 |
+
+**Purpose**: Validates robust error handling across all organizer store operations, ensuring system stability under adverse conditions.
+
+---
+
 ## Test Utilities Registry
 
 ### Active Test Utilities Overview
@@ -227,6 +325,8 @@
 | ------------------------- | ------------------------------------------ | ------------ | --------- | -------------------- | --------------------------------------------------- |
 | Virtual Folder Test Utils | `src/test-utils/virtualFolderTestUtils.js` | 2025-01-20   | ✅ Active | Virtual Folder Tests | Mock data and validation for virtual folder testing |
 | Mock File API Utils       | `src/test-utils/mockFileAPI.js`            | Pre-existing | ✅ Active | Upload/Memory Tests  | File API mocking for upload system testing          |
+| Tag Validation Test       | `src/test-utils/tagValidationTest.js`      | 2025-01-20   | ✅ Active | Manual Testing       | Tag validation and orphaned tag cleanup verification |
+| Category Migration Test   | `src/test-utils/categoryMigrationTest.js`  | 2025-01-20   | ✅ Active | Manual Testing       | Category isActive field migration verification      |
 
 ### Detailed Utility Information
 
@@ -237,7 +337,7 @@
 | **File**      | `src/test-utils/virtualFolderTestUtils.js`                    |
 | **Created**   | 2025-01-20                                                    |
 | **Purpose**   | Support Virtual Folder System testing                         |
-| **Used By**   | `virtualFolderStore.test.js`, `organizer.integration.test.js` |
+| **Used By**   | `virtualFolderStore.test.js`, `organizer.integration.test.js`, `performanceOptimization.test.js`, `backwardCompatibility.test.js`, `errorHandling.test.js` |
 
 **Exported Functions:**
 | Function | Parameters | Purpose |
@@ -264,6 +364,46 @@
 | **Created**   | Pre-existing                               |
 | **Purpose**   | File API mocking for upload system testing |
 | **Used By**   | `memoryLeak.test.js`, upload system tests  |
+
+---
+
+#### 3. Tag Validation Test ✅
+
+| **Attribute** | **Details**                                        |
+| ------------- | -------------------------------------------------- |
+| **File**      | `src/test-utils/tagValidationTest.js`              |
+| **Created**   | 2025-01-20                                         |
+| **Type**      | Manual Testing Utility (not automated Vitest test) |
+| **Purpose**   | Validate tag references and identify orphaned tags |
+
+**Key Features:**
+- Tests category store initialization
+- Fetches raw tags from subcollections
+- Validates category references for each tag
+- Identifies orphaned tags (deleted categories)
+- Identifies inactive tags (inactive categories)
+- Reports validation statistics
+
+**Usage**: Manual/dev testing tool for debugging tag-category relationship issues in production data.
+
+---
+
+#### 4. Category Migration Test ✅
+
+| **Attribute** | **Details**                                        |
+| ------------- | -------------------------------------------------- |
+| **File**      | `src/test-utils/categoryMigrationTest.js`          |
+| **Created**   | 2025-01-20                                         |
+| **Type**      | Manual Testing Utility (not automated Vitest test) |
+| **Purpose**   | Verify isActive field migration for categories     |
+
+**Key Features:**
+- Tests normal category queries with isActive field
+- Verifies unique name validation with migration fallback
+- Confirms automatic migration of categories missing isActive
+- Reports migration statistics and status
+
+**Usage**: Manual/dev testing tool for verifying backward compatibility during category schema migrations.
 
 ---
 
@@ -300,8 +440,8 @@
 
 #### 2025-01-20: Memory Leak Tests Complete Resolution
 
-**Change Type**: 🔧 Fixed  
-**Author**: Claude Code  
+**Change Type**: 🔧 Fixed
+**Author**: Claude Code
 **Purpose**: Complete resolution of all remaining memory leak test failures
 
 **Files Modified:**
@@ -336,8 +476,8 @@
 
 #### 2025-01-20: Memory Leak Tests Vitest API Update
 
-**Change Type**: 🔧 Fixed  
-**Author**: Claude Code  
+**Change Type**: 🔧 Fixed
+**Author**: Claude Code
 **Purpose**: Update deprecated Vitest API calls to fix memory leak test compatibility
 
 **Files Modified:**
@@ -359,13 +499,13 @@
 | API Compatibility | ❌ Deprecated APIs | ✅ Current Vitest v3.2 | Fully updated |
 | Test Stability | All timing out | 4 specific failures | Isolated issues |
 
-**All Remaining Work Completed:** ✅  
+**All Remaining Work Completed:** ✅
 All issues identified in this phase have been successfully resolved in the subsequent "Memory Leak Tests Complete Resolution" update.
 
 #### 2025-01-20: Virtual Folder Test Suite Creation
 
-**Change Type**: ✅ Added  
-**Author**: Claude Code  
+**Change Type**: ✅ Added
+**Author**: Claude Code
 **Purpose**: Automate Phase 1 Virtual Folder Foundation testing that was previously manual-only
 
 **Files Added:**
