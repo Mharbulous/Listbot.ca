@@ -138,21 +138,30 @@ export function useCellTooltip() {
       return;
     }
 
+    // If tooltip is visible for a DIFFERENT cell, hide it first
+    // This prevents the content from updating while showing at the old position
+    if (isVisible.value && currentCellElement !== cellElement) {
+      hideTooltip();
+    }
+
     // Clear any existing show timers
     if (showTimer) {
       clearTimeout(showTimer);
       showTimer = null;
     }
 
-    // Store cell element and background color
-    currentCellElement = cellElement;
-    backgroundColor.value = bgColor;
-
-    // Set content
-    content.value = text;
+    // Store pending data to be applied when tooltip becomes visible
+    const pendingCellElement = cellElement;
+    const pendingBgColor = bgColor;
+    const pendingText = text;
 
     // Start timer to show tooltip after delay
     showTimer = setTimeout(() => {
+      // Only update state when tooltip actually becomes visible
+      currentCellElement = pendingCellElement;
+      backgroundColor.value = pendingBgColor;
+      content.value = pendingText;
+
       // Calculate position based on cell element
       position.value = calculatePosition(currentCellElement);
 
