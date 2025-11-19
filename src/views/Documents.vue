@@ -72,7 +72,7 @@
       <!-- Custom cell rendering for Source Folder Path column -->
       <template #cell-sourceFolderPath="{ row, value }">
         <span :class="{ 'error-text': value.startsWith('ERROR:') }">
-          {{ value }}
+          {{ getDisplayPath(value) || value }}
         </span>
       </template>
 
@@ -116,6 +116,7 @@ import { useUserPreferencesStore } from '@/core/stores/userPreferences';
 import { formatDateTime as formatDateTimeUtil } from '@/utils/dateFormatter';
 import { formatMimeType } from '@/utils/mimeTypeFormatter';
 import { PerformanceMonitor } from '@/utils/performanceMonitor';
+import { getDisplayPath } from '@/features/upload/utils/folderPathUtils';
 import DocumentTable from '@/components/base/DocumentTable.vue';
 
 // Get route for accessing params
