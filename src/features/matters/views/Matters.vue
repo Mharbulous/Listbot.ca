@@ -366,10 +366,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
-import { useAuthStore } from '@/core/auth/stores';
-import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useAuthStore } from '@/core/auth/stores/index.js';
+import { useMatterViewStore } from '../stores/matterView.js';
 import { collection, getCountFromServer } from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import { db } from '@/services/firebase.js';
 
 // Component configuration
 defineOptions({

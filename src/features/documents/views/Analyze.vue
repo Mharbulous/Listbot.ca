@@ -150,9 +150,9 @@
 
 <script setup>
 import { ref, nextTick, watch, computed } from 'vue';
-import { useColumnResize } from '@/composables/useColumnResize';
-import { useColumnDragDrop } from '@/composables/useColumnDragDrop';
-import { useColumnVisibility } from '@/composables/useColumnVisibility';
+import { useColumnResize } from '@/features/documents/composables/useColumnResize';
+import { useColumnDragDrop } from '@/features/documents/composables/useColumnDragDrop';
+import { useColumnVisibility } from '@/features/documents/composables/useColumnVisibility';
 import { getDescription } from '@/utils/analyzeMockData';
 
 // Column selector and refs

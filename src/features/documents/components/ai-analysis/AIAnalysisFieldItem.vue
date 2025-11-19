@@ -34,7 +34,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
-import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import SegmentedControl from '@/shared/components/ui/SegmentedControl.vue';
 
 const props = defineProps({
   label: {

@@ -393,7 +393,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
-import { useFirmMembers } from '@/features/profile/composables/useFirmMembers';
+import { useFirmMembers } from '@/features/profile/composables/useFirmMembers.js';
 
 // Component configuration
 defineOptions({

@@ -3,7 +3,7 @@
  * Manages batch upload orchestration, progress tracking, and upload lifecycle
  */
 
-import { useMatterViewStore } from '../../../stores/matterView.js';
+import { useMatterViewStore } from '@/features/matters/stores/matterView.js';
 import { useUploadOrchestration } from './useUploadOrchestration.js';
 
 /**

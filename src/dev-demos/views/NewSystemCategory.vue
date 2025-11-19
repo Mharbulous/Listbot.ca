@@ -225,21 +225,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCategoryManager } from '../../features/organizer/composables/useCategoryManager.js';
-import { getAutomaticTagColor } from '../../features/organizer/utils/automaticTagColors.js';
-import { categoryTypeOptions } from '../../features/organizer/utils/categoryTypes.js';
-import { currencyOptions } from '../../features/organizer/utils/currencyOptions.js';
-import { sequenceFormatOptions } from '../../features/organizer/utils/categoryFormOptions.js';
+import { useCategoryManager } from '../../features/documents/composables/useCategoryManager.js';
+import { getAutomaticTagColor } from '../../features/documents/utils/automaticTagColors.js';
+import { categoryTypeOptions } from '../../features/documents/utils/categoryTypes.js';
+import { currencyOptions } from '../../features/documents/utils/currencyOptions.js';
+import { sequenceFormatOptions } from '../../features/documents/utils/categoryFormOptions.js';
 import {
   generateRegexExamples,
   capitalizeFirstLetter,
   isRegexDefinitionValid,
-} from '../../features/organizer/utils/categoryFormHelpers.js';
+} from '../../features/documents/utils/categoryFormHelpers.js';
 import {
   checkForDuplicateSystemCategory,
   getCategoryConflictErrors,
-} from '../../features/organizer/utils/categoryIdGenerator.js';
-import TagOptionsManager from '../../features/organizer/components/TagOptionsManager.vue';
+} from '../../features/documents/utils/categoryIdGenerator.js';
+import TagOptionsManager from '../../features/documents/components/TagOptionsManager.vue';
 
 const router = useRouter();
 const categoryManager = useCategoryManager();

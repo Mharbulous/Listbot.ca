@@ -3,7 +3,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/services/firebase.js';
 import { pdfjsLib, wasmUrl, standardFontDataUrl } from '@/config/pdfWorker.js';
-import { useThumbnailRenderer } from '@/features/organizer/composables/useThumbnailRenderer.js';
+import { useThumbnailRenderer } from '@/features/documents/composables/useThumbnailRenderer.js';
 
 /**
  * Composable for managing document peek functionality

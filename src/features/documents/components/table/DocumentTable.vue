@@ -253,9 +253,9 @@ import { useVirtualTable } from '@/features/documents/composables/useVirtualTabl
 import { useColumnSort } from '@/features/documents/composables/useColumnSort';
 import { useDocumentTablePeek, getRowBackgroundColor } from '@/features/documents/composables/useDocumentTablePeek';
 import { useCellTooltip } from '@/features/documents/composables/useCellTooltip';
-import DocumentPeekTooltip from './DocumentPeekTooltip.vue';
-import CellContentTooltip from './CellContentTooltip.vue';
-import DragHandle from './DragHandle.vue';
+import DocumentPeekTooltip from '@/features/documents/components/table/DocumentPeekTooltip.vue';
+import CellContentTooltip from '@/features/documents/components/table/CellContentTooltip.vue';
+import DragHandle from '@/features/documents/components/table/DragHandle.vue';
 
 // Props
 const props = defineProps({

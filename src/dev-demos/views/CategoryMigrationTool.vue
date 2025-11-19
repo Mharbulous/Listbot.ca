@@ -186,12 +186,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCategoryManager } from '../../features/organizer/composables/useCategoryManager.js';
+import { useCategoryManager } from '../../features/documents/composables/useCategoryManager.js';
 import {
   getCategoryTypeInfo,
   getCategoryTypeLabel,
-} from '../../features/organizer/utils/categoryTypes.js';
-import { getCurrencySymbol } from '../../features/organizer/utils/currencyOptions.js';
+} from '../../features/documents/utils/categoryTypes.js';
+import { getCurrencySymbol } from '../../features/documents/utils/currencyOptions.js';
 
 const router = useRouter();
 const categoryManager = useCategoryManager();

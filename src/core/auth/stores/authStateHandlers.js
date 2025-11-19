@@ -106,7 +106,7 @@ export async function _handleUserUnauthenticated(store) {
 
   // Clear user preferences on logout
   try {
-    const { useUserPreferencesStore } = await import('../../../features/profile/stores/userPreferences');
+    const { useUserPreferencesStore } = await import('@/features/profile/stores/userPreferences');
     const preferencesStore = useUserPreferencesStore();
     preferencesStore.clear();
   } catch (error) {

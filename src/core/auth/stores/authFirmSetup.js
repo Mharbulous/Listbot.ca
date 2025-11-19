@@ -103,7 +103,7 @@ export async function _createSoloFirm(firebaseUser) {
     });
 
     // 3. Create user document with preferences (including new display preferences)
-    const { UserService } = await import('../../../services/userService');
+    const { UserService } = await import('@/features/profile/services/userService');
     await UserService.createOrUpdateUserDocument(firebaseUser, {
       preferences: {
         theme: 'light',
@@ -128,7 +128,7 @@ export async function _createSoloFirm(firebaseUser) {
  */
 export async function _initializeUserPreferences(userId) {
   try {
-    const { useUserPreferencesStore } = await import('../userPreferences');
+    const { useUserPreferencesStore } = await import('@/features/profile/stores/userPreferences');
     const preferencesStore = useUserPreferencesStore();
     await preferencesStore.initialize(userId);
   } catch (error) {

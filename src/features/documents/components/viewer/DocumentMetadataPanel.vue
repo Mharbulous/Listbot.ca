@@ -104,10 +104,10 @@
 
 <script setup>
 import { ref } from 'vue';
-import DigitalFileTab from './tabs/DigitalFileTab.vue';
-import AIAnalysisTab from './tabs/AIAnalysisTab.vue';
-import ReviewTab from './tabs/ReviewTab.vue';
-import DocumentTab from './tabs/DocumentTab.vue';
+import DigitalFileTab from '../ai-analysis/DigitalFileTab.vue';
+import AIAnalysisTab from '../ai-analysis/AIAnalysisTab.vue';
+import ReviewTab from '../ai-analysis/ReviewTab.vue';
+import DocumentTab from '../ai-analysis/DocumentTab.vue';
 
 // Tab state
 const activeTab = ref('document');

@@ -454,10 +454,10 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
-import { useUsers } from '@/features/profile/composables/useUsers';
-import { useMatterViewStore } from '@/features/matters/stores/matterView';
-import { useFirmMembers } from '@/features/profile/composables/useFirmMembers';
-import { useAuthStore } from '@/core/auth/stores';
+import { useUsers } from '@/features/profile/composables/useUsers.js';
+import { useMatterViewStore } from '../stores/matterView.js';
+import { useFirmMembers } from '@/features/profile/composables/useFirmMembers.js';
+import { useAuthStore } from '@/core/auth/stores/index.js';
 
 // Component configuration
 defineOptions({

@@ -117,11 +117,11 @@
 <script setup>
 import { computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useUserPreferencesStore } from '@/features/profile/stores/userPreferences';
+import { useUserPreferencesStore } from '@/features/profile/stores/userPreferences.js';
 import {
   dateFormatOptions,
   timeFormatOptions,
-} from '@/features/documents/utils/categoryFormOptions';
+} from '@/features/documents/utils/categoryFormOptions.js';
 
 const preferencesStore = useUserPreferencesStore();
 const { dateFormat, timeFormat, isLoading } = storeToRefs(preferencesStore);

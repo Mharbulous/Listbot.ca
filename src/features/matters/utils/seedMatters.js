@@ -1,5 +1,5 @@
 import { writeBatch, doc, collection, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import { db } from '@/services/firebase.js';
 
 /**
  * Seed Firestore database with initial matter data

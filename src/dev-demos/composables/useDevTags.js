@@ -1,6 +1,6 @@
 import { ref, computed, reactive } from 'vue';
 import { onSnapshot } from 'firebase/firestore';
-import { useAuthStore } from '../../core/stores/auth/index.js';
+import { useAuthStore } from '@/core/auth/stores/index.js';
 import { DevTagService } from '../services/devTagService.js';
 
 /**

@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import PdfThumbnailList from '@/features/organizer/components/PdfThumbnailList.vue';
+import PdfThumbnailList from '@/features/documents/components/PdfThumbnailList.vue';
 
 // Props
 defineProps({
