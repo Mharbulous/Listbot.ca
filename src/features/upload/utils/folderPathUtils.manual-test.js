@@ -9,6 +9,7 @@ import {
   parseExistingPaths,
   serializePaths,
   normalizePath,
+  getDisplayPath,
   FOLDER_PATH_PATTERNS,
 } from './folderPathUtils.js';
 
@@ -151,6 +152,20 @@ export function runFolderPathTests() {
     serializePaths(['/2025', '/Bank Statements'])
   );
   console.log('serialize([]) =', serializePaths([]));
+  console.log('serialize(["/", "/2025"]) =', serializePaths(['/', '/2025']));
+  console.log('Expected: "/2025" (root path filtered out)');
+  console.log('');
+
+  // Test getDisplayPath
+  console.log('Testing getDisplayPath:');
+  console.log('getDisplayPath("") =', getDisplayPath(''));
+  console.log('getDisplayPath("/2025") =', getDisplayPath('/2025'));
+  console.log('getDisplayPath("/|/2025/1. Bank Statements") =', getDisplayPath('/|/2025/1. Bank Statements'));
+  console.log('Expected: "/2025/1. Bank Statements" (root filtered, first path shown)');
+  console.log('getDisplayPath("/2025|/Bank Statements") =', getDisplayPath('/2025|/Bank Statements'));
+  console.log('Expected: "/2025" (first non-root path)');
+  console.log('getDisplayPath("/") =', getDisplayPath('/'));
+  console.log('Expected: "" (only root path, filtered out)');
   console.log('');
 
   console.log('🎉 All folder path pattern tests completed!');
