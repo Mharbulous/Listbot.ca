@@ -1,7 +1,8 @@
 # AI-Powered Document Analysis - Implementation Guide
 
+**Reconciled up to**: 2025-11-19
 **Status**: Phases 1-3 Implemented (DocumentDate & DocumentType)
-**Last Updated**: 2025-11-09
+**Last Updated**: 2025-11-19
 **Implementation Completion**: November 2025
 
 ## Overview
@@ -15,6 +16,29 @@ The AI document analysis system automatically extracts structured metadata from 
 - **Confidence Scoring**: Provides 0-100% confidence scores with 95% threshold for auto-approval
 - **Alternative Suggestions**: Offers up to 2 alternatives for low-confidence (<95%) extractions
 - **Hybrid Storage**: Stores results in both subcollection (full metadata) and embedded map (table performance)
+
+## Key Files
+
+### Core Services
+- `src/services/aiMetadataExtractionService.js` - Singleton service for AI metadata extraction (DocumentDate, DocumentType)
+- `src/features/organizer/services/aiTagService.js` - Class service for general AI tag suggestions
+- `src/features/organizer/services/aiProcessingService.js` - Lower-level AI operations
+- `src/features/organizer/services/fileProcessingService.js` - File retrieval and processing
+- `src/features/organizer/services/tagSubcollectionService.js` - Tag storage and synchronization
+
+### UI Components
+- `src/components/document/tabs/AIAnalysisTab.vue` - AI configuration panel
+- `src/components/document/tabs/ReviewTab.vue` - AI results review panel
+- `src/components/document/tabs/ai-analysis/AIAnalysisButton.vue` - Analysis trigger button
+- `src/components/document/tabs/ai-analysis/AIAnalysisError.vue` - Error display component
+- `src/components/document/tabs/ai-analysis/AIAnalysisFieldItem.vue` - Configuration field item
+- `src/components/document/tabs/ai-analysis/AIReviewFieldItem.vue` - Review field item
+
+### Composables
+- `src/composables/useAIAnalysis.js` - AI analysis state management and logic
+
+### Configuration
+- `src/services/firebase.js` - Firebase AI initialization
 
 ## Architecture
 
@@ -71,6 +95,11 @@ This is a **class service** for general AI-powered tag suggestions (not system c
 
 **Note**: This service is separate from metadata extraction and uses different prompting strategies.
 
+**Auth Store Import**: Uses new modular auth structure:
+```javascript
+import { useAuthStore } from '@/core/stores/auth/index.js';
+```
+
 #### 3. AI Processing Service
 
 **Location**: `src/features/organizer/services/aiProcessingService.js`
@@ -92,6 +121,60 @@ Handles file retrieval and processing for AI analysis.
 - `getFileForProcessing(evidence, firmId, matterId)` - Retrieves file from Firebase Storage as base64
 - `getUploadExtension(evidence)` - Extracts file extension
 - `arrayBufferToBase64(arrayBuffer)` - Efficient base64 conversion
+
+### Composable Layer
+
+#### useAIAnalysis Composable
+
+**Location**: `src/composables/useAIAnalysis.js`
+
+**Purpose**: Centralizes AI analysis state management and logic, providing a reusable interface for AI-powered metadata extraction. This composable is used by both AIAnalysisTab and ReviewTab to share state and behavior.
+
+**Key State**:
+- `isAnalyzing` - Analysis in progress flag
+- `loadingAITags` - Loading existing tags from Firestore
+- `showLoadingUI` - Delayed loading indicator (200ms debounce)
+- `aiError` - Error state with user-friendly messages
+- `aiResults` - Stores documentDate and documentType results
+- `fieldPreferences` - Get/Skip/Manual settings per field
+- `reviewValues` - Editable review values (Phase 4)
+- `reviewErrors` - Validation errors for review inputs
+- `savingReview` - Review save in progress
+
+**Key Methods**:
+- `loadAITags()` - Loads existing AI tags from Firestore subcollection
+- `handleAnalyzeClick()` - Triggers AI analysis for fields marked "Get"
+- `retryAnalysis()` - Retries failed analysis
+- `setExtractionMode(fieldName, mode)` - Updates Get/Skip/Manual preference
+- `shouldShowOnAITab(fieldName)` - Determines if field is pending (not yet determined)
+- `acceptReviewValue(fieldName)` - Validates and saves accepted review value (Phase 4)
+- `rejectReviewValue(fieldName)` - Rejects AI value and logs feedback (Phase 4)
+- `formatDateString(dateString, dateFormat)` - Formats dates per user preference
+
+**Computed Properties**:
+- `hasEmptyFields` - True if any required field is not yet determined
+- `hasFieldsToReview` - True if any field is ready for review (Phase 4)
+
+**Usage Pattern**:
+```javascript
+// In AIAnalysisTab.vue or ReviewTab.vue
+import { useAIAnalysis } from '@/composables/useAIAnalysis';
+
+const {
+  isAnalyzing,
+  aiResults,
+  fieldPreferences,
+  handleAnalyzeClick,
+  loadAITags,
+  shouldShowOnAITab
+} = useAIAnalysis(props);
+```
+
+**Benefits**:
+- **Shared State**: Both AI and Review tabs use the same state
+- **Code Reuse**: Eliminates duplication between components
+- **Testability**: Logic can be tested independently of components
+- **Maintainability**: Single source of truth for AI analysis behavior
 
 ### UI Components
 
@@ -118,19 +201,12 @@ The metadata panel contains four tabs: **AI**, **Review**, **Document**, and **F
 - **Confidence Badges**: (≥95% green, 80-94% amber, <80% red)
 - **Error Handling**: Retry capability for failed analysis
 
-**Key Methods**:
-- `handleAnalyzeClick()` - Triggers analysis for fields marked "Get"
-- `loadAITags()` - Loads existing results from Firestore
-- `setExtractionMode(fieldName, mode)` - Updates Get/Skip/Manual selection
-- `shouldShowOnAITab(fieldName)` - Determines if field is pending (not yet determined)
-- `getConfidenceBadgeColor(confidence)` - Badge colors based on confidence thresholds
-- `formatDateString(dateString)` - Formats dates per user preference
+**State Management**: Uses `useAIAnalysis` composable for all state and logic
 
-**State Management**:
-- `isAnalyzing` - Analysis in progress flag
-- `extractionMode` - Get/Skip/Manual settings per field
-- `aiResults` - Stores documentDate and documentType results
-- `aiError` - Error state with user-friendly messages
+**Sub-Components**:
+- `AIAnalysisButton.vue` - Analyze Document button with loading states
+- `AIAnalysisError.vue` - Error display with retry action
+- `AIAnalysisFieldItem.vue` - Individual field configuration item
 
 #### Review Tab
 
@@ -153,12 +229,10 @@ The metadata panel contains four tabs: **AI**, **Review**, **Document**, and **F
 - **Manual Fields**: Appear on BOTH tabs until accepted
 - **Accepted Fields**: Disappear from AI Tab (determined state)
 
-**Key Methods**:
-- `acceptReviewValue(fieldName)` - Validates and saves accepted value
-- `rejectReviewValue(fieldName)` - (Future) Logs rejection and returns to AI Tab
-- `validateReviewValue(fieldName, value)` - Validation rules per field type
-- `shouldShowOnReviewTab(fieldName)` - Shows if AI-extracted OR set to Manual
-- `isAcceptEnabled(fieldName)` - Enables Accept button when input is valid
+**State Management**: Uses `useAIAnalysis` composable for all state and logic
+
+**Sub-Components**:
+- `AIReviewFieldItem.vue` - Individual review field with Accept/Reject buttons
 
 **Validation**:
 - Document Date: YYYY-MM-DD format, not in future
@@ -377,7 +451,7 @@ throw new Error('No document types found');
 ### Technical Flow
 
 ```javascript
-// 1. User clicks "Analyze Document"
+// 1. User clicks "Analyze Document" (via useAIAnalysis composable)
 handleAnalyzeClick() {
   isAnalyzing.value = true;
 
@@ -459,104 +533,68 @@ Return as JSON:
 }
 ```
 
-### Step 2: Update UI Component
+### Step 2: Update useAIAnalysis Composable
+
+**File**: `src/composables/useAIAnalysis.js`
+
+**Pattern**: Add new field to state refs
+
+```javascript
+const aiResults = ref({
+  documentDate: null,
+  documentType: null,
+  documentAuthor: null  // Add new field
+});
+
+const fieldPreferences = ref({
+  documentDate: 'get',
+  documentType: 'get',
+  documentAuthor: 'get'  // Add new field
+});
+
+const reviewValues = ref({
+  documentDate: '',
+  documentType: '',
+  documentAuthor: ''  // Add new field
+});
+```
+
+**Pattern**: Update `loadAITags()` method
+
+```javascript
+aiResults.value = {
+  documentDate: tags?.find(t => t?.categoryId === 'DocumentDate') || null,
+  documentType: tags?.find(t => t?.categoryId === 'DocumentType') || null,
+  documentAuthor: tags?.find(t => t?.categoryId === 'DocumentAuthor') || null
+};
+```
+
+### Step 3: Update UI Components
 
 **File**: `src/components/document/tabs/AIAnalysisTab.vue`
 
-**Pattern**: Add new field display in System Fields section
+**Pattern**: Add new field display using sub-component
 
 ```vue
-<!-- Document Author -->
-<div class="metadata-item">
-  <span class="metadata-label">Document Author:</span>
-
-  <!-- State 1: Analyze Button -->
-  <v-btn
-    v-if="!aiResults.documentAuthor && !isAnalyzing"
-    color="primary"
-    variant="outlined"
-    prepend-icon="mdi-robot"
-    @click="handleAnalyzeClick"
-    class="analyze-button"
-    size="small"
-  >
-    Analyze Document
-  </v-btn>
-
-  <!-- State 2: Analyzing Spinner -->
-  <div v-else-if="isAnalyzing" class="analyzing-state">
-    <v-progress-circular indeterminate size="20" color="primary" />
-    <span class="analyzing-text">Analyzing...</span>
-  </div>
-
-  <!-- State 3: AI Result with Tooltip -->
-  <div v-else class="ai-result">
-    <v-tooltip location="bottom" max-width="400">
-      <template v-slot:activator="{ props: tooltipProps }">
-        <div v-bind="tooltipProps" class="ai-result-content">
-          <span class="ai-result-value">{{ aiResults.documentAuthor.tagName }}</span>
-          <v-chip
-            :color="getConfidenceBadgeColor(aiResults.documentAuthor.confidence)"
-            size="small"
-            variant="flat"
-            class="ai-result-badge"
-          >
-            {{ aiResults.documentAuthor.confidence }}%
-          </v-chip>
-        </div>
-      </template>
-      <div class="ai-tooltip-content">
-        <div v-if="aiResults.documentAuthor.metadata?.context" class="ai-tooltip-section">
-          <strong>Context:</strong>
-          <p>{{ aiResults.documentAuthor.metadata.context }}</p>
-        </div>
-        <div v-if="aiResults.documentAuthor.metadata?.aiAlternatives?.length" class="ai-tooltip-section">
-          <strong>Alternatives:</strong>
-          <ul>
-            <li v-for="alt in aiResults.documentAuthor.metadata.aiAlternatives" :key="alt.value">
-              {{ alt.value }} ({{ alt.confidence }}%) - {{ alt.reasoning }}
-            </li>
-          </ul>
-        </div>
-      </div>
-    </v-tooltip>
-  </div>
-</div>
+<!-- Document Author - Show only if not determined -->
+<AIAnalysisFieldItem
+  v-if="shouldShowOnAITab('documentAuthor')"
+  label="Document Author"
+  :field-preference="fieldPreferences.documentAuthor"
+  :is-analyzing="isAnalyzing"
+  @update:field-preference="setExtractionMode('documentAuthor', $event)"
+/>
 ```
 
-### Step 3: Update Tag Storage Logic
+**File**: `src/components/document/tabs/ReviewTab.vue`
 
-**File**: `AIAnalysisTab.vue` - `handleAnalyzeClick()` method
+**Pattern**: Add new review field using sub-component
 
-**Pattern**: Add new category to tags array
-
-```javascript
-const tagsToStore = [
-  // ... existing DocumentDate tag
-  // ... existing DocumentType tag
-
-  // New DocumentAuthor tag
-  {
-    categoryId: 'DocumentAuthor',
-    categoryName: 'Document Author',
-    tagName: result.documentAuthor.value,
-    confidence: result.documentAuthor.confidence,
-    source: 'ai',
-    autoApproved: result.documentAuthor.confidence >= confidenceThreshold,
-    reviewRequired: result.documentAuthor.confidence < confidenceThreshold,
-    createdBy: authStore.user?.uid || 'system',
-    metadata: {
-      model: 'gemini-2.5-flash-lite',
-      processingTime: result.processingTime,
-      aiReasoning: result.documentAuthor.reasoning,
-      context: result.documentAuthor.context,
-      aiAlternatives: result.documentAuthor.alternatives || [],
-      reviewReason: result.documentAuthor.confidence < confidenceThreshold
-        ? 'Confidence below threshold'
-        : null
-    }
-  }
-];
+```vue
+<!-- Document Author Review -->
+<div v-if="shouldShowField('documentAuthor')" class="review-field">
+  <!-- Review field content with confidence badge, input, Accept/Reject buttons -->
+</div>
 ```
 
 ### Step 4: Create System Category in Firestore
@@ -572,30 +610,6 @@ const tagsToStore = [
   description: 'The person or entity who created/authored the document',
   tags: [] // Empty for Open List, or predefined authors
 }
-```
-
-### Step 5: Update State Management
-
-**File**: `AIAnalysisTab.vue`
-
-**Pattern**: Add new field to `aiResults` ref
-
-```javascript
-const aiResults = ref({
-  documentDate: null,
-  documentType: null,
-  documentAuthor: null  // Add new field
-});
-```
-
-**Pattern**: Update `loadAITags()` method
-
-```javascript
-aiResults.value = {
-  documentDate: tags?.find(t => t?.categoryId === 'DocumentDate') || null,
-  documentType: tags?.find(t => t?.categoryId === 'DocumentType') || null,
-  documentAuthor: tags?.find(t => t?.categoryId === 'DocumentAuthor') || null
-};
 ```
 
 ## Configuration
@@ -790,13 +804,13 @@ If still occurring, provide specific example document for prompt refinement.
 
 ## Related Documentation
 
-- **`docs/ai/ai-metadata-extraction-requirements.md`** - Product requirements (PRD)
-- **`docs/architecture/CategoryTags.md`** - Tag system architecture
-- **`docs/architecture/file-lifecycle.md`** - File terminology and lifecycle
+- **`docs/Features/Organizer/AIAnalysis/ai-requirements.md`** - Product requirements (PRD)
+- **`docs/Features/Organizer/Categories/25-11-18-category-system-overview.md`** - Tag system architecture
+- **`docs/Features/Upload/Processing/file-lifecycle.md`** - File terminology and lifecycle
 - **`planning/2. TODOs/2025-11-07-First-AI-analysis-dateNtype.md`** - Implementation plan and learnings
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: 2025-11-09
+**Document Version**: 2.1
+**Last Updated**: 2025-11-19
 **Status**: Complete implementation guide (reflects Phases 1-3 completion)
