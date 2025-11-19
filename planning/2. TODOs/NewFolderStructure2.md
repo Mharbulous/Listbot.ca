@@ -16,18 +16,18 @@
 ```
 src/
 ├── views/                              # 🎯 Navigation menu items (route entry points)
-│   ├── AboutView.vue                   # ℹ️ Information menu item
-│   ├── AnalyzeView.vue                 # 🕵️ Analyze menu item
-│   ├── CategoriesView.vue              # 🗃️ Categories menu item (new)
-│   ├── DocumentsView.vue               # 📁 Documents menu item
-│   ├── HomeView.vue                    # 🏠 Home/landing
-│   ├── ListView.vue                    # 📃 List menu item
-│   ├── MattersView.vue                 # 🗄️ Matters menu item
-│   ├── MatterDetailView.vue            # 🗄️ Individual matter view
-│   ├── ProfileView.vue                 # 👤 User profile
-│   ├── SettingsView.vue                # ⚙️ App settings
-│   ├── UploadView.vue                  # 📤 Upload menu item
-│   ├── LoginView.vue                   # 🔐 Login page
+│   ├── About.vue                       # ℹ️ Information menu item
+│   ├── Analyze.vue                     # 🕵️ Analyze menu item
+│   ├── Categories.vue                  # 🗃️ Categories menu item (new)
+│   ├── Documents.vue                   # 📁 Documents menu item
+│   ├── Home.vue                        # 🏠 Home/landing
+│   ├── List.vue                        # 📃 List menu item
+│   ├── Matters.vue                     # 🗄️ Matters menu item
+│   ├── MatterDetail.vue                # 🗄️ Individual matter view
+│   ├── Profile.vue                     # 👤 User profile
+│   ├── Settings.vue                    # ⚙️ App settings
+│   ├── Upload.vue                      # 📤 Upload menu item
+│   ├── Login.vue                       # 🔐 Login page
 │   └── defaults/                       # Default/error views
 │       ├── UnderConstruction.vue
 │       └── PageNotFound.vue
@@ -94,10 +94,12 @@ src/
 │   ├── categories/                     # Category/tag management
 │   │   ├── components/
 │   │   │   ├── CategoryManager.vue
-│   │   │   ├── CategoryWizard.vue
 │   │   │   ├── CategoryCard.vue
 │   │   │   ├── CategorySelector.vue
 │   │   │   └── TagEditor.vue
+│   │   ├── wizards/                    # Category wizards
+│   │   │   ├── CategoryCreationWizard.vue
+│   │   │   └── CategoryEditWizard.vue
 │   │   ├── composables/
 │   │   │   └── useCategory.js
 │   │   ├── stores/
@@ -182,6 +184,11 @@ src/
 │   │   │   ├── BaseInput.vue
 │   │   │   ├── BaseDialog.vue
 │   │   │   └── BaseCard.vue
+│   │   ├── wizard/                     # Shared wizard components
+│   │   │   ├── WizardContainer.vue
+│   │   │   ├── WizardStep.vue
+│   │   │   ├── WizardNavigation.vue
+│   │   │   └── WizardProgressBar.vue
 │   │   └── ui/                         # Common UI elements
 │   │       ├── LoadingSpinner.vue
 │   │       ├── ErrorMessage.vue
@@ -260,9 +267,10 @@ src/
   - Move `/components/features/` matter components → `/features/matters/components/`
   - Move matter-specific stores → `/features/matters/stores/`
 
-- [ ] Organize **documents** feature (currently "organizer")
-  - Move `/features/organizer/` → `/features/documents/`
+- [ ] Organize **documents** feature (rename from "organizer")
+  - Rename `/features/organizer/` → `/features/documents/`
   - Consolidate `/components/document/` → `/features/documents/components/`
+  - Update all imports from `@/features/organizer/` → `@/features/documents/`
 
 - [ ] Organize **upload** feature
   - Keep `/features/upload/` structure
@@ -270,9 +278,17 @@ src/
 
 - [ ] Organize **categories** feature
   - Extract from organizer → `/features/categories/`
+  - Create `/features/categories/wizards/` for wizard components
+  - Move `CategoryCreationWizard.vue` → `/features/categories/wizards/`
+  - Move `CategoryEditWizard.vue` → `/features/categories/wizards/`
+
+- [ ] Create shared wizard infrastructure
+  - Create `/shared/components/wizard/` folder
+  - Add reusable wizard components (WizardContainer, WizardStep, WizardNavigation, WizardProgressBar)
+  - Add wizard-related composables to `/shared/composables/` (e.g., `useWizardSteps.js`)
 
 ### Phase 4: Views
-- [ ] Rename view files to `*View.vue` convention (optional but clearer)
+- [ ] Keep view file names WITHOUT `View` suffix (folder path provides context)
 - [ ] Ensure each view is a thin composition shell
 - [ ] Update router imports
 
@@ -282,19 +298,19 @@ src/
 
 ### Views → Features
 ```
-📁 DocumentsView.vue (route shell)
+📁 Documents.vue (route shell at /views/Documents.vue)
   └── uses 📦 /features/documents/
       ├── DocumentTable.vue
       ├── useDocumentNavigation()
       └── documentStore
 
-📤 UploadView.vue (route shell)
+📤 Upload.vue (route shell at /views/Upload.vue)
   └── uses 📦 /features/upload/
       ├── UploadZone.vue
       ├── FileList.vue
       └── uploadStore
 
-🗄️ MattersView.vue (route shell)
+🗄️ Matters.vue (route shell at /views/Matters.vue)
   └── uses 📦 /features/matters/
       ├── MatterTable.vue
       └── matterStore
@@ -307,6 +323,18 @@ src/
       ├── components/base/BaseButton.vue
       ├── composables/useAsync.js
       └── utils/dateUtils.js
+```
+
+### Wizards (Feature + Shared)
+```
+🧙 /features/categories/wizards/CategoryCreationWizard.vue
+  └── uses 🔗 /shared/components/wizard/
+      ├── WizardContainer.vue
+      ├── WizardStep.vue
+      ├── WizardNavigation.vue
+      └── WizardProgressBar.vue
+  └── uses 🔗 /shared/composables/
+      └── useWizardSteps.js
 ```
 
 ---
@@ -325,28 +353,57 @@ src/
 
 ---
 
-## Naming Conventions
+## Naming Conventions (Optimized for Claude Code Token Efficiency)
 
-- **Views**: `*View.vue` (e.g., `DocumentsView.vue`, `MattersView.vue`)
-- **Feature Components**: Domain-specific names (e.g., `DocumentTable.vue`, `MatterCard.vue`)
-- **Shared Components**:
-  - Base components: `Base*.vue` (e.g., `BaseButton.vue`)
-  - Layout components: `App*.vue` (e.g., `AppSideBar.vue`)
-- **Composables**: `use*.js` (e.g., `useMatter.js`)
-- **Stores**: `*Store.js` (e.g., `matterStore.js`)
-- **Services**: `*Service.js` (e.g., `authService.js`)
+### Philosophy: Folder Path Provides Context
+
+File names should be **descriptive but not redundant** with their folder path. This optimizes Claude Code's ability to find relevant files efficiently while minimizing token usage when searching.
+
+### Views (Route Entry Points)
+- **DON'T** add `View` suffix - folder path already signals this is a view
+- **DO** use clear, singular or plural names matching the route
+- ✅ `/views/Documents.vue` - Clear from path this is a view
+- ✅ `/views/Matters.vue` - No redundancy
+- ❌ `/views/DocumentsView.vue` - Redundant (folder already says "view")
+
+### Feature Components
+- **DO** use explicit, purpose-describing names
+- **DO** include the feature domain in the name to avoid ambiguity
+- ✅ `/features/documents/components/DocumentTable.vue` - Clear purpose
+- ✅ `/features/documents/components/DocumentViewer.vue` - Clear purpose
+- ✅ `/features/matters/components/MatterCard.vue` - Clear purpose
+- ❌ `/features/documents/components/Document.vue` - Ambiguous (document what?)
+
+### Shared Components
+- **Base components**: `Base*.vue` prefix (e.g., `BaseButton.vue`, `BaseDialog.vue`)
+- **Layout components**: `App*.vue` prefix (e.g., `AppSideBar.vue`, `AppHeader.vue`)
+- **UI components**: Descriptive names (e.g., `LoadingSpinner.vue`, `ErrorMessage.vue`)
+
+### JavaScript/TypeScript Files
+- **Composables**: `use*.js` (e.g., `useMatter.js`, `useDocumentNavigation.js`)
+- **Stores**: `*Store.js` (e.g., `matterStore.js`, `documentStore.js`)
+- **Services**: `*Service.js` (e.g., `authService.js`, `uploadService.js`)
+- **Utils**: Descriptive names (e.g., `dateUtils.js`, `formatters.js`)
+
+### Why This Helps Claude Code
+
+When Claude searches for "documents view", it efficiently finds:
+1. Path match: `/views/Documents.vue` ✅ (folder + filename both match)
+2. No need to read redundant suffixes
+3. Explicit feature component names help disambiguate when searching for specific functionality
 
 ---
 
 ## Questions to Consider
 
-1. Should we rename existing views to `*View.vue` for consistency?
-2. Should `/features/organizer/` be renamed to `/features/documents/`?
-3. How should we handle wizard-style views (e.g., CategoryCreationWizard)?
-   - Option A: Keep as feature components used by views
-   - Option B: Create dedicated views for complex wizards
+1. ~~Should we rename existing views to `*View.vue` for consistency?~~ **RESOLVED: No - keep without suffix for token efficiency**
+2. ~~Should `/features/organizer/` be renamed to `/features/documents/`?~~ **RESOLVED: Yes - rename to documents**
+3. ~~How should we handle wizard-style views (e.g., CategoryCreationWizard)?~~ **RESOLVED: Create `/wizards/` subfolder within each feature + shared wizard components**
 4. Should login be a view or a feature component?
-   - Current proposal: LoginView.vue (view) uses auth feature
+   - Current proposal: `Login.vue` (view) uses `/core/auth/` components
+5. Should wizard routes point to views or directly to feature wizard components?
+   - Option A: Create dedicated views that wrap wizards (e.g., `/views/CategoryWizard.vue` wraps `/features/categories/wizards/CategoryCreationWizard.vue`)
+   - Option B: Route directly to feature wizard components
 
 ---
 
@@ -356,4 +413,9 @@ src/
 - Features are **domain-focused** and **self-contained**
 - Shared code is **cross-cutting** (used by multiple features)
 - Core is **foundational** (auth, routing, config)
+- **Wizards** are organized as a distinct class of components:
+  - Feature-specific wizards live in `/features/{feature}/wizards/`
+  - Shared wizard UI components live in `/shared/components/wizard/`
+  - Wizards often share similar subcomponents (steps, navigation, progress bars)
+- **Naming optimized for Claude Code**: File names avoid redundancy with folder paths for better token efficiency in AI-assisted development
 - This aligns with Vue 3 best practices and feature-based architecture patterns
