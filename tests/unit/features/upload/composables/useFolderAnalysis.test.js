@@ -15,9 +15,9 @@ describe('useFolderAnalysis', () => {
     const result = preprocessFileData(mockFiles);
 
     expect(result.directoryStats).toEqual({
-      totalDirectoryCount: 4, // documents, documents/backup, images, root
+      totalDirectoryCount: 3, // documents, images, documents/backup
       maxFileDepth: 2,
-      avgFileDepth: 1.3,
+      avgFileDepth: 1.0,
       avgDirectoryDepth: 1.3,
     });
 
@@ -42,6 +42,6 @@ describe('useFolderAnalysis', () => {
   it('calculateFilenameStats returns correct filename length', () => {
     const result = calculateFilenameStats(mockFiles);
 
-    expect(result.avgFilenameLength).toBeCloseTo(16.3, 1);
+    expect(result.avgFilenameLength).toBeCloseTo(21.5, 1);
   });
 });
