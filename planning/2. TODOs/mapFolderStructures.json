@@ -1,0 +1,1688 @@
+{
+  "description": "Mapping of current /src file paths to new planned locations based on NewFolderStructurev3.md",
+  "generatedDate": "2025-11-19",
+  "mappings": {
+    "App.vue": {
+      "current": "src/App.vue",
+      "new": "src/App.vue",
+      "status": "unchanged",
+      "notes": "Root component stays at top level"
+    },
+    "main.js": {
+      "current": "src/main.js",
+      "new": "src/main.js",
+      "status": "unchanged",
+      "notes": "App entry point stays at top level"
+    },
+    "core/composables/useNotification.js": {
+      "current": "src/core/composables/useNotification.js",
+      "new": "src/core/composables/useNotification.js",
+      "status": "unchanged",
+      "notes": "Core cross-feature composable"
+    },
+    "core/stores/auth/authFirmSetup.js": {
+      "current": "src/core/stores/auth/authFirmSetup.js",
+      "new": "src/core/auth/stores/authFirmSetup.js",
+      "status": "moved",
+      "notes": "Moved to core/auth/stores/"
+    },
+    "core/stores/auth/authStateHandlers.js": {
+      "current": "src/core/stores/auth/authStateHandlers.js",
+      "new": "src/core/auth/stores/authStateHandlers.js",
+      "status": "moved",
+      "notes": "Moved to core/auth/stores/"
+    },
+    "core/stores/auth/authStore.js": {
+      "current": "src/core/stores/auth/authStore.js",
+      "new": "src/core/auth/stores/authStore.js",
+      "status": "moved",
+      "notes": "Moved to core/auth/stores/"
+    },
+    "core/stores/auth/index.js": {
+      "current": "src/core/stores/auth/index.js",
+      "new": "src/core/auth/stores/index.js",
+      "status": "moved",
+      "notes": "Moved to core/auth/stores/"
+    },
+    "core/stores/firm.js": {
+      "current": "src/core/stores/firm.js",
+      "new": "src/core/firm/stores/firm.js",
+      "status": "moved",
+      "notes": "Moved to core/firm/stores/"
+    },
+    "core/stores/userPreferences.js": {
+      "current": "src/core/stores/userPreferences.js",
+      "new": "src/features/profile/stores/userPreferences.js",
+      "status": "moved",
+      "notes": "User preferences are profile-specific, moved to features/profile/"
+    },
+    "components/features/auth/LoginForm.vue": {
+      "current": "src/components/features/auth/LoginForm.vue",
+      "new": "src/features/authentication/components/LoginForm.vue",
+      "status": "moved",
+      "notes": "Moved to authentication feature"
+    },
+    "services/authService.js": {
+      "current": "src/services/authService.js",
+      "new": "src/features/authentication/services/authService.js",
+      "status": "moved",
+      "notes": "Authentication service moved to feature"
+    },
+    "router/guards/auth.js": {
+      "current": "src/router/guards/auth.js",
+      "new": "src/features/authentication/guards/authGuard.js",
+      "status": "moved",
+      "notes": "Auth guard moved to authentication feature"
+    },
+    "composables/useMatters.js": {
+      "current": "src/composables/useMatters.js",
+      "new": "src/features/matters/composables/useMatters.js",
+      "status": "moved",
+      "notes": "Matter composable moved to matters feature"
+    },
+    "services/matterService.js": {
+      "current": "src/services/matterService.js",
+      "new": "src/features/matters/services/matterService.js",
+      "status": "moved",
+      "notes": "Matter service moved to matters feature"
+    },
+    "stores/matterView.js": {
+      "current": "src/stores/matterView.js",
+      "new": "src/features/matters/stores/matterView.js",
+      "status": "moved",
+      "notes": "Matter view store moved to matters feature"
+    },
+    "utils/seedMatters.js": {
+      "current": "src/utils/seedMatters.js",
+      "new": "src/features/matters/utils/seedMatters.js",
+      "status": "moved",
+      "notes": "Matter-specific utility moved to matters feature"
+    },
+    "router/guards/matter.js": {
+      "current": "src/router/guards/matter.js",
+      "new": "src/features/matters/guards/matterGuard.js",
+      "status": "moved",
+      "notes": "Matter guard moved to matters feature"
+    },
+    "views/Matters.vue": {
+      "current": "src/views/Matters.vue",
+      "new": "src/features/matters/views/Matters.vue",
+      "status": "moved",
+      "notes": "Matter view moved to matters feature"
+    },
+    "views/MatterDetail.vue": {
+      "current": "src/views/MatterDetail.vue",
+      "new": "src/features/matters/views/MatterDetail.vue",
+      "status": "moved",
+      "notes": "Matter detail view moved to matters feature"
+    },
+    "views/EditMatter.vue": {
+      "current": "src/views/EditMatter.vue",
+      "new": "src/features/matters/views/EditMatter.vue",
+      "status": "moved",
+      "notes": "Edit matter view moved to matters feature"
+    },
+    "views/NewMatter.vue": {
+      "current": "src/views/NewMatter.vue",
+      "new": "src/features/matters/views/NewMatter.vue",
+      "status": "moved",
+      "notes": "New matter view moved to matters feature"
+    },
+    "views/MatterImport.vue": {
+      "current": "src/views/MatterImport.vue",
+      "new": "src/features/matters/views/MatterImport.vue",
+      "status": "moved",
+      "notes": "Matter import view moved to matters feature"
+    },
+    "components/base/DocumentTable.vue": {
+      "current": "src/components/base/DocumentTable.vue",
+      "new": "src/features/documents/components/table/DocumentTable.vue",
+      "status": "moved",
+      "notes": "Document table moved to documents feature"
+    },
+    "components/base/DragHandle.vue": {
+      "current": "src/components/base/DragHandle.vue",
+      "new": "src/features/documents/components/table/DragHandle.vue",
+      "status": "moved",
+      "notes": "Drag handle component moved to documents feature"
+    },
+    "components/base/CellContentTooltip.vue": {
+      "current": "src/components/base/CellContentTooltip.vue",
+      "new": "src/features/documents/components/table/CellContentTooltip.vue",
+      "status": "moved",
+      "notes": "Cell tooltip moved to documents feature"
+    },
+    "components/base/DocumentPeekTooltip.vue": {
+      "current": "src/components/base/DocumentPeekTooltip.vue",
+      "new": "src/features/documents/components/table/DocumentPeekTooltip.vue",
+      "status": "moved",
+      "notes": "Document peek tooltip moved to documents feature"
+    },
+    "components/document/DocumentNavigationBar.vue": {
+      "current": "src/components/document/DocumentNavigationBar.vue",
+      "new": "src/features/documents/components/viewer/DocumentNavigationBar.vue",
+      "status": "moved",
+      "notes": "Document viewer component moved to documents feature"
+    },
+    "components/document/DocumentMetadataPanel.vue": {
+      "current": "src/components/document/DocumentMetadataPanel.vue",
+      "new": "src/features/documents/components/viewer/DocumentMetadataPanel.vue",
+      "status": "moved",
+      "notes": "Document viewer component moved to documents feature"
+    },
+    "components/document/PdfViewerArea.vue": {
+      "current": "src/components/document/PdfViewerArea.vue",
+      "new": "src/features/documents/components/viewer/PdfViewerArea.vue",
+      "status": "moved",
+      "notes": "Document viewer component moved to documents feature"
+    },
+    "components/document/PdfThumbnailPanel.vue": {
+      "current": "src/components/document/PdfThumbnailPanel.vue",
+      "new": "src/features/documents/components/viewer/PdfThumbnailPanel.vue",
+      "status": "moved",
+      "notes": "Document viewer component moved to documents feature"
+    },
+    "components/document/tabs/AIAnalysisTab.vue": {
+      "current": "src/components/document/tabs/AIAnalysisTab.vue",
+      "new": "src/features/documents/components/ai-analysis/AIAnalysisTab.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/DigitalFileTab.vue": {
+      "current": "src/components/document/tabs/DigitalFileTab.vue",
+      "new": "src/features/documents/components/ai-analysis/DigitalFileTab.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/DocumentTab.vue": {
+      "current": "src/components/document/tabs/DocumentTab.vue",
+      "new": "src/features/documents/components/ai-analysis/DocumentTab.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/ReviewTab.vue": {
+      "current": "src/components/document/tabs/ReviewTab.vue",
+      "new": "src/features/documents/components/ai-analysis/ReviewTab.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/ai-analysis/AIAnalysisButton.vue": {
+      "current": "src/components/document/tabs/ai-analysis/AIAnalysisButton.vue",
+      "new": "src/features/documents/components/ai-analysis/AIAnalysisButton.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/ai-analysis/AIAnalysisError.vue": {
+      "current": "src/components/document/tabs/ai-analysis/AIAnalysisError.vue",
+      "new": "src/features/documents/components/ai-analysis/AIAnalysisError.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/ai-analysis/AIAnalysisFieldItem.vue": {
+      "current": "src/components/document/tabs/ai-analysis/AIAnalysisFieldItem.vue",
+      "new": "src/features/documents/components/ai-analysis/AIAnalysisFieldItem.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/document/tabs/ai-analysis/AIReviewFieldItem.vue": {
+      "current": "src/components/document/tabs/ai-analysis/AIReviewFieldItem.vue",
+      "new": "src/features/documents/components/ai-analysis/AIReviewFieldItem.vue",
+      "status": "moved",
+      "notes": "AI analysis component moved to documents feature"
+    },
+    "components/features/tags/EditableTag.vue": {
+      "current": "src/components/features/tags/EditableTag.vue",
+      "new": "src/features/documents/components/tags/EditableTag.vue",
+      "status": "moved",
+      "notes": "Tag component moved to documents feature"
+    },
+    "components/features/tags/composables/useTagEditing.js": {
+      "current": "src/components/features/tags/composables/useTagEditing.js",
+      "new": "src/features/documents/components/tags/composables/useTagEditing.js",
+      "status": "moved",
+      "notes": "Tag composable moved to documents feature"
+    },
+    "features/organizer/components/cells/BadgeCell.vue": {
+      "current": "src/features/organizer/components/cells/BadgeCell.vue",
+      "new": "src/features/documents/components/table/cells/BadgeCell.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/cells/DateCell.vue": {
+      "current": "src/features/organizer/components/cells/DateCell.vue",
+      "new": "src/features/documents/components/table/cells/DateCell.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/cells/FileSizeCell.vue": {
+      "current": "src/features/organizer/components/cells/FileSizeCell.vue",
+      "new": "src/features/documents/components/table/cells/FileSizeCell.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/cells/TagListCell.vue": {
+      "current": "src/features/organizer/components/cells/TagListCell.vue",
+      "new": "src/features/documents/components/table/cells/TagListCell.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/cells/TextCell.vue": {
+      "current": "src/features/organizer/components/cells/TextCell.vue",
+      "new": "src/features/documents/components/table/cells/TextCell.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/AITagChip.vue": {
+      "current": "src/features/organizer/components/AITagChip.vue",
+      "new": "src/features/documents/components/AITagChip.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/ColumnSelector.vue": {
+      "current": "src/features/organizer/components/ColumnSelector.vue",
+      "new": "src/features/documents/components/ColumnSelector.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FileDetails.vue": {
+      "current": "src/features/organizer/components/FileDetails.vue",
+      "new": "src/features/documents/components/FileDetails.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FileGrid.vue": {
+      "current": "src/features/organizer/components/FileGrid.vue",
+      "new": "src/features/documents/components/FileGrid.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FileItem.vue": {
+      "current": "src/features/organizer/components/FileItem.vue",
+      "new": "src/features/documents/components/FileItem.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FilePreview.vue": {
+      "current": "src/features/organizer/components/FilePreview.vue",
+      "new": "src/features/documents/components/FilePreview.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FileSearch.vue": {
+      "current": "src/features/organizer/components/FileSearch.vue",
+      "new": "src/features/documents/components/FileSearch.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FileTypeFilters.vue": {
+      "current": "src/features/organizer/components/FileTypeFilters.vue",
+      "new": "src/features/documents/components/FileTypeFilters.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FolderBreadcrumbs.vue": {
+      "current": "src/features/organizer/components/FolderBreadcrumbs.vue",
+      "new": "src/features/documents/components/FolderBreadcrumbs.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/FolderHierarchySelector.vue": {
+      "current": "src/features/organizer/components/FolderHierarchySelector.vue",
+      "new": "src/features/documents/components/FolderHierarchySelector.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/PdfPageCanvas.vue": {
+      "current": "src/features/organizer/components/PdfPageCanvas.vue",
+      "new": "src/features/documents/components/PdfPageCanvas.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/PdfThumbnailList.vue": {
+      "current": "src/features/organizer/components/PdfThumbnailList.vue",
+      "new": "src/features/documents/components/PdfThumbnailList.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/TagOptionsManager.vue": {
+      "current": "src/features/organizer/components/TagOptionsManager.vue",
+      "new": "src/features/documents/components/TagOptionsManager.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/components/ViewModeToggle.vue": {
+      "current": "src/features/organizer/components/ViewModeToggle.vue",
+      "new": "src/features/documents/components/ViewModeToggle.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "composables/useAIAnalysis.js": {
+      "current": "src/composables/useAIAnalysis.js",
+      "new": "src/features/documents/composables/useAIAnalysis.js",
+      "status": "moved",
+      "notes": "Document-specific composable"
+    },
+    "composables/useCellTooltip.js": {
+      "current": "src/composables/useCellTooltip.js",
+      "new": "src/features/documents/composables/useCellTooltip.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useColumnDragDrop.js": {
+      "current": "src/composables/useColumnDragDrop.js",
+      "new": "src/features/documents/composables/useColumnDragDrop.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useColumnResize.js": {
+      "current": "src/composables/useColumnResize.js",
+      "new": "src/features/documents/composables/useColumnResize.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useColumnSort.js": {
+      "current": "src/composables/useColumnSort.js",
+      "new": "src/features/documents/composables/useColumnSort.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useColumnVisibility.js": {
+      "current": "src/composables/useColumnVisibility.js",
+      "new": "src/features/documents/composables/useColumnVisibility.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useDocumentPeek.js": {
+      "current": "src/composables/useDocumentPeek.js",
+      "new": "src/features/documents/composables/useDocumentPeek.js",
+      "status": "moved",
+      "notes": "Document-specific composable"
+    },
+    "composables/useDocumentTablePeek.js": {
+      "current": "src/composables/useDocumentTablePeek.js",
+      "new": "src/features/documents/composables/useDocumentTablePeek.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useTooltipTiming.js": {
+      "current": "src/composables/useTooltipTiming.js",
+      "new": "src/features/documents/composables/useTooltipTiming.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useVirtualTable.js": {
+      "current": "src/composables/useVirtualTable.js",
+      "new": "src/features/documents/composables/useVirtualTable.js",
+      "status": "moved",
+      "notes": "Document table composable"
+    },
+    "composables/useAsyncInspector.js": {
+      "current": "src/composables/useAsyncInspector.js",
+      "new": "src/core/composables/useAsyncInspector.js",
+      "status": "moved",
+      "notes": "Development/debugging utility - moved to core"
+    },
+    "composables/useAsyncRegistry.js": {
+      "current": "src/composables/useAsyncRegistry.js",
+      "new": "src/core/composables/useAsyncRegistry.js",
+      "status": "moved",
+      "notes": "Development/debugging utility - moved to core"
+    },
+    "composables/useFavicon.js": {
+      "current": "src/composables/useFavicon.js",
+      "new": "src/core/composables/useFavicon.js",
+      "status": "moved",
+      "notes": "Cross-feature composable - moved to core"
+    },
+    "composables/useFirmMembers.js": {
+      "current": "src/composables/useFirmMembers.js",
+      "new": "src/features/profile/composables/useFirmMembers.js",
+      "status": "moved",
+      "notes": "Profile feature composable"
+    },
+    "composables/useUsers.js": {
+      "current": "src/composables/useUsers.js",
+      "new": "src/features/profile/composables/useUsers.js",
+      "status": "moved",
+      "notes": "Profile feature composable"
+    },
+    "features/organizer/composables/useCanvasPreloader.js": {
+      "current": "src/features/organizer/composables/useCanvasPreloader.js",
+      "new": "src/features/documents/composables/useCanvasPreloader.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryEditActions.js": {
+      "current": "src/features/organizer/composables/useCategoryEditActions.js",
+      "new": "src/features/documents/composables/useCategoryEditActions.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryEditForm.js": {
+      "current": "src/features/organizer/composables/useCategoryEditForm.js",
+      "new": "src/features/documents/composables/useCategoryEditForm.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryEditState.js": {
+      "current": "src/features/organizer/composables/useCategoryEditState.js",
+      "new": "src/features/documents/composables/useCategoryEditState.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryEditValidation.js": {
+      "current": "src/features/organizer/composables/useCategoryEditValidation.js",
+      "new": "src/features/documents/composables/useCategoryEditValidation.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryFormHelpers.js": {
+      "current": "src/features/organizer/composables/useCategoryFormHelpers.js",
+      "new": "src/features/documents/composables/useCategoryFormHelpers.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryManager.js": {
+      "current": "src/features/organizer/composables/useCategoryManager.js",
+      "new": "src/features/documents/composables/useCategoryManager.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useCategoryTypeConversion.js": {
+      "current": "src/features/organizer/composables/useCategoryTypeConversion.js",
+      "new": "src/features/documents/composables/useCategoryTypeConversion.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useDocumentNavigation.js": {
+      "current": "src/features/organizer/composables/useDocumentNavigation.js",
+      "new": "src/features/documents/composables/useDocumentNavigation.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useDocumentPreloader.js": {
+      "current": "src/features/organizer/composables/useDocumentPreloader.js",
+      "new": "src/features/documents/composables/useDocumentPreloader.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useEvidenceDeduplication.js": {
+      "current": "src/features/organizer/composables/useEvidenceDeduplication.js",
+      "new": "src/features/documents/composables/useEvidenceDeduplication.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useEvidenceLoader.js": {
+      "current": "src/features/organizer/composables/useEvidenceLoader.js",
+      "new": "src/features/documents/composables/useEvidenceLoader.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useFilePreview.js": {
+      "current": "src/features/organizer/composables/useFilePreview.js",
+      "new": "src/features/documents/composables/useFilePreview.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useFileSearch.js": {
+      "current": "src/features/organizer/composables/useFileSearch.js",
+      "new": "src/features/documents/composables/useFileSearch.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useFileViewer.js": {
+      "current": "src/features/organizer/composables/useFileViewer.js",
+      "new": "src/features/documents/composables/useFileViewer.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useNavigationPerformanceTracker.js": {
+      "current": "src/features/organizer/composables/useNavigationPerformanceTracker.js",
+      "new": "src/features/documents/composables/useNavigationPerformanceTracker.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePageComplexity.js": {
+      "current": "src/features/organizer/composables/usePageComplexity.js",
+      "new": "src/features/documents/composables/usePageComplexity.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePagePreloader.js": {
+      "current": "src/features/organizer/composables/usePagePreloader.js",
+      "new": "src/features/documents/composables/usePagePreloader.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePageVisibility.js": {
+      "current": "src/features/organizer/composables/usePageVisibility.js",
+      "new": "src/features/documents/composables/usePageVisibility.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePdfCache.js": {
+      "current": "src/features/organizer/composables/usePdfCache.js",
+      "new": "src/features/documents/composables/usePdfCache.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePdfMetadata.js": {
+      "current": "src/features/organizer/composables/usePdfMetadata.js",
+      "new": "src/features/documents/composables/usePdfMetadata.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/usePdfViewer.js": {
+      "current": "src/features/organizer/composables/usePdfViewer.js",
+      "new": "src/features/documents/composables/usePdfViewer.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useRenderTracking.js": {
+      "current": "src/features/organizer/composables/useRenderTracking.js",
+      "new": "src/features/documents/composables/useRenderTracking.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useTagColor.js": {
+      "current": "src/features/organizer/composables/useTagColor.js",
+      "new": "src/features/documents/composables/useTagColor.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useThumbnailRenderer.js": {
+      "current": "src/features/organizer/composables/useThumbnailRenderer.js",
+      "new": "src/features/documents/composables/useThumbnailRenderer.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/composables/useViewerNavigation.js": {
+      "current": "src/features/organizer/composables/useViewerNavigation.js",
+      "new": "src/features/documents/composables/useViewerNavigation.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "services/aiMetadataExtractionService.js": {
+      "current": "src/services/aiMetadataExtractionService.js",
+      "new": "src/features/documents/services/aiMetadataExtractionService.js",
+      "status": "moved",
+      "notes": "Document-specific service"
+    },
+    "services/fileService.js": {
+      "current": "src/services/fileService.js",
+      "new": "src/features/documents/services/fileService.js",
+      "status": "moved",
+      "notes": "Document-specific service"
+    },
+    "features/organizer/services/aiProcessingService.js": {
+      "current": "src/features/organizer/services/aiProcessingService.js",
+      "new": "src/features/documents/services/aiProcessingService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/aiTagService.js": {
+      "current": "src/features/organizer/services/aiTagService.js",
+      "new": "src/features/documents/services/aiTagService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/categoryService.js": {
+      "current": "src/features/organizer/services/categoryService.js",
+      "new": "src/features/documents/services/categoryService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/evidenceDocumentService.js": {
+      "current": "src/features/organizer/services/evidenceDocumentService.js",
+      "new": "src/features/documents/services/evidenceDocumentService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/evidenceQueryService.js": {
+      "current": "src/features/organizer/services/evidenceQueryService.js",
+      "new": "src/features/documents/services/evidenceQueryService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/evidenceService.js": {
+      "current": "src/features/organizer/services/evidenceService.js",
+      "new": "src/features/documents/services/evidenceService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/fileProcessingService.js": {
+      "current": "src/features/organizer/services/fileProcessingService.js",
+      "new": "src/features/documents/services/fileProcessingService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/index.js": {
+      "current": "src/features/organizer/services/index.js",
+      "new": "src/features/documents/services/index.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/systemCategoriesService.js": {
+      "current": "src/features/organizer/services/systemCategoriesService.js",
+      "new": "src/features/documents/services/systemCategoriesService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/systemCategoryService.js": {
+      "current": "src/features/organizer/services/systemCategoryService.js",
+      "new": "src/features/documents/services/systemCategoryService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/tagOperationService.js": {
+      "current": "src/features/organizer/services/tagOperationService.js",
+      "new": "src/features/documents/services/tagOperationService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/services/tagSubcollectionService.js": {
+      "current": "src/features/organizer/services/tagSubcollectionService.js",
+      "new": "src/features/documents/services/tagSubcollectionService.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "stores/documentView.js": {
+      "current": "src/stores/documentView.js",
+      "new": "src/features/documents/stores/documentView.js",
+      "status": "moved",
+      "notes": "Document view store moved to documents feature"
+    },
+    "features/organizer/stores/categoryComposables.js": {
+      "current": "src/features/organizer/stores/categoryComposables.js",
+      "new": "src/features/documents/stores/categoryComposables.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/categoryCore.js": {
+      "current": "src/features/organizer/stores/categoryCore.js",
+      "new": "src/features/documents/stores/categoryCore.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/categoryStore.js": {
+      "current": "src/features/organizer/stores/categoryStore.js",
+      "new": "src/features/documents/stores/categoryStore.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/categoryValidation.js": {
+      "current": "src/features/organizer/stores/categoryValidation.js",
+      "new": "src/features/documents/stores/categoryValidation.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/organizer.js": {
+      "current": "src/features/organizer/stores/organizer.js",
+      "new": "src/features/documents/stores/organizer.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/organizerCore.js": {
+      "current": "src/features/organizer/stores/organizerCore.js",
+      "new": "src/features/documents/stores/organizerCore.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/organizerQueryStore.js": {
+      "current": "src/features/organizer/stores/organizerQueryStore.js",
+      "new": "src/features/documents/stores/organizerQueryStore.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/stores/virtualFolderStore.js": {
+      "current": "src/features/organizer/stores/virtualFolderStore.js",
+      "new": "src/features/documents/stores/virtualFolderStore.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "utils/categoryFieldMapping.js": {
+      "current": "src/utils/categoryFieldMapping.js",
+      "new": "src/features/documents/utils/categoryFieldMapping.js",
+      "status": "moved",
+      "notes": "Document-specific utility"
+    },
+    "features/organizer/utils/automaticTagColors.js": {
+      "current": "src/features/organizer/utils/automaticTagColors.js",
+      "new": "src/features/documents/utils/automaticTagColors.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/categoryFormHelpers.js": {
+      "current": "src/features/organizer/utils/categoryFormHelpers.js",
+      "new": "src/features/documents/utils/categoryFormHelpers.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/categoryFormOptions.js": {
+      "current": "src/features/organizer/utils/categoryFormOptions.js",
+      "new": "src/features/documents/utils/categoryFormOptions.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/categoryIdGenerator.js": {
+      "current": "src/features/organizer/utils/categoryIdGenerator.js",
+      "new": "src/features/documents/utils/categoryIdGenerator.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/categoryTypeConversions.js": {
+      "current": "src/features/organizer/utils/categoryTypeConversions.js",
+      "new": "src/features/documents/utils/categoryTypeConversions.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/categoryTypes.js": {
+      "current": "src/features/organizer/utils/categoryTypes.js",
+      "new": "src/features/documents/utils/categoryTypes.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/currencyOptions.js": {
+      "current": "src/features/organizer/utils/currencyOptions.js",
+      "new": "src/features/documents/utils/currencyOptions.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/fileUtils.js": {
+      "current": "src/features/organizer/utils/fileUtils.js",
+      "new": "src/features/documents/utils/fileUtils.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/fileViewerUtils.js": {
+      "current": "src/features/organizer/utils/fileViewerUtils.js",
+      "new": "src/features/documents/utils/fileViewerUtils.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/previewGenerators.js": {
+      "current": "src/features/organizer/utils/previewGenerators.js",
+      "new": "src/features/documents/utils/previewGenerators.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/uploadUtils.js": {
+      "current": "src/features/organizer/utils/uploadUtils.js",
+      "new": "src/features/documents/utils/uploadUtils.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/utils/uploadViewerUtils.js": {
+      "current": "src/features/organizer/utils/uploadViewerUtils.js",
+      "new": "src/features/documents/utils/uploadViewerUtils.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/constants/systemCategories.js": {
+      "current": "src/features/organizer/constants/systemCategories.js",
+      "new": "src/features/documents/constants/systemCategories.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/types/viewer.types.js": {
+      "current": "src/features/organizer/types/viewer.types.js",
+      "new": "src/features/documents/types/viewer.types.js",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "views/Documents.vue": {
+      "current": "src/views/Documents.vue",
+      "new": "src/features/documents/views/Documents.vue",
+      "status": "moved",
+      "notes": "Document view moved to documents feature"
+    },
+    "views/Analyze.vue": {
+      "current": "src/views/Analyze.vue",
+      "new": "src/features/documents/views/Analyze.vue",
+      "status": "moved",
+      "notes": "Document analysis view moved to documents feature"
+    },
+    "features/organizer/views/CategoryCreationWizard.vue": {
+      "current": "src/features/organizer/views/CategoryCreationWizard.vue",
+      "new": "src/features/documents/views/CategoryCreationWizard.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/views/CategoryEditWizard.vue": {
+      "current": "src/features/organizer/views/CategoryEditWizard.vue",
+      "new": "src/features/documents/views/CategoryEditWizard.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/views/CategoryManager.vue": {
+      "current": "src/features/organizer/views/CategoryManager.vue",
+      "new": "src/features/documents/views/CategoryManager.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/views/FileViewer.vue": {
+      "current": "src/features/organizer/views/FileViewer.vue",
+      "new": "src/features/documents/views/FileViewer.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "features/organizer/views/ViewDocument.vue": {
+      "current": "src/features/organizer/views/ViewDocument.vue",
+      "new": "src/features/documents/views/ViewDocument.vue",
+      "status": "moved",
+      "notes": "Organizer renamed to documents"
+    },
+    "services/profileService.js": {
+      "current": "src/services/profileService.js",
+      "new": "src/features/profile/services/profileService.js",
+      "status": "moved",
+      "notes": "Profile service moved to profile feature"
+    },
+    "services/userService.js": {
+      "current": "src/services/userService.js",
+      "new": "src/features/profile/services/userService.js",
+      "status": "moved",
+      "notes": "User service moved to profile feature"
+    },
+    "views/Profile.vue": {
+      "current": "src/views/Profile.vue",
+      "new": "src/features/profile/views/Profile.vue",
+      "status": "moved",
+      "notes": "Profile view moved to profile feature"
+    },
+    "views/Settings.vue": {
+      "current": "src/views/Settings.vue",
+      "new": "src/features/profile/views/Settings.vue",
+      "status": "moved",
+      "notes": "Settings view moved to profile feature"
+    },
+    "services/uploadService.js": {
+      "current": "src/services/uploadService.js",
+      "new": "src/features/upload/services/uploadService.js",
+      "status": "moved",
+      "notes": "Upload service moved to upload feature"
+    },
+    "features/upload/components/ClearFilesMenu.vue": {
+      "current": "src/features/upload/components/ClearFilesMenu.vue",
+      "new": "src/features/upload/components/ClearFilesMenu.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/FileNameCell.vue": {
+      "current": "src/features/upload/components/FileNameCell.vue",
+      "new": "src/features/upload/components/FileNameCell.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/FileQueueChips.vue": {
+      "current": "src/features/upload/components/FileQueueChips.vue",
+      "new": "src/features/upload/components/FileQueueChips.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/FileQueuePlaceholder.vue": {
+      "current": "src/features/upload/components/FileQueuePlaceholder.vue",
+      "new": "src/features/upload/components/FileQueuePlaceholder.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/FileTypeIcon.vue": {
+      "current": "src/features/upload/components/FileTypeIcon.vue",
+      "new": "src/features/upload/components/FileTypeIcon.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/FileUploadStatus.vue": {
+      "current": "src/features/upload/components/FileUploadStatus.vue",
+      "new": "src/features/upload/components/FileUploadStatus.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/LazyFileItem.vue": {
+      "current": "src/features/upload/components/LazyFileItem.vue",
+      "new": "src/features/upload/components/LazyFileItem.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/QueueProgressIndicator.vue": {
+      "current": "src/features/upload/components/QueueProgressIndicator.vue",
+      "new": "src/features/upload/components/QueueProgressIndicator.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/QueueTimeProgress.vue": {
+      "current": "src/features/upload/components/QueueTimeProgress.vue",
+      "new": "src/features/upload/components/QueueTimeProgress.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/SelectCell.vue": {
+      "current": "src/features/upload/components/SelectCell.vue",
+      "new": "src/features/upload/components/SelectCell.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/StatusCell.vue": {
+      "current": "src/features/upload/components/StatusCell.vue",
+      "new": "src/features/upload/components/StatusCell.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadButtons.vue": {
+      "current": "src/features/upload/components/UploadButtons.vue",
+      "new": "src/features/upload/components/UploadButtons.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadCompletionModal.vue": {
+      "current": "src/features/upload/components/UploadCompletionModal.vue",
+      "new": "src/features/upload/components/UploadCompletionModal.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadControlButtons.vue": {
+      "current": "src/features/upload/components/UploadControlButtons.vue",
+      "new": "src/features/upload/components/UploadControlButtons.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadPreviewModal.vue": {
+      "current": "src/features/upload/components/UploadPreviewModal.vue",
+      "new": "src/features/upload/components/UploadPreviewModal.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadProgressModal.vue": {
+      "current": "src/features/upload/components/UploadProgressModal.vue",
+      "new": "src/features/upload/components/UploadProgressModal.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadSummaryCard.vue": {
+      "current": "src/features/upload/components/UploadSummaryCard.vue",
+      "new": "src/features/upload/components/UploadSummaryCard.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTable.vue": {
+      "current": "src/features/upload/components/UploadTable.vue",
+      "new": "src/features/upload/components/UploadTable.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableDropzone.vue": {
+      "current": "src/features/upload/components/UploadTableDropzone.vue",
+      "new": "src/features/upload/components/UploadTableDropzone.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableFooter.vue": {
+      "current": "src/features/upload/components/UploadTableFooter.vue",
+      "new": "src/features/upload/components/UploadTableFooter.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableFooterStats.vue": {
+      "current": "src/features/upload/components/UploadTableFooterStats.vue",
+      "new": "src/features/upload/components/UploadTableFooterStats.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableHeader.vue": {
+      "current": "src/features/upload/components/UploadTableHeader.vue",
+      "new": "src/features/upload/components/UploadTableHeader.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableMockup.vue": {
+      "current": "src/features/upload/components/UploadTableMockup.vue",
+      "new": "src/features/upload/components/UploadTableMockup.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableRow.vue": {
+      "current": "src/features/upload/components/UploadTableRow.vue",
+      "new": "src/features/upload/components/UploadTableRow.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/components/UploadTableVirtualizer.vue": {
+      "current": "src/features/upload/components/UploadTableVirtualizer.vue",
+      "new": "src/features/upload/components/UploadTableVirtualizer.vue",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/deduplication/detection.js": {
+      "current": "src/features/upload/composables/deduplication/detection.js",
+      "new": "src/features/upload/composables/deduplication/detection.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/deduplication/hashing.js": {
+      "current": "src/features/upload/composables/deduplication/hashing.js",
+      "new": "src/features/upload/composables/deduplication/hashing.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/deduplication/prefilter.js": {
+      "current": "src/features/upload/composables/deduplication/prefilter.js",
+      "new": "src/features/upload/composables/deduplication/prefilter.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFileDropHandler.js": {
+      "current": "src/features/upload/composables/useFileDropHandler.js",
+      "new": "src/features/upload/composables/useFileDropHandler.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFileFormatters.js": {
+      "current": "src/features/upload/composables/useFileFormatters.js",
+      "new": "src/features/upload/composables/useFileFormatters.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFileMetadata.js": {
+      "current": "src/features/upload/composables/useFileMetadata.js",
+      "new": "src/features/upload/composables/useFileMetadata.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFileProcessor.js": {
+      "current": "src/features/upload/composables/useFileProcessor.js",
+      "new": "src/features/upload/composables/useFileProcessor.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFileTypeIcons.js": {
+      "current": "src/features/upload/composables/useFileTypeIcons.js",
+      "new": "src/features/upload/composables/useFileTypeIcons.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFolderAnalysis.js": {
+      "current": "src/features/upload/composables/useFolderAnalysis.js",
+      "new": "src/features/upload/composables/useFolderAnalysis.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFolderProgress.js": {
+      "current": "src/features/upload/composables/useFolderProgress.js",
+      "new": "src/features/upload/composables/useFolderProgress.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useFolderTimeouts.js": {
+      "current": "src/features/upload/composables/useFolderTimeouts.js",
+      "new": "src/features/upload/composables/useFolderTimeouts.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useGroupStyling.js": {
+      "current": "src/features/upload/composables/useGroupStyling.js",
+      "new": "src/features/upload/composables/useGroupStyling.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useHashVerification.js": {
+      "current": "src/features/upload/composables/useHashVerification.js",
+      "new": "src/features/upload/composables/useHashVerification.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useLazyFileList.js": {
+      "current": "src/features/upload/composables/useLazyFileList.js",
+      "new": "src/features/upload/composables/useLazyFileList.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useLazyHashTooltip.js": {
+      "current": "src/features/upload/composables/useLazyHashTooltip.js",
+      "new": "src/features/upload/composables/useLazyHashTooltip.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueCore.js": {
+      "current": "src/features/upload/composables/useQueueCore.js",
+      "new": "src/features/upload/composables/useQueueCore.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueHashProcessing.js": {
+      "current": "src/features/upload/composables/useQueueHashProcessing.js",
+      "new": "src/features/upload/composables/useQueueHashProcessing.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueHelpers.js": {
+      "current": "src/features/upload/composables/useQueueHelpers.js",
+      "new": "src/features/upload/composables/useQueueHelpers.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueMetadataFilter.js": {
+      "current": "src/features/upload/composables/useQueueMetadataFilter.js",
+      "new": "src/features/upload/composables/useQueueMetadataFilter.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueProgress.js": {
+      "current": "src/features/upload/composables/useQueueProgress.js",
+      "new": "src/features/upload/composables/useQueueProgress.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueState.js": {
+      "current": "src/features/upload/composables/useQueueState.js",
+      "new": "src/features/upload/composables/useQueueState.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useQueueWorkers.js": {
+      "current": "src/features/upload/composables/useQueueWorkers.js",
+      "new": "src/features/upload/composables/useQueueWorkers.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useSequentialHashWorker.js": {
+      "current": "src/features/upload/composables/useSequentialHashWorker.js",
+      "new": "src/features/upload/composables/useSequentialHashWorker.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useSequentialPrefilter.js": {
+      "current": "src/features/upload/composables/useSequentialPrefilter.js",
+      "new": "src/features/upload/composables/useSequentialPrefilter.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useSequentialVerification.js": {
+      "current": "src/features/upload/composables/useSequentialVerification.js",
+      "new": "src/features/upload/composables/useSequentialVerification.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useTentativeVerification.js": {
+      "current": "src/features/upload/composables/useTentativeVerification.js",
+      "new": "src/features/upload/composables/useTentativeVerification.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadAdapter.js": {
+      "current": "src/features/upload/composables/useUploadAdapter.js",
+      "new": "src/features/upload/composables/useUploadAdapter.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadControls.js": {
+      "current": "src/features/upload/composables/useUploadControls.js",
+      "new": "src/features/upload/composables/useUploadControls.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadOrchestration.js": {
+      "current": "src/features/upload/composables/useUploadOrchestration.js",
+      "new": "src/features/upload/composables/useUploadOrchestration.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadOrchestrator.js": {
+      "current": "src/features/upload/composables/useUploadOrchestrator.js",
+      "new": "src/features/upload/composables/useUploadOrchestrator.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadProcessor.js": {
+      "current": "src/features/upload/composables/useUploadProcessor.js",
+      "new": "src/features/upload/composables/useUploadProcessor.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadState.js": {
+      "current": "src/features/upload/composables/useUploadState.js",
+      "new": "src/features/upload/composables/useUploadState.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-addition.js": {
+      "current": "src/features/upload/composables/useUploadTable-addition.js",
+      "new": "src/features/upload/composables/useUploadTable-addition.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-deduplication-sequential.js": {
+      "current": "src/features/upload/composables/useUploadTable-deduplication-sequential.js",
+      "new": "src/features/upload/composables/useUploadTable-deduplication-sequential.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-deduplication.js": {
+      "current": "src/features/upload/composables/useUploadTable-deduplication.js",
+      "new": "src/features/upload/composables/useUploadTable-deduplication.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-hashVerification.js": {
+      "current": "src/features/upload/composables/useUploadTable-hashVerification.js",
+      "new": "src/features/upload/composables/useUploadTable-hashVerification.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-management.js": {
+      "current": "src/features/upload/composables/useUploadTable-management.js",
+      "new": "src/features/upload/composables/useUploadTable-management.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable-sorting.js": {
+      "current": "src/features/upload/composables/useUploadTable-sorting.js",
+      "new": "src/features/upload/composables/useUploadTable-sorting.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useUploadTable.js": {
+      "current": "src/features/upload/composables/useUploadTable.js",
+      "new": "src/features/upload/composables/useUploadTable.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useWebWorker.js": {
+      "current": "src/features/upload/composables/useWebWorker.js",
+      "new": "src/features/upload/composables/useWebWorker.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/useWorkerManager.js": {
+      "current": "src/features/upload/composables/useWorkerManager.js",
+      "new": "src/features/upload/composables/useWorkerManager.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/webWorker/useWebWorkerHealth.js": {
+      "current": "src/features/upload/composables/webWorker/useWebWorkerHealth.js",
+      "new": "src/features/upload/composables/webWorker/useWebWorkerHealth.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/webWorker/useWebWorkerMessages.js": {
+      "current": "src/features/upload/composables/webWorker/useWebWorkerMessages.js",
+      "new": "src/features/upload/composables/webWorker/useWebWorkerMessages.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/webWorker/useWebWorkerState.js": {
+      "current": "src/features/upload/composables/webWorker/useWebWorkerState.js",
+      "new": "src/features/upload/composables/webWorker/useWebWorkerState.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/composables/webWorker/webWorkerConstants.js": {
+      "current": "src/features/upload/composables/webWorker/webWorkerConstants.js",
+      "new": "src/features/upload/composables/webWorker/webWorkerConstants.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/deduplicationLogic.js": {
+      "current": "src/features/upload/utils/deduplicationLogic.js",
+      "new": "src/features/upload/utils/deduplicationLogic.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/fileAnalysis.js": {
+      "current": "src/features/upload/utils/fileAnalysis.js",
+      "new": "src/features/upload/utils/fileAnalysis.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/filePathExtractor.js": {
+      "current": "src/features/upload/utils/filePathExtractor.js",
+      "new": "src/features/upload/utils/filePathExtractor.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/fileTypeChecker.js": {
+      "current": "src/features/upload/utils/fileTypeChecker.js",
+      "new": "src/features/upload/utils/fileTypeChecker.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/fileTypeIcons.js": {
+      "current": "src/features/upload/utils/fileTypeIcons.js",
+      "new": "src/features/upload/utils/fileTypeIcons.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/folderPathUtils.js": {
+      "current": "src/features/upload/utils/folderPathUtils.js",
+      "new": "src/features/upload/utils/folderPathUtils.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/folderPathUtils.manual-test.js": {
+      "current": "src/features/upload/utils/folderPathUtils.manual-test.js",
+      "new": "src/features/upload/utils/folderPathUtils.manual-test.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/hardwareCalibration.js": {
+      "current": "src/features/upload/utils/hardwareCalibration.js",
+      "new": "src/features/upload/utils/hardwareCalibration.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/networkUtils.js": {
+      "current": "src/features/upload/utils/networkUtils.js",
+      "new": "src/features/upload/utils/networkUtils.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/processingTimer.js": {
+      "current": "src/features/upload/utils/processingTimer.js",
+      "new": "src/features/upload/utils/processingTimer.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/utils/uploadHelpers.js": {
+      "current": "src/features/upload/utils/uploadHelpers.js",
+      "new": "src/features/upload/utils/uploadHelpers.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "features/upload/workers/fileHashWorker.js": {
+      "current": "src/features/upload/workers/fileHashWorker.js",
+      "new": "src/features/upload/workers/fileHashWorker.js",
+      "status": "unchanged",
+      "notes": "Already in upload feature"
+    },
+    "components/layout/AppHeader.vue": {
+      "current": "src/components/layout/AppHeader.vue",
+      "new": "src/shared/components/layout/AppHeader.vue",
+      "status": "moved",
+      "notes": "Layout component moved to shared"
+    },
+    "components/layout/AppSideBar.vue": {
+      "current": "src/components/layout/AppSideBar.vue",
+      "new": "src/shared/components/layout/AppSideBar.vue",
+      "status": "moved",
+      "notes": "Layout component moved to shared"
+    },
+    "components/AppSwitcher.vue": {
+      "current": "src/components/AppSwitcher.vue",
+      "new": "src/shared/components/navigation/AppSwitcher.vue",
+      "status": "moved",
+      "notes": "Navigation component moved to shared"
+    },
+    "components/base/BaseSearchBar.vue": {
+      "current": "src/components/base/BaseSearchBar.vue",
+      "new": "src/shared/components/base/BaseSearchBar.vue",
+      "status": "moved",
+      "notes": "Base component moved to shared"
+    },
+    "components/base/HoldToConfirmButton.vue": {
+      "current": "src/components/base/HoldToConfirmButton.vue",
+      "new": "src/shared/components/base/HoldToConfirmButton.vue",
+      "status": "moved",
+      "notes": "Base component moved to shared"
+    },
+    "shared/components/ClearAllButton.vue": {
+      "current": "src/shared/components/ClearAllButton.vue",
+      "new": "src/shared/components/base/ClearAllButton.vue",
+      "status": "moved",
+      "notes": "Moved to base subfolder within shared"
+    },
+    "components/home/AddAppTab.vue": {
+      "current": "src/components/home/AddAppTab.vue",
+      "new": "src/shared/components/home/AddAppTab.vue",
+      "status": "moved",
+      "notes": "Home component moved to shared"
+    },
+    "components/home/FeaturesTab.vue": {
+      "current": "src/components/home/FeaturesTab.vue",
+      "new": "src/shared/components/home/FeaturesTab.vue",
+      "status": "moved",
+      "notes": "Home component moved to shared"
+    },
+    "components/home/FirstAppTab.vue": {
+      "current": "src/components/home/FirstAppTab.vue",
+      "new": "src/shared/components/home/FirstAppTab.vue",
+      "status": "moved",
+      "notes": "Home component moved to shared"
+    },
+    "components/home/LocalDevTab.vue": {
+      "current": "src/components/home/LocalDevTab.vue",
+      "new": "src/shared/components/home/LocalDevTab.vue",
+      "status": "moved",
+      "notes": "Home component moved to shared"
+    },
+    "components/ui/SegmentedControl.vue": {
+      "current": "src/components/ui/SegmentedControl.vue",
+      "new": "src/shared/components/ui/SegmentedControl.vue",
+      "status": "moved",
+      "notes": "UI component moved to shared"
+    },
+    "views/Home.vue": {
+      "current": "src/views/Home.vue",
+      "new": "src/views/Home.vue",
+      "status": "unchanged",
+      "notes": "Top-level route entry point"
+    },
+    "views/About.vue": {
+      "current": "src/views/About.vue",
+      "new": "src/views/About.vue",
+      "status": "unchanged",
+      "notes": "Top-level route entry point"
+    },
+    "views/Testing.vue": {
+      "current": "src/views/Testing.vue",
+      "new": "src/views/Testing.vue",
+      "status": "unchanged",
+      "notes": "Development testing view"
+    },
+    "views/defaults/PageNotFound.vue": {
+      "current": "src/views/defaults/PageNotFound.vue",
+      "new": "src/views/defaults/PageNotFound.vue",
+      "status": "unchanged",
+      "notes": "Default error view"
+    },
+    "views/defaults/UnderConstruction.vue": {
+      "current": "src/views/defaults/UnderConstruction.vue",
+      "new": "src/views/defaults/UnderConstruction.vue",
+      "status": "unchanged",
+      "notes": "Default placeholder view"
+    },
+    "router/index.js": {
+      "current": "src/router/index.js",
+      "new": "src/router/index.js",
+      "status": "unchanged",
+      "notes": "Main router configuration stays at top level"
+    },
+    "services/firebase.js": {
+      "current": "src/services/firebase.js",
+      "new": "src/services/firebase.js",
+      "status": "unchanged",
+      "notes": "Shared Firebase initialization"
+    },
+    "services/firmService.js": {
+      "current": "src/services/firmService.js",
+      "new": "src/services/firmService.js",
+      "status": "unchanged",
+      "notes": "Shared firm operations"
+    },
+    "utils/analyzeMockData.js": {
+      "current": "src/utils/analyzeMockData.js",
+      "new": "src/utils/analyzeMockData.js",
+      "status": "unchanged",
+      "notes": "Development utility"
+    },
+    "utils/cloudMockData.js": {
+      "current": "src/utils/cloudMockData.js",
+      "new": "src/utils/cloudMockData.js",
+      "status": "unchanged",
+      "notes": "Development utility"
+    },
+    "utils/dateFormatter.js": {
+      "current": "src/utils/dateFormatter.js",
+      "new": "src/utils/dateFormatter.js",
+      "status": "unchanged",
+      "notes": "Generic shared utility"
+    },
+    "utils/errorMessages.js": {
+      "current": "src/utils/errorMessages.js",
+      "new": "src/utils/errorMessages.js",
+      "status": "unchanged",
+      "notes": "Generic shared utility"
+    },
+    "utils/memoryTracking.js": {
+      "current": "src/utils/memoryTracking.js",
+      "new": "src/utils/memoryTracking.js",
+      "status": "unchanged",
+      "notes": "Development utility"
+    },
+    "utils/mimeTypeFormatter.js": {
+      "current": "src/utils/mimeTypeFormatter.js",
+      "new": "src/utils/mimeTypeFormatter.js",
+      "status": "unchanged",
+      "notes": "Generic shared utility"
+    },
+    "utils/performanceMonitor.js": {
+      "current": "src/utils/performanceMonitor.js",
+      "new": "src/utils/performanceMonitor.js",
+      "status": "unchanged",
+      "notes": "Development utility"
+    },
+    "utils/webglDetection.js": {
+      "current": "src/utils/webglDetection.js",
+      "new": "src/utils/webglDetection.js",
+      "status": "unchanged",
+      "notes": "Browser capability detection"
+    },
+    "config/pdfWorker.js": {
+      "current": "src/config/pdfWorker.js",
+      "new": "src/config/pdfWorker.js",
+      "status": "unchanged",
+      "notes": "Configuration file"
+    },
+    "plugins/vuetify.js": {
+      "current": "src/plugins/vuetify.js",
+      "new": "src/plugins/vuetify.js",
+      "status": "unchanged",
+      "notes": "Vue plugin configuration"
+    },
+    "dev-demos/components/DemoContainer.vue": {
+      "current": "src/dev-demos/components/DemoContainer.vue",
+      "new": "src/dev-demos/components/DemoContainer.vue",
+      "status": "unchanged",
+      "notes": "Development demo component"
+    },
+    "dev-demos/composables/useDevTags.js": {
+      "current": "src/dev-demos/composables/useDevTags.js",
+      "new": "src/dev-demos/composables/useDevTags.js",
+      "status": "unchanged",
+      "notes": "Development demo composable"
+    },
+    "dev-demos/composables/usePerformanceTracker.js": {
+      "current": "src/dev-demos/composables/usePerformanceTracker.js",
+      "new": "src/dev-demos/composables/usePerformanceTracker.js",
+      "status": "unchanged",
+      "notes": "Development demo composable"
+    },
+    "dev-demos/services/devTagService.js": {
+      "current": "src/dev-demos/services/devTagService.js",
+      "new": "src/dev-demos/services/devTagService.js",
+      "status": "unchanged",
+      "notes": "Development demo service"
+    },
+    "dev-demos/utils/demoRoutes.js": {
+      "current": "src/dev-demos/utils/demoRoutes.js",
+      "new": "src/dev-demos/utils/demoRoutes.js",
+      "status": "unchanged",
+      "notes": "Development demo utility"
+    },
+    "dev-demos/utils/mockDataFactories.js": {
+      "current": "src/dev-demos/utils/mockDataFactories.js",
+      "new": "src/dev-demos/utils/mockDataFactories.js",
+      "status": "unchanged",
+      "notes": "Development demo utility"
+    },
+    "dev-demos/views/2click-autocomplete-tags.vue": {
+      "current": "src/dev-demos/views/2click-autocomplete-tags.vue",
+      "new": "src/dev-demos/views/2click-autocomplete-tags.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/CategoryEditViewer.vue": {
+      "current": "src/dev-demos/views/CategoryEditViewer.vue",
+      "new": "src/dev-demos/views/CategoryEditViewer.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/CategoryMigrationTool.vue": {
+      "current": "src/dev-demos/views/CategoryMigrationTool.vue",
+      "new": "src/dev-demos/views/CategoryMigrationTool.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/DemoIndex.vue": {
+      "current": "src/dev-demos/views/DemoIndex.vue",
+      "new": "src/dev-demos/views/DemoIndex.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/LazyLoadingDemo.vue": {
+      "current": "src/dev-demos/views/LazyLoadingDemo.vue",
+      "new": "src/dev-demos/views/LazyLoadingDemo.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/NewSystemCategory.vue": {
+      "current": "src/dev-demos/views/NewSystemCategory.vue",
+      "new": "src/dev-demos/views/NewSystemCategory.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "dev-demos/views/SeedMatterData.vue": {
+      "current": "src/dev-demos/views/SeedMatterData.vue",
+      "new": "src/dev-demos/views/SeedMatterData.vue",
+      "status": "unchanged",
+      "notes": "Development demo view"
+    },
+    "test-utils/categoryMigrationTest.js": {
+      "current": "src/test-utils/categoryMigrationTest.js",
+      "new": "src/test-utils/categoryMigrationTest.js",
+      "status": "unchanged",
+      "notes": "Testing utility"
+    },
+    "test-utils/mockFileAPI.js": {
+      "current": "src/test-utils/mockFileAPI.js",
+      "new": "src/test-utils/mockFileAPI.js",
+      "status": "unchanged",
+      "notes": "Testing utility"
+    },
+    "test-utils/tagValidationTest.js": {
+      "current": "src/test-utils/tagValidationTest.js",
+      "new": "src/test-utils/tagValidationTest.js",
+      "status": "unchanged",
+      "notes": "Testing utility"
+    },
+    "test-utils/virtualFolderTestUtils.js": {
+      "current": "src/test-utils/virtualFolderTestUtils.js",
+      "new": "src/test-utils/virtualFolderTestUtils.js",
+      "status": "unchanged",
+      "notes": "Testing utility"
+    }
+  },
+  "summary": {
+    "totalFiles": 278,
+    "movedFiles": 168,
+    "unchangedFiles": 110,
+    "majorChanges": [
+      "Core auth stores restructured from core/stores/auth/* to core/auth/stores/*",
+      "Firm store moved from core/stores/firm.js to core/firm/stores/firm.js",
+      "All organizer feature files renamed to documents feature",
+      "Feature-specific services, composables, and stores moved to respective feature folders",
+      "Shared components consolidated under shared/components with clear categorization",
+      "Router guards moved to feature-specific guard folders",
+      "Top-level views moved to feature-specific view folders (except Home, About, Testing, defaults)"
+    ]
+  }
+}
