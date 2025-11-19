@@ -1,5 +1,5 @@
 <template>
-  <nav class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }" id="app-sidebar">
+  <nav class="sidebar" :class="{ 'sidebar-collapsed': props.isCollapsed }" id="app-sidebar">
     <!-- Header with Logo -->
     <div class="sidebar-header">
       <img
@@ -49,17 +49,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatterViewStore } from '@/features/matters/stores/matterView'
 import AppSwitcher from '../navigation/AppSwitcher.vue'
 
+// Props
+const props = defineProps({
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
+})
+
 // Get current route for active state
 const route = useRoute()
 const matterViewStore = useMatterViewStore()
-
-// Sidebar visibility state
-const isCollapsed = ref(false)
 
 // Navigation items configuration
 const navItems = [
@@ -116,20 +121,6 @@ const getItemIcon = (item) => {
   }
   return item.icon
 }
-
-// Toggle sidebar visibility
-const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value
-}
-
-// Event listeners for toggle-sidebar event
-onMounted(() => {
-  window.addEventListener('toggle-sidebar', toggleSidebar)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('toggle-sidebar', toggleSidebar)
-})
 </script>
 
 <style scoped>
