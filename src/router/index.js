@@ -45,7 +45,7 @@ const router = createRouter({
     {
       path: '/analyze',
       name: 'analyze',
-      component: () => import('../views/Analyze.vue'),
+      component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Analyze' },
     },
     {
