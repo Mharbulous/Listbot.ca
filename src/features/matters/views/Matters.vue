@@ -50,137 +50,141 @@
       </button>
     </div>
 
-    <!-- Console-style Controls -->
+    <!-- Filter/Search Toolbar -->
     <div class="px-6 py-3">
-      <div class="flex items-center gap-3">
-        <!-- Filter Options -->
-        <div class="flex items-center gap-2">
-          <!-- My Matters / All Matters -->
-          <button
-            @click="showMyMattersOnly = !showMyMattersOnly"
-            :class="[
-              'px-2.5 py-1.5 rounded text-sm font-medium transition-colors',
-              showMyMattersOnly
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50',
-            ]"
-            :title="showMyMattersOnly ? 'My matters' : 'All firm matters'"
-          >
-            <!-- Single person icon when showing only my matters -->
-            <svg v-if="showMyMattersOnly" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-              />
-            </svg>
-            <!-- Three people icon when showing all firm matters -->
-            <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-              />
-            </svg>
-          </button>
-
-          <!-- Active / All (including archived) -->
-          <button
-            @click="showArchivedMatters = !showArchivedMatters"
-            :class="[
-              'px-2.5 py-1.5 rounded text-sm font-medium transition-colors',
-              showArchivedMatters
-                ? 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50'
-                : 'bg-slate-800 text-white',
-            ]"
-            :title="showArchivedMatters ? 'Archive files included' : 'Active files only'"
-          >
-            <!-- Folders icon when showing active only (teenyicons:folders-solid) -->
-            <svg
-              v-if="!showArchivedMatters"
-              class="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 15 15"
+      <div class="flex items-center gap-4">
+        <!-- Left Side: View Scope Controls -->
+        <div class="flex items-center gap-3">
+          <!-- Segmented Control: My Matters / Firm Matters -->
+          <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+            <button
+              @click="showMyMattersOnly = true"
+              :class="[
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                showMyMattersOnly
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900',
+              ]"
             >
-              <path
-                d="M4.5 0A1.5 1.5 0 0 0 3 1.5v7A1.5 1.5 0 0 0 4.5 10h9A1.5 1.5 0 0 0 15 8.5v-5A1.5 1.5 0 0 0 13.5 2H9.707l-2-2z"
-              />
-              <path
-                d="M12 11H4.5A2.5 2.5 0 0 1 2 8.5V5h-.5A1.5 1.5 0 0 0 0 6.5v7A1.5 1.5 0 0 0 1.5 15h9a1.5 1.5 0 0 0 1.5-1.5z"
-              />
-            </svg>
-            <!-- Archive icon when showing active + archived (teenyicons:archive-solid) -->
-            <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 15 15">
-              <path d="M0 0h15v5H0z" />
-              <path
-                fill-rule="evenodd"
-                d="M1 6v7.5A1.5 1.5 0 0 0 2.5 15h10a1.5 1.5 0 0 0 1.5-1.5V6zm9 3H5V8h5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
+              My Matters
+            </button>
+            <button
+              @click="showMyMattersOnly = false"
+              :class="[
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                !showMyMattersOnly
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900',
+              ]"
+            >
+              Firm Matters
+            </button>
+          </div>
 
-          <!-- Case Sensitive -->
-          <button
-            @click="caseSensitive = !caseSensitive"
-            :class="[
-              'px-2.5 py-1.5 rounded text-xs font-mono font-bold transition-colors',
-              caseSensitive
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50',
-            ]"
-            :title="caseSensitive ? 'Case sensitive' : 'Case insensitive'"
-          >
-            {{ caseSensitive ? 'A ≠ a' : 'A = a' }}
-          </button>
-
-          <!-- Whole Word Match -->
-          <button
-            @click="wholeWord = !wholeWord"
-            :class="[
-              'px-2.5 py-1.5 rounded text-xs font-mono font-bold transition-colors',
-              wholeWord
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-200/50 text-slate-600 hover:bg-slate-300/50',
-            ]"
-            :title="wholeWord ? 'Match whole words only' : 'Match partial words'"
-          >
-            {{ wholeWord ? 'word' : 'wor_' }}
-          </button>
+          <!-- Dropdown: Status Filter -->
+          <div class="relative" data-dropdown>
+            <button
+              @click="statusDropdownOpen = !statusDropdownOpen"
+              class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+            >
+              <span>Status: {{ statusFilterLabel }}</span>
+              <svg
+                class="w-4 h-4 transition-transform"
+                :class="{ 'rotate-180': statusDropdownOpen }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            <!-- Dropdown Menu -->
+            <div
+              v-if="statusDropdownOpen"
+              class="absolute top-full mt-1 left-0 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]"
+            >
+              <button
+                @click="setStatusFilter('active')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="statusFilter === 'active' ? 'text-blue-600 font-medium' : 'text-slate-700'"
+              >
+                Active
+              </button>
+              <button
+                @click="setStatusFilter('archived')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="statusFilter === 'archived' ? 'text-blue-600 font-medium' : 'text-slate-700'"
+              >
+                Archived
+              </button>
+              <button
+                @click="setStatusFilter('all')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="statusFilter === 'all' ? 'text-blue-600 font-medium' : 'text-slate-700'"
+              >
+                All
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Search Input -->
+        <!-- Right Side: Search Input with Integrated Actions -->
         <div class="flex-1 relative">
           <input
             v-model="searchText"
             type="text"
             placeholder="filter matters..."
-            class="w-full px-3 py-1.5 bg-white/50 border-b-2 border-slate-300 focus:border-blue-500 focus:bg-white outline-none text-sm transition-all placeholder:text-slate-400"
+            class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all placeholder:text-slate-400"
           />
-          <svg
-            v-if="!searchText"
-            class="absolute right-2 top-2 w-4 h-4 text-slate-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <button
-            v-else
-            @click="searchText = ''"
-            class="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+          <!-- Integrated Search Actions -->
+          <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <!-- Case Sensitive Toggle -->
+            <button
+              @click="caseSensitive = !caseSensitive"
+              :class="[
+                'p-1.5 rounded text-xs font-semibold transition-colors',
+                caseSensitive
+                  ? 'text-blue-600 hover:bg-blue-50'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
+              ]"
+              :title="caseSensitive ? 'Case sensitive' : 'Case insensitive'"
+            >
+              <span class="font-mono">Aa</span>
+            </button>
+            <!-- Whole Word Toggle -->
+            <button
+              @click="wholeWord = !wholeWord"
+              :class="[
+                'p-1.5 rounded text-xs font-semibold transition-colors',
+                wholeWord
+                  ? 'text-blue-600 hover:bg-blue-50'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
+              ]"
+              :title="wholeWord ? 'Match whole words only' : 'Match partial words'"
+            >
+              <span class="font-mono">Ab</span>
+            </button>
+            <!-- Clear Button -->
+            <button
+              v-if="searchText"
+              @click="searchText = ''"
+              class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- New Matter Button -->
@@ -363,7 +367,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
 import { useAuthStore } from '@/core/auth/stores/index.js';
@@ -392,9 +396,12 @@ const { matters, loading, error, fetchMatters, updateLastAccessed } = useMatters
 // Filter state
 const searchText = ref('');
 const showMyMattersOnly = ref(false);
-const showArchivedMatters = ref(false);
 const caseSensitive = ref(false);
 const wholeWord = ref(false);
+
+// Status dropdown state
+const statusDropdownOpen = ref(false);
+const statusFilter = ref('active'); // 'active' | 'archived' | 'all'
 
 // Notification state for redirects
 const showNotification = ref(false);
@@ -475,7 +482,25 @@ onMounted(async () => {
       showNotification.value = false;
     }, 8000);
   }
+
+  // Add click-outside handler for status dropdown
+  document.addEventListener('click', handleClickOutside);
 });
+
+// Clean up event listener on unmount
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
+// Close dropdown when clicking outside
+function handleClickOutside(event) {
+  if (statusDropdownOpen.value) {
+    const dropdown = event.target.closest('[data-dropdown]');
+    if (!dropdown) {
+      statusDropdownOpen.value = false;
+    }
+  }
+}
 
 // Helper function to format Firestore Timestamp to date string
 function formatDate(timestamp) {
@@ -495,6 +520,22 @@ function formatDate(timestamp) {
   return timestamp;
 }
 
+// Computed property for status filter label
+const statusFilterLabel = computed(() => {
+  const labels = {
+    active: 'Active',
+    archived: 'Archived',
+    all: 'All',
+  };
+  return labels[statusFilter.value] || 'Active';
+});
+
+// Method to set status filter and close dropdown
+function setStatusFilter(status) {
+  statusFilter.value = status;
+  statusDropdownOpen.value = false;
+}
+
 // Filter by user assignment and archived status
 const visibleMatters = computed(() => {
   return matters.value.filter((matter) => {
@@ -503,10 +544,14 @@ const visibleMatters = computed(() => {
       return false;
     }
 
-    // Filter by archived status
-    if (!showArchivedMatters.value && matter.archived) {
+    // Filter by status
+    if (statusFilter.value === 'active' && matter.archived) {
       return false;
     }
+    if (statusFilter.value === 'archived' && !matter.archived) {
+      return false;
+    }
+    // 'all' shows everything, no filter needed
 
     return true;
   });
