@@ -9,6 +9,7 @@ import { useUploadOrchestration } from './useUploadOrchestration.js';
 /**
  * Upload Orchestrator Composable
  * @param {Object} params - Configuration parameters
+ * @param {Ref<Array>} params.uploadQueue - The upload queue ref
  * @param {Function} params.notify - Notification function
  * @param {Function} params.getUploadableFiles - Function to get uploadable files
  * @param {Function} params.processSingleFile - Function to process single file
@@ -20,6 +21,7 @@ import { useUploadOrchestration } from './useUploadOrchestration.js';
  * @returns {Object} Orchestrator functions
  */
 export function useUploadOrchestrator({
+  uploadQueue,
   notify,
   getUploadableFiles,
   processSingleFile,
@@ -49,6 +51,9 @@ export function useUploadOrchestrator({
 
       // Get uploadable files
       const filesToUpload = getUploadableFiles();
+
+      // Count pre-detected duplicates (files that won't be uploaded)
+      const duplicatesSkipped = uploadQueue.value.filter(f => f.status === 'duplicate').length;
 
       if (filesToUpload.length === 0) {
         notify('No files to upload', 'info');
@@ -92,6 +97,7 @@ export function useUploadOrchestrator({
       // While file N is uploading, we hash/check file N+1 to hide latency
       let uploadedCount = 0;
       let copyCount = 0;
+      let copiesSkipped = 0;
       let failedCount = 0;
 
       // Get only primary files (non-copy) for processing
@@ -156,7 +162,7 @@ export function useUploadOrchestrator({
                   if (copyResult.duplicate) {
                     // Copy metadata already exists from same user - duplicate
                     copyFile.status = 'skipped'; // Shows as "Duplicate" with orange dot
-                    // Don't increment copyCount - this is a duplicate
+                    copiesSkipped++; // Track copy duplicates
                   } else {
                     // Copy metadata created successfully
                     copyFile.status = 'copied'; // Copy metadata only (not uploaded to Storage)
@@ -196,7 +202,7 @@ export function useUploadOrchestrator({
         // Log progress every 10 files
         if ((i + 1) % 10 === 0 || i + 1 === primaryFiles.length) {
           console.log(
-            `[UPLOAD] Progress: ${i + 1}/${primaryFiles.length} (${uploadedCount} uploaded, ${copyCount} copies, ${failedCount} failed)`
+            `[UPLOAD] Progress: ${i + 1}/${primaryFiles.length} (${uploadedCount} uploaded, ${copyCount} copies, ${copiesSkipped} copies skipped, ${failedCount} failed)`
           );
         }
       }
@@ -212,6 +218,8 @@ export function useUploadOrchestrator({
       console.log(`[UPLOAD] Total files: ${filesToUpload.length}`);
       console.log(`[UPLOAD] Primary files uploaded: ${uploadedCount}`);
       console.log(`[UPLOAD] Copy metadata created: ${copyCount}`);
+      console.log(`[UPLOAD] Copies skipped (duplicate metadata): ${copiesSkipped}`);
+      console.log(`[UPLOAD] Duplicates skipped (pre-detected): ${duplicatesSkipped}`);
       console.log(`[UPLOAD] Failed: ${failedCount}`);
       console.log(`[UPLOAD] Duration: ${durationSeconds}s`);
       console.log('[UPLOAD] ========================================');
@@ -236,12 +244,16 @@ export function useUploadOrchestrator({
         metrics: {
           filesUploaded: uploadedCount,
           filesCopies: copyCount,
+          copiesSkipped: copiesSkipped,
+          duplicatesSkipped: duplicatesSkipped,
           totalFiles: uploadedCount + copyCount,
           failedFiles: failedCount,
         },
         totalFiles: filesToUpload.length,
         uploaded: uploadedCount,
         copies: copyCount,
+        copiesSkipped: copiesSkipped,
+        duplicatesSkipped: duplicatesSkipped,
         failed: failedCount,
         duration,
       };

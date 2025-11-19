@@ -191,6 +191,8 @@ const previewSummary = ref({
 const completionMetrics = ref({
   filesUploaded: 0,
   filesCopies: 0,
+  copiesSkipped: 0,
+  duplicatesSkipped: 0,
   totalFiles: 0,
   failedFiles: 0,
 });
