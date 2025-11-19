@@ -2,14 +2,14 @@
 
 **Date:** 2025-10-31
 **Last Updated:** 2025-10-31 (Post Console Logging Standardization)
-**Codebase:** Bookkeeper Application
+**Codebase:** ListBot Application
 **Analysis Scope:** Full codebase review for duplicate logic patterns
 
 ---
 
 ## Executive Summary
 
-This report identifies violations of the DRY (Don't Repeat Yourself) principle across the Bookkeeper codebase. A total of **12 major categories** of duplication were identified, with an estimated **850+ lines of code** that could be eliminated through refactoring.
+This report identifies violations of the DRY (Don't Repeat Yourself) principle across the ListBot codebase. A total of **12 major categories** of duplication were identified, with an estimated **850+ lines of code** that could be eliminated through refactoring.
 
 **Key Findings:**
 - High-impact duplications exist in composables and services
@@ -81,7 +81,7 @@ This report identifies violations of the DRY (Don't Repeat Yourself) principle a
 
 ## KISS Principle Considerations
 
-The Bookkeeper application follows the KISS (Keep It Simple, Stupid) principle as stated in the project documentation. When evaluating DRY violations, we must balance:
+The ListBot application follows the KISS (Keep It Simple, Stupid) principle as stated in the project documentation. When evaluating DRY violations, we must balance:
 
 - **DRY Benefits:** Reduced code size, single source of truth, easier maintenance
 - **KISS Benefits:** Code clarity, explicit behavior, easier debugging
@@ -103,7 +103,7 @@ If implementing DRY improvements, recommended order:
 
 ## Conclusion
 
-The Bookkeeper codebase exhibits patterns of duplication that are largely **intentional and beneficial** for code clarity. The main exceptions are:
+The ListBot codebase exhibits patterns of duplication that are largely **intentional and beneficial** for code clarity. The main exceptions are:
 
 1. ~~Console logging~~ - ✅ **ADDRESSED** - LogService design completed in `planning/4. Testing/Console-Logging-Standardization.md`
 2. LocalStorage patterns (good candidate for abstraction)

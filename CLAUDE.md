@@ -5,9 +5,9 @@
 
 <!-- DO NOT EDIT ABOVE THIS LINE -->
 
-# CLAUDE.md - Bookkeeper App
+# CLAUDE.md - ListBot App
 
-This file provides high-level directives for working on the Bookkeeper repository.
+This file provides high-level directives for working on the ListBot repository.
 This file is **lean by design**. Detailed documentation is in the `/docs` directory.
 
 ## 1. CRITICAL: Core Directives
@@ -35,7 +35,7 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
 
 ## 2. Project Overview & Tech Stack
 
-- **Project**: **Bookkeeper** - A Vue 3 bookkeeping app with file upload/processing.
+- **Project**: **ListBot** - A Vue 3 app with file upload/processing.
 - **Architecture**: Part of a multi-app SSO architecture sharing Firebase Auth.
 - **Frontend**: Vue 3 (Composition API)
 - **Build Tool**: Vite
@@ -68,36 +68,41 @@ This file is **lean by design**. Detailed documentation is in the `/docs` direct
 
 ---
 
-## 4. Documentation & Architecture (@-Imports)
+## 4. Documentation Organization (@-Imports)
 
-This `CLAUDE.md` is lean. You MUST reference the files below using `@path/to/file` when you need detailed context on architecture or implementation.
+This `CLAUDE.md` is lean by design. Documentation is organized using a **CLAUDE.md indexed feature-module structure**, where each folder contains a `CLAUDE.md` index file that points to detailed documentation within that module.
 
-- `@docs/architecture/overview.md`
-  - High-level component architecture (Layouts, Views, Base vs. Feature).
-  - High-level data flow patterns.
-- `@docs/architecture/authentication.md`
-  - **CRITICAL**: The full "Auth State Machine" logic (`uninitialized` -> `initializing` -> ...).
-  - **CRITICAL**: The "Solo Firm" architecture (`firmId === userId`).
-  - Route guards and Pinia store integration.
-- `@docs/architecture/file-lifecycle.md`
-  - **CRITICAL**: The definitive guide to all file terminology (Original, Source, Upload, Batesed, Page, Redacted, Production, Storage).
-  - **You MUST use this exact terminology.**
-- `@docs/architecture/file-processing.md`
-  - The 3-phase hardware-calibrated time estimation formulas.
-  - Deduplication strategy (size-pre-filter, BLAKE3 hash as ID).
-  - Path parsing optimization logic.
-  - Hardware performance calibration (H-Factor system).
-- `@src/dev-demos/README.md`
-  - Overview of the demo system, routes (`/dev/*`), and components.
-- `@docs/testing/performance-analysis.md`
-  - Instructions for performance data collection (`parse_console_log.py`).
-  - Details on the H-Factor (Hardware Calibration) system.
-- `@docs/front-end/DocumentTable.md`
-  - DocumentTable architecture and the 4 column data sources (Built-in, System, Firm, Matter categories).
-- `@docs/2025-11-10-New-Upload-Page.md`
-  - **NEW UPLOAD PAGE**: Development plan for the new upload page at `/testing` route.
-  - Both old (`/upload`) and new (`/testing`) pages will coexist during development.
-  - **For any coding tasks on the new upload page, consult this document.**
+### Documentation Structure Overview
+
+Documentation is organized into feature-based modules that mirror the codebase structure. For full details on the organization philosophy and structure, see:
+
+- `@docs/System/Documentation/documentation-hierarchy.md` - The feature-module organization philosophy
+- `@docs/System/Documentation/documentation-structure.md` - Visual structure diagrams and discovery patterns
+
+### Primary Documentation Modules
+
+**System-Wide Documentation**
+- `@docs/System/CLAUDE.md` - System architecture, stack, conventions, and shared components
+
+**Feature Documentation (Vertical Slices)**
+- `@docs/Features/Authentication/CLAUDE.md` - Multi-app SSO authentication, auth state machine, security
+- `@docs/Features/Upload/CLAUDE.md` - File upload, processing, deduplication, workers
+  - **CRITICAL**: Contains file lifecycle terminology and deduplication terminology
+- `@docs/Features/Organizer/CLAUDE.md` - Document table, viewer, categories, AI analysis
+- `@docs/Features/Matters/CLAUDE.md` - Matter/case management
+- `@docs/Features/Profile/CLAUDE.md` - User profile and settings
+
+**Cross-Feature Documentation**
+- `@docs/Data/CLAUDE.md` - Firestore schema, security rules, query patterns
+- `@docs/Testing/CLAUDE.md` - Testing strategy, Vitest setup, test patterns
+- `@docs/DevOps/CLAUDE.md` - Local development, SSO setup, deployment
+
+### How to Use This Structure
+
+1. **Feature-scoped work**: Navigate to the relevant feature module (e.g., `@docs/Features/Upload/CLAUDE.md` for upload-related tasks)
+2. **System-wide concepts**: Reference `@docs/System/CLAUDE.md` for architecture, stack, and conventions
+3. **Progressive disclosure**: Each folder's `CLAUDE.md` provides an overview and points to detailed documentation
+4. **Vertical slices**: All documentation for a feature (UI, logic, state, data) is grouped together in that feature's folder
 
 ---
 
@@ -112,7 +117,7 @@ This is a brief overview of core concepts. For details, see the `@docs` above.
   1.  Files with unique sizes _skip_ hashing.
   2.  Only files with matching sizes are hashed.
   3.  The final BLAKE3 hash is used as the document ID in Firestore, providing automatic, database-level deduplication.
-- **Multi-App SSO**: All apps (Bookkeeper, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
+- **Multi-App SSO**: All apps (ListBot, Intranet, Files) share a **single, identical Firebase project config** to enable seamless SSO.
 
 ---
 
@@ -175,3 +180,116 @@ If emojis aren't essential, use plain text:
 - **Windows with Git Bash**: Use forward slashes with drive letter: `C:/Users/name/file.md`
 - **Relative paths**: `./planning/file.md` (from project root)
 - **Absolute paths preferred** for reliability in Windows environments
+- DO NOT modify any files from the production branch!  If asked to commit changes from the production branch you should instead switch to the main branch and commit from the main branch. Fuller explanation is provided here:  docs\hosting\2025-11-16-Promotion.md
+
+---
+
+## 7. Technical Best Practices
+
+**You MUST follow these best practices to avoid common pitfalls and bugs.**
+
+### Vue 3 TypeScript Ref Typing
+
+- **CORRECT**: Use proper TypeScript typing for refs with objects:
+  ```typescript
+  const user = ref<User>()  // for optional
+  const user = ref<User | null>(null)  // for explicitly nullable
+  ```
+- **INCORRECT**: Avoid casting empty objects as types:
+  ```typescript
+  const user = ref({} as User)  // ❌ Bypasses type safety, leads to undefined property access
+  ```
+- **Why**: Casting empty objects bypasses TypeScript's type safety and leads to undefined property access at runtime.
+
+### Tailwind CSS Directive Order
+
+- **CRITICAL**: Tailwind directives MUST be imported in this exact order:
+  ```css
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  ```
+- Then import the CSS file **after Vue** in `main.js`:
+  ```javascript
+  import { createApp } from 'vue'
+  import './style.css'  // Import after Vue
+  ```
+
+### Vuetify + Tailwind Framework Conflicts
+
+- **Issue**: Applying utility classes from both frameworks on the same elements causes specificity conflicts.
+- **Solutions**:
+  1. Use Tailwind's `prefix` option (e.g., `prefix: 'tw-'`) in config
+  2. Enable Vuetify's tree-shaking to reduce CSS bloat
+  3. Separate usage strategically:
+     - Use **Vuetify** for complex components (dialogs, data tables, etc.)
+     - Use **Tailwind** for layout and custom styling
+
+### Firebase Authentication v9 getRedirectResult Behavior
+
+- **CRITICAL**: In Firebase v9 modular SDK, `getRedirectResult()` returns `null` when no redirect occurred (not a `UserCredential` object with `null` user).
+- **CORRECT**:
+  ```typescript
+  const result = await getRedirectResult(auth)
+  if (result === null) {
+    // No redirect occurred
+  } else {
+    // result is UserCredential
+    const user = result.user
+  }
+  ```
+- **INCORRECT**:
+  ```typescript
+  const result = await getRedirectResult(auth)
+  if (result.user === null) {  // ❌ TypeError if result is null
+  ```
+- **Why**: Always check `result === null` before accessing properties to avoid TypeErrors.
+
+### Firestore Security Rules Are Not Filters
+
+- **CRITICAL**: Firestore security rules are **all-or-nothing**. Queries MUST include the same constraints as security rules.
+- **Example**: If your security rule is:
+  ```javascript
+  allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+  ```
+- **CORRECT Query**:
+  ```typescript
+  const q = query(collection(db, 'items'), where('userId', '==', uid))
+  ```
+- **INCORRECT Query**:
+  ```typescript
+  const q = query(collection(db, 'items'))  // ❌ Will fail entirely, even if all docs match
+  ```
+- **Why**: Queries will fail entirely if they don't include the same constraints, even if all documents would pass the security rules.
+
+### Web Worker Testing with @vitest/web-worker
+
+- **CRITICAL**: When testing workers with `@vitest/web-worker`, use `self.onmessage` (not bare `onmessage`).
+- **CORRECT**:
+  ```typescript
+  self.onmessage = (event) => {
+    // Worker logic
+  }
+  ```
+- **INCORRECT**:
+  ```typescript
+  onmessage = (event) => {  // ❌ Breaks with @vitest/web-worker
+  ```
+- **Why**: The testing library requires explicit `self` reference for proper compatibility.
+
+### Vitest Web Worker and jsdom Incompatibility
+
+- **CRITICAL**: Do NOT combine `environment: 'jsdom'` with `@vitest/web-worker` as it causes dynamic import errors.
+- **Solutions**:
+  1. Test workers separately with `environment: 'node'`
+  2. Use Vitest Browser Mode instead
+- **Example**:
+  ```typescript
+  // vitest.config.ts
+  export default {
+    test: {
+      // For worker tests
+      environment: 'node',  // Not 'jsdom'
+    }
+  }
+  ```

@@ -484,7 +484,7 @@ Phase 2 successfully implemented real Gemini API integration with comprehensive 
 // ❌ WRONG (causes 403 errors in client-side apps):
 getAI(app, { backend: new VertexAIBackend() })
 
-// ✅ CORRECT (for client-side web apps like Bookkeeper):
+// ✅ CORRECT (for client-side web apps like ListBot):
 getAI(app)
 ```
 **Why Default Backend**:
@@ -524,7 +524,7 @@ const model = getGenerativeModel(firebaseAI, { model: 'gemini-2.5-flash-lite' })
 - **VertexAIBackend** - ❌ For server-side Node.js only, requires Google Cloud IAM credentials
 - **GoogleAIBackend** - For apps using Google AI API key directly (has free tier, no Firebase Storage)
 
-**CRITICAL**: Bookkeeper is a client-side web app → MUST use default backend
+**CRITICAL**: ListBot is a client-side web app → MUST use default backend
 
 **Model Recommendations** (as of 2025):
 - Use `gemini-2.5-flash-lite` or newer

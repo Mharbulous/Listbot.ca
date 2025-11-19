@@ -32,6 +32,7 @@ const props = defineProps({
         'uploading',
         'creating_metadata',
         'completed',
+        'copied', // Copy file with metadata copied (not uploaded to Storage)
         'skipped',
         'skip',
         'error',
@@ -69,6 +70,7 @@ const statusTextMap = {
   creating_metadata: 'Saving...',
   completed: 'Uploaded',
   uploaded: 'Uploaded',
+  copied: 'Copied',
   skipped: 'Duplicate',
   skip: 'Skip',
   error: 'Failed',
@@ -86,12 +88,25 @@ const statusTextMap = {
 // Base status text
 const baseStatusText = computed(() => statusTextMap[props.status] || 'Unknown');
 
-// Display status text with tentative indicator
+// Display status text with tentative indicator and upload progress
 // Phase 3a: Add "?" for tentative duplicate/copy status (no hash yet)
+// Phase 3b: Add "X%" for uploading primary files
 const displayStatusText = computed(() => {
+  // Phase 3b: Show upload progress for uploading files
+  if (props.status === 'uploading') {
+    // Primary file - show progress if available
+    if (props.file?.uploadProgress !== undefined && props.file.uploadProgress > 0) {
+      return `Uploading ${props.file.uploadProgress}%`;
+    }
+    // Copy file or no progress yet - just show "Uploading..."
+    return 'Uploading...';
+  }
+
+  // Phase 3a: Tentative status indicator
   if ((props.status === 'duplicate' || props.status === 'copy') && !props.hash) {
     return baseStatusText.value + '?';
   }
+
   return baseStatusText.value;
 });
 
@@ -175,8 +190,12 @@ const handleMouseLeave = () => {
   background-color: #4caf50; /* Green */
 }
 
+.status-copied {
+  background-color: #4caf50; /* Green - copy file with metadata copied */
+}
+
 .status-skipped {
-  background-color: #9c27b0; /* Purple */
+  background-color: #ff9800; /* Orange */
 }
 
 .status-skip {

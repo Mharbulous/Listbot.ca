@@ -13,6 +13,7 @@
     <SelectCell
       :file-status="file.status"
       :file-id="file.id"
+      :disabled="disabled"
       @toggle="handleCheckboxToggle"
       @remove="handleRemove"
       @swap="handleSwap"
@@ -105,6 +106,10 @@ const props = defineProps({
     default: false,
   },
   isLastInGroup: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
     type: Boolean,
     default: false,
   },

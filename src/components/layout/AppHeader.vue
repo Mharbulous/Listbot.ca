@@ -13,8 +13,8 @@
       <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
         {{ pageTitle }}
       </h1>
-      <!-- Add to Queue button (Testing page only) -->
-      <div v-if="route.path === '/testing'" class="flex items-center">
+      <!-- Add to Queue button (Upload page only) -->
+      <div v-if="route.path === '/upload'" class="flex items-center">
         <v-menu location="bottom">
           <template v-slot:activator="{ props: menuProps }">
             <v-btn
@@ -224,7 +224,7 @@ function navigateToMatter() {
   }
 }
 
-// File selection triggers for Testing page
+// File selection triggers for Upload page
 function triggerFileSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-file-select'));
 }

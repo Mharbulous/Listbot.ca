@@ -11,7 +11,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../../services/firebase.js';
-import { useAuthStore } from '../../../core/stores/auth.js';
+import { useAuthStore } from '../../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import tagSubcollectionService from '../services/tagSubcollectionService.js';
 import { useCategoryStore } from './categoryStore.js';

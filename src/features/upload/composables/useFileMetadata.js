@@ -1,9 +1,10 @@
 import { db } from '../../../services/firebase.js';
 import { doc, setDoc, getDoc, Timestamp, updateDoc, increment } from 'firebase/firestore';
-import { useAuthStore } from '../../../core/stores/auth.js';
+import { useAuthStore } from '../../../core/stores/auth/index.js';
 import { useMatterViewStore } from '../../../stores/matterView.js';
 import { updateFolderPaths } from '../../upload/utils/folderPathUtils.js';
 import { EvidenceService } from '../../organizer/services/evidenceService.js';
+import { generateMetadataHashInput } from '../utils/deduplicationLogic.js';
 import xxhash from 'xxhash-wasm';
 
 // Initialize xxHash hasher (singleton pattern for performance)
@@ -21,16 +22,27 @@ export function useFileMetadata() {
 
   /**
    * Generate metadata hash from file metadata
-   * Uses concatenated string: sourceFileName|lastModified|fileHash
+   * Uses concatenated string: sourceFileName|lastModified|fileHash|folderPath
+   *
+   * CRITICAL: Includes folderPath to distinguish copies in different folders.
+   * Without folderPath, files with identical content in different folders would be
+   * incorrectly marked as duplicates instead of copies.
+   *
    * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
+   * @param {string} folderPath - Source folder path (without filename)
    * @returns {Promise<string>} - xxHash 64-bit hash of metadata string (16 hex chars)
    */
-  const generateMetadataHash = async (sourceFileName, lastModified, fileHash) => {
+  const generateMetadataHash = async (sourceFileName, lastModified, fileHash, folderPath = '') => {
     try {
-      // Create deterministic concatenated string with pipe delimiters
-      const metadataString = `${sourceFileName}|${lastModified}|${fileHash}`;
+      // Use shared deduplication logic to ensure consistency with Phase 1
+      const metadataString = generateMetadataHashInput(
+        sourceFileName,
+        lastModified,
+        fileHash,
+        folderPath
+      );
 
       // Generate xxHash 64-bit hash of the metadata string
       const hasher = await getXxHash();
@@ -77,9 +89,6 @@ export function useFileMetadata() {
         throw new Error('No matter selected. Please select a matter before uploading files.');
       }
 
-      // Generate metadata hash for document ID
-      const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
-
       // Extract folder path from original path if available
       let currentFolderPath = '';
       if (originalPath) {
@@ -88,6 +97,14 @@ export function useFileMetadata() {
           currentFolderPath = pathParts.slice(0, -1).join('/');
         }
       }
+
+      // Generate metadata hash for document ID (includes folderPath for copy detection)
+      const metadataHash = await generateMetadataHash(
+        sourceFileName,
+        lastModified,
+        fileHash,
+        currentFolderPath
+      );
 
       // Get existing metadata to check for existing sourceFolderPath
       let existingFolderPaths = '';
@@ -216,11 +233,17 @@ export function useFileMetadata() {
    * @param {string} sourceFileName - Original filename
    * @param {number} lastModified - File's last modified timestamp
    * @param {string} fileHash - Content hash of the file
+   * @param {string} folderPath - Source folder path (without filename)
    * @returns {Promise<boolean>} - Whether the metadata record exists
    */
-  const metadataRecordExists = async (sourceFileName, lastModified, fileHash) => {
+  const metadataRecordExists = async (sourceFileName, lastModified, fileHash, folderPath = '') => {
     try {
-      const metadataHash = await generateMetadataHash(sourceFileName, lastModified, fileHash);
+      const metadataHash = await generateMetadataHash(
+        sourceFileName,
+        lastModified,
+        fileHash,
+        folderPath
+      );
       const firmId = authStore.currentFirm;
 
       if (!firmId) {

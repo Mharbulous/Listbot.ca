@@ -72,7 +72,7 @@ export function serializePaths(paths) {
 
   return paths
     .map((path) => normalizePath(path))
-    .filter((path) => path !== '')
+    .filter((path) => path !== '' && path !== '/') // Filter out empty strings AND root path
     .join(PATH_DELIMITER);
 }
 
@@ -216,4 +216,21 @@ export function containsFolderPath(targetPath, sourceFolderPath) {
   const normalized = normalizePath(targetPath);
   const existing = parseExistingPaths(sourceFolderPath);
   return existing.includes(normalized);
+}
+
+/**
+ * Gets the first non-root folder path for display purposes
+ * Filters out root paths ('/') and returns the first meaningful path
+ * @param {string} sourceFolderPath - Pipe-delimited folder paths string
+ * @returns {string} - First non-root path, or empty string if none exist
+ */
+export function getDisplayPath(sourceFolderPath) {
+  if (!sourceFolderPath || typeof sourceFolderPath !== 'string') {
+    return '';
+  }
+
+  const paths = parseExistingPaths(sourceFolderPath);
+  const nonRootPaths = paths.filter((path) => path !== '/');
+
+  return nonRootPaths.length > 0 ? nonRootPaths[0] : '';
 }

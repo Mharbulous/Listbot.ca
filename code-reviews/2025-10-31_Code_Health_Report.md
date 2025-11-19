@@ -1,5 +1,5 @@
 # Codebase Health Report
-**Project**: Bookkeeper
+**Project**: ListBot
 **Report Date**: 2025-10-31
 **Status**: ✅ EXCELLENT
 **Issues Found**: 0 (all issues resolved)

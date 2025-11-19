@@ -9,7 +9,7 @@
 
 ### Problem Statement
 
-Users currently have no way to organize, categorize, or efficiently locate previously uploaded documents in the Bookkeeper application. Files exist only as an unstructured list from the upload system, making document discovery time-consuming and inefficient, particularly for legal professionals who need to quickly locate specific documents among hundreds or thousands of uploaded files.
+Users currently have no way to organize, categorize, or efficiently locate previously uploaded documents in the ListBot application. Files exist only as an unstructured list from the upload system, making document discovery time-consuming and inefficient, particularly for legal professionals who need to quickly locate specific documents among hundreds or thousands of uploaded files.
 
 ### Solution Overview
 

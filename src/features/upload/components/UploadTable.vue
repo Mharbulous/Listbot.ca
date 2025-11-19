@@ -154,9 +154,9 @@ const virtualizerRef = ref(null); // For virtualized content
 // Only counts "best" or "primary" files (excludes copies)
 const allFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
-  // Filter out completed, redundant, n/a, duplicate, copy, and read error files (can't be toggled or are copies)
+  // Filter out completed, copied, redundant, n/a, duplicate, copy, and read error files (can't be toggled or are copies)
   const selectableFiles = props.files.filter(
-    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
+    (f) => f.status !== 'completed' && f.status !== 'copied' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
   );
   if (selectableFiles.length === 0) return false;
   // All selectable files must NOT be skipped
@@ -166,7 +166,7 @@ const allFilesSelected = computed(() => {
 const someFilesSelected = computed(() => {
   if (props.files.length === 0) return false;
   const selectableFiles = props.files.filter(
-    (f) => f.status !== 'completed' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
+    (f) => f.status !== 'completed' && f.status !== 'copied' && f.status !== 'redundant' && f.status !== 'n/a' && f.status !== 'duplicate' && f.status !== 'copy' && f.status !== 'read error'
   );
   if (selectableFiles.length === 0) return false;
   const selectedCount = selectableFiles.filter((f) => f.status !== 'skip').length;
@@ -196,18 +196,21 @@ const footerStats = computed(() => {
   const uploaded = props.files.filter((f) => f.status === 'completed').length;
   const naFiles = props.files.filter((f) => f.status === 'n/a').length;
   const readErrors = props.files.filter((f) => f.status === 'read error').length;
-  // Uploadable = total - duplicates - removed - n/a files - read errors
-  const uploadable = total - duplicates - removed - naFiles - readErrors;
+  const copies = props.files.filter((f) => f.status === 'copy').length;
+  // Uploadable = total - duplicates - removed - n/a files - read errors - copies
+  const uploadable = total - duplicates - removed - naFiles - readErrors - copies;
 
-  // Checked files = files that will be uploaded (not skipped, not completed, not duplicates, not redundant, not n/a, not read errors)
+  // Checked files = files that will be uploaded (not skipped, not completed, not copied, not duplicates, not redundant, not n/a, not read errors, not copies)
   const checkedFiles = props.files.filter(
     (f) =>
       f.status !== 'skip' &&
       f.status !== 'completed' &&
+      f.status !== 'copied' &&
       f.status !== 'duplicate' &&
       f.status !== 'redundant' &&
       f.status !== 'n/a' &&
-      f.status !== 'read error'
+      f.status !== 'read error' &&
+      f.status !== 'copy'
   );
   const checkedCount = checkedFiles.length;
   const checkedSize = checkedFiles.reduce((sum, f) => sum + (f.size || 0), 0);

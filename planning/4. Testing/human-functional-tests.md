@@ -468,7 +468,7 @@ This document provides a comprehensive checklist for human testers to validate t
 
    - [ ] Set up virtual folder view with specific navigation state
    - [ ] Navigate to different SSO app (Intranet or Coryphaeus)
-   - [ ] Return to Bookkeeper Organizer
+   - [ ] Return to ListBot Organizer
    - [ ] **VERIFY**: Virtual folder state is preserved appropriately
    - [ ] **VERIFY**: User preferences (view mode, hierarchy) persist
 

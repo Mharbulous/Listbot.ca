@@ -125,17 +125,18 @@ export function useCellTooltip() {
     // Get the text content
     const text = getTextContent(cellElement);
     if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
-      // Reset cursor for empty cells or t.b.d. cells
-      cellElement.style.cursor = '';
       return;
     }
-
-    // Set help cursor to indicate content can be viewed in tooltip
-    cellElement.style.cursor = 'help';
 
     // If tooltip is already visible for this cell, just update hover state
     if (isVisible.value && currentCellElement === cellElement) {
       return;
+    }
+
+    // If tooltip is visible for a DIFFERENT cell, hide it first
+    // This prevents the content from updating while showing at the old position
+    if (isVisible.value && currentCellElement !== cellElement) {
+      hideTooltip();
     }
 
     // Clear any existing show timers
@@ -144,15 +145,18 @@ export function useCellTooltip() {
       showTimer = null;
     }
 
-    // Store cell element and background color
-    currentCellElement = cellElement;
-    backgroundColor.value = bgColor;
-
-    // Set content
-    content.value = text;
+    // Store pending data to be applied when tooltip becomes visible
+    const pendingCellElement = cellElement;
+    const pendingBgColor = bgColor;
+    const pendingText = text;
 
     // Start timer to show tooltip after delay
     showTimer = setTimeout(() => {
+      // Only update state when tooltip actually becomes visible
+      currentCellElement = pendingCellElement;
+      backgroundColor.value = pendingBgColor;
+      content.value = pendingText;
+
       // Calculate position based on cell element
       position.value = calculatePosition(currentCellElement);
 
@@ -212,11 +216,6 @@ export function useCellTooltip() {
   const handleCellMouseLeave = (cellElement) => {
     // Mark that cell is no longer being hovered
     isCellHovered = false;
-
-    // Reset cursor
-    if (cellElement) {
-      cellElement.style.cursor = '';
-    }
 
     // Clear any pending show timers
     if (showTimer) {

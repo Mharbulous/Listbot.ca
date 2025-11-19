@@ -1,4 +1,4 @@
-# Bookkeeper
+# ListBot
 
 Vue 3 + Vuetify 3 + Vite + Firebase + Pinia + Tailwind + Vitest
 
@@ -22,36 +22,25 @@ Part of a multi-app SSO architecture with file upload/processing.
 
 ## Documentation
 
-**Hub and Spoke Model**: `CLAUDE.md` is the hub - start there for development directives, workflow, and pointers to all detailed documentation. Detailed docs in `/docs` are the spokes, referenced from `CLAUDE.md` as needed.
+**CLAUDE.md Indexed Feature-Module Structure**: Documentation is organized by business features/modules, mirroring the codebase structure. Each major folder contains a `CLAUDE.md` index file that points to detailed documentation within that module.
 
-CLAUDE.md (HUB)
-│
-├── docs/architecture/
+### Start Here
+- **Root**: `/CLAUDE.md` - High-level directives and documentation index
+- **System-Wide**: `@docs/System/CLAUDE.md` - Architecture, stack, conventions, shared components
+- **Features** (organized as vertical slices):
+  - `@docs/Features/Authentication/CLAUDE.md` - Multi-app SSO, auth state machine, security
+  - `@docs/Features/Upload/CLAUDE.md` - File upload, processing, deduplication, workers
+  - `@docs/Features/Organizer/CLAUDE.md` - Document table, viewer, categories, AI analysis
+  - `@docs/Features/Matters/CLAUDE.md` - Matter/case management
+  - `@docs/Features/Profile/CLAUDE.md` - User profile and settings
+- **Cross-Feature**:
+  - `@docs/Data/CLAUDE.md` - Firestore schema, security rules, query patterns
+  - `@docs/Testing/CLAUDE.md` - Testing strategy, Vitest setup, test patterns
+  - `@docs/DevOps/CLAUDE.md` - Local development, SSO setup, deployment
 
-│   ├── overview.md ✓
+### Philosophy
+Each feature module contains **all** documentation for that feature (UI, logic, state, data) as a vertical slice, making it easy to find everything related to a specific feature in one place. This structure mirrors `src/features/` for intuitive navigation.
 
-│   ├── authentication.md ✓
-
-│   ├── file-lifecycle.md ✓
-
-│   └── file-processing.md ✓
-
-│
-
-├── docs/front-end/
-
-│   └── DocumentTable.md ✓
-
-│
-├── docs/testing/
-
-│   └── performance-analysis.md ✗ (MISSING - referenced but not found)
-
-│
-├── docs/
-
-│   └── 2025-11-10-New-Upload-Page.md ✓
-
-│
-└── src/dev-demos/
-    └── README.md ✓
+For more details, see:
+- `@docs/System/Documentation/documentation-hierarchy.md` - Organization philosophy
+- `@docs/System/Documentation/documentation-structure.md` - Visual structure diagrams

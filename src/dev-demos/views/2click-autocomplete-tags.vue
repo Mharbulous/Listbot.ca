@@ -146,7 +146,7 @@ import DemoContainer from '../components/DemoContainer.vue';
 import EditableTag from '@/components/features/tags/EditableTag.vue';
 import { getAutomaticTagColor } from '@/features/organizer/utils/automaticTagColors.js';
 import { useDevTags } from '../composables/useDevTags.js';
-import { useAuthStore } from '../../core/stores/auth.js';
+import { useAuthStore } from '../../core/stores/auth/index.js';
 
 // Development tag integration
 const devTags = useDevTags();

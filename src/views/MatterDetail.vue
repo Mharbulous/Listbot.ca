@@ -457,7 +457,7 @@ import { useMatters } from '../composables/useMatters.js';
 import { useUsers } from '../composables/useUsers.js';
 import { useMatterViewStore } from '../stores/matterView.js';
 import { useFirmMembers } from '../composables/useFirmMembers.js';
-import { useAuthStore } from '../core/stores/auth.js';
+import { useAuthStore } from '../core/stores/auth/index.js';
 
 // Component configuration
 defineOptions({

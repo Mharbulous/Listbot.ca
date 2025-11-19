@@ -72,6 +72,22 @@
         <v-btn variant="text" @click="snackbar.show = false"> Close </v-btn>
       </template>
     </v-snackbar>
+
+    <!-- Upload Preview Modal (persistent during upload) -->
+    <UploadPreviewModal
+      :show="showPreviewModal"
+      :summary="previewSummary"
+      :persistent="uploadAdapter.isUploading.value"
+      @confirm="handlePreviewConfirm"
+      @cancel="handlePreviewCancel"
+    />
+
+    <!-- Upload Completion Modal -->
+    <UploadCompletionModal
+      :show="showCompletionModal"
+      :metrics="completionMetrics"
+      @close="handleCompletionClose"
+    />
   </div>
 </template>
 
@@ -79,6 +95,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
+import UploadPreviewModal from '../features/upload/components/UploadPreviewModal.vue';
+import UploadCompletionModal from '../features/upload/components/UploadCompletionModal.vue';
 import { useUploadTable } from '../features/upload/composables/useUploadTable.js';
 import { useUploadAdapter } from '../features/upload/composables/useUploadAdapter.js';
 import { useNotification } from '../core/composables/useNotification.js';
@@ -156,6 +174,29 @@ const { verificationState } = useSequentialVerification(
 // Refs for file inputs
 const fileInput = ref(null);
 const folderRecursiveInput = ref(null);
+
+// Modal state
+const showPreviewModal = ref(false);
+const showCompletionModal = ref(false);
+const previewSummary = ref({
+  totalSelected: 0,
+  uniqueFiles: 0,
+  copies: 0,
+  redundant: 0,
+  readErrors: 0,
+  toUpload: 0,
+  metadataOnly: 0,
+  storageSaved: 0,
+});
+const completionMetrics = ref({
+  filesUploaded: 0,
+  filesCopies: 0,
+  copiesSkipped: 0,
+  duplicatesSkipped: 0,
+  totalFiles: 0,
+  failedFiles: 0,
+});
+let uploadConfirmed = false;
 
 // Listen for events from AppHeader
 onMounted(() => {
@@ -252,12 +293,56 @@ const handleCloseModal = () => {
 
 const handleUpload = async () => {
   console.log('[TESTING] Upload clicked');
+
+  // Calculate preview summary
+  const readyFiles = uploadQueue.value.filter(f => f.status === 'ready');
+  const copyFiles = uploadQueue.value.filter(f => f.status === 'copy');
+  const duplicateFiles = uploadQueue.value.filter(f => f.status === 'duplicate');
+  const readErrorFiles = uploadQueue.value.filter(f => f.status === 'read error');
+
+  previewSummary.value = {
+    totalSelected: uploadQueue.value.length,
+    uniqueFiles: readyFiles.length,
+    copies: copyFiles.length,
+    redundant: duplicateFiles.length,
+    readErrors: readErrorFiles.length,
+    toUpload: readyFiles.length,
+    metadataOnly: copyFiles.length,
+    storageSaved: 0, // Phase 3b: Removed per plan
+  };
+
+  // Show preview modal
+  uploadConfirmed = false;
+  showPreviewModal.value = true;
+
+  // Wait for user confirmation (handled by modal emits)
+};
+
+const handlePreviewConfirm = async () => {
+  showPreviewModal.value = false;
+  uploadConfirmed = true;
+
   try {
     const result = await uploadAdapter.uploadQueueFiles();
     console.log('[TESTING] Upload result:', result);
+
+    // Show completion modal
+    if (result.metrics) {
+      completionMetrics.value = result.metrics;
+      showCompletionModal.value = true;
+    }
   } catch (error) {
     console.error('[TESTING] Upload error:', error);
   }
+};
+
+const handlePreviewCancel = () => {
+  showPreviewModal.value = false;
+  uploadConfirmed = false;
+};
+
+const handleCompletionClose = () => {
+  showCompletionModal.value = false;
 };
 
 const handleSelectAll = () => {

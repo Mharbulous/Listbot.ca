@@ -295,6 +295,11 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
+                Documents
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Adverse Parties
               </th>
               <th
@@ -331,6 +336,14 @@
               <td class="px-6 py-4 text-sm text-slate-700">
                 {{ matter.description }}
               </td>
+              <td class="px-6 py-4 text-sm text-slate-900 text-center">
+                <span v-if="documentCounts[matter.id] !== undefined" class="font-medium">
+                  {{ documentCounts[matter.id] }}
+                </span>
+                <span v-else class="text-slate-400">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400 mx-auto"></div>
+                </span>
+              </td>
               <td class="px-6 py-4 text-sm text-slate-700">
                 {{
                   Array.isArray(matter.adverseParties)
@@ -353,8 +366,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
-import { useAuthStore } from '../core/stores/auth.js';
+import { useAuthStore } from '../core/stores/auth/index.js';
 import { useMatterViewStore } from '../stores/matterView.js';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import { db } from '../services/firebase.js';
 
 // Component configuration
 defineOptions({
@@ -386,9 +401,60 @@ const showNotification = ref(false);
 const notificationMessage = ref('');
 const notificationType = ref('info'); // 'info' | 'warning'
 
+// Document counts for each matter
+const documentCounts = ref({});
+
+/**
+ * Fetch document counts for all matters
+ * Uses getCountFromServer for efficient counting without downloading documents
+ */
+async function fetchDocumentCounts() {
+  if (!authStore.firmId || matters.value.length === 0) {
+    return;
+  }
+
+  try {
+    // Fetch counts for all matters in parallel
+    const countPromises = matters.value.map(async (matter) => {
+      try {
+        const evidenceRef = collection(
+          db,
+          'firms',
+          authStore.firmId,
+          'matters',
+          matter.id,
+          'evidence'
+        );
+        const snapshot = await getCountFromServer(evidenceRef);
+        return { matterId: matter.id, count: snapshot.data().count };
+      } catch (error) {
+        console.error('Error fetching document count for matter', error, {
+          matterId: matter.id,
+          firmId: authStore.firmId,
+        });
+        return { matterId: matter.id, count: 0 };
+      }
+    });
+
+    const counts = await Promise.all(countPromises);
+
+    // Update the documentCounts ref with all counts
+    const countsMap = {};
+    counts.forEach(({ matterId, count }) => {
+      countsMap[matterId] = count;
+    });
+    documentCounts.value = countsMap;
+  } catch (error) {
+    console.error('Error fetching document counts', error, {
+      firmId: authStore.firmId,
+    });
+  }
+}
+
 // Fetch matters on component mount
 onMounted(async () => {
   await fetchMatters();
+  await fetchDocumentCounts();
 
   // Check for redirect reasons from route guard
   const reason = route.query.reason;

@@ -88,7 +88,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, onBeforeUnmount, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useAuthStore } from '@/core/stores/auth.js';
+import { useAuthStore } from '@/core/stores/auth/index.js';
 import { useDocumentViewStore } from '@/stores/documentView.js';
 import { useMatterViewStore } from '@/stores/matterView.js';
 import { useUserPreferencesStore } from '@/core/stores/userPreferences.js';
