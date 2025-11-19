@@ -36,7 +36,13 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          allowed_tools: "Bash(mkdir *),Bash(git mv *),Bash(git *),Bash(ls -R)"
+          allowed_tools: |
+            Bash(mkdir *)
+            Bash(git mv *)
+            Bash(git add *)
+            Bash(git commit *)
+            Bash(git status)
+            Bash(ls -R)
           
           # Optional: Explicitly tell Claude to always try to open a PR if it makes changes
           # prompt: 'After completing the requested task, please create a Pull Request with your changes.'
