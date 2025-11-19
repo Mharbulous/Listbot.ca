@@ -1,12 +1,14 @@
 <template>
   <header
-    class="fixed top-0 left-[60px] right-0 z-[50] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
+    class="fixed top-0 left-0 right-0 z-[1001] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
   >
-    <!-- Left Section: Menu + Page Title -->
+    <!-- Left Section: Hamburger + Page Title -->
     <div class="flex items-center gap-4 flex-shrink-0">
       <button
-        class="md:hidden bg-transparent border-none text-2xl cursor-pointer text-slate-600"
-        id="mobileMenuBtn"
+        class="bg-transparent border-none text-2xl cursor-pointer text-slate-600 hover:text-slate-800 transition-colors flex items-center justify-center w-10 h-10"
+        id="hamburgerMenuBtn"
+        @click="toggleSidebar"
+        title="Toggle sidebar"
       >
         ☰
       </button>
@@ -280,6 +282,11 @@ function triggerFileSelect() {
 
 function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
+}
+
+function toggleSidebar() {
+  // Dispatch custom event to toggle sidebar visibility
+  window.dispatchEvent(new CustomEvent('toggle-sidebar'));
 }
 
 function updateMousePosition(event) {
