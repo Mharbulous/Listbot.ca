@@ -54,6 +54,18 @@
           Categories
         </v-btn>
       </div>
+      <!-- Documents button (Matter Categories page only) -->
+      <div v-if="isOnMatterCategoriesPage" class="flex items-center">
+        <v-btn
+          color="primary"
+          size="default"
+          variant="elevated"
+          prepend-icon="mdi-file-document-multiple"
+          @click="navigateToDocuments"
+        >
+          Documents
+        </v-btn>
+      </div>
     </div>
 
     <!-- Center Section: Active Matter Display -->
@@ -213,6 +225,11 @@ const isOnMatterDocumentsPage = computed(() => {
   return route.path.match(/^\/matters\/[^/]+\/documents$/);
 });
 
+const isOnMatterCategoriesPage = computed(() => {
+  // Match routes like /matters/:matterId/categories
+  return route.path.match(/^\/matters\/[^/]+\/categories$/);
+});
+
 const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
 
 const shouldShowBannerHover = computed(
@@ -245,6 +262,14 @@ function navigateToCategories() {
   const match = route.path.match(/^\/matters\/([^/]+)\/documents$/);
   if (match && match[1]) {
     router.push(`/matters/${match[1]}/categories`);
+  }
+}
+
+function navigateToDocuments() {
+  // Extract matterId from current route path
+  const match = route.path.match(/^\/matters\/([^/]+)\/categories$/);
+  if (match && match[1]) {
+    router.push(`/matters/${match[1]}/documents`);
   }
 }
 
