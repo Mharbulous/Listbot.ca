@@ -284,16 +284,6 @@
   cursor: default !important; /* Default cursor for the cell itself - override row cursor */
 }
 
-/* Help cursor only on text content within cells (excluding empty cells) */
-.row-cell span:not(.tbd-text) {
-  cursor: help !important;
-}
-
-/* Also apply help cursor to badge elements */
-.row-cell .badge {
-  cursor: help !important;
-}
-
 .column-selector-spacer {
   background: white !important; /* Override zebra pattern from parent row */
   border-bottom: none; /* Remove bottom border from spacer column */

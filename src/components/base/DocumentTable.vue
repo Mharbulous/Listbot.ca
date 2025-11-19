@@ -514,3 +514,13 @@ onUnmounted(() => {
 // Component is ready - no logging needed here as Documents.vue tracks the overall mount time
 </script>
 <style scoped src="./DocumentTable.css"></style>
+<style scoped>
+/* Cursor behavior for slot content - using :deep() to penetrate scoped CSS boundary */
+.row-cell :deep(span:not(.tbd-text)) {
+  cursor: help !important;
+}
+
+.row-cell :deep(.badge) {
+  cursor: help !important;
+}
+</style>
