@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import { createAuthGuard } from './guards/auth'; // Import the auth guard
-import { createMatterGuard } from './guards/matter'; // Import the matter guard
+import { createAuthGuard } from '../features/authentication/guards/authGuard'; // Import the auth guard
+import { createMatterGuard } from '../features/matters/guards/matterGuard'; // Import the matter guard
 import { registerDemoRoutes } from '../dev-demos/utils/demoRoutes'; // Import demo routes
 
 const router = createRouter({
@@ -27,13 +27,13 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'profile',
-      component: () => import('../views/Profile.vue'),
+      component: () => import('../features/profile/views/Profile.vue'),
       meta: { requiresAuth: true, title: 'Profile' },
     },
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('../views/Settings.vue'),
+      component: () => import('../features/profile/views/Settings.vue'),
       meta: { requiresAuth: true, title: 'Settings' },
     },
     {
@@ -57,67 +57,67 @@ const router = createRouter({
     {
       path: '/matters/:matterId/documents',
       name: 'documents',
-      component: () => import('../views/Documents.vue'),
+      component: () => import('../features/documents/views/Documents.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Documents' },
     },
     {
       path: '/matters/:matterId/documents/view/:fileHash',
       name: 'view-document',
-      component: () => import('../features/organizer/views/ViewDocument.vue'),
+      component: () => import('../features/documents/views/ViewDocument.vue'),
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },
     },
     {
       path: '/matters/:matterId/categories',
       name: 'category-manager',
-      component: () => import('../features/organizer/views/CategoryManager.vue'),
+      component: () => import('../features/documents/views/CategoryManager.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories' },
     },
     {
       path: '/matters/:matterId/categories/new',
       name: 'category-creation-wizard',
-      component: () => import('../features/organizer/views/CategoryCreationWizard.vue'),
+      component: () => import('../features/documents/views/CategoryCreationWizard.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> New' },
     },
     {
       path: '/matters/:matterId/categories/edit/:id',
       name: 'category-edit',
-      component: () => import('../features/organizer/views/CategoryEditWizard.vue'),
+      component: () => import('../features/documents/views/CategoryEditWizard.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> Edit' },
     },
     {
       path: '/matters',
       name: 'matters',
-      component: () => import('../views/Matters.vue'),
+      component: () => import('../features/matters/views/Matters.vue'),
       meta: { requiresAuth: true, title: 'Matters' },
     },
     {
       path: '/matters/new',
       name: 'new-matter',
-      component: () => import('../views/NewMatter.vue'),
+      component: () => import('../features/matters/views/NewMatter.vue'),
       meta: { requiresAuth: true, title: 'New Matter' },
     },
     {
       path: '/matters/import',
       name: 'import-matters',
-      component: () => import('../views/MatterImport.vue'),
+      component: () => import('../features/matters/views/MatterImport.vue'),
       meta: { requiresAuth: true, title: 'Import Matters' },
     },
     {
       path: '/matters/edit/:matterId',
       name: 'edit-matter',
-      component: () => import('../views/EditMatter.vue'),
+      component: () => import('../features/matters/views/EditMatter.vue'),
       meta: { requiresAuth: true, title: 'Edit Matter' },
     },
     {
       path: '/matters/:id',
       name: 'matter-detail',
-      component: () => import('../views/MatterDetail.vue'),
+      component: () => import('../features/matters/views/MatterDetail.vue'),
       meta: { requiresAuth: true, title: 'Matter Details' },
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../components/features/auth/LoginForm.vue'),
+      component: () => import('../features/authentication/components/LoginForm.vue'),
       meta: { requiresAuth: false },
     },
     {
