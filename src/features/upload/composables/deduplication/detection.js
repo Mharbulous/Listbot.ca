@@ -4,9 +4,12 @@
  * Marks redundant files as duplicates and identifies copies
  */
 
+import { generateMetadataKey } from '../../utils/deduplicationLogic.js';
+
 /**
  * Group files by metadata within a hash group
  * MUST include folderPath to distinguish copies in different folders
+ * Uses shared deduplication logic for consistency with Phase 2
  * @param {Array} items - Array of { queueItem, isExisting } with same hash
  * @returns {Map} - Map of metadataKey -> array of { queueItem, isExisting }
  */
@@ -14,7 +17,13 @@ function groupByMetadata(items) {
   const metadataGroups = new Map();
 
   items.forEach(({ queueItem, isExisting }) => {
-    const metadataKey = `${queueItem.name}_${queueItem.size}_${queueItem.sourceLastModified}_${queueItem.folderPath}`;
+    // Use shared deduplication logic to ensure consistency with Phase 2
+    const metadataKey = generateMetadataKey(
+      queueItem.name,
+      queueItem.size,
+      queueItem.sourceLastModified,
+      queueItem.folderPath
+    );
 
     if (!metadataGroups.has(metadataKey)) {
       metadataGroups.set(metadataKey, []);

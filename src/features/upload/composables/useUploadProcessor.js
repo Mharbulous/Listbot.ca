@@ -178,18 +178,19 @@ export function useUploadProcessor({ updateFileStatus }) {
         throw new Error('Missing firmId or matterId for copy metadata record');
       }
 
-      // Generate metadata hash for this variant
-      const metadataHash = await generateMetadataHash(
-        queueFile.name,
-        queueFile.sourceLastModified,
-        queueFile.hash
-      );
-
       // Extract folder path
       let currentFolderPath = '';
       if (queueFile.folderPath) {
         currentFolderPath = queueFile.folderPath;
       }
+
+      // Generate metadata hash for this variant (includes folderPath for copy detection)
+      const metadataHash = await generateMetadataHash(
+        queueFile.name,
+        queueFile.sourceLastModified,
+        queueFile.hash,
+        currentFolderPath
+      );
 
       const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', queueFile.hash);
 
