@@ -11,8 +11,8 @@
     <!-- Normal app content -->
     <template v-else>
       <template v-if="$route.path !== '/login'">
-        <NewSideBar />
-        <AppHeader />
+        <AppHeader @toggle-sidebar="toggleSidebar" />
+        <NewSideBar :is-collapsed="isSidebarCollapsed" />
       </template>
       <div
         class="flex-grow flex flex-col transition-all duration-300"

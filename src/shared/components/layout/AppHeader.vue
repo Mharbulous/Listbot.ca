@@ -185,6 +185,9 @@ import { useAuthStore } from '@/core/auth/stores';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 
+// Define emits
+const emit = defineEmits(['toggle-sidebar']);
+
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -285,8 +288,8 @@ function triggerFolderRecursiveSelect() {
 }
 
 function toggleSidebar() {
-  // Dispatch custom event to toggle sidebar visibility
-  window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+  // Emit event to parent component
+  emit('toggle-sidebar');
 }
 
 function updateMousePosition(event) {
