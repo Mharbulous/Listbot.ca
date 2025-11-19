@@ -39,7 +39,7 @@ const router = createRouter({
     {
       path: '/upload',
       name: 'upload',
-      component: () => import('../features/upload/FileUpload.vue'),
+      component: () => import('../views/Testing.vue'),
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
@@ -51,7 +51,7 @@ const router = createRouter({
     {
       path: '/testing',
       name: 'testing',
-      component: () => import('../views/Testing.vue'),
+      component: () => import('../features/upload/FileUpload.vue'),
       meta: { requiresAuth: true, title: 'Upload Queue' },
     },
     {
