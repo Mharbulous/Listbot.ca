@@ -33,6 +33,7 @@ export function useUploadAdapter({ uploadQueue, updateFileStatus, showNotificati
 
   // Initialize orchestrator
   const orchestrator = useUploadOrchestrator({
+    uploadQueue,
     notify: state.notify,
     getUploadableFiles: state.getUploadableFiles,
     processSingleFile: processor.processSingleFile,
