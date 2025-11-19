@@ -59,10 +59,10 @@ describe('AIMetadataExtractionService', () => {
       expect(prompt).toContain('NOT payment stamp dates');
     });
 
-    it('includes confidence threshold guidance', () => {
+    it('includes alternative guidance', () => {
       const documentTypes = ['Email'];
       const prompt = aiMetadataExtractionService._buildPrompt(documentTypes);
-      expect(prompt).toContain('confidence < 95%');
+      expect(prompt).toContain('alternative');
       expect(prompt).toContain('alternatives');
     });
 
