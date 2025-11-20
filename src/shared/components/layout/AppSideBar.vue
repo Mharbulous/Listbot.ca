@@ -3,9 +3,9 @@
     <!-- Top Section: Logo + Toggle Button -->
     <div class="sidebar-header">
       <!-- Logo (shown when expanded) -->
-      <div v-if="!props.isCollapsed" class="sidebar-logo">
+      <RouterLink v-if="!props.isCollapsed" to="/" class="sidebar-logo">
         <span class="logo-text">ListBot</span>
-      </div>
+      </RouterLink>
 
       <!-- Toggle Button -->
       <button
@@ -171,6 +171,12 @@ const handleMouseLeave = () => {
 
 // Get icon for item
 const getItemIcon = (item) => {
+  // Special handling for Collect (Documents) item - show open folder when hovered or active
+  if (item.key === 'collect') {
+    const isHovered = hoveredItem.value === 'collect';
+    const isActive = route.path === item.path;
+    return isHovered || isActive ? '📂' : '📁';
+  }
   return item.icon;
 };
 </script>
@@ -218,6 +224,13 @@ const getItemIcon = (item) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar-logo:hover {
+  opacity: 0.8;
 }
 
 .logo-text {
