@@ -1,6 +1,6 @@
 <template>
   <header
-    class="bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border flex-shrink-0"
+    class="bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Page Title -->
     <div class="flex items-center gap-4 flex-shrink-0">
