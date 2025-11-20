@@ -28,7 +28,10 @@ export function useFolderAnalysis() {
       const isMainFolder = pathParts.length === 2; // Exactly 2 parts: folder/file (no subfolders)
 
       // Track root folders and subfolder detection
-      rootFolders.add(pathParts[0]);
+      // Only count as root folder if file is in a folder (not a root-level file)
+      if (pathParts.length > 1) {
+        rootFolders.add(pathParts[0]);
+      }
       if (pathParts.length > 2) {
         hasSubfolders = true;
       }
@@ -92,18 +95,18 @@ export function useFolderAnalysis() {
       sizeGroups.set(size, (sizeGroups.get(size) || 0) + 1);
     });
 
-    const uniqueFiles = Array.from(sizeGroups.values()).filter((count) => count === 1).length;
+    const uniqueFiles = sizeGroups.size; // Count of distinct file sizes
     const identicalSizeFiles = fileSizes.length - uniqueFiles;
     const zeroByteFiles = fileSizes.filter((size) => size === 0).length;
 
-    // Get top 5 largest source files
+    // Get top 5 largest source files (in KB for better precision with small files)
     const sortedSizes = [...fileSizes].sort((a, b) => b - a);
     const largestFileSizesMB = sortedSizes
       .slice(0, 5)
-      .map((size) => Math.round((size / (1024 * 1024)) * 10) / 10);
+      .map((size) => Math.round((size / 1024) * 10) / 10);
 
     return {
-      totalSizeMB: Math.round(totalSizeMB * 10) / 10,
+      totalSizeMB: Math.round(totalSizeMB * 1000) / 1000,
       uniqueFiles,
       identicalSizeFiles,
       zeroByteFiles,
@@ -113,12 +116,13 @@ export function useFolderAnalysis() {
 
   const calculateFilenameStats = (files) => {
     const filenameLengths = files.map((f) => f.path.length);
-    const avgFilenameLength =
-      filenameLengths.length > 0
-        ? Math.round(
-            (filenameLengths.reduce((sum, len) => sum + len, 0) / filenameLengths.length) * 10
-          ) / 10
-        : 0;
+    let avgFilenameLength = 0;
+
+    if (filenameLengths.length > 0) {
+      const sum = filenameLengths.reduce((sum, len) => sum + len, 0);
+      const avg = sum / filenameLengths.length;
+      avgFilenameLength = Math.round(avg * 10) / 10;
+    }
 
     return { avgFilenameLength };
   };

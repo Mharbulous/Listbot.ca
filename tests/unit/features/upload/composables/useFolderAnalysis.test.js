@@ -42,6 +42,9 @@ describe('useFolderAnalysis', () => {
   it('calculateFilenameStats returns correct filename length', () => {
     const result = calculateFilenameStats(mockFiles);
 
-    expect(result.avgFilenameLength).toBeCloseTo(21.5, 1);
+    // Paths: 'documents/report.pdf' (20), 'images/photo.jpg' (16),
+    // 'documents/backup/report-backup.pdf' (34), 'empty-file.txt' (14)
+    // Sum: 84, Avg: 21.0
+    expect(result.avgFilenameLength).toBeCloseTo(21.0, 1);
   });
 });
