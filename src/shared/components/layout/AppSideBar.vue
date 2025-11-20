@@ -92,6 +92,7 @@ const navItems = [
 
   // Pleadings and Issues (not part of EDRM workflow)
   { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
+  { key: 'cast', path: '/cast', icon: '🎭', label: 'Cast' },
   { key: 'issues', path: '/issues', icon: '⚖️', label: 'Issues' },
 
   // EDRM Workflow Section Header
