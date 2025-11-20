@@ -19,7 +19,7 @@
     </div>
 
     <!-- Navigation Items -->
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" :style="{ gap: navGap }">
       <template v-for="item in navItems" :key="item.key">
         <!-- Section Header -->
         <div v-if="item.type === 'header'" class="nav-section-header">
@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
@@ -205,6 +205,49 @@ const getItemIcon = (item) => {
   }
   return item.icon;
 };
+
+// Responsive gap calculation
+const navGap = ref('4px'); // Default minimum gap
+
+const calculateNavGap = () => {
+  const viewportHeight = window.innerHeight;
+
+  // Fixed heights
+  const headerHeight = 64; // sidebar-header min-height
+  const footerHeight = 73; // Approximate footer height (py-4 = 16*2 + avatar 36 + borders)
+
+  // Count navigation items (exclude headers)
+  const navItemCount = navItems.filter(item => item.type !== 'header').length;
+  const headerCount = navItems.filter(item => item.type === 'header').length;
+
+  // Minimum item heights
+  const minNavItemHeight = 54; // 30px icon + 12px padding top + 12px padding bottom
+  const minHeaderHeight = 32; // Approximate header height
+
+  // Calculate total minimum height needed
+  const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
+
+  // Available space for gaps
+  const availableSpace = viewportHeight - headerHeight - footerHeight - minTotalItemsHeight;
+
+  // Total number of gaps (between items, including before/after headers)
+  const gapCount = navItems.length + 1; // +1 for top padding
+
+  // Calculate gap size (minimum 1px, maximum available space divided by gap count)
+  const calculatedGap = Math.max(1, Math.floor(availableSpace / gapCount));
+
+  navGap.value = `${calculatedGap}px`;
+};
+
+// Set up resize observer
+onMounted(() => {
+  calculateNavGap();
+  window.addEventListener('resize', calculateNavGap);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', calculateNavGap);
+});
 </script>
 
 <style scoped>
@@ -312,12 +355,15 @@ const getItemIcon = (item) => {
 .sidebar-nav {
   position: relative;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  /* gap is set dynamically via inline style */
 }
 
 /* Section Header */
 .nav-section-header {
-  padding: 16px 12px 8px 12px;
-  margin-top: 8px;
+  padding: 12px;
+  /* margin removed for consistent spacing - gap handles all spacing */
 }
 
 .section-label {
