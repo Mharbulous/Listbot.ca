@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/About.vue'),
+      component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
