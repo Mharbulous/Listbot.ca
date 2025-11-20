@@ -95,7 +95,7 @@ const navItems = [
   { key: 'identify', path: '/identify', icon: '🔍', label: 'Identify' },
 
   // EDRM Stage 2: Preserve
-  { key: 'preserve', path: '/upload', icon: '🔒', label: 'Preserve' },
+  { key: 'preserve', path: '/upload', icon: '🗃️', label: 'Preserve' },
 
   // EDRM Stage 3: Collect
   {
