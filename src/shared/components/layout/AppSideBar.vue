@@ -95,7 +95,7 @@ const navItems = [
   { key: 'identify', path: '/identify', icon: '🔍', label: 'Identify' },
 
   // EDRM Stage 2: Preserve
-  { key: 'preserve', path: '/upload', icon: '🗃️', label: 'Preserve' },
+  { key: 'preserve', path: '/upload', icon: '🔐', label: 'Preserve' },
 
   // EDRM Stage 3: Collect
   {
@@ -105,7 +105,7 @@ const navItems = [
         ? `/matters/${matterViewStore.currentMatterId}/documents`
         : '/documents'
     ),
-    icon: '📁',
+    icon: '🗃️',
     label: 'Collect',
   },
 
@@ -119,7 +119,7 @@ const navItems = [
   { key: 'analyze', path: '/analysis', icon: '📊', label: 'Analyze' },
 
   // EDRM Stage 7: Produce
-  { key: 'produce', path: '/list', icon: '📋', label: 'Produce' },
+  { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
 
   // EDRM Stage 8: Present
   { key: 'present', path: '/present', icon: '🏛️', label: 'Present' },
@@ -165,14 +165,8 @@ const handleMouseLeave = () => {
   hoveredItem.value = null;
 };
 
-// Get icon for item (handles dynamic folder icon for Documents)
+// Get icon for item
 const getItemIcon = (item) => {
-  // Special handling for Collect (Documents) item - show open folder when hovered or active
-  if (item.key === 'collect') {
-    const isHovered = hoveredItem.value === 'collect';
-    const isActive = route.path === item.path;
-    return isHovered || isActive ? '📂' : '📁';
-  }
   return item.icon;
 };
 </script>
