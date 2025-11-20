@@ -122,7 +122,7 @@ const navItems = [
   { key: 'produce', path: '/list', icon: '📋', label: 'Produce' },
 
   // EDRM Stage 8: Present
-  { key: 'present', path: '/present', icon: '🗣️', label: 'Present' },
+  { key: 'present', path: '/present', icon: '🏛️', label: 'Present' },
 
   // End of Workflow Section Header
   { key: 'workflow-end', type: 'header', label: 'Resources' },
