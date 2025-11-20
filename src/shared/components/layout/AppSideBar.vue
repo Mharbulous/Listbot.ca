@@ -61,6 +61,7 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import SidebarFooter from './SidebarFooter.vue';
 
 // Props
@@ -82,6 +83,7 @@ const handleToggle = () => {
 // Get current route for active state
 const route = useRoute();
 const matterViewStore = useMatterViewStore();
+const organizerStore = useOrganizerStore();
 
 // Navigation items configuration
 const navItems = [
@@ -117,7 +119,30 @@ const navItems = [
   { key: 'process', path: '/process', icon: '🤖', label: 'Process' },
 
   // EDRM Stage 5: Review
-  { key: 'review', path: '/analyze', icon: '🕵️', label: 'Review' },
+  {
+    key: 'review',
+    path: computed(() => {
+      const matterId = matterViewStore.currentMatterId;
+      if (!matterId) return '/analyze';
+
+      // Try to get last viewed document from local storage
+      const lastViewedDoc = localStorage.getItem('lastViewedDocument');
+      if (lastViewedDoc) {
+        return `/matters/${matterId}/review/${lastViewedDoc}`;
+      }
+
+      // Otherwise, get first document from organizer store
+      const firstDoc = organizerStore.sortedEvidenceList?.[0];
+      if (firstDoc) {
+        return `/matters/${matterId}/review/${firstDoc.id}`;
+      }
+
+      // Fallback to analyze page if no documents
+      return '/analyze';
+    }),
+    icon: '🕵️',
+    label: 'Review',
+  },
 
   // EDRM Stage 6: Analyze
   { key: 'analyze', path: '/analysis', icon: '📊', label: 'Analyze' },

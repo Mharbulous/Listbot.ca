@@ -67,7 +67,7 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, title: 'Collect' },
     },
     {
-      path: '/matters/:matterId/documents/view/:fileHash',
+      path: '/matters/:matterId/review/:fileHash',
       name: 'view-document',
       component: () => import('../features/documents/views/ViewDocument.vue'),
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },

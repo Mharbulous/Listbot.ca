@@ -116,7 +116,7 @@ const isHoveringBanner = ref(false);
 const isHoveringCloseButton = ref(false);
 
 const pageTitle = computed(() => {
-  if (route.meta.titleFn && route.path.startsWith('/documents/view/')) {
+  if (route.meta.titleFn && route.path.includes('/review/')) {
     const documentName = documentViewStore.documentName || 'Loading...';
     return documentName;
   }
