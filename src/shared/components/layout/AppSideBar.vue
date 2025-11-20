@@ -78,16 +78,6 @@ const matterViewStore = useMatterViewStore();
 // Navigation items configuration
 const navItems = [
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
-  {
-    key: 'categories',
-    path: computed(() =>
-      matterViewStore.currentMatterId
-        ? `/matters/${matterViewStore.currentMatterId}/categories`
-        : '/categories'
-    ),
-    icon: '🗃️',
-    label: 'Categories',
-  },
   { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
   {
     key: 'cloud',
