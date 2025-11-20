@@ -206,47 +206,62 @@ const getItemIcon = (item) => {
   return item.icon;
 };
 
-// Responsive gap calculation
+// Responsive gap calculation for middle nav section
 const navGap = ref('4px'); // Default minimum gap
+const navContainerRef = ref(null);
+let resizeObserver = null;
 
 const calculateNavGap = () => {
-  const viewportHeight = window.innerHeight;
+  const navContainer = navContainerRef.value;
+  if (!navContainer) return;
 
-  // Fixed heights
-  const headerHeight = 64; // sidebar-header min-height
-  const footerHeight = 73; // Approximate footer height (py-4 = 16*2 + avatar 36 + borders)
+  // Get actual height of the nav container (the middle section)
+  const containerHeight = navContainer.clientHeight;
 
   // Count navigation items (exclude headers)
   const navItemCount = navItems.filter(item => item.type !== 'header').length;
   const headerCount = navItems.filter(item => item.type === 'header').length;
 
-  // Minimum item heights
+  // Minimum item heights (from CSS)
   const minNavItemHeight = 54; // 30px icon + 12px padding top + 12px padding bottom
-  const minHeaderHeight = 32; // Approximate header height
+  const minHeaderHeight = 32; // Approximate header height with padding
 
-  // Calculate total minimum height needed
+  // Calculate total minimum height needed for items
   const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
 
-  // Available space for gaps
-  const availableSpace = viewportHeight - headerHeight - footerHeight - minTotalItemsHeight;
+  // Available space for gaps within the nav container
+  const availableSpace = containerHeight - minTotalItemsHeight;
 
-  // Total number of gaps (between items, including before/after headers)
+  // Total number of gaps (between items)
   const gapCount = navItems.length + 1; // +1 for top padding
 
-  // Calculate gap size (minimum 1px, maximum available space divided by gap count)
+  // Calculate gap size (minimum 1px)
   const calculatedGap = Math.max(1, Math.floor(availableSpace / gapCount));
 
   navGap.value = `${calculatedGap}px`;
 };
 
-// Set up resize observer
+// Set up resize observer on nav container
 onMounted(() => {
-  calculateNavGap();
-  window.addEventListener('resize', calculateNavGap);
+  navContainerRef.value = document.querySelector('.sidebar-nav');
+
+  if (navContainerRef.value) {
+    calculateNavGap();
+
+    // Use ResizeObserver to watch the nav container specifically
+    resizeObserver = new ResizeObserver(() => {
+      calculateNavGap();
+    });
+
+    resizeObserver.observe(navContainerRef.value);
+  }
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', calculateNavGap);
+  if (resizeObserver && navContainerRef.value) {
+    resizeObserver.unobserve(navContainerRef.value);
+    resizeObserver.disconnect();
+  }
 });
 </script>
 
@@ -346,9 +361,11 @@ onUnmounted(() => {
   padding: 0;
 }
 
-/* Flexible Spacer - Pushes AppSwitcher to bottom */
+/* Flexible Spacer - No longer needed as .sidebar-nav fills space */
 .sidebar-flex-spacer {
-  flex-grow: 1;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 0;
 }
 
 /* Navigation Container */
@@ -357,6 +374,9 @@ onUnmounted(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
+  flex: 1; /* Fill available space between header and footer */
+  overflow-y: auto; /* Allow scrolling if content exceeds space */
+  overflow-x: hidden;
   /* gap is set dynamically via inline style */
 }
 
