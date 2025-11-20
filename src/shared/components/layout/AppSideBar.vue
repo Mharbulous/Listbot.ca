@@ -87,11 +87,12 @@ const navItems = [
         : '/documents'
     ),
     icon: '📁',
-    label: 'Documents',
+    label: 'Collect',
   },
+  { key: 'process', path: '/process', icon: '🤖', label: 'Process' },
   { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Review' },
-  { key: 'list', path: '/list', icon: '📃', label: 'List' },
-  { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
+  { key: 'list', path: '/list', icon: '📋', label: 'Produce' },
+  { key: 'about', path: '/about', icon: 'ℹ️', label: 'About' },
 ];
 
 // Tooltip state

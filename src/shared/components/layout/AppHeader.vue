@@ -35,7 +35,7 @@
         </v-menu>
       </div>
 
-      <!-- Categories button (Matter Documents page only) -->
+      <!-- Categories button (Collect page only) -->
       <div v-if="isOnMatterDocumentsPage" class="flex items-center">
         <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
           Categories
@@ -84,7 +84,7 @@
 
     <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3">
-      <!-- Documents button (Matter Categories page only) -->
+      <!-- Collect button (Matter Categories page only) -->
       <div v-if="isOnMatterCategoriesPage" class="flex items-center">
         <v-btn
           color="primary"
@@ -93,7 +93,7 @@
           prepend-icon="mdi-file-document-multiple"
           @click="navigateToDocuments"
         >
-          Documents
+          Collect
         </v-btn>
       </div>
     </div>
