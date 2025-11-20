@@ -14,7 +14,21 @@
       <div class="bg-white rounded-lg shadow-sm border border-slate-200 mt-8">
         <!-- Tab Header -->
         <div class="border-b border-slate-200">
-          <div class="flex">
+          <div class="flex flex-wrap">
+            <button
+              @click="activeTab = 'features'"
+              :class="[
+                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                activeTab === 'features'
+                  ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              ]"
+            >
+              <span class="flex items-center">
+                <span class="mr-2 text-lg">✨</span>
+                Features
+              </span>
+            </button>
             <button
               @click="activeTab = 'first-app'"
               :class="[
@@ -62,6 +76,7 @@
 
         <!-- Tab Content -->
         <div class="p-8">
+          <FeaturesTab v-if="activeTab === 'features'" />
           <FirstAppTab v-if="activeTab === 'first-app'" />
           <AddAppTab v-if="activeTab === 'add-app'" />
           <LocalDevTab v-if="activeTab === 'local-dev'" />
@@ -73,6 +88,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import FeaturesTab from '../shared/components/home/FeaturesTab.vue';
 import FirstAppTab from '../shared/components/home/FirstAppTab.vue';
 import AddAppTab from '../shared/components/home/AddAppTab.vue';
 import LocalDevTab from '../shared/components/home/LocalDevTab.vue';
@@ -82,8 +98,8 @@ defineOptions({
   name: 'HomeView',
 });
 
-// Tab state management
-const activeTab = ref('first-app');
+// Tab state management - default to features tab
+const activeTab = ref('features');
 </script>
 
 <style scoped>

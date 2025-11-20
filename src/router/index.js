@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/About.vue'),
+      component: () => import('../views/HomePage.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
@@ -43,25 +43,31 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
+      path: '/process',
+      name: 'process',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Process' },
+    },
+    {
       path: '/analyze',
       name: 'analyze',
       component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Analyze' },
+      meta: { requiresAuth: true, title: 'Review' },
     },
     {
       path: '/list',
       name: 'list',
       component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Evidence List' },
+      meta: { requiresAuth: true, title: 'Produce' },
     },
     {
       path: '/matters/:matterId/documents',
       name: 'documents',
       component: () => import('../features/documents/views/Documents.vue'),
-      meta: { requiresAuth: true, requiresMatter: true, title: 'Documents' },
+      meta: { requiresAuth: true, requiresMatter: true, title: 'Collect' },
     },
     {
-      path: '/matters/:matterId/documents/view/:fileHash',
+      path: '/matters/:matterId/review/:fileHash',
       name: 'view-document',
       component: () => import('../features/documents/views/ViewDocument.vue'),
       meta: { requiresAuth: true, requiresMatter: true, titleFn: true },

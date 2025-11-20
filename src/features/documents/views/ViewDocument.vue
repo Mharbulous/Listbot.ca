@@ -269,6 +269,8 @@ watch(
     if (newHash && newHash !== oldHash) {
       fileHash.value = newHash;
       evidenceLoader.loadEvidence(newHash, navigation.navigationStartTime);
+      // Save last viewed document to local storage
+      localStorage.setItem('lastViewedDocument', newHash);
     }
   }
 );
@@ -301,6 +303,8 @@ onMounted(async () => {
   navigation.performanceTracker.startNavigation('initial', null, fileHash.value, totalExpectedOperations);
 
   evidenceLoader.loadEvidence(fileHash.value, navigation.navigationStartTime);
+  // Save last viewed document to local storage
+  localStorage.setItem('lastViewedDocument', fileHash.value);
   window.addEventListener('keydown', handleKeydown);
 });
 

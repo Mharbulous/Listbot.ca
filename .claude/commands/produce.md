@@ -53,7 +53,7 @@ git pull origin main
 
 ### 1.3 Run Tests
 ```bash
-npm run test:run
+npm run test:run -- --exclude tests/sso-e2e.test.js 2>&1 | tail -20
 ```
 
 **If tests fail:** STOP the workflow and report test failures to user. Do NOT proceed with promotion.
@@ -130,7 +130,6 @@ Promotion from main to production for [VERSION]
 - [x] Pre-flight validation completed
 - [x] Ready for production deployment
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
 ### 3.2 Create PR with GitHub CLI

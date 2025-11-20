@@ -1,47 +1,53 @@
 <template>
-  <nav class="sidebar" id="app-sidebar">
-    <!-- Header with Logo -->
+  <nav class="sidebar" :class="{ 'sidebar-collapsed': props.isCollapsed }" id="app-sidebar">
+    <!-- Top Section: Logo + Toggle Button -->
     <div class="sidebar-header">
-      <img
-        src="/src/assets/images/BDLC-Logo-transparent.png"
-        alt="Logo"
-        class="sidebar-logo"
-      />
-    </div>
-
-    <!-- Spacer -->
-    <div class="sidebar-spacer"></div>
-
-    <!-- Navigation Items -->
-    <nav class="sidebar-nav">
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.key"
-        :to="item.path"
-        class="nav-item"
-        :class="{ 'nav-item-active': route.path === item.path }"
-        @mouseenter="handleMouseEnter($event, item.key)"
-        @mouseleave="handleMouseLeave"
-      >
-        <span class="nav-icon">{{ getItemIcon(item) }}</span>
+      <!-- Logo (shown when expanded) -->
+      <RouterLink v-if="!props.isCollapsed" to="/" class="sidebar-logo">
+        <span class="logo-text">ListBot</span>
       </RouterLink>
-    </nav>
 
-    <!-- Flexible spacer to push AppSwitcher to bottom -->
-    <div class="sidebar-flex-spacer"></div>
-
-    <!-- App Switcher -->
-    <div class="sidebar-section">
-      <AppSwitcher :is-hovered="false" />
+      <!-- Toggle Button -->
+      <button
+        class="sidebar-toggle-btn"
+        :class="{ 'sidebar-toggle-centered': props.isCollapsed }"
+        @click="handleToggle"
+        :title="props.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <span class="toggle-icon">{{ props.isCollapsed ? '☰' : '«' }}</span>
+      </button>
     </div>
 
-    <!-- Floating Tooltip (rendered to body) -->
+    <!-- Navigation Items (fills available space) -->
+    <div class="sidebar-nav" :style="{ gap: navGap }">
+      <template v-for="item in navItems" :key="item.key">
+        <!-- Section Header -->
+        <div v-if="item.type === 'header'" class="nav-section-header">
+          <span v-if="!props.isCollapsed" class="section-label">{{ item.label }}</span>
+          <span v-else class="section-divider"></span>
+        </div>
+
+        <!-- Navigation Link -->
+        <RouterLink
+          v-else
+          :to="item.path"
+          class="nav-item"
+          :class="{ 'nav-item-active': route.path === item.path }"
+          @mouseenter="handleMouseEnter($event, item.key)"
+          @mouseleave="handleMouseLeave"
+        >
+          <span class="nav-icon">{{ getItemIcon(item) }}</span>
+          <span v-if="!props.isCollapsed" class="nav-label">{{ item.label }}</span>
+        </RouterLink>
+      </template>
+    </div>
+
+    <!-- Sidebar Footer (User + App Menu) -->
+    <SidebarFooter :is-collapsed="props.isCollapsed" />
+
+    <!-- Floating Tooltip (only shown when collapsed) -->
     <Teleport to="body">
-      <div
-        v-if="hoveredItem"
-        class="sidebar-tooltip"
-        :style="tooltipStyle"
-      >
+      <div v-if="hoveredItem && props.isCollapsed" class="sidebar-tooltip" :style="tooltipStyle">
         {{ tooltipText }}
       </div>
     </Teleport>
@@ -49,70 +55,215 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useMatterViewStore } from '@/features/matters/stores/matterView'
-import AppSwitcher from '../navigation/AppSwitcher.vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
+import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useOrganizerStore } from '@/features/documents/stores/organizer';
+import SidebarFooter from './SidebarFooter.vue';
+
+// Props
+const props = defineProps({
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// Emits
+const emit = defineEmits(['toggle'])
+
+// Toggle handler
+const handleToggle = () => {
+  emit('toggle')
+}
 
 // Get current route for active state
-const route = useRoute()
-const matterViewStore = useMatterViewStore()
+const route = useRoute();
+const matterViewStore = useMatterViewStore();
+const organizerStore = useOrganizerStore();
 
 // Navigation items configuration
 const navItems = [
+  // Matters (Special - not part of EDRM workflow)
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
-  { key: 'categories', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/categories` : '/categories'), icon: '🗃️', label: 'Categories' },
-  { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
-  { key: 'cloud', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/documents` : '/documents'), icon: '📁', label: 'Documents' },
-  { key: 'list', path: '/list', icon: '📃', label: 'List' },
-  { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
-  { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
-]
+
+  // Pleadings and Issues (not part of EDRM workflow)
+  { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
+  { key: 'cast', path: '/cast', icon: '🎭', label: 'Cast' },
+  { key: 'issues', path: '/issues', icon: '⚖️', label: 'Issues' },
+
+  // EDRM Workflow Section Header
+  { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
+
+  // EDRM Stage 1: Identify
+  { key: 'identify', path: '/identify', icon: '🔍', label: 'Identify' },
+
+  // EDRM Stage 2: Preserve
+  { key: 'preserve', path: '/upload', icon: '🔐', label: 'Preserve' },
+
+  // EDRM Stage 3: Collect
+  {
+    key: 'collect',
+    path: computed(() =>
+      matterViewStore.currentMatterId
+        ? `/matters/${matterViewStore.currentMatterId}/documents`
+        : '/documents'
+    ),
+    icon: '🗃️',
+    label: 'Collect',
+  },
+
+  // EDRM Stage 4: Process
+  { key: 'process', path: '/process', icon: '🤖', label: 'Process' },
+
+  // EDRM Stage 5: Review
+  {
+    key: 'review',
+    path: computed(() => {
+      const matterId = matterViewStore.currentMatterId;
+      if (!matterId) return '/analyze';
+
+      // Try to get last viewed document from local storage
+      const lastViewedDoc = localStorage.getItem('lastViewedDocument');
+      if (lastViewedDoc) {
+        return `/matters/${matterId}/review/${lastViewedDoc}`;
+      }
+
+      // Otherwise, get first document from organizer store
+      const firstDoc = organizerStore.sortedEvidenceList?.[0];
+      if (firstDoc) {
+        return `/matters/${matterId}/review/${firstDoc.id}`;
+      }
+
+      // Fallback to analyze page if no documents
+      return '/analyze';
+    }),
+    icon: '🕵️',
+    label: 'Review',
+  },
+
+  // EDRM Stage 6: Analyze
+  { key: 'analyze', path: '/analysis', icon: '📊', label: 'Analyze' },
+
+  // EDRM Stage 7: Produce
+  { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
+
+  // EDRM Stage 8: Present
+  { key: 'present', path: '/present', icon: '🏛️', label: 'Present' },
+
+  // End of Workflow Section Header
+  { key: 'workflow-end', type: 'header', label: 'Resources' },
+
+  // About (Special - not part of EDRM workflow)
+  { key: 'about', path: '/about', icon: 'ℹ️', label: 'About' },
+];
 
 // Tooltip state
-const hoveredItem = ref(null)
-const tooltipPosition = ref({ top: 0, left: 68 })
+const hoveredItem = ref(null);
+const tooltipPosition = ref({ top: 0, left: 68 });
 
 // Computed: Get tooltip text for currently hovered item
 const tooltipText = computed(() => {
-  if (!hoveredItem.value) return ''
-  const item = navItems.find(i => i.key === hoveredItem.value)
-  return item?.label || ''
-})
+  if (!hoveredItem.value) return '';
+  const item = navItems.find((i) => i.key === hoveredItem.value);
+  return item?.label || '';
+});
 
 // Computed: Tooltip positioning styles
 const tooltipStyle = computed(() => ({
   top: `${tooltipPosition.value.top}px`,
   left: `${tooltipPosition.value.left}px`,
-}))
+}));
 
 // Mouse enter handler: Show tooltip and calculate position
 const handleMouseEnter = (event, itemKey) => {
-  hoveredItem.value = itemKey
+  hoveredItem.value = itemKey;
 
   // Calculate tooltip position relative to hovered element
-  const rect = event.currentTarget.getBoundingClientRect()
+  const rect = event.currentTarget.getBoundingClientRect();
   tooltipPosition.value = {
     top: rect.top + rect.height / 2, // Vertically center on icon
-    left: 68 // 60px sidebar width + 8px spacing
-  }
-}
+    left: 68, // 60px sidebar width + 8px spacing
+  };
+};
 
 // Mouse leave handler: Hide tooltip
 const handleMouseLeave = () => {
-  hoveredItem.value = null
-}
+  hoveredItem.value = null;
+};
 
-// Get icon for item (handles dynamic folder icon for Documents)
+// Get icon for item
 const getItemIcon = (item) => {
-  // Special handling for Documents item - show open folder when hovered or active
-  if (item.key === 'cloud') {
-    const isHovered = hoveredItem.value === 'cloud'
-    const isActive = route.path === item.path
-    return (isHovered || isActive) ? '📂' : '📁'
+  // Special handling for Collect (Documents) item - show open folder when hovered or active
+  if (item.key === 'collect') {
+    const isHovered = hoveredItem.value === 'collect';
+    const isActive = route.path === item.path;
+    return isHovered || isActive ? '📂' : '📁';
   }
-  return item.icon
-}
+  return item.icon;
+};
+
+// Responsive gap calculation for middle nav section
+const navGap = ref('4px'); // Default minimum gap
+const navContainerRef = ref(null);
+let resizeObserver = null;
+
+const calculateNavGap = () => {
+  const navContainer = navContainerRef.value;
+  if (!navContainer) return;
+
+  // Get actual height of the nav container (the middle section)
+  const containerHeight = navContainer.clientHeight;
+
+  // Count navigation items (exclude headers)
+  const navItemCount = navItems.filter(item => item.type !== 'header').length;
+  const headerCount = navItems.filter(item => item.type === 'header').length;
+
+  // Minimum item heights (from CSS - no vertical padding, just min-height)
+  const minNavItemHeight = 54; // min-height from CSS
+  const minHeaderHeight = 32; // min-height from CSS
+
+  // Calculate total minimum height needed for items
+  const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
+
+  // Available space for gaps within the nav container
+  const availableSpace = containerHeight - minTotalItemsHeight;
+
+  // Total number of gaps (between items)
+  const gapCount = navItems.length + 1; // +1 for top padding
+
+  // Calculate gap size (minimum 1px)
+  const calculatedGap = Math.max(1, Math.floor(availableSpace / gapCount));
+
+  navGap.value = `${calculatedGap}px`;
+};
+
+// Set up resize observer on nav container
+onMounted(async () => {
+  // Wait for DOM to be fully rendered
+  await nextTick();
+
+  navContainerRef.value = document.querySelector('.sidebar-nav');
+
+  if (navContainerRef.value) {
+    // Initial calculation
+    calculateNavGap();
+
+    // Use ResizeObserver to watch the nav container specifically
+    resizeObserver = new ResizeObserver(() => {
+      calculateNavGap();
+    });
+
+    resizeObserver.observe(navContainerRef.value);
+  }
+});
+
+onUnmounted(() => {
+  if (resizeObserver && navContainerRef.value) {
+    resizeObserver.unobserve(navContainerRef.value);
+    resizeObserver.disconnect();
+  }
+});
 </script>
 
 <style scoped>
@@ -121,67 +272,146 @@ const getItemIcon = (item) => {
   position: fixed;
   left: 0;
   top: 0;
-  width: 60px;
+  width: 240px;
   height: 100vh;
-  z-index: 1000;
-  background: linear-gradient(
-    to bottom,
-    var(--sidebar-bg-primary),
-    var(--sidebar-bg-secondary)
-  );
+  z-index: 50;
+  background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
   color: var(--sidebar-text-primary);
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
 }
 
-/* Header Section */
+/* Sidebar Collapsed State */
+.sidebar-collapsed {
+  width: 64px;
+}
+
+/* Sidebar Header: Logo + Toggle */
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 80px;
-  padding: 20px;
-  border-bottom: 1px solid var(--sidebar-border);
+  justify-content: space-between;
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--sidebar-border, rgba(255, 255, 255, 0.1));
+  min-height: 64px;
+  flex-shrink: 0;
 }
 
+.sidebar-collapsed .sidebar-header {
+  justify-content: center;
+  padding: 16px 8px;
+}
+
+/* Logo */
 .sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar-logo:hover {
+  opacity: 0.8;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sidebar-text-primary);
+  white-space: nowrap;
+}
+
+/* Toggle Button */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
-  object-fit: cover;
-  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--sidebar-text-secondary);
+  border-radius: 6px;
+  transition: all 200ms ease-in-out;
+  flex-shrink: 0;
 }
 
-/* Section Container */
-.sidebar-section {
-  padding: 0;
+.sidebar-toggle-btn:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
 }
 
-/* Spacer */
-.sidebar-spacer {
-  height: 32px;
+.sidebar-toggle-centered {
+  margin: 0 auto;
 }
 
-/* Flexible Spacer - Pushes AppSwitcher to bottom */
-.sidebar-flex-spacer {
-  flex-grow: 1;
+.toggle-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Navigation Container */
 .sidebar-nav {
   position: relative;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Fill available space between header and footer */
+  overflow-y: auto; /* Allow scrolling if content exceeds space */
+  overflow-x: hidden;
+  /* gap is set dynamically via inline style */
+}
+
+/* Section Header */
+.nav-section-header {
+  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
+  min-height: 32px; /* Maintain consistent height */
+  display: flex;
+  align-items: center;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sidebar-text-secondary);
+  opacity: 0.7;
+}
+
+.section-divider {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--sidebar-border, rgba(255, 255, 255, 0.2));
+  margin: 0 auto;
 }
 
 /* Navigation Item */
 .nav-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 12px;
+  justify-content: flex-start;
+  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
+  min-height: 54px; /* Maintain clickable height (30px icon + 12px top + 12px bottom) */
+  gap: 12px;
   color: var(--sidebar-text-secondary);
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms ease-in-out;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .nav-item {
+  justify-content: center;
+  gap: 0;
 }
 
 .nav-item:hover {
@@ -203,6 +433,17 @@ const getItemIcon = (item) => {
   width: 30px;
   height: 30px;
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* Text Label */
+.nav-label {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Floating Tooltip - Rendered to Body */
