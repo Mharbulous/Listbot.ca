@@ -20,18 +20,26 @@
 
     <!-- Navigation Items -->
     <nav class="sidebar-nav">
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.key"
-        :to="item.path"
-        class="nav-item"
-        :class="{ 'nav-item-active': route.path === item.path }"
-        @mouseenter="handleMouseEnter($event, item.key)"
-        @mouseleave="handleMouseLeave"
-      >
-        <span class="nav-icon">{{ getItemIcon(item) }}</span>
-        <span v-if="!props.isCollapsed" class="nav-label">{{ item.label }}</span>
-      </RouterLink>
+      <template v-for="item in navItems" :key="item.key">
+        <!-- Section Header -->
+        <div v-if="item.type === 'header'" class="nav-section-header">
+          <span v-if="!props.isCollapsed" class="section-label">{{ item.label }}</span>
+          <span v-else class="section-divider"></span>
+        </div>
+
+        <!-- Navigation Link -->
+        <RouterLink
+          v-else
+          :to="item.path"
+          class="nav-item"
+          :class="{ 'nav-item-active': route.path === item.path }"
+          @mouseenter="handleMouseEnter($event, item.key)"
+          @mouseleave="handleMouseLeave"
+        >
+          <span class="nav-icon">{{ getItemIcon(item) }}</span>
+          <span v-if="!props.isCollapsed" class="nav-label">{{ item.label }}</span>
+        </RouterLink>
+      </template>
     </nav>
 
     <!-- Flexible spacer to push footer to bottom -->
@@ -77,10 +85,21 @@ const matterViewStore = useMatterViewStore();
 
 // Navigation items configuration
 const navItems = [
+  // Matters (Special - not part of EDRM workflow)
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
-  { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
+
+  // EDRM Workflow Section Header
+  { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
+
+  // EDRM Stage 1: Identify
+  { key: 'identify', path: '/identify', icon: '🔍', label: 'Identify' },
+
+  // EDRM Stage 2: Preserve
+  { key: 'preserve', path: '/upload', icon: '🔒', label: 'Preserve' },
+
+  // EDRM Stage 3: Collect
   {
-    key: 'cloud',
+    key: 'collect',
     path: computed(() =>
       matterViewStore.currentMatterId
         ? `/matters/${matterViewStore.currentMatterId}/documents`
@@ -89,9 +108,26 @@ const navItems = [
     icon: '📁',
     label: 'Collect',
   },
+
+  // EDRM Stage 4: Process
   { key: 'process', path: '/process', icon: '🤖', label: 'Process' },
-  { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Review' },
-  { key: 'list', path: '/list', icon: '📋', label: 'Produce' },
+
+  // EDRM Stage 5: Review
+  { key: 'review', path: '/analyze', icon: '🕵️', label: 'Review' },
+
+  // EDRM Stage 6: Analyze
+  { key: 'analyze', path: '/analysis', icon: '📊', label: 'Analyze' },
+
+  // EDRM Stage 7: Produce
+  { key: 'produce', path: '/list', icon: '📋', label: 'Produce' },
+
+  // EDRM Stage 8: Present
+  { key: 'present', path: '/present', icon: '📺', label: 'Present' },
+
+  // End of Workflow Section Header
+  { key: 'workflow-end', type: 'header', label: 'Resources' },
+
+  // About (Special - not part of EDRM workflow)
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'About' },
 ];
 
@@ -131,9 +167,9 @@ const handleMouseLeave = () => {
 
 // Get icon for item (handles dynamic folder icon for Documents)
 const getItemIcon = (item) => {
-  // Special handling for Documents item - show open folder when hovered or active
-  if (item.key === 'cloud') {
-    const isHovered = hoveredItem.value === 'cloud';
+  // Special handling for Collect (Documents) item - show open folder when hovered or active
+  if (item.key === 'collect') {
+    const isHovered = hoveredItem.value === 'collect';
     const isActive = route.path === item.path;
     return isHovered || isActive ? '📂' : '📁';
   }
@@ -239,6 +275,29 @@ const getItemIcon = (item) => {
 .sidebar-nav {
   position: relative;
   padding: 0;
+}
+
+/* Section Header */
+.nav-section-header {
+  padding: 16px 12px 8px 12px;
+  margin-top: 8px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sidebar-text-secondary);
+  opacity: 0.7;
+}
+
+.section-divider {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--sidebar-border, rgba(255, 255, 255, 0.2));
+  margin: 0 auto;
 }
 
 /* Navigation Item */
