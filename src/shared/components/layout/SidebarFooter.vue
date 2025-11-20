@@ -424,7 +424,7 @@ const handleSignOut = async () => {
 
 /* Trigger Button */
 .footer-trigger {
-  @apply w-full flex items-center gap-3 px-3 py-4 text-slate-200 hover:bg-slate-700 transition-colors cursor-pointer bg-transparent border-none outline-none;
+  @apply w-full flex items-center gap-3 px-3 py-3.5 text-slate-200 hover:bg-slate-700 transition-colors cursor-pointer bg-transparent border-none outline-none;
 }
 
 .sidebar-footer-collapsed .footer-trigger {
