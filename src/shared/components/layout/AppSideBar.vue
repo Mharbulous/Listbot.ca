@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
@@ -241,6 +241,16 @@ const calculateNavGap = () => {
 
   navGap.value = `${calculatedGap}px`;
 };
+
+// Watch navItems array length to recalculate gap when items are added/removed
+watch(
+  () => navItems.length,
+  async () => {
+    // Wait for DOM to update with new items
+    await nextTick();
+    calculateNavGap();
+  }
+);
 
 // Set up resize observer on nav container
 onMounted(async () => {
