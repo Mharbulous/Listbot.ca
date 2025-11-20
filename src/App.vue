@@ -10,22 +10,39 @@
 
     <!-- Normal app content -->
     <template v-else>
+      <!-- L-Layout: Row [ Sidebar, Column [ Header, Content ] ] -->
       <template v-if="$route.path !== '/login'">
-        <AppHeader @toggle-sidebar="toggleSidebar" />
+        <!-- Full-height Sidebar (left) -->
         <NewSideBar :is-collapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+
+        <!-- Content area (right): Column [ Header, Main Content ] -->
+        <div
+          class="flex flex-col flex-grow transition-all duration-300"
+          :class="{
+            'ml-[64px]': isSidebarCollapsed,
+            'ml-[240px]': !isSidebarCollapsed,
+          }"
+          style="min-width: 0"
+        >
+          <!-- Header (spans only content area width) -->
+          <AppHeader />
+
+          <!-- Main content -->
+          <div class="flex-grow">
+            <router-view />
+          </div>
+        </div>
       </template>
+
+      <!-- Login page (no sidebar/header) -->
       <div
-        class="flex-grow flex flex-col transition-all duration-300"
-        :class="{
-          'justify-center items-center': $route.path === '/login',
-          'ml-[60px]': $route.path !== '/login' && isSidebarCollapsed,
-          'ml-[240px]': $route.path !== '/login' && !isSidebarCollapsed,
-          'pt-20': $route.path !== '/login',
-        }"
-        style="min-width: 0"
+        v-else
+        class="flex-grow flex flex-col justify-center items-center"
       >
         <router-view />
       </div>
+
+      <!-- Mobile menu overlay (if needed) -->
       <template v-if="$route.path !== '/login'">
         <div
           class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-[99]"

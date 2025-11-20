@@ -1,17 +1,9 @@
 <template>
   <header
-    class="fixed top-0 left-0 right-0 z-[1001] bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border"
+    class="bg-white px-8 py-5 border-b border-slate-200 flex items-center justify-between h-20 box-border flex-shrink-0"
   >
-    <!-- Left Section: Hamburger + Page Title -->
+    <!-- Left Section: Page Title -->
     <div class="flex items-center gap-4 flex-shrink-0">
-      <button
-        class="bg-transparent border-none text-2xl cursor-pointer text-slate-600 hover:text-slate-800 transition-colors flex items-center justify-center w-10 h-10"
-        id="hamburgerMenuBtn"
-        @click="toggleSidebar"
-        title="Toggle sidebar"
-      >
-        ☰
-      </button>
       <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
         {{ pageTitle }}
       </h1>
@@ -185,9 +177,6 @@ import { useAuthStore } from '@/core/auth/stores';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 
-// Define emits
-const emit = defineEmits(['toggle-sidebar']);
-
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -285,11 +274,6 @@ function triggerFileSelect() {
 
 function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
-}
-
-function toggleSidebar() {
-  // Emit event to parent component
-  emit('toggle-sidebar');
 }
 
 function updateMousePosition(event) {
