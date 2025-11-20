@@ -3,7 +3,7 @@ allowed-tools: Bash(git):*, Bash(npm):*, Bash(gh):*, TodoWrite, AskUserQuestion
 description: Automate production promotion workflow with validation, auto-versioning, and tagging
 ---
 
-# Production Promotion Workflow (`/produce`)
+# Promotion Workflow (`/promote`)
 
 Automate the complete promotion of main branch to production with pre-flight validation, auto-increment versioning, squash merge, and automatic tagging.
 
