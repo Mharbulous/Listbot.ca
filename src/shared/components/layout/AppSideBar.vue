@@ -88,6 +88,10 @@ const navItems = [
   // Matters (Special - not part of EDRM workflow)
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
 
+  // Pleadings and Issues (not part of EDRM workflow)
+  { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
+  { key: 'issues', path: '/issues', icon: '⚖️', label: 'Issues' },
+
   // EDRM Workflow Section Header
   { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
 
