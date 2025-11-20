@@ -7,48 +7,6 @@
       <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
         {{ pageTitle }}
       </h1>
-      <!-- Add to Queue button (Upload page only) -->
-      <div v-if="route.path === '/upload'" class="flex items-center">
-        <v-menu location="bottom">
-          <template v-slot:activator="{ props: menuProps }">
-            <v-btn
-              color="primary"
-              size="default"
-              variant="elevated"
-              prepend-icon="mdi-plus"
-              append-icon="mdi-chevron-down"
-              v-bind="menuProps"
-            >
-              Add to Queue
-            </v-btn>
-          </template>
-
-          <v-list density="compact">
-            <v-list-item
-              prepend-icon="mdi-file-multiple"
-              title="Files"
-              @click="triggerFileSelect"
-            />
-            <v-list-item
-              prepend-icon="mdi-folder-multiple"
-              title="Folder w. Subfolders"
-              @click="triggerFolderRecursiveSelect"
-            />
-          </v-list>
-        </v-menu>
-      </div>
-      <!-- Documents button (Matter Categories page only) -->
-      <div v-if="isOnMatterCategoriesPage" class="flex items-center">
-        <v-btn
-          color="primary"
-          size="default"
-          variant="elevated"
-          prepend-icon="mdi-file-document-multiple"
-          @click="navigateToDocuments"
-        >
-          Documents
-        </v-btn>
-      </div>
     </div>
 
     <!-- Center Section: Active Matter Display -->
@@ -86,12 +44,54 @@
       </button>
     </div>
 
-    <!-- Right Section: Categories Button -->
+    <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3">
+      <!-- Add to Queue button (Upload page only) -->
+      <div v-if="route.path === '/upload'" class="flex items-center">
+        <v-menu location="bottom">
+          <template v-slot:activator="{ props: menuProps }">
+            <v-btn
+              color="primary"
+              size="default"
+              variant="elevated"
+              prepend-icon="mdi-plus"
+              append-icon="mdi-chevron-down"
+              v-bind="menuProps"
+            >
+              Add to Queue
+            </v-btn>
+          </template>
+
+          <v-list density="compact">
+            <v-list-item
+              prepend-icon="mdi-file-multiple"
+              title="Files"
+              @click="triggerFileSelect"
+            />
+            <v-list-item
+              prepend-icon="mdi-folder-multiple"
+              title="Folder w. Subfolders"
+              @click="triggerFolderRecursiveSelect"
+            />
+          </v-list>
+        </v-menu>
+      </div>
       <!-- Categories button (Matter Documents page only) -->
       <div v-if="isOnMatterDocumentsPage" class="flex items-center">
         <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
           Categories
+        </v-btn>
+      </div>
+      <!-- Documents button (Matter Categories page only) -->
+      <div v-if="isOnMatterCategoriesPage" class="flex items-center">
+        <v-btn
+          color="primary"
+          size="default"
+          variant="elevated"
+          prepend-icon="mdi-file-document-multiple"
+          @click="navigateToDocuments"
+        >
+          Documents
         </v-btn>
       </div>
     </div>
