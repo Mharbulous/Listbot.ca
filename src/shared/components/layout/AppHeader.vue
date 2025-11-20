@@ -99,13 +99,6 @@
 
     <!-- Right Section: User -->
     <div class="flex items-center gap-3">
-      <!-- Mouse X Position Debug Display -->
-      <div
-        class="px-3 py-1 bg-slate-100 border border-slate-300 rounded text-xs font-mono text-slate-700"
-      >
-        X: {{ mouseX }}px
-      </div>
-
       <div
         class="relative inline-block cursor-pointer outline-none group"
         tabindex="0"
@@ -171,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
@@ -185,8 +178,6 @@ const matterViewStore = useMatterViewStore();
 
 const isHoveringBanner = ref(false);
 const isHoveringCloseButton = ref(false);
-const mouseX = ref(0);
-let lastUpdateTime = 0;
 
 const menuLinks = [
   {
@@ -275,29 +266,6 @@ function triggerFileSelect() {
 function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
 }
-
-function updateMousePosition(event) {
-  const currentTime = Date.now();
-  // Throttle to 100ms
-  if (currentTime - lastUpdateTime >= 100) {
-    mouseX.value = event.clientX;
-    lastUpdateTime = currentTime;
-  }
-}
-
-// Add global mousemove and drag listeners on mount
-onMounted(() => {
-  window.addEventListener('mousemove', updateMousePosition);
-  window.addEventListener('drag', updateMousePosition);
-  window.addEventListener('dragover', updateMousePosition);
-});
-
-// Clean up listeners on unmount
-onUnmounted(() => {
-  window.removeEventListener('mousemove', updateMousePosition);
-  window.removeEventListener('drag', updateMousePosition);
-  window.removeEventListener('dragover', updateMousePosition);
-});
 </script>
 
 <style scoped>
