@@ -157,7 +157,7 @@ const getItemIcon = (item) => {
   left: 0;
   top: 0;
   width: 240px;
-  height: calc(100vh - 80px);
+  height: 100vh;
   z-index: 50;
   background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
   color: var(--sidebar-text-primary);
