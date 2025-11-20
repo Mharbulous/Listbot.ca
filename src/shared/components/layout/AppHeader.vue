@@ -37,12 +37,6 @@
           </v-list>
         </v-menu>
       </div>
-      <!-- Categories button (Matter Documents page only) -->
-      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
-        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
-          Categories
-        </v-btn>
-      </div>
       <!-- Documents button (Matter Categories page only) -->
       <div v-if="isOnMatterCategoriesPage" class="flex items-center">
         <v-btn
@@ -92,19 +86,20 @@
       </button>
     </div>
 
-    <!-- Right Section: Mouse Position Debug Display -->
+    <!-- Right Section: Categories Button -->
     <div class="flex items-center gap-3">
-      <div
-        class="px-3 py-1 bg-slate-100 border border-slate-300 rounded text-xs font-mono text-slate-700"
-      >
-        X: {{ mouseX }}px
+      <!-- Categories button (Matter Documents page only) -->
+      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
+          Categories
+        </v-btn>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
@@ -116,8 +111,6 @@ const matterViewStore = useMatterViewStore();
 
 const isHoveringBanner = ref(false);
 const isHoveringCloseButton = ref(false);
-const mouseX = ref(0);
-let lastUpdateTime = 0;
 
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.startsWith('/documents/view/')) {
@@ -184,27 +177,4 @@ function triggerFileSelect() {
 function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
 }
-
-function updateMousePosition(event) {
-  const currentTime = Date.now();
-  // Throttle to 100ms
-  if (currentTime - lastUpdateTime >= 100) {
-    mouseX.value = event.clientX;
-    lastUpdateTime = currentTime;
-  }
-}
-
-// Add global mousemove and drag listeners on mount
-onMounted(() => {
-  window.addEventListener('mousemove', updateMousePosition);
-  window.addEventListener('drag', updateMousePosition);
-  window.addEventListener('dragover', updateMousePosition);
-});
-
-// Clean up listeners on unmount
-onUnmounted(() => {
-  window.removeEventListener('mousemove', updateMousePosition);
-  window.removeEventListener('drag', updateMousePosition);
-  window.removeEventListener('dragover', updateMousePosition);
-});
 </script>
