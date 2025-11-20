@@ -1,5 +1,23 @@
 <template>
   <nav class="sidebar" :class="{ 'sidebar-collapsed': props.isCollapsed }" id="app-sidebar">
+    <!-- Top Section: Logo + Toggle Button -->
+    <div class="sidebar-header">
+      <!-- Logo (shown when expanded) -->
+      <div v-if="!props.isCollapsed" class="sidebar-logo">
+        <span class="logo-text">ListBot</span>
+      </div>
+
+      <!-- Toggle Button -->
+      <button
+        class="sidebar-toggle-btn"
+        :class="{ 'sidebar-toggle-centered': props.isCollapsed }"
+        @click="handleToggle"
+        :title="props.isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <span class="toggle-icon">{{ props.isCollapsed ? '☰' : '«' }}</span>
+      </button>
+    </div>
+
     <!-- Navigation Items -->
     <nav class="sidebar-nav">
       <RouterLink
@@ -51,8 +69,13 @@ const props = defineProps({
   },
 })
 
-// Emits (none currently used)
-// const emit = defineEmits([])
+// Emits
+const emit = defineEmits(['toggle'])
+
+// Toggle handler
+const handleToggle = () => {
+  emit('toggle')
+}
 
 // Get current route for active state
 const route = useRoute()
@@ -120,10 +143,10 @@ const getItemIcon = (item) => {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 80px;
+  top: 0;
   width: 240px;
-  height: calc(100vh - 80px);
-  z-index: 50;
+  height: 100vh;
+  z-index: 1000;
   background: linear-gradient(
     to bottom,
     var(--sidebar-bg-primary),
@@ -138,7 +161,69 @@ const getItemIcon = (item) => {
 
 /* Sidebar Collapsed State */
 .sidebar-collapsed {
-  width: 60px;
+  width: 64px;
+}
+
+/* Sidebar Header: Logo + Toggle */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--sidebar-border, rgba(255, 255, 255, 0.1));
+  min-height: 64px;
+  flex-shrink: 0;
+}
+
+.sidebar-collapsed .sidebar-header {
+  justify-content: center;
+  padding: 16px 8px;
+}
+
+/* Logo */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sidebar-text-primary);
+  white-space: nowrap;
+}
+
+/* Toggle Button */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--sidebar-text-secondary);
+  border-radius: 6px;
+  transition: all 200ms ease-in-out;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
+}
+
+.sidebar-toggle-centered {
+  margin: 0 auto;
+}
+
+.toggle-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Section Container */
