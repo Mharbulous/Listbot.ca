@@ -70,7 +70,7 @@
             />
             <v-list-item
               prepend-icon="mdi-folder-multiple"
-              title="Folder w. Subfolders"
+              title="Folder"
               @click="triggerFolderRecursiveSelect"
             />
           </v-list>
