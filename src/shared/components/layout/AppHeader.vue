@@ -76,7 +76,13 @@
           </v-list>
         </v-menu>
       </div>
-      <!-- Documents button (Matter Categories page only) -->
+      <!-- Categories button (Matter Collect page only) -->
+      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
+          Categories
+        </v-btn>
+      </div>
+      <!-- Collect button (Matter Categories page only) -->
       <div v-if="isOnMatterCategoriesPage" class="flex items-center">
         <v-btn
           color="primary"
@@ -85,52 +91,7 @@
           prepend-icon="mdi-file-document-multiple"
           @click="navigateToDocuments"
         >
-          Documents
-        </v-btn>
-      </div>
-    </div>
-
-    <!-- Center Section: Active Matter Display -->
-    <div
-      v-if="matterViewStore.hasMatter"
-      @click="isBannerClickable && navigateToMatter()"
-      @mouseenter="isHoveringBanner = true"
-      @mouseleave="isHoveringBanner = false"
-      :class="[
-        'flex items-center gap-2 px-4 py-2 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl transition-colors',
-        shouldShowBannerHover ? 'bg-amber-100' : 'bg-amber-50',
-        isBannerClickable ? 'cursor-pointer' : 'cursor-default',
-      ]"
-      :title="isBannerClickable ? 'View Matter Details' : ''"
-    >
-      <p class="flex-1 min-w-0 text-sm font-medium text-slate-800 truncate text-center">
-        {{ matterViewStore.selectedMatter.matterNumber }}:
-        {{ matterViewStore.selectedMatter.description }}
-      </p>
-      <button
-        @click.stop="clearMatter"
-        @mouseenter="isHoveringCloseButton = true"
-        @mouseleave="isHoveringCloseButton = false"
-        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-200 rounded transition-colors"
-        title="Clear selected matter"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Right Section: Categories Button -->
-    <div class="flex items-center gap-3">
-      <!-- Categories button (Matter Documents page only) -->
-      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
-        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
-          Categories
+          Collect
         </v-btn>
       </div>
     </div>
