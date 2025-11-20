@@ -39,12 +39,7 @@
       </div>
       <!-- Categories button (Matter Documents page only) -->
       <div v-if="isOnMatterDocumentsPage" class="flex items-center">
-        <v-btn
-          color="primary"
-          size="default"
-          variant="elevated"
-          @click="navigateToCategories"
-        >
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
           Categories
         </v-btn>
       </div>
@@ -97,7 +92,7 @@
       </button>
     </div>
 
-    <!-- Right Section: User -->
+    <!-- Right Section: Mouse Position Debug Display -->
     <div class="flex items-center gap-3">
       <div
         class="relative inline-block cursor-pointer outline-none group"
@@ -166,31 +161,16 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/core/auth/stores';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 
 const router = useRouter();
 const route = useRoute();
-const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const matterViewStore = useMatterViewStore();
 
 const isHoveringBanner = ref(false);
 const isHoveringCloseButton = ref(false);
-
-const menuLinks = [
-  {
-    to: '/settings',
-    label: 'Settings',
-    icon: '<path fill-rule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.205 1.251l-1.18 2.044a1 1 0 01-1.186.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.205-1.251l1.18-2.044a1 1 0 011.186-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />',
-  },
-  {
-    to: '/profile',
-    label: 'Profile',
-    icon: '<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />',
-  },
-];
 
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.startsWith('/documents/view/')) {
@@ -220,15 +200,6 @@ const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
 const shouldShowBannerHover = computed(
   () => isBannerClickable.value && isHoveringBanner.value && !isHoveringCloseButton.value
 );
-
-async function signOut() {
-  try {
-    await authStore.logout();
-    router.push('/login');
-  } catch (error) {
-    console.error('Sign out failed:', error);
-  }
-}
 
 function clearMatter() {
   matterViewStore.clearMatter();
@@ -267,20 +238,3 @@ function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
 }
 </script>
-
-<style scoped>
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>
