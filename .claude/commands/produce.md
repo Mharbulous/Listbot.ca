@@ -130,7 +130,6 @@ Promotion from main to production for [VERSION]
 - [x] Pre-flight validation completed
 - [x] Ready for production deployment
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
 ### 3.2 Create PR with GitHub CLI
