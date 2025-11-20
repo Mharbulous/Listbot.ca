@@ -18,8 +18,8 @@
       </button>
     </div>
 
-    <!-- Navigation Items -->
-    <nav class="sidebar-nav" :style="{ gap: navGap }">
+    <!-- Navigation Items (fills available space) -->
+    <div class="sidebar-nav" :style="{ gap: navGap }">
       <template v-for="item in navItems" :key="item.key">
         <!-- Section Header -->
         <div v-if="item.type === 'header'" class="nav-section-header">
@@ -40,10 +40,7 @@
           <span v-if="!props.isCollapsed" class="nav-label">{{ item.label }}</span>
         </RouterLink>
       </template>
-    </nav>
-
-    <!-- Flexible spacer to push footer to bottom -->
-    <div class="sidebar-flex-spacer"></div>
+    </div>
 
     <!-- Sidebar Footer (User + App Menu) -->
     <SidebarFooter :is-collapsed="props.isCollapsed" />
@@ -58,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
@@ -222,9 +219,9 @@ const calculateNavGap = () => {
   const navItemCount = navItems.filter(item => item.type !== 'header').length;
   const headerCount = navItems.filter(item => item.type === 'header').length;
 
-  // Minimum item heights (from CSS)
-  const minNavItemHeight = 54; // 30px icon + 12px padding top + 12px padding bottom
-  const minHeaderHeight = 32; // Approximate header height with padding
+  // Minimum item heights (from CSS - no vertical padding, just min-height)
+  const minNavItemHeight = 54; // min-height from CSS
+  const minHeaderHeight = 32; // min-height from CSS
 
   // Calculate total minimum height needed for items
   const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
@@ -242,10 +239,14 @@ const calculateNavGap = () => {
 };
 
 // Set up resize observer on nav container
-onMounted(() => {
+onMounted(async () => {
+  // Wait for DOM to be fully rendered
+  await nextTick();
+
   navContainerRef.value = document.querySelector('.sidebar-nav');
 
   if (navContainerRef.value) {
+    // Initial calculation
     calculateNavGap();
 
     // Use ResizeObserver to watch the nav container specifically
@@ -356,18 +357,6 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-/* Section Container */
-.sidebar-section {
-  padding: 0;
-}
-
-/* Flexible Spacer - No longer needed as .sidebar-nav fills space */
-.sidebar-flex-spacer {
-  flex-grow: 0;
-  flex-shrink: 0;
-  height: 0;
-}
-
 /* Navigation Container */
 .sidebar-nav {
   position: relative;
@@ -382,8 +371,10 @@ onUnmounted(() => {
 
 /* Section Header */
 .nav-section-header {
-  padding: 12px;
-  /* margin removed for consistent spacing - gap handles all spacing */
+  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
+  min-height: 32px; /* Maintain consistent height */
+  display: flex;
+  align-items: center;
 }
 
 .section-label {
@@ -408,7 +399,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 12px;
+  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
+  min-height: 54px; /* Maintain clickable height (30px icon + 12px top + 12px bottom) */
   gap: 12px;
   color: var(--sidebar-text-secondary);
   text-decoration: none;
