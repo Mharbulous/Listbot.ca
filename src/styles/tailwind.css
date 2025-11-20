@@ -59,8 +59,3 @@
     @apply text-brand-blue no-underline transition-colors duration-200 hover:text-brand-blue-dark;
   }
 }
-
-/* Title sliding effect - matches the original Gemini-like behavior */
-#app-sidebar:hover + .flex-grow .page-title {
-  transform: translateX(220px);
-}
