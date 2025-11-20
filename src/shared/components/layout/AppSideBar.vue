@@ -99,8 +99,8 @@ const navItems = [
     icon: '📁',
     label: 'Documents',
   },
+  { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Review' },
   { key: 'list', path: '/list', icon: '📃', label: 'List' },
-  { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
 ];
 
