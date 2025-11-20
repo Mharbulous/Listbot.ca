@@ -34,21 +34,15 @@
       </RouterLink>
     </nav>
 
-    <!-- Flexible spacer to push controls to bottom -->
+    <!-- Flexible spacer to push footer to bottom -->
     <div class="sidebar-flex-spacer"></div>
 
-    <!-- App Switcher -->
-    <div class="sidebar-section">
-      <AppSwitcher :is-hovered="false" />
-    </div>
+    <!-- Sidebar Footer (User + App Menu) -->
+    <SidebarFooter :is-collapsed="props.isCollapsed" />
 
     <!-- Floating Tooltip (only shown when collapsed) -->
     <Teleport to="body">
-      <div
-        v-if="hoveredItem && props.isCollapsed"
-        class="sidebar-tooltip"
-        :style="tooltipStyle"
-      >
+      <div v-if="hoveredItem && props.isCollapsed" class="sidebar-tooltip" :style="tooltipStyle">
         {{ tooltipText }}
       </div>
     </Teleport>
@@ -56,10 +50,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useMatterViewStore } from '@/features/matters/stores/matterView'
-import AppSwitcher from '../navigation/AppSwitcher.vue'
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import SidebarFooter from './SidebarFooter.vue';
 
 // Props
 const props = defineProps({
@@ -67,7 +61,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-})
+});
 
 // Emits
 const emit = defineEmits(['toggle'])
@@ -78,64 +72,82 @@ const handleToggle = () => {
 }
 
 // Get current route for active state
-const route = useRoute()
-const matterViewStore = useMatterViewStore()
+const route = useRoute();
+const matterViewStore = useMatterViewStore();
 
 // Navigation items configuration
 const navItems = [
   { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
-  { key: 'categories', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/categories` : '/categories'), icon: '🗃️', label: 'Categories' },
+  {
+    key: 'categories',
+    path: computed(() =>
+      matterViewStore.currentMatterId
+        ? `/matters/${matterViewStore.currentMatterId}/categories`
+        : '/categories'
+    ),
+    icon: '🗃️',
+    label: 'Categories',
+  },
   { key: 'upload', path: '/upload', icon: '📤', label: 'Upload' },
-  { key: 'cloud', path: computed(() => matterViewStore.currentMatterId ? `/matters/${matterViewStore.currentMatterId}/documents` : '/documents'), icon: '📁', label: 'Documents' },
+  {
+    key: 'cloud',
+    path: computed(() =>
+      matterViewStore.currentMatterId
+        ? `/matters/${matterViewStore.currentMatterId}/documents`
+        : '/documents'
+    ),
+    icon: '📁',
+    label: 'Documents',
+  },
   { key: 'list', path: '/list', icon: '📃', label: 'List' },
   { key: 'analyze', path: '/analyze', icon: '🕵️', label: 'Analyze' },
   { key: 'about', path: '/about', icon: 'ℹ️', label: 'Information' },
-]
+];
 
 // Tooltip state
-const hoveredItem = ref(null)
-const tooltipPosition = ref({ top: 0, left: 68 })
+const hoveredItem = ref(null);
+const tooltipPosition = ref({ top: 0, left: 68 });
 
 // Computed: Get tooltip text for currently hovered item
 const tooltipText = computed(() => {
-  if (!hoveredItem.value) return ''
-  const item = navItems.find(i => i.key === hoveredItem.value)
-  return item?.label || ''
-})
+  if (!hoveredItem.value) return '';
+  const item = navItems.find((i) => i.key === hoveredItem.value);
+  return item?.label || '';
+});
 
 // Computed: Tooltip positioning styles
 const tooltipStyle = computed(() => ({
   top: `${tooltipPosition.value.top}px`,
   left: `${tooltipPosition.value.left}px`,
-}))
+}));
 
 // Mouse enter handler: Show tooltip and calculate position
 const handleMouseEnter = (event, itemKey) => {
-  hoveredItem.value = itemKey
+  hoveredItem.value = itemKey;
 
   // Calculate tooltip position relative to hovered element
-  const rect = event.currentTarget.getBoundingClientRect()
+  const rect = event.currentTarget.getBoundingClientRect();
   tooltipPosition.value = {
     top: rect.top + rect.height / 2, // Vertically center on icon
-    left: 68 // 60px sidebar width + 8px spacing
-  }
-}
+    left: 68, // 60px sidebar width + 8px spacing
+  };
+};
 
 // Mouse leave handler: Hide tooltip
 const handleMouseLeave = () => {
-  hoveredItem.value = null
-}
+  hoveredItem.value = null;
+};
 
 // Get icon for item (handles dynamic folder icon for Documents)
 const getItemIcon = (item) => {
   // Special handling for Documents item - show open folder when hovered or active
   if (item.key === 'cloud') {
-    const isHovered = hoveredItem.value === 'cloud'
-    const isActive = route.path === item.path
-    return (isHovered || isActive) ? '📂' : '📁'
+    const isHovered = hoveredItem.value === 'cloud';
+    const isActive = route.path === item.path;
+    return isHovered || isActive ? '📂' : '📁';
   }
-  return item.icon
-}
+  return item.icon;
+};
 </script>
 
 <style scoped>
@@ -145,13 +157,9 @@ const getItemIcon = (item) => {
   left: 0;
   top: 0;
   width: 240px;
-  height: 100vh;
-  z-index: 1000;
-  background: linear-gradient(
-    to bottom,
-    var(--sidebar-bg-primary),
-    var(--sidebar-bg-secondary)
-  );
+  height: calc(100vh - 80px);
+  z-index: 50;
+  background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
   color: var(--sidebar-text-primary);
   display: flex;
   flex-direction: column;
