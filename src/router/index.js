@@ -45,7 +45,7 @@ const router = createRouter({
     {
       path: '/process',
       name: 'process',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Process.vue'),
       meta: { requiresAuth: true, title: 'Process' },
     },
     {
