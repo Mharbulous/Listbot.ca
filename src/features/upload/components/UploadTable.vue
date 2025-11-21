@@ -74,6 +74,7 @@ import { computed, watch, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import { useFileDropHandler } from '../composables/useFileDropHandler';
 import { getGroupBackgroundColor, isFirstInGroup, isLastInGroup } from '../composables/useGroupStyling';
+import { useAutoScroll } from '../composables/useAutoScroll';
 
 // Component configuration
 defineOptions({
@@ -149,6 +150,14 @@ const handleDrop = (event) => {
 
 // Refs
 const virtualizerRef = ref(null); // For virtualized content
+
+// Auto-scroll setup (scrolls to center files when status changes during upload)
+// Only scrolls when user is NOT hovering over the table
+const { isHovering } = useAutoScroll(
+  computed(() => props.files),
+  virtualizerRef,
+  computed(() => props.isUploading)
+);
 
 // Selection state for Select All checkbox
 // Only counts "best" or "primary" files (excludes copies)
