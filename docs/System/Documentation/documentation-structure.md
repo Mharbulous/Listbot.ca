@@ -165,7 +165,7 @@ graph LR
     ROOT --> DEVOPS[🚀 DevOps]
 
     FEATURES --> AUTH[🔐 Authentication]
-    FEATURES --> UPLOAD[⬆️ Upload]
+    FEATURES --> UPLOAD[☁️ Upload]
     FEATURES --> ORGANIZER[📋 Organizer]
     FEATURES --> MATTERS[📁 Matters]
     FEATURES --> PROFILE[👤 Profile]

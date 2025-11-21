@@ -35,7 +35,7 @@ Add document peek functionality from DocumentTable allowing users to preview fil
 **Actions Column with Peek:**
 ```
 ┌──────────────┐
-│ [👁️] [⬆️]   │  ← Eye button for preview
+│ [👁️] [☁️]   │  ← Eye button for preview
 └──────────────┘
 ```
 

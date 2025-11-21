@@ -111,7 +111,7 @@ Each phase delivers a demonstrable improvement to users:
 **Key Features:**
 - Cancel button with visual crossed-out state and undo capability
 - Duplicate promotion algorithm (promotes next oldest when original cancelled)
-- Immediate upload button (⬆️) to bypass batch queue
+- Immediate upload button (☁️) to bypass batch queue
 - All actions update footer counts in real-time
 
 **📄 Detailed Implementation:** See `2025-11-10-Phase2-UploadActions.md`
@@ -162,7 +162,7 @@ Each phase delivers a demonstrable improvement to users:
 
 ---
 
-### **Phase 5: Real-Time Dashboard - Queue & Upload Progress** ⬆️ **MOVED UP**
+### **Phase 5: Real-Time Dashboard - Queue & Upload Progress** ☁️ **MOVED UP**
 **Duration:** 3-4 days | **Priority:** High | **Dependencies:** Phase 1
 
 **Why moved earlier:** Creates measurement baseline for Phase 6 optimizations. Users can see "before" performance metrics, making the "after" improvements in Phase 6 quantifiable and dramatic.

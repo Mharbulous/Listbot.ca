@@ -200,7 +200,7 @@ firms/firm123/matters/matter456/uploads/a1b2c3d4e5f6....pdf
 - **Status dot:** Colored circle with text label (see StatusCell.vue)
 - **Footer buttons:** "Clear X skipped files" (white) + "Upload X files (size)" (green)
 
-**No Actions Column** - The original plan had an Actions column with ⬆️ Upload Now and ❌ Cancel buttons, but this was not implemented. Skip/undo is handled via checkboxes instead.
+**No Actions Column** - The original plan had an Actions column with ☁️ Upload Now and ❌ Cancel buttons, but this was not implemented. Skip/undo is handled via checkboxes instead.
 
 ---
 
@@ -1223,7 +1223,7 @@ Phase 3 builds on Phase 2's upload system by adding intelligent copy management 
 - Create Firestore structure from scratch
 - Cancel action (❌ button in Actions column)
 - Undo action (🔄 button)
-- Immediate upload (⬆️ Upload Now button)
+- Immediate upload (☁️ Upload Now button)
 
 **Why These Changes Were Made:**
 1. **Hash Worker Already Exists** - `fileHashWorker.js` (335 lines) with sophisticated deduplication
