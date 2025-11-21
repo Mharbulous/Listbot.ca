@@ -1,7 +1,7 @@
 /**
  * Upload Adapter Composable
  * Bridges the new upload queue (Phase 1.5) with existing upload infrastructure
- * Provides a clean interface for uploading files from the Testing.vue queue
+ * Provides a clean interface for uploading files from the Upload.vue queue
  *
  * This is a thin orchestration layer that composes specialized composables:
  * - useUploadState: State management and file filtering

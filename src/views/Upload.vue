@@ -105,7 +105,7 @@ import { useQueueState } from '../features/upload/composables/useQueueState.js';
 
 // Component configuration
 defineOptions({
-  name: 'TestingView',
+  name: 'UploadView',
 });
 
 // Composables
@@ -200,13 +200,13 @@ let uploadConfirmed = false;
 
 // Listen for events from AppHeader
 onMounted(() => {
-  window.addEventListener('testing-trigger-file-select', triggerFileSelect);
-  window.addEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+  window.addEventListener('upload-trigger-file-select', triggerFileSelect);
+  window.addEventListener('upload-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('testing-trigger-file-select', triggerFileSelect);
-  window.removeEventListener('testing-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+  window.removeEventListener('upload-trigger-file-select', triggerFileSelect);
+  window.removeEventListener('upload-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
 });
 
 // File selection handlers
@@ -242,57 +242,57 @@ const handleFolderRecursiveSelected = async (files) => {
 
 // File management handlers
 const handleCancelFile = (fileId) => {
-  console.log('[TESTING] Skip file:', fileId);
+  console.log('[UPLOAD] Skip file:', fileId);
   skipFile(fileId);
 };
 
 const handleUndoFile = (fileId) => {
-  console.log('[TESTING] Undo skip file:', fileId);
+  console.log('[UPLOAD] Undo skip file:', fileId);
   undoSkip(fileId);
 };
 
 const handleRemoveFile = (fileId) => {
-  console.log('[TESTING] Remove file from queue:', fileId);
+  console.log('[UPLOAD] Remove file from queue:', fileId);
   removeFromQueue(fileId);
 };
 
 const handleSwapFile = (fileId) => {
-  console.log('[TESTING] Swap copy to primary:', fileId);
+  console.log('[UPLOAD] Swap copy to primary:', fileId);
   swapCopyToPrimary(fileId);
 };
 
 const handleClearQueue = () => {
-  console.log('[TESTING] Clear queue');
+  console.log('[UPLOAD] Clear queue');
   clearQueue();
 };
 
 const handleClearDuplicates = () => {
-  console.log('[TESTING] Clear duplicates');
+  console.log('[UPLOAD] Clear duplicates');
   clearDuplicates();
 };
 
 const handleClearSkipped = () => {
-  console.log('[TESTING] Clear skipped files');
+  console.log('[UPLOAD] Clear skipped files');
   clearSkipped();
 };
 
 const handleToggleDuplicates = () => {
-  console.log('[TESTING] Toggle duplicates visibility');
+  console.log('[UPLOAD] Toggle duplicates visibility');
   toggleDuplicatesVisibility();
 };
 
 const handleCancelQueue = () => {
-  console.log('[TESTING] Cancel queue');
+  console.log('[UPLOAD] Cancel queue');
   cancelQueue();
 };
 const handleCloseModal = () => {
-  console.log('[TESTING] Close modal');
+  console.log('[UPLOAD] Close modal');
   queueProgress.value.cancelled = false;
   queueProgress.value.isQueueing = false;
 };
 
 const handleUpload = async () => {
-  console.log('[TESTING] Upload clicked');
+  console.log('[UPLOAD] Upload clicked');
 
   // Calculate preview summary
   const readyFiles = uploadQueue.value.filter(f => f.status === 'ready');
@@ -324,7 +324,7 @@ const handlePreviewConfirm = async () => {
 
   try {
     const result = await uploadAdapter.uploadQueueFiles();
-    console.log('[TESTING] Upload result:', result);
+    console.log('[UPLOAD] Upload result:', result);
 
     // Show completion modal
     if (result.metrics) {
@@ -332,7 +332,7 @@ const handlePreviewConfirm = async () => {
       showCompletionModal.value = true;
     }
   } catch (error) {
-    console.error('[TESTING] Upload error:', error);
+    console.error('[UPLOAD] Upload error:', error);
   }
 };
 
@@ -346,43 +346,43 @@ const handleCompletionClose = () => {
 };
 
 const handleSelectAll = () => {
-  console.log('[TESTING] Select all files');
+  console.log('[UPLOAD] Select all files');
   selectAll();
 };
 
 const handleDeselectAll = () => {
-  console.log('[TESTING] Deselect all files');
+  console.log('[UPLOAD] Deselect all files');
   deselectAll();
 };
 
 // Upload control handlers
 const handlePause = () => {
-  console.log('[TESTING] Pause upload');
+  console.log('[UPLOAD] Pause upload');
   uploadAdapter.pauseUpload();
 };
 
 const handleResume = async () => {
-  console.log('[TESTING] Resume upload');
+  console.log('[UPLOAD] Resume upload');
   try {
     const result = await uploadAdapter.resumeUpload();
-    console.log('[TESTING] Resume result:', result);
+    console.log('[UPLOAD] Resume result:', result);
   } catch (error) {
-    console.error('[TESTING] Resume error:', error);
+    console.error('[UPLOAD] Resume error:', error);
   }
 };
 
 const handleCancelUpload = () => {
-  console.log('[TESTING] Cancel upload');
+  console.log('[UPLOAD] Cancel upload');
   uploadAdapter.cancelUpload();
 };
 
 const handleRetryFailed = async () => {
-  console.log('[TESTING] Retry failed uploads');
+  console.log('[UPLOAD] Retry failed uploads');
   try {
     const result = await uploadAdapter.retryFailedUploads();
-    console.log('[TESTING] Retry result:', result);
+    console.log('[UPLOAD] Retry result:', result);
   } catch (error) {
-    console.error('[TESTING] Retry error:', error);
+    console.error('[UPLOAD] Retry error:', error);
   }
 };
 
