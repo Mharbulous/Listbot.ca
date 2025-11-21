@@ -25,6 +25,10 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'SSO' },
     },
     {
+      path: '/about',
+      redirect: '/sso',
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../features/profile/views/Profile.vue'),
