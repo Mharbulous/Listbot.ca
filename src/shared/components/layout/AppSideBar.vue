@@ -56,8 +56,8 @@ const { hoveredItem, tooltipText, tooltipStyle, handleMouseEnter, handleMouseLea
   background: linear-gradient(
     to bottom,
     #22d3ee 0%,     /* Cyan 400 (Surface Water Start) */
-    #1d4ed8 40%,    /* Blue 700 - Mid-Transition (Photic Zone) */
-    #3730a3 75%,    /* Indigo 900 - Twilight Zone */
+    #1d4ed8 25%,    /* Blue 700 - Mid-Transition (Photic Zone) */
+    #3730a3 35%,    /* Indigo 900 - Twilight Zone */
     #111827 100%    /* Gray 900 - Midnight Zone (Abyss) */
   );
   color: var(--sidebar-text-primary);
