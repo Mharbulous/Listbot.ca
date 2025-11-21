@@ -57,6 +57,33 @@ const route = useRoute();
   justify-content: space-evenly;
   overflow-y: auto;
   overflow-x: hidden;
+  direction: rtl; /* Move scrollbar to left */
+}
+
+/* Custom scrollbar styling */
+.sidebar-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: linear-gradient(
+    to bottom,
+    var(--sidebar-bg-primary),
+    var(--sidebar-bg-secondary)
+  );
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--sidebar-text-secondary);
+  opacity: 0.3;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-hover-text);
+  opacity: 0.5;
 }
 
 .nav-section-header {
@@ -65,6 +92,7 @@ const route = useRoute();
   display: flex;
   align-items: center;
   flex: 0.5 1 auto;
+  direction: ltr; /* Reset content direction */
 }
 
 .section-label {
@@ -97,6 +125,7 @@ const route = useRoute();
   transition: all 200ms ease-in-out;
   white-space: nowrap;
   flex: 1 1 auto;
+  direction: ltr; /* Reset content direction */
 }
 
 .sidebar-collapsed .nav-item {
