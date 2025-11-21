@@ -91,7 +91,7 @@ const router = createRouter({
     {
       path: '/identify',
       name: 'identify',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Identify.vue'),
       meta: { requiresAuth: true, title: 'Identify' },
     },
     {
