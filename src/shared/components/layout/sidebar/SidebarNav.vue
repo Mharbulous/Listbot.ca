@@ -66,24 +66,27 @@ const route = useRoute();
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
+  background: var(--sidebar-text-secondary);
+  opacity: 0.3;
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
   background: linear-gradient(
     to bottom,
     var(--sidebar-bg-primary),
     var(--sidebar-bg-secondary)
   );
   border-radius: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: var(--sidebar-text-secondary);
-  opacity: 0.3;
-  border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: var(--sidebar-hover-text);
-  opacity: 0.5;
+  background: linear-gradient(
+    to bottom,
+    var(--sidebar-bg-primary),
+    var(--sidebar-hover-text)
+  );
 }
 
 .nav-section-header {
