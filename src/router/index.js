@@ -49,16 +49,56 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Process' },
     },
     {
-      path: '/analyze',
+      path: '/analysis',
       name: 'analyze',
       component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Review' },
+      meta: { requiresAuth: true, title: 'Analyze' },
+    },
+    {
+      path: '/analyze',
+      redirect: '/analysis',
     },
     {
       path: '/list',
       name: 'list',
       component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Produce' },
+    },
+    {
+      path: '/pleadings',
+      name: 'pleadings',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings' },
+    },
+    {
+      path: '/law',
+      name: 'law',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Legal Memos' },
+    },
+    {
+      path: '/facts',
+      name: 'facts',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Disputed Facts' },
+    },
+    {
+      path: '/cast',
+      name: 'cast',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Cast of Characters' },
+    },
+    {
+      path: '/identify',
+      name: 'identify',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Identify' },
+    },
+    {
+      path: '/present',
+      name: 'present',
+      component: () => import('../views/defaults/UnderConstruction.vue'),
+      meta: { requiresAuth: true, title: 'Present' },
     },
     {
       path: '/matters/:matterId/documents',
