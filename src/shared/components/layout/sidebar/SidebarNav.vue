@@ -60,10 +60,11 @@ const route = useRoute();
 }
 
 .nav-section-header {
-  padding: clamp(4px, 1vh, 8px) 12px;
+  padding: 4px 12px;
   min-height: 24px;
   display: flex;
   align-items: center;
+  flex: 0.5 1 auto;
 }
 
 .section-label {
@@ -87,7 +88,7 @@ const route = useRoute();
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: clamp(4px, 0.8vh, 8px) 12px;
+  padding: 4px 12px;
   min-height: 36px;
   gap: 12px;
   color: var(--sidebar-text-secondary);
@@ -95,6 +96,7 @@ const route = useRoute();
   cursor: pointer;
   transition: all 200ms ease-in-out;
   white-space: nowrap;
+  flex: 1 1 auto;
 }
 
 .sidebar-collapsed .nav-item {
