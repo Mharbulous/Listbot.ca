@@ -70,8 +70,8 @@ export function useNavItems() {
       label: 'Review',
     },
 
-    // EDRM Stage 6: Analyze
-    { key: 'analyze', path: '/analysis', icon: '🧠', label: 'Analyze' },
+    // EDRM Stage 6: Analysis
+    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis' },
 
     // EDRM Stage 7: Produce
     { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
