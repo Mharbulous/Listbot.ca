@@ -97,7 +97,7 @@ const router = createRouter({
     {
       path: '/present',
       name: 'present',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Present.vue'),
       meta: { requiresAuth: true, title: 'Present' },
     },
     {
