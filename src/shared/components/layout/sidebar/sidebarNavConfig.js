@@ -49,7 +49,7 @@ export function useNavItems() {
       key: 'review',
       path: computed(() => {
         const matterId = matterViewStore.currentMatterId;
-        if (!matterId) return '/analyze';
+        if (!matterId) return '/review';
 
         // Try to get last viewed document from local storage
         const lastViewedDoc = localStorage.getItem('lastViewedDocument');
@@ -63,8 +63,8 @@ export function useNavItems() {
           return `/matters/${matterId}/review/${firstDoc.id}`;
         }
 
-        // Fallback to analyze page if no documents
-        return '/analyze';
+        // Fallback to review page if no documents
+        return '/review';
       }),
       icon: '🧑‍💻',
       label: 'Review',

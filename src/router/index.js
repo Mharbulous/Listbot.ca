@@ -45,8 +45,14 @@ const router = createRouter({
     {
       path: '/process',
       name: 'process',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Process.vue'),
       meta: { requiresAuth: true, title: 'Process' },
+    },
+    {
+      path: '/review',
+      name: 'review',
+      component: () => import('../views/Review.vue'),
+      meta: { requiresAuth: true, title: 'Review' },
     },
     {
       path: '/analysis',
