@@ -61,7 +61,7 @@ const router = createRouter({
     {
       path: '/list',
       name: 'list',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Produce.vue'),
       meta: { requiresAuth: true, title: 'Produce' },
     },
     {
