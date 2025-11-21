@@ -52,7 +52,14 @@ const { hoveredItem, tooltipText, tooltipStyle, handleMouseEnter, handleMouseLea
   width: 240px;
   height: calc(100vh - 64px);
   z-index: 50;
-  background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
+  /* Ocean depth gradient - from surface to abyss */
+  background: linear-gradient(
+    to bottom,
+    #22d3ee 0%,     /* Cyan 400 (Surface Water Start) */
+    #1d4ed8 40%,    /* Blue 700 - Mid-Transition (Photic Zone) */
+    #3730a3 75%,    /* Indigo 900 - Twilight Zone */
+    #111827 100%    /* Gray 900 - Midnight Zone (Abyss) */
+  );
   color: var(--sidebar-text-primary);
   display: flex;
   flex-direction: column;
