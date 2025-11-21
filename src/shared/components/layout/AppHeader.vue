@@ -4,47 +4,37 @@
   >
     <!-- Left Section: Breadcrumb Navigation -->
     <nav class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
-      <!-- Client Name -->
-      <span class="text-sm font-medium text-slate-800 flex-shrink-0" :title="authStore.userDisplayName">
-        {{ authStore.userDisplayName }}
-      </span>
+      <!-- Client Name (only shown when matter is selected) -->
+      <template v-if="matterViewStore.hasMatter">
+        <span
+          @click="clearMatter"
+          class="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer hover:underline flex-shrink-0"
+          :title="clientName"
+        >
+          {{ clientName }}
+        </span>
+      </template>
 
       <!-- Matter (if selected) -->
       <template v-if="matterViewStore.hasMatter">
         <span class="text-slate-400 flex-shrink-0">›</span>
-        <div class="flex items-center gap-1.5 min-w-0">
-          <span
-            @click="isBannerClickable && navigateToMatter()"
-            :class="[
-              'text-sm font-medium truncate max-w-md',
-              isBannerClickable
-                ? 'text-primary-600 hover:text-primary-700 cursor-pointer hover:underline'
-                : 'text-slate-800 cursor-default',
-            ]"
-            :title="
-              matterViewStore.selectedMatter.matterNumber +
-              ': ' +
-              matterViewStore.selectedMatter.description
-            "
-          >
-            {{ matterViewStore.selectedMatter.matterNumber }}:
-            {{ matterViewStore.selectedMatter.description }}
-          </span>
-          <button
-            @click.stop="clearMatter"
-            class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
-            title="Clear selected matter"
-          >
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+        <span
+          @click="isBannerClickable && navigateToMatter()"
+          :class="[
+            'text-sm font-medium truncate max-w-md',
+            isBannerClickable
+              ? 'text-primary-600 hover:text-primary-700 cursor-pointer hover:underline'
+              : 'text-slate-800 cursor-default',
+          ]"
+          :title="
+            matterViewStore.selectedMatter.matterNumber +
+            ': ' +
+            matterViewStore.selectedMatter.description
+          "
+        >
+          {{ matterViewStore.selectedMatter.matterNumber }}:
+          {{ matterViewStore.selectedMatter.description }}
+        </span>
       </template>
 
       <!-- Current Page -->
@@ -140,6 +130,12 @@ const pageTitle = computed(() => {
     return documentName;
   }
   return route.meta.title || 'Home';
+});
+
+const clientName = computed(() => {
+  if (!matterViewStore.hasMatter) return null;
+  const clients = matterViewStore.selectedMatter?.clients || [];
+  return clients.length > 0 ? clients[0] : 'No Client';
 });
 
 const isOnMatterDetailPage = computed(() => {

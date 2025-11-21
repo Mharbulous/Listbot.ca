@@ -12,7 +12,7 @@ const LEGACY_STORAGE_KEY = 'listbot_active_matter'; // For migration
  */
 export const useMatterViewStore = defineStore('matterView', {
   state: () => ({
-    currentMatter: null, // { id, matterNumber, description, archived }
+    currentMatter: null, // { id, matterNumber, description, clients, archived }
   }),
 
   getters: {
@@ -63,13 +63,14 @@ export const useMatterViewStore = defineStore('matterView', {
   actions: {
     /**
      * Set the currently selected matter and persist to localStorage
-     * @param {Object} matter - The matter object with id, matterNumber, description, and archived
+     * @param {Object} matter - The matter object with id, matterNumber, description, clients, and archived
      */
     setMatter(matter) {
       const matterData = {
         id: matter.id,
         matterNumber: matter.matterNumber,
         description: matter.description,
+        clients: matter.clients || [],
         archived: matter.archived || false,
       };
 
@@ -121,6 +122,11 @@ export const useMatterViewStore = defineStore('matterView', {
           // Handle legacy data without archived field
           if (matterData.archived === undefined) {
             matterData.archived = false; // Default to false for legacy data
+          }
+
+          // Handle legacy data without clients field
+          if (matterData.clients === undefined) {
+            matterData.clients = []; // Default to empty array for legacy data
           }
 
           this.currentMatter = matterData;
