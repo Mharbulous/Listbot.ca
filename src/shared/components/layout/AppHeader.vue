@@ -1,6 +1,6 @@
 <template>
   <header
-    class="header-fixed bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
+    class="header-fixed ocean-sky-gradient px-8 py-4 flex items-center justify-between h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Logo, Hamburger, and Breadcrumb Navigation -->
     <div class="flex items-center gap-4 flex-1 min-w-0">
@@ -252,5 +252,16 @@ function triggerFolderRecursiveSelect() {
 .hamburger-btn:hover {
   background-color: #f1f5f9;
   color: #0f172a;
+}
+
+/* Ocean sky gradient - air above the water */
+.ocean-sky-gradient {
+  background: linear-gradient(
+    to bottom,
+    #f0f9ff 0%,     /* Sky-100 (Air Gradient Start) */
+    #e0f2fe 100%    /* Sky-200 (Air Gradient End) */
+  );
+  /* Thin bottom border representing ocean waves */
+  border-bottom: 2px solid #22d3ee; /* Cyan 400 - matches ocean surface */
 }
 </style>
