@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen">
+  <div class="flex flex-col min-h-screen">
     <!-- Loading state during initialization -->
     <div v-if="!authStore.isInitialized" class="flex items-center justify-center w-full h-screen">
       <div class="text-center">
@@ -10,25 +10,28 @@
 
     <!-- Normal app content -->
     <template v-else>
-      <!-- L-Layout: Row [ Sidebar, Column [ Header, Content ] ] -->
+      <!-- T-Layout: Column [ Header, Row [ Sidebar, Content ] ] -->
       <template v-if="$route.path !== '/login'">
-        <!-- Full-height Sidebar (left) -->
-        <NewSideBar :is-collapsed="isSidebarCollapsed" @toggle="toggleSidebar" />
+        <!-- Header (spans full width at top) -->
+        <AppHeader
+          :is-collapsed="isSidebarCollapsed"
+          @toggle-sidebar="toggleSidebar"
+        />
 
-        <!-- Content area (right): Column [ Header, Main Content ] -->
-        <div
-          class="flex flex-col flex-grow transition-all duration-300"
-          :class="{
-            'ml-[64px]': isSidebarCollapsed,
-            'ml-[240px]': !isSidebarCollapsed,
-          }"
-          style="min-width: 0"
-        >
-          <!-- Header (spans only content area width) -->
-          <AppHeader />
+        <!-- Row container for Sidebar and Content -->
+        <div class="flex flex-grow" style="height: calc(100vh - 64px)">
+          <!-- Sidebar (left, below header) -->
+          <NewSideBar :is-collapsed="isSidebarCollapsed" />
 
-          <!-- Main content -->
-          <div class="flex-grow">
+          <!-- Main content (right, below header) -->
+          <div
+            class="flex-grow transition-all duration-300 overflow-auto"
+            :class="{
+              'ml-[64px]': isSidebarCollapsed,
+              'ml-[240px]': !isSidebarCollapsed,
+            }"
+            style="min-width: 0"
+          >
             <router-view />
           </div>
         </div>
