@@ -19,7 +19,7 @@
     </div>
 
     <!-- Navigation Items (fills available space) -->
-    <div class="sidebar-nav" :style="{ gap: navGap }">
+    <div class="sidebar-nav">
       <template v-for="item in navItems" :key="item.key">
         <!-- Section Header -->
         <div v-if="item.type === 'header'" class="nav-section-header">
@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
@@ -206,104 +206,6 @@ const getItemIcon = (item) => {
   }
   return item.icon;
 };
-
-// Responsive gap calculation for middle nav section
-const navGap = ref('4px'); // Default minimum gap
-const navContainerRef = ref(null);
-let resizeObserver = null;
-
-const calculateNavGap = () => {
-  const navContainer = navContainerRef.value;
-  if (!navContainer) return;
-
-  // Get the sidebar element to calculate total available space
-  const sidebar = document.getElementById('app-sidebar');
-  if (!sidebar) return;
-
-  // Get the header and footer elements
-  const header = sidebar.querySelector('.sidebar-header');
-  const footer = sidebar.querySelector('.sidebar-footer');
-  if (!header || !footer) return;
-
-  // Calculate available height for navigation items
-  // Total sidebar height minus header and footer
-  const sidebarHeight = sidebar.clientHeight;
-  const headerHeight = header.clientHeight;
-  const footerHeight = footer.clientHeight;
-  const availableNavHeight = sidebarHeight - headerHeight - footerHeight;
-
-  // Count navigation items (exclude headers)
-  const navItemCount = navItems.filter(item => item.type !== 'header').length;
-  const headerCount = navItems.filter(item => item.type === 'header').length;
-
-  // Minimum item heights (from CSS - no vertical padding, just min-height)
-  const minNavItemHeight = 54; // min-height from CSS
-  const minHeaderHeight = 32; // min-height from CSS
-
-  // Calculate total minimum height needed for items
-  const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
-
-  // Available space for gaps within the nav container
-  const availableSpace = availableNavHeight - minTotalItemsHeight;
-
-  // Total number of gaps (between items)
-  const gapCount = navItems.length + 1; // +1 for top padding
-
-  // Calculate what the gap would be if we distributed space evenly
-  const calculatedGap = Math.floor(availableSpace / gapCount);
-
-  // ADAPTIVE BEHAVIOR: Switch between spacious and compact modes
-  // Threshold: If gap would be less than 8px, we're in "cramped" territory
-  // In cramped mode, use a fixed small gap and allow scrolling
-  const COMPACT_THRESHOLD = 8; // px
-  const COMPACT_GAP = 4; // px - fixed gap in compact mode
-
-  if (calculatedGap < COMPACT_THRESHOLD) {
-    // Compact mode: Not enough space, use fixed small gap and allow scrolling
-    navGap.value = `${COMPACT_GAP}px`;
-  } else {
-    // Spacious mode: Enough space, distribute it evenly
-    navGap.value = `${calculatedGap}px`;
-  }
-};
-
-// Watch navItems array length to recalculate gap when items are added/removed
-watch(
-  () => navItems.length,
-  async () => {
-    // Wait for DOM to update with new items
-    await nextTick();
-    calculateNavGap();
-  }
-);
-
-// Set up resize observer on sidebar
-onMounted(async () => {
-  // Wait for DOM to be fully rendered
-  await nextTick();
-
-  navContainerRef.value = document.querySelector('.sidebar-nav');
-  const sidebar = document.getElementById('app-sidebar');
-
-  if (navContainerRef.value && sidebar) {
-    // Initial calculation
-    calculateNavGap();
-
-    // Use ResizeObserver to watch the entire sidebar height
-    // This catches window resize events that affect available space
-    resizeObserver = new ResizeObserver(() => {
-      calculateNavGap();
-    });
-
-    resizeObserver.observe(sidebar);
-  }
-});
-
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-  }
-});
 </script>
 
 <style scoped>
@@ -404,17 +306,18 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1; /* Fill available space between header and footer */
+  justify-content: space-evenly; /* Automatically distribute items with even spacing */
   overflow-y: auto; /* Allow scrolling if content exceeds space */
   overflow-x: hidden;
-  /* gap is set dynamically via inline style */
 }
 
 /* Section Header */
 .nav-section-header {
-  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
-  min-height: 32px; /* Maintain consistent height */
+  padding: clamp(4px, 1vh, 8px) 12px; /* Responsive vertical padding */
+  min-height: 24px; /* Reduced min-height for better condensing */
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .section-label {
@@ -439,14 +342,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 12px; /* Horizontal padding only - gap handles vertical spacing */
-  min-height: 54px; /* Maintain clickable height (30px icon + 12px top + 12px bottom) */
+  padding: clamp(6px, 1.2vh, 12px) 12px; /* Responsive vertical padding, fixed horizontal */
+  min-height: 42px; /* Reduced min-height to allow better condensing (30px icon + min padding) */
   gap: 12px;
   color: var(--sidebar-text-secondary);
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms ease-in-out;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sidebar-collapsed .nav-item {
