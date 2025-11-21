@@ -10,7 +10,7 @@
 
 /* Text colors - Soft moonlight and star whites */
 --sidebar-text-primary: theme('colors.slate.100');
---sidebar-text-secondary: theme('colors.blue.200');
+--sidebar-text-secondary: theme('colors.white');
 --sidebar-text-accent: theme('colors.yellow.300');
 
 /* Border colors - Darker blue tones */
