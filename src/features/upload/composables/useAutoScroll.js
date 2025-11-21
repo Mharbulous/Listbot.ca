@@ -3,13 +3,14 @@
  *
  * Auto-scrolls the upload queue table to center files that change status during upload.
  * Only scrolls when the user is NOT hovering over the table.
+ * Uses TanStack Virtual's scrollToIndex API for proper virtualized scrolling.
  */
 
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 
 /**
  * @param {Ref<Array>} files - The files array to watch for status changes
- * @param {Ref<Object>} virtualizerRef - The virtualizer ref that exposes scrollContainerRef
+ * @param {Ref<Object>} virtualizerRef - The virtualizer ref that exposes rowVirtualizer and scrollContainerRef
  * @param {Ref<boolean>} isUploading - Whether upload is in progress
  * @returns {Object} - { isHovering: Ref<boolean> }
  */
@@ -21,40 +22,24 @@ export function useAutoScroll(files, virtualizerRef, isUploading) {
   const SCROLL_TRIGGER_STATUSES = ['completed', 'copied', 'duplicate', 'error'];
 
   /**
-   * Scroll to center a file in the viewport
+   * Scroll to center a file in the viewport using TanStack Virtual's scrollToIndex
    */
   const scrollToCenter = (fileIndex) => {
-    const scrollContainer = virtualizerRef.value?.scrollContainerRef;
+    const rowVirtualizer = virtualizerRef.value?.rowVirtualizer;
 
-    if (!scrollContainer) {
-      console.warn('[AUTO-SCROLL] Scroll container not available');
+    if (!rowVirtualizer) {
+      console.warn('[AUTO-SCROLL] Row virtualizer not available');
       return;
     }
 
-    const containerHeight = scrollContainer.clientHeight;
-
-    // Get the virtualizer instance from UploadTableVirtualizer
-    // We need to access the parent's exposed scrollContainerRef
-    // and calculate the scroll position manually since TanStack Virtual
-    // doesn't directly expose scrollToIndex in the way we need
-
-    // Calculate target scroll position to center the item
-    // Each row is 48px (ROW_HEIGHT constant)
-    const ROW_HEIGHT = 48;
-    const itemTop = fileIndex * ROW_HEIGHT;
-    const targetScroll = itemTop - (containerHeight / 2) + (ROW_HEIGHT / 2);
-
-    // Smooth scroll to position
-    scrollContainer.scrollTo({
-      top: Math.max(0, targetScroll),
+    // Use TanStack Virtual's scrollToIndex method
+    // This is the correct way to scroll with virtualized content
+    rowVirtualizer.value.scrollToIndex(fileIndex, {
+      align: 'center',
       behavior: 'smooth'
     });
 
-    console.log('[AUTO-SCROLL] Scrolling to file at index', fileIndex, {
-      itemTop,
-      containerHeight,
-      targetScroll: Math.max(0, targetScroll)
-    });
+    console.log('[AUTO-SCROLL] Scrolling to file at index', fileIndex);
   };
 
   /**

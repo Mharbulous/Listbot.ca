@@ -328,9 +328,10 @@ const handleRetryFailed = () => {
   emit('retry-failed');
 };
 
-// Expose scroll container ref for parent component
+// Expose scroll container ref and virtualizer for parent component
 defineExpose({
   scrollContainerRef,
+  rowVirtualizer,
 });
 </script>
 
