@@ -174,10 +174,10 @@ function navigateToDocuments() {
 
 // File selection triggers for Upload page
 function triggerFileSelect() {
-  window.dispatchEvent(new CustomEvent('testing-trigger-file-select'));
+  window.dispatchEvent(new CustomEvent('upload-trigger-file-select'));
 }
 
 function triggerFolderRecursiveSelect() {
-  window.dispatchEvent(new CustomEvent('testing-trigger-folder-recursive-select'));
+  window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
 }
 </script>

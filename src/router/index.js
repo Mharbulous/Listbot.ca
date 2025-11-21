@@ -39,7 +39,7 @@ const router = createRouter({
     {
       path: '/upload',
       name: 'upload',
-      component: () => import('../views/Testing.vue'),
+      component: () => import('../views/Upload.vue'),
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
