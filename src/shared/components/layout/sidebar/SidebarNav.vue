@@ -60,7 +60,7 @@ const route = useRoute();
 }
 
 .nav-section-header {
-  padding: 4px 12px;
+  padding: 0 12px;
   min-height: 24px;
   display: flex;
   align-items: center;
@@ -88,7 +88,7 @@ const route = useRoute();
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 4px 12px;
+  padding: 0 12px;
   min-height: 36px;
   gap: 12px;
   color: var(--sidebar-text-secondary);
