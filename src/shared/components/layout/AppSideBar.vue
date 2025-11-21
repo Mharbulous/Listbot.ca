@@ -216,8 +216,21 @@ const calculateNavGap = () => {
   const navContainer = navContainerRef.value;
   if (!navContainer) return;
 
-  // Get actual height of the nav container (the middle section)
-  const containerHeight = navContainer.clientHeight;
+  // Get the sidebar element to calculate total available space
+  const sidebar = document.getElementById('app-sidebar');
+  if (!sidebar) return;
+
+  // Get the header and footer elements
+  const header = sidebar.querySelector('.sidebar-header');
+  const footer = sidebar.querySelector('.sidebar-footer');
+  if (!header || !footer) return;
+
+  // Calculate available height for navigation items
+  // Total sidebar height minus header and footer
+  const sidebarHeight = sidebar.clientHeight;
+  const headerHeight = header.clientHeight;
+  const footerHeight = footer.clientHeight;
+  const availableNavHeight = sidebarHeight - headerHeight - footerHeight;
 
   // Count navigation items (exclude headers)
   const navItemCount = navItems.filter(item => item.type !== 'header').length;
@@ -231,7 +244,7 @@ const calculateNavGap = () => {
   const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
 
   // Available space for gaps within the nav container
-  const availableSpace = containerHeight - minTotalItemsHeight;
+  const availableSpace = availableNavHeight - minTotalItemsHeight;
 
   // Total number of gaps (between items)
   const gapCount = navItems.length + 1; // +1 for top padding
@@ -264,29 +277,30 @@ watch(
   }
 );
 
-// Set up resize observer on nav container
+// Set up resize observer on sidebar
 onMounted(async () => {
   // Wait for DOM to be fully rendered
   await nextTick();
 
   navContainerRef.value = document.querySelector('.sidebar-nav');
+  const sidebar = document.getElementById('app-sidebar');
 
-  if (navContainerRef.value) {
+  if (navContainerRef.value && sidebar) {
     // Initial calculation
     calculateNavGap();
 
-    // Use ResizeObserver to watch the nav container specifically
+    // Use ResizeObserver to watch the entire sidebar height
+    // This catches window resize events that affect available space
     resizeObserver = new ResizeObserver(() => {
       calculateNavGap();
     });
 
-    resizeObserver.observe(navContainerRef.value);
+    resizeObserver.observe(sidebar);
   }
 });
 
 onUnmounted(() => {
-  if (resizeObserver && navContainerRef.value) {
-    resizeObserver.unobserve(navContainerRef.value);
+  if (resizeObserver) {
     resizeObserver.disconnect();
   }
 });
