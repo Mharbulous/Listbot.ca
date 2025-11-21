@@ -19,10 +19,10 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
-      path: '/about',
-      name: 'about',
+      path: '/sso',
+      name: 'sso',
       component: () => import('../views/Home.vue'),
-      meta: { requiresAuth: true, title: 'About' },
+      meta: { requiresAuth: true, title: 'SSO' },
     },
     {
       path: '/profile',
