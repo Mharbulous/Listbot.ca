@@ -214,22 +214,50 @@ let resizeObserver = null;
 
 const calculateNavGap = () => {
   const navContainer = navContainerRef.value;
-  if (!navContainer) return;
+  if (!navContainer) {
+    console.log('[GAP DEBUG] navContainer not found');
+    return;
+  }
 
   // Get the sidebar element to calculate total available space
   const sidebar = document.getElementById('app-sidebar');
-  if (!sidebar) return;
+  if (!sidebar) {
+    console.log('[GAP DEBUG] sidebar not found');
+    return;
+  }
 
   // Get the header and footer elements
   const header = sidebar.querySelector('.sidebar-header');
   const footer = sidebar.querySelector('.sidebar-footer');
-  if (!header || !footer) return;
+  if (!header || !footer) {
+    console.log('[GAP DEBUG] header or footer not found', { header, footer });
+    return;
+  }
 
   // Calculate available height for navigation items
   // Total sidebar height minus header and footer
   const sidebarHeight = sidebar.clientHeight;
+  const sidebarBoundingHeight = sidebar.getBoundingClientRect().height;
+  const viewportHeight = window.innerHeight;
   const headerHeight = header.clientHeight;
+  const headerBoundingHeight = header.getBoundingClientRect().height;
   const footerHeight = footer.clientHeight;
+  const footerBoundingHeight = footer.getBoundingClientRect().height;
+  const navContainerHeight = navContainer.clientHeight;
+  const navContainerBoundingHeight = navContainer.getBoundingClientRect().height;
+
+  console.group('[GAP DEBUG] Height Measurements');
+  console.log('Window viewport height:', viewportHeight);
+  console.log('Sidebar clientHeight:', sidebarHeight);
+  console.log('Sidebar boundingRect height:', sidebarBoundingHeight);
+  console.log('Header clientHeight:', headerHeight);
+  console.log('Header boundingRect height:', headerBoundingHeight);
+  console.log('Footer clientHeight:', footerHeight);
+  console.log('Footer boundingRect height:', footerBoundingHeight);
+  console.log('Nav container clientHeight:', navContainerHeight);
+  console.log('Nav container boundingRect height:', navContainerBoundingHeight);
+  console.groupEnd();
+
   const availableNavHeight = sidebarHeight - headerHeight - footerHeight;
 
   // Count navigation items (exclude headers)
@@ -243,6 +271,16 @@ const calculateNavGap = () => {
   // Calculate total minimum height needed for items
   const minTotalItemsHeight = (navItemCount * minNavItemHeight) + (headerCount * minHeaderHeight);
 
+  console.group('[GAP DEBUG] Item Calculations');
+  console.log('Total navigation items:', navItemCount);
+  console.log('Total section headers:', headerCount);
+  console.log('Total items (including headers):', navItems.length);
+  console.log('Min nav item height:', minNavItemHeight);
+  console.log('Min header height:', minHeaderHeight);
+  console.log('Min total items height needed:', minTotalItemsHeight);
+  console.log('Available nav height:', availableNavHeight);
+  console.groupEnd();
+
   // Available space for gaps within the nav container
   const availableSpace = availableNavHeight - minTotalItemsHeight;
 
@@ -252,6 +290,12 @@ const calculateNavGap = () => {
   // Calculate what the gap would be if we distributed space evenly
   const calculatedGap = Math.floor(availableSpace / gapCount);
 
+  console.group('[GAP DEBUG] Gap Calculations');
+  console.log('Available space for gaps:', availableSpace);
+  console.log('Number of gaps:', gapCount);
+  console.log('Calculated gap per space:', calculatedGap);
+  console.groupEnd();
+
   // ADAPTIVE BEHAVIOR: Switch between spacious and compact modes
   // Threshold: If gap would be less than 8px, we're in "cramped" territory
   // In cramped mode, use a fixed small gap and allow scrolling
@@ -260,11 +304,15 @@ const calculateNavGap = () => {
 
   if (calculatedGap < COMPACT_THRESHOLD) {
     // Compact mode: Not enough space, use fixed small gap and allow scrolling
+    console.log('[GAP DEBUG] Using COMPACT mode, gap:', COMPACT_GAP);
     navGap.value = `${COMPACT_GAP}px`;
   } else {
     // Spacious mode: Enough space, distribute it evenly
+    console.log('[GAP DEBUG] Using SPACIOUS mode, gap:', calculatedGap);
     navGap.value = `${calculatedGap}px`;
   }
+
+  console.log('[GAP DEBUG] Final gap value:', navGap.value);
 };
 
 // Watch navItems array length to recalculate gap when items are added/removed
