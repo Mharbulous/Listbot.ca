@@ -2,8 +2,65 @@
   <header
     class="bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
   >
-    <!-- Left Section: Page Title and Action Buttons -->
-    <div class="flex items-center gap-4 flex-shrink-0">
+    <!-- Left Section: Breadcrumb Navigation -->
+    <nav class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
+      <!-- Client/Firm -->
+      <span class="text-sm font-medium text-slate-700 whitespace-nowrap">
+        {{ clientName }}
+      </span>
+
+      <!-- Matter (if selected) -->
+      <template v-if="matterViewStore.hasMatter">
+        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <button
+          v-if="isBannerClickable"
+          @click="navigateToMatter"
+          class="text-sm font-medium text-slate-700 hover:text-primary hover:underline whitespace-nowrap truncate max-w-xs"
+          :title="`${matterViewStore.selectedMatter.matterNumber}: ${matterViewStore.selectedMatter.description}`"
+        >
+          {{ matterViewStore.selectedMatter.matterNumber }}: {{ matterViewStore.selectedMatter.description }}
+        </button>
+        <span
+          v-else
+          class="text-sm font-medium text-slate-700 whitespace-nowrap truncate max-w-xs"
+          :title="`${matterViewStore.selectedMatter.matterNumber}: ${matterViewStore.selectedMatter.description}`"
+        >
+          {{ matterViewStore.selectedMatter.matterNumber }}: {{ matterViewStore.selectedMatter.description }}
+        </span>
+        <button
+          @click="clearMatter"
+          class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-600 ml-1"
+          title="Clear selected matter"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </template>
+
+      <!-- Page -->
+      <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+      <span class="text-sm font-medium text-slate-900 whitespace-nowrap">
+        {{ pageTitle }}
+      </span>
+
+      <!-- Document (if on review page) -->
+      <template v-if="documentViewStore.documentName">
+        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-sm font-medium text-slate-900 whitespace-nowrap truncate max-w-md" :title="documentViewStore.documentName">
+          {{ documentViewStore.documentName }}
+        </span>
+      </template>
+    </nav>
+
+    <!-- Right Section: Contextual Action Buttons -->
+    <div class="flex items-center gap-3 flex-shrink-0">
       <!-- Add to Queue button (Upload page only) -->
       <div v-if="route.path === '/upload'" class="flex items-center">
         <v-menu location="bottom">
@@ -42,48 +99,6 @@
         </v-btn>
       </div>
 
-      <h1 class="page-title text-2xl md:text-xl font-semibold text-slate-800 whitespace-nowrap">
-        {{ pageTitle }}
-      </h1>
-    </div>
-
-    <!-- Center Section: Active Matter Display -->
-    <div
-      v-if="matterViewStore.hasMatter"
-      @click="isBannerClickable && navigateToMatter()"
-      @mouseenter="isHoveringBanner = true"
-      @mouseleave="isHoveringBanner = false"
-      :class="[
-        'flex items-center gap-2 px-4 py-2 border border-amber-300 rounded-lg mx-4 flex-1 max-w-2xl transition-colors',
-        shouldShowBannerHover ? 'bg-amber-100' : 'bg-amber-50',
-        isBannerClickable ? 'cursor-pointer' : 'cursor-default',
-      ]"
-      :title="isBannerClickable ? 'View Matter Details' : ''"
-    >
-      <p class="flex-1 min-w-0 text-sm font-medium text-slate-800 truncate text-center">
-        {{ matterViewStore.selectedMatter.matterNumber }}:
-        {{ matterViewStore.selectedMatter.description }}
-      </p>
-      <button
-        @click.stop="clearMatter"
-        @mouseenter="isHoveringCloseButton = true"
-        @mouseleave="isHoveringCloseButton = false"
-        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-200 rounded transition-colors"
-        title="Clear selected matter"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Right Section: Contextual Action Buttons -->
-    <div class="flex items-center gap-3">
       <!-- Collect button (Matter Categories page only) -->
       <div v-if="isOnMatterCategoriesPage" class="flex items-center">
         <v-btn
@@ -102,23 +117,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '@/core/auth/stores/authStore';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const matterViewStore = useMatterViewStore();
 
-const isHoveringBanner = ref(false);
-const isHoveringCloseButton = ref(false);
+const clientName = computed(() => authStore.userDisplayName || 'User');
 
 const pageTitle = computed(() => {
+  // For review/document view pages, use the page title from route meta, not document name
+  // Document name is shown as a separate breadcrumb item
   if (route.meta.titleFn && route.path.includes('/review/')) {
-    const documentName = documentViewStore.documentName || 'Loading...';
-    return documentName;
+    return 'Review';
   }
   return route.meta.title || 'Home';
 });
@@ -139,10 +156,6 @@ const isOnMatterCategoriesPage = computed(() => {
 });
 
 const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
-
-const shouldShowBannerHover = computed(
-  () => isBannerClickable.value && isHoveringBanner.value && !isHoveringCloseButton.value
-);
 
 function clearMatter() {
   matterViewStore.clearMatter();
