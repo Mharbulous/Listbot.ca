@@ -236,10 +236,22 @@ const calculateNavGap = () => {
   // Total number of gaps (between items)
   const gapCount = navItems.length + 1; // +1 for top padding
 
-  // Calculate gap size (minimum 1px)
-  const calculatedGap = Math.max(1, Math.floor(availableSpace / gapCount));
+  // Calculate what the gap would be if we distributed space evenly
+  const calculatedGap = Math.floor(availableSpace / gapCount);
 
-  navGap.value = `${calculatedGap}px`;
+  // ADAPTIVE BEHAVIOR: Switch between spacious and compact modes
+  // Threshold: If gap would be less than 8px, we're in "cramped" territory
+  // In cramped mode, use a fixed small gap and allow scrolling
+  const COMPACT_THRESHOLD = 8; // px
+  const COMPACT_GAP = 4; // px - fixed gap in compact mode
+
+  if (calculatedGap < COMPACT_THRESHOLD) {
+    // Compact mode: Not enough space, use fixed small gap and allow scrolling
+    navGap.value = `${COMPACT_GAP}px`;
+  } else {
+    // Spacious mode: Enough space, distribute it evenly
+    navGap.value = `${calculatedGap}px`;
+  }
 };
 
 // Watch navItems array length to recalculate gap when items are added/removed
