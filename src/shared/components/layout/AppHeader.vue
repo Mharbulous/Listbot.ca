@@ -2,13 +2,8 @@
   <header
     class="header-fixed bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
   >
-    <!-- Left Section: Logo, Hamburger, and Breadcrumb Navigation -->
+    <!-- Left Section: Hamburger, Logo, and Breadcrumb Navigation -->
     <div class="flex items-center gap-4 flex-1 min-w-0">
-      <!-- Logo -->
-      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
-        <span class="text-lg font-bold text-primary-600">ListBot</span>
-      </RouterLink>
-
       <!-- Hamburger Toggle Button -->
       <button
         class="hamburger-btn"
@@ -17,6 +12,11 @@
       >
         <span class="text-xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
+
+      <!-- Logo -->
+      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
+        <span class="text-lg font-bold text-primary-600">ListBot</span>
+      </RouterLink>
 
       <!-- Vertical Divider -->
       <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>

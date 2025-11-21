@@ -109,7 +109,7 @@ const route = useRoute();
   width: 32px;
   height: 1px;
   background: var(--sidebar-border, rgba(255, 255, 255, 0.2));
-  margin: 0 auto;
+  margin: 0 0 0 12px;
 }
 
 .nav-item {
@@ -129,7 +129,7 @@ const route = useRoute();
 }
 
 .sidebar-collapsed .nav-item {
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
 }
 
