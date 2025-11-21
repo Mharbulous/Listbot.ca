@@ -19,7 +19,7 @@
         />
 
         <!-- Row container for Sidebar and Content -->
-        <div class="flex flex-grow" style="height: calc(100vh - 64px)">
+        <div class="flex flex-grow mt-16" style="height: calc(100vh - 64px)">
           <!-- Sidebar (left, below header) -->
           <NewSideBar :is-collapsed="isSidebarCollapsed" />
 
