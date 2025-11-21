@@ -100,7 +100,7 @@ const navItems = [
   { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
 
   // EDRM Stage 1: Identify
-  { key: 'identify', path: '/identify', icon: '🔍', label: 'Identify' },
+  { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify' },
 
   // EDRM Stage 2: Preserve
   { key: 'preserve', path: '/upload', icon: '🔐', label: 'Preserve' },
