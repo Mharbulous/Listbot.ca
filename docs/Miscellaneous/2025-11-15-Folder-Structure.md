@@ -1,7 +1,7 @@
-# Folder Structure - Auth Module Decomposition
+# Folder Structure - Module Decomposition
 
 **Date**: 2025-11-15
-**Updated**: 2025-11-18 (Auth module decomposed)
+**Updated**: 2025-11-21 (AppSideBar decomposed)
 
 ## Auth Module Structure
 
@@ -143,3 +143,145 @@ See dedicated test suggestions in auth module documentation.
 - `@docs/architecture/authentication.md` - Full auth state machine and Solo Firm architecture
 - `@docs/architecture/overview.md` - High-level component architecture
 - `@CLAUDE.md` - Core directives and project overview
+
+---
+
+## AppSideBar Module Structure
+
+The AppSideBar component has been decomposed from a single 422-line file into 6 focused modules following the streamline workflow.
+
+### Directory Structure
+
+```
+src/shared/components/layout/
+├── AppSideBar.vue                    # Main orchestrator (~79 lines)
+├── SidebarFooter.vue                 # Footer component (unchanged)
+└── sidebar/
+    ├── SidebarHeader.vue            # Logo + toggle button (~107 lines)
+    ├── SidebarNav.vue               # Navigation items list (~143 lines)
+    ├── SidebarTooltip.vue           # Floating tooltip component (~57 lines)
+    ├── useSidebarTooltip.js         # Tooltip logic composable (~60 lines)
+    └── sidebarNavConfig.js          # Navigation items configuration (~107 lines)
+```
+
+### Module Responsibilities
+
+#### `AppSideBar.vue` - Main Orchestrator
+**Responsibilities:**
+- Container layout structure
+- Collapse/expand state management
+- Orchestrates child components
+- Minimal styling (layout only)
+
+**Size:** ~79 lines (down from 422 lines)
+
+#### `SidebarHeader.vue` - Header Component
+**Responsibilities:**
+- Logo display (conditional on collapse state)
+- Toggle button with icon
+- Header-specific styling
+
+**Size:** ~107 lines
+
+#### `SidebarNav.vue` - Navigation Component
+**Responsibilities:**
+- Iterates through navigation items
+- Renders section headers and nav links
+- Handles active state highlighting
+- Delegates tooltip events to parent
+- Navigation-specific styling
+
+**Size:** ~143 lines
+
+#### `SidebarTooltip.vue` - Tooltip Component
+**Responsibilities:**
+- Renders floating tooltip with Teleport
+- Positioning and animation styles
+- Clean, reusable tooltip component
+
+**Size:** ~57 lines
+
+#### `useSidebarTooltip.js` - Tooltip Composable
+**Responsibilities:**
+- Tooltip state management (hoveredItem, position)
+- Mouse enter/leave handlers
+- Position calculation logic
+- Returns reactive state and handlers
+
+**Size:** ~60 lines
+
+**Exported API:**
+- `hoveredItem` (ref) - Currently hovered navigation item key
+- `tooltipText` (computed) - Text to display in tooltip
+- `tooltipStyle` (computed) - Positioning styles
+- `handleMouseEnter(event, itemKey)` - Show tooltip handler
+- `handleMouseLeave()` - Hide tooltip handler
+
+#### `sidebarNavConfig.js` - Navigation Configuration
+**Responsibilities:**
+- Navigation items array definition
+- Icon selection logic (getItemIcon)
+- Computed paths for dynamic routes
+- Centralized configuration
+
+**Size:** ~107 lines
+
+**Navigation Sections:**
+1. **Special Items** (not part of EDRM workflow)
+   - Matters, Pleadings, Legal memos, Disputed Facts, Cast of Characters
+
+2. **EDRM Workflow** (E-Discovery stages)
+   - Identify, Preserve, Collect, Process, Review, Analyze, Produce, Present
+
+3. **Resources**
+   - About
+
+**Exported API:**
+- `useNavItems()` - Returns navigation items array with dynamic computed paths
+- `getItemIcon(item, isHovered, isActive)` - Returns appropriate icon (handles special cases like folder icons)
+
+### Migration Notes
+
+**Old Structure:**
+```
+src/shared/components/layout/AppSideBar.vue (422 lines)
+```
+
+**New Structure:**
+```
+src/shared/components/layout/
+├── AppSideBar.vue (~79 lines)
+└── sidebar/ (6 modules, ~474 lines total)
+```
+
+**Deprecated:**
+- Original file backed up to `/deprecated/AppSideBar.vue.backup-20251121`
+
+**Backward Compatibility:**
+- Component interface unchanged (same props and events)
+- All existing imports continue to work
+- No changes required in consuming code
+
+### Benefits of Decomposition
+
+1. **Maintainability** - Each file < 150 lines, focused on single responsibility
+2. **Reusability** - Tooltip composable can be reused in other components
+3. **Testability** - Components and logic can be tested in isolation
+4. **Readability** - Clear separation of concerns
+5. **Scalability** - Easy to extend navigation configuration without touching component logic
+
+### Testing Strategy
+
+**Suggested Test Coverage:**
+1. Toggle sidebar expand/collapse
+2. Navigate to each menu item (verify routing)
+3. Hover over items when sidebar is collapsed (verify tooltips appear)
+4. Verify active state highlighting matches current route
+5. Test responsive behavior with different viewport heights
+6. Verify folder icon changes (open/closed) on Collect item
+7. Test section headers display correctly in both expanded and collapsed states
+
+### Related Documentation
+
+- `@docs/System/CLAUDE.md` - System architecture and component conventions
+- `@CLAUDE.md` - Core directives and streamline workflow
