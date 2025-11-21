@@ -91,10 +91,10 @@ const navItems = [
   
   
   
-  { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
-  { key: 'law', path: '/law', icon: '📚', label: 'Relevant Law' }, 
-  { key: 'cast', path: '/cast', icon: '🎭', label: 'Cast' },
+  { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },  
+  { key: 'law', path: '/law', icon: '📚', label: 'Legal memos' },   
   { key: 'facts', path: '/facts', icon: '⚖️', label: 'Disputed Facts' },
+  { key: 'cast', path: '/cast', icon: '🎭', label: 'Cast of Characters' },
 
   // EDRM Workflow Section Header
   { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
@@ -142,12 +142,12 @@ const navItems = [
       // Fallback to analyze page if no documents
       return '/analyze';
     }),
-    icon: '🕵️',
+    icon: '🧑‍💻',
     label: 'Review',
   },
 
   // EDRM Stage 6: Analyze
-  { key: 'analyze', path: '/analysis', icon: '📊', label: 'Analyze' },
+  { key: 'analyze', path: '/analysis', icon: '🧠', label: 'Analyze' },
 
   // EDRM Stage 7: Produce
   { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
