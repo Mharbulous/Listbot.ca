@@ -64,7 +64,6 @@ const route = useRoute();
   min-height: 24px;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
 }
 
 .section-label {
@@ -96,7 +95,6 @@ const route = useRoute();
   cursor: pointer;
   transition: all 200ms ease-in-out;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .sidebar-collapsed .nav-item {
