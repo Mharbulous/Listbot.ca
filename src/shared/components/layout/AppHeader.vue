@@ -1,9 +1,28 @@
 <template>
   <header
-    class="bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
+    class="header-fixed bg-white px-8 py-4 border-b border-slate-200 flex items-center justify-between h-16 box-border flex-shrink-0"
   >
-    <!-- Left Section: Breadcrumb Navigation -->
-    <nav class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
+    <!-- Left Section: Logo, Hamburger, and Breadcrumb Navigation -->
+    <div class="flex items-center gap-4 flex-1 min-w-0">
+      <!-- Logo -->
+      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
+        <span class="text-lg font-bold text-primary-600">ListBot</span>
+      </RouterLink>
+
+      <!-- Hamburger Toggle Button -->
+      <button
+        class="hamburger-btn"
+        @click="$emit('toggle-sidebar')"
+        :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <span class="text-xl">{{ isCollapsed ? '☰' : '«' }}</span>
+      </button>
+
+      <!-- Vertical Divider -->
+      <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
+
+      <!-- Breadcrumb Navigation -->
+      <nav class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
       <!-- Client Name (only shown when matter is selected) -->
       <template v-if="matterViewStore.hasMatter">
         <span
@@ -53,7 +72,8 @@
           {{ documentViewStore.documentName }}
         </span>
       </template>
-    </nav>
+      </nav>
+    </div>
 
     <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3 flex-shrink-0">
@@ -117,6 +137,17 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores/authStore';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
+
+// Props
+const props = defineProps({
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// Emits
+const emit = defineEmits(['toggle-sidebar']);
 
 const router = useRouter();
 const route = useRoute();
@@ -192,3 +223,34 @@ function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
 }
 </script>
+
+<style scoped>
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  border-radius: 6px;
+  transition: all 200ms ease-in-out;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+</style>

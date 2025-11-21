@@ -1,8 +1,5 @@
 <template>
   <nav class="sidebar" :class="{ 'sidebar-collapsed': props.isCollapsed }" id="app-sidebar">
-    <!-- Top Section: Logo + Toggle Button -->
-    <SidebarHeader :is-collapsed="props.isCollapsed" @toggle="handleToggle" />
-
     <!-- Navigation Items (fills available space) -->
     <SidebarNav
       :nav-items="navItems"
@@ -25,7 +22,6 @@
 </template>
 
 <script setup>
-import SidebarHeader from './sidebar/SidebarHeader.vue';
 import SidebarNav from './sidebar/SidebarNav.vue';
 import SidebarFooter from './SidebarFooter.vue';
 import SidebarTooltip from './sidebar/SidebarTooltip.vue';
@@ -40,14 +36,6 @@ const props = defineProps({
   },
 });
 
-// Emits
-const emit = defineEmits(['toggle']);
-
-// Toggle handler
-const handleToggle = () => {
-  emit('toggle');
-};
-
 // Navigation items
 const navItems = useNavItems();
 
@@ -60,9 +48,9 @@ const { hoveredItem, tooltipText, tooltipStyle, handleMouseEnter, handleMouseLea
 .sidebar {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 64px;
   width: 240px;
-  height: 100vh;
+  height: calc(100vh - 64px);
   z-index: 50;
   background: linear-gradient(to bottom, var(--sidebar-bg-primary), var(--sidebar-bg-secondary));
   color: var(--sidebar-text-primary);
