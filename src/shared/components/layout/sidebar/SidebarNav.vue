@@ -60,11 +60,11 @@ const route = useRoute();
 }
 
 .nav-section-header {
-  padding: clamp(4px, 1vh, 8px) 12px;
+  padding: 4px 12px;
   min-height: 24px;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  flex: 0.5 1 auto;
 }
 
 .section-label {
@@ -88,15 +88,15 @@ const route = useRoute();
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: clamp(6px, 1.2vh, 12px) 12px;
-  min-height: 42px;
+  padding: 4px 12px;
+  min-height: 36px;
   gap: 12px;
   color: var(--sidebar-text-secondary);
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms ease-in-out;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex: 1 1 auto;
 }
 
 .sidebar-collapsed .nav-item {
