@@ -63,9 +63,13 @@ const router = createRouter({
       redirect: '/analysis/stub',
     },
     {
+      path: '/produce',
+      redirect: '/list/stub',
+    },
+    {
       path: '/list/stub',
       name: 'list',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Produce.vue'),
       meta: { requiresAuth: true, title: 'Produce' },
     },
     {
