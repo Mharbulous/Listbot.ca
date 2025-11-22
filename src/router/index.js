@@ -47,9 +47,9 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
-      path: '/process',
+      path: '/process/stub',
       name: 'process',
-      component: () => import('../views/Process.vue'),
+      component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Process' },
     },
     {
@@ -63,9 +63,9 @@ const router = createRouter({
       redirect: '/analysis/stub',
     },
     {
-      path: '/list',
+      path: '/list/stub',
       name: 'list',
-      component: () => import('../views/Produce.vue'),
+      component: () => import('../views/defaults/UnderConstruction.vue'),
       meta: { requiresAuth: true, title: 'Produce' },
     },
     {
@@ -111,7 +111,7 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, title: 'Collect' },
     },
     {
-      path: '/review',
+      path: '/review/stub',
       name: 'review',
       beforeEnter: (to, from, next) => {
         // Intelligent redirect for /review shortcut

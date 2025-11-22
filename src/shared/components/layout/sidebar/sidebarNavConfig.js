@@ -1,6 +1,5 @@
 import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
-import { useOrganizerStore } from '@/features/documents/stores/organizer';
 
 /**
  * Navigation items configuration for the sidebar
@@ -8,7 +7,6 @@ import { useOrganizerStore } from '@/features/documents/stores/organizer';
  */
 export function useNavItems() {
   const matterViewStore = useMatterViewStore();
-  const organizerStore = useOrganizerStore();
 
   return [
     // Matters (Special - not part of EDRM workflow)
@@ -42,7 +40,7 @@ export function useNavItems() {
     },
 
     // EDRM Stage 4: Process
-    { key: 'process', path: '/process', icon: '🤖', label: 'Process' },
+    { key: 'process', path: '/process/stub', icon: '🤖', label: 'Process 🚧' },
 
     // EDRM Stage 5: Review
     {
@@ -67,14 +65,14 @@ export function useNavItems() {
         return '/analysis/stub';
       }),
       icon: '🧑‍💻',
-      label: 'Review',
+      label: 'Review 🚧',
     },
 
     // EDRM Stage 6: Analysis
     { key: 'analysis', path: '/analysis/stub', icon: '🧠', label: 'Analysis 🚧' },
 
     // EDRM Stage 7: Produce
-    { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
+    { key: 'produce', path: '/list/stub', icon: '📃', label: 'Produce 🚧' },
 
     // EDRM Stage 8: Present
     { key: 'present', path: '/present/stub', icon: '🏛️', label: 'Present 🚧' },
