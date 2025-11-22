@@ -128,6 +128,12 @@ const route = useRoute();
   flex: 1 1 auto;
   direction: ltr; /* Reset content direction */
   position: relative;
+  min-height: 36px;
+}
+
+/* Add right padding when stub button exists to prevent text overlap */
+.nav-item-wrapper:has(.stub-button) .nav-item {
+  padding-right: 54px; /* 30px button + 12px spacing + 12px buffer */
 }
 
 .nav-item {
@@ -142,7 +148,7 @@ const route = useRoute();
   cursor: pointer;
   transition: all 200ms ease-in-out;
   white-space: nowrap;
-  flex: 1 1 auto;
+  width: 100%;
 }
 
 .sidebar-collapsed .nav-item {
@@ -181,6 +187,10 @@ const route = useRoute();
 }
 
 .stub-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -191,16 +201,13 @@ const route = useRoute();
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms ease-in-out;
-  flex-shrink: 0;
   border-radius: 4px;
-  margin-left: auto;
-  margin-right: 12px;
 }
 
 .stub-button:hover {
   background-color: var(--sidebar-hover-bg);
   color: var(--sidebar-hover-text);
-  transform: scale(1.1);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .stub-button-active {
