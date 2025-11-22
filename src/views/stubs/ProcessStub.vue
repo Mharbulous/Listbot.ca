@@ -318,82 +318,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Planned Enhancements -->
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Enhancements</h2>
-
-        <!-- High Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3">High Priority Features</h3>
-
-          <!-- Step 3 -->
-          <div class="flex gap-4 mb-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 text-red-800 font-bold flex items-center justify-center"
-            >
-              3
-            </div>
-            <div>
-              <h4 class="font-semibold text-blue-600 mb-1">AI Fuzzy Deduplication <span class="text-xs">📋 PLANNED</span></h4>
-              <p class="text-blue-700 text-sm">
-                Advanced AI analysis identifies near-duplicate documents with similar but not
-                identical content.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 4 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center"
-            >
-              4
-            </div>
-            <div>
-              <h4 class="font-semibold text-blue-600 mb-1">Email Threading <span class="text-xs">📋 PLANNED</span></h4>
-              <p class="text-blue-700 text-sm">
-                Email conversations are reconstructed and analyzed to identify inclusive vs.
-                non-inclusive messages.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 5 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center"
-            >
-              5
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1">
-                Categorization <span class="text-sm text-emerald-600">(Implemented)</span>
-              </h4>
-              <p class="text-slate-600">
-                Documents are automatically categorized based on content analysis for efficient
-                organization.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 6 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center"
-            >
-              6
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1">Review-Ready Corpus <span class="text-sm text-emerald-600">(Output)</span></h4>
-              <p class="text-slate-600 text-sm">
-                Processed documents optimized for review, with volume reduced by 50-75%
-                and organized for efficient analysis.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
 
     <!-- Competitive Advantage -->
     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
@@ -429,47 +354,6 @@
             performance
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Medium Priority Features -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-        <span
-          class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-        >
-          MEDIUM PRIORITY
-        </span>
-        Advanced Processing - Phase 2
-      </h3>
-      <div class="grid gap-4 md:grid-cols-2">
-        <FeatureCard
-          icon="🤖"
-          title="AI Fuzzy Deduplication"
-          badge="Advanced AI Analysis"
-          description="Advanced AI-powered detection of near-duplicate documents that are substantially similar but not identical, reducing review volume while preserving important variations."
-        />
-
-        <FeatureCard
-          icon="⚙️"
-          title="Processing Profiles"
-          badge="Workflow Efficiency"
-          description="Save and reuse preferred processing settings across similar matters, including deduplication preferences and metadata field selections."
-        />
-
-        <FeatureCard
-          icon="⚠️"
-          title="Exception Handling Workflows"
-          badge="Quality Assurance"
-          description="Dedicated workflows for files that fail to process, with manual review queues and retry mechanisms."
-        />
-
-        <FeatureCard
-          icon="🗂️"
-          title="Metadata Field Mapping"
-          badge="Customization"
-          description="Configure which metadata fields to extract and preserve during processing, supporting 600+ file types."
-        />
       </div>
     </div>
 
