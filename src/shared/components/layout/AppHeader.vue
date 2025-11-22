@@ -47,7 +47,7 @@
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 mattersFilterStore.showMyMattersOnly
                   ? 'text-white'
-                  : 'text-slate-600 hover:text-slate-900',
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
               ]"
             >
               My Matters
@@ -58,7 +58,7 @@
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 !mattersFilterStore.showMyMattersOnly
                   ? 'text-white'
-                  : 'text-slate-600 hover:text-slate-900',
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
               ]"
             >
               Firm Matters
@@ -498,9 +498,5 @@ onUnmounted(() => {
   cursor: pointer;
   border: none;
   background: transparent;
-}
-
-.matters-switch button:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 </style>
