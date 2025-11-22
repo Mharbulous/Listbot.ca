@@ -70,13 +70,22 @@ const router = createRouter({
     },
     {
       path: '/produce',
-      redirect: '/list/stub',
+      redirect: '/produce/stub',
+    },
+    {
+      path: '/produce/stub',
+      name: 'produce',
+      component: () => import('../views/stubs/ProduceStub.vue'),
+      meta: { requiresAuth: true, title: 'Produce' },
+    },
+    // Backward compatibility redirects for old /list routes
+    {
+      path: '/list',
+      redirect: '/produce',
     },
     {
       path: '/list/stub',
-      name: 'list',
-      component: () => import('../views/stubs/ProduceStub.vue'),
-      meta: { requiresAuth: true, title: 'Produce' },
+      redirect: '/produce/stub',
     },
     {
       path: '/pleadings/stub',
