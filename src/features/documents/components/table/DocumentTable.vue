@@ -118,7 +118,6 @@
           </div>
         </div>
       </div>
-      </div>
 
       <!-- Scrollable Table Body with Virtual Scrolling -->
       <div class="table-mockup-body" :style="{ minWidth: totalFooterWidth + 'px' }">
