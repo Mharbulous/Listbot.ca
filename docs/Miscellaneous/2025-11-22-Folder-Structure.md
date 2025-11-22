@@ -1,29 +1,29 @@
 # Folder Structure - Module Decomposition
 
-**Date**: 2025-11-15
-**Updated**: 2025-11-21 (AppSideBar decomposed)
+**Date**: 2025-11-22
+**Updated**: 2025-11-22 (Line counts verified and updated)
 
 ## Auth Module Structure
 
-The authentication module has been decomposed from a single 345-line file into 3 focused modules following the streamline workflow.
+The authentication module has been decomposed from a single 345-line file into 4 focused modules following the streamline workflow.
 
 ### Directory Structure
 
 ```
-src/core/stores/auth/
-├── index.js              # Entry point - re-exports useAuthStore for backward compatibility
-├── authStore.js          # Core Pinia store (~120 lines)
-├── authFirmSetup.js      # Firm management (~100 lines)
-└── authStateHandlers.js  # Auth lifecycle (~100 lines)
+src/core/auth/stores/
+├── index.js              # Entry point - re-exports useAuthStore for backward compatibility (17 lines)
+├── authStore.js          # Core Pinia store (218 lines)
+├── authFirmSetup.js      # Firm management (138 lines)
+└── authStateHandlers.js  # Auth lifecycle (115 lines)
 ```
 
 ### Module Responsibilities
 
-#### `index.js` - Entry Point
+#### `index.js` - Entry Point (17 lines)
 - Re-exports `useAuthStore` for backward compatibility
-- Maintains existing import paths: `import { useAuthStore } from '@/core/stores/auth'`
+- Maintains existing import paths: `import { useAuthStore } from '@/core/auth/stores'`
 
-#### `authStore.js` - Core Pinia Store
+#### `authStore.js` - Core Pinia Store (218 lines)
 **Responsibilities:**
 - Pinia store definition (`defineStore`)
 - State management (authState, user, userRole, firmId, error)
@@ -36,7 +36,7 @@ src/core/stores/auth/
 uninitialized → initializing → authenticated | unauthenticated | error
 ```
 
-#### `authFirmSetup.js` - Firm Management
+#### `authFirmSetup.js` - Firm Management (138 lines)
 **Responsibilities:**
 - Solo Firm architecture implementation (firmId === userId)
 - Firm creation and management
@@ -48,7 +48,7 @@ uninitialized → initializing → authenticated | unauthenticated | error
 - `_createSoloFirm(firebaseUser)` - One-time firm creation (firm doc + default matter + preferences)
 - `_initializeUserPreferences(userId)` - Initialize user preferences store
 
-#### `authStateHandlers.js` - Auth Lifecycle
+#### `authStateHandlers.js` - Auth Lifecycle (115 lines)
 **Responsibilities:**
 - Firebase authentication lifecycle events
 - Auth state transitions
@@ -112,11 +112,12 @@ src/core/stores/auth.js (345 lines)
 
 **New Structure:**
 ```
-src/core/stores/auth/
-├── index.js
-├── authStore.js
-├── authFirmSetup.js
-└── authStateHandlers.js
+src/core/auth/stores/
+├── index.js (17 lines)
+├── authStore.js (218 lines)
+├── authFirmSetup.js (138 lines)
+└── authStateHandlers.js (115 lines)
+Total: 488 lines (143 lines of additional code due to module boundaries and documentation)
 ```
 
 **Deprecated:**
@@ -154,36 +155,44 @@ The AppSideBar component has been decomposed from a single 422-line file into 6 
 
 ```
 src/shared/components/layout/
-├── AppSideBar.vue                    # Main orchestrator (~79 lines)
-├── SidebarFooter.vue                 # Footer component (unchanged)
+├── AppSideBar.vue                    # Main orchestrator (73 lines)
+├── SidebarFooter.vue                 # Footer component with user menu (596 lines) ⚠️ NEEDS STREAMLINING
 └── sidebar/
-    ├── SidebarHeader.vue            # Logo + toggle button (~107 lines)
-    ├── SidebarNav.vue               # Navigation items list (~143 lines)
-    ├── SidebarTooltip.vue           # Floating tooltip component (~57 lines)
-    ├── useSidebarTooltip.js         # Tooltip logic composable (~60 lines)
-    └── sidebarNavConfig.js          # Navigation items configuration (~107 lines)
+    ├── SidebarHeader.vue            # Logo + toggle button (97 lines)
+    ├── SidebarNav.vue               # Navigation items list (235 lines)
+    ├── SidebarTooltip.vue           # Floating tooltip component (54 lines)
+    ├── useSidebarTooltip.js         # Tooltip logic composable (58 lines)
+    └── sidebarNavConfig.js          # Navigation items configuration (121 lines)
 ```
 
 ### Module Responsibilities
 
-#### `AppSideBar.vue` - Main Orchestrator
+#### `AppSideBar.vue` - Main Orchestrator (73 lines)
 **Responsibilities:**
 - Container layout structure
 - Collapse/expand state management
 - Orchestrates child components
 - Minimal styling (layout only)
 
-**Size:** ~79 lines (down from 422 lines)
+#### `SidebarFooter.vue` - Footer Component (596 lines) ⚠️
+**⚠️ WARNING: This file is 596 lines and NEEDS STREAMLINING**
 
-#### `SidebarHeader.vue` - Header Component
+**Responsibilities:**
+- User avatar and menu trigger
+- Unified menu popover (Account, Switch Apps, Sign Out sections)
+- Keyboard navigation and accessibility
+- Tooltip for user avatar
+- App switching functionality
+
+**This component should be decomposed into smaller modules.**
+
+#### `SidebarHeader.vue` - Header Component (97 lines)
 **Responsibilities:**
 - Logo display (conditional on collapse state)
 - Toggle button with icon
 - Header-specific styling
 
-**Size:** ~107 lines
-
-#### `SidebarNav.vue` - Navigation Component
+#### `SidebarNav.vue` - Navigation Component (235 lines)
 **Responsibilities:**
 - Iterates through navigation items
 - Renders section headers and nav links
@@ -191,24 +200,18 @@ src/shared/components/layout/
 - Delegates tooltip events to parent
 - Navigation-specific styling
 
-**Size:** ~143 lines
-
-#### `SidebarTooltip.vue` - Tooltip Component
+#### `SidebarTooltip.vue` - Tooltip Component (54 lines)
 **Responsibilities:**
 - Renders floating tooltip with Teleport
 - Positioning and animation styles
 - Clean, reusable tooltip component
 
-**Size:** ~57 lines
-
-#### `useSidebarTooltip.js` - Tooltip Composable
+#### `useSidebarTooltip.js` - Tooltip Composable (58 lines)
 **Responsibilities:**
 - Tooltip state management (hoveredItem, position)
 - Mouse enter/leave handlers
 - Position calculation logic
 - Returns reactive state and handlers
-
-**Size:** ~60 lines
 
 **Exported API:**
 - `hoveredItem` (ref) - Currently hovered navigation item key
@@ -217,14 +220,12 @@ src/shared/components/layout/
 - `handleMouseEnter(event, itemKey)` - Show tooltip handler
 - `handleMouseLeave()` - Hide tooltip handler
 
-#### `sidebarNavConfig.js` - Navigation Configuration
+#### `sidebarNavConfig.js` - Navigation Configuration (121 lines)
 **Responsibilities:**
 - Navigation items array definition
 - Icon selection logic (getItemIcon)
 - Computed paths for dynamic routes
 - Centralized configuration
-
-**Size:** ~107 lines
 
 **Navigation Sections:**
 1. **Special Items** (not part of EDRM workflow)
@@ -250,8 +251,10 @@ src/shared/components/layout/AppSideBar.vue (422 lines)
 **New Structure:**
 ```
 src/shared/components/layout/
-├── AppSideBar.vue (~79 lines)
-└── sidebar/ (6 modules, ~474 lines total)
+├── AppSideBar.vue (73 lines)
+├── SidebarFooter.vue (596 lines) ⚠️
+└── sidebar/ (5 modules, 565 lines total)
+Total: 1,234 lines
 ```
 
 **Deprecated:**
@@ -264,11 +267,22 @@ src/shared/components/layout/
 
 ### Benefits of Decomposition
 
-1. **Maintainability** - Each file < 150 lines, focused on single responsibility
+1. **Maintainability** - Most files < 250 lines, focused on single responsibility
 2. **Reusability** - Tooltip composable can be reused in other components
 3. **Testability** - Components and logic can be tested in isolation
 4. **Readability** - Clear separation of concerns
 5. **Scalability** - Easy to extend navigation configuration without touching component logic
+
+### Next Steps for AppSideBar Module
+
+**⚠️ PRIORITY: SidebarFooter.vue requires streamlining**
+
+This file is 596 lines and should be decomposed into smaller modules:
+- Menu trigger component
+- Menu popover component
+- User links configuration
+- App switcher component
+- Keyboard navigation composable
 
 ### Testing Strategy
 
