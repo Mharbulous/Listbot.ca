@@ -133,7 +133,7 @@ const route = useRoute();
 
 /* Add right padding when stub button exists to prevent text overlap */
 .nav-item-wrapper:has(.stub-button) .nav-item {
-  padding-right: 54px; /* 30px button + 12px spacing + 12px buffer */
+  padding-right: 64px; /* 30px button + 22px spacing + 12px buffer */
 }
 
 .nav-item {
@@ -152,7 +152,7 @@ const route = useRoute();
 }
 
 .sidebar-collapsed .nav-item {
-  justify-content: center;
+  /* Keep left alignment for smooth transitions */
   gap: 0;
 }
 
@@ -188,7 +188,7 @@ const route = useRoute();
 
 .stub-button {
   position: absolute;
-  right: 12px;
+  right: 22px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;

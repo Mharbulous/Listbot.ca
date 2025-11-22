@@ -49,7 +49,7 @@ const { hoveredItem, tooltipText, tooltipStyle, handleMouseEnter, handleMouseLea
   position: fixed;
   left: 0;
   top: 64px;
-  width: 160px;
+  width: 170px;
   height: calc(100vh - 64px);
   z-index: 50;
   /* Ocean depth gradient - from surface to abyss */
