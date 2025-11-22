@@ -1,19 +1,12 @@
 <template>
   <StubPageLayout>
     <template #header>
-      <div class="mb-8">
-        <div
-          class="inline-flex items-center px-4 py-2 rounded-full text-lg font-medium bg-purple-100 text-purple-800 mb-4"
-        >
-          ⚖️ EDRM Stage 6: Review - Pleadings
-        </div>
-        <h1 class="text-4xl font-bold text-slate-900 mb-4">Pleadings Feature</h1>
-        <p class="text-xl text-slate-600 mb-6">
-          The only e-discovery platform that understands pleadings as the organizational framework
-          for litigation—automatically extracting facts, tracking party positions, and
-          systematically connecting evidence to allegations.
-        </p>
-      </div>
+      <PageHeader
+        badge-text="Case Management: Pleadings"
+        badge-color="purple"
+        title="Pleadings Workflow"
+        description="The only e-discovery platform that understands pleadings as the organizational framework for litigation—automatically extracting facts, tracking party positions, and systematically connecting evidence to allegations."
+      />
     </template>
 
     <template #content>
@@ -140,6 +133,7 @@
 
 <script setup>
 import StubPageLayout from '@/components/stubs/StubPageLayout.vue';
+import PageHeader from '@/components/stubs/PageHeader.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
 import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
