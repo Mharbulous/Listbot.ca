@@ -28,7 +28,7 @@
             class="flex-grow transition-all duration-300 overflow-auto"
             :class="{
               'ml-[64px]': isSidebarCollapsed,
-              'ml-[240px]': !isSidebarCollapsed,
+              'ml-[200px]': !isSidebarCollapsed,
             }"
             style="min-width: 0"
           >

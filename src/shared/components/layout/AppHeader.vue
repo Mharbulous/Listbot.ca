@@ -13,8 +13,8 @@
       >
         <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
-      <!-- Logo -->
-      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
+      <!-- Logo (only visible when sidebar is open) -->
+      <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
         <span class="text-lg font-bold text-primary-600">ListBot</span>
       </RouterLink>
 
