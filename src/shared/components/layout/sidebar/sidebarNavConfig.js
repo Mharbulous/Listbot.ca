@@ -45,7 +45,25 @@ export function useNavItems() {
     // EDRM Stage 5: Review
     {
       key: 'review',
-      path: '/review/stub',
+      path: computed(() => {
+        const matterId = matterViewStore.currentMatterId;
+        if (!matterId) return '/analysis/stub';
+
+        // Try to get last viewed document from local storage
+        const lastViewedDoc = localStorage.getItem('lastViewedDocument');
+        if (lastViewedDoc) {
+          return `/matters/${matterId}/review/${lastViewedDoc}`;
+        }
+
+        // Otherwise, get first document from organizer store
+        const firstDoc = organizerStore.sortedEvidenceList?.[0];
+        if (firstDoc) {
+          return `/matters/${matterId}/review/${firstDoc.id}`;
+        }
+
+        // Fallback to analyze page if no documents
+        return '/analysis/stub';
+      }),
       icon: '🧑‍💻',
       label: 'Review 🚧',
     },

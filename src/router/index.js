@@ -113,7 +113,51 @@ const router = createRouter({
     {
       path: '/review/stub',
       name: 'review',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      beforeEnter: (to, from, next) => {
+        // Intelligent redirect for /review shortcut
+        const { useMatterViewStore } = require('../features/matters/stores/matterView');
+        const { useOrganizerStore } = require('../features/documents/stores/organizer');
+
+        const matterViewStore = useMatterViewStore();
+        const organizerStore = useOrganizerStore();
+
+        const matterId = matterViewStore.currentMatterId;
+
+        // If no matter selected, redirect to analyze page
+        if (!matterId) {
+          next('/analysis/stub');
+          return;
+        }
+
+        // Try to get last viewed document from local storage
+        const lastViewedDoc = localStorage.getItem('lastViewedDocument');
+        if (lastViewedDoc) {
+          next({
+            name: 'view-document',
+            params: {
+              matterId: matterId,
+              fileHash: lastViewedDoc
+            }
+          });
+          return;
+        }
+
+        // Otherwise, get first document from organizer store
+        const firstDoc = organizerStore.sortedEvidenceList?.[0];
+        if (firstDoc) {
+          next({
+            name: 'view-document',
+            params: {
+              matterId: matterId,
+              fileHash: firstDoc.id
+            }
+          });
+          return;
+        }
+
+        // Fallback to analyze page if no documents
+        next('/analysis/stub');
+      },
       meta: { requiresAuth: true, title: 'Review' },
     },
     {
