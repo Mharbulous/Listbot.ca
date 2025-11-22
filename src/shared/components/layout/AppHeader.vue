@@ -145,13 +145,13 @@
                   mattersFilterStore.caseSensitive ? 'Case sensitive' : 'Case insensitive'
                 "
               >
-                <span class="font-mono">Aa</span>
+                <span class="font-mono">{{ mattersFilterStore.caseSensitive ? 'Aa' : 'aA' }}</span>
               </button>
               <!-- Whole Word Toggle -->
               <button
                 @click="mattersFilterStore.toggleWholeWord()"
                 :class="[
-                  'p-1.5 rounded text-xs font-semibold transition-colors',
+                  'px-1.5 py-1.5 rounded text-xs font-semibold transition-colors',
                   mattersFilterStore.wholeWord
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
@@ -160,7 +160,7 @@
                   mattersFilterStore.wholeWord ? 'Match whole words only' : 'Match partial words'
                 "
               >
-                <span class="font-mono">Ab</span>
+                <span class="font-mono">{{ mattersFilterStore.wholeWord ? 'Word' : 'Wo__' }}</span>
               </button>
               <!-- Clear Button -->
               <button
