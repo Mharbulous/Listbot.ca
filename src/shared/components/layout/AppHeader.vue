@@ -34,14 +34,20 @@
       <template v-if="isOnMattersListPage">
         <div class="flex items-center gap-3 flex-1">
           <!-- Segmented Control: My Matters / Firm Matters -->
-          <div class="inline-flex rounded-lg bg-white/50 p-0.5 flex-shrink-0">
+          <div class="matters-switch inline-flex rounded-lg bg-white/50 p-0.5 flex-shrink-0 relative">
+            <!-- Sliding background indicator -->
+            <div
+              class="switch-indicator"
+              :class="{ 'switch-indicator-right': !mattersFilterStore.showMyMattersOnly }"
+            ></div>
+
             <button
               @click="mattersFilterStore.setShowMyMatters(true)"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 mattersFilterStore.showMyMattersOnly
-                  ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80',
+                  ? 'text-white'
+                  : 'text-slate-600 hover:text-slate-900',
               ]"
             >
               My Matters
@@ -49,10 +55,10 @@
             <button
               @click="mattersFilterStore.setShowMyMatters(false)"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 !mattersFilterStore.showMyMattersOnly
-                  ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80',
+                  ? 'text-white'
+                  : 'text-slate-600 hover:text-slate-900',
               ]"
             >
               Firm Matters
@@ -464,5 +470,37 @@ onUnmounted(() => {
   );
   /* Thin bottom border representing ocean waves */
   border-bottom: 2px solid #22d3ee; /* Cyan 400 - matches ocean surface */
+}
+
+/* Matters switch animations */
+.matters-switch {
+  position: relative;
+}
+
+.switch-indicator {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.switch-indicator-right {
+  transform: translateX(100%);
+}
+
+.matters-switch button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.matters-switch button:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
