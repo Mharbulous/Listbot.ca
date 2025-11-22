@@ -73,22 +73,12 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Document Name
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
                 Proceeding
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Filing Party
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
-                Status
+                Document Name
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -98,7 +88,22 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Filed Date
+                Filing Party
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Filing Date
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Expires
               </th>
               <th
                 class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -114,36 +119,13 @@
               class="hover:bg-slate-50 cursor-pointer transition-colors"
             >
               <td class="px-6 py-4">
-                <div class="text-sm font-medium text-slate-900">{{ pleading.documentName }}</div>
-              </td>
-              <td class="px-6 py-4">
                 <div class="text-sm">
                   <div class="font-medium text-slate-900">{{ pleading.proceeding.venue }}</div>
                   <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
                 </div>
               </td>
               <td class="px-6 py-4">
-                <div class="text-sm">
-                  <div class="font-medium text-slate-900">{{ pleading.partyName }}</div>
-                  <div class="text-xs text-slate-500">{{ pleading.partyRole }}</div>
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="{
-                    'bg-slate-100 text-slate-700': pleading.status === 'Drafting',
-                    'bg-green-100 text-green-700': pleading.status === 'Filed',
-                    'bg-blue-100 text-blue-700': pleading.status === 'Partially Served',
-                    'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
-                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon',
-                    'bg-red-100 text-red-700': pleading.status === 'Expired',
-                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue',
-                    'bg-gray-100 text-gray-700': pleading.status === 'Struck'
-                  }"
-                >
-                  {{ pleading.status }}
-                </span>
+                <div class="text-sm font-medium text-slate-900">{{ pleading.documentName }}</div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
@@ -157,8 +139,34 @@
                   </button>
                 </div>
               </td>
+              <td class="px-6 py-4">
+                <div class="text-sm">
+                  <div class="font-medium text-slate-900">{{ pleading.partyName }}</div>
+                  <div class="text-xs text-slate-500">{{ pleading.partyRole }}</div>
+                </div>
+              </td>
               <td class="px-6 py-4 text-sm text-slate-900">
                 {{ pleading.filedDate }}
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full"
+                  :class="{
+                    'bg-slate-100 text-slate-700': pleading.status === 'Drafting',
+                    'bg-green-100 text-green-700': pleading.status === 'Filed',
+                    'bg-blue-100 text-blue-700': pleading.status === 'Partially Served',
+                    'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
+                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon',
+                    'bg-red-100 text-red-700': pleading.status === 'Expired',
+                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue',
+                    'bg-red-100 text-red-700': pleading.status === 'Struck'
+                  }"
+                >
+                  {{ pleading.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-slate-600">
+                {{ pleading.expires || '—' }}
               </td>
               <td class="px-6 py-4 text-right">
                 <button
@@ -299,6 +307,7 @@ const mockPleadings = ref([
     status: 'Filed',
     version: 'Original',
     filedDate: '2024-03-15',
+    expires: null,
     hasAmendments: false,
   },
   {
@@ -315,6 +324,7 @@ const mockPleadings = ref([
     status: 'Fully Served',
     version: 'Original',
     filedDate: '2024-04-12',
+    expires: '2024-12-15',
     hasAmendments: false,
   },
   {
@@ -331,6 +341,7 @@ const mockPleadings = ref([
     status: 'Partially Served',
     version: 'Original',
     filedDate: '2024-04-12',
+    expires: '2025-01-20',
     hasAmendments: false,
   },
   {
@@ -347,6 +358,7 @@ const mockPleadings = ref([
     status: 'Drafting',
     version: 'First Amendment',
     filedDate: '2024-05-20',
+    expires: null,
     hasAmendments: true,
   },
   {
@@ -363,6 +375,7 @@ const mockPleadings = ref([
     status: 'Expiring soon',
     version: 'Original',
     filedDate: '2024-05-28',
+    expires: '2024-11-30',
     hasAmendments: false,
   },
   {
@@ -379,6 +392,7 @@ const mockPleadings = ref([
     status: 'Expired',
     version: 'Original',
     filedDate: '2024-06-01',
+    expires: '2024-10-15',
     hasAmendments: false,
   },
   {
@@ -395,6 +409,7 @@ const mockPleadings = ref([
     status: 'Overdue',
     version: 'Original',
     filedDate: '2024-07-10',
+    expires: '2024-09-20',
     hasAmendments: false,
   },
   {
@@ -411,6 +426,7 @@ const mockPleadings = ref([
     status: 'Struck',
     version: 'First Amendment',
     filedDate: '2024-08-05',
+    expires: '2024-08-20',
     hasAmendments: true,
   },
 ]);
@@ -418,18 +434,18 @@ const mockPleadings = ref([
 // Mock version history data
 const mockVersionHistory = ref([
   {
-    version: 'v1',
-    title: 'Original Complaint',
-    filedDate: '2024-03-15',
-    changes: 'Initial filing',
-    isCurrent: false,
-  },
-  {
     version: 'v2',
     title: 'First Amended Complaint',
     filedDate: '2024-05-20',
     changes: 'Added count for breach of contract, clarified damages calculation',
     isCurrent: true,
+  },
+  {
+    version: 'v1',
+    title: 'Original Complaint',
+    filedDate: '2024-03-15',
+    changes: 'Initial filing',
+    isCurrent: false,
   },
 ]);
 
