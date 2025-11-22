@@ -125,9 +125,9 @@ const route = useRoute();
 .nav-item-wrapper {
   display: flex;
   align-items: center;
-  gap: 4px;
   flex: 1 1 auto;
   direction: ltr; /* Reset content direction */
+  position: relative;
 }
 
 .nav-item {
@@ -193,6 +193,8 @@ const route = useRoute();
   transition: all 200ms ease-in-out;
   flex-shrink: 0;
   border-radius: 4px;
+  margin-left: auto;
+  margin-right: 12px;
 }
 
 .stub-button:hover {
