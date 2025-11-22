@@ -54,9 +54,15 @@ const router = createRouter({
     },
     {
       path: '/process/stub',
-      name: 'process',
+      name: 'process-stub',
       component: () => import('../views/stubs/ProcessStub.vue'),
-      meta: { requiresAuth: true, title: 'Process' },
+      meta: { requiresAuth: true, title: 'Process Blueprint' },
+    },
+    {
+      path: '/process',
+      name: 'process',
+      component: () => import('../views/ProcessDashboard.vue'),
+      meta: { requiresAuth: true, title: 'Processing Dashboard' },
     },
     {
       path: '/analysis/stub',
@@ -152,10 +158,6 @@ const router = createRouter({
       name: 'collect-stub',
       component: () => import('../views/stubs/CollectStub.vue'),
       meta: { requiresAuth: true, title: 'Collect' },
-    },
-    {
-      path: '/process',
-      redirect: '/process/stub',
     },
     {
       path: '/analysis',
