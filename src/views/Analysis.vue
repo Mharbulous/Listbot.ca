@@ -28,9 +28,9 @@
           <p class="text-slate-700">
             Advanced analytics differentiate premium platforms from basic review tools.
             <span class="font-bold text-purple-700"
-              >Email threading alone reduces review time by 40-74%</span
-            >, while AI-powered insights (timelines, communication patterns, concept clustering)
-            transform raw data into compelling case narratives.
+              >AI-powered insights (timelines, communication patterns, concept clustering)</span
+            > transform raw data into compelling case narratives, while structured legal analysis
+            tools organize facts into meaningful relationships that drive case strategy.
           </p>
         </div>
       </div>
@@ -70,32 +70,6 @@
           Quick Wins (1-2 months) - Highest ROI
         </h3>
         <div class="grid gap-4 md:grid-cols-2">
-          <!-- Email Threading -->
-          <div class="bg-white border-2 border-emerald-200 rounded-lg p-6">
-            <div class="flex items-start gap-3 mb-3">
-              <div class="text-2xl">📧</div>
-              <div>
-                <h4 class="text-lg font-semibold text-slate-900">Basic Email Threading</h4>
-                <p class="text-sm text-emerald-600 font-medium">40-74% Review Time Reduction</p>
-              </div>
-            </div>
-            <p class="text-slate-600 mb-3">
-              Parse email headers to reconstruct conversation threads, identifying inclusive emails
-              that contain all prior messages—eliminating redundant review.
-            </p>
-            <div class="text-sm text-slate-500 space-y-1">
-              <div><span class="font-medium">Method:</span> Parse Subject, In-Reply-To, References</div>
-              <div><span class="font-medium">Display:</span> Vue 3 tree component visualization</div>
-              <div>
-                <span class="font-medium">Impact:</span> Review only inclusive emails, skip
-                duplicates
-              </div>
-              <div>
-                <span class="font-medium">ROI:</span> Industry-leading time savings (40-74%)
-              </div>
-            </div>
-          </div>
-
           <!-- Timeline Visualization -->
           <div class="bg-white border-2 border-emerald-200 rounded-lg p-6">
             <div class="flex items-start gap-3 mb-3">
@@ -134,6 +108,28 @@
               <div><span class="font-medium">Processing:</span> Firebase Cloud Functions hashing</div>
               <div><span class="font-medium">Grouping:</span> UI display of duplicate families</div>
               <div><span class="font-medium">Action:</span> Review once, apply to all duplicates</div>
+            </div>
+          </div>
+
+          <!-- Legal Analysis Tree Structure -->
+          <div class="bg-white border-2 border-emerald-200 rounded-lg p-6">
+            <div class="flex items-start gap-3 mb-3">
+              <div class="text-2xl">⚖️</div>
+              <div>
+                <h4 class="text-lg font-semibold text-slate-900">Structured Legal Analysis</h4>
+                <p class="text-sm text-emerald-600 font-medium">Case Strategy Innovation</p>
+              </div>
+            </div>
+            <p class="text-slate-600 mb-3">
+              Organize atomic facts from the Facts feature into a tree-like structure based on legal
+              concepts from the Law feature, enabling strategic fact organization by legal relevance.
+            </p>
+            <div class="text-sm text-slate-500 space-y-1">
+              <div><span class="font-medium">Root:</span> Legal concepts (e.g., "Plaintiff pleads negligence by Defendant")</div>
+              <div><span class="font-medium">Level 1:</span> Elements (e.g., "duty of care" for negligence)</div>
+              <div><span class="font-medium">Level 2:</span> Factors (guidance on relevant facts for each element)</div>
+              <div><span class="font-medium">Level 3:</span> Atomic facts filter down and group by relevant factors</div>
+              <div><span class="font-medium">Benefit:</span> Facts can relate to multiple factors, revealing complex legal relationships</div>
             </div>
           </div>
         </div>
