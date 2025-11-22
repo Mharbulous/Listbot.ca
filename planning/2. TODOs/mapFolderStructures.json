@@ -1466,9 +1466,9 @@
       "status": "unchanged",
       "notes": "Top-level route entry point"
     },
-    "views/About.vue": {
-      "current": "src/views/About.vue",
-      "new": "src/views/About.vue",
+    "views/sso.vue": {
+      "current": "src/views/sso.vue",
+      "new": "src/views/sso.vue",
       "status": "unchanged",
       "notes": "Top-level route entry point"
     },

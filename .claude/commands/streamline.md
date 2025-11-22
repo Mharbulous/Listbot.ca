@@ -11,12 +11,36 @@ The following files are **EXEMPT** from the 300-line limit and should **NEVER** 
 - Explain why it's on the exception list
 - Do NOT proceed with decomposition
 
+## Folder-Structure Date Check (Only when NO target file specified)
+
+**If the user has NOT specified a specific file to streamline:**
+
+1. Check if `docs\Miscellaneous\2025-11-15-Folder-Structure.md` exists (or any file matching the pattern `YYYY-MM-DD-Folder-Structure.md`)
+2. Extract the date (YYYY-MM-DD) from the filename
+3. Compare the date to today's date
+
+**If the Folder-Structure file date is in the PAST:**
+- Review all files listed in the Folder-Structure.md file
+- Count the actual number of lines of code (excluding comments) for each file
+- Update all line counts in the file
+- Rename the file to today's date (e.g., `2025-11-22-Folder-Structure.md`)
+- Report to the user: "Folder-Structure.md was outdated and has been updated. Please start a new chat window to run /streamline with a fresh context."
+- **STOP** - Do NOT proceed with streamlining in this session
+
+**If the Folder-Structure file date is CURRENT or FUTURE:**
+- Proceed with the normal file selection process below
+
+**If the user HAS specified a specific file:**
+- Skip this entire date check and proceed directly to streamlining the specified file
+
 ## File Selection
 
-First, count the number of lines of code (excluding comments).  Compare the documentation file, docs\2025-11-15-Folder-Structure.md, and update if needed.
+**When no target file is specified**, review the files in `docs\Miscellaneous\2025-11-15-Folder-Structure.md` and identify candidate files that would benefit most from decomposition and refactoring.
 
-If the user has not specified a specific file, then review the files in the documentation file, docs\2025-11-15-Folder-Structure.md, and identify the three best candidate files that would benefit most from decomposition and refactoring.  However once you find a file that would obviously benefit, stop searching and select that file.  If you find no obvious candidate, then choose one file from the three identified candidate files, based on which file looks like it would benefit most from decompoistion or refactoring, and select that file.
-
+**Selection Strategy:**
+- Identify the three best candidate files that would benefit most from decomposition and refactoring
+- However, once you find a file that would obviously benefit, stop searching and select that file
+- If you find no obvious candidate, choose one file from the three identified candidates based on which would benefit most from decomposition or refactoring
 
 **Virtual Scrolling Detection:**
 - Check if the file contains virtual scrolling implementation (e.g., `virtual-scroller`, `virtual-scroll`, Vuetify's `v-virtual-scroll`)
@@ -48,8 +72,11 @@ If the user has not specified a specific file, then review the files in the docu
    - Build each new file from scratch in the most elegant and simple way possible
    - Strictly preserve appearance, functionality, and behavior exactly as the original
 
-4. **Update documentation**
-   -Upon completion, update the file: docs\2025-11-15-Folder-Structure.md
+4. **Update Documentation (After Completion)**
+   - Update `docs\Miscellaneous\YYYY-MM-DD-Folder-Structure.md` with:
+     - New file structure reflecting the decomposition
+     - Line counts for all newly created files
+   - Remove or mark as deprecated the original file entry
 
 5. **Provide Test Suggestions**
    - Upon completion, suggest specific tests for the user to try on the local server
@@ -57,8 +84,16 @@ If the user has not specified a specific file, then review the files in the docu
 
 **If the file has 300 lines or LESS:**
 
-- Instead of decomposing the selected file, rebuild the selected file from scratch in a more elegant way.
-- Count the number of lines of code (excluding comments) of the rebuilt file.  If the rebuilt file uses less lines of code (excluding comments) the issue a PR.  Otherwise, if the file has an equal or greater number of lines of code, then report to the user that you were unable to streamline the file, and offer to lengthen the file instead.
+1. **Rebuild the File**
+   - Instead of decomposing the selected file, rebuild it from scratch in a more elegant way
+   - Count the number of lines of code (excluding comments) of the rebuilt file
+
+2. **Evaluate Results**
+   - If the rebuilt file uses fewer lines of code (excluding comments), issue a PR
+   - Otherwise, if the file has an equal or greater number of lines of code, report to the user that you were unable to streamline the file, and offer to lengthen the file instead
+
+3. **Update Documentation (If Successful)**
+   - Update `docs\Miscellaneous\YYYY-MM-DD-Folder-Structure.md` with the updated line count for the streamlined file (if it was successfully reduced)
 
 ## Important Constraints
 

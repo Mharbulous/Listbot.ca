@@ -15,14 +15,18 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home-explicit',
-      component: () => import('../views/About.vue'),
+      component: () => import('../views/SSO.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
-      path: '/about',
-      name: 'about',
+      path: '/sso',
+      name: 'sso',
       component: () => import('../views/Home.vue'),
-      meta: { requiresAuth: true, title: 'About' },
+      meta: { requiresAuth: true, title: 'SSO' },
+    },
+    {
+      path: '/about',
+      redirect: '/sso',
     },
     {
       path: '/profile',
@@ -39,32 +43,180 @@ const router = createRouter({
     {
       path: '/upload',
       name: 'upload',
-      component: () => import('../views/Testing.vue'),
+      component: () => import('../views/Upload.vue'),
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
-      path: '/process',
+      path: '/upload/stub',
+      name: 'preserve',
+      component: () => import('../views/Preserve.vue'),
+      meta: { requiresAuth: true, title: 'Preserve' },
+    },
+    {
+      path: '/process/stub',
       name: 'process',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Process.vue'),
       meta: { requiresAuth: true, title: 'Process' },
     },
     {
-      path: '/analyze',
-      name: 'analyze',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Review' },
+      path: '/analysis/stub',
+      name: 'analysis',
+      component: () => import('../views/Analysis.vue'),
+      meta: { requiresAuth: true, title: 'Analysis' },
     },
     {
-      path: '/list',
+      path: '/analyze',
+      redirect: '/analysis/stub',
+    },
+    {
+      path: '/produce',
+      redirect: '/list/stub',
+    },
+    {
+      path: '/list/stub',
       name: 'list',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Produce.vue'),
       meta: { requiresAuth: true, title: 'Produce' },
+    },
+    {
+      path: '/pleadings/stub',
+      name: 'pleadings',
+      component: () => import('../views/Pleadings.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings' },
+    },
+    {
+      path: '/pleadings',
+      redirect: '/pleadings/stub',
+    },
+    {
+      path: '/law',
+      redirect: '/law/stub',
+    },
+    {
+      path: '/law/stub',
+      name: 'law',
+      component: () => import('../views/Law.vue'),
+      meta: { requiresAuth: true, title: 'Legal Memos' },
+    },
+    {
+      path: '/theory',
+      redirect: '/theory/stub',
+    },
+    {
+      path: '/theory/stub',
+      name: 'theory',
+      component: () => import('../views/Theory.vue'),
+      meta: { requiresAuth: true, title: 'Theory' },
+    },
+    {
+      path: '/facts',
+      redirect: '/facts/stub',
+    },
+    {
+      path: '/facts/stub',
+      name: 'facts',
+      component: () => import('../views/Facts.vue'),
+      meta: { requiresAuth: true, title: 'Facts' },
+    },
+    {
+      path: '/cast',
+      redirect: '/cast/stub',
+    },
+    {
+      path: '/cast/stub',
+      name: 'cast',
+      component: () => import('../views/Cast.vue'),
+      meta: { requiresAuth: true, title: 'Characters' },
+    },
+    {
+      path: '/identify',
+      redirect: '/identify/stub',
+    },
+    {
+      path: '/identify/stub',
+      name: 'identify',
+      component: () => import('../views/Identify.vue'),
+      meta: { requiresAuth: true, title: 'Identify' },
+    },
+    {
+      path: '/collect/stub',
+      name: 'collect-stub',
+      component: () => import('../views/Collect.vue'),
+      meta: { requiresAuth: true, title: 'Collect' },
+    },
+    {
+      path: '/process',
+      redirect: '/process/stub',
+    },
+    {
+      path: '/analysis',
+      redirect: '/analysis/stub',
+    },
+    {
+      path: '/present',
+      redirect: '/present/stub',
+    },
+    {
+      path: '/present/stub',
+      name: 'present',
+      component: () => import('../views/Present.vue'),
+      meta: { requiresAuth: true, title: 'Present' },
     },
     {
       path: '/matters/:matterId/documents',
       name: 'documents',
       component: () => import('../features/documents/views/Documents.vue'),
       meta: { requiresAuth: true, requiresMatter: true, title: 'Collect' },
+    },
+    {
+      path: '/review/stub',
+      name: 'review',
+      beforeEnter: (to, from, next) => {
+        // Intelligent redirect for /review shortcut
+        const { useMatterViewStore } = require('../features/matters/stores/matterView');
+        const { useOrganizerStore } = require('../features/documents/stores/organizer');
+
+        const matterViewStore = useMatterViewStore();
+        const organizerStore = useOrganizerStore();
+
+        const matterId = matterViewStore.currentMatterId;
+
+        // If no matter selected, redirect to analyze page
+        if (!matterId) {
+          next('/analysis/stub');
+          return;
+        }
+
+        // Try to get last viewed document from local storage
+        const lastViewedDoc = localStorage.getItem('lastViewedDocument');
+        if (lastViewedDoc) {
+          next({
+            name: 'view-document',
+            params: {
+              matterId: matterId,
+              fileHash: lastViewedDoc
+            }
+          });
+          return;
+        }
+
+        // Otherwise, get first document from organizer store
+        const firstDoc = organizerStore.sortedEvidenceList?.[0];
+        if (firstDoc) {
+          next({
+            name: 'view-document',
+            params: {
+              matterId: matterId,
+              fileHash: firstDoc.id
+            }
+          });
+          return;
+        }
+
+        // Fallback to analyze page if no documents
+        next('/analysis/stub');
+      },
+      meta: { requiresAuth: true, title: 'Review' },
     },
     {
       path: '/matters/:matterId/review/:fileHash',

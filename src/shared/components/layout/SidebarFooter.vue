@@ -12,14 +12,19 @@
       class="footer-trigger"
     >
       <!-- Avatar -->
-      <div class="footer-avatar">
+      <div
+        ref="avatarEl"
+        class="footer-avatar"
+        @mouseenter="handleAvatarMouseEnter"
+        @mouseleave="handleAvatarMouseLeave"
+      >
         <div v-if="authStore.userInitials === 'loading'" class="loading-spinner"></div>
         <span v-else>{{ authStore.userInitials }}</span>
       </div>
 
-      <!-- User Name (only when expanded) -->
+      <!-- User Role (only when expanded) -->
       <span v-if="!props.isCollapsed" class="footer-username">
-        {{ authStore.userDisplayName || 'User' }}
+        {{ userRoleDisplay }}
       </span>
 
       <!-- Chevron (only when expanded) -->
@@ -72,7 +77,17 @@
 
         <!-- Section 2: Switch Apps -->
         <div class="menu-section">
-          <h3 class="menu-section-header">Switch Apps</h3>
+          <div class="menu-section-header-with-button">
+            <h3 class="menu-section-header">Switch Apps</h3>
+            <a
+              href="http://localhost:5173/#/sso"
+              class="menu-section-button"
+              title="Go to SSO page"
+              @click="closeMenu"
+            >
+              ℹ️
+            </a>
+          </div>
           <div class="menu-items">
             <a
               v-for="(app, index) in availableApps"
@@ -134,13 +149,21 @@
       @click="closeMenu"
       aria-hidden="true"
     ></div>
+
+    <!-- Avatar Tooltip -->
+    <SidebarTooltip
+      :show="showTooltip"
+      :text="authStore.userDisplayName || 'User'"
+      :style="tooltipStyle"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, watch } from 'vue';
+import { ref, reactive, nextTick, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores';
+import SidebarTooltip from './sidebar/SidebarTooltip.vue';
 
 // Props
 const props = defineProps({
@@ -161,8 +184,24 @@ const menu = ref(null);
 const menuItems = reactive([]);
 const focusedIndex = ref(-1);
 
+// Tooltip state
+const showTooltip = ref(false);
+const tooltipStyle = ref({});
+const avatarEl = ref(null);
+
 // Generate unique ID for accessibility
 const menuId = `unified-menu-${Math.random().toString(36).substr(2, 9)}`;
+
+// Computed property to format the user role
+const userRoleDisplay = computed(() => {
+  if (!authStore.userRole) return 'Member';
+
+  // Capitalize first letter of each word
+  return authStore.userRole
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+});
 
 // Watch for sidebar collapse and close menu
 watch(
@@ -409,6 +448,28 @@ const handleSignOut = async () => {
     console.error('Sign out failed:', error);
   }
 };
+
+/**
+ * Show tooltip on avatar hover
+ */
+const handleAvatarMouseEnter = (event) => {
+  const target = event.currentTarget;
+  const rect = target.getBoundingClientRect();
+
+  tooltipStyle.value = {
+    left: `${rect.right + 12}px`,
+    top: `${rect.top + rect.height / 2}px`,
+  };
+
+  showTooltip.value = true;
+};
+
+/**
+ * Hide tooltip
+ */
+const handleAvatarMouseLeave = () => {
+  showTooltip.value = false;
+};
 </script>
 
 <style scoped>
@@ -428,7 +489,7 @@ const handleSignOut = async () => {
 }
 
 .sidebar-footer-collapsed .footer-trigger {
-  @apply justify-center px-0;
+  @apply px-3;
 }
 
 /* Avatar */
@@ -436,7 +497,7 @@ const handleSignOut = async () => {
   @apply w-9 h-9 bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-sm flex-shrink-0;
 }
 
-/* Username */
+/* User Role */
 .footer-username {
   @apply flex-1 text-sm font-medium text-slate-200 truncate text-left;
 }
@@ -487,8 +548,20 @@ const handleSignOut = async () => {
   @apply border-b-0;
 }
 
+.menu-section-header-with-button {
+  @apply flex items-center justify-between px-4 py-2;
+}
+
 .menu-section-header {
   @apply px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide;
+}
+
+.menu-section-header-with-button .menu-section-header {
+  @apply px-0 py-0;
+}
+
+.menu-section-button {
+  @apply text-base hover:bg-slate-700 px-2 py-1 rounded transition-colors no-underline;
 }
 
 /* Menu Items Container */

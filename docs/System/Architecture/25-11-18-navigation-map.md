@@ -61,7 +61,7 @@ ListBot App
 ├── 👤 User Management
 │   ├── /profile ......................... User Profile
 │   ├── /settings ........................ User Settings
-│   └── /about ........................... About / Information
+│   └── /sso ........................... About / Information
 │
 ├── 🔧 System Routes
 │   ├── /under-construction .............. Under Construction Page
@@ -126,7 +126,7 @@ The app uses a fixed sidebar (`AppSideBar.vue`) with the following navigation it
 | `/testing` | ✅ | ❌ | ❌ |
 | `/profile` | ✅ | ❌ | ❌ |
 | `/settings` | ✅ | ❌ | ❌ |
-| `/about` | ✅ | ❌ | ❌ |
+| `/sso` | ✅ | ❌ | ❌ |
 | `/analyze` | ✅ | ❌ | ❌ |
 | `/list` | ✅ | ❌ | ❌ |
 | `/dev/*` | varies | varies | ❌ |
@@ -201,7 +201,7 @@ src/views/
 ├── Analyze.vue ........................ /analyze
 ├── Documents.vue ...................... /matters/:matterId/documents
 ├── EditMatter.vue ..................... /matters/edit/:matterId
-├── Home.vue ........................... /about (shows template info)
+├── Home.vue ........................... /sso (shows template info)
 ├── MatterDetail.vue ................... /matters/:id
 ├── MatterImport.vue ................... /matters/import
 ├── Matters.vue ........................ /matters
@@ -307,4 +307,4 @@ The `/dev` route provides an index page listing all available development demos 
 - The **sidebar navigation** is fixed and always visible (except on `/login`)
 - **Mobile menu** functionality exists but requires JavaScript interaction
 - **App Switcher** component in sidebar footer enables SSO navigation between multiple apps
-- **Route swap (2025-11-09)**: The `/` and `/home` routes now show app features (About.vue), while `/about` shows template information (Home.vue)
+- **Route swap (2025-11-09)**: The `/` and `/home` routes now show app features (About.vue), while `/sso` shows template information (Home.vue)

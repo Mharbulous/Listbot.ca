@@ -154,7 +154,7 @@ British Columbia uses a **List of Documents** (Form 22) as its primary discovery
 **Key Features**:
 - Notes ongoing obligation to produce documents
 - Requirement to serve amended lists when further documents are obtained (Rule 7-1(9))
-- Complete discovery workflow guidance
+- Complete Document Discovery guidance
 
 **Suggested Filename**: `CANBC-LawSocietyBC-LitigationChecklists.pdf`
 
@@ -276,7 +276,7 @@ The following BC cases provide judicial interpretation of List of Documents requ
 - **Timing**: 35 days after end of pleading period
 - **Ongoing Obligation**: Rule 7-1(9) requires amended lists when new documents obtained
 
-### Discovery Workflow
+### Document Discovery
 1. **List of Documents** (Form 22) - within 35 days
 2. **Appointment to Examine** (Form 23) - schedule discovery examination
 3. **Notice to Admit** (Form 26) - request admissions (optional but strategic)
@@ -321,7 +321,7 @@ Due to network security restrictions in the automated environment, these forms m
 - Uses "List of Documents" terminology (unlike Ontario's "Affidavit of Documents")
 - 4-part structure under Rule 7-1
 - 35-day filing deadline (from end of pleading period)
-- Comprehensive discovery workflow with Forms 22, 23, and 26
+- Comprehensive Document Discovery with Forms 22, 23, and 26
 - **Key Discovery**: CanLII Manual (2025 edition) identified as best source for completed Form 22 examples
 
 ---

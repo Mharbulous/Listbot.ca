@@ -50,166 +50,6 @@
       </button>
     </div>
 
-    <!-- Filter/Search Toolbar -->
-    <div class="px-6 py-3">
-      <div class="flex items-center gap-4">
-        <!-- Left Side: View Scope Controls -->
-        <div class="flex items-center gap-3">
-          <!-- Segmented Control: My Matters / Firm Matters -->
-          <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
-            <button
-              @click="showMyMattersOnly = true"
-              :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                showMyMattersOnly
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900',
-              ]"
-            >
-              My Matters
-            </button>
-            <button
-              @click="showMyMattersOnly = false"
-              :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                !showMyMattersOnly
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900',
-              ]"
-            >
-              Firm Matters
-            </button>
-          </div>
-
-          <!-- Dropdown: Status Filter -->
-          <div class="relative" data-dropdown>
-            <button
-              @click="statusDropdownOpen = !statusDropdownOpen"
-              class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
-            >
-              <span>Status: {{ statusFilterLabel }}</span>
-              <svg
-                class="w-4 h-4 transition-transform"
-                :class="{ 'rotate-180': statusDropdownOpen }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-            <!-- Dropdown Menu -->
-            <div
-              v-if="statusDropdownOpen"
-              class="absolute top-full mt-1 left-0 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]"
-            >
-              <button
-                @click="setStatusFilter('active')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
-                :class="statusFilter === 'active' ? 'text-blue-600 font-medium' : 'text-slate-700'"
-              >
-                Active
-              </button>
-              <button
-                @click="setStatusFilter('archived')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
-                :class="statusFilter === 'archived' ? 'text-blue-600 font-medium' : 'text-slate-700'"
-              >
-                Archived
-              </button>
-              <button
-                @click="setStatusFilter('all')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
-                :class="statusFilter === 'all' ? 'text-blue-600 font-medium' : 'text-slate-700'"
-              >
-                All
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Side: Search Input with Integrated Actions -->
-        <div class="flex-1 relative">
-          <input
-            v-model="searchText"
-            type="text"
-            placeholder="filter matters..."
-            class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all placeholder:text-slate-400"
-          />
-          <!-- Integrated Search Actions -->
-          <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <!-- Case Sensitive Toggle -->
-            <button
-              @click="caseSensitive = !caseSensitive"
-              :class="[
-                'p-1.5 rounded text-xs font-semibold transition-colors',
-                caseSensitive
-                  ? 'text-blue-600 hover:bg-blue-50'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
-              ]"
-              :title="caseSensitive ? 'Case sensitive' : 'Case insensitive'"
-            >
-              <span class="font-mono">Aa</span>
-            </button>
-            <!-- Whole Word Toggle -->
-            <button
-              @click="wholeWord = !wholeWord"
-              :class="[
-                'p-1.5 rounded text-xs font-semibold transition-colors',
-                wholeWord
-                  ? 'text-blue-600 hover:bg-blue-50'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
-              ]"
-              :title="wholeWord ? 'Match whole words only' : 'Match partial words'"
-            >
-              <span class="font-mono">Ab</span>
-            </button>
-            <!-- Clear Button -->
-            <button
-              v-if="searchText"
-              @click="searchText = ''"
-              class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- New Matter Button -->
-        <router-link
-          to="/matters/new"
-          class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-1.5"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New Matter
-        </router-link>
-
-        <!-- Results Summary -->
-        <div v-if="searchText" class="text-xs text-slate-500 whitespace-nowrap ml-2">
-          {{ filteredMatters.length }}/{{ visibleMatters.length }}
-        </div>
-      </div>
-    </div>
-
     <!-- Table Container -->
     <div class="flex-1 overflow-auto">
       <!-- Loading State -->
@@ -272,7 +112,9 @@
           <p class="text-lg font-medium mb-2">No matters found</p>
           <p class="text-sm">
             {{
-              searchText ? 'Try adjusting your search' : 'Create your first matter to get started'
+              mattersFilterStore.searchText
+                ? 'Try adjusting your search'
+                : 'Create your first matter to get started'
             }}
           </p>
         </div>
@@ -299,12 +141,12 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Documents
+                Adverse Parties
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Adverse Parties
+                Documents
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -340,6 +182,13 @@
               <td class="px-6 py-4 text-sm text-slate-700">
                 {{ matter.description }}
               </td>
+              <td class="px-6 py-4 text-sm text-slate-700">
+                {{
+                  Array.isArray(matter.adverseParties)
+                    ? matter.adverseParties.join(', ')
+                    : matter.adverseParties
+                }}
+              </td>
               <td class="px-6 py-4 text-sm text-slate-900 text-center">
                 <span v-if="documentCounts[matter.id] !== undefined" class="font-medium">
                   {{ documentCounts[matter.id] }}
@@ -347,13 +196,6 @@
                 <span v-else class="text-slate-400">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400 mx-auto"></div>
                 </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-700">
-                {{
-                  Array.isArray(matter.adverseParties)
-                    ? matter.adverseParties.join(', ')
-                    : matter.adverseParties
-                }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                 {{ formatDate(matter.lastAccessed) }}
@@ -372,6 +214,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useMatters } from '../composables/useMatters.js';
 import { useAuthStore } from '@/core/auth/stores/index.js';
 import { useMatterViewStore } from '../stores/matterView.js';
+import { useMattersFilterStore } from '../stores/mattersFilter.js';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 
@@ -390,18 +233,11 @@ const authStore = useAuthStore();
 // Matter view store for tracking selected matter
 const matterViewStore = useMatterViewStore();
 
+// Matters filter store for filter controls
+const mattersFilterStore = useMattersFilterStore();
+
 // Use the matters composable
 const { matters, loading, error, fetchMatters, updateLastAccessed } = useMatters();
-
-// Filter state
-const searchText = ref('');
-const showMyMattersOnly = ref(false);
-const caseSensitive = ref(false);
-const wholeWord = ref(false);
-
-// Status dropdown state
-const statusDropdownOpen = ref(false);
-const statusFilter = ref('active'); // 'active' | 'archived' | 'all'
 
 // Notification state for redirects
 const showNotification = ref(false);
@@ -482,25 +318,7 @@ onMounted(async () => {
       showNotification.value = false;
     }, 8000);
   }
-
-  // Add click-outside handler for status dropdown
-  document.addEventListener('click', handleClickOutside);
 });
-
-// Clean up event listener on unmount
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
-
-// Close dropdown when clicking outside
-function handleClickOutside(event) {
-  if (statusDropdownOpen.value) {
-    const dropdown = event.target.closest('[data-dropdown]');
-    if (!dropdown) {
-      statusDropdownOpen.value = false;
-    }
-  }
-}
 
 // Helper function to format Firestore Timestamp to date string
 function formatDate(timestamp) {
@@ -520,35 +338,19 @@ function formatDate(timestamp) {
   return timestamp;
 }
 
-// Computed property for status filter label
-const statusFilterLabel = computed(() => {
-  const labels = {
-    active: 'Active',
-    archived: 'Archived',
-    all: 'All',
-  };
-  return labels[statusFilter.value] || 'Active';
-});
-
-// Method to set status filter and close dropdown
-function setStatusFilter(status) {
-  statusFilter.value = status;
-  statusDropdownOpen.value = false;
-}
-
 // Filter by user assignment and archived status
 const visibleMatters = computed(() => {
   return matters.value.filter((matter) => {
     // Filter by user assignment
-    if (showMyMattersOnly.value && !matter.assignedTo?.includes(authStore.user?.uid)) {
+    if (mattersFilterStore.showMyMattersOnly && !matter.assignedTo?.includes(authStore.user?.uid)) {
       return false;
     }
 
     // Filter by status
-    if (statusFilter.value === 'active' && matter.archived) {
+    if (mattersFilterStore.statusFilter === 'active' && matter.archived) {
       return false;
     }
-    if (statusFilter.value === 'archived' && !matter.archived) {
+    if (mattersFilterStore.statusFilter === 'archived' && !matter.archived) {
       return false;
     }
     // 'all' shows everything, no filter needed
@@ -559,11 +361,13 @@ const visibleMatters = computed(() => {
 
 // Filter by search text
 const filteredMatters = computed(() => {
-  if (!searchText.value) {
+  if (!mattersFilterStore.searchText) {
     return visibleMatters.value;
   }
 
-  const search = caseSensitive.value ? searchText.value : searchText.value.toLowerCase();
+  const search = mattersFilterStore.caseSensitive
+    ? mattersFilterStore.searchText
+    : mattersFilterStore.searchText.toLowerCase();
 
   return visibleMatters.value.filter((matter) => {
     // Convert arrays to strings for searching
@@ -576,9 +380,9 @@ const filteredMatters = computed(() => {
       ' '
     );
 
-    const content = caseSensitive.value ? fields : fields.toLowerCase();
+    const content = mattersFilterStore.caseSensitive ? fields : fields.toLowerCase();
 
-    if (wholeWord.value) {
+    if (mattersFilterStore.wholeWord) {
       const regex = new RegExp(`\\b${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
       return regex.test(content);
     }

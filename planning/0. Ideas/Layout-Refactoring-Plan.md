@@ -22,7 +22,7 @@ Replace the current mixed layout approach with a standardized CSS Grid-based lay
 - `src/views/Home.vue` (574 lines) - Standard page requiring layout wrapper
 - `src/views/Settings.vue` (120 lines) - Standard page requiring layout wrapper
 - `src/views/Profile.vue` (85 lines) - Standard page requiring layout wrapper  
-- `src/views/About.vue` (390 lines) - Standard page requiring layout wrapper
+- `src/views/sso.vue` (390 lines) - Standard page requiring layout wrapper
 - `src/components/layout/AppSidebar.vue` (180 lines) - Sidebar requiring grid integration
 - `src/components/layout/AppHeader.vue` (85 lines) - Header requiring grid integration
 
