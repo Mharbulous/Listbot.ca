@@ -152,7 +152,7 @@ const route = useRoute();
 }
 
 .sidebar-collapsed .nav-item {
-  justify-content: center;
+  /* Keep left alignment for smooth transitions */
   gap: 0;
 }
 
