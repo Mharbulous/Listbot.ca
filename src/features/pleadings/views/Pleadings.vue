@@ -5,9 +5,6 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-slate-900">Pleadings</h1>
-          <p class="text-sm text-slate-600 mt-1">
-            Manage pleadings documents and track amendments across proceedings
-          </p>
         </div>
         <div class="flex gap-3">
           <button
@@ -40,28 +37,28 @@
       </div>
     </div>
 
-    <!-- Proceedings Summary Cards -->
-    <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div
-        v-for="proceeding in mockProceedings"
-        :key="proceeding.id"
-        class="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-        @click="selectedProceeding = selectedProceeding === proceeding.id ? null : proceeding.id"
-        :class="{ 'ring-2 ring-purple-500': selectedProceeding === proceeding.id }"
-      >
-        <div class="flex items-start justify-between mb-2">
-          <div class="flex-1">
-            <div class="text-xs font-medium text-slate-500 uppercase">{{ proceeding.jurisdiction }}</div>
-            <div class="text-sm font-semibold text-slate-900 mt-1">{{ proceeding.venue }}</div>
+    <!-- Proceedings Tabs -->
+    <div class="bg-white border-b border-slate-200">
+      <div class="px-6 flex overflow-x-auto">
+        <button
+          @click="selectedProceeding = null"
+          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
+          :class="selectedProceeding === null ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+        >
+          ALL
+        </button>
+        <button
+          v-for="proceeding in mockProceedings"
+          :key="proceeding.id"
+          @click="selectedProceeding = proceeding.id"
+          class="px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap"
+          :class="selectedProceeding === proceeding.id ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+        >
+          <div class="flex flex-col items-start">
+            <div class="font-medium">{{ proceeding.jurisdiction }}, {{ proceeding.venue }}</div>
+            <div class="text-xs text-slate-500">{{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
           </div>
-          <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-            {{ proceeding.pleadingCount }} docs
-          </span>
-        </div>
-        <div class="text-xs text-slate-600">
-          <div><span class="font-medium">File No:</span> {{ proceeding.courtFileNo }}</div>
-          <div class="mt-1"><span class="font-medium">Status:</span> {{ proceeding.status }}</div>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -69,35 +66,6 @@
     <div class="flex-1 overflow-auto">
       <!-- Data Table -->
       <div class="bg-white border border-slate-200 m-6 rounded-lg shadow-sm overflow-hidden">
-        <!-- Filter Bar -->
-        <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center gap-4">
-          <div class="flex-1">
-            <input
-              type="text"
-              placeholder="Search pleadings..."
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-          <select
-            class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="">All Document Types</option>
-            <option value="complaint">Complaint</option>
-            <option value="answer">Answer</option>
-            <option value="counterclaim">Counterclaim</option>
-            <option value="reply">Reply</option>
-          </select>
-          <div v-if="selectedProceeding" class="flex items-center gap-2">
-            <span class="text-xs text-slate-600">Filtered by proceeding</span>
-            <button
-              @click="selectedProceeding = null"
-              class="text-xs text-purple-600 hover:text-purple-700 font-medium"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-
         <!-- Table -->
         <table class="w-full">
           <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
@@ -110,12 +78,12 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Type
+                Proceeding
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Proceeding
+                Filing Party
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -126,11 +94,6 @@
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
                 Filed Date
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
-                Status
               </th>
               <th
                 class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -160,23 +123,17 @@
                   </div>
                   <div class="text-sm">
                     <div class="font-medium text-slate-900">{{ pleading.documentName }}</div>
-                    <div class="text-xs text-slate-500">{{ pleading.fileSize }}</div>
                   </div>
                 </div>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getDocumentTypeBadgeClass(pleading.documentType)"
-                >
-                  {{ pleading.documentType }}
-                </span>
               </td>
               <td class="px-6 py-4">
                 <div class="text-sm">
                   <div class="font-medium text-slate-900">{{ pleading.proceeding.venue }}</div>
                   <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
                 </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-slate-900">
+                {{ pleading.filingParty }}
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
@@ -192,14 +149,6 @@
               </td>
               <td class="px-6 py-4 text-sm text-slate-900">
                 {{ pleading.filedDate }}
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getStatusBadgeClass(pleading.status)"
-                >
-                  {{ pleading.status }}
-                </span>
               </td>
               <td class="px-6 py-4 text-right">
                 <button
@@ -300,27 +249,24 @@ import { ref, computed } from 'vue';
 const mockProceedings = ref([
   {
     id: '1',
-    jurisdiction: 'Federal',
-    venue: 'Northern District of California',
-    courtFileNo: '3:24-cv-01234',
-    status: 'Active',
-    pleadingCount: 5,
+    jurisdiction: 'BC, Canada',
+    venue: 'BCSC',
+    registry: 'Coquitlam Registry',
+    courtFileNo: 'S-321451',
   },
   {
     id: '2',
-    jurisdiction: 'State',
-    venue: 'Superior Court of California',
-    courtFileNo: 'BC-2024-567890',
-    status: 'Active',
-    pleadingCount: 3,
+    jurisdiction: 'BC, Canada',
+    venue: 'BCSC',
+    registry: 'Vancouver Registry',
+    courtFileNo: 'S-245678',
   },
   {
     id: '3',
-    jurisdiction: 'Federal',
-    venue: 'Southern District of New York',
-    courtFileNo: '1:24-cv-05678',
-    status: 'Settled',
-    pleadingCount: 2,
+    jurisdiction: 'BC, Canada',
+    venue: 'BCCA',
+    registry: 'Vancouver Registry',
+    courtFileNo: 'CA-456789',
   },
 ]);
 
@@ -328,32 +274,30 @@ const mockProceedings = ref([
 const mockPleadings = ref([
   {
     id: '1',
-    documentName: 'Complaint for Damages',
+    documentName: 'Notice of Civil Claim',
     documentType: 'Complaint',
     proceeding: {
       id: '1',
-      venue: 'Northern District of California',
-      courtFileNo: '3:24-cv-01234',
+      venue: 'BCSC',
+      courtFileNo: 'S-321451',
     },
+    filingParty: 'Plaintiff (John Smith)',
     version: 'Original',
     filedDate: '2024-03-15',
-    status: 'Active',
-    fileSize: '2.3 MB',
     hasAmendments: false,
   },
   {
     id: '2',
-    documentName: 'Answer to Complaint',
+    documentName: 'Response to Civil Claim',
     documentType: 'Answer',
     proceeding: {
       id: '1',
-      venue: 'Northern District of California',
-      courtFileNo: '3:24-cv-01234',
+      venue: 'BCSC',
+      courtFileNo: 'S-321451',
     },
+    filingParty: 'Defendant (Acme Corp)',
     version: 'Original',
     filedDate: '2024-04-12',
-    status: 'Active',
-    fileSize: '1.8 MB',
     hasAmendments: false,
   },
   {
@@ -362,28 +306,26 @@ const mockPleadings = ref([
     documentType: 'Counterclaim',
     proceeding: {
       id: '1',
-      venue: 'Northern District of California',
-      courtFileNo: '3:24-cv-01234',
+      venue: 'BCSC',
+      courtFileNo: 'S-321451',
     },
+    filingParty: 'Defendant (Acme Corp)',
     version: 'Original',
     filedDate: '2024-04-12',
-    status: 'Active',
-    fileSize: '1.5 MB',
     hasAmendments: false,
   },
   {
     id: '4',
-    documentName: 'First Amended Complaint',
+    documentName: 'Amended Notice of Civil Claim',
     documentType: 'Complaint',
     proceeding: {
       id: '1',
-      venue: 'Northern District of California',
-      courtFileNo: '3:24-cv-01234',
+      venue: 'BCSC',
+      courtFileNo: 'S-321451',
     },
+    filingParty: 'Plaintiff (John Smith)',
     version: 'First Amendment',
     filedDate: '2024-05-20',
-    status: 'Active',
-    fileSize: '2.5 MB',
     hasAmendments: true,
   },
   {
@@ -392,58 +334,54 @@ const mockPleadings = ref([
     documentType: 'Reply',
     proceeding: {
       id: '1',
-      venue: 'Northern District of California',
-      courtFileNo: '3:24-cv-01234',
+      venue: 'BCSC',
+      courtFileNo: 'S-321451',
     },
+    filingParty: 'Plaintiff (John Smith)',
     version: 'Original',
     filedDate: '2024-05-28',
-    status: 'Active',
-    fileSize: '1.2 MB',
     hasAmendments: false,
   },
   {
     id: '6',
-    documentName: 'Petition for Damages',
+    documentName: 'Notice of Civil Claim',
     documentType: 'Complaint',
     proceeding: {
       id: '2',
-      venue: 'Superior Court of California',
-      courtFileNo: 'BC-2024-567890',
+      venue: 'BCSC',
+      courtFileNo: 'S-245678',
     },
+    filingParty: 'Plaintiff (Jane Doe)',
     version: 'Original',
     filedDate: '2024-06-01',
-    status: 'Active',
-    fileSize: '3.1 MB',
     hasAmendments: false,
   },
   {
     id: '7',
-    documentName: 'Answer and Affirmative Defenses',
+    documentName: 'Response to Civil Claim',
     documentType: 'Answer',
     proceeding: {
       id: '2',
-      venue: 'Superior Court of California',
-      courtFileNo: 'BC-2024-567890',
+      venue: 'BCSC',
+      courtFileNo: 'S-245678',
     },
+    filingParty: 'Defendant (XYZ Ltd)',
     version: 'Original',
     filedDate: '2024-07-10',
-    status: 'Active',
-    fileSize: '2.2 MB',
     hasAmendments: false,
   },
   {
     id: '8',
-    documentName: 'First Amended Petition',
+    documentName: 'Amended Notice of Civil Claim',
     documentType: 'Complaint',
     proceeding: {
       id: '2',
-      venue: 'Superior Court of California',
-      courtFileNo: 'BC-2024-567890',
+      venue: 'BCSC',
+      courtFileNo: 'S-245678',
     },
+    filingParty: 'Plaintiff (Jane Doe)',
     version: 'First Amendment',
     filedDate: '2024-08-05',
-    status: 'Active',
-    fileSize: '3.3 MB',
     hasAmendments: true,
   },
 ]);
@@ -479,25 +417,6 @@ const filteredPleadings = computed(() => {
 });
 
 // Methods
-function getDocumentTypeBadgeClass(type) {
-  const classes = {
-    'Complaint': 'bg-red-100 text-red-700',
-    'Answer': 'bg-blue-100 text-blue-700',
-    'Counterclaim': 'bg-orange-100 text-orange-700',
-    'Reply': 'bg-green-100 text-green-700',
-  };
-  return classes[type] || 'bg-slate-100 text-slate-700';
-}
-
-function getStatusBadgeClass(status) {
-  const classes = {
-    'Active': 'bg-green-100 text-green-700',
-    'Superseded': 'bg-slate-100 text-slate-700',
-    'Dismissed': 'bg-red-100 text-red-700',
-  };
-  return classes[status] || 'bg-slate-100 text-slate-700';
-}
-
 function showVersionHistory(pleading) {
   showVersionModal.value = true;
 }
