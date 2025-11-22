@@ -317,51 +317,16 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Processing Workflow Overview -->
-    <div class="mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">Processing Workflow</h2>
-      <div class="bg-white border border-slate-200 rounded-lg p-6">
-        <div class="space-y-4">
-          <!-- Step 1 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center"
-            >
-              1
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1">Collection & Upload</h4>
-              <p class="text-slate-600">
-                Documents are collected and uploaded to the platform with original metadata
-                preserved.
-              </p>
-            </div>
-          </div>
+      <!-- Planned Enhancements -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Enhancements</h2>
 
-          <!-- Step 2 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center"
-            >
-              2
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1">
-                Hash Calculation & Exact Deduplication <span class="text-sm text-emerald-600">(Implemented at Preserve stage)</span>
-              </h4>
-              <p class="text-slate-600">
-                BLAKE3 hashes are calculated during upload to identify and group exact duplicates,
-                reducing storage and processing costs.
-              </p>
-            </div>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="flex gap-4">
-            <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center"
+        <!-- High Priority Features -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <span
+              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800"
             >
               3
             </div>
@@ -461,63 +426,145 @@
             performance
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Implementation Timeline -->
-    <div class="mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">Implementation Timeline</h2>
-      <div class="space-y-4">
-        <!-- Phase 1 -->
-        <div class="border-l-4 border-amber-500 pl-6 py-2">
-          <div class="flex items-center gap-3 mb-2">
-            <h3 class="text-lg font-semibold text-slate-900">Phase 1: Quick Wins</h3>
-            <span class="text-sm text-slate-600">(1-2 months)</span>
+        <!-- Medium Priority Features -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <span
+              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+            >
+              MEDIUM PRIORITY
+            </span>
+            Advanced Processing - Phase 2
+          </h3>
+          <div class="grid gap-4 md:grid-cols-2">
+            <FeatureCard
+              icon="🤖"
+              title="AI Fuzzy Deduplication"
+              badge="Advanced AI Analysis"
+              description="Advanced AI-powered detection of near-duplicate documents that are substantially similar but not identical, reducing review volume while preserving important variations."
+            />
+
+            <FeatureCard
+              icon="⚙️"
+              title="Processing Profiles"
+              badge="Workflow Efficiency"
+              description="Save and reuse preferred processing settings across similar matters, including deduplication preferences and metadata field selections."
+            />
+
+            <FeatureCard
+              icon="⚠️"
+              title="Exception Handling Workflows"
+              badge="Quality Assurance"
+              description="Dedicated workflows for files that fail to process, with manual review queues and retry mechanisms."
+            />
+
+            <FeatureCard
+              icon="🗂️"
+              title="Metadata Field Mapping"
+              badge="Customization"
+              description="Configure which metadata fields to extract and preserve during processing, supporting 600+ file types."
+            />
           </div>
-          <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
-            <li>Email threading with header parsing and conversation reconstruction</li>
-            <li>Processing analytics dashboard with Chart.js visualizations</li>
-          </ul>
-        </div>
-
-        <!-- Phase 2 -->
-        <div class="border-l-4 border-blue-500 pl-6 py-2">
-          <div class="flex items-center gap-3 mb-2">
-            <h3 class="text-lg font-semibold text-slate-900">Phase 2: Advanced Features</h3>
-            <span class="text-sm text-slate-600">(3-6 months)</span>
-          </div>
-          <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
-            <li>Processing profiles for workflow reuse</li>
-            <li>Exception handling workflows and manual review queues</li>
-            <li>Metadata field mapping and customization</li>
-            <li>Enhanced email threading visualization</li>
-          </ul>
         </div>
       </div>
-    </div>
 
-    <!-- Call to Action -->
-    <div class="text-center pt-6 border-t border-slate-200">
-      <p class="text-slate-600 mb-4">
-        The Process stage is foundational to efficient e-discovery, and ListBot.ca is committed to
-        delivering enterprise-grade capabilities through modern technology.
-      </p>
-      <button
-        @click="goBack"
-        class="inline-flex items-center gap-2 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-      >
-        ← Back to Documents
-      </button>
-    </div>
-  </div>
+      <!-- Workflow Steps -->
+      <WorkflowSteps title="Processing Workflow" :steps="workflowSteps" />
+    </template>
+
+    <template #competitive-advantage>
+      <CompetitiveAdvantageGrid
+        color="blue"
+        description="ListBot.ca's processing capabilities will put it ahead of basic platforms while remaining more accessible than enterprise solutions:"
+        :advantages="competitiveAdvantages"
+      />
+    </template>
+
+    <template #timeline>
+      <ImplementationTimeline :phases="timelinePhases" />
+    </template>
+
+    <template #footer>
+      <StubFooter
+        message="The Process stage is foundational to efficient e-discovery, and ListBot.ca is committed to delivering enterprise-grade capabilities through modern technology."
+        back-button-text="Back to Documents"
+      />
+    </template>
+  </StubPageLayout>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import StubPageLayout from '@/components/stubs/StubPageLayout.vue';
+import PageHeader from '@/components/stubs/PageHeader.vue';
+import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
+import FeatureCard from '@/components/stubs/FeatureCard.vue';
+import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
+import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
+import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
+import StubFooter from '@/components/stubs/StubFooter.vue';
 
-const router = useRouter();
+const workflowSteps = [
+  {
+    title: 'Collection & Upload',
+    description: 'Documents are collected and uploaded to the platform with original metadata preserved.',
+  },
+  {
+    title: 'Hash Calculation & Exact Deduplication',
+    description:
+      'BLAKE3 hashes are calculated during upload to identify and group exact duplicates, reducing storage and processing costs.',
+    status: 'Implemented at Preserve stage',
+  },
+  {
+    title: 'AI Fuzzy Deduplication',
+    description:
+      'Advanced AI analysis identifies near-duplicate documents with similar but not identical content (planned).',
+  },
+  {
+    title: 'Email Threading',
+    description:
+      'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages (planned).',
+  },
+  {
+    title: 'Categorization',
+    description:
+      'Documents are automatically categorized based on content analysis for efficient organization.',
+    status: 'Implemented',
+  },
+  {
+    title: 'Review-Ready Corpus',
+    description:
+      'Processed documents are now optimized for review, with volume reduced by 50-75% and organized for efficient analysis.',
+  },
+];
 
-const goBack = () => {
-  router.go(-1);
-};
+const competitiveAdvantages = [
+  { label: 'AI fuzzy deduplication', text: 'will surpass basic hash-only platforms' },
+  { label: 'Email threading', text: 'will deliver 40-74% review time reduction' },
+  { label: 'Processing analytics', text: 'will provide real-time insights' },
+  { label: 'Modern tech stack', text: '(Vue 3, Firebase) ensures performance' },
+];
+
+const timelinePhases = [
+  {
+    title: 'Phase 1: Quick Wins',
+    timeframe: '1-2 months',
+    color: 'amber',
+    items: [
+      'Email threading with header parsing and conversation reconstruction',
+      'Processing analytics dashboard with Chart.js visualizations',
+    ],
+  },
+  {
+    title: 'Phase 2: Advanced Features',
+    timeframe: '3-6 months',
+    color: 'blue',
+    items: [
+      'Processing profiles for workflow reuse',
+      'Exception handling workflows and manual review queues',
+      'Metadata field mapping and customization',
+      'Enhanced email threading visualization',
+    ],
+  },
+];
 </script>
