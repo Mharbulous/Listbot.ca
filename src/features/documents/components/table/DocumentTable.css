@@ -17,15 +17,7 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Sticky Header Group - Contains title row and table header, sticks as one unit */
-.sticky-header-group {
-  position: sticky;
-  top: 0; /* Stick to top of scroll container */
-  z-index: 10; /* Above table body */
-  /* No padding or margins - children stack naturally */
-}
-
-/* Page Title Row - No longer individually sticky */
+/* Page Title Row - Scrollable drawer that slides up behind header */
 .page-title-row {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 24px;
@@ -43,8 +35,11 @@
   letter-spacing: 0.5px;
 }
 
-/* Table Header - No longer individually sticky */
+/* Table Header - Sticky drawer front panel */
 .table-mockup-header {
+  position: sticky;
+  top: 0; /* Stick to top of scroll container */
+  z-index: 10; /* Above scrolling title (drawer effect) */
   display: flex;
   background: #f9fafb;
   border-bottom: 2px solid #e5e7eb;
