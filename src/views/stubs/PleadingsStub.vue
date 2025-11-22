@@ -30,9 +30,9 @@
         </p>
       </div>
 
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="🔍"
@@ -58,11 +58,17 @@
             color="purple"
             description="Track amendments to pleadings with version history, recording which pleadings were amended and the dates of each amendment for complete litigation chronology."
           />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="📄"
             title="Pleading Ingestion & Parsing"
             badge="Foundation Feature"
-            priority="high"
             color="purple"
             description="Upload pleadings (complaints, answers, counterclaims) with AI-powered extraction of allegations, denials, and affirmative defenses."
           />
@@ -70,7 +76,6 @@
             icon="🔗"
             title="Allegation-Evidence Linking"
             badge="Core Workflow"
-            priority="high"
             color="purple"
             description="Connect specific allegations to supporting or contradicting evidence, creating a systematic proof map."
           />
