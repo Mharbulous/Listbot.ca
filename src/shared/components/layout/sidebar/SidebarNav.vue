@@ -131,16 +131,16 @@ const route = useRoute();
   min-height: 36px;
 }
 
-/* Add right padding when stub button exists to prevent text overlap */
+/* Stub buttons positioned at right: 42px with no additional padding needed */
 .nav-item-wrapper:has(.stub-button) .nav-item {
-  padding-right: 64px; /* 30px button + 22px spacing + 12px buffer */
+  padding-right: 0px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0px 12px;
+  padding: 0px 0px 0px 12px;
   min-height: 36px;
   gap: 12px;
   color: var(--sidebar-text-secondary);
@@ -188,7 +188,7 @@ const route = useRoute();
 
 .stub-button {
   position: absolute;
-  right: 22px;
+  right: 42px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -202,6 +202,7 @@ const route = useRoute();
   cursor: pointer;
   transition: all 200ms ease-in-out;
   border-radius: 4px;
+  padding-left: 0px;
 }
 
 .stub-button:hover {
