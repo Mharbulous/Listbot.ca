@@ -26,9 +26,9 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
-      <!-- Page Title Row (scrollable - slides up like drawer) -->
-      <div v-if="pageTitle" class="page-title-row">
-        <h1 class="page-title-text">{{ pageTitle }}</h1>
+      <!-- Title Drawer (scrollable - slides up behind sticky header) -->
+      <div v-if="pageTitle" class="title-drawer">
+        <h1 class="title-drawer-text">{{ pageTitle }}</h1>
       </div>
 
       <!-- Sticky Table Header (drawer front panel - stays fixed) -->

@@ -17,8 +17,8 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Page Title Row - Scrollable drawer that slides up behind header */
-.page-title-row {
+/* Title Drawer - Scrollable drawer that slides up behind sticky header */
+.title-drawer {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 24px;
   border-bottom: 2px solid #e5e7eb;
@@ -26,7 +26,7 @@
   min-width: max-content; /* Match table width */
 }
 
-.page-title-text {
+.title-drawer-text {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
