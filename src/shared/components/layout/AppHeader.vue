@@ -35,7 +35,7 @@
         <div class="flex items-center gap-3 flex-1">
           <!-- Segmented Control: My Matters / Firm Matters -->
           <div class="matters-switch inline-flex rounded-lg bg-white/50 p-0.5 flex-shrink-0 relative">
-            <!-- Sliding background indicator -->
+            <!-- Sliding background indicator with selected text -->
             <div
               class="switch-indicator"
               :class="{
@@ -43,16 +43,26 @@
                 'switch-indicator-nudge-left': isHoveringMyMatters && !mattersFilterStore.showMyMattersOnly,
                 'switch-indicator-nudge-right': isHoveringFirmMatters && mattersFilterStore.showMyMattersOnly,
               }"
-            ></div>
+            >
+              <!-- Text that moves with the indicator -->
+              <span class="switch-indicator-text">
+                <Transition name="switch-text-fade" mode="out-in">
+                  <span :key="mattersFilterStore.showMyMattersOnly ? 'my' : 'firm'">
+                    {{ mattersFilterStore.showMyMattersOnly ? 'My Matters' : 'Firm Matters' }}
+                  </span>
+                </Transition>
+              </span>
+            </div>
 
+            <!-- Background buttons (clickable areas with static text) -->
             <button
               @click="mattersFilterStore.setShowMyMatters(true)"
               @mouseenter="isHoveringMyMatters = true"
               @mouseleave="isHoveringMyMatters = false"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative',
                 mattersFilterStore.showMyMattersOnly
-                  ? 'text-white'
+                  ? 'text-transparent'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
               ]"
             >
@@ -63,9 +73,9 @@
               @mouseenter="isHoveringFirmMatters = true"
               @mouseleave="isHoveringFirmMatters = false"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative',
                 !mattersFilterStore.showMyMattersOnly
-                  ? 'text-white'
+                  ? 'text-transparent'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
               ]"
             >
@@ -513,6 +523,35 @@ onUnmounted(() => {
 
 .switch-indicator-nudge-right {
   transform: translateX(5px) !important;
+}
+
+/* Text inside the sliding indicator */
+.switch-indicator-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Fade transition for text when switching */
+.switch-text-fade-enter-active,
+.switch-text-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.switch-text-fade-enter-from,
+.switch-text-fade-leave-to {
+  opacity: 0;
+}
+
+.switch-text-fade-enter-to,
+.switch-text-fade-leave-from {
+  opacity: 1;
 }
 
 .matters-switch button {
