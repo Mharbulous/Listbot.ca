@@ -218,7 +218,7 @@ const workflowSteps = [
   {
     title: 'Identify Core Legal Claims',
     description:
-      'Start with the legal basis for your case—the claims or defenses you'll pursue and the elements you must prove.',
+      'Start with the legal basis for your case—the claims or defenses you\'ll pursue and the elements you must prove.',
   },
   {
     title: 'Map Facts to Elements',
