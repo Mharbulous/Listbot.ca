@@ -24,7 +24,7 @@ export function useNavItems() {
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify/stub', icon: '🕵️', label: 'Identify' },
+    { key: 'identify', path: '/identify/stub', icon: '🕵️', label: 'Identify 🚧' },
 
     // EDRM Stage 2: Preserve
     { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve' },
@@ -71,13 +71,13 @@ export function useNavItems() {
     },
 
     // EDRM Stage 6: Analysis
-    { key: 'analysis', path: '/analysis/stub', icon: '🧠', label: 'Analysis' },
+    { key: 'analysis', path: '/analysis/stub', icon: '🧠', label: 'Analysis 🚧' },
 
     // EDRM Stage 7: Produce
     { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present/stub', icon: '🏛️', label: 'Present' },
+    { key: 'present', path: '/present/stub', icon: '🏛️', label: 'Present 🚧' },
 
     // End of Workflow Section Header
     { key: 'workflow-end', type: 'header', label: 'Resources' },
