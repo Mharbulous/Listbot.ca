@@ -160,21 +160,25 @@ const workflowSteps = [
     title: 'Upload & Parse Pleadings',
     description:
       'Import complaint, answer, counterclaims, and amended pleadings with AI-powered extraction of allegations, denials, and affirmative defenses.',
+    status: 'Wishlist',
   },
   {
     title: 'Link Evidence to Allegations',
     description:
       'Systematically connect documents to specific allegations they prove or refute, building a proof map organized by court file.',
+    status: 'Wishlist',
   },
   {
     title: 'Track Proof Status',
     description:
       'Monitor which allegations are proven, refuted, or uncertain based on linked evidence across all versions.',
+    status: 'Wishlist',
   },
   {
     title: 'Generate Reports & Responses',
     description:
       'Create status reports showing proof progress and draft discovery responses organized by allegation and proceeding.',
+    status: 'Wishlist',
   },
 ];
 
