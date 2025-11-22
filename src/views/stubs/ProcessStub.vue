@@ -1,5 +1,6 @@
 <template>
-  <div class="max-w-6xl mx-auto p-8">
+  <StubPageLayout>
+    <div class="max-w-6xl mx-auto p-8">
     <!-- Developer Notice -->
     <div class="bg-amber-50 border-l-4 border-amber-500 p-6 mb-6 rounded-lg">
       <div class="flex items-start gap-3">
@@ -324,12 +325,15 @@
 
         <!-- High Priority Features -->
         <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800"
+          <h3 class="text-lg font-semibold text-slate-700 mb-3">High Priority Features</h3>
+
+          <!-- Step 3 -->
+          <div class="flex gap-4 mb-4">
+            <div
+              class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 text-red-800 font-bold flex items-center justify-center"
             >
               3
-            </span>
+            </div>
             <div>
               <h4 class="font-semibold text-blue-600 mb-1">AI Fuzzy Deduplication <span class="text-xs">📋 PLANNED</span></h4>
               <p class="text-blue-700 text-sm">
@@ -390,7 +394,6 @@
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Competitive Advantage -->
     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
@@ -426,52 +429,53 @@
             performance
           </div>
         </div>
-
-        <!-- Medium Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              MEDIUM PRIORITY
-            </span>
-            Advanced Processing - Phase 2
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <FeatureCard
-              icon="🤖"
-              title="AI Fuzzy Deduplication"
-              badge="Advanced AI Analysis"
-              description="Advanced AI-powered detection of near-duplicate documents that are substantially similar but not identical, reducing review volume while preserving important variations."
-            />
-
-            <FeatureCard
-              icon="⚙️"
-              title="Processing Profiles"
-              badge="Workflow Efficiency"
-              description="Save and reuse preferred processing settings across similar matters, including deduplication preferences and metadata field selections."
-            />
-
-            <FeatureCard
-              icon="⚠️"
-              title="Exception Handling Workflows"
-              badge="Quality Assurance"
-              description="Dedicated workflows for files that fail to process, with manual review queues and retry mechanisms."
-            />
-
-            <FeatureCard
-              icon="🗂️"
-              title="Metadata Field Mapping"
-              badge="Customization"
-              description="Configure which metadata fields to extract and preserve during processing, supporting 600+ file types."
-            />
-          </div>
-        </div>
       </div>
+    </div>
 
-      <!-- Workflow Steps -->
-      <WorkflowSteps title="Processing Workflow" :steps="workflowSteps" />
-    </template>
+    <!-- Medium Priority Features -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+        <span
+          class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+        >
+          MEDIUM PRIORITY
+        </span>
+        Advanced Processing - Phase 2
+      </h3>
+      <div class="grid gap-4 md:grid-cols-2">
+        <FeatureCard
+          icon="🤖"
+          title="AI Fuzzy Deduplication"
+          badge="Advanced AI Analysis"
+          description="Advanced AI-powered detection of near-duplicate documents that are substantially similar but not identical, reducing review volume while preserving important variations."
+        />
+
+        <FeatureCard
+          icon="⚙️"
+          title="Processing Profiles"
+          badge="Workflow Efficiency"
+          description="Save and reuse preferred processing settings across similar matters, including deduplication preferences and metadata field selections."
+        />
+
+        <FeatureCard
+          icon="⚠️"
+          title="Exception Handling Workflows"
+          badge="Quality Assurance"
+          description="Dedicated workflows for files that fail to process, with manual review queues and retry mechanisms."
+        />
+
+        <FeatureCard
+          icon="🗂️"
+          title="Metadata Field Mapping"
+          badge="Customization"
+          description="Configure which metadata fields to extract and preserve during processing, supporting 600+ file types."
+        />
+      </div>
+    </div>
+
+    <!-- Workflow Steps -->
+    <WorkflowSteps title="Processing Workflow" :steps="workflowSteps" />
+    </div>
 
     <template #competitive-advantage>
       <CompetitiveAdvantageGrid
