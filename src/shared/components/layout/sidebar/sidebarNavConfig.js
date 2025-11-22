@@ -15,16 +15,16 @@ export function useNavItems() {
     { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Legal memos' },
-    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts' },
-    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters' },
+    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings 🚧' },
+    { key: 'law', path: '/law', icon: '📚', label: 'Legal memos 🚧' },
+    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts 🚧' },
+    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters 🚧' },
 
     // EDRM Workflow Section Header
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify' },
+    { key: 'identify', path: '/identify/stub', icon: '🕵️', label: 'Identify 🚧' },
 
     // EDRM Stage 2: Preserve
     { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve' },
@@ -49,7 +49,7 @@ export function useNavItems() {
       key: 'review',
       path: computed(() => {
         const matterId = matterViewStore.currentMatterId;
-        if (!matterId) return '/analyze';
+        if (!matterId) return '/analysis/stub';
 
         // Try to get last viewed document from local storage
         const lastViewedDoc = localStorage.getItem('lastViewedDocument');
@@ -64,20 +64,20 @@ export function useNavItems() {
         }
 
         // Fallback to analyze page if no documents
-        return '/analyze';
+        return '/analysis/stub';
       }),
       icon: '🧑‍💻',
       label: 'Review',
     },
 
     // EDRM Stage 6: Analysis
-    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis' },
+    { key: 'analysis', path: '/analysis/stub', icon: '🧠', label: 'Analysis 🚧' },
 
     // EDRM Stage 7: Produce
     { key: 'produce', path: '/list', icon: '📃', label: 'Produce' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present', icon: '🏛️', label: 'Present' },
+    { key: 'present', path: '/present/stub', icon: '🏛️', label: 'Present 🚧' },
 
     // End of Workflow Section Header
     { key: 'workflow-end', type: 'header', label: 'Resources' },

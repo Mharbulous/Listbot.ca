@@ -125,7 +125,7 @@ const router = createRouter({
 
         // If no matter selected, redirect to analyze page
         if (!matterId) {
-          next('/analysis');
+          next('/analysis/stub');
           return;
         }
 
@@ -156,7 +156,7 @@ const router = createRouter({
         }
 
         // Fallback to analyze page if no documents
-        next('/analysis');
+        next('/analysis/stub');
       },
       meta: { requiresAuth: true, title: 'Review' },
     },
