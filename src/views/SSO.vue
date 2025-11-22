@@ -18,10 +18,10 @@
             <button
               @click="activeTab = 'features'"
               :class="[
-                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                'px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer rounded-t-lg',
                 activeTab === 'features'
                   ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                  : 'border-transparent text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 hover:border-slate-400 hover:shadow-sm',
               ]"
             >
               <span class="flex items-center">
@@ -32,10 +32,10 @@
             <button
               @click="activeTab = 'first-app'"
               :class="[
-                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                'px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer rounded-t-lg',
                 activeTab === 'first-app'
                   ? 'border-blue-500 text-blue-600 bg-blue-50'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                  : 'border-transparent text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 hover:border-slate-400 hover:shadow-sm',
               ]"
             >
               <span class="flex items-center">
@@ -46,10 +46,10 @@
             <button
               @click="activeTab = 'add-app'"
               :class="[
-                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                'px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer rounded-t-lg',
                 activeTab === 'add-app'
                   ? 'border-green-500 text-green-600 bg-green-50'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                  : 'border-transparent text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 hover:border-slate-400 hover:shadow-sm',
               ]"
             >
               <span class="flex items-center">
@@ -60,10 +60,10 @@
             <button
               @click="activeTab = 'local-dev'"
               :class="[
-                'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+                'px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 cursor-pointer rounded-t-lg',
                 activeTab === 'local-dev'
                   ? 'border-purple-500 text-purple-600 bg-purple-50'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                  : 'border-transparent text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 hover:border-slate-400 hover:shadow-sm',
               ]"
             >
               <span class="flex items-center">
