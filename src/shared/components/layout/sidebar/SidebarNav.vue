@@ -7,6 +7,9 @@
         <span v-else class="section-divider"></span>
       </div>
 
+      <!-- Spacer (invisible element for spacing) -->
+      <div v-else-if="item.type === 'spacer'" class="nav-spacer"></div>
+
       <!-- Navigation Link -->
       <div v-else class="nav-item-wrapper">
         <RouterLink
@@ -214,5 +217,19 @@ const route = useRoute();
 .stub-button-active {
   background-color: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
+}
+
+.nav-spacer {
+  flex: 1 1 auto;
+  min-height: 36px;
+  direction: ltr;
+  /* Invisible but takes up space */
+}
+
+/* Hide spacer when vertical space is limited */
+@media (max-height: 800px) {
+  .nav-spacer {
+    display: none;
+  }
 }
 </style>
