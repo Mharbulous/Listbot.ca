@@ -72,7 +72,17 @@
 
         <!-- Section 2: Switch Apps -->
         <div class="menu-section">
-          <h3 class="menu-section-header">Switch Apps</h3>
+          <div class="menu-section-header-with-button">
+            <h3 class="menu-section-header">Switch Apps</h3>
+            <a
+              href="http://localhost:5173/#/sso"
+              class="menu-section-button"
+              title="Go to SSO page"
+              @click="closeMenu"
+            >
+              ↔️
+            </a>
+          </div>
           <div class="menu-items">
             <a
               v-for="(app, index) in availableApps"
@@ -487,8 +497,20 @@ const handleSignOut = async () => {
   @apply border-b-0;
 }
 
+.menu-section-header-with-button {
+  @apply flex items-center justify-between px-4 py-2;
+}
+
 .menu-section-header {
   @apply px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wide;
+}
+
+.menu-section-header-with-button .menu-section-header {
+  @apply px-0 py-0;
+}
+
+.menu-section-button {
+  @apply text-base hover:bg-slate-700 px-2 py-1 rounded transition-colors no-underline;
 }
 
 /* Menu Items Container */
