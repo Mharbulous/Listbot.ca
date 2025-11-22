@@ -99,6 +99,16 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Legal Memos' },
     },
     {
+      path: '/theory',
+      redirect: '/theory/stub',
+    },
+    {
+      path: '/theory/stub',
+      name: 'theory',
+      component: () => import('../views/Theory.vue'),
+      meta: { requiresAuth: true, title: 'Theory' },
+    },
+    {
       path: '/facts',
       redirect: '/facts/stub',
     },
