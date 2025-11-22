@@ -79,13 +79,7 @@ export function useNavItems() {
     { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/list/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },
-
-    // End of Workflow Section Header
-    { key: 'workflow-end', type: 'header', label: 'Resources' },
-
-    // SSO (Special - not part of EDRM workflow)
-    { key: 'sso', path: '/sso', icon: '↔️', label: 'SSO' },
+    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    
   ];
 }
 

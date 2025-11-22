@@ -80,7 +80,7 @@
               title="Go to SSO page"
               @click="closeMenu"
             >
-              ↔️
+              ℹ️
             </a>
           </div>
           <div class="menu-items">
