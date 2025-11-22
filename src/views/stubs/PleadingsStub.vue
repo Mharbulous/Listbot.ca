@@ -35,6 +35,30 @@
         <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
+            icon="🔍"
+            title="Document Identification & Classification"
+            badge="Process Integration"
+            priority="high"
+            color="purple"
+            description="Automated identification of pleadings documents during the Process step, enabling automatic routing to the Pleadings section for specialized handling."
+          />
+          <FeatureCard
+            icon="⚖️"
+            title="Proceeding Management"
+            badge="Organization Core"
+            priority="high"
+            color="purple"
+            description="Track multiple related proceedings by Jurisdiction, Venue, and Court File No., allowing pleadings to be sorted and grouped with other documents from the same court file."
+          />
+          <FeatureCard
+            icon="📋"
+            title="Version Control & Amendment Tracking"
+            badge="Foundation Feature"
+            priority="high"
+            color="purple"
+            description="Track amendments to pleadings with version history, recording which pleadings were amended and the dates of each amendment for complete litigation chronology."
+          />
+          <FeatureCard
             icon="📄"
             title="Pleading Ingestion & Parsing"
             badge="Foundation Feature"
@@ -119,32 +143,47 @@ import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
   {
-    title: 'Upload Pleadings',
-    description: 'Import complaint, answer, counterclaims, and amended pleadings into the system.',
+    title: 'Process Step: Identify Pleadings',
+    description:
+      'During the Process step, AI automatically identifies pleadings documents and routes them to the Pleadings section for specialized handling.',
   },
   {
-    title: 'AI Extracts Allegations',
+    title: 'Assign to Proceeding',
     description:
-      'AI automatically parses pleadings to extract numbered allegations, denials, and affirmative defenses.',
+      'Associate each pleading with a specific proceeding (Jurisdiction, Venue, Court File No.) to enable grouping and organization across related litigation.',
+  },
+  {
+    title: 'Track Versions & Amendments',
+    description:
+      'Record amendment history with dates, maintaining a complete chronology of how pleadings evolved throughout the litigation.',
+  },
+  {
+    title: 'Upload & Parse Pleadings',
+    description:
+      'Import complaint, answer, counterclaims, and amended pleadings with AI-powered extraction of allegations, denials, and affirmative defenses.',
   },
   {
     title: 'Link Evidence to Allegations',
     description:
-      'Systematically connect documents to specific allegations they prove or refute, building a proof map.',
+      'Systematically connect documents to specific allegations they prove or refute, building a proof map organized by court file.',
   },
   {
     title: 'Track Proof Status',
-    description: 'Monitor which allegations are proven, refuted, or uncertain based on linked evidence.',
+    description:
+      'Monitor which allegations are proven, refuted, or uncertain based on linked evidence across all versions.',
   },
   {
     title: 'Generate Reports & Responses',
     description:
-      'Create status reports showing proof progress and draft discovery responses organized by allegation.',
+      'Create status reports showing proof progress and draft discovery responses organized by allegation and proceeding.',
   },
 ];
 
 const competitiveAdvantages = [
   { label: 'First-to-market', text: 'no other platform treats pleadings this way' },
+  { label: 'Auto-identification', text: 'identifies pleadings during processing automatically' },
+  { label: 'Proceeding management', text: 'organizes by jurisdiction, venue, and court file' },
+  { label: 'Version tracking', text: 'maintains complete amendment history with dates' },
   { label: 'AI extraction', text: 'automatically parses allegations from pleadings' },
   { label: 'Systematic linking', text: 'connects every piece of evidence to claims' },
   { label: 'Burden tracking', text: 'visualizes proof requirements and status' },
@@ -153,9 +192,11 @@ const competitiveAdvantages = [
 const timelinePhases = [
   {
     title: 'Phase 1: Core Pleadings Integration',
-    timeframe: '4-6 months',
     color: 'purple',
     items: [
+      'Document identification during Process step',
+      'Proceeding management (Jurisdiction, Venue, Court File No.)',
+      'Version control and amendment tracking',
       'Pleading upload and parsing',
       'AI-powered allegation extraction',
       'Evidence-allegation linking system',
@@ -164,9 +205,10 @@ const timelinePhases = [
   },
   {
     title: 'Phase 2: Advanced Features',
-    timeframe: '6-9 months',
     color: 'indigo',
     items: [
+      'Multi-proceeding organization and views',
+      'Cross-proceeding evidence analysis',
       'AI suggestion engine for relevant documents',
       'Automated discovery response generation',
       'Burden of proof visualization',
