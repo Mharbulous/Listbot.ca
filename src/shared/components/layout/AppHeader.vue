@@ -1,6 +1,6 @@
 <template>
   <header
-    class="header-fixed ocean-sky-gradient px-8 py-4 flex items-center h-16 box-border flex-shrink-0"
+    class="header-fixed ocean-sky-gradient px-3 py-4 flex items-center h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Logo and Hamburger (pinned to left) -->
     <div class="flex items-center gap-4 flex-shrink-0">
