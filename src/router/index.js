@@ -20,11 +20,7 @@ const router = createRouter({
     },
     {
       path: '/sso',
-<<<<<<< HEAD
-      name: 'about',
-=======
       name: 'sso',
->>>>>>> 425ac611279ddc862b6b2a996e35ce4cc8ed0177
       component: () => import('../views/Home.vue'),
       meta: { requiresAuth: true, title: 'SSO' },
     },
