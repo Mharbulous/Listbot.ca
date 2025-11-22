@@ -149,7 +149,7 @@
           <!-- Concept Clustering -->
           <div class="bg-white border-2 border-indigo-200 rounded-lg p-6">
             <div class="flex items-start gap-3 mb-3">
-              <div class="text-2xl">🧩</div>
+              <div class="text-2xl">♙</div>
               <div>
                 <h4 class="text-lg font-semibold text-slate-900">
                   Gemini-Powered Concept Clustering
@@ -416,7 +416,7 @@
           <!-- Concept Clustering -->
           <div>
             <div class="flex items-start gap-3 mb-2">
-              <div class="text-xl">🧩</div>
+              <div class="text-xl">♙</div>
               <div>
                 <h3 class="font-semibold text-slate-900">Concept Clustering</h3>
               </div>

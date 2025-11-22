@@ -20,7 +20,7 @@
       class="bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 p-6 mb-8 rounded-lg"
     >
       <div class="flex items-start gap-4">
-        <div class="text-3xl">🧩</div>
+        <div class="text-3xl">♙</div>
         <div>
           <h3 class="text-lg font-semibold text-slate-900 mb-2">The Foundation of Advocacy</h3>
           <p class="text-slate-700">

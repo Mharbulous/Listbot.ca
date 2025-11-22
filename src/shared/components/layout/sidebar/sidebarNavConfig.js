@@ -16,7 +16,7 @@ export function useNavItems() {
     { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
     { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
     { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
-    { key: 'theory', path: '/theory', icon: '🧩', label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
+    { key: 'theory', path: '/theory', icon: '♙', label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
     { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
     // EDRM Workflow Section Header

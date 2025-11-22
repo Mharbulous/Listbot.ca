@@ -40,12 +40,12 @@ flowchart TB
     end
 
     subgraph Col3 ["📄 Storage 3: Pages"]
-        SoloPage1["🧩Page 1 of 3"]
-        PageRaw2["🧩Page 2 of 3"]
-        SoloPage2["🧩Page 2 of 3"]
-        PageRaw3["🧩Page 3 of 3"]
-        PageRaw1["🧩Page 4 of 7"]
-        OnePage_split["🧩Page 4 of 7"]
+        SoloPage1["♙Page 1 of 3"]
+        PageRaw2["♙Page 2 of 3"]
+        SoloPage2["♙Page 2 of 3"]
+        PageRaw3["♙Page 3 of 3"]
+        PageRaw1["♙Page 4 of 7"]
+        OnePage_split["♙Page 4 of 7"]
     end
 
     subgraph Col5 ["📁 Storage 4: Merged"]
