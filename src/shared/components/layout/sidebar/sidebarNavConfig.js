@@ -80,7 +80,7 @@ export function useNavItems() {
     { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 7: Produce
-    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/list/stub', stubStatus: 'placeholder' },
+    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/produce/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 8: Present
     { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    

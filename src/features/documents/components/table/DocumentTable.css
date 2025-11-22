@@ -17,10 +17,31 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Sticky Header - Sticks within scroll container */
+/* Page Title Row - Sticky below app header */
+.page-title-row {
+  position: sticky;
+  top: 64px; /* Stick below app header (64px height) */
+  z-index: 9; /* Below table header (z-index: 10) */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 24px;
+  border-bottom: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: max-content; /* Match table width */
+}
+
+.page-title-text {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+/* Sticky Header - Sticks below page title (if present) or below app header */
 .table-mockup-header {
   position: sticky;
-  top: 0; /* Stick to top of scroll container */
+  top: 64px; /* Default: stick below app header (overridden by inline style when pageTitle exists) */
   z-index: 10;
   display: flex;
   background: #f9fafb;

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col bg-slate-50">
+  <div class="h-full flex flex-col" style="background-color: #FAF8F3;">
     <!-- Notification Banner for Redirects -->
     <div
       v-if="showNotification"

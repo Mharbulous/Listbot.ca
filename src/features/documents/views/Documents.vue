@@ -7,6 +7,7 @@
       :error="error"
       :row-height="48"
       :overscan="5"
+      :page-title="'Document Collection'"
       column-selector-label="Cols"
       @dragover="onDragOver"
       @drop="onDrop"
@@ -387,7 +388,7 @@ onMounted(async () => {
 <style scoped>
 /* Page Container - Full viewport height minus header */
 .analyze-mockup-page {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  height: calc(100vh - 64px); /* Full viewport height minus AppHeader (h-16 = 64px) */
   width: 100%; /* Full width of parent */
   background: white;
   overflow: hidden; /* Prevent page-level scrolling */

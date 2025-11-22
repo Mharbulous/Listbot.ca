@@ -26,8 +26,13 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
+      <!-- Page Title Row (scrollable) -->
+      <div v-if="pageTitle" class="page-title-row">
+        <h1 class="page-title-text">{{ pageTitle }}</h1>
+      </div>
+
       <!-- Sticky Table Header -->
-      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
+      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px', top: pageTitle ? '132px' : '64px' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
           <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
@@ -295,6 +300,11 @@ const props = defineProps({
   columnSelectorLabel: {
     type: String,
     default: 'Cols'
+  },
+  // Optional page title to display above the table
+  pageTitle: {
+    type: String,
+    default: null
   }
 });
 

@@ -128,7 +128,7 @@ The app uses a fixed sidebar (`AppSideBar.vue`) with the following navigation it
 | `/settings` | ✅ | ❌ | ❌ |
 | `/sso` | ✅ | ❌ | ❌ |
 | `/analyze` | ✅ | ❌ | ❌ |
-| `/list` | ✅ | ❌ | ❌ |
+| `/produce` | ✅ | ❌ | ❌ |
 | `/dev/*` | varies | varies | ❌ |
 
 ### Global Guards
@@ -271,7 +271,7 @@ Some routes use `titleFn: true` metadata to generate dynamic titles:
 
 ### Under Construction Routes
 The following routes redirect to the "Under Construction" page:
-- `/list` - Evidence List feature (planned)
+- `/produce` - Evidence List feature (planned)
 
 ### Catch-All Route
 - `/:pathMatch(.*)*` - Catches all unmatched routes and redirects to `/404`

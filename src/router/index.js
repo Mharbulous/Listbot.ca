@@ -49,19 +49,25 @@ const router = createRouter({
     {
       path: '/upload/stub',
       name: 'preserve',
-      component: () => import('../views/Preserve.vue'),
+      component: () => import('../views/stubs/PreserveStub.vue'),
       meta: { requiresAuth: true, title: 'Preserve' },
     },
     {
       path: '/process/stub',
+      name: 'process-stub',
+      component: () => import('../views/stubs/ProcessStub.vue'),
+      meta: { requiresAuth: true, title: 'Process Blueprint' },
+    },
+    {
+      path: '/process',
       name: 'process',
-      component: () => import('../views/Process.vue'),
-      meta: { requiresAuth: true, title: 'Process' },
+      component: () => import('../views/ProcessDashboard.vue'),
+      meta: { requiresAuth: true, title: 'Processing Dashboard' },
     },
     {
       path: '/analysis/stub',
       name: 'analysis',
-      component: () => import('../views/Analysis.vue'),
+      component: () => import('../views/stubs/AnalysisStub.vue'),
       meta: { requiresAuth: true, title: 'Analysis' },
     },
     {
@@ -70,23 +76,34 @@ const router = createRouter({
     },
     {
       path: '/produce',
-      redirect: '/list/stub',
+      redirect: '/produce/stub',
+    },
+    {
+      path: '/produce/stub',
+      name: 'produce',
+      component: () => import('../views/stubs/ProduceStub.vue'),
+      meta: { requiresAuth: true, title: 'Produce' },
+    },
+    // Backward compatibility redirects for old /list routes
+    {
+      path: '/list',
+      redirect: '/produce',
     },
     {
       path: '/list/stub',
-      name: 'list',
-      component: () => import('../views/Produce.vue'),
-      meta: { requiresAuth: true, title: 'Produce' },
+      redirect: '/produce/stub',
     },
     {
       path: '/pleadings/stub',
-      name: 'pleadings',
-      component: () => import('../views/Pleadings.vue'),
-      meta: { requiresAuth: true, title: 'Pleadings' },
+      name: 'pleadings-stub',
+      component: () => import('../views/stubs/PleadingsStub.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings Blueprint' },
     },
     {
       path: '/pleadings',
-      redirect: '/pleadings/stub',
+      name: 'pleadings',
+      component: () => import('../features/pleadings/views/Pleadings.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings' },
     },
     {
       path: '/law',
@@ -95,7 +112,7 @@ const router = createRouter({
     {
       path: '/law/stub',
       name: 'law',
-      component: () => import('../views/Law.vue'),
+      component: () => import('../views/stubs/LawStub.vue'),
       meta: { requiresAuth: true, title: 'Legal Memos' },
     },
     {
@@ -105,7 +122,7 @@ const router = createRouter({
     {
       path: '/theory/stub',
       name: 'theory',
-      component: () => import('../views/Theory.vue'),
+      component: () => import('../views/stubs/TheoryStub.vue'),
       meta: { requiresAuth: true, title: 'Theory' },
     },
     {
@@ -115,7 +132,7 @@ const router = createRouter({
     {
       path: '/facts/stub',
       name: 'facts',
-      component: () => import('../views/Facts.vue'),
+      component: () => import('../views/stubs/FactsStub.vue'),
       meta: { requiresAuth: true, title: 'Facts' },
     },
     {
@@ -125,7 +142,7 @@ const router = createRouter({
     {
       path: '/cast/stub',
       name: 'cast',
-      component: () => import('../views/Cast.vue'),
+      component: () => import('../views/stubs/CastStub.vue'),
       meta: { requiresAuth: true, title: 'Characters' },
     },
     {
@@ -135,18 +152,14 @@ const router = createRouter({
     {
       path: '/identify/stub',
       name: 'identify',
-      component: () => import('../views/Identify.vue'),
+      component: () => import('../views/stubs/IdentifyStub.vue'),
       meta: { requiresAuth: true, title: 'Identify' },
     },
     {
       path: '/collect/stub',
       name: 'collect-stub',
-      component: () => import('../views/Collect.vue'),
+      component: () => import('../views/stubs/CollectStub.vue'),
       meta: { requiresAuth: true, title: 'Collect' },
-    },
-    {
-      path: '/process',
-      redirect: '/process/stub',
     },
     {
       path: '/analysis',
@@ -159,7 +172,7 @@ const router = createRouter({
     {
       path: '/present/stub',
       name: 'present',
-      component: () => import('../views/Present.vue'),
+      component: () => import('../views/stubs/PresentStub.vue'),
       meta: { requiresAuth: true, title: 'Present' },
     },
     {
