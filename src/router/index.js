@@ -73,10 +73,14 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Produce' },
     },
     {
-      path: '/pleadings',
+      path: '/pleadings/stub',
       name: 'pleadings',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Pleadings.vue'),
       meta: { requiresAuth: true, title: 'Pleadings' },
+    },
+    {
+      path: '/pleadings',
+      redirect: '/pleadings/stub',
     },
     {
       path: '/law',
