@@ -11,23 +11,36 @@ The following files are **EXEMPT** from the 300-line limit and should **NEVER** 
 - Explain why it's on the exception list
 - Do NOT proceed with decomposition
 
+## Folder-Structure Date Check (Only when NO target file specified)
+
+**If the user has NOT specified a specific file to streamline:**
+
+1. Check if `docs\Miscellaneous\2025-11-15-Folder-Structure.md` exists (or any file matching the pattern `YYYY-MM-DD-Folder-Structure.md`)
+2. Extract the date (YYYY-MM-DD) from the filename
+3. Compare the date to today's date
+
+**If the Folder-Structure file date is in the PAST:**
+- Review all files listed in the Folder-Structure.md file
+- Count the actual number of lines of code (excluding comments) for each file
+- Update all line counts in the file
+- Rename the file to today's date (e.g., `2025-11-22-Folder-Structure.md`)
+- Report to the user: "Folder-Structure.md was outdated and has been updated. Please start a new chat window to run /streamline with a fresh context."
+- **STOP** - Do NOT proceed with streamlining in this session
+
+**If the Folder-Structure file date is CURRENT or FUTURE:**
+- Proceed with the normal file selection process below
+
+**If the user HAS specified a specific file:**
+- Skip this entire date check and proceed directly to streamlining the specified file
+
 ## File Selection
 
-If the user has not specified a specific file, then review the files in the documentation file, `docs\2025-11-15-Folder-Structure.md`, and identify candidate files that would benefit most from decomposition and refactoring.
-
-**Line Count Validation (During Selection Phase):**
-- When reading each file to evaluate it as a candidate, count the actual number of lines of code (excluding comments)
-- Compare the actual line count with the documented line count in `docs\2025-11-15-Folder-Structure.md`
-- If there is a mismatch, inform the user: "Found miscount in Folder-Structure.md - [file path] has [actual count] lines"
-- Do NOT mention the incorrect documented count
-- Track all miscounted files and their corrected line counts for later updating
-- **Do NOT update Folder-Structure.md during the selection phase** - preserve context memory for intelligent streamlining
+**When no target file is specified**, review the files in `docs\Miscellaneous\2025-11-15-Folder-Structure.md` and identify candidate files that would benefit most from decomposition and refactoring.
 
 **Selection Strategy:**
 - Identify the three best candidate files that would benefit most from decomposition and refactoring
 - However, once you find a file that would obviously benefit, stop searching and select that file
 - If you find no obvious candidate, choose one file from the three identified candidates based on which would benefit most from decomposition or refactoring
-
 
 **Virtual Scrolling Detection:**
 - Check if the file contains virtual scrolling implementation (e.g., `virtual-scroller`, `virtual-scroll`, Vuetify's `v-virtual-scroll`)
@@ -53,25 +66,19 @@ If the user has not specified a specific file, then review the files in the docu
    - Explain the logical groupings and file structure
    - Wait for user comment and approval before proceeding
 
-3. **Compact Conversation (After File Selection)**
-   - Once the file is selected and approved, use the `/compact` command to compress conversation history
-   - Use this exact format: `/compact Focus on information relating to the file [target file path] in preparation for decomposition, and preserve the filepaths and corrected line-counts of any mis-counted files from Folder-Structure.md`
-   - This preserves context memory for intelligent decomposition
-
-4. **Execute Decomposition (After Approval and Compact)**
+3. **Execute Decomposition (After Approval)**
    - Move the original file to `/deprecated` folder as a backup reference
    - Create new files according to the approved plan
    - Build each new file from scratch in the most elegant and simple way possible
    - Strictly preserve appearance, functionality, and behavior exactly as the original
 
-5. **Update Documentation (After Completion)**
-   - Update `docs\2025-11-15-Folder-Structure.md` with:
-     - Corrected line counts for any miscounted files discovered during selection
+4. **Update Documentation (After Completion)**
+   - Update `docs\Miscellaneous\YYYY-MM-DD-Folder-Structure.md` with:
      - New file structure reflecting the decomposition
      - Line counts for all newly created files
    - Remove or mark as deprecated the original file entry
 
-6. **Provide Test Suggestions**
+5. **Provide Test Suggestions**
    - Upon completion, suggest specific tests for the user to try on the local server
    - Assume the local server is already running unless explicitly told otherwise
 
@@ -86,9 +93,7 @@ If the user has not specified a specific file, then review the files in the docu
    - Otherwise, if the file has an equal or greater number of lines of code, report to the user that you were unable to streamline the file, and offer to lengthen the file instead
 
 3. **Update Documentation (If Successful)**
-   - Update `docs\2025-11-15-Folder-Structure.md` with:
-     - Corrected line counts for any miscounted files discovered during selection
-     - Updated line count for the streamlined file (if it was successfully reduced)
+   - Update `docs\Miscellaneous\YYYY-MM-DD-Folder-Structure.md` with the updated line count for the streamlined file (if it was successfully reduced)
 
 ## Important Constraints
 
