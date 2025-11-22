@@ -26,7 +26,7 @@
           :class="{ 'stub-button-active': route.path === item.stubPath }"
           title="View detailed feature roadmap"
         >
-          🚧
+          {{ getStubIcon(item) }}
         </RouterLink>
       </div>
     </template>
@@ -35,7 +35,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router';
-import { getItemIcon } from './sidebarNavConfig';
+import { getItemIcon, getStubIcon } from './sidebarNavConfig';
 
 defineProps({
   navItems: {

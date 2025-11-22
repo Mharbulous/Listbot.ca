@@ -13,19 +13,19 @@ export function useNavItems() {
     { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub' },
-    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters', stubPath: '/cast/stub' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub' },
-    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub' },
+    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
+    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
+    { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
+    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
     // EDRM Workflow Section Header
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub' },
+    { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub' },
+    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'building' },
 
     // EDRM Stage 3: Collect
     {
@@ -38,10 +38,11 @@ export function useNavItems() {
       icon: '🗃️',
       label: 'Collect',
       stubPath: '/collect/stub',
+      stubStatus: 'building',
     },
 
     // EDRM Stage 4: Process
-    { key: 'process', path: '/process', icon: '🤖', label: 'Process', stubPath: '/process/stub' },
+    { key: 'process', path: '/process', icon: '🤖', label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 5: Review
     {
@@ -68,16 +69,17 @@ export function useNavItems() {
       icon: '🧑‍💻',
       label: 'Review',
       stubPath: '/review/stub',
+      stubStatus: 'building',
     },
 
     // EDRM Stage 6: Analysis
-    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub' },
+    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 7: Produce
-    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/list/stub' },
+    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/list/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub' },
+    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },
 
     // End of Workflow Section Header
     { key: 'workflow-end', type: 'header', label: 'Resources' },
@@ -102,4 +104,20 @@ export function getItemIcon(item, isHovered = false, isActive = false) {
     return isHovered || isActive ? '📂' : '📁';
   }
   return item.icon;
+}
+
+/**
+ * Get the stub button icon based on implementation status
+ *
+ * @param {Object} item - Navigation item with stubStatus property
+ * @returns {string} The icon emoji to display
+ */
+export function getStubIcon(item) {
+  const statusIcons = {
+    placeholder: '📐', // No functional page - only generic placeholder/redirect exists
+    building: '🏗️',    // Partial implementation - functional page exists but incomplete
+    complete: '🆕',    // Feature-complete - all stub features implemented
+  };
+
+  return statusIcons[item.stubStatus] || '🚧'; // Default to construction sign if status not recognized
 }
