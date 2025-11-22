@@ -3,11 +3,8 @@
     class="header-fixed ocean-sky-gradient pr-3 py-4 flex items-center h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Logo and Hamburger (pinned to left) -->
-    <div
-      class="flex items-center flex-shrink-0 transition-all duration-300"
-      :class="isCollapsed ? 'pl-3' : 'pl-7'"
-    >
-        <!-- Hamburger Toggle Button -->
+    <div class="flex items-center flex-shrink-0 pl-3">
+      <!-- Hamburger Toggle Button (always at same position) -->
       <button
         class="hamburger-btn"
         @click="$emit('toggle-sidebar')"
@@ -15,16 +12,20 @@
       >
         <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
-      <!-- Logo (only visible when sidebar is open) -->
-      <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0 ml-4">
-        <span class="text-lg font-bold text-primary-600">ListBot</span>
-      </RouterLink>
+
+      <!-- Spacer that adjusts to keep divider aligned with sidebar edge -->
+      <div
+        class="flex items-center transition-all duration-300"
+        :class="isCollapsed ? 'w-[12px]' : 'w-[108px]'"
+      >
+        <!-- Logo (only visible when sidebar is open) -->
+        <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0 ml-4">
+          <span class="text-lg font-bold text-primary-600">ListBot</span>
+        </RouterLink>
+      </div>
 
       <!-- Vertical Divider (aligned with sidebar edge) -->
-      <div
-        class="h-8 w-px bg-slate-200 flex-shrink-0 transition-all duration-300"
-        :class="isCollapsed ? 'ml-3' : 'ml-4'"
-      ></div>
+      <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
     </div>
 
     <!-- Center Section: Breadcrumb Navigation (flexible) -->
