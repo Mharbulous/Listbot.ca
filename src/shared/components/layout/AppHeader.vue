@@ -38,11 +38,17 @@
             <!-- Sliding background indicator -->
             <div
               class="switch-indicator"
-              :class="{ 'switch-indicator-right': !mattersFilterStore.showMyMattersOnly }"
+              :class="{
+                'switch-indicator-right': !mattersFilterStore.showMyMattersOnly,
+                'switch-indicator-nudge-left': isHoveringMyMatters && !mattersFilterStore.showMyMattersOnly,
+                'switch-indicator-nudge-right': isHoveringFirmMatters && mattersFilterStore.showMyMattersOnly,
+              }"
             ></div>
 
             <button
               @click="mattersFilterStore.setShowMyMatters(true)"
+              @mouseenter="isHoveringMyMatters = true"
+              @mouseleave="isHoveringMyMatters = false"
               :class="[
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 mattersFilterStore.showMyMattersOnly
@@ -54,6 +60,8 @@
             </button>
             <button
               @click="mattersFilterStore.setShowMyMatters(false)"
+              @mouseenter="isHoveringFirmMatters = true"
+              @mouseleave="isHoveringFirmMatters = false"
               :class="[
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative z-10',
                 !mattersFilterStore.showMyMattersOnly
@@ -340,6 +348,10 @@ const documentViewStore = useDocumentViewStore();
 const matterViewStore = useMatterViewStore();
 const mattersFilterStore = useMattersFilterStore();
 
+// Hover state for matters switch anticipatory nudge
+const isHoveringMyMatters = ref(false);
+const isHoveringFirmMatters = ref(false);
+
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.includes('/review/')) {
     const documentName = documentViewStore.documentName || 'Loading...';
@@ -492,6 +504,15 @@ onUnmounted(() => {
 
 .switch-indicator-right {
   transform: translateX(100%);
+}
+
+/* Anticipatory nudge when hovering inactive button */
+.switch-indicator-nudge-left {
+  transform: translateX(calc(100% - 5px)) !important;
+}
+
+.switch-indicator-nudge-right {
+  transform: translateX(5px) !important;
 }
 
 .matters-switch button {
