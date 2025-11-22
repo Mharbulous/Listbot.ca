@@ -15,10 +15,10 @@ export function useNavItems() {
     { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Legal memos' },
-    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts' },
-    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters' },
+    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings 🚧' },
+    { key: 'law', path: '/law', icon: '📚', label: 'Legal memos 🚧' },
+    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts 🚧' },
+    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters 🚧' },
 
     // EDRM Workflow Section Header
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
