@@ -28,58 +28,229 @@
       <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
     </div>
 
-    <!-- Center Section: Breadcrumb Navigation (flexible) -->
-    <nav class="flex items-center gap-2 flex-1 min-w-0 px-4" aria-label="Breadcrumb">
-      <!-- Client Name (only shown when matter is selected) -->
-      <template v-if="matterViewStore.hasMatter">
-        <span
-          @click="clearMatter"
-          class="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer hover:underline flex-shrink-0"
-          :title="clientName"
-        >
-          {{ clientName }}
-        </span>
+    <!-- Center Section: Breadcrumb Navigation OR Matters Filter Controls -->
+    <div class="flex items-center gap-2 flex-1 min-w-0 px-4">
+      <!-- Matters Filter Controls (only on /matters page) -->
+      <template v-if="isOnMattersListPage">
+        <div class="flex items-center gap-3 flex-1">
+          <!-- Segmented Control: My Matters / Firm Matters -->
+          <div class="inline-flex rounded-lg bg-slate-100 p-0.5 flex-shrink-0">
+            <button
+              @click="mattersFilterStore.setShowMyMatters(true)"
+              :class="[
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                mattersFilterStore.showMyMattersOnly
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900',
+              ]"
+            >
+              My Matters
+            </button>
+            <button
+              @click="mattersFilterStore.setShowMyMatters(false)"
+              :class="[
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                !mattersFilterStore.showMyMattersOnly
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900',
+              ]"
+            >
+              Firm Matters
+            </button>
+          </div>
+
+          <!-- Dropdown: Status Filter -->
+          <div class="relative flex-shrink-0" data-matters-dropdown>
+            <button
+              @click="mattersFilterStore.toggleStatusDropdown()"
+              class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+            >
+              <span>Status: {{ mattersFilterStore.statusFilterLabel }}</span>
+              <svg
+                class="w-4 h-4 transition-transform"
+                :class="{ 'rotate-180': mattersFilterStore.statusDropdownOpen }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            <!-- Dropdown Menu -->
+            <div
+              v-if="mattersFilterStore.statusDropdownOpen"
+              class="absolute top-full mt-1 left-0 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]"
+            >
+              <button
+                @click="mattersFilterStore.setStatusFilter('active')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="
+                  mattersFilterStore.statusFilter === 'active'
+                    ? 'text-blue-600 font-medium'
+                    : 'text-slate-700'
+                "
+              >
+                Active
+              </button>
+              <button
+                @click="mattersFilterStore.setStatusFilter('archived')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="
+                  mattersFilterStore.statusFilter === 'archived'
+                    ? 'text-blue-600 font-medium'
+                    : 'text-slate-700'
+                "
+              >
+                Archived
+              </button>
+              <button
+                @click="mattersFilterStore.setStatusFilter('all')"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                :class="
+                  mattersFilterStore.statusFilter === 'all'
+                    ? 'text-blue-600 font-medium'
+                    : 'text-slate-700'
+                "
+              >
+                All
+              </button>
+            </div>
+          </div>
+
+          <!-- Search Input with Integrated Actions -->
+          <div class="flex-1 relative min-w-0">
+            <input
+              v-model="mattersFilterStore.searchText"
+              type="text"
+              placeholder="filter matters..."
+              class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all placeholder:text-slate-400"
+            />
+            <!-- Integrated Search Actions -->
+            <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <!-- Case Sensitive Toggle -->
+              <button
+                @click="mattersFilterStore.toggleCaseSensitive()"
+                :class="[
+                  'p-1.5 rounded text-xs font-semibold transition-colors',
+                  mattersFilterStore.caseSensitive
+                    ? 'text-blue-600 hover:bg-blue-50'
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
+                ]"
+                :title="
+                  mattersFilterStore.caseSensitive ? 'Case sensitive' : 'Case insensitive'
+                "
+              >
+                <span class="font-mono">Aa</span>
+              </button>
+              <!-- Whole Word Toggle -->
+              <button
+                @click="mattersFilterStore.toggleWholeWord()"
+                :class="[
+                  'p-1.5 rounded text-xs font-semibold transition-colors',
+                  mattersFilterStore.wholeWord
+                    ? 'text-blue-600 hover:bg-blue-50'
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
+                ]"
+                :title="
+                  mattersFilterStore.wholeWord ? 'Match whole words only' : 'Match partial words'
+                "
+              >
+                <span class="font-mono">Ab</span>
+              </button>
+              <!-- Clear Button -->
+              <button
+                v-if="mattersFilterStore.searchText"
+                @click="mattersFilterStore.clearSearchText()"
+                class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- New Matter Button -->
+          <router-link
+            to="/matters/new"
+            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            New Matter
+          </router-link>
+        </div>
       </template>
 
-      <!-- Matter (if selected) -->
-      <template v-if="matterViewStore.hasMatter">
+      <!-- Breadcrumb Navigation (all other pages) -->
+      <nav v-else class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
+        <!-- Client Name (only shown when matter is selected) -->
+        <template v-if="matterViewStore.hasMatter">
+          <span
+            @click="clearMatter"
+            class="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer hover:underline flex-shrink-0"
+            :title="clientName"
+          >
+            {{ clientName }}
+          </span>
+        </template>
+
+        <!-- Matter (if selected) -->
+        <template v-if="matterViewStore.hasMatter">
+          <span class="text-slate-400 flex-shrink-0">›</span>
+          <span
+            @click="isBannerClickable && navigateToMatter()"
+            :class="[
+              'text-sm font-medium truncate max-w-md',
+              isBannerClickable
+                ? 'text-primary-600 hover:text-primary-700 cursor-pointer hover:underline'
+                : 'text-slate-800 cursor-default',
+            ]"
+            :title="
+              matterViewStore.selectedMatter.matterNumber +
+              ': ' +
+              matterViewStore.selectedMatter.description
+            "
+          >
+            {{ matterViewStore.selectedMatter.matterNumber }}:
+            {{ matterViewStore.selectedMatter.description }}
+          </span>
+        </template>
+
+        <!-- Current Page -->
         <span class="text-slate-400 flex-shrink-0">›</span>
-        <span
-          @click="isBannerClickable && navigateToMatter()"
-          :class="[
-            'text-sm font-medium truncate max-w-md',
-            isBannerClickable
-              ? 'text-primary-600 hover:text-primary-700 cursor-pointer hover:underline'
-              : 'text-slate-800 cursor-default',
-          ]"
-          :title="
-            matterViewStore.selectedMatter.matterNumber +
-            ': ' +
-            matterViewStore.selectedMatter.description
-          "
-        >
-          {{ matterViewStore.selectedMatter.matterNumber }}:
-          {{ matterViewStore.selectedMatter.description }}
+        <span class="text-sm font-medium text-slate-800 truncate" :title="pageTitle">
+          {{ pageTitle }}
         </span>
-      </template>
 
-      <!-- Current Page -->
-      <span class="text-slate-400 flex-shrink-0">›</span>
-      <span class="text-sm font-medium text-slate-800 truncate" :title="pageTitle">
-        {{ pageTitle }}
-      </span>
-
-      <!-- Document (if viewing) -->
-      <template v-if="documentViewStore.documentName">
-        <span class="text-slate-400 flex-shrink-0">›</span>
-        <span
-          class="text-sm font-medium text-slate-800 truncate max-w-xs"
-          :title="documentViewStore.documentName"
-        >
-          {{ documentViewStore.documentName }}
-        </span>
-      </template>
-    </nav>
+        <!-- Document (if viewing) -->
+        <template v-if="documentViewStore.documentName">
+          <span class="text-slate-400 flex-shrink-0">›</span>
+          <span
+            class="text-sm font-medium text-slate-800 truncate max-w-xs"
+            :title="documentViewStore.documentName"
+          >
+            {{ documentViewStore.documentName }}
+          </span>
+        </template>
+      </nav>
+    </div>
 
     <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3 flex-shrink-0">
@@ -138,11 +309,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores/authStore';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useMattersFilterStore } from '@/features/matters/stores/mattersFilter';
 
 // Props
 const props = defineProps({
@@ -160,6 +332,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const matterViewStore = useMatterViewStore();
+const mattersFilterStore = useMattersFilterStore();
 
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.includes('/review/')) {
@@ -191,6 +364,8 @@ const isOnMatterCategoriesPage = computed(() => {
 });
 
 const isBannerClickable = computed(() => !isOnMatterDetailPage.value);
+
+const isOnMattersListPage = computed(() => route.path === '/matters');
 
 function clearMatter() {
   matterViewStore.clearMatter();
@@ -228,6 +403,26 @@ function triggerFileSelect() {
 function triggerFolderRecursiveSelect() {
   window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
 }
+
+// Close dropdown when clicking outside (for matters filter)
+function handleClickOutside(event) {
+  if (mattersFilterStore.statusDropdownOpen) {
+    const dropdown = event.target.closest('[data-matters-dropdown]');
+    if (!dropdown) {
+      mattersFilterStore.closeStatusDropdown();
+    }
+  }
+}
+
+// Setup click-outside listener
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Clean up event listener on unmount
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>
