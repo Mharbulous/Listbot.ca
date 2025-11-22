@@ -141,12 +141,12 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Documents
+                Adverse Parties
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Adverse Parties
+                Documents
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -182,6 +182,13 @@
               <td class="px-6 py-4 text-sm text-slate-700">
                 {{ matter.description }}
               </td>
+              <td class="px-6 py-4 text-sm text-slate-700">
+                {{
+                  Array.isArray(matter.adverseParties)
+                    ? matter.adverseParties.join(', ')
+                    : matter.adverseParties
+                }}
+              </td>
               <td class="px-6 py-4 text-sm text-slate-900 text-center">
                 <span v-if="documentCounts[matter.id] !== undefined" class="font-medium">
                   {{ documentCounts[matter.id] }}
@@ -189,13 +196,6 @@
                 <span v-else class="text-slate-400">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400 mx-auto"></div>
                 </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-700">
-                {{
-                  Array.isArray(matter.adverseParties)
-                    ? matter.adverseParties.join(', ')
-                    : matter.adverseParties
-                }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                 {{ formatDate(matter.lastAccessed) }}
