@@ -4,12 +4,8 @@
   >
     <!-- Left Section: Logo and Hamburger (pinned to left) -->
     <div class="flex items-center gap-4 flex-shrink-0">
-      <!-- Logo -->
-      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
-        <span class="text-lg font-bold text-primary-600">ListBot</span>
-      </RouterLink>
 
-      <!-- Hamburger Toggle Button -->
+        <!-- Hamburger Toggle Button -->
       <button
         class="hamburger-btn"
         @click="$emit('toggle-sidebar')"
@@ -17,6 +13,12 @@
       >
         <span class="text-xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
+      <!-- Logo -->
+      <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
+        <span class="text-lg font-bold text-primary-600">ListBot</span>
+      </RouterLink>
+
+    
 
       <!-- Vertical Divider -->
       <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
