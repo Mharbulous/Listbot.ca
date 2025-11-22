@@ -329,7 +329,7 @@
               class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800"
             >
               3
-            </div>
+            </span>
             <div>
               <h4 class="font-semibold text-blue-600 mb-1">AI Fuzzy Deduplication <span class="text-xs">📋 PLANNED</span></h4>
               <p class="text-blue-700 text-sm">
