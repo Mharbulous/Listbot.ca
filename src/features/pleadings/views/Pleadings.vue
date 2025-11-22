@@ -55,8 +55,8 @@
           :class="selectedProceeding === proceeding.id ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
         >
           <div class="flex flex-col items-start">
-            <div class="font-medium">{{ proceeding.jurisdiction }}, {{ proceeding.venue }}</div>
-            <div class="text-xs text-slate-500">{{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
+            <div class="font-bold">{{ proceeding.styleCause }}</div>
+            <div class="text-xs text-slate-500">{{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
           </div>
         </button>
       </div>
@@ -88,6 +88,11 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
+                Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Version
               </th>
               <th
@@ -109,22 +114,7 @@
               class="hover:bg-slate-50 cursor-pointer transition-colors"
             >
               <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded flex items-center justify-center"
-                  >
-                    <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div class="text-sm">
-                    <div class="font-medium text-slate-900">{{ pleading.documentName }}</div>
-                  </div>
-                </div>
+                <div class="text-sm font-medium text-slate-900">{{ pleading.documentName }}</div>
               </td>
               <td class="px-6 py-4">
                 <div class="text-sm">
@@ -132,8 +122,28 @@
                   <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
                 </div>
               </td>
-              <td class="px-6 py-4 text-sm text-slate-900">
-                {{ pleading.filingParty }}
+              <td class="px-6 py-4">
+                <div class="text-sm">
+                  <div class="font-medium text-slate-900">{{ pleading.partyName }}</div>
+                  <div class="text-xs text-slate-500">{{ pleading.partyRole }}</div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full"
+                  :class="{
+                    'bg-slate-100 text-slate-700': pleading.status === 'Drafting',
+                    'bg-green-100 text-green-700': pleading.status === 'Filed',
+                    'bg-blue-100 text-blue-700': pleading.status === 'Partially Served',
+                    'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
+                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon',
+                    'bg-red-100 text-red-700': pleading.status === 'Expired',
+                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue',
+                    'bg-gray-100 text-gray-700': pleading.status === 'Struck'
+                  }"
+                >
+                  {{ pleading.status }}
+                </span>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
@@ -249,23 +259,26 @@ import { ref, computed } from 'vue';
 const mockProceedings = ref([
   {
     id: '1',
+    styleCause: 'Smith et al. v. Jones et al.',
     jurisdiction: 'BC, Canada',
     venue: 'BCSC',
-    registry: 'Coquitlam Registry',
+    registry: 'Coquitlam',
     courtFileNo: 'S-321451',
   },
   {
     id: '2',
+    styleCause: 'Doe v. XYZ Ltd.',
     jurisdiction: 'BC, Canada',
     venue: 'BCSC',
-    registry: 'Vancouver Registry',
+    registry: 'Vancouver',
     courtFileNo: 'S-245678',
   },
   {
     id: '3',
+    styleCause: 'Adams et al. v. British Columbia',
     jurisdiction: 'BC, Canada',
     venue: 'BCCA',
-    registry: 'Vancouver Registry',
+    registry: 'Vancouver',
     courtFileNo: 'CA-456789',
   },
 ]);
@@ -281,7 +294,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-321451',
     },
-    filingParty: 'Plaintiff (John Smith)',
+    partyName: 'John Smith',
+    partyRole: 'Plaintiff',
+    status: 'Filed',
     version: 'Original',
     filedDate: '2024-03-15',
     hasAmendments: false,
@@ -295,7 +310,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-321451',
     },
-    filingParty: 'Defendant (Acme Corp)',
+    partyName: 'Acme Corp',
+    partyRole: 'Defendant',
+    status: 'Fully Served',
     version: 'Original',
     filedDate: '2024-04-12',
     hasAmendments: false,
@@ -309,7 +326,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-321451',
     },
-    filingParty: 'Defendant (Acme Corp)',
+    partyName: 'Acme Corp',
+    partyRole: 'Defendant',
+    status: 'Partially Served',
     version: 'Original',
     filedDate: '2024-04-12',
     hasAmendments: false,
@@ -323,7 +342,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-321451',
     },
-    filingParty: 'Plaintiff (John Smith)',
+    partyName: 'John Smith',
+    partyRole: 'Plaintiff',
+    status: 'Drafting',
     version: 'First Amendment',
     filedDate: '2024-05-20',
     hasAmendments: true,
@@ -337,7 +358,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-321451',
     },
-    filingParty: 'Plaintiff (John Smith)',
+    partyName: 'John Smith',
+    partyRole: 'Plaintiff',
+    status: 'Expiring soon',
     version: 'Original',
     filedDate: '2024-05-28',
     hasAmendments: false,
@@ -351,7 +374,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-245678',
     },
-    filingParty: 'Plaintiff (Jane Doe)',
+    partyName: 'Jane Doe',
+    partyRole: 'Plaintiff',
+    status: 'Expired',
     version: 'Original',
     filedDate: '2024-06-01',
     hasAmendments: false,
@@ -365,7 +390,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-245678',
     },
-    filingParty: 'Defendant (XYZ Ltd)',
+    partyName: 'XYZ Ltd',
+    partyRole: 'Defendant',
+    status: 'Overdue',
     version: 'Original',
     filedDate: '2024-07-10',
     hasAmendments: false,
@@ -379,7 +406,9 @@ const mockPleadings = ref([
       venue: 'BCSC',
       courtFileNo: 'S-245678',
     },
-    filingParty: 'Plaintiff (Jane Doe)',
+    partyName: 'Jane Doe',
+    partyRole: 'Plaintiff',
+    status: 'Struck',
     version: 'First Amendment',
     filedDate: '2024-08-05',
     hasAmendments: true,
