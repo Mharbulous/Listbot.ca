@@ -17,10 +17,10 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Page Title Row - Sticky below app header */
+/* Page Title Row - Sticky at top of scroll container */
 .page-title-row {
   position: sticky;
-  top: 64px; /* Stick below app header (64px height) */
+  top: 0; /* Stick to top of scroll container */
   z-index: 9; /* Below table header (z-index: 10) */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 24px;
@@ -38,10 +38,10 @@
   letter-spacing: 0.5px;
 }
 
-/* Sticky Header - Sticks below page title (if present) or below app header */
+/* Sticky Header - Sticks below page title (if present) or at top of scroll container */
 .table-mockup-header {
   position: sticky;
-  top: 64px; /* Default: stick below app header (overridden by inline style when pageTitle exists) */
+  top: 0; /* Default: stick to top of scroll container (overridden by inline style when pageTitle exists) */
   z-index: 10;
   display: flex;
   background: #f9fafb;

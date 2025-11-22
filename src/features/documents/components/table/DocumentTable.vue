@@ -32,7 +32,7 @@
       </div>
 
       <!-- Sticky Table Header -->
-      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px', top: pageTitle ? '132px' : '64px' }">
+      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px', top: pageTitle ? '68px' : '0' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
           <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
