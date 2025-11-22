@@ -26,13 +26,15 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
-      <!-- Page Title Row (scrollable) -->
-      <div v-if="pageTitle" class="page-title-row">
-        <h1 class="page-title-text">{{ pageTitle }}</h1>
-      </div>
+      <!-- Sticky Header Group: Title + Table Header stick together as one unit -->
+      <div class="sticky-header-group">
+        <!-- Page Title Row -->
+        <div v-if="pageTitle" class="page-title-row">
+          <h1 class="page-title-text">{{ pageTitle }}</h1>
+        </div>
 
-      <!-- Sticky Table Header -->
-      <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
+        <!-- Table Header -->
+        <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
           <button ref="columnSelectorBtn" class="column-selector-btn" @click="showColumnSelector = !showColumnSelector">
@@ -106,6 +108,7 @@
             <button class="reset-btn" @click="resetToDefaults">Reset to Defaults</button>
           </div>
         </div>
+      </div>
       </div>
 
       <!-- Scrollable Table Body with Virtual Scrolling -->
