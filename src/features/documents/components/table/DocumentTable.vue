@@ -26,20 +26,9 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
-      <!-- Page Title Row (scrollable - slides up like drawer) -->
-      <div v-if="pageTitle" class="page-title-row">
-        <h1 class="page-title-text">{{ pageTitle }}</h1>
-        <v-text-field
-          v-model="searchQuery"
-          density="compact"
-          variant="solo"
-          label="Search documents..."
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          hide-details
-          class="search-field"
-          style="max-width: 350px;"
-        />
+      <!-- Title Drawer (scrollable - slides up behind sticky header) -->
+      <div v-if="pageTitle" class="title-drawer">
+        <h1 class="title-drawer-text">{{ pageTitle }}</h1>
       </div>
 
       <!-- Sticky Table Header (drawer front panel - stays fixed) -->
