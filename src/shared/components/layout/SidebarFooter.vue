@@ -489,7 +489,7 @@ const handleAvatarMouseLeave = () => {
 }
 
 .sidebar-footer-collapsed .footer-trigger {
-  @apply justify-center px-0;
+  @apply px-3;
 }
 
 /* Avatar */
