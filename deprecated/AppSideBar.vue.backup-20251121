@@ -159,7 +159,7 @@ const navItems = [
   { key: 'workflow-end', type: 'header', label: 'Resources' },
 
   // About (Special - not part of EDRM workflow)
-  { key: 'about', path: '/about', icon: 'ℹ️', label: 'About' },
+  { key: 'about', path: '/sso', icon: 'ℹ️', label: 'About' },
 ];
 
 // Tooltip state

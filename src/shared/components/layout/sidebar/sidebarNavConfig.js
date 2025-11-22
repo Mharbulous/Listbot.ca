@@ -83,7 +83,7 @@ export function useNavItems() {
     { key: 'workflow-end', type: 'header', label: 'Resources' },
 
     // About (Special - not part of EDRM workflow)
-    { key: 'about', path: '/about', icon: 'ℹ️', label: 'About' },
+    { key: 'sso', path: '/sso', icon: '↔️', label: 'SSO' },
   ];
 }
 

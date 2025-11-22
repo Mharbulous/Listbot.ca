@@ -15,11 +15,11 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home-explicit',
-      component: () => import('../views/About.vue'),
+      component: () => import('../views/sso.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
-      path: '/about',
+      path: '/sso',
       name: 'about',
       component: () => import('../views/Home.vue'),
       meta: { requiresAuth: true, title: 'About' },
