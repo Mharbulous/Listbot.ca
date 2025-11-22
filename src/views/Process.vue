@@ -94,31 +94,6 @@
             </div>
           </div>
 
-          <!-- Exact Hash Deduplication -->
-          <div class="bg-white border border-slate-200 rounded-lg p-6">
-            <div class="flex items-start gap-3 mb-3">
-              <div class="text-2xl">🔍</div>
-              <div>
-                <h4 class="text-lg font-semibold text-slate-900">
-                  Exact Hash-Based Deduplication
-                </h4>
-                <p class="text-sm text-blue-600 font-medium">Quick Win</p>
-              </div>
-            </div>
-            <p class="text-slate-600 mb-3">
-              MD5/SHA256 hash matching to identify and remove exact duplicate files, complementing
-              the existing AI fuzzy deduplication.
-            </p>
-            <div class="text-sm text-slate-500 mb-2">
-              <span class="font-medium">Implementation:</span> Hash calculated during upload via
-              Firebase Cloud Functions
-            </div>
-            <div class="text-sm text-slate-500">
-              <span class="font-medium">Benefit:</span> Eliminates true duplicates instantly,
-              typically reducing corpus by 30-50%
-            </div>
-          </div>
-
           <!-- Processing Analytics Dashboard -->
           <div class="bg-white border border-slate-200 rounded-lg p-6">
             <div class="flex items-start gap-3 mb-3">
@@ -254,15 +229,17 @@
           <!-- Step 2 -->
           <div class="flex gap-4">
             <div
-              class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center"
+              class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center"
             >
               2
             </div>
             <div>
-              <h4 class="font-semibold text-slate-900 mb-1">Hash Calculation & Exact Deduplication</h4>
+              <h4 class="font-semibold text-slate-900 mb-1">
+                Hash Calculation & Exact Deduplication <span class="text-sm text-emerald-600">(Implemented at Preserve stage)</span>
+              </h4>
               <p class="text-slate-600">
-                MD5/SHA256 hashes are calculated to identify and group exact duplicates
-                (planned).
+                BLAKE3 hashes are calculated during upload to identify and group exact duplicates,
+                reducing storage and processing costs.
               </p>
             </div>
           </div>
@@ -384,9 +361,8 @@
             <span class="text-sm text-slate-600">(1-2 months)</span>
           </div>
           <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
-            <li>Exact hash-based deduplication (MD5/SHA256)</li>
-            <li>Basic email threading with header parsing</li>
-            <li>Processing analytics dashboard with Chart.js</li>
+            <li>Email threading with header parsing and conversation reconstruction</li>
+            <li>Processing analytics dashboard with Chart.js visualizations</li>
           </ul>
         </div>
 

@@ -8,17 +8,27 @@
       </div>
 
       <!-- Navigation Link -->
-      <RouterLink
-        v-else
-        :to="item.path"
-        class="nav-item"
-        :class="{ 'nav-item-active': route.path === item.path }"
-        @mouseenter="$emit('item-hover', $event, item.key)"
-        @mouseleave="$emit('item-leave')"
-      >
-        <span class="nav-icon">{{ getItemIcon(item, hoveredItemKey, route.path) }}</span>
-        <span v-if="!isCollapsed" class="nav-label">{{ item.label }}</span>
-      </RouterLink>
+      <div v-else class="nav-item-wrapper">
+        <RouterLink
+          :to="item.path"
+          class="nav-item"
+          :class="{ 'nav-item-active': route.path === item.path }"
+          @mouseenter="$emit('item-hover', $event, item.key)"
+          @mouseleave="$emit('item-leave')"
+        >
+          <span class="nav-icon">{{ getItemIcon(item, hoveredItemKey, route.path) }}</span>
+          <span v-if="!isCollapsed" class="nav-label">{{ item.label }}</span>
+        </RouterLink>
+        <RouterLink
+          v-if="item.stubPath && !isCollapsed"
+          :to="item.stubPath"
+          class="stub-button"
+          :class="{ 'stub-button-active': route.path === item.stubPath }"
+          title="View detailed feature roadmap"
+        >
+          🚧
+        </RouterLink>
+      </div>
     </template>
   </div>
 </template>
@@ -112,6 +122,14 @@ const route = useRoute();
   margin: 0 auto;
 }
 
+.nav-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  direction: ltr; /* Reset content direction */
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -125,7 +143,6 @@ const route = useRoute();
   transition: all 200ms ease-in-out;
   white-space: nowrap;
   flex: 1 1 auto;
-  direction: ltr; /* Reset content direction */
 }
 
 .sidebar-collapsed .nav-item {
@@ -161,5 +178,31 @@ const route = useRoute();
   transition: opacity 0.2s ease-in-out;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.stub-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  color: var(--sidebar-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.stub-button:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
+  transform: scale(1.1);
+}
+
+.stub-button-active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
 }
 </style>

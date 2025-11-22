@@ -25,7 +25,7 @@ export function useNavItems() {
     { key: 'identify', path: '/identify/stub', icon: '🕵️', label: 'Identify 🚧' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve' },
+    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub' },
 
     // EDRM Stage 3: Collect
     {
