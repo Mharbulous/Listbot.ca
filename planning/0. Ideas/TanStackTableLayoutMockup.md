@@ -222,9 +222,9 @@ src/features/organizer/components/TanStackFileTable.vue
 5. **No Double Scrollbars**: Only table scrolls, not the page
 6. **Clean UX**: Minimal UI chrome, focus on data
 
-## Comparison to Current `/list` Page
+## Comparison to Current `/produce` Page
 
-| Feature | `/list` (Current) | `/analyze` (New) |
+| Feature | `/produce` (Current) | `/analyze` (New) |
 |---------|-------------------|------------------|
 | Virtual Scrolling | Vertical only | Vertical + Horizontal |
 | Column Selector | Separate toolbar | Integrated in header |
