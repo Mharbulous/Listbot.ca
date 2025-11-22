@@ -7,7 +7,7 @@
       >
         EDRM Stage 6: Analysis
       </div>
-      <h1 class="text-4xl font-bold text-slate-900 mb-4">Analyze Workflow</h1>
+      <h1 class="text-4xl font-bold text-slate-900 mb-4">Analysis Workflow</h1>
       <p class="text-xl text-slate-600 max-w-4xl">
         The Analysis stage goes beyond document-by-document review to uncover patterns, relationships,
         and strategic insights that inform case strategy—revealing the "story behind the data."
