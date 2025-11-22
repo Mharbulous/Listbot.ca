@@ -107,7 +107,6 @@
           </div>
         </div>
       </div>
-      </div>
 
       <!-- Scrollable Table Body with Virtual Scrolling -->
       <div class="table-mockup-body" :style="{ minWidth: totalFooterWidth + 'px' }">
@@ -355,6 +354,9 @@ const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 const columnSelectorBtn = ref(null);
+
+// Search functionality
+const searchQuery = ref('');
 
 const defaultColumnWidths = computed(() => {
   return props.columns.reduce((acc, col) => {
