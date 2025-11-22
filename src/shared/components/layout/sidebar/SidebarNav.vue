@@ -188,7 +188,7 @@ const route = useRoute();
 
 .stub-button {
   position: absolute;
-  right: 42px;
+  right: 1px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
