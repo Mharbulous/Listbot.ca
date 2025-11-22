@@ -34,14 +34,14 @@
       <template v-if="isOnMattersListPage">
         <div class="flex items-center gap-3 flex-1">
           <!-- Segmented Control: My Matters / Firm Matters -->
-          <div class="inline-flex rounded-lg bg-slate-100 p-0.5 flex-shrink-0">
+          <div class="inline-flex rounded-lg bg-white/50 p-0.5 flex-shrink-0">
             <button
               @click="mattersFilterStore.setShowMyMatters(true)"
               :class="[
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                 mattersFilterStore.showMyMattersOnly
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900',
+                  ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80',
               ]"
             >
               My Matters
@@ -51,8 +51,8 @@
               :class="[
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                 !mattersFilterStore.showMyMattersOnly
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900',
+                  ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80',
               ]"
             >
               Firm Matters
@@ -63,7 +63,7 @@
           <div class="relative flex-shrink-0" data-matters-dropdown>
             <button
               @click="mattersFilterStore.toggleStatusDropdown()"
-              class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors flex items-center gap-2"
             >
               <span>Status: {{ mattersFilterStore.statusFilterLabel }}</span>
               <svg
@@ -138,29 +138,29 @@
                 :class="[
                   'p-1.5 rounded text-xs font-semibold transition-colors',
                   mattersFilterStore.caseSensitive
-                    ? 'text-blue-600 hover:bg-blue-50'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
                 ]"
                 :title="
                   mattersFilterStore.caseSensitive ? 'Case sensitive' : 'Case insensitive'
                 "
               >
-                <span class="font-mono">Aa</span>
+                <span class="font-mono">{{ mattersFilterStore.caseSensitive ? 'Aa' : 'aA' }}</span>
               </button>
               <!-- Whole Word Toggle -->
               <button
                 @click="mattersFilterStore.toggleWholeWord()"
                 :class="[
-                  'p-1.5 rounded text-xs font-semibold transition-colors',
+                  'px-1.5 py-1.5 rounded text-xs font-semibold transition-colors',
                   mattersFilterStore.wholeWord
-                    ? 'text-blue-600 hover:bg-blue-50'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
                 ]"
                 :title="
                   mattersFilterStore.wholeWord ? 'Match whole words only' : 'Match partial words'
                 "
               >
-                <span class="font-mono">Ab</span>
+                <span class="font-mono">{{ mattersFilterStore.wholeWord ? 'Word' : 'Wo__' }}</span>
               </button>
               <!-- Clear Button -->
               <button
