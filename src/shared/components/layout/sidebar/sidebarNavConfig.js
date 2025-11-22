@@ -19,6 +19,9 @@ export function useNavItems() {
     { key: 'theory', path: '/theory', icon: '♙', label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
     { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
+    // Spacer for visual separation
+    { key: 'spacer-1', type: 'spacer' },
+
     // EDRM Workflow Section Header
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
@@ -26,7 +29,7 @@ export function useNavItems() {
     { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'building' },
+    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
 
     // EDRM Stage 3: Collect
     {
