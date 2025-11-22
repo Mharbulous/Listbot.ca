@@ -53,14 +53,14 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Process' },
     },
     {
-      path: '/analysis',
+      path: '/analysis/stub',
       name: 'analysis',
       component: () => import('../views/Analysis.vue'),
       meta: { requiresAuth: true, title: 'Analysis' },
     },
     {
       path: '/analyze',
-      redirect: '/analysis',
+      redirect: '/analysis/stub',
     },
     {
       path: '/list',
@@ -93,13 +93,13 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Characters' },
     },
     {
-      path: '/identify',
+      path: '/identify/stub',
       name: 'identify',
       component: () => import('../views/Identify.vue'),
       meta: { requiresAuth: true, title: 'Identify' },
     },
     {
-      path: '/present',
+      path: '/present/stub',
       name: 'present',
       component: () => import('../views/Present.vue'),
       meta: { requiresAuth: true, title: 'Present' },
