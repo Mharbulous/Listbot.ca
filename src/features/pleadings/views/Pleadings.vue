@@ -153,13 +153,10 @@
                   class="px-2 py-1 text-xs font-medium rounded-full"
                   :class="{
                     'bg-slate-100 text-slate-700': pleading.status === 'Drafting',
-                    'bg-green-100 text-green-700': pleading.status === 'Filed',
-                    'bg-blue-100 text-blue-700': pleading.status === 'Partially Served',
+                    'bg-blue-100 text-blue-700': pleading.status === 'Filed' || pleading.status === 'Partially Served',
                     'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
-                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon',
-                    'bg-red-100 text-red-700': pleading.status === 'Expired',
-                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue',
-                    'bg-red-100 text-red-700': pleading.status === 'Struck'
+                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon' || pleading.status === 'Overdue',
+                    'bg-red-100 text-red-700': pleading.status === 'Expired' || pleading.status === 'Struck'
                   }"
                 >
                   {{ pleading.status }}
