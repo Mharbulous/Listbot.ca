@@ -47,6 +47,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresActiveMatter: true, title: 'Upload' },
     },
     {
+      path: '/upload/stub',
+      name: 'preserve',
+      component: () => import('../views/Preserve.vue'),
+      meta: { requiresAuth: true, title: 'Preserve' },
+    },
+    {
       path: '/process/stub',
       name: 'process',
       component: () => import('../views/Process.vue'),
