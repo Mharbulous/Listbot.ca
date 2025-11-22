@@ -29,7 +29,7 @@
         </div>
 
         <!-- Right Column: Mascot Visual -->
-        <div class="flex justify-center lg:justify-start order-first lg:order-last">
+        <div class="flex justify-center lg:justify-end">
           <div class="relative mascot-container">
             <div class="absolute inset-0 bg-gradient-to-br from-indigo-400 to-violet-400 rounded-3xl blur-2xl opacity-20 transform scale-95"></div>
             <img
