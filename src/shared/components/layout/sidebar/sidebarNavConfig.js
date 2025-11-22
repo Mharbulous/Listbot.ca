@@ -14,7 +14,7 @@ export function useNavItems() {
 
     // Pleadings and Issues (not part of EDRM workflow)
     { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings 🚧' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Legal memos 🚧' },
+    { key: 'law', path: '/law', icon: '📚', label: 'Law 🚧' },
     { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts 🚧' },
     { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters 🚧' },
 
@@ -65,7 +65,7 @@ export function useNavItems() {
         return '/analysis/stub';
       }),
       icon: '🧑‍💻',
-      label: 'Review 🚧',
+      label: 'Review',
     },
 
     // EDRM Stage 6: Analysis
