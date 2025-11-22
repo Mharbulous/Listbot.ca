@@ -24,6 +24,10 @@
   border-bottom: 2px solid #e5e7eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   min-width: max-content; /* Match table width */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .page-title-text {
@@ -33,6 +37,11 @@
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.search-field {
+  flex-shrink: 0;
 }
 
 /* Table Header - Sticky drawer front panel */

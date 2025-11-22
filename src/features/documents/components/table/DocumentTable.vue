@@ -29,6 +29,17 @@
       <!-- Page Title Row (scrollable - slides up like drawer) -->
       <div v-if="pageTitle" class="page-title-row">
         <h1 class="page-title-text">{{ pageTitle }}</h1>
+        <v-text-field
+          v-model="searchQuery"
+          density="compact"
+          variant="solo"
+          label="Search documents..."
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          hide-details
+          class="search-field"
+          style="max-width: 350px;"
+        />
       </div>
 
       <!-- Sticky Table Header (drawer front panel - stays fixed) -->
@@ -355,6 +366,9 @@ const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 const columnSelectorBtn = ref(null);
+
+// Search functionality
+const searchQuery = ref('');
 
 const defaultColumnWidths = computed(() => {
   return props.columns.reduce((acc, col) => {
