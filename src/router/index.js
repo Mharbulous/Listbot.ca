@@ -15,7 +15,7 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home-explicit',
-      component: () => import('../views/sso.vue'),
+      component: () => import('../views/SSO.vue'),
       meta: { requiresAuth: true, title: 'Home' },
     },
     {
@@ -90,27 +90,61 @@ const router = createRouter({
     },
     {
       path: '/law',
+      redirect: '/law/stub',
+    },
+    {
+      path: '/law/stub',
       name: 'law',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Law.vue'),
       meta: { requiresAuth: true, title: 'Legal Memos' },
     },
     {
       path: '/facts',
+      redirect: '/facts/stub',
+    },
+    {
+      path: '/facts/stub',
       name: 'facts',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Facts.vue'),
       meta: { requiresAuth: true, title: 'Facts' },
     },
     {
       path: '/cast',
+      redirect: '/cast/stub',
+    },
+    {
+      path: '/cast/stub',
       name: 'cast',
-      component: () => import('../views/defaults/UnderConstruction.vue'),
+      component: () => import('../views/Cast.vue'),
       meta: { requiresAuth: true, title: 'Characters' },
+    },
+    {
+      path: '/identify',
+      redirect: '/identify/stub',
     },
     {
       path: '/identify/stub',
       name: 'identify',
       component: () => import('../views/Identify.vue'),
       meta: { requiresAuth: true, title: 'Identify' },
+    },
+    {
+      path: '/collect/stub',
+      name: 'collect-stub',
+      component: () => import('../views/Collect.vue'),
+      meta: { requiresAuth: true, title: 'Collect' },
+    },
+    {
+      path: '/process',
+      redirect: '/process/stub',
+    },
+    {
+      path: '/analysis',
+      redirect: '/analysis/stub',
+    },
+    {
+      path: '/present',
+      redirect: '/present/stub',
     },
     {
       path: '/present/stub',
