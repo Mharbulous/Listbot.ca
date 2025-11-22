@@ -149,20 +149,25 @@ See dedicated test suggestions in auth module documentation.
 
 ## AppSideBar Module Structure
 
-The AppSideBar component has been decomposed from a single 422-line file into 6 focused modules following the streamline workflow.
+The AppSideBar component has been decomposed from a single 422-line file into multiple focused modules following the streamline workflow.
 
 ### Directory Structure
 
 ```
 src/shared/components/layout/
 ├── AppSideBar.vue                    # Main orchestrator (73 lines)
-├── SidebarFooter.vue                 # Footer component with user menu (596 lines) ⚠️ NEEDS STREAMLINING
+├── SidebarFooter.vue                 # Footer orchestrator (81 lines)
 └── sidebar/
     ├── SidebarHeader.vue            # Logo + toggle button (97 lines)
     ├── SidebarNav.vue               # Navigation items list (235 lines)
     ├── SidebarTooltip.vue           # Floating tooltip component (54 lines)
     ├── useSidebarTooltip.js         # Tooltip logic composable (58 lines)
-    └── sidebarNavConfig.js          # Navigation items configuration (121 lines)
+    ├── sidebarNavConfig.js          # Navigation items configuration (121 lines)
+    ├── FooterTrigger.vue            # Footer trigger with avatar (156 lines)
+    ├── FooterMenu.vue               # Footer menu popover (245 lines)
+    ├── useFooterMenu.js             # Menu state management (73 lines)
+    ├── useKeyboardNav.js            # Keyboard navigation (152 lines)
+    └── footerConfig.js              # Footer configuration (58 lines)
 ```
 
 ### Module Responsibilities
@@ -174,17 +179,12 @@ src/shared/components/layout/
 - Orchestrates child components
 - Minimal styling (layout only)
 
-#### `SidebarFooter.vue` - Footer Component (596 lines) ⚠️
-**⚠️ WARNING: This file is 596 lines and NEEDS STREAMLINING**
-
+#### `SidebarFooter.vue` - Footer Orchestrator (81 lines)
 **Responsibilities:**
-- User avatar and menu trigger
-- Unified menu popover (Account, Switch Apps, Sign Out sections)
-- Keyboard navigation and accessibility
-- Tooltip for user avatar
-- App switching functionality
-
-**This component should be decomposed into smaller modules.**
+- Coordinates FooterTrigger and FooterMenu components
+- Uses useFooterMenu and useKeyboardNav composables
+- Manages state between child components
+- Minimal orchestration logic
 
 #### `SidebarHeader.vue` - Header Component (97 lines)
 **Responsibilities:**
@@ -241,52 +241,111 @@ src/shared/components/layout/
 - `useNavItems()` - Returns navigation items array with dynamic computed paths
 - `getItemIcon(item, isHovered, isActive)` - Returns appropriate icon (handles special cases like folder icons)
 
+#### `FooterTrigger.vue` - Footer Trigger Component (156 lines)
+**Responsibilities:**
+- Avatar display with loading spinner
+- User role display (when sidebar expanded)
+- Chevron icon animation
+- Tooltip integration for avatar
+- Click handler to toggle menu
+- Exposes triggerButton ref to parent
+
+#### `FooterMenu.vue` - Footer Menu Component (245 lines)
+**Responsibilities:**
+- Menu popover structure with transition
+- Three menu sections:
+  - **Account**: Profile, Settings links
+  - **Switch Apps**: App switcher with descriptions
+  - **Sign Out**: Logout button
+- Mobile backdrop overlay
+- Menu positioning and styles
+- Menu item click handlers
+
+#### `useFooterMenu.js` - Menu State Composable (73 lines)
+**Responsibilities:**
+- Menu open/close state management
+- Toggle menu visibility
+- Close menu and return focus to trigger
+- Handle blur events
+- Watch for sidebar collapse (auto-close menu)
+
+**Exported API:**
+- `isOpen` (ref) - Menu open state
+- `menuId` (string) - Unique menu ID for accessibility
+- `toggleMenu()` - Toggle menu visibility
+- `closeMenu()` - Close menu and restore focus
+- `handleBlur()` - Handle focus loss
+
+#### `useKeyboardNav.js` - Keyboard Navigation Composable (152 lines)
+**Responsibilities:**
+- Menu items refs array management
+- Focused index tracking
+- Keyboard event handlers (Enter, Space, Arrow keys, Escape, Home, End, Tab)
+- Focus management helpers
+
+**Exported API:**
+- `menuItems` (reactive array) - Menu item element refs
+- `focusedIndex` (ref) - Currently focused item index
+- `totalItems` (number) - Total count of menu items
+- `handleTriggerKeydown(event)` - Trigger button keyboard handler
+- `handleItemKeydown(event, index)` - Menu item keyboard handler
+- `resetFocusIndex()` - Reset focus tracking
+
+#### `footerConfig.js` - Footer Configuration (58 lines)
+**Responsibilities:**
+- User menu links configuration (Profile, Settings)
+- Available apps configuration (Book Keeper, Intranet)
+- App URL generation logic
+- Base domain constant
+
+**Exported API:**
+- `userLinks` - Array of user menu links
+- `availableApps` - Array of available apps
+- `baseDomain` - Base domain for URL generation
+- `getAppUrl(subdomain)` - Generate URL for app subdomain
+
 ### Migration Notes
 
-**Old Structure:**
+**Old Structure (AppSideBar):**
 ```
 src/shared/components/layout/AppSideBar.vue (422 lines)
+```
+
+**Old Structure (SidebarFooter):**
+```
+src/shared/components/layout/SidebarFooter.vue (596 lines)
 ```
 
 **New Structure:**
 ```
 src/shared/components/layout/
 ├── AppSideBar.vue (73 lines)
-├── SidebarFooter.vue (596 lines) ⚠️
-└── sidebar/ (5 modules, 565 lines total)
-Total: 1,234 lines
+├── SidebarFooter.vue (81 lines)
+└── sidebar/ (11 modules, 1,249 lines total)
+Total: 1,403 lines
 ```
 
 **Deprecated:**
-- Original file backed up to `/deprecated/AppSideBar.vue.backup-20251121`
+- `/deprecated/AppSideBar.vue.backup-20251121` (original AppSideBar)
+- `/deprecated/SidebarFooter.vue.backup-20251122` (original SidebarFooter)
 
 **Backward Compatibility:**
-- Component interface unchanged (same props and events)
+- All component interfaces unchanged (same props and events)
 - All existing imports continue to work
 - No changes required in consuming code
 
 ### Benefits of Decomposition
 
-1. **Maintainability** - Most files < 250 lines, focused on single responsibility
-2. **Reusability** - Tooltip composable can be reused in other components
+1. **Maintainability** - All files < 250 lines, focused on single responsibility
+2. **Reusability** - Tooltip and keyboard navigation composables can be reused
 3. **Testability** - Components and logic can be tested in isolation
 4. **Readability** - Clear separation of concerns
-5. **Scalability** - Easy to extend navigation configuration without touching component logic
-
-### Next Steps for AppSideBar Module
-
-**⚠️ PRIORITY: SidebarFooter.vue requires streamlining**
-
-This file is 596 lines and should be decomposed into smaller modules:
-- Menu trigger component
-- Menu popover component
-- User links configuration
-- App switcher component
-- Keyboard navigation composable
+5. **Scalability** - Easy to extend configuration without touching component logic
+6. **Accessibility** - Keyboard navigation logic is centralized and ARIA-compliant
 
 ### Testing Strategy
 
-**Suggested Test Coverage:**
+**Suggested Test Coverage (Navigation):**
 1. Toggle sidebar expand/collapse
 2. Navigate to each menu item (verify routing)
 3. Hover over items when sidebar is collapsed (verify tooltips appear)
@@ -294,6 +353,22 @@ This file is 596 lines and should be decomposed into smaller modules:
 5. Test responsive behavior with different viewport heights
 6. Verify folder icon changes (open/closed) on Collect item
 7. Test section headers display correctly in both expanded and collapsed states
+
+**Suggested Test Coverage (Footer Menu):**
+1. Click footer trigger to open/close menu
+2. Verify avatar displays user initials correctly
+3. Hover over avatar when sidebar is collapsed (verify tooltip shows user name)
+4. Navigate to Profile and Settings from footer menu
+5. Test app switching links (Book Keeper, Intranet)
+6. Test sign out functionality
+7. Keyboard navigation:
+   - Press Enter/Space on trigger to open menu
+   - Press Arrow keys to navigate menu items
+   - Press Escape to close menu
+   - Press Home/End to jump to first/last item
+8. Verify menu auto-closes when sidebar collapses
+9. Verify focus returns to trigger when menu closes
+10. Test mobile backdrop (click outside to close)
 
 ### Related Documentation
 
