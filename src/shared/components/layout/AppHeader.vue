@@ -16,7 +16,7 @@
       <!-- Spacer that adjusts to keep divider aligned with sidebar edge -->
       <div
         class="flex items-center transition-all duration-300"
-        :class="isCollapsed ? 'w-[12px]' : 'w-[108px]'"
+        :class="isCollapsed ? 'w-[22px]' : 'w-[118px]'"
       >
         <!-- Logo (only visible when sidebar is open) -->
         <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0 ml-4">
