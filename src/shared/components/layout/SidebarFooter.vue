@@ -12,14 +12,19 @@
       class="footer-trigger"
     >
       <!-- Avatar -->
-      <div class="footer-avatar">
+      <div
+        ref="avatarEl"
+        class="footer-avatar"
+        @mouseenter="handleAvatarMouseEnter"
+        @mouseleave="handleAvatarMouseLeave"
+      >
         <div v-if="authStore.userInitials === 'loading'" class="loading-spinner"></div>
         <span v-else>{{ authStore.userInitials }}</span>
       </div>
 
-      <!-- User Name (only when expanded) -->
+      <!-- User Role (only when expanded) -->
       <span v-if="!props.isCollapsed" class="footer-username">
-        {{ authStore.userDisplayName || 'User' }}
+        {{ userRoleDisplay }}
       </span>
 
       <!-- Chevron (only when expanded) -->
@@ -144,13 +149,21 @@
       @click="closeMenu"
       aria-hidden="true"
     ></div>
+
+    <!-- Avatar Tooltip -->
+    <SidebarTooltip
+      :show="showTooltip"
+      :text="authStore.userDisplayName || 'User'"
+      :style="tooltipStyle"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, watch } from 'vue';
+import { ref, reactive, nextTick, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores';
+import SidebarTooltip from './sidebar/SidebarTooltip.vue';
 
 // Props
 const props = defineProps({
@@ -171,8 +184,24 @@ const menu = ref(null);
 const menuItems = reactive([]);
 const focusedIndex = ref(-1);
 
+// Tooltip state
+const showTooltip = ref(false);
+const tooltipStyle = ref({});
+const avatarEl = ref(null);
+
 // Generate unique ID for accessibility
 const menuId = `unified-menu-${Math.random().toString(36).substr(2, 9)}`;
+
+// Computed property to format the user role
+const userRoleDisplay = computed(() => {
+  if (!authStore.userRole) return 'Member';
+
+  // Capitalize first letter of each word
+  return authStore.userRole
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+});
 
 // Watch for sidebar collapse and close menu
 watch(
@@ -419,6 +448,28 @@ const handleSignOut = async () => {
     console.error('Sign out failed:', error);
   }
 };
+
+/**
+ * Show tooltip on avatar hover
+ */
+const handleAvatarMouseEnter = (event) => {
+  const target = event.currentTarget;
+  const rect = target.getBoundingClientRect();
+
+  tooltipStyle.value = {
+    left: `${rect.right + 12}px`,
+    top: `${rect.top + rect.height / 2}px`,
+  };
+
+  showTooltip.value = true;
+};
+
+/**
+ * Hide tooltip
+ */
+const handleAvatarMouseLeave = () => {
+  showTooltip.value = false;
+};
 </script>
 
 <style scoped>
@@ -446,7 +497,7 @@ const handleSignOut = async () => {
   @apply w-9 h-9 bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-sm flex-shrink-0;
 }
 
-/* Username */
+/* User Role */
 .footer-username {
   @apply flex-1 text-sm font-medium text-slate-200 truncate text-left;
 }
