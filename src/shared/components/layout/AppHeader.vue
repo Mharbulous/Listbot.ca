@@ -1,10 +1,12 @@
 <template>
   <header
-    class="header-fixed ocean-sky-gradient px-3 py-4 flex items-center h-16 box-border flex-shrink-0"
+    class="header-fixed ocean-sky-gradient pr-3 py-4 flex items-center h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Logo and Hamburger (pinned to left) -->
-    <div class="flex items-center gap-4 flex-shrink-0">
-
+    <div
+      class="flex items-center flex-shrink-0 transition-all duration-300"
+      :class="isCollapsed ? 'pl-3' : 'pl-7'"
+    >
         <!-- Hamburger Toggle Button -->
       <button
         class="hamburger-btn"
@@ -14,14 +16,15 @@
         <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
       <!-- Logo (only visible when sidebar is open) -->
-      <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
+      <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0 ml-4">
         <span class="text-lg font-bold text-primary-600">ListBot</span>
       </RouterLink>
 
-    
-
-      <!-- Vertical Divider -->
-      <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
+      <!-- Vertical Divider (aligned with sidebar edge) -->
+      <div
+        class="h-8 w-px bg-slate-200 flex-shrink-0 transition-all duration-300"
+        :class="isCollapsed ? 'ml-3' : 'ml-4'"
+      ></div>
     </div>
 
     <!-- Center Section: Breadcrumb Navigation (flexible) -->
