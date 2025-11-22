@@ -11,7 +11,7 @@
         @click="$emit('toggle-sidebar')"
         :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
-        <span class="text-xl">{{ isCollapsed ? '☰' : '«' }}</span>
+        <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
