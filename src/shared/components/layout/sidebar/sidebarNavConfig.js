@@ -82,7 +82,11 @@ export function useNavItems() {
     // End of Workflow Section Header
     { key: 'workflow-end', type: 'header', label: 'Resources' },
 
+<<<<<<< HEAD
     // About (Special - not part of EDRM workflow)
+=======
+    // SSO (Special - not part of EDRM workflow)
+>>>>>>> 425ac611279ddc862b6b2a996e35ce4cc8ed0177
     { key: 'sso', path: '/sso', icon: '↔️', label: 'SSO' },
   ];
 }

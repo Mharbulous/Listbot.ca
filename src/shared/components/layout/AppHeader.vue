@@ -1,9 +1,9 @@
 <template>
   <header
-    class="header-fixed ocean-sky-gradient px-8 py-4 flex items-center justify-between h-16 box-border flex-shrink-0"
+    class="header-fixed ocean-sky-gradient px-8 py-4 flex items-center h-16 box-border flex-shrink-0"
   >
-    <!-- Left Section: Logo, Hamburger, and Breadcrumb Navigation -->
-    <div class="flex items-center gap-4 flex-1 min-w-0">
+    <!-- Left Section: Logo and Hamburger (pinned to left) -->
+    <div class="flex items-center gap-4 flex-shrink-0">
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0">
         <span class="text-lg font-bold text-primary-600">ListBot</span>
@@ -20,9 +20,10 @@
 
       <!-- Vertical Divider -->
       <div class="h-8 w-px bg-slate-200 flex-shrink-0"></div>
+    </div>
 
-      <!-- Breadcrumb Navigation -->
-      <nav class="flex items-center gap-2 flex-1 min-w-0" aria-label="Breadcrumb">
+    <!-- Center Section: Breadcrumb Navigation (flexible) -->
+    <nav class="flex items-center gap-2 flex-1 min-w-0 px-4" aria-label="Breadcrumb">
       <!-- Client Name (only shown when matter is selected) -->
       <template v-if="matterViewStore.hasMatter">
         <span
@@ -72,8 +73,7 @@
           {{ documentViewStore.documentName }}
         </span>
       </template>
-      </nav>
-    </div>
+    </nav>
 
     <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3 flex-shrink-0">
