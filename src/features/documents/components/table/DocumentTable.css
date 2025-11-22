@@ -17,11 +17,16 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Page Title Row - Sticky at top of scroll container */
-.page-title-row {
+/* Sticky Header Group - Contains title row and table header, sticks as one unit */
+.sticky-header-group {
   position: sticky;
   top: 0; /* Stick to top of scroll container */
-  z-index: 10; /* Above table header (z-index: 9) */
+  z-index: 10; /* Above table body */
+  /* No padding or margins - children stack naturally */
+}
+
+/* Page Title Row - No longer individually sticky */
+.page-title-row {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 24px;
   border-bottom: 2px solid #e5e7eb;
@@ -38,11 +43,8 @@
   letter-spacing: 0.5px;
 }
 
-/* Sticky Header - Sticks at top of scroll container */
+/* Table Header - No longer individually sticky */
 .table-mockup-header {
-  position: sticky;
-  top: 0; /* Stick to top of scroll container */
-  z-index: 9; /* Below page title row (z-index: 10) */
   display: flex;
   background: #f9fafb;
   border-bottom: 2px solid #e5e7eb;
