@@ -93,11 +93,11 @@ const navItems = [
   
   { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings' },  
   { key: 'law', path: '/law', icon: '📚', label: 'Legal memos' },   
-  { key: 'facts', path: '/facts', icon: '⚖️', label: 'Disputed Facts' },
-  { key: 'cast', path: '/cast', icon: '🎭', label: 'Cast of Characters' },
+  { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts' },
+  { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters' },
 
   // EDRM Workflow Section Header
-  { key: 'edrm-header', type: 'header', label: 'E-Discovery Workflow' },
+  { key: 'edrm-header', type: 'header', label: 'Discovery Workflow' },
 
   // EDRM Stage 1: Identify
   { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify' },

@@ -228,7 +228,7 @@ src/shared/components/layout/
 
 **Navigation Sections:**
 1. **Special Items** (not part of EDRM workflow)
-   - Matters, Pleadings, Legal memos, Disputed Facts, Cast of Characters
+   - Matters, Pleadings, Legal memos, Facts, Characters
 
 2. **EDRM Workflow** (E-Discovery stages)
    - Identify, Preserve, Collect, Process, Review, Analyze, Produce, Present

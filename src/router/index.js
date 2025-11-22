@@ -84,13 +84,13 @@ const router = createRouter({
       path: '/facts',
       name: 'facts',
       component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Disputed Facts' },
+      meta: { requiresAuth: true, title: 'Facts' },
     },
     {
       path: '/cast',
       name: 'cast',
       component: () => import('../views/defaults/UnderConstruction.vue'),
-      meta: { requiresAuth: true, title: 'Cast of Characters' },
+      meta: { requiresAuth: true, title: 'Characters' },
     },
     {
       path: '/identify',
