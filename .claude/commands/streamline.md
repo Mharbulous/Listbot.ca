@@ -13,9 +13,20 @@ The following files are **EXEMPT** from the 300-line limit and should **NEVER** 
 
 ## File Selection
 
-First, count the number of lines of code (excluding comments).  Compare the documentation file, docs\2025-11-15-Folder-Structure.md, and update if needed.
+If the user has not specified a specific file, then review the files in the documentation file, `docs\2025-11-15-Folder-Structure.md`, and identify candidate files that would benefit most from decomposition and refactoring.
 
-If the user has not specified a specific file, then review the files in the documentation file, docs\2025-11-15-Folder-Structure.md, and identify the three best candidate files that would benefit most from decomposition and refactoring.  However once you find a file that would obviously benefit, stop searching and select that file.  If you find no obvious candidate, then choose one file from the three identified candidate files, based on which file looks like it would benefit most from decompoistion or refactoring, and select that file.
+**Line Count Validation (During Selection Phase):**
+- When reading each file to evaluate it as a candidate, count the actual number of lines of code (excluding comments)
+- Compare the actual line count with the documented line count in `docs\2025-11-15-Folder-Structure.md`
+- If there is a mismatch, inform the user: "Found miscount in Folder-Structure.md - [file path] has [actual count] lines"
+- Do NOT mention the incorrect documented count
+- Track all miscounted files and their corrected line counts for later updating
+- **Do NOT update Folder-Structure.md during the selection phase** - preserve context memory for intelligent streamlining
+
+**Selection Strategy:**
+- Identify the three best candidate files that would benefit most from decomposition and refactoring
+- However, once you find a file that would obviously benefit, stop searching and select that file
+- If you find no obvious candidate, choose one file from the three identified candidates based on which would benefit most from decomposition or refactoring
 
 
 **Virtual Scrolling Detection:**
@@ -42,23 +53,42 @@ If the user has not specified a specific file, then review the files in the docu
    - Explain the logical groupings and file structure
    - Wait for user comment and approval before proceeding
 
-3. **Execute Decomposition (After Approval)**
+3. **Compact Conversation (After File Selection)**
+   - Once the file is selected and approved, use the `/compact` command to compress conversation history
+   - Use this exact format: `/compact Focus on information relating to the file [target file path] in preparation for decomposition, and preserve the filepaths and corrected line-counts of any mis-counted files from Folder-Structure.md`
+   - This preserves context memory for intelligent decomposition
+
+4. **Execute Decomposition (After Approval and Compact)**
    - Move the original file to `/deprecated` folder as a backup reference
    - Create new files according to the approved plan
    - Build each new file from scratch in the most elegant and simple way possible
    - Strictly preserve appearance, functionality, and behavior exactly as the original
 
-4. **Update documentation**
-   -Upon completion, update the file: docs\2025-11-15-Folder-Structure.md
+5. **Update Documentation (After Completion)**
+   - Update `docs\2025-11-15-Folder-Structure.md` with:
+     - Corrected line counts for any miscounted files discovered during selection
+     - New file structure reflecting the decomposition
+     - Line counts for all newly created files
+   - Remove or mark as deprecated the original file entry
 
-5. **Provide Test Suggestions**
+6. **Provide Test Suggestions**
    - Upon completion, suggest specific tests for the user to try on the local server
    - Assume the local server is already running unless explicitly told otherwise
 
 **If the file has 300 lines or LESS:**
 
-- Instead of decomposing the selected file, rebuild the selected file from scratch in a more elegant way.
-- Count the number of lines of code (excluding comments) of the rebuilt file.  If the rebuilt file uses less lines of code (excluding comments) the issue a PR.  Otherwise, if the file has an equal or greater number of lines of code, then report to the user that you were unable to streamline the file, and offer to lengthen the file instead.
+1. **Rebuild the File**
+   - Instead of decomposing the selected file, rebuild it from scratch in a more elegant way
+   - Count the number of lines of code (excluding comments) of the rebuilt file
+
+2. **Evaluate Results**
+   - If the rebuilt file uses fewer lines of code (excluding comments), issue a PR
+   - Otherwise, if the file has an equal or greater number of lines of code, report to the user that you were unable to streamline the file, and offer to lengthen the file instead
+
+3. **Update Documentation (If Successful)**
+   - Update `docs\2025-11-15-Folder-Structure.md` with:
+     - Corrected line counts for any miscounted files discovered during selection
+     - Updated line count for the streamlined file (if it was successfully reduced)
 
 ## Important Constraints
 
