@@ -97,7 +97,7 @@ const navItems = [
   { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters' },
 
   // EDRM Workflow Section Header
-  { key: 'edrm-header', type: 'header', label: 'Discovery Workflow' },
+  { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
   // EDRM Stage 1: Identify
   { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify' },
