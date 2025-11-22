@@ -95,13 +95,15 @@ const router = createRouter({
     },
     {
       path: '/pleadings/stub',
-      name: 'pleadings',
+      name: 'pleadings-stub',
       component: () => import('../views/stubs/PleadingsStub.vue'),
-      meta: { requiresAuth: true, title: 'Pleadings' },
+      meta: { requiresAuth: true, title: 'Pleadings Blueprint' },
     },
     {
       path: '/pleadings',
-      redirect: '/pleadings/stub',
+      name: 'pleadings',
+      component: () => import('../features/pleadings/views/Pleadings.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings' },
     },
     {
       path: '/law',
