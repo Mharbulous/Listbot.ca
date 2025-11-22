@@ -157,9 +157,8 @@
                     'bg-blue-100 text-blue-700': pleading.status === 'Partially Served',
                     'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
                     'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon',
-                    'bg-red-100 text-red-700': pleading.status === 'Expired',
-                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue',
-                    'bg-red-100 text-red-700': pleading.status === 'Struck'
+                    'bg-red-100 text-red-700': pleading.status === 'Expired' || pleading.status === 'Struck',
+                    'bg-orange-100 text-orange-700': pleading.status === 'Overdue'
                   }"
                 >
                   {{ pleading.status }}
