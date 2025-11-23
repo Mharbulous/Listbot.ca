@@ -526,7 +526,6 @@ function openActionMenu(pleading) {
   top: 0;
   z-index: 10; /* Above scrolling title drawer */
   background: transparent;
-  padding-top: 8px;
   padding-bottom: 0px; /* Ensure tabs sit flush against table header */
 }
 
@@ -549,6 +548,9 @@ function openActionMenu(pleading) {
   border: 1px solid #cbd5e1;
   border-bottom: none;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 60px; /* Ensure consistent height across all tabs */
+  display: flex;
+  align-items: center; /* Vertically center content */
 }
 
 /* Active Tab - Appears raised and connected to table */
