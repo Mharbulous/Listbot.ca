@@ -107,13 +107,15 @@ const router = createRouter({
     },
     {
       path: '/law',
-      redirect: '/law/stub',
+      name: 'law',
+      component: () => import('../features/law/views/Law.vue'),
+      meta: { requiresAuth: true, title: 'Legal Research & Memos' },
     },
     {
       path: '/law/stub',
-      name: 'law',
+      name: 'law-stub',
       component: () => import('../views/stubs/LawStub.vue'),
-      meta: { requiresAuth: true, title: 'Legal Memos' },
+      meta: { requiresAuth: true, title: 'Legal Memos Blueprint' },
     },
     {
       path: '/theory',
