@@ -72,7 +72,7 @@ function handleOpenActionMenu(fact) {
 }
 
 .title-drawer {
-  padding: 20px 24px 0 24px;
+  padding: 20px 24px 10px 24px;
   min-width: max-content;
   display: flex;
   align-items: center;
