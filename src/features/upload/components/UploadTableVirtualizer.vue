@@ -42,85 +42,83 @@
 -->
 
 <template>
-  <!-- Wrapper for table (no drag-drop - that's handled by parent UploadTable.vue) -->
-  <div class="table-wrapper">
-    <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
-    <div ref="scrollContainerRef" class="scroll-container">
-      <!-- Gradient Background -->
-      <div class="gradient-background"></div>
+  <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
+  <!-- Merged table-wrapper and scroll-container into single container -->
+  <div ref="scrollContainerRef" class="scroll-container">
+    <!-- Gradient Background -->
+    <div class="gradient-background"></div>
 
-      <!-- Title Drawer -->
-      <div class="title-drawer">
-        <h1 class="title-drawer-text">Preserve</h1>
-      </div>
+    <!-- Title Drawer -->
+    <div class="title-drawer">
+      <h1 class="title-drawer-text">Preserve</h1>
+    </div>
 
-      <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
-      <UploadTableHeader
-        :all-selected="props.allSelected"
-        :some-selected="props.someSelected"
-        :is-uploading="props.isUploading"
-        @select-all="handleSelectAll"
-        @deselect-all="handleDeselectAll"
-      />
+    <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
+    <UploadTableHeader
+      :all-selected="props.allSelected"
+      :some-selected="props.someSelected"
+      :is-uploading="props.isUploading"
+      @select-all="handleSelectAll"
+      @deselect-all="handleDeselectAll"
+    />
 
-      <!-- Content wrapper for rows (no flex properties) -->
-      <div class="content-wrapper">
-        <!-- Virtual container with dynamic height based on total content size -->
-        <div class="virtual-container" :style="{ height: totalSize + 'px' }">
-          <!-- Only render visible rows + overscan buffer -->
-          <div
-            v-for="virtualRow in virtualItems"
-            :key="virtualRow.key"
-            class="virtual-row"
-            :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: virtualRow.size + 'px',
-              transform: `translateY(${virtualRow.start}px)`,
-            }"
-          >
-            <UploadTableRow
-              :file="props.files[virtualRow.index]"
-              :scrollbar-width="0"
-              :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
-              :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
-              :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
-              :disabled="props.isUploading"
-              @cancel="handleCancel"
-              @undo="handleUndo"
-              @remove="handleRemove"
-              @swap="handleSwap"
-            />
-          </div>
+    <!-- Content wrapper for rows (no flex properties) -->
+    <div class="content-wrapper">
+      <!-- Virtual container with dynamic height based on total content size -->
+      <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+        <!-- Only render visible rows + overscan buffer -->
+        <div
+          v-for="virtualRow in virtualItems"
+          :key="virtualRow.key"
+          class="virtual-row"
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: virtualRow.size + 'px',
+            transform: `translateY(${virtualRow.start}px)`,
+          }"
+        >
+          <UploadTableRow
+            :file="props.files[virtualRow.index]"
+            :scrollbar-width="0"
+            :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
+            :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+            :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+            :disabled="props.isUploading"
+            @cancel="handleCancel"
+            @undo="handleUndo"
+            @remove="handleRemove"
+            @swap="handleSwap"
+          />
         </div>
       </div>
-
-      <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
-      <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
-      <div class="dropzone-cell">
-        <UploadTableDropzone />
-      </div>
-
-      <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
-      <UploadTableFooter
-        :stats="props.footerStats"
-        :is-uploading="props.isUploading"
-        :is-paused="props.isPaused"
-        :duplicates-hidden="props.duplicatesHidden"
-        :verification-state="props.verificationState"
-        @upload="handleUpload"
-        @clear-queue="handleClearQueue"
-        @clear-duplicates="handleClearDuplicates"
-        @clear-skipped="handleClearSkipped"
-        @toggle-duplicates="handleToggleDuplicates"
-        @pause="handlePause"
-        @resume="handleResume"
-        @cancel="handleCancel"
-        @retry-failed="handleRetryFailed"
-      />
     </div>
+
+    <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
+    <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
+    <div class="dropzone-cell">
+      <UploadTableDropzone />
+    </div>
+
+    <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
+    <UploadTableFooter
+      :stats="props.footerStats"
+      :is-uploading="props.isUploading"
+      :is-paused="props.isPaused"
+      :duplicates-hidden="props.duplicatesHidden"
+      :verification-state="props.verificationState"
+      @upload="handleUpload"
+      @clear-queue="handleClearQueue"
+      @clear-duplicates="handleClearDuplicates"
+      @clear-skipped="handleClearSkipped"
+      @toggle-duplicates="handleToggleDuplicates"
+      @pause="handlePause"
+      @resume="handleResume"
+      @cancel="handleCancel"
+      @retry-failed="handleRetryFailed"
+    />
   </div>
 </template>
 
@@ -343,19 +341,11 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Wrapper for table + overlay - enables absolute positioning of overlay */
-.table-wrapper {
-  flex: 1;
-  position: relative; /* Creates positioning context for absolute overlay */
-  min-height: 0; /* Allow flex shrinking */
-  display: flex;
-  flex-direction: column;
-}
-
+/* Merged table-wrapper and scroll-container styles */
 .scroll-container {
   flex: 1;
-  position: relative;
-  overflow-y: auto;
+  position: relative; /* Creates positioning context for absolute overlay */
+  overflow-y: auto; /* Enable vertical scrolling */
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
