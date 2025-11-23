@@ -40,26 +40,31 @@
 
       <!-- Proceedings Tabs (Sticky) -->
       <div class="proceedings-tabs-sticky">
-        <div class="px-6 flex overflow-x-auto gap-1">
-        <button
-          @click="selectedProceeding = null"
-          class="folder-tab px-5 py-3 text-sm font-medium transition-all whitespace-nowrap relative"
-          :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
-        >
-          ALL
-        </button>
-        <button
-          v-for="proceeding in mockProceedings"
-          :key="proceeding.id"
-          @click="selectedProceeding = proceeding.id"
-          class="folder-tab px-5 py-3 text-sm transition-all whitespace-nowrap relative"
-          :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
-        >
-          <div class="flex flex-col items-start">
-            <div class="font-bold">{{ proceeding.styleCause }}</div>
-            <div class="text-xs text-slate-500">{{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
+        <div class="px-6 flex justify-between items-end">
+          <!-- Left-aligned proceeding tabs -->
+          <div class="flex overflow-x-auto gap-1">
+            <button
+              v-for="proceeding in mockProceedings"
+              :key="proceeding.id"
+              @click="selectedProceeding = proceeding.id"
+              class="folder-tab px-5 py-3 text-sm transition-all whitespace-nowrap relative"
+              :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
+            >
+              <div class="flex flex-col items-start">
+                <div class="font-bold">{{ proceeding.styleCause }}</div>
+                <div class="text-xs text-slate-500">{{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
+              </div>
+            </button>
           </div>
-        </button>
+
+          <!-- Right-aligned "ALL" tab -->
+          <button
+            @click="selectedProceeding = null"
+            class="folder-tab px-5 py-3 text-sm font-medium transition-all whitespace-nowrap relative"
+            :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
+          >
+            ALL
+          </button>
         </div>
       </div>
 
