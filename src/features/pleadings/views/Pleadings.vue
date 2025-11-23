@@ -42,14 +42,15 @@
       <div class="proceedings-tabs-sticky">
         <div class="px-6">
           <!-- Tabs Container - holds all tabs -->
-          <div class="tabs-container flex gap-1 items-end">
+          <div class="tabs-container flex items-end">
             <!-- Left-aligned proceeding tabs -->
             <button
-              v-for="proceeding in mockProceedings"
+              v-for="(proceeding, index) in mockProceedings"
               :key="proceeding.id"
               @click="selectedProceeding = proceeding.id"
               class="folder-tab px-5 py-0 text-sm transition-all whitespace-nowrap relative"
               :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
+              :style="getTabStyle(index, proceeding.id)"
             >
               <div class="flex flex-col items-start">
                 <div class="font-bold">{{ proceeding.styleCause }}</div>
@@ -62,6 +63,7 @@
               @click="selectedProceeding = null"
               class="folder-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative ml-auto"
               :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
+              :style="getAllTabStyle()"
             >
               ALL
             </button>
@@ -474,6 +476,38 @@ function showVersionHistory(pleading) {
 function openActionMenu(pleading) {
   console.log('Open action menu for:', pleading);
 }
+
+// Tab overlap and z-index management
+function getTabStyle(index, proceedingId) {
+  const isSelected = selectedProceeding.value === proceedingId;
+  const overlapAmount = '-16px'; // Amount of overlap between tabs
+
+  // Base z-index increases from left to right
+  // Selected tab gets highest z-index (20)
+  // Non-selected tabs get z-index based on position (1, 2, 3, etc.)
+  const baseZIndex = index + 1;
+  const zIndex = isSelected ? 20 : baseZIndex;
+
+  return {
+    marginLeft: index === 0 ? '0' : overlapAmount,
+    zIndex: zIndex
+  };
+}
+
+function getAllTabStyle() {
+  const isSelected = selectedProceeding.value === null;
+  const overlapAmount = '-16px';
+
+  // ALL tab is on the right (ml-auto), but needs overlap if there are proceedings
+  // Give it a high base z-index since it's rightmost
+  const baseZIndex = mockProceedings.value.length + 1;
+  const zIndex = isSelected ? 20 : baseZIndex;
+
+  return {
+    marginLeft: mockProceedings.value.length > 0 ? overlapAmount : '0',
+    zIndex: zIndex
+  };
+}
 </script>
 
 <style scoped>
@@ -533,7 +567,7 @@ function openActionMenu(pleading) {
 /* Tabs Container - Wraps the skeuomorphic tabs */
 .tabs-container {
   height: 80px; /* Accommodate tab content + transforms (4px down) + shadows (-3px up) */
-  overflow: hidden; /* Suppress scrollbars */
+  overflow: visible; /* Allow tabs to overlap without clipping */
 }
 
 /* Table Container */
@@ -564,7 +598,7 @@ function openActionMenu(pleading) {
   background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
   color: #0f172a; /* slate-900 */
   transform: translateY(1px);
-  z-index: 10;
+  /* z-index controlled dynamically via inline style */
   border-color: #cbd5e1;
   box-shadow:
     0 -3px 6px rgba(0, 0, 0, 0.08),
@@ -577,7 +611,7 @@ function openActionMenu(pleading) {
   background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
   color: #64748b;
   transform: translateY(4px);
-  z-index: 5;
+  /* z-index controlled dynamically via inline style */
   border-color: #cbd5e1;
   box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
 }
