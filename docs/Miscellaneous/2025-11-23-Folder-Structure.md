@@ -724,3 +724,208 @@ Total: 844 lines (143 lines of additional code due to module boundaries and docu
 
 - `@docs/Features/Matters/CLAUDE.md` - Matters feature documentation (if exists)
 - `@CLAUDE.md` - Core directives and streamline workflow
+
+---
+
+## MatterDetail Module Structure
+
+The MatterDetail view has been decomposed from a single 682-line file into multiple focused modules following the streamline workflow.
+
+### Directory Structure
+
+```
+src/features/matters/
+├── views/
+│   └── MatterDetail.vue                    # Main orchestrator (154 lines)
+├── components/
+│   ├── MatterInfoCard.vue                  # Matter info display (178 lines)
+│   ├── MatterPartiesSection.vue            # Parties section (105 lines)
+│   ├── MatterFirmSection.vue               # Firm section (91 lines)
+│   ├── ReactivationDialog.vue              # Reactivation modal (139 lines)
+│   └── MatterSnackbar.vue                  # Snackbar notification (95 lines)
+└── composables/
+    └── useMatterDetail.js                  # Core logic (167 lines)
+```
+
+### Module Responsibilities
+
+#### `MatterDetail.vue` - Main Orchestrator (154 lines)
+**Responsibilities:**
+- Page layout with background
+- Orchestrates child components (info card, dialog, snackbar)
+- Route handling and data loading coordination
+- Loading and error state display
+- Clear matter and navigation handlers
+
+#### `MatterInfoCard.vue` - Matter Information Display (178 lines)
+**Responsibilities:**
+- Matter information card container
+- Header with matter number, description, archived badge, close button
+- Two-column grid orchestration (Parties + Firm sections)
+- Back and Edit buttons
+- History footer (created, updated, last accessed dates)
+
+**Emits:**
+- `close` - When close button is clicked
+- `back` - When back button is clicked
+- `edit` - When edit button is clicked
+- `archived-badge-click` - When archived badge is clicked
+
+#### `MatterPartiesSection.vue` - Parties Display (105 lines)
+**Responsibilities:**
+- Clients section with icon and list
+- Adverse parties section with icon and list
+- Empty states for each section
+- Section styling
+
+**Props:**
+- `clients` (Array) - List of client names
+- `adverseParties` (Array) - List of adverse party names
+
+#### `MatterFirmSection.vue` - Firm Information Display (91 lines)
+**Responsibilities:**
+- Responsible lawyer section with icon
+- Team members section with icon
+- Empty states for each section
+- Section styling
+
+**Props:**
+- `responsibleLawyerName` (String) - Responsible lawyer display name
+- `teamMembers` (Array) - List of team member display names
+
+#### `ReactivationDialog.vue` - Reactivation Modal (139 lines)
+**Responsibilities:**
+- Modal dialog for reactivating archived matters
+- Role-based UI (lawyer/non-lawyer, responsible/non-responsible)
+- Two-step assume responsibility flow for non-responsible lawyers
+- Dialog actions and handlers
+- Emits events to parent
+
+**Props:**
+- `modelValue` (Boolean) - Dialog visibility (v-model)
+- `isLawyer` (Boolean) - Current user is a lawyer
+- `isResponsibleLawyer` (Boolean) - Current user is the responsible lawyer
+
+**Emits:**
+- `update:modelValue` - For v-model support
+- `reactivate` - When reactivate is confirmed (passes shouldUpdateResponsibleLawyer boolean)
+
+**Flow:**
+1. **Non-Lawyer**: Shows "Cannot Reactivate" message with Close button
+2. **Responsible Lawyer**: Shows confirmation with Reactivate button
+3. **Non-Responsible Lawyer**: Two-step flow
+   - Step 1: "Assume Responsibility" button
+   - Step 2: "Reactivate Matter" button (after assuming responsibility)
+
+#### `MatterSnackbar.vue` - Notification Component (95 lines)
+**Responsibilities:**
+- Reusable snackbar for success/error messages
+- Icon display based on type (checkmark for success, X for error)
+- Close button
+- Slide-up animation
+
+**Props:**
+- `modelValue` (Boolean) - Visibility control (v-model)
+- `message` (String) - Message to display
+- `color` (String) - 'success' or 'error' (default: 'success')
+
+**Emits:**
+- `update:modelValue` - For v-model support
+
+#### `useMatterDetail.js` - Core Logic Composable (167 lines)
+**Responsibilities:**
+- Matter loading and fetching
+- User display names management
+- Role checking computed properties (isLawyer, isResponsibleLawyer)
+- Reactivation handlers
+- Firm members initialization
+
+**Exported API:**
+- `matter` (Ref) - Current matter data
+- `loading` (Ref) - Loading state
+- `error` (Ref) - Error message
+- `userDisplayNames` (Ref<Map>) - Map of user IDs to display names
+- `currentUserIsLawyer` (Computed) - Current user is a lawyer
+- `currentUserIsResponsibleLawyer` (Computed) - Current user is the responsible lawyer
+- `loadMatter(matterId)` - Load matter by ID
+- `initialize()` - Initialize firm members
+- `reactivateMatter(matterId, shouldUpdateResponsibleLawyer)` - Reactivate archived matter
+
+**Helper Functions:**
+- `formatDate(timestamp)` - Format Firestore Timestamp to date string
+- `getInitials(displayName)` - Get initials from display name (currently unused but available)
+
+### Migration Notes
+
+**Old Structure:**
+```
+src/features/matters/views/MatterDetail.vue (682 lines)
+```
+
+**New Structure:**
+```
+src/features/matters/
+├── views/MatterDetail.vue (154 lines)
+├── components/ (5 components, 608 lines total)
+└── composables/useMatterDetail.js (167 lines)
+Total: 929 lines (247 lines of additional code due to module boundaries and documentation)
+```
+
+**Deprecated:**
+- Original file moved to `/deprecated/MatterDetail.vue.backup-20251123`
+
+**Backward Compatibility:**
+- Component interface unchanged (same URL route)
+- All existing functionality preserved
+- No changes required in router configuration
+
+### Benefits of Decomposition
+
+1. **Single Responsibility** - Each component has one clear purpose
+2. **Reusability** - Dialog and snackbar can be reused in other views
+3. **Testability** - Smaller components are easier to unit test
+4. **Maintainability** - All files are under 180 lines (most under 140 lines)
+5. **Readability** - Clear separation of concerns
+6. **Composability** - useMatterDetail can be used in other views
+7. **Scalability** - Easy to extend individual sections without touching other code
+
+### Testing Strategy
+
+**Suggested Test Coverage:**
+1. **Loading and Error States:**
+   - Verify loading spinner displays while fetching matter
+   - Test error state with retry and back buttons
+   - Verify successful matter load
+
+2. **Matter Information Display:**
+   - Verify matter number and description display
+   - Check archived badge appears for archived matters
+   - Verify clients and adverse parties lists
+   - Verify responsible lawyer and team members display
+   - Check empty states for missing data
+   - Verify history footer (created, updated, last accessed dates)
+
+3. **Navigation:**
+   - Click close button to clear matter and return to list
+   - Click back button to return to matters list
+   - Click edit button to navigate to edit page (only for active matters)
+
+4. **Reactivation Flow:**
+   - **Non-Lawyer**: Click archived badge, verify "Cannot Reactivate" message
+   - **Responsible Lawyer**: Click archived badge, confirm reactivation
+   - **Non-Responsible Lawyer**:
+     - Click archived badge
+     - Click "Assume Responsibility" button
+     - Verify message changes
+     - Click "Reactivate Matter" button
+     - Verify matter is reactivated and responsible lawyer is updated
+
+5. **Snackbar:**
+   - Verify success message after successful reactivation
+   - Verify error message if reactivation fails
+   - Click close button to dismiss snackbar
+
+### Related Documentation
+
+- `@docs/Features/Matters/CLAUDE.md` - Matters feature documentation (if exists)
+- `@CLAUDE.md` - Core directives and streamline workflow
