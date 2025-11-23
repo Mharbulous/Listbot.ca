@@ -166,20 +166,20 @@ export const useDocumentCollectionColorsStore = defineStore('documentCollectionC
     const bgColor = bgOptions[Math.floor(Math.random() * bgOptions.length)];
 
     // Generate text color with good contrast
+    // Try darker colors for text (better readability)
+    const darkOptions = [
+      '#0f172a', // Dark slate (matches sidebar)
+      '#1e293b', // Slate 800
+      '#374151', // Gray 700
+      '#1f2937', // Gray 800
+      '#111827', // Gray 900
+    ];
+
     let txtColor;
     let attempts = 0;
     const maxAttempts = 50;
 
     do {
-      // Try darker colors for text (better readability)
-      const darkOptions = [
-        '#0f172a', // Dark slate (matches sidebar)
-        '#1e293b', // Slate 800
-        '#374151', // Gray 700
-        '#1f2937', // Gray 800
-        '#111827', // Gray 900
-      ];
-
       txtColor = darkOptions[Math.floor(Math.random() * darkOptions.length)];
       attempts++;
 
