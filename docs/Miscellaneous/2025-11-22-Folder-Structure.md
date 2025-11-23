@@ -374,3 +374,156 @@ Total: 1,403 lines
 
 - `@docs/System/CLAUDE.md` - System architecture and component conventions
 - `@CLAUDE.md` - Core directives and streamline workflow
+
+---
+
+## Pleadings Module Structure
+
+The Pleadings view has been decomposed from a single 692-line file into multiple focused modules following the streamline workflow.
+
+### Directory Structure
+
+```
+src/features/pleadings/
+├── views/
+│   └── Pleadings.vue                    # Main orchestrator (124 lines)
+├── components/
+│   ├── ProceedingsTabs.vue              # Tabbed navigation (208 lines)
+│   ├── PleadingsTable.vue               # Data table (140 lines)
+│   └── VersionHistoryModal.vue          # History modal (72 lines)
+└── data/
+    └── pleadingsMockData.js             # Mock data (179 lines)
+```
+
+### Module Responsibilities
+
+#### `Pleadings.vue` - Main Orchestrator (124 lines)
+**Responsibilities:**
+- Page layout with gradient background
+- Title drawer with action buttons
+- Orchestrates child components (tabs, table, modal)
+- Manages selected proceeding state
+- Provides filtered pleadings computed property
+- Handles event delegation from child components
+
+#### `ProceedingsTabs.vue` - Tabbed Navigation (208 lines)
+**Responsibilities:**
+- Renders proceeding tabs with folder-style UI
+- Implements "ALL" tab for showing all pleadings
+- Dynamic tab overlap detection and management
+- Resize observer for responsive overlap behavior
+- Z-index management for active/inactive tabs
+- Emits `update:modelValue` for v-model support
+
+**Key Features:**
+- Responsive overlap: Tabs overlap when space is constrained
+- Active tab elevation: Selected tab appears raised and connected to table
+- Proceeding tabs are 4px taller than ALL tab
+- Smart z-index: Active tab always on top, others stacked left-to-right
+
+#### `PleadingsTable.vue` - Data Table (140 lines)
+**Responsibilities:**
+- Displays pleadings data in tabular format
+- Seven columns: Document Name, Version, Filing Date, Filing Party, Proceeding, Expires, Actions
+- Version history link for amended pleadings
+- Empty state display when no pleadings
+- Row hover effects
+- Emits events for version history and action menu
+
+**Table Columns:**
+1. **Document Name** - Name of the pleading
+2. **Version** - Original or amendment number (with history link if amended)
+3. **Filing Date** - Date the pleading was filed
+4. **Filing Party** - Party name and role (Plaintiff/Defendant)
+5. **Proceeding** - Venue and court file number
+6. **Expires** - Expiry date (if applicable)
+7. **Actions** - Three-dot menu for actions
+
+#### `VersionHistoryModal.vue` - History Modal (72 lines)
+**Responsibilities:**
+- Displays amendment history in modal dialog
+- Timeline view of all versions
+- Current version indicator (green badge)
+- Modal overlay with click-outside-to-close
+- Close button in footer
+- Supports v-model for visibility control
+
+#### `pleadingsMockData.js` - Mock Data (179 lines)
+**Responsibilities:**
+- Mock proceedings data (3 proceedings)
+- Mock pleadings data (8 pleadings across multiple proceedings)
+- Mock version history data (2 versions)
+- Named exports for reusability
+
+**Data Structure:**
+- **mockProceedings**: Array of proceedings with style of cause, venue, registry, court file number
+- **mockPleadings**: Array of pleadings with document info, party details, proceeding reference
+- **mockVersionHistory**: Array of versions with title, date, changes, current status
+
+### Migration Notes
+
+**Old Structure:**
+```
+src/features/pleadings/views/Pleadings.vue (692 lines)
+```
+
+**New Structure:**
+```
+src/features/pleadings/
+├── views/Pleadings.vue (124 lines)
+├── components/ (3 components, 420 lines total)
+└── data/pleadingsMockData.js (179 lines)
+Total: 723 lines (31 lines of additional code due to module boundaries)
+```
+
+**Deprecated:**
+- Original file moved to `/deprecated/Pleadings.vue.backup`
+
+**Backward Compatibility:**
+- Component interface unchanged (same URL route)
+- All existing functionality preserved
+- No changes required in router configuration
+
+### Benefits of Decomposition
+
+1. **Single Responsibility** - Each component has one clear purpose
+2. **Reusability** - Tabs, table, and modal can be reused independently
+3. **Testability** - Smaller components are easier to unit test
+4. **Maintainability** - Changes to tabs don't affect table logic
+5. **Readability** - Each file is under 210 lines
+6. **Data Separation** - Mock data is centralized and can be replaced with API calls
+
+### Testing Strategy
+
+**Suggested Test Coverage:**
+1. **Tab Navigation:**
+   - Click on proceeding tabs to filter pleadings
+   - Click "ALL" tab to show all pleadings
+   - Verify active tab styling and z-index
+   - Test responsive overlap behavior (resize window)
+   - Verify tabs remain sticky when scrolling
+
+2. **Table Display:**
+   - Verify all 8 mock pleadings display in "ALL" view
+   - Filter by proceeding and verify correct pleadings shown
+   - Click "View History" on amended pleadings
+   - Click action menu (three dots) on any pleading
+   - Verify empty state when no pleadings match filter
+
+3. **Version History Modal:**
+   - Click "View History" on amended pleading
+   - Verify modal displays with version timeline
+   - Verify "Current" badge on latest version
+   - Click close button to dismiss
+   - Click outside modal to dismiss
+
+4. **Page Layout:**
+   - Verify gradient background renders
+   - Verify title drawer with "Pleadings" heading
+   - Verify "New Proceeding" and "Upload Pleading" buttons
+   - Test responsive behavior at different viewport sizes
+
+### Related Documentation
+
+- `@docs/Features/Pleadings/CLAUDE.md` - Pleadings feature documentation (if exists)
+- `@CLAUDE.md` - Core directives and streamline workflow
