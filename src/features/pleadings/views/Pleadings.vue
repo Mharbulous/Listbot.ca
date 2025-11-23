@@ -73,11 +73,6 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Proceeding
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
                 Document Name
               </th>
               <th
@@ -88,17 +83,22 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Filing Party
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
                 Filing Date
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
+                Filing Party
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
                 Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Proceeding
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -119,12 +119,6 @@
               class="hover:bg-slate-50 cursor-pointer transition-colors"
             >
               <td class="px-6 py-4">
-                <div class="text-sm">
-                  <div class="font-medium text-slate-900">{{ pleading.proceeding.venue }}</div>
-                  <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
-                </div>
-              </td>
-              <td class="px-6 py-4">
                 <div class="text-sm font-medium text-slate-900">{{ pleading.documentName }}</div>
               </td>
               <td class="px-6 py-4">
@@ -139,14 +133,14 @@
                   </button>
                 </div>
               </td>
+              <td class="px-6 py-4 text-sm text-slate-900">
+                {{ pleading.filedDate }}
+              </td>
               <td class="px-6 py-4">
                 <div class="text-sm">
                   <div class="font-medium text-slate-900">{{ pleading.partyName }}</div>
                   <div class="text-xs text-slate-500">{{ pleading.partyRole }}</div>
                 </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-900">
-                {{ pleading.filedDate }}
               </td>
               <td class="px-6 py-4">
                 <span
@@ -161,6 +155,12 @@
                 >
                   {{ pleading.status }}
                 </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm">
+                  <div class="font-medium text-slate-900">{{ pleading.proceeding.venue }}</div>
+                  <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
+                </div>
               </td>
               <td class="px-6 py-4 text-sm text-slate-600">
                 {{ pleading.expires || '—' }}
