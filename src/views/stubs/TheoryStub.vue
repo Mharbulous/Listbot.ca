@@ -18,160 +18,140 @@
     </template>
 
     <template #content>
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
-
-        <!-- High Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800"
-            >
-              HIGH PRIORITY
-            </span>
-            Core Theory Development Tools
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <FeatureCard
-              icon="📝"
-              title="Theory Statement Builder"
-              badge="Foundation Feature"
-              priority="high"
-              color="purple"
-              description="Craft your core case theory statement—a concise narrative that explains your legal theory, key facts, and why you should win—in one or two compelling sentences."
-            >
-              <template #extra-content>
-                <div class="bg-purple-50 border border-purple-200 rounded p-3 mb-3">
-                  <div class="text-sm font-medium text-purple-900 mb-1">Expected Impact:</div>
-                  <div class="text-sm text-purple-800">
-                    A clear theory statement guides all strategic decisions and advocacy
-                  </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="📝"
+            title="AI Theory Statement Builder"
+            badge="Foundation Feature"
+            priority="high"
+            color="purple"
+            description="Craft your core case theory statement—a concise narrative that explains your legal theory, key facts, and why you should win—in one or two compelling sentences."
+          >
+            <template #extra-content>
+              <div class="bg-purple-50 border border-purple-200 rounded p-3 mb-3">
+                <div class="text-sm font-medium text-purple-900 mb-1">Expected Impact:</div>
+                <div class="text-sm text-purple-800">
+                  A clear theory statement guides all strategic decisions and advocacy
                 </div>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Example:</span> "This is a breach of contract case where
-                  the defendant failed to deliver..."
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="✅"
-              title="Legal Elements Checklist"
-              badge="Foundation Feature"
-              priority="high"
-              color="purple"
-              description="Map each legal element of your claim or defense to supporting facts and evidence, ensuring you can prove every required element at trial."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500 mb-2">
-                  <span class="font-medium">Features:</span> Element-to-fact mapping, evidence
-                  linking, gap identification
-                </div>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Visual proof you can meet your burden on
-                  every element
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="🎨"
-              title="Theme & Narrative Builder"
-              badge="Workflow Feature"
-              color="blue"
-              description="Develop the emotional themes and narrative arc that make your case memorable and persuasive—the human story behind the legal theory."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Compelling themes resonate with judges and
-                  juries
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="🛡️"
-              title="Weakness Analysis"
-              badge="Strategic Feature"
-              color="blue"
-              description="Identify vulnerabilities in your theory and develop responses to opposing arguments, preparing you to address weaknesses head-on."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Proactive defense against opposing
-                  arguments
-                </div>
-              </template>
-            </FeatureCard>
-          </div>
+              </div>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Example:</span> "This is a breach of contract case where
+                the defendant failed to deliver..."
+              </div>
+            </template>
+          </FeatureCard>
         </div>
+      </div>
 
-        <!-- Medium Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              MEDIUM PRIORITY
-            </span>
-            Advanced Theory Tools
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <FeatureCard
-              icon="🔀"
-              title="Alternative Theory Analysis"
-              badge="Strategic Planning"
-              description="Develop and compare alternative legal theories for your case, evaluating strengths, weaknesses, and strategic implications of each approach."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Choose the strongest theory with
-                  confidence
-                </div>
-              </template>
-            </FeatureCard>
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="✅"
+            title="Legal Elements Checklist"
+            badge="Foundation Feature"
+            color="purple"
+            description="Map each legal element of your claim or defense to supporting facts and evidence, ensuring you can prove every required element at trial."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500 mb-2">
+                <span class="font-medium">Features:</span> Element-to-fact mapping, evidence
+                linking, gap identification
+              </div>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Visual proof you can meet your burden on
+                every element
+              </div>
+            </template>
+          </FeatureCard>
 
-            <FeatureCard
-              icon="⏱️"
-              title="Timeline-Theory Integration"
-              badge="Narrative Development"
-              description="Link your theory to a visual timeline of events, creating a chronological narrative that makes complex facts easy to understand."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Visual storytelling enhances persuasion
-                </div>
-              </template>
-            </FeatureCard>
+          <FeatureCard
+            icon="🎨"
+            title="Theme & Narrative Builder"
+            badge="Workflow Feature"
+            color="blue"
+            description="Develop the emotional themes and narrative arc that make your case memorable and persuasive—the human story behind the legal theory."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Compelling themes resonate with judges and
+                juries
+              </div>
+            </template>
+          </FeatureCard>
 
-            <FeatureCard
-              icon="🤖"
-              title="AI Theory Development"
-              badge="AI-Powered Analysis"
-              description="AI analyzes your facts and law to suggest potential theories, identify gaps in your proof, and recommend supporting evidence."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> AI insights uncover theories you might miss
-                </div>
-              </template>
-            </FeatureCard>
+          <FeatureCard
+            icon="🛡️"
+            title="Weakness Analysis"
+            badge="Strategic Feature"
+            color="blue"
+            description="Identify vulnerabilities in your theory and develop responses to opposing arguments, preparing you to address weaknesses head-on."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Proactive defense against opposing
+                arguments
+              </div>
+            </template>
+          </FeatureCard>
 
-            <FeatureCard
-              icon="🎭"
-              title="Advocacy Templates"
-              badge="Trial Preparation"
-              description="Generate opening statement and closing argument outlines based on your theory, ensuring consistent messaging from start to finish."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Your theory flows through every phase of
-                  trial
-                </div>
-              </template>
-            </FeatureCard>
-          </div>
+          <FeatureCard
+            icon="🔀"
+            title="Alternative Theory Analysis"
+            badge="Strategic Planning"
+            description="Develop and compare alternative legal theories for your case, evaluating strengths, weaknesses, and strategic implications of each approach."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Choose the strongest theory with
+                confidence
+              </div>
+            </template>
+          </FeatureCard>
+
+          <FeatureCard
+            icon="⏱️"
+            title="Timeline-Theory Integration"
+            badge="Narrative Development"
+            description="Link your theory to a visual timeline of events, creating a chronological narrative that makes complex facts easy to understand."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Visual storytelling enhances persuasion
+              </div>
+            </template>
+          </FeatureCard>
+
+          <FeatureCard
+            icon="🤖"
+            title="AI Theory Development"
+            badge="AI-Powered Analysis"
+            description="AI analyzes your facts and law to suggest potential theories, identify gaps in your proof, and recommend supporting evidence."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> AI insights uncover theories you might miss
+              </div>
+            </template>
+          </FeatureCard>
+
+          <FeatureCard
+            icon="🎭"
+            title="Advocacy Templates"
+            badge="Trial Preparation"
+            description="Generate opening statement and closing argument outlines based on your theory, ensuring consistent messaging from start to finish."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Your theory flows through every phase of
+                trial
+              </div>
+            </template>
+          </FeatureCard>
         </div>
       </div>
 
