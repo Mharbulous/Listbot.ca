@@ -6,6 +6,8 @@
         v-for="(proceeding, index) in proceedings"
         :key="proceeding.id"
         @click="handleTabClick(proceeding.id)"
+        @mouseenter="handleTabHover(proceeding.id)"
+        @mouseleave="handleTabLeave"
         class="folder-tab proceeding-tab px-5 py-0 text-sm transition-all whitespace-nowrap relative"
         :class="modelValue === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
         :style="getTabStyle(index, proceeding.id)"
@@ -24,6 +26,8 @@
       <!-- Right-aligned "ALL" tab -->
       <button
         @click="handleTabClick(null)"
+        @mouseenter="handleTabHover('all')"
+        @mouseleave="handleTabLeave"
         class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
         :class="modelValue === null ? 'folder-tab-active' : 'folder-tab-inactive'"
         :style="getAllTabStyle()"
@@ -53,9 +57,18 @@ const emit = defineEmits(['update:modelValue']);
 const tabsContainerRef = ref(null);
 const containerWidth = ref(0);
 const needsOverlap = ref(false);
+const hoveredTab = ref(null);
 
 function handleTabClick(proceedingId) {
   emit('update:modelValue', proceedingId);
+}
+
+function handleTabHover(proceedingId) {
+  hoveredTab.value = proceedingId;
+}
+
+function handleTabLeave() {
+  hoveredTab.value = null;
 }
 
 function checkOverlapNeeded() {
@@ -69,11 +82,13 @@ function checkOverlapNeeded() {
 
 function getTabStyle(index, proceedingId) {
   const isSelected = props.modelValue === proceedingId;
+  const isHovered = hoveredTab.value === proceedingId;
   const overlapAmount = 40;
   const normalGap = 8;
 
   const baseZIndex = index + 1;
-  const zIndex = isSelected ? 100 : baseZIndex;
+  // Active tab: z-index 100, hovered tab: z-index 99, normal: incremental
+  const zIndex = isSelected ? 100 : (isHovered ? 99 : baseZIndex);
 
   if (!needsOverlap.value) {
     return {
@@ -90,10 +105,12 @@ function getTabStyle(index, proceedingId) {
 
 function getAllTabStyle() {
   const isSelected = props.modelValue === null;
+  const isHovered = hoveredTab.value === 'all';
   const overlapAmount = 40;
 
   const baseZIndex = props.proceedings.length + 1;
-  const zIndex = isSelected ? 100 : baseZIndex;
+  // Active tab: z-index 100, hovered tab: z-index 99, normal: incremental
+  const zIndex = isSelected ? 100 : (isHovered ? 99 : baseZIndex);
 
   if (!needsOverlap.value) {
     return {
@@ -150,6 +167,7 @@ onUnmounted(() => {
   height: 60px;
   display: flex;
   align-items: center;
+  position: relative; /* Required for z-index to work */
 }
 
 .proceeding-tab {
