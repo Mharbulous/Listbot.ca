@@ -39,10 +39,9 @@
       </div>
 
       <!-- Proceedings Tabs (Sticky) -->
-      <div class="proceedings-tabs-sticky">
-        <div class="px-6">
-          <!-- Tabs Container - holds all tabs -->
-          <div ref="tabsContainerRef" class="tabs-container flex items-end">
+      <div class="proceedings-tabs-sticky px-6">
+        <!-- Tabs Container - holds all tabs -->
+        <div ref="tabsContainerRef" class="tabs-container flex items-end">
             <!-- Left-aligned proceeding tabs -->
             <button
               v-for="(proceeding, index) in mockProceedings"
@@ -70,14 +69,11 @@
             >
               ALL
             </button>
-          </div>
         </div>
       </div>
 
-      <!-- Table Container -->
-      <div class="table-container">
       <!-- Data Table -->
-      <div class="bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
+      <div class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
         <!-- Table -->
         <table class="w-full">
           <thead class="table-header border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
@@ -195,7 +191,6 @@
           <p class="text-lg font-medium mb-2">No pleadings found</p>
           <p class="text-sm">Upload your first pleading to get started</p>
         </div>
-      </div>
       </div>
     </div>
 
