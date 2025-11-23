@@ -42,7 +42,7 @@
       <div class="proceedings-tabs-sticky">
         <div class="px-6">
           <!-- Tabs Container - holds all tabs -->
-          <div class="tabs-container flex items-end">
+          <div ref="tabsContainerRef" class="tabs-container flex items-end">
             <!-- Left-aligned proceeding tabs -->
             <button
               v-for="(proceeding, index) in mockProceedings"
@@ -252,7 +252,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 // Mock data for proceedings
 const mockProceedings = ref([
@@ -435,6 +435,9 @@ const mockVersionHistory = ref([
 // State
 const selectedProceeding = ref(null);
 const showVersionModal = ref(false);
+const tabsContainerRef = ref(null);
+const containerWidth = ref(0);
+const needsOverlap = ref(false);
 
 // Computed
 const filteredPleadings = computed(() => {
@@ -453,16 +456,58 @@ function openActionMenu(pleading) {
   console.log('Open action menu for:', pleading);
 }
 
+// Check if tabs need to overlap based on available space
+function checkOverlapNeeded() {
+  if (!tabsContainerRef.value) return;
+
+  containerWidth.value = tabsContainerRef.value.offsetWidth;
+  const scrollWidth = tabsContainerRef.value.scrollWidth;
+
+  // If content scrolls (wider than container), we need overlap
+  needsOverlap.value = scrollWidth > containerWidth.value;
+}
+
+// Setup resize observer
+let resizeObserver = null;
+
+onMounted(() => {
+  checkOverlapNeeded();
+
+  // Watch for container size changes
+  if (tabsContainerRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      checkOverlapNeeded();
+    });
+    resizeObserver.observe(tabsContainerRef.value);
+  }
+});
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
 // Tab overlap and z-index management
 function getTabStyle(index, proceedingId) {
   const isSelected = selectedProceeding.value === proceedingId;
   const overlapAmount = 40; // Amount of overlap in pixels
+  const normalGap = 8; // Normal gap between tabs when space allows
 
   // Base z-index increases from left to right
   // Selected tab gets highest z-index (20)
   // Non-selected tabs get z-index based on position (1, 2, 3, etc.)
   const baseZIndex = index + 1;
   const zIndex = isSelected ? 20 : baseZIndex;
+
+  // Only apply overlap if space is constrained
+  if (!needsOverlap.value) {
+    // Enough space - use normal gaps
+    return {
+      marginRight: `${normalGap}px`,
+      zIndex: zIndex
+    };
+  }
 
   // Use position: relative + left to create true overlap
   // (Don't use transform - it would override the CSS translateY for vertical positioning)
@@ -482,6 +527,14 @@ function getAllTabStyle() {
   // Give it a high base z-index since it's rightmost
   const baseZIndex = mockProceedings.value.length + 1;
   const zIndex = isSelected ? 20 : baseZIndex;
+
+  // Only apply overlap if space is constrained
+  if (!needsOverlap.value) {
+    // Enough space - no overlap needed
+    return {
+      zIndex: zIndex
+    };
+  }
 
   // Use position: relative + left to create true overlap with the rightmost proceeding tab
   // (Don't use transform - it would override the CSS translateY for vertical positioning)
