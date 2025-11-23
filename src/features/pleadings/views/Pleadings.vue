@@ -549,6 +549,9 @@ function openActionMenu(pleading) {
   border: 1px solid #cbd5e1;
   border-bottom: none;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 60px; /* Ensure consistent height across all tabs */
+  display: flex;
+  align-items: center; /* Vertically center content */
 }
 
 /* Active Tab - Appears raised and connected to table */
