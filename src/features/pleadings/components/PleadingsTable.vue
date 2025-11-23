@@ -9,7 +9,7 @@
           <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Version
           </th>
-          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[110px] min-w-[110px]">
             Filing Date
           </th>
           <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -18,7 +18,7 @@
           <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Proceeding
           </th>
-          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[110px] min-w-[110px]">
             Expires
           </th>
           <th class="px-2 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -47,7 +47,7 @@
               </button>
             </div>
           </td>
-          <td class="px-2 py-1 text-sm text-slate-900">
+          <td class="px-2 py-1 text-sm text-slate-900 w-[110px] min-w-[110px] whitespace-nowrap">
             {{ pleading.filedDate }}
           </td>
           <td class="px-2 py-1">
@@ -62,7 +62,7 @@
               <div class="text-xs text-slate-500">{{ pleading.proceeding.courtFileNo }}</div>
             </div>
           </td>
-          <td class="px-2 py-1 text-sm text-slate-600">
+          <td class="px-2 py-1 text-sm text-slate-600 w-[110px] min-w-[110px] whitespace-nowrap">
             {{ pleading.expires || '—' }}
           </td>
           <td class="px-2 py-1 text-right">
