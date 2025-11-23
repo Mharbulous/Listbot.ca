@@ -18,9 +18,9 @@
     </template>
 
     <template #content>
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="👤"
@@ -31,18 +31,25 @@
             description="Comprehensive database of all case participants with contact information, roles, and custom fields."
           />
           <FeatureCard
-            icon="🔗"
-            title="Relationship Mapping"
-            badge="Visualization"
-            color="blue"
-            description="Visual relationship diagrams showing connections between parties, witnesses, and organizations."
-          />
-          <FeatureCard
             icon="📝"
             title="Role & Status Tracking"
             badge="Organization"
             color="indigo"
             description="Track each person's role (plaintiff, defendant, witness, expert) and current status (deposed, subpoenaed, etc.)."
+          />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="🔗"
+            title="Relationship Mapping"
+            badge="Visualization"
+            color="blue"
+            description="Visual relationship diagrams showing connections between parties, witnesses, and organizations."
           />
           <FeatureCard
             icon="📅"
@@ -57,13 +64,6 @@
             badge="Evidence Linking"
             color="emerald"
             description="Connect characters to relevant documents, depositions, and exhibits."
-          />
-          <FeatureCard
-            icon="📊"
-            title="Contact Management"
-            badge="Workflow"
-            color="blue"
-            description="Track contact information, communication history, and deposition scheduling."
           />
         </div>
       </div>
