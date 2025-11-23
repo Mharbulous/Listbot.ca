@@ -73,7 +73,7 @@ function getTabStyle(index, proceedingId) {
   const normalGap = 8;
 
   const baseZIndex = index + 1;
-  const zIndex = isSelected ? 20 : baseZIndex;
+  const zIndex = isSelected ? 100 : baseZIndex;
 
   if (!needsOverlap.value) {
     return {
@@ -82,10 +82,8 @@ function getTabStyle(index, proceedingId) {
     };
   }
 
-  const leftOffset = index === 0 ? 0 : -(overlapAmount * index);
-
   return {
-    left: `${leftOffset}px`,
+    marginLeft: index === 0 ? '0' : `-${overlapAmount}px`,
     zIndex: zIndex
   };
 }
@@ -95,7 +93,7 @@ function getAllTabStyle() {
   const overlapAmount = 40;
 
   const baseZIndex = props.proceedings.length + 1;
-  const zIndex = isSelected ? 20 : baseZIndex;
+  const zIndex = isSelected ? 100 : baseZIndex;
 
   if (!needsOverlap.value) {
     return {
@@ -103,10 +101,8 @@ function getAllTabStyle() {
     };
   }
 
-  const leftOffset = props.proceedings.length > 0 ? -overlapAmount : 0;
-
   return {
-    left: `${leftOffset}px`,
+    marginLeft: props.proceedings.length > 0 ? `-${overlapAmount}px` : '0',
     zIndex: zIndex
   };
 }
