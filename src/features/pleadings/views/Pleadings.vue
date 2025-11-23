@@ -58,10 +58,13 @@
               </div>
             </button>
 
+            <!-- Spacer to push ALL tab to the right -->
+            <div class="flex-grow"></div>
+
             <!-- Right-aligned "ALL" tab -->
             <button
               @click="selectedProceeding = null"
-              class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative ml-auto"
+              class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
               :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
               :style="getAllTabStyle()"
             >
@@ -453,7 +456,7 @@ function openActionMenu(pleading) {
 // Tab overlap and z-index management
 function getTabStyle(index, proceedingId) {
   const isSelected = selectedProceeding.value === proceedingId;
-  const overlapAmount = '-16px'; // Amount of overlap between tabs
+  const overlapAmount = '-40px'; // Amount of overlap between tabs - increased for text obscuring
 
   // Base z-index increases from left to right
   // Selected tab gets highest z-index (20)
@@ -469,9 +472,9 @@ function getTabStyle(index, proceedingId) {
 
 function getAllTabStyle() {
   const isSelected = selectedProceeding.value === null;
-  const overlapAmount = '-16px';
+  const overlapAmount = '-40px'; // Amount of overlap between tabs - increased for text obscuring
 
-  // ALL tab is on the right (ml-auto), but needs overlap if there are proceedings
+  // ALL tab is on the right, but needs overlap if there are proceedings
   // Give it a high base z-index since it's rightmost
   const baseZIndex = mockProceedings.value.length + 1;
   const zIndex = isSelected ? 20 : baseZIndex;
