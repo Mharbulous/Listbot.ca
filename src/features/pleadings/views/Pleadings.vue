@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col bg-slate-50">
+  <div class="h-full flex flex-col bg-viewport-bg">
     <!-- Page Header -->
     <div class="bg-white border-b border-slate-200 px-6 py-4">
       <div class="flex items-center justify-between">
