@@ -69,7 +69,7 @@
       <div class="bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
         <!-- Table -->
         <table class="w-full">
-          <thead class="border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
+          <thead class="table-header border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
             <tr>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -572,5 +572,14 @@ function openActionMenu(pleading) {
 /* Override table border radius to connect with tabs */
 .folder-tab-active + .folder-tab-active {
   margin-left: -1px;
+}
+
+/* Table Header - Matches active tab styling for visual connection */
+.table-header {
+  border-top-right-radius: 12px;
+  box-shadow:
+    0 -3px 6px rgba(0, 0, 0, 0.08),
+    -2px 0 4px rgba(0, 0, 0, 0.03),
+    2px 0 4px rgba(0, 0, 0, 0.03);
 }
 </style>
