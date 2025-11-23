@@ -328,6 +328,74 @@
           Collect
         </v-btn>
       </div>
+
+      <!-- Document Collection Color Control Buttons (Documents page only) -->
+      <div v-if="isOnMatterDocumentsPage" class="flex items-center gap-2">
+        <!-- Preset Color Buttons 1-5 -->
+        <button
+          v-for="(preset, index) in colorPresets"
+          :key="`preset-${index}`"
+          @click="documentCollectionColorsStore.setPreset(index)"
+          :style="{
+            backgroundColor: preset.background,
+            color: preset.text,
+            border: '2px solid #d1d5db',
+            borderRadius: '6px',
+            width: '32px',
+            height: '32px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            transition: 'all 0.2s',
+          }"
+          :title="`Preset ${index + 1}: ${preset.text} on ${preset.background}`"
+          class="color-preset-btn"
+        >
+          {{ index + 1 }}
+        </button>
+
+        <!-- Harmonious Random Colors Button -->
+        <button
+          @click="documentCollectionColorsStore.generateHarmoniousColors()"
+          class="color-random-btn"
+          title="Generate harmonious colors based on UI theme"
+          style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s;
+          "
+        >
+          🎨
+        </button>
+
+        <!-- Completely Random Colors Button -->
+        <button
+          @click="documentCollectionColorsStore.generateRandomColors()"
+          class="color-random-btn"
+          title="Generate completely random colors"
+          style="
+            background: linear-gradient(135deg, #ff6b6b 0%, #f06595 100%);
+            color: white;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s;
+          "
+        >
+          🎲
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -339,6 +407,7 @@ import { useAuthStore } from '@/core/auth/stores/authStore';
 import { useDocumentViewStore } from '@/features/documents/stores/documentView';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useMattersFilterStore } from '@/features/matters/stores/mattersFilter';
+import { useDocumentCollectionColorsStore } from '@/features/documents/stores/documentCollectionColors';
 
 // Props
 const props = defineProps({
@@ -357,10 +426,20 @@ const authStore = useAuthStore();
 const documentViewStore = useDocumentViewStore();
 const matterViewStore = useMatterViewStore();
 const mattersFilterStore = useMattersFilterStore();
+const documentCollectionColorsStore = useDocumentCollectionColorsStore();
 
 // Hover state for matters switch anticipatory nudge
 const isHoveringMyMatters = ref(false);
 const isHoveringFirmMatters = ref(false);
+
+// Color presets for Document Collection
+const colorPresets = [
+  { text: '#006064', background: '#B2EBF2' },
+  { text: '#E65100', background: '#FFECB3' },
+  { text: '#C62828', background: '#FFCDD2' },
+  { text: '#000000', background: '#4DD0E1' },
+  { text: '#ECEFF1', background: '#455A64' },
+];
 
 const pageTitle = computed(() => {
   if (route.meta.titleFn && route.path.includes('/review/')) {
@@ -558,5 +637,17 @@ onUnmounted(() => {
   cursor: pointer;
   border: none;
   background: transparent;
+}
+
+/* Color Control Buttons */
+.color-preset-btn:hover,
+.color-random-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.color-preset-btn:active,
+.color-random-btn:active {
+  transform: scale(0.95);
 }
 </style>
