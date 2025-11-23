@@ -7,12 +7,9 @@
   - Slot for page content
 
   Usage:
-    <PageLayout>
-      <TitleDrawer title="Page Title">
-        <!-- Controls go here -->
-      </TitleDrawer>
-      <!-- Rest of page content -->
-    </PageLayout>
+    PageLayout wraps TitleDrawer and other page content
+    Place TitleDrawer with title prop as first child
+    Add remaining page content as siblings
 -->
 <template>
   <div class="scroll-container">
