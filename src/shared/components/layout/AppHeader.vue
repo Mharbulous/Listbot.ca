@@ -10,7 +10,7 @@
         @click="$emit('toggle-sidebar')"
         :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
-        <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
+        <span class="text-5xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
 
       <!-- Spacer that adjusts to keep divider aligned with sidebar edge -->
@@ -20,7 +20,7 @@
       >
         <!-- Logo (only visible when sidebar is open) -->
         <RouterLink v-if="!isCollapsed" to="/" class="flex items-center gap-2 text-decoration-none flex-shrink-0 ml-4">
-          <span class="text-lg font-bold text-primary-600">ListBot</span>
+          <span class="text-2xl font-bold text-primary-600">ListBot</span>
         </RouterLink>
       </div>
 
@@ -60,7 +60,7 @@
               @mouseenter="isHoveringMyMatters = true"
               @mouseleave="isHoveringMyMatters = false"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative',
+                'px-3 py-1.5 rounded-md text-xl font-medium transition-all duration-300 relative',
                 mattersFilterStore.showMyMattersOnly
                   ? 'text-transparent'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
@@ -73,7 +73,7 @@
               @mouseenter="isHoveringFirmMatters = true"
               @mouseleave="isHoveringFirmMatters = false"
               :class="[
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 relative',
+                'px-3 py-1.5 rounded-md text-xl font-medium transition-all duration-300 relative',
                 !mattersFilterStore.showMyMattersOnly
                   ? 'text-transparent'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
@@ -87,7 +87,7 @@
           <div class="relative flex-shrink-0" data-matters-dropdown>
             <button
               @click="mattersFilterStore.toggleStatusDropdown()"
-              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors flex items-center gap-2"
+              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-xl font-medium text-white transition-colors flex items-center gap-2"
             >
               <span>Status: {{ mattersFilterStore.statusFilterLabel }}</span>
               <svg
@@ -112,7 +112,7 @@
             >
               <button
                 @click="mattersFilterStore.setStatusFilter('active')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
                 :class="
                   mattersFilterStore.statusFilter === 'active'
                     ? 'text-blue-600 font-medium'
@@ -123,7 +123,7 @@
               </button>
               <button
                 @click="mattersFilterStore.setStatusFilter('archived')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
                 :class="
                   mattersFilterStore.statusFilter === 'archived'
                     ? 'text-blue-600 font-medium'
@@ -134,7 +134,7 @@
               </button>
               <button
                 @click="mattersFilterStore.setStatusFilter('all')"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
+                class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
                 :class="
                   mattersFilterStore.statusFilter === 'all'
                     ? 'text-blue-600 font-medium'
@@ -152,7 +152,7 @@
               v-model="mattersFilterStore.searchText"
               type="text"
               placeholder="filter matters..."
-              class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all placeholder:text-slate-400"
+              class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xl transition-all placeholder:text-slate-400"
             />
             <!-- Integrated Search Actions -->
             <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -160,7 +160,7 @@
               <button
                 @click="mattersFilterStore.toggleCaseSensitive()"
                 :class="[
-                  'p-1.5 rounded text-xs font-semibold transition-colors',
+                  'p-1.5 rounded text-lg font-semibold transition-colors',
                   mattersFilterStore.caseSensitive
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
@@ -175,7 +175,7 @@
               <button
                 @click="mattersFilterStore.toggleWholeWord()"
                 :class="[
-                  'px-1.5 py-1.5 rounded text-xs font-semibold transition-colors',
+                  'px-1.5 py-1.5 rounded text-lg font-semibold transition-colors',
                   mattersFilterStore.wholeWord
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
@@ -207,7 +207,7 @@
           <!-- New Matter Button -->
           <router-link
             to="/matters/new"
-            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
+            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xl font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -228,7 +228,7 @@
         <template v-if="matterViewStore.hasMatter">
           <span
             @click="clearMatter"
-            class="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer hover:underline flex-shrink-0"
+            class="text-xl font-medium text-primary-600 hover:text-primary-700 cursor-pointer hover:underline flex-shrink-0"
             :title="clientName"
           >
             {{ clientName }}
@@ -241,7 +241,7 @@
           <span
             @click="isBannerClickable && navigateToMatter()"
             :class="[
-              'text-sm font-medium truncate max-w-md',
+              'text-xl font-medium truncate max-w-md',
               isBannerClickable
                 ? 'text-primary-600 hover:text-primary-700 cursor-pointer hover:underline'
                 : 'text-slate-800 cursor-default',
@@ -259,7 +259,7 @@
 
         <!-- Current Page -->
         <span class="text-slate-400 flex-shrink-0">›</span>
-        <span class="text-sm font-medium text-slate-800 truncate" :title="pageTitle">
+        <span class="text-xl font-medium text-slate-800 truncate" :title="pageTitle">
           {{ pageTitle }}
         </span>
 
@@ -267,7 +267,7 @@
         <template v-if="documentViewStore.documentName">
           <span class="text-slate-400 flex-shrink-0">›</span>
           <span
-            class="text-sm font-medium text-slate-800 truncate max-w-xs"
+            class="text-xl font-medium text-slate-800 truncate max-w-xs"
             :title="documentViewStore.documentName"
           >
             {{ documentViewStore.documentName }}
@@ -532,7 +532,7 @@ onUnmounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 0.875rem; /* text-sm */
+  font-size: 1.25rem; /* text-xl */
   font-weight: 500; /* font-medium */
   white-space: nowrap;
   pointer-events: none;
