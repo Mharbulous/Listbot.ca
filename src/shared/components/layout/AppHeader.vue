@@ -10,7 +10,7 @@
         @click="$emit('toggle-sidebar')"
         :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
-        <span class="text-5xl">{{ isCollapsed ? '☰' : '«' }}</span>
+        <span class="text-2xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
 
       <!-- Spacer that adjusts to keep divider aligned with sidebar edge -->
