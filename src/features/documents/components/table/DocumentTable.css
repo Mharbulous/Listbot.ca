@@ -24,7 +24,7 @@
   left: 0;
   right: 0;
   height: 800px; /* Extended height for smoother gradient blend */
-  background: linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%);
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
   z-index: 0; /* Behind all content */
   pointer-events: none; /* Don't interfere with clicks */
 }

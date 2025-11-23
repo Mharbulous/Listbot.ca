@@ -10,16 +10,7 @@ export const useDocumentCollectionColorsStore = defineStore('documentCollectionC
   const textColor = ref('#FFFFFF');
   const backgroundColor = ref('#667eea');
 
-  /**
-   * Preset color combinations
-   */
-  const presets = [
-    { text: '#455A64', background: 'linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%)' },
-    { text: '#E65100', background: '#FFECB3' },
-    { text: '#C62828', background: '#FFCDD2' },
-    { text: '#000000', background: '#4DD0E1' },
-    { text: '#ECEFF1', background: '#455A64' },
-  ];
+  
 
   /**
    * Set colors to a specific preset
