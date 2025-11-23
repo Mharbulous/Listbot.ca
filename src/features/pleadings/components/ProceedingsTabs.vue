@@ -1,42 +1,45 @@
 <template>
   <div class="proceedings-tabs-sticky px-6">
     <div class="tabs-container">
-      <!-- Proceeding tabs (left-aligned) -->
-      <button
+      <!-- Proceeding tabs (left-aligned) - wrapped in containers that shrink -->
+      <div
         v-for="(proceeding, index) in proceedings"
         :key="proceeding.id"
-        @click="selectTab(proceeding.id)"
-        @mouseenter="setHoveredTab(proceeding.id)"
-        @mouseleave="clearHoveredTab"
-        class="folder-tab proceeding-tab"
-        :class="[
-          getTabStateClass(proceeding.id),
-          { 'last-proceeding-tab': index === proceedings.length - 1 }
-        ]"
-        :style="getTabStyle(proceeding.id)"
+        class="tab-wrapper"
+        :class="{ 'last-tab-wrapper': index === proceedings.length - 1 }"
+        :style="getTabWrapperStyle(proceeding.id)"
       >
-        <div class="tab-content">
-          <div class="tab-title">{{ proceeding.styleCause }}</div>
-          <div class="tab-subtitle">
-            {{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}
+        <button
+          @click="selectTab(proceeding.id)"
+          @mouseenter="setHoveredTab(proceeding.id)"
+          @mouseleave="clearHoveredTab"
+          class="folder-tab proceeding-tab"
+          :class="getTabStateClass(proceeding.id)"
+        >
+          <div class="tab-content">
+            <div class="tab-title">{{ proceeding.styleCause }}</div>
+            <div class="tab-subtitle">
+              {{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+      </div>
 
       <!-- Super spacer to absorb extra space and push ALL tab to the right -->
       <div class="super-spacer"></div>
 
       <!-- ALL tab (right-aligned, never shrinks) -->
-      <button
-        @click="selectTab(null)"
-        @mouseenter="setHoveredTab(ALL_TAB_ID)"
-        @mouseleave="clearHoveredTab"
-        class="folder-tab all-tab"
-        :class="getTabStateClass(null)"
-        :style="getTabStyle(null)"
-      >
-        ALL
-      </button>
+      <div class="all-tab-wrapper" :style="getTabWrapperStyle(null)">
+        <button
+          @click="selectTab(null)"
+          @mouseenter="setHoveredTab(ALL_TAB_ID)"
+          @mouseleave="clearHoveredTab"
+          class="folder-tab all-tab"
+          :class="getTabStateClass(null)"
+        >
+          ALL
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -117,8 +120,8 @@ const getTabStateClass = (tabId) => {
 // TAB STYLING (CSS-only adaptive approach)
 // ============================================================================
 
-const getTabStyle = (tabId) => {
-  // Calculate z-index based on state
+const getTabWrapperStyle = (tabId) => {
+  // Calculate z-index for the wrapper - this controls stacking order
   let zIndex = 1;
   if (isActive(tabId)) {
     zIndex = Z_INDEX_ACTIVE;
@@ -162,6 +165,40 @@ const getTabStyle = (tabId) => {
 }
 
 /* ========================================================================== */
+/* TAB WRAPPERS - These shrink while buttons stay fixed, creating overlap    */
+/* ========================================================================== */
+
+.tab-wrapper {
+  position: relative;
+  flex-shrink: 1;
+  flex-basis: 220px;
+  min-width: 0; /* Allows shrinking below content size - KEY for overlap! */
+  margin-right: 8px;
+}
+
+/* Last proceeding tab wrapper has a minimum width floor to prevent complete collapse */
+.last-tab-wrapper {
+  min-width: 140px;
+}
+
+/* Hover and focus bring tab wrapper to front */
+.tab-wrapper:hover,
+.tab-wrapper:has(:focus-visible) {
+  z-index: 100 !important;
+}
+
+/* ALL tab wrapper - never shrinks */
+.all-tab-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.all-tab-wrapper:hover,
+.all-tab-wrapper:has(:focus-visible) {
+  z-index: 100 !important;
+}
+
+/* ========================================================================== */
 /* SUPER SPACER - Absorbs extra space and pushes ALL tab to the right        */
 /* ========================================================================== */
 
@@ -183,7 +220,6 @@ const getTabStyle = (tabId) => {
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
-  position: relative;
   padding: 0 20px;
   font-size: 0.875rem;
   transition: all 0.2s;
@@ -191,41 +227,22 @@ const getTabStyle = (tabId) => {
 }
 
 /* ========================================================================== */
-/* PROCEEDING TAB - Adaptive flex behavior                                   */
+/* PROCEEDING TAB - FIXED WIDTH (doesn't shrink, creates overlap)            */
 /* ========================================================================== */
 
 .proceeding-tab {
   height: 64px;
-  /* Fixed width for consistent sizing */
-  width: 220px;
-  /* Flex properties for adaptive behavior */
-  flex-basis: 220px;
-  flex-shrink: 1;
-  min-width: 0; /* Allows shrinking below content size */
-  /* Spacing between tabs */
-  margin-right: 8px;
-}
-
-/* Last proceeding tab has a minimum width floor to prevent complete collapse */
-.last-proceeding-tab {
-  min-width: 140px;
-}
-
-/* Hover and focus bring tab to front */
-.proceeding-tab:hover,
-.proceeding-tab:focus-within {
-  z-index: 100 !important;
+  width: 220px; /* FIXED width - does NOT shrink! */
 }
 
 /* ========================================================================== */
-/* ALL TAB - Never shrinks, always visible                                   */
+/* ALL TAB - FIXED WIDTH                                                      */
 /* ========================================================================== */
 
 .all-tab {
   height: 60px;
   font-weight: 500;
-  width: 80px;
-  flex-shrink: 0; /* Never shrinks */
+  width: 80px; /* FIXED width */
   /* Left shadow helps visualize the stacking order */
   box-shadow:
     -4px 0 8px -2px rgba(0, 0, 0, 0.1),
