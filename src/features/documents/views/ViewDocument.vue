@@ -323,7 +323,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 80px); /* Subtract AppHeader height */
-  background-color: #f5f5f5;
+  background-color: #FCFCF5;
 }
 
 .view-document-content {

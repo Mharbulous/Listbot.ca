@@ -19,6 +19,7 @@ export default {
         'slate-200': '#e2e8f0',
         'slate-100': '#f1f5f9',
         'slate-50': '#f8fafc',
+        'viewport-bg': '#FCFCF5',
       },
     },
   },

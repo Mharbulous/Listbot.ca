@@ -442,7 +442,7 @@ const handleFolderRecursiveSelect = (event) => {
 .main-viewport {
   height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
   width: 100%; /* Full width of parent */
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  background: #FCFCF5;
   padding: 0; /* No padding - table fills entire viewport */
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
