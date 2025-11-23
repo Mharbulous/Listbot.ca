@@ -40,9 +40,10 @@
 
       <!-- Proceedings Tabs (Sticky) -->
       <div class="proceedings-tabs-sticky">
-        <div class="px-6 flex justify-between items-end">
-          <!-- Left-aligned proceeding tabs -->
+        <div class="px-6">
+          <!-- Tabs Container - holds all tabs -->
           <div class="tabs-container flex gap-1 items-end">
+            <!-- Left-aligned proceeding tabs -->
             <button
               v-for="proceeding in mockProceedings"
               :key="proceeding.id"
@@ -55,16 +56,16 @@
                 <div class="text-xs text-slate-500">{{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
               </div>
             </button>
-          </div>
 
-          <!-- Right-aligned "ALL" tab -->
-          <button
-            @click="selectedProceeding = null"
-            class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
-            :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
-          >
-            ALL
-          </button>
+            <!-- Right-aligned "ALL" tab -->
+            <button
+              @click="selectedProceeding = null"
+              class="folder-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative ml-auto"
+              :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
+            >
+              ALL
+            </button>
+          </div>
         </div>
       </div>
 
@@ -551,11 +552,6 @@ function openActionMenu(pleading) {
   height: 60px; /* Fixed height for all tabs */
   display: flex;
   align-items: center; /* Vertically center content */
-}
-
-/* ALL Tab - Slightly shorter to match proceedings tabs alignment */
-.all-tab {
-  height: 56px; /* 4px shorter than proceedings tabs */
 }
 
 /* Active Tab - Appears raised and connected to table */
