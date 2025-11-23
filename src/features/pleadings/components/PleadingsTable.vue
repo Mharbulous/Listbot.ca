@@ -3,25 +3,25 @@
     <table class="w-full">
       <thead class="table-header border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
         <tr>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Document Name
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Version
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Filing Date
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Filing Party
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Proceeding
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Expires
           </th>
-          <th class="px-2 py-1 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
             Actions
           </th>
         </tr>
