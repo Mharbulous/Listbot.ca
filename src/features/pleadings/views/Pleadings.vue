@@ -102,11 +102,6 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                Status
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-              >
                 Proceeding
               </th>
               <th
@@ -150,20 +145,6 @@
                   <div class="font-medium text-slate-900">{{ pleading.partyName }}</div>
                   <div class="text-xs text-slate-500">{{ pleading.partyRole }}</div>
                 </div>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="{
-                    'bg-slate-100 text-slate-700': pleading.status === 'Drafting',
-                    'bg-blue-100 text-blue-700': pleading.status === 'Filed' || pleading.status === 'Partially Served',
-                    'bg-emerald-100 text-emerald-700': pleading.status === 'Fully Served',
-                    'bg-yellow-100 text-yellow-700': pleading.status === 'Expiring soon' || pleading.status === 'Overdue',
-                    'bg-red-100 text-red-700': pleading.status === 'Expired' || pleading.status === 'Struck'
-                  }"
-                >
-                  {{ pleading.status }}
-                </span>
               </td>
               <td class="px-6 py-4">
                 <div class="text-sm">
@@ -311,7 +292,6 @@ const mockPleadings = ref([
     },
     partyName: 'John Smith',
     partyRole: 'Plaintiff',
-    status: 'Filed',
     version: 'Original',
     filedDate: '2024-03-15',
     expires: null,
@@ -328,7 +308,6 @@ const mockPleadings = ref([
     },
     partyName: 'Acme Corp',
     partyRole: 'Defendant',
-    status: 'Fully Served',
     version: 'Original',
     filedDate: '2024-04-12',
     expires: '2024-12-15',
@@ -345,7 +324,6 @@ const mockPleadings = ref([
     },
     partyName: 'Acme Corp',
     partyRole: 'Defendant',
-    status: 'Partially Served',
     version: 'Original',
     filedDate: '2024-04-12',
     expires: '2025-01-20',
@@ -362,7 +340,6 @@ const mockPleadings = ref([
     },
     partyName: 'John Smith',
     partyRole: 'Plaintiff',
-    status: 'Drafting',
     version: 'First Amendment',
     filedDate: '2024-05-20',
     expires: null,
@@ -379,7 +356,6 @@ const mockPleadings = ref([
     },
     partyName: 'John Smith',
     partyRole: 'Plaintiff',
-    status: 'Expiring soon',
     version: 'Original',
     filedDate: '2024-05-28',
     expires: '2024-11-30',
@@ -396,7 +372,6 @@ const mockPleadings = ref([
     },
     partyName: 'Jane Doe',
     partyRole: 'Plaintiff',
-    status: 'Expired',
     version: 'Original',
     filedDate: '2024-06-01',
     expires: '2024-10-15',
@@ -413,7 +388,6 @@ const mockPleadings = ref([
     },
     partyName: 'XYZ Ltd',
     partyRole: 'Defendant',
-    status: 'Overdue',
     version: 'Original',
     filedDate: '2024-07-10',
     expires: '2024-09-20',
@@ -430,7 +404,6 @@ const mockPleadings = ref([
     },
     partyName: 'Jane Doe',
     partyRole: 'Plaintiff',
-    status: 'Struck',
     version: 'First Amendment',
     filedDate: '2024-08-05',
     expires: '2024-08-20',
