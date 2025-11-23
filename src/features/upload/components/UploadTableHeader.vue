@@ -92,7 +92,7 @@ watch(
 <style scoped>
 .upload-table-header {
   position: sticky;
-  top: 0;
+  top: 56px; /* Positioned below title-drawer (20px padding + ~36px text) */
   z-index: 10;
   display: flex;
   background: #f9fafb;

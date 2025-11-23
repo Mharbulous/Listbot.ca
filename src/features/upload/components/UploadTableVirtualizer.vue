@@ -373,7 +373,7 @@ defineExpose({
   pointer-events: none;
 }
 
-/* Title Drawer - Scrollable drawer that slides up behind sticky header */
+/* Title Drawer - Sticky drawer that stays at the top */
 .title-drawer {
   padding: 20px 24px 0 24px;
   min-width: max-content;
@@ -381,10 +381,12 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  position: relative;
-  z-index: 1;
-  background: transparent;
+  position: sticky;
+  top: 0;
+  z-index: 11; /* Above header (z-index: 10) */
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 100%);
   color: #455A64;
+  --title-drawer-height: 56px; /* Approximate height: 20px padding + 36px text */
 }
 
 .title-drawer-text {
