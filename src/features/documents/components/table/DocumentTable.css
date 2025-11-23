@@ -20,7 +20,6 @@
 /* Title Drawer - Scrollable drawer that slides up behind sticky header */
 .title-drawer {
   padding: 20px 24px;
-  border-bottom: 2px solid #e5e7eb;
   min-width: max-content; /* Match table width */
   display: flex;
   align-items: center;
