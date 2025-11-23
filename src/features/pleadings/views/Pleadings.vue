@@ -456,7 +456,7 @@ function openActionMenu(pleading) {
 // Tab overlap and z-index management
 function getTabStyle(index, proceedingId) {
   const isSelected = selectedProceeding.value === proceedingId;
-  const overlapAmount = '-40px'; // Amount of overlap between tabs - increased for text obscuring
+  const overlapAmount = 40; // Amount of overlap in pixels
 
   // Base z-index increases from left to right
   // Selected tab gets highest z-index (20)
@@ -464,23 +464,31 @@ function getTabStyle(index, proceedingId) {
   const baseZIndex = index + 1;
   const zIndex = isSelected ? 20 : baseZIndex;
 
+  // Use position: relative + left to create true overlap
+  // (Don't use transform - it would override the CSS translateY for vertical positioning)
+  const leftOffset = index === 0 ? 0 : -(overlapAmount * index);
+
   return {
-    marginLeft: index === 0 ? '0' : overlapAmount,
+    left: `${leftOffset}px`,
     zIndex: zIndex
   };
 }
 
 function getAllTabStyle() {
   const isSelected = selectedProceeding.value === null;
-  const overlapAmount = '-40px'; // Amount of overlap between tabs - increased for text obscuring
+  const overlapAmount = 40; // Amount of overlap in pixels
 
   // ALL tab is on the right, but needs overlap if there are proceedings
   // Give it a high base z-index since it's rightmost
   const baseZIndex = mockProceedings.value.length + 1;
   const zIndex = isSelected ? 20 : baseZIndex;
 
+  // Use position: relative + left to create true overlap with the rightmost proceeding tab
+  // (Don't use transform - it would override the CSS translateY for vertical positioning)
+  const leftOffset = mockProceedings.value.length > 0 ? -overlapAmount : 0;
+
   return {
-    marginLeft: mockProceedings.value.length > 0 ? overlapAmount : '0',
+    left: `${leftOffset}px`,
     zIndex: zIndex
   };
 }
