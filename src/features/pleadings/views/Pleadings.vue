@@ -48,7 +48,7 @@
               v-for="(proceeding, index) in mockProceedings"
               :key="proceeding.id"
               @click="selectedProceeding = proceeding.id"
-              class="folder-tab px-5 py-0 text-sm transition-all whitespace-nowrap relative"
+              class="folder-tab proceeding-tab px-5 py-0 text-sm transition-all whitespace-nowrap relative"
               :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
               :style="getTabStyle(index, proceeding.id)"
             >
@@ -61,7 +61,7 @@
             <!-- Right-aligned "ALL" tab -->
             <button
               @click="selectedProceeding = null"
-              class="folder-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative ml-auto"
+              class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative ml-auto"
               :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
               :style="getAllTabStyle()"
             >
@@ -573,7 +573,7 @@ function getAllTabStyle() {
 /* Table Container */
 .table-container {
   position: relative;
-  z-index: 1; /* Above gradient background */
+  z-index: 25; /* Above all tabs (tabs max at z-index 20) */
 }
 
 /* Folder Tab Base Styles */
@@ -588,9 +588,14 @@ function getAllTabStyle() {
   align-items: center; /* Vertically center content */
 }
 
-/* ALL Tab - Slightly shorter to match proceedings tabs alignment */
+/* Proceeding Tabs - Taller than ALL tab */
+.proceeding-tab {
+  height: 64px; /* 4px taller than base */
+}
+
+/* ALL Tab - Base height */
 .all-tab {
-  height: 56px; /* 4px shorter than proceedings tabs */
+  height: 60px; /* Base height */
 }
 
 /* Active Tab - Appears raised and connected to table */
@@ -606,6 +611,11 @@ function getAllTabStyle() {
     2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
+/* Proceeding tabs positioned 4px lower when active */
+.proceeding-tab.folder-tab-active {
+  transform: translateY(5px);
+}
+
 /* Inactive Tabs - Appear lower and behind */
 .folder-tab-inactive {
   background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
@@ -616,11 +626,21 @@ function getAllTabStyle() {
   box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* Proceeding tabs positioned 4px lower when inactive */
+.proceeding-tab.folder-tab-inactive {
+  transform: translateY(8px);
+}
+
 .folder-tab-inactive:hover {
   background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
   color: #334155;
   transform: translateY(2px);
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.07);
+}
+
+/* Proceeding tabs positioned 4px lower when hovering */
+.proceeding-tab.folder-tab-inactive:hover {
+  transform: translateY(6px);
 }
 
 /* Override table border radius to connect with tabs */
