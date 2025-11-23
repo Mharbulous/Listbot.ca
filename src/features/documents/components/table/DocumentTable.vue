@@ -26,12 +26,15 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
+      <!-- Extended Gradient Background (sits behind all content) -->
+      <div class="gradient-background"></div>
+
       <!-- Title Drawer (scrollable - slides up behind sticky header) -->
       <div
         v-if="pageTitle"
         class="title-drawer"
         :style="{
-          background: 'linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%)',
+          background: 'transparent',
           color: '#455A64',
         }"
       >

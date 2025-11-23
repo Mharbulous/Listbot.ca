@@ -17,6 +17,18 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
+/* Extended Gradient Background - Provides vertical blending space */
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 800px; /* Extended height for smoother gradient blend */
+  background: linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%);
+  z-index: 0; /* Behind all content */
+  pointer-events: none; /* Don't interfere with clicks */
+}
+
 /* Title Drawer - Scrollable drawer that slides up behind sticky header */
 .title-drawer {
   padding: 20px 24px;
@@ -25,6 +37,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  position: relative;
+  z-index: 1; /* Above gradient background */
 }
 
 .title-drawer-text {
@@ -286,6 +300,8 @@
 .table-mockup-body {
   background: white;
   width: max-content; /* Match header width exactly */
+  position: relative;
+  z-index: 1; /* Above gradient background */
 }
 
 /* Virtual Container - Required for absolutely positioned rows */
