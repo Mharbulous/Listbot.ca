@@ -7,7 +7,6 @@
 ## Files Exceeding 700 Lines (Streamlining Candidates)
 
 ### Priority 1: Files WITHOUT Date Prefix
-- `Features/Organizer/AIAnalysis/ai-requirements.md` - **1430 lines** ⚠️ CRITICAL
 - `Features/Upload/Deduplication/deduplication-complexity-analysis.md` - **759 lines**
 
 ### Priority 2: Files WITH Date Prefix (Oldest First)
@@ -53,7 +52,14 @@
 
 ### Features/Organizer/AIAnalysis/
 - `25-11-19-ai-analysis-overview.md` - 816 lines ⚠️
-- `ai-requirements.md` - 1430 lines ⚠️ **CRITICAL - No date prefix**
+- `ai-requirements-architecture.md` - 249 lines *(no date prefix)*
+- `ai-requirements-functional.md` - 269 lines *(no date prefix)*
+- `ai-requirements-implementation.md` - 182 lines *(no date prefix)*
+- `ai-requirements-nonfunctional.md` - 44 lines *(no date prefix)*
+- `ai-requirements-overview.md` - 152 lines *(no date prefix)*
+- `ai-requirements-prompts.md` - 99 lines *(no date prefix)*
+- `ai-requirements-ui-mockups.md` - 182 lines *(no date prefix)*
+- `ai-requirements-user-stories.md` - 299 lines *(no date prefix)*
 
 ### Features/Organizer/Categories/
 - `25-11-18-category-system-overview.md` - 431 lines
@@ -124,12 +130,12 @@
 
 ## Summary Statistics
 
-- **Total documentation files:** 49 (excluding CLAUDE.md index files)
-- **Total lines:** 20,921
-- **Files >700 lines:** 6
+- **Total documentation files:** 56 (excluding CLAUDE.md index files)
+- **Total lines:** 20,967
+- **Files >700 lines:** 5
 - **Files 600-700 lines:** 4
-- **Files without date prefix:** 18
-- **Average file size:** 427 lines
+- **Files without date prefix:** 25
+- **Average file size:** 374 lines
 
 ---
 
@@ -137,7 +143,7 @@
 
 **Recommended decomposition order:**
 
-1. `Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)
+1. ✅ ~~`Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)~~ **COMPLETED**
 2. `Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines, no date prefix)
 3. `Testing/25-11-18-vitest-test-suites.md` (1629 lines)
 4. `Features/Upload/old-upload-page.md` (1109 lines)
