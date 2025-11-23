@@ -1,7 +1,7 @@
 <template>
   <div class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px]">
     <table class="w-full min-w-[720px]">
-      <thead class="table-header border-b border-slate-200 sticky top-0 min-w-[720px]" style="background-color: #e0f2fe;">
+      <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
         <tr>
           <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Fact Statement
@@ -121,13 +121,5 @@ function handleActionMenu(fact) {
 .table-container {
   position: relative;
   z-index: 25;
-}
-
-.table-header {
-  border-top-right-radius: 12px;
-  box-shadow:
-    0 -3px 6px rgba(0, 0, 0, 0.08),
-    -2px 0 4px rgba(0, 0, 0, 0.03),
-    2px 0 4px rgba(0, 0, 0, 0.03);
 }
 </style>

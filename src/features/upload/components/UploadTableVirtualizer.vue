@@ -44,14 +44,9 @@
 <template>
   <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
   <!-- Merged table-wrapper and scroll-container into single container -->
-  <div ref="scrollContainerRef" class="scroll-container">
-    <!-- Gradient Background -->
-    <div class="gradient-background"></div>
-
+  <PageLayout ref="scrollContainerRef" class="upload-layout">
     <!-- Title Drawer -->
-    <div class="title-drawer">
-      <h1 class="title-drawer-text">Preserve</h1>
-      <div class="flex items-center gap-3 flex-1 min-w-0 ml-6">
+    <TitleDrawer title="Upload Queue">
         <!-- Add to Queue button -->
         <div class="flex items-center">
           <v-menu location="bottom">
@@ -82,8 +77,7 @@
             </v-list>
           </v-menu>
         </div>
-      </div>
-    </div>
+    </TitleDrawer>
 
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
     <UploadTableHeader
@@ -151,7 +145,7 @@
       @cancel="handleCancel"
       @retry-failed="handleRetryFailed"
     />
-  </div>
+  </PageLayout>
 </template>
 
 <script setup>
@@ -160,6 +154,8 @@ import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
+import PageLayout from '@/shared/components/layout/PageLayout.vue';
+import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 import UploadTableDropzone from './UploadTableDropzone.vue';
 import { useQueueState } from '../composables/useQueueState.js';
 
@@ -382,53 +378,13 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Merged table-wrapper and scroll-container styles */
-.scroll-container {
-  flex: 1;
-  position: relative; /* Creates positioning context for absolute overlay */
-  overflow-y: auto; /* Enable vertical scrolling */
+/* Custom layout styling for Upload table */
+.upload-layout {
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
 }
 
-/* Gradient Background - Provides vertical blending space */
-.gradient-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 800px;
-  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* Title Drawer - Sticky drawer that stays at the top */
-.title-drawer {
-  padding: 20px 24px 0 24px;
-  min-width: max-content;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  position: sticky;
-  top: 0;
-  z-index: 11; /* Above header (z-index: 10) */
-  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 100%);
-  color: #455A64;
-  --title-drawer-height: 56px; /* Approximate height: 20px padding + 36px text */
-}
-
-.title-drawer-text {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: inherit;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
 
 /* Content wrapper for virtual rows (no flex properties) */
 .content-wrapper {
