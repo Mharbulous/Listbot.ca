@@ -411,6 +411,10 @@ onBeforeUnmount(() => {
 .view-document-content > :nth-child(1) {
   grid-column: thumbnails-start / thumbnails-end;
   grid-row: 1 / 3;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 /* Navigation bar: column 2 (center), row 1 */
@@ -418,6 +422,10 @@ onBeforeUnmount(() => {
   grid-column: center-start / center-end;
   grid-row: 1;
   min-width: 500px;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 /* PDF Viewer: dynamically spans columns based on panel visibility, row 2 */
@@ -425,6 +433,10 @@ onBeforeUnmount(() => {
   grid-row: 2;
   min-width: 500px;
   transition: grid-column 0.3s ease;
+  position: sticky;
+  top: 72px; /* Below navigation bar (64px height + 8px offset) */
+  z-index: 9;
+  align-self: start;
 }
 
 /* Both panels open: PDF viewer stays in center column */
@@ -451,6 +463,10 @@ onBeforeUnmount(() => {
 .view-document-content > :nth-child(4) {
   grid-column: metadata-start / metadata-end;
   grid-row: 1 / 3;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 .content-center {
