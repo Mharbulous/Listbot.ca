@@ -126,13 +126,15 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Theory' },
     },
     {
-      path: '/facts',
-      redirect: '/facts/stub',
+      path: '/facts/stub',
+      name: 'facts-stub',
+      component: () => import('../views/stubs/FactsStub.vue'),
+      meta: { requiresAuth: true, title: 'Facts Blueprint' },
     },
     {
-      path: '/facts/stub',
+      path: '/facts',
       name: 'facts',
-      component: () => import('../views/stubs/FactsStub.vue'),
+      component: () => import('../features/facts/views/Facts.vue'),
       meta: { requiresAuth: true, title: 'Facts' },
     },
     {
