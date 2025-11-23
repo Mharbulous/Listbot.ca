@@ -51,6 +51,38 @@
     <!-- Title Drawer -->
     <div class="title-drawer">
       <h1 class="title-drawer-text">Preserve</h1>
+      <div class="flex items-center gap-3 flex-1 min-w-0 ml-6">
+        <!-- Add to Queue button -->
+        <div class="flex items-center">
+          <v-menu location="bottom">
+            <template v-slot:activator="{ props: menuProps }">
+              <v-btn
+                color="primary"
+                size="default"
+                variant="elevated"
+                prepend-icon="mdi-plus"
+                append-icon="mdi-chevron-down"
+                v-bind="menuProps"
+              >
+                Add to Queue
+              </v-btn>
+            </template>
+
+            <v-list density="compact">
+              <v-list-item
+                prepend-icon="mdi-file-multiple"
+                title="Files"
+                @click="triggerFileSelect"
+              />
+              <v-list-item
+                prepend-icon="mdi-folder-multiple"
+                title="Folder"
+                @click="triggerFolderRecursiveSelect"
+              />
+            </v-list>
+          </v-menu>
+        </div>
+      </div>
     </div>
 
     <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
@@ -332,6 +364,15 @@ const handleCancelUpload = () => {
 
 const handleRetryFailed = () => {
   emit('retry-failed');
+};
+
+// File selection triggers for Add to Queue button
+const triggerFileSelect = () => {
+  window.dispatchEvent(new CustomEvent('upload-trigger-file-select'));
+};
+
+const triggerFolderRecursiveSelect = () => {
+  window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
 };
 
 // Expose scroll container ref for parent component

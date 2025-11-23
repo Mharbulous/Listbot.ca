@@ -86,35 +86,11 @@
 
     <!-- Right Section: Contextual Action Buttons -->
     <div class="flex items-center gap-3 flex-shrink-0">
-      <!-- Add to Queue button (Upload page only) -->
-      <div v-if="route.path === '/upload'" class="flex items-center">
-        <v-menu location="bottom">
-          <template v-slot:activator="{ props: menuProps }">
-            <v-btn
-              color="primary"
-              size="default"
-              variant="elevated"
-              prepend-icon="mdi-plus"
-              append-icon="mdi-chevron-down"
-              v-bind="menuProps"
-            >
-              Add to Queue
-            </v-btn>
-          </template>
-
-          <v-list density="compact">
-            <v-list-item
-              prepend-icon="mdi-file-multiple"
-              title="Files"
-              @click="triggerFileSelect"
-            />
-            <v-list-item
-              prepend-icon="mdi-folder-multiple"
-              title="Folder"
-              @click="triggerFolderRecursiveSelect"
-            />
-          </v-list>
-        </v-menu>
+      <!-- Categories button (Collect page only) -->
+      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
+          Categories
+        </v-btn>
       </div>
 
       <!-- Collect button (Matter Categories page only) -->
@@ -201,15 +177,6 @@ function navigateToDocuments() {
   if (match && match[1]) {
     router.push(`/matters/${match[1]}/documents`);
   }
-}
-
-// File selection triggers for Upload page
-function triggerFileSelect() {
-  window.dispatchEvent(new CustomEvent('upload-trigger-file-select'));
-}
-
-function triggerFolderRecursiveSelect() {
-  window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
 }
 </script>
 
