@@ -387,8 +387,6 @@ onBeforeUnmount(() => {
   grid-template-rows: auto 1fr;
   gap: 24px;
   padding: 24px;
-  flex: 1;
-  overflow: auto;
   align-items: start;
   position: relative;
   z-index: 1;
