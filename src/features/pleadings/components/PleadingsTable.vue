@@ -1,27 +1,27 @@
 <template>
   <div class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
-    <table class="w-full">
+    <table class="w-full min-w-[720px]">
       <thead class="table-header border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
         <tr>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Document Name
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Version
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Filing Date
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Filing Party
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Proceeding
           </th>
-          <th class="px-2 py-1 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Expires
           </th>
-          <th class="px-2 py-1 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+          <th class="px-2 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
             Actions
           </th>
         </tr>

@@ -259,6 +259,7 @@ const getTabWrapperStyle = (tabId) => {
   align-items: flex-start;
   overflow: hidden;
   width: 100%;
+  text-align: left;
 }
 
 .tab-title {
