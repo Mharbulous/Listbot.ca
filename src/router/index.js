@@ -139,13 +139,15 @@ const router = createRouter({
     },
     {
       path: '/cast',
-      redirect: '/cast/stub',
+      name: 'cast',
+      component: () => import('../features/cast/views/Cast.vue'),
+      meta: { requiresAuth: true, title: 'Characters' },
     },
     {
       path: '/cast/stub',
-      name: 'cast',
+      name: 'cast-stub',
       component: () => import('../views/stubs/CastStub.vue'),
-      meta: { requiresAuth: true, title: 'Characters' },
+      meta: { requiresAuth: true, title: 'Characters Blueprint' },
     },
     {
       path: '/identify',
