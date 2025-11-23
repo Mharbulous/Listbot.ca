@@ -1,7 +1,7 @@
 # Folder Structure - Module Decomposition
 
-**Date**: 2025-11-22
-**Updated**: 2025-11-22 (Line counts verified and updated)
+**Date**: 2025-11-23
+**Updated**: 2025-11-23 (Line counts verified and updated)
 
 ## Auth Module Structure
 
@@ -386,10 +386,10 @@ The Pleadings view has been decomposed from a single 692-line file into multiple
 ```
 src/features/pleadings/
 ├── views/
-│   └── Pleadings.vue                    # Main orchestrator (124 lines)
+│   └── Pleadings.vue                    # Main orchestrator (78 lines)
 ├── components/
-│   ├── ProceedingsTabs.vue              # Tabbed navigation (208 lines)
-│   ├── PleadingsTable.vue               # Data table (140 lines)
+│   ├── ProceedingsTabs.vue              # Tabbed navigation (339 lines)
+│   ├── PleadingsTable.vue               # Data table (132 lines)
 │   └── VersionHistoryModal.vue          # History modal (72 lines)
 └── data/
     └── pleadingsMockData.js             # Mock data (179 lines)
@@ -397,7 +397,7 @@ src/features/pleadings/
 
 ### Module Responsibilities
 
-#### `Pleadings.vue` - Main Orchestrator (124 lines)
+#### `Pleadings.vue` - Main Orchestrator (78 lines)
 **Responsibilities:**
 - Page layout with gradient background
 - Title drawer with action buttons
@@ -406,7 +406,7 @@ src/features/pleadings/
 - Provides filtered pleadings computed property
 - Handles event delegation from child components
 
-#### `ProceedingsTabs.vue` - Tabbed Navigation (208 lines)
+#### `ProceedingsTabs.vue` - Tabbed Navigation (339 lines)
 **Responsibilities:**
 - Renders proceeding tabs with folder-style UI
 - Implements "ALL" tab for showing all pleadings
@@ -421,7 +421,7 @@ src/features/pleadings/
 - Proceeding tabs are 4px taller than ALL tab
 - Smart z-index: Active tab always on top, others stacked left-to-right
 
-#### `PleadingsTable.vue` - Data Table (140 lines)
+#### `PleadingsTable.vue` - Data Table (132 lines)
 **Responsibilities:**
 - Displays pleadings data in tabular format
 - Seven columns: Document Name, Version, Filing Date, Filing Party, Proceeding, Expires, Actions
@@ -470,10 +470,10 @@ src/features/pleadings/views/Pleadings.vue (692 lines)
 **New Structure:**
 ```
 src/features/pleadings/
-├── views/Pleadings.vue (124 lines)
-├── components/ (3 components, 420 lines total)
+├── views/Pleadings.vue (78 lines)
+├── components/ (3 components, 543 lines total)
 └── data/pleadingsMockData.js (179 lines)
-Total: 723 lines (31 lines of additional code due to module boundaries)
+Total: 800 lines (108 lines of additional code due to module boundaries)
 ```
 
 **Deprecated:**
