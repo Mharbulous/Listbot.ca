@@ -18,147 +18,126 @@
     </template>
 
     <template #content>
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="🤖"
+            title="AI Fact Extraction"
+            badge="Advanced Feature"
+            color="blue"
+            description="Automatically extract dates, parties, locations, and key events from documents using AI analysis, pre-populating fact cards."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Dramatically speeds up initial fact
+                gathering
+              </div>
+            </template>
+          </FeatureCard>
 
-        <!-- High Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800"
-            >
-              HIGH PRIORITY
-            </span>
-            Core Fact Management
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <FeatureCard
-              icon="📅"
-              title="Interactive Timeline"
-              badge="Foundation Feature"
-              priority="high"
-              color="amber"
-              description="Visual timeline view of case events with drag-and-drop organization, filtering by date range, parties, or categories."
-            >
-              <template #extra-content>
-                <div class="bg-amber-50 border border-amber-200 rounded p-3 mb-3">
-                  <div class="text-sm font-medium text-amber-900 mb-1">Expected Impact:</div>
-                  <div class="text-sm text-amber-800">
-                    Instantly identify patterns, gaps, and inconsistencies in factual narratives
-                  </div>
-                </div>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">How it works:</span> Visual timeline with automatic
-                  sorting and conflict detection
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="🗂️"
-              title="Structured Fact Cards"
-              badge="Foundation Feature"
-              priority="high"
-              color="amber"
-              description="Create detailed fact entries with date, time, location, parties involved, supporting documents, and witness connections."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500 mb-2">
-                  <span class="font-medium">Fields:</span> Date/time, location, parties, witnesses,
-                  documents
-                </div>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Comprehensive fact database with rich
-                  metadata
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="🔗"
-              title="Evidence Cross-Reference"
-              badge="Integration Feature"
-              color="blue"
-              description="Link facts directly to supporting documents in your evidence collection, creating automatic cross-references and citations."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Jump from fact to supporting evidence
-                  with one click
-                </div>
-              </template>
-            </FeatureCard>
-
-            <FeatureCard
-              icon="🤖"
-              title="AI Fact Extraction"
-              badge="Advanced Feature"
-              color="blue"
-              description="Automatically extract dates, parties, locations, and key events from documents using AI analysis, pre-populating fact cards."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Dramatically speeds up initial fact
-                  gathering
-                </div>
-              </template>
-            </FeatureCard>
-          </div>
+          <FeatureCard
+            icon="🔗"
+            title="Evidence Cross-Reference"
+            badge="Integration Feature"
+            color="blue"
+            description="Link facts directly to supporting documents in your evidence collection, creating automatic cross-references and citations."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Jump from fact to supporting evidence
+                with one click
+              </div>
+            </template>
+          </FeatureCard>
         </div>
+      </div>
 
-        <!-- Medium Priority Features -->
-        <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              MEDIUM PRIORITY
-            </span>
-            Advanced Analysis
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <FeatureCard
-              icon="⚠️"
-              title="Fact Conflict Detection"
-              badge="Quality Control"
-              description="Automatically identify inconsistencies in dates, locations, or witness accounts across multiple fact entries."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Catch errors and identify areas needing
-                  clarification
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="📅"
+            title="Interactive Timeline"
+            badge="Foundation Feature"
+            color="amber"
+            description="Visual timeline view of case events with drag-and-drop organization, filtering by date range, parties, or categories."
+          >
+            <template #extra-content>
+              <div class="bg-amber-50 border border-amber-200 rounded p-3 mb-3">
+                <div class="text-sm font-medium text-amber-900 mb-1">Expected Impact:</div>
+                <div class="text-sm text-amber-800">
+                  Instantly identify patterns, gaps, and inconsistencies in factual narratives
                 </div>
-              </template>
-            </FeatureCard>
+              </div>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">How it works:</span> Visual timeline with automatic
+                sorting and conflict detection
+              </div>
+            </template>
+          </FeatureCard>
 
-            <FeatureCard
-              icon="🏷️"
-              title="Custom Fact Categories"
-              badge="Organization"
-              description="Create custom tags and categories to organize facts by legal issue, party, chronological phase, or strategic importance."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Flexible organization tailored to your
-                  case theory
-                </div>
-              </template>
-            </FeatureCard>
+          <FeatureCard
+            icon="🗂️"
+            title="Structured Fact Cards"
+            badge="Foundation Feature"
+            color="amber"
+            description="Create detailed fact entries with date, time, location, parties involved, supporting documents, and witness connections."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500 mb-2">
+                <span class="font-medium">Fields:</span> Date/time, location, parties, witnesses,
+                documents
+              </div>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Comprehensive fact database with rich
+                metadata
+              </div>
+            </template>
+          </FeatureCard>
 
-            <FeatureCard
-              icon="📄"
-              title="Fact Chronologies"
-              badge="Export & Reporting"
-              description="Generate professional chronologies and fact summaries for court submissions, settlement negotiations, or client updates."
-            >
-              <template #extra-content>
-                <div class="text-sm text-slate-500">
-                  <span class="font-medium">Benefit:</span> Professional work product in minutes
-                </div>
-              </template>
-            </FeatureCard>
-          </div>
+          <FeatureCard
+            icon="⚠️"
+            title="Fact Conflict Detection"
+            badge="Quality Control"
+            description="Automatically identify inconsistencies in dates, locations, or witness accounts across multiple fact entries."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Catch errors and identify areas needing
+                clarification
+              </div>
+            </template>
+          </FeatureCard>
+
+          <FeatureCard
+            icon="🏷️"
+            title="Custom Fact Categories"
+            badge="Organization"
+            description="Create custom tags and categories to organize facts by legal issue, party, chronological phase, or strategic importance."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Flexible organization tailored to your
+                case theory
+              </div>
+            </template>
+          </FeatureCard>
+
+          <FeatureCard
+            icon="📄"
+            title="Fact Chronologies"
+            badge="Export & Reporting"
+            description="Generate professional chronologies and fact summaries for court submissions, settlement negotiations, or client updates."
+          >
+            <template #extra-content>
+              <div class="text-sm text-slate-500">
+                <span class="font-medium">Benefit:</span> Professional work product in minutes
+              </div>
+            </template>
+          </FeatureCard>
         </div>
       </div>
 
