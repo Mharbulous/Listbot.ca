@@ -39,6 +39,10 @@
         }"
       >
         <h1 class="title-drawer-text">{{ pageTitle }}</h1>
+        <!-- Slot for controls (e.g., buttons, filters) -->
+        <div v-if="$slots.controls" class="title-drawer-controls">
+          <slot name="controls"></slot>
+        </div>
       </div>
 
       <!-- Sticky Table Header (drawer front panel - stays fixed) -->
