@@ -1,6 +1,7 @@
 # Responsive Overlapping Folder Tabs - Best Practices
 
 **Date:** 2025-11-22
+**Updated:** 2025-11-23
 **Topic:** Implementing browser-style skeuomorphic tabs with responsive overlap behavior
 
 ## Problem Statement
@@ -10,16 +11,281 @@ How do you create folder-style tabs that:
 2. **Overlap each other** when space is constrained
 3. **Stack with rightmost tabs on top** (like browser tabs)
 4. Transition smoothly between these states
+5. Never exceed container width (no horizontal scrollbar)
 
-## Core Concept
+## ✅ PROVEN TECHNIQUE: Wrapper-Based Overflow (RECOMMENDED)
 
-The key insight is that **negative margins** create overlap in flow layouts, while **z-index stacking** controls which tabs appear on top. This mimics physical folder tabs where tabs on the right naturally sit in front of tabs on the left.
+**Status:** Successfully implemented in production (ProceedingsTabs.vue)
+**Example:** See `docs/Front-End/25-11-22-Adaptive-folder-tabs.md`
+
+This is the **CSS-only** approach that actually works. The key insight is using a **two-layer structure** where wrappers shrink but buttons stay fixed.
+
+### Core Concept
+
+**Each tab has TWO elements:**
+1. **Wrapper element** (e.g., `<div>` or `<li>`) - SHRINKS adaptively
+2. **Button inside wrapper** - FIXED width (e.g., 220px), never shrinks
+
+**When wrapper shrinks below button width:**
+- Button OVERFLOWS its wrapper container
+- Creates automatic overlap with next tab
+- Pure CSS, no JavaScript needed for overlap
+
+### HTML Structure
+
+```html
+<div class="tabs-container">
+  <!-- Tab 1 wrapper -->
+  <div class="tab-wrapper">
+    <button class="tab-button">Tab 1</button>
+  </div>
+
+  <!-- Tab 2 wrapper -->
+  <div class="tab-wrapper">
+    <button class="tab-button">Tab 2</button>
+  </div>
+
+  <!-- Super spacer - absorbs space first -->
+  <div class="super-spacer"></div>
+
+  <!-- ALL tab - never shrinks -->
+  <div class="all-tab-wrapper">
+    <button class="all-tab-button">ALL</button>
+  </div>
+</div>
+```
+
+### CSS Pattern (The Correct Way)
+
+```css
+/* Container */
+.tabs-container {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  overflow: visible; /* Allow buttons to overflow */
+}
+
+/* Tab Wrapper - This SHRINKS */
+.tab-wrapper {
+  position: relative;
+  flex-shrink: 1;          /* Can shrink */
+  flex-basis: 220px;       /* Preferred width */
+  min-width: 0;            /* KEY! Allows shrinking below 220px */
+  margin-right: 8px;       /* Spacing between tabs */
+}
+
+/* Last wrapper gets a floor to prevent complete collapse */
+.tab-wrapper:last-of-type {
+  min-width: 140px;
+}
+
+/* Hover brings wrapper to front */
+.tab-wrapper:hover {
+  z-index: 100;
+}
+
+/* Tab Button - FIXED WIDTH (creates overflow) */
+.tab-button {
+  width: 220px;  /* FIXED - never shrinks! */
+  height: 64px;
+  /* Styling omitted for brevity */
+}
+
+/* Super Spacer - Shrinks FIRST (high shrink value) */
+.super-spacer {
+  flex-grow: 1;
+  flex-shrink: 10000;  /* Very high - shrinks before tabs */
+  min-width: 0;
+}
+
+/* ALL tab wrapper - NEVER shrinks */
+.all-tab-wrapper {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.all-tab-button {
+  width: 80px;  /* Fixed width */
+  height: 60px;
+}
+```
+
+### Vue 3 Implementation Example
+
+```vue
+<template>
+  <div class="tabs-container">
+    <!-- Tab wrappers that shrink -->
+    <div
+      v-for="(tab, index) in tabs"
+      :key="tab.id"
+      class="tab-wrapper"
+      :class="{ 'last-tab-wrapper': index === tabs.length - 1 }"
+      :style="{ zIndex: isActive(tab.id) ? 100 : index + 1 }"
+    >
+      <button
+        @click="selectTab(tab.id)"
+        class="tab-button"
+        :class="{ active: isActive(tab.id) }"
+      >
+        {{ tab.title }}
+      </button>
+    </div>
+
+    <!-- Super spacer -->
+    <div class="super-spacer"></div>
+
+    <!-- ALL tab -->
+    <div class="all-tab-wrapper">
+      <button @click="selectTab(null)" class="all-tab-button">
+        ALL
+      </button>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.tab-wrapper {
+  position: relative;
+  flex-shrink: 1;
+  flex-basis: 220px;
+  min-width: 0;
+  margin-right: 8px;
+}
+
+.last-tab-wrapper {
+  min-width: 140px;
+}
+
+.tab-button {
+  width: 220px; /* Fixed - never shrinks */
+  height: 64px;
+}
+
+.super-spacer {
+  flex-grow: 1;
+  flex-shrink: 10000;
+  min-width: 0;
+}
+
+.all-tab-wrapper {
+  flex-shrink: 0;
+}
+</style>
+```
+
+### How Overlap Works (Step-by-Step)
+
+1. **Wide container (lots of space):**
+   - Super spacer absorbs extra space
+   - All tab wrappers stay at full 220px width
+   - Buttons fit perfectly in wrappers
+   - Tabs have 8px gaps between them (margin-right)
+
+2. **Container starts shrinking:**
+   - Super spacer shrinks first (shrink: 10000)
+   - Tab wrappers still at 220px
+   - No overlap yet
+
+3. **Spacer exhausted, container continues shrinking:**
+   - Tab wrappers start shrinking (e.g., 220px → 200px → 180px)
+   - Buttons stay at FIXED 220px width
+   - Buttons overflow their wrappers
+   - **Example:** Wrapper is 180px, button is 220px = 40px overflow
+   - Next wrapper is 8px away (margin-right)
+   - **Result:** ~32px overlap with next tab
+
+4. **Container very narrow:**
+   - Tab wrappers shrink to minimum (140px for last tab, 0px for others)
+   - Buttons still 220px wide
+   - Maximum overlap achieved
+   - ALL tab stays full 80px (never shrinks)
+
+### Why This Works Better Than Other Approaches
+
+✅ **Advantages:**
+- Pure CSS (no JavaScript needed for overlap detection)
+- Smooth, automatic adaptation to any container width
+- True overlap (not just negative margins)
+- No layout shifts or recalculations
+- Works with flexbox naturally
+- Easy to understand and maintain
+
+❌ **What NOT to do:**
+- Don't make buttons shrink (flex-shrink on button) - this squeezes but doesn't overlap
+- Don't use negative margins - harder to control and less predictable
+- Don't use JavaScript for overlap detection - unnecessary complexity
+
+### Critical Implementation Details
+
+1. **`min-width: 0` is ESSENTIAL** on tab wrappers
+   - Default flex minimum is `auto` (content size)
+   - `min-width: 0` allows shrinking below content/button size
+   - Without this, wrappers won't shrink below 220px
+
+2. **Last wrapper gets `min-width: 140px`**
+   - Prevents the last tab from completely disappearing
+   - Ensures at least one tab is always readable
+
+3. **Super spacer gets very high shrink value (10000)**
+   - Ensures it shrinks completely before tabs start overlapping
+   - Creates two-phase behavior: normal → overlapping
+
+4. **Z-index layering:**
+   - Base z-index increases left-to-right (1, 2, 3...)
+   - Active tab: z-index: 100
+   - Hovered tab: z-index: 99 or 100
+   - This mimics physical folder tabs
+
+5. **Text truncation inside buttons:**
+   ```css
+   .tab-content {
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+   }
+   ```
+
+### Common Mistakes to Avoid
+
+❌ **WRONG - Making button shrink:**
+```css
+.tab-button {
+  flex-shrink: 1;  /* NO! Button will squeeze, not overlap */
+  width: 220px;
+}
+```
+
+✅ **CORRECT - Only wrapper shrinks:**
+```css
+.tab-wrapper {
+  flex-shrink: 1;  /* YES! Wrapper shrinks */
+}
+
+.tab-button {
+  width: 220px;  /* Fixed - no flex properties */
+}
+```
 
 ---
 
-## Best Practice Approaches
+## Alternative Approaches (For Reference)
 
-### Approach 1: JavaScript-Detected Overlap (Recommended for Precision)
+**Note:** The following approaches were researched from internet sources but are **NOT RECOMMENDED** for new implementations. They are kept here for reference only. Use the **Wrapper-Based Overflow** technique above instead.
+
+**Why these are less preferred:**
+- More complex (JavaScript needed for overlap detection)
+- Harder to maintain (conditional logic, ResizeObserver management)
+- Less predictable (negative margins can conflict with other styles)
+- Layout shift risks (switching between gap/overlap modes)
+
+**See working example:** `docs/Front-End/25-11-22-Adaptive-folder-tabs.md` (React)
+**Production implementation:** `src/features/pleadings/components/ProceedingsTabs.vue` (Vue 3)
+
+---
+
+### Approach 1: JavaScript-Detected Overlap (NOT Recommended)
 
 Use JavaScript to detect when tabs overflow their container, then apply negative margins conditionally.
 
@@ -76,7 +342,7 @@ function getTabStyle(index) {
 
 ---
 
-### Approach 2: Container Queries (Pure CSS, Modern)
+### Approach 2: Container Queries (NOT Recommended - Fixed Breakpoint)
 
 Use CSS container queries to automatically switch between gapped and overlapped layouts.
 
@@ -139,7 +405,7 @@ Use CSS container queries to automatically switch between gapped and overlapped 
 
 ---
 
-### Approach 3: Float-Based (Legacy, but Reliable)
+### Approach 3: Float-Based (NOT Recommended - Legacy)
 
 The classic approach using floats and negative margins.
 
@@ -342,13 +608,24 @@ When implementing overlapping tabs, verify:
 
 ## Summary
 
-**The Golden Rules:**
-1. Use **negative `margin-left`** for overlap (not `left` positioning)
-2. Apply **incremental z-index** from left to right
-3. Give **active tab highest z-index** (e.g., 100)
-4. First tab never has negative margin (acts as anchor)
-5. Detect overflow with **`scrollWidth > offsetWidth`**
-6. Use **`ResizeObserver`** for dynamic detection
-7. Set **`position: relative`** for z-index to work
+**✅ RECOMMENDED: Wrapper-Based Overflow (Proven in Production)**
 
-This approach works reliably across modern frameworks (React, Vue, Svelte) and CSS methodologies (Tailwind, CSS-in-JS, vanilla CSS).
+**The Golden Rules:**
+1. Use **two-layer structure**: wrapper (shrinks) + button (fixed width)
+2. Set wrapper: `flex-shrink: 1`, `flex-basis: 220px`, **`min-width: 0`** (critical!)
+3. Set button: `width: 220px` (fixed - no flex properties)
+4. Last wrapper: `min-width: 140px` (prevents complete collapse)
+5. Super spacer: `flex-shrink: 10000` (shrinks first)
+6. Apply **incremental z-index** from left to right (1, 2, 3...)
+7. Give **active/hovered tab highest z-index** (e.g., 100)
+8. ALL tab: `flex-shrink: 0` (never shrinks)
+9. Container: `overflow: visible` (allows button overflow)
+
+**Why This Works:**
+- When wrapper shrinks below button width, button overflows → creates overlap
+- Pure CSS solution - no JavaScript needed for overlap detection
+- Smooth, automatic adaptation to any container width
+- Works reliably across modern frameworks (React, Vue, Svelte)
+
+**Alternative Approaches:**
+For scenarios where the wrapper technique doesn't fit, see the "Alternative Approaches" section above for negative margin and JavaScript-based solutions.

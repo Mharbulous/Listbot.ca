@@ -1,3 +1,39 @@
+/*
+ * CSS-ONLY ADAPTIVE OVERLAPPING TABS
+ *
+ * CRITICAL TECHNIQUE: Two-Layer Structure for True Overlap
+ * ========================================================
+ *
+ * This example demonstrates the CORRECT way to create adaptive tabs that
+ * squeeze together and overlap without exceeding container width.
+ *
+ * KEY INSIGHT:
+ * - Each tab has TWO elements: a WRAPPER (li) and a BUTTON inside
+ * - The WRAPPER shrinks adaptively (flex-shrink, min-width: 0)
+ * - The BUTTON stays at FIXED width (220px - never shrinks)
+ * - When wrapper < button width, the button OVERFLOWS and creates overlap!
+ *
+ * COMMON MISTAKE TO AVOID:
+ * ❌ Making the button itself shrink (flex-shrink on button)
+ *    This causes tabs to squeeze but NOT overlap
+ *
+ * ✅ CORRECT: Wrapper shrinks, button stays fixed
+ *    This creates true overlap as button overflows its container
+ *
+ * HOW IT WORKS:
+ * 1. Super spacer (shrink: 10000) absorbs extra space first
+ * 2. When spacer is exhausted, tab wrappers start shrinking
+ * 3. Buttons stay 220px wide and overflow their shrinking wrappers
+ * 4. Result: Tabs overlap and squeeze together adaptively
+ * 5. Last wrapper has min-width: 140px to prevent complete collapse
+ *
+ * FLEXBOX PROPERTIES:
+ * - flex-basis: 220px (preferred width)
+ * - flex-shrink: 1 (can shrink)
+ * - min-width: 0 (KEY! allows shrinking below content size)
+ * - Last wrapper: min-width: 140px (floor to prevent total collapse)
+ */
+
 import React, { useState } from 'react';
 import { Folder, Layers } from 'lucide-react';
 
@@ -52,39 +88,75 @@ export default function App() {
 
         <div className="w-full px-4 pt-4">
           <ul className="flex items-end w-full relative h-[64px]">
-            
-            {/* 1. THE TABS */}
+
+            {/* ================================================================
+                1. THE TAB WRAPPERS - This is the KEY to overlap behavior!
+                ================================================================
+
+                CRITICAL: Each tab has TWO layers:
+                - Outer <li> wrapper: SHRINKS adaptively
+                - Inner <button>: FIXED width (220px), creates overlap
+
+                Wrapper properties (li element):
+                - flex-shrink: 1 (allows shrinking)
+                - flex-basis: 220px (preferred width)
+                - min-width: 0 (allows shrinking below 220px - KEY!)
+                - margin-right: 8px (spacing between tabs)
+
+                Last wrapper exception:
+                - min-width: 140px (prevents complete collapse)
+
+                When wrapper shrinks below 220px:
+                → The 220px button OVERFLOWS its wrapper
+                → Creates overlap with next tab (only 8px away)
+                → This is how true overlap happens!
+            */}
             {proceedings.map((proc, index) => {
               const isLast = index === proceedings.length - 1;
               const isActive = activeTab === proc.id;
-              
+
               return (
-                <li 
+                <li
                   key={proc.id}
                   className={`
-                    relative 
-                    mr-2 
+                    relative
+                    mr-2
                     flex-shrink
-                    
-                    /* HOVER LOGIC */
+
+                    /* HOVER LOGIC - Bring hovered tab to front */
                     hover:z-[100]
                     focus-within:z-[100]
-                    
-                    /* THE MAGIC FIX (Retained from previous working version): 
-                       - Normal tabs can shrink to 0 (min-w-0).
-                       - The LAST tab has a min-width floor (min-w-[140px]).
+
+                    /* THE MAGIC: Wrapper shrinks, button inside stays fixed
+                       - Normal tabs: can shrink to 0 (min-w-0)
+                       - LAST tab: has min-width floor (min-w-[140px])
+                       This prevents the last tab from disappearing completely
                     */
                     ${isLast ? 'min-w-[140px]' : 'min-w-0'}
                   `}
-                  style={{ 
-                    flexBasis: '220px' 
+                  style={{
+                    flexBasis: '220px' // Preferred width for wrapper
                   }}
                 >
+                  {/* ============================================================
+                      BUTTON: FIXED WIDTH - Never shrinks!
+                      ============================================================
+
+                      This button is ALWAYS 220px wide, even when its wrapper
+                      shrinks below 220px. This overflow creates the overlap.
+
+                      Example:
+                      - Wrapper shrinks to 180px
+                      - Button stays at 220px
+                      - Button overflows by 40px
+                      - Next wrapper is 8px away (margin-right)
+                      - Net overlap: ~32px with next tab
+                  */}
                   <button
                     onClick={() => setActiveTab(proc.id)}
                     className={`
-                      /* FIXED DIMENSIONS */
-                      w-[220px] 
+                      /* FIXED DIMENSIONS - NEVER SHRINKS! */
+                      w-[220px]
                       h-[64px]
                       
                       /* Visual Styling */
@@ -121,10 +193,40 @@ export default function App() {
               );
             })}
 
-            {/* 2. THE SUPER SPACER */}
+            {/* ================================================================
+                2. THE SUPER SPACER - Absorbs extra space FIRST
+                ================================================================
+
+                Properties:
+                - flex-grow: 1 (takes all available space)
+                - flex-shrink: 10000 (VERY HIGH - shrinks before tabs)
+                - min-width: 0 (can shrink completely)
+
+                Purpose:
+                This spacer absorbs extra space and pushes the ALL tab to
+                the right. When container shrinks, this spacer shrinks FIRST
+                (because of very high shrink value). Only when this spacer
+                is exhausted do the tab wrappers start shrinking.
+
+                This creates two-phase behavior:
+                1. Wide container: Spacer takes space, tabs stay full width
+                2. Narrow container: Spacer gone, tabs start overlapping
+            */}
             <li className="flex-grow shrink-[10000] min-w-0"></li>
 
-            {/* 3. THE 'ALL' TAB */}
+            {/* ================================================================
+                3. THE 'ALL' TAB - Never shrinks
+                ================================================================
+
+                Properties:
+                - flex-shrink: 0 (NEVER shrinks)
+                - Fixed width: 80px
+                - z-index: 50 (always visible, below active tabs)
+
+                Purpose:
+                This tab always stays at full 80px width, even when other
+                tabs are overlapping. It's pinned to the right side.
+            */}
             <li className="flex-shrink-0 relative z-[50]">
               <button
                 onClick={() => setActiveTab('all')}
