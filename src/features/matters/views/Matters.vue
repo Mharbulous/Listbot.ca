@@ -51,12 +51,9 @@
     </div>
 
     <!-- Scroll container with gradient and title -->
-    <div class="scroll-container">
-      <div class="gradient-background"></div>
-
-      <div class="title-drawer">
-        <h1 class="title-drawer-text">Matters</h1>
-        <div class="flex items-center gap-3 flex-1 min-w-0 ml-6">
+    <PageLayout>
+      <TitleDrawer title="Matters">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
           <!-- Segmented Control: My Matters / Firm Matters -->
           <div class="matters-switch inline-flex rounded-lg bg-white/50 p-0.5 flex-shrink-0 relative">
             <!-- Sliding background indicator with selected text -->
@@ -244,7 +241,7 @@
             New Matter
           </router-link>
         </div>
-      </div>
+      </TitleDrawer>
 
       <!-- Table Container -->
       <div class="table-content">
@@ -317,7 +314,7 @@
 
         <!-- Table with Data -->
         <table v-else class="w-full">
-          <thead class="matters-table-header">
+          <thead class="sticky-table-header">
             <tr>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -401,7 +398,7 @@
         </table>
       </div>
       </div>
-    </div>
+    </PageLayout>
   </div>
 </template>
 
@@ -414,6 +411,8 @@ import { useMatterViewStore } from '../stores/matterView.js';
 import { useMattersFilterStore } from '../stores/mattersFilter.js';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
+import PageLayout from '@/shared/components/layout/PageLayout.vue';
+import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 
 // Component configuration
 defineOptions({
@@ -629,59 +628,9 @@ const selectMatter = async (matter) => {
 </script>
 
 <style scoped>
-.scroll-container {
-  flex: 1;
-  overflow: auto;
-  position: relative;
-  min-width: 0;
-}
-
-.gradient-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 800px;
-  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.title-drawer {
-  padding: 20px 24px 10px 24px;
-  min-width: max-content;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  position: relative;
-  z-index: 1;
-  background: transparent;
-  color: #455A64;
-}
-
-.title-drawer-text {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: inherit;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
 .table-content {
   position: relative;
   z-index: 1;
-}
-
-.matters-table-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Matters switch animations */

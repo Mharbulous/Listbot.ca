@@ -1,4 +1,5 @@
 import './styles/main.css';
+import './shared/styles/sticky-table-header.css';
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
