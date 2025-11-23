@@ -520,7 +520,7 @@ function openActionMenu(pleading) {
   position: sticky;
   top: 0;
   z-index: 10; /* Above scrolling title drawer */
-  background: #FCFCF5;
+  background: transparent;
   padding-top: 8px;
 }
 
