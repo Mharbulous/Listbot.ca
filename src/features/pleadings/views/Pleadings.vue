@@ -526,7 +526,9 @@ function openActionMenu(pleading) {
   top: 0;
   z-index: 10; /* Above scrolling title drawer */
   background: transparent;
-  padding-top: 8px;
+  padding-top: 12px; /* Increased to accommodate active tab shadow (-3px) with clearance */
+  padding-bottom: 6px; /* Accommodate inactive tab transform (4px) with buffer */
+  overflow: hidden; /* Suppress scrollbars */
 }
 
 /* Table Container */
