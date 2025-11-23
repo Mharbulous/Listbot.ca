@@ -566,7 +566,7 @@ function getAllTabStyle() {
 
 /* Tabs Container - Wraps the skeuomorphic tabs */
 .tabs-container {
-  height: 88px; /* Accommodate tab content (64px) + transforms (8px down) + shadows (-3px up) */
+  height: 80px; /* Accommodate tab content + transforms (4px down) + shadows (-3px up) */
   overflow: visible; /* Allow tabs to overlap without clipping */
 }
 
