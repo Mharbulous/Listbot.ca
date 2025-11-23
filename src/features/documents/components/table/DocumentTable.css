@@ -19,7 +19,6 @@
 
 /* Title Drawer - Scrollable drawer that slides up behind sticky header */
 .title-drawer {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 24px;
   border-bottom: 2px solid #e5e7eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -34,10 +33,25 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
   flex-shrink: 0;
+}
+
+.color-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.color-hex-label {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
 }
 
 .search-field {
