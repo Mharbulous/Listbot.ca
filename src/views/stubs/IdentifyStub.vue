@@ -38,23 +38,35 @@
         Comprehensive identification prevents expensive over-collection while ensuring defensibility.
       </KeyImpactBox>
 
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="👤"
-            title="Custodian Management"
+            title="Custodian List"
             badge="Foundation Feature"
-            priority="high"
             color="blue"
             description="Database of data custodians with contact information, roles, and data source mapping."
           />
           <FeatureCard
+            icon="📝"
+            title="Preservation Reminders"
+            badge="Workflow Automation"
+            color="blue"
+            description="Automated questionnaires to custodians with response tracking and follow-up reminders."
+          />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
             icon="💾"
             title="Data Source Inventory"
             badge="Foundation Feature"
-            priority="high"
             color="blue"
             description="Visual mapping of all potential ESI sources including email servers, file shares, cloud storage, and mobile devices."
           />
@@ -64,13 +76,6 @@
             badge="Cost Control"
             color="emerald"
             description="Estimate data volumes before collection to scope costs and identify high-volume sources."
-          />
-          <FeatureCard
-            icon="📝"
-            title="Preservation Questionnaires"
-            badge="Workflow Automation"
-            color="blue"
-            description="Automated questionnaires to custodians with response tracking and follow-up reminders."
           />
         </div>
       </div>
