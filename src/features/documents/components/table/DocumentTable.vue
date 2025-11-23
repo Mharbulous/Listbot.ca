@@ -31,15 +31,11 @@
         v-if="pageTitle"
         class="title-drawer"
         :style="{
-          background: documentCollectionColorsStore.backgroundColor,
-          color: documentCollectionColorsStore.textColor,
+          background: 'linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%)',
+          color: '#455A64',
         }"
       >
         <h1 class="title-drawer-text">{{ pageTitle }}</h1>
-        <div class="color-display">
-          <div class="color-hex-label">text {{ documentCollectionColorsStore.textColor }}</div>
-          <div class="color-hex-label">background {{ documentCollectionColorsStore.backgroundColor }}</div>
-        </div>
       </div>
 
       <!-- Sticky Table Header (drawer front panel - stays fixed) -->
@@ -262,7 +258,6 @@
 import { ref, nextTick, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/core/auth/stores';
-import { useDocumentCollectionColorsStore } from '@/features/documents/stores/documentCollectionColors';
 import { useColumnResize } from '@/features/documents/composables/useColumnResize';
 import { useColumnDragDrop } from '@/features/documents/composables/useColumnDragDrop';
 import { useColumnVisibility } from '@/features/documents/composables/useColumnVisibility';
@@ -332,9 +327,6 @@ const router = useRouter();
 
 // Auth store for firm ID
 const authStore = useAuthStore();
-
-// Document Collection Colors store
-const documentCollectionColorsStore = useDocumentCollectionColorsStore();
 
 // Cell content tooltip functionality
 const cellTooltip = useCellTooltip();
