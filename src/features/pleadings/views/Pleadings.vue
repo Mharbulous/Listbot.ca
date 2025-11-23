@@ -1,11 +1,13 @@
 <template>
   <div class="h-full flex flex-col bg-viewport-bg">
-    <!-- Page Header -->
-    <div class="bg-white border-b border-slate-200 px-6 py-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-slate-900">Pleadings</h1>
-        </div>
+    <!-- Scroll Container with Gradient -->
+    <div class="scroll-container">
+      <!-- Extended Gradient Background (sits behind all content) -->
+      <div class="gradient-background"></div>
+
+      <!-- Title Drawer (scrollable - slides up behind sticky tabs) -->
+      <div class="title-drawer">
+        <h1 class="title-drawer-text">Pleadings</h1>
         <div class="flex gap-3">
           <button
             class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -35,11 +37,10 @@
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Proceedings Tabs -->
-    <div class="bg-viewport-bg pt-2">
-      <div class="px-6 flex overflow-x-auto gap-1">
+      <!-- Proceedings Tabs (Sticky) -->
+      <div class="proceedings-tabs-sticky">
+        <div class="px-6 flex overflow-x-auto gap-1">
         <button
           @click="selectedProceeding = null"
           class="folder-tab px-5 py-3 text-sm font-medium transition-all whitespace-nowrap relative"
@@ -59,11 +60,11 @@
             <div class="text-xs text-slate-500">{{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}</div>
           </div>
         </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Table Container -->
-    <div class="flex-1 overflow-auto">
+      <!-- Table Container -->
+      <div class="table-container">
       <!-- Data Table -->
       <div class="bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
         <!-- Table -->
@@ -202,6 +203,7 @@
           <p class="text-lg font-medium mb-2">No pleadings found</p>
           <p class="text-sm">Upload your first pleading to get started</p>
         </div>
+      </div>
       </div>
     </div>
 
@@ -469,6 +471,65 @@ function openActionMenu(pleading) {
 </script>
 
 <style scoped>
+/* Scroll Container - Fills available space, provides scrolling */
+.scroll-container {
+  flex: 1; /* Fill available vertical space */
+  overflow: auto; /* Browser's native scrollbars for both directions */
+  position: relative;
+  min-width: 0; /* Allow flex child to shrink below content size */
+}
+
+/* Extended Gradient Background - Provides vertical blending space */
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 800px; /* Extended height for smoother gradient blend */
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
+  z-index: 0; /* Behind all content */
+  pointer-events: none; /* Don't interfere with clicks */
+}
+
+/* Title Drawer - Scrollable drawer that slides up behind sticky tabs */
+.title-drawer {
+  padding: 20px 24px;
+  min-width: max-content; /* Match table width */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  z-index: 1; /* Above gradient background */
+  background: transparent;
+  color: #455A64;
+}
+
+.title-drawer-text {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: inherit; /* Inherit color from parent .title-drawer */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Proceedings Tabs - Sticky at top */
+.proceedings-tabs-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10; /* Above scrolling title drawer */
+  background: #FCFCF5;
+  padding-top: 8px;
+}
+
+/* Table Container */
+.table-container {
+  position: relative;
+  z-index: 1; /* Above gradient background */
+}
+
 /* Folder Tab Base Styles */
 .folder-tab {
   border-top-left-radius: 12px;
