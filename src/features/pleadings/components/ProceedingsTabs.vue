@@ -1,6 +1,6 @@
 <template>
   <div class="proceedings-tabs-sticky px-6">
-    <div ref="tabsContainerRef" class="tabs-container">
+    <div class="tabs-container">
       <!-- Proceeding tabs (left-aligned) -->
       <button
         v-for="(proceeding, index) in proceedings"
@@ -9,8 +9,11 @@
         @mouseenter="setHoveredTab(proceeding.id)"
         @mouseleave="clearHoveredTab"
         class="folder-tab proceeding-tab"
-        :class="getTabStateClass(proceeding.id)"
-        :style="getTabStyle(index, proceeding.id)"
+        :class="[
+          getTabStateClass(proceeding.id),
+          { 'last-proceeding-tab': index === proceedings.length - 1 }
+        ]"
+        :style="getTabStyle(proceeding.id)"
       >
         <div class="tab-content">
           <div class="tab-title">{{ proceeding.styleCause }}</div>
@@ -20,17 +23,17 @@
         </div>
       </button>
 
-      <!-- Spacer to push ALL tab to the right -->
-      <div class="flex-grow"></div>
+      <!-- Super spacer to absorb extra space and push ALL tab to the right -->
+      <div class="super-spacer"></div>
 
-      <!-- ALL tab (right-aligned) -->
+      <!-- ALL tab (right-aligned, never shrinks) -->
       <button
         @click="selectTab(null)"
         @mouseenter="setHoveredTab(ALL_TAB_ID)"
         @mouseleave="clearHoveredTab"
         class="folder-tab all-tab"
         :class="getTabStateClass(null)"
-        :style="getTabStyle(proceedingCount, null)"
+        :style="getTabStyle(null)"
       >
         ALL
       </button>
@@ -39,14 +42,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const OVERLAP_AMOUNT = 40;
-const NORMAL_GAP = 8;
 const Z_INDEX_ACTIVE = 100;
 const Z_INDEX_HOVERED = 99;
 const ALL_TAB_ID = 'all';
@@ -72,8 +73,6 @@ const emit = defineEmits(['update:modelValue']);
 // STATE
 // ============================================================================
 
-const tabsContainerRef = ref(null);
-const shouldOverlapTabs = ref(false);
 const hoveredTabId = ref(null);
 
 // ============================================================================
@@ -115,64 +114,29 @@ const getTabStateClass = (tabId) => {
 };
 
 // ============================================================================
-// TAB STYLING
+// TAB STYLING (CSS-only adaptive approach)
 // ============================================================================
 
-const calculateZIndex = (baseIndex, tabId) => {
-  if (isActive(tabId)) return Z_INDEX_ACTIVE;
-  if (isHovered(tabId)) return Z_INDEX_HOVERED;
-  return baseIndex + 1;
-};
-
-const getTabStyle = (index, tabId) => {
-  const zIndex = calculateZIndex(index, tabId);
-
-  if (!shouldOverlapTabs.value) {
-    // Normal mode: tabs have spacing between them
-    return {
-      marginRight: index < proceedingCount.value ? `${NORMAL_GAP}px` : '0',
-      zIndex,
-    };
+const getTabStyle = (tabId) => {
+  // Calculate z-index based on state
+  let zIndex = 1;
+  if (isActive(tabId)) {
+    zIndex = Z_INDEX_ACTIVE;
+  } else if (isHovered(tabId)) {
+    zIndex = Z_INDEX_HOVERED;
+  } else {
+    // Find the index for non-active, non-hovered tabs
+    const proceedingIndex = props.proceedings.findIndex((p) => p.id === tabId);
+    if (proceedingIndex !== -1) {
+      zIndex = proceedingIndex + 1;
+    } else if (tabId === null) {
+      // ALL tab gets a base z-index
+      zIndex = 50;
+    }
   }
 
-  // Overlap mode: tabs overlap to fit in container
-  return {
-    marginLeft: index === 0 ? '0' : `-${OVERLAP_AMOUNT}px`,
-    zIndex,
-  };
+  return { zIndex };
 };
-
-// ============================================================================
-// RESPONSIVE OVERLAP DETECTION
-// ============================================================================
-
-const checkOverlapNeeded = () => {
-  if (!tabsContainerRef.value) return;
-
-  const containerWidth = tabsContainerRef.value.offsetWidth;
-  const scrollWidth = tabsContainerRef.value.scrollWidth;
-
-  shouldOverlapTabs.value = scrollWidth > containerWidth;
-};
-
-// ============================================================================
-// LIFECYCLE
-// ============================================================================
-
-let resizeObserver = null;
-
-onMounted(() => {
-  checkOverlapNeeded();
-
-  if (tabsContainerRef.value) {
-    resizeObserver = new ResizeObserver(checkOverlapNeeded);
-    resizeObserver.observe(tabsContainerRef.value);
-  }
-});
-
-onUnmounted(() => {
-  resizeObserver?.disconnect();
-});
 </script>
 
 <style scoped>
@@ -193,6 +157,18 @@ onUnmounted(() => {
   overflow: visible;
   display: flex;
   align-items: flex-end;
+  width: 100%;
+  position: relative;
+}
+
+/* ========================================================================== */
+/* SUPER SPACER - Absorbs extra space and pushes ALL tab to the right        */
+/* ========================================================================== */
+
+.super-spacer {
+  flex-grow: 1;
+  flex-shrink: 10000;
+  min-width: 0;
 }
 
 /* ========================================================================== */
@@ -214,13 +190,46 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+/* ========================================================================== */
+/* PROCEEDING TAB - Adaptive flex behavior                                   */
+/* ========================================================================== */
+
 .proceeding-tab {
   height: 64px;
+  /* Fixed width for consistent sizing */
+  width: 220px;
+  /* Flex properties for adaptive behavior */
+  flex-basis: 220px;
+  flex-shrink: 1;
+  min-width: 0; /* Allows shrinking below content size */
+  /* Spacing between tabs */
+  margin-right: 8px;
 }
+
+/* Last proceeding tab has a minimum width floor to prevent complete collapse */
+.last-proceeding-tab {
+  min-width: 140px;
+}
+
+/* Hover and focus bring tab to front */
+.proceeding-tab:hover,
+.proceeding-tab:focus-within {
+  z-index: 100 !important;
+}
+
+/* ========================================================================== */
+/* ALL TAB - Never shrinks, always visible                                   */
+/* ========================================================================== */
 
 .all-tab {
   height: 60px;
   font-weight: 500;
+  width: 80px;
+  flex-shrink: 0; /* Never shrinks */
+  /* Left shadow helps visualize the stacking order */
+  box-shadow:
+    -4px 0 8px -2px rgba(0, 0, 0, 0.1),
+    0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ========================================================================== */
@@ -231,15 +240,25 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  overflow: hidden;
+  width: 100%;
 }
 
 .tab-title {
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .tab-subtitle {
   font-size: 0.75rem;
   color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 /* ========================================================================== */
