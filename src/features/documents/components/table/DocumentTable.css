@@ -33,6 +33,7 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
+  color: inherit; /* Inherit color from parent .title-drawer */
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
   flex-shrink: 0;
@@ -51,6 +52,7 @@
   font-weight: 600;
   font-family: 'Courier New', monospace;
   letter-spacing: 0.5px;
+  color: inherit; /* Inherit color from parent .title-drawer */
   opacity: 0.9;
 }
 
