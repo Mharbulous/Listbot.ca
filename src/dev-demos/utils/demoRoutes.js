@@ -69,6 +69,17 @@ export const demoRoutes = [
     },
   },
   {
+    path: '/dev/plan',
+    name: 'DevPlan',
+    component: () => import('../../views/DevPlanPage.vue'),
+    meta: {
+      requiresAuth: false,
+      devOnly: true,
+      title: 'Development Roadmap',
+      description: 'Strategic development plan showing feature priorities and implementation phases',
+    },
+  },
+  {
     path: '/dev',
     name: 'DevDemoIndex',
     component: () => import('../views/DemoIndex.vue'),
