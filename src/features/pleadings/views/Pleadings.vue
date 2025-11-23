@@ -60,7 +60,7 @@
           <!-- Right-aligned "ALL" tab -->
           <button
             @click="selectedProceeding = null"
-            class="folder-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
+            class="folder-tab all-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
             :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
           >
             ALL
@@ -551,6 +551,11 @@ function openActionMenu(pleading) {
   height: 60px; /* Fixed height for all tabs */
   display: flex;
   align-items: center; /* Vertically center content */
+}
+
+/* ALL Tab - Slightly shorter to match proceedings tabs alignment */
+.all-tab {
+  height: 56px; /* 4px shorter than proceedings tabs */
 }
 
 /* Active Tab - Appears raised and connected to table */
