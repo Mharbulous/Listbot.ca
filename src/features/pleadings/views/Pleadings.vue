@@ -42,7 +42,7 @@
       <div class="proceedings-tabs-sticky">
         <div class="px-6 flex justify-between items-end">
           <!-- Left-aligned proceeding tabs -->
-          <div class="tabs-container flex gap-1">
+          <div class="tabs-container flex gap-1 items-end">
             <button
               v-for="proceeding in mockProceedings"
               :key="proceeding.id"
