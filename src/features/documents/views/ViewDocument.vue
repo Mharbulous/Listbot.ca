@@ -14,10 +14,17 @@
       <v-btn class="mt-4" color="primary" @click="goBack">Back to Organizer</v-btn>
     </div>
 
-    <!-- Main content -->
-    <div
-      v-else
-      class="view-document-content"
+    <!-- Scroll container with gradient and title -->
+    <div v-else class="scroll-container">
+      <div class="gradient-background"></div>
+
+      <div class="title-drawer">
+        <h1 class="title-drawer-text">Review</h1>
+      </div>
+
+      <!-- Main content -->
+      <div
+        class="view-document-content"
       :data-thumbnails-visible="thumbnailsVisible"
       :data-metadata-visible="metadataVisible"
     >
@@ -80,6 +87,7 @@
         @variant-selected="handleMetadataSelection"
         @dropdown-toggled="dropdownOpen = $event"
       />
+      </div>
     </div>
   </div>
 </template>
@@ -326,6 +334,49 @@ onBeforeUnmount(() => {
   background-color: #FCFCF5;
 }
 
+.scroll-container {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 800px;
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.title-drawer {
+  padding: 20px 24px 0 24px;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  color: #455A64;
+}
+
+.title-drawer-text {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: inherit;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
 .view-document-content {
   display: grid;
   grid-template-columns:
@@ -339,6 +390,8 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: auto;
   align-items: start;
+  position: relative;
+  z-index: 1;
 
   /* Default column widths (panels open) */
   --thumbnails-width: 200px;
