@@ -337,7 +337,7 @@
           :key="`preset-${index}`"
           @click="documentCollectionColorsStore.setPreset(index)"
           :style="{
-            backgroundColor: preset.background,
+            background: preset.background,
             color: preset.text,
             border: '2px solid #d1d5db',
             borderRadius: '6px',
@@ -434,7 +434,7 @@ const isHoveringFirmMatters = ref(false);
 
 // Color presets for Document Collection
 const colorPresets = [
-  { text: '#006064', background: '#B2EBF2' },
+  { text: '#455A64', background: 'linear-gradient(to bottom, #B2EBF2 0%, #FCFCF5 100%)' },
   { text: '#E65100', background: '#FFECB3' },
   { text: '#C62828', background: '#FFCDD2' },
   { text: '#000000', background: '#4DD0E1' },

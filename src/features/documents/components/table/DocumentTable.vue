@@ -31,7 +31,7 @@
         v-if="pageTitle"
         class="title-drawer"
         :style="{
-          backgroundColor: documentCollectionColorsStore.backgroundColor,
+          background: documentCollectionColorsStore.backgroundColor,
           color: documentCollectionColorsStore.textColor,
         }"
       >
