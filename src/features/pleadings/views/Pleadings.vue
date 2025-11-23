@@ -38,12 +38,12 @@
     </div>
 
     <!-- Proceedings Tabs -->
-    <div class="bg-white border-b border-slate-200">
-      <div class="px-6 flex overflow-x-auto">
+    <div class="bg-viewport-bg pt-2">
+      <div class="px-6 flex overflow-x-auto gap-1">
         <button
           @click="selectedProceeding = null"
-          class="px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
-          :class="selectedProceeding === null ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+          class="folder-tab px-5 py-3 text-sm font-medium transition-all whitespace-nowrap relative"
+          :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
         >
           ALL
         </button>
@@ -51,8 +51,8 @@
           v-for="proceeding in mockProceedings"
           :key="proceeding.id"
           @click="selectedProceeding = proceeding.id"
-          class="px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap"
-          :class="selectedProceeding === proceeding.id ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+          class="folder-tab px-5 py-3 text-sm transition-all whitespace-nowrap relative"
+          :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
         >
           <div class="flex flex-col items-start">
             <div class="font-bold">{{ proceeding.styleCause }}</div>
@@ -65,7 +65,7 @@
     <!-- Table Container -->
     <div class="flex-1 overflow-auto">
       <!-- Data Table -->
-      <div class="bg-white border border-slate-200 m-6 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
         <!-- Table -->
         <table class="w-full">
           <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
@@ -469,5 +469,47 @@ function openActionMenu(pleading) {
 </script>
 
 <style scoped>
-/* Add any component-specific styles here */
+/* Folder Tab Base Styles */
+.folder-tab {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Active Tab - Appears raised and connected to table */
+.folder-tab-active {
+  background: white;
+  color: #6b21a8;
+  transform: translateY(1px);
+  z-index: 10;
+  border-color: #cbd5e1;
+  box-shadow:
+    0 -3px 6px rgba(0, 0, 0, 0.08),
+    -2px 0 4px rgba(0, 0, 0, 0.03),
+    2px 0 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Inactive Tabs - Appear lower and behind */
+.folder-tab-inactive {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #64748b;
+  transform: translateY(4px);
+  z-index: 5;
+  border-color: #cbd5e1;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.folder-tab-inactive:hover {
+  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #334155;
+  transform: translateY(2px);
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.07);
+}
+
+/* Override table border radius to connect with tabs */
+.folder-tab-active + .folder-tab-active {
+  margin-left: -1px;
+}
 </style>
