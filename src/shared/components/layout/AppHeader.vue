@@ -3,14 +3,14 @@
     class="header-fixed ocean-sky-gradient pr-3 py-4 flex items-center h-16 box-border flex-shrink-0"
   >
     <!-- Left Section: Logo and Hamburger (pinned to left) -->
-    <div class="flex items-center flex-shrink-0 pl-3">
+    <div class="flex items-center flex-shrink-0 pl-2">
       <!-- Hamburger Toggle Button (always at same position) -->
       <button
         class="hamburger-btn"
         @click="$emit('toggle-sidebar')"
         :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
       >
-        <span class="text-2xl">{{ isCollapsed ? '☰' : '«' }}</span>
+        <span class="text-3xl">{{ isCollapsed ? '☰' : '«' }}</span>
       </button>
 
       <!-- Spacer that adjusts to keep divider aligned with sidebar edge -->
