@@ -18,9 +18,9 @@
     </template>
 
     <template #content>
-      <!--Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="🔗"
@@ -45,6 +45,13 @@
             color="blue"
             description="Machine learning groups conceptually similar documents even when exact keywords differ, uncovering hidden themes."
           />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="🔍"
             title="Anomaly Detection"
