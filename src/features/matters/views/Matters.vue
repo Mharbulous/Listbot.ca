@@ -129,7 +129,7 @@
 
         <!-- Table with Data -->
         <table v-else class="w-full">
-          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+          <thead class="matters-table-header">
             <tr>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -463,5 +463,14 @@ const selectMatter = async (matter) => {
 .table-content {
   position: relative;
   z-index: 1;
+}
+
+.matters-table-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 </style>

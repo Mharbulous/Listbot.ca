@@ -46,6 +46,14 @@
   <div class="table-wrapper">
     <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
     <div ref="scrollContainerRef" class="scroll-container">
+      <!-- Gradient Background -->
+      <div class="gradient-background"></div>
+
+      <!-- Title Drawer -->
+      <div class="title-drawer">
+        <h1 class="title-drawer-text">Preserve</h1>
+      </div>
+
       <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
       <UploadTableHeader
         :all-selected="props.allSelected"
@@ -351,6 +359,42 @@ defineExpose({
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
+}
+
+/* Gradient Background - Provides vertical blending space */
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 800px;
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Title Drawer - Scrollable drawer that slides up behind sticky header */
+.title-drawer {
+  padding: 20px 24px 0 24px;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  color: #455A64;
+}
+
+.title-drawer-text {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: inherit;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 /* Content wrapper for virtual rows (no flex properties) */
