@@ -42,7 +42,7 @@
       <div class="proceedings-tabs-sticky">
         <div class="px-6 flex justify-between items-end">
           <!-- Left-aligned proceeding tabs -->
-          <div class="flex overflow-x-auto gap-1">
+          <div class="tabs-container flex gap-1">
             <button
               v-for="proceeding in mockProceedings"
               :key="proceeding.id"
@@ -528,6 +528,12 @@ function openActionMenu(pleading) {
   background: transparent;
   padding-top: 12px; /* Increased to accommodate active tab shadow (-3px) with clearance */
   padding-bottom: 6px; /* Accommodate inactive tab transform (4px) with buffer */
+  overflow: hidden; /* Suppress scrollbars */
+}
+
+/* Tabs Container - Wraps the skeuomorphic tabs */
+.tabs-container {
+  height: 80px; /* Accommodate tab content + transforms (4px down) + shadows (-3px up) */
   overflow: hidden; /* Suppress scrollbars */
 }
 
