@@ -554,6 +554,11 @@ function openActionMenu(pleading) {
   align-items: center; /* Vertically center content */
 }
 
+/* ALL Tab - Slightly shorter to match proceedings tabs alignment */
+.all-tab {
+  height: 56px; /* 4px shorter than proceedings tabs */
+}
+
 /* Active Tab - Appears raised and connected to table */
 .folder-tab-active {
   background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
