@@ -15,18 +15,8 @@
       @close="handleCloseModal"
     />
 
-    <!-- Scroll container with gradient and title -->
-    <div class="scroll-container">
-      <div class="gradient-background"></div>
-
-      <div class="title-drawer">
-        <h1 class="title-drawer-text">Preserve</h1>
-      </div>
-
-      <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
-      <div class="table-section">
-      <!-- Upload Table with integrated empty state -->
-      <UploadTable
+    <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
+    <UploadTable
         :files="filteredUploadQueue"
         :all-files="uploadQueue"
         :is-empty="uploadQueue.length === 0"
@@ -50,28 +40,26 @@
         @resume="handleResume"
         @cancel-upload="handleCancelUpload"
         @retry-failed="handleRetryFailed"
-      />
+    />
 
-      <!-- Hidden file inputs -->
-      <input
-        ref="fileInput"
-        type="file"
-        multiple
-        accept="*/*"
-        style="display: none"
-        @change="handleFileSelect"
-      />
+    <!-- Hidden file inputs -->
+    <input
+      ref="fileInput"
+      type="file"
+      multiple
+      accept="*/*"
+      style="display: none"
+      @change="handleFileSelect"
+    />
 
-      <input
-        ref="folderRecursiveInput"
-        type="file"
-        webkitdirectory
-        multiple
-        style="display: none"
-        @change="handleFolderRecursiveSelect"
-      />
-      </div>
-    </div>
+    <input
+      ref="folderRecursiveInput"
+      type="file"
+      webkitdirectory
+      multiple
+      style="display: none"
+      @change="handleFolderRecursiveSelect"
+    />
 
 
     <!-- Notification Snackbar -->
@@ -456,55 +444,5 @@ const handleFolderRecursiveSelect = (event) => {
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
-}
-
-.scroll-container {
-  flex: 1;
-  overflow: auto;
-  position: relative;
-  min-width: 0;
-}
-
-.gradient-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 800px;
-  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.title-drawer {
-  padding: 20px 24px 0 24px;
-  min-width: max-content;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  position: relative;
-  z-index: 1;
-  background: transparent;
-  color: #455A64;
-}
-
-.title-drawer-text {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: inherit;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
-.table-section {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Center the upload-table-container horizontally */
-  min-width: max-content;
 }
 </style>
