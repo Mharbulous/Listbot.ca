@@ -18,25 +18,62 @@
     </template>
 
     <template #content>
-      <!-- Planned Features -->
+      <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
-            icon="📚"
-            title="Legal Research Library"
-            badge="Foundation Feature"
+            icon="🏷️"
+            title="Issue Tracking"
+            badge="Core Feature"
             priority="high"
             color="teal"
-            description="Organize case law, statutes, regulations, and secondary sources with custom tagging and categorization."
+            description="Keep track of legal questions asked by user. Tag research by legal issue, claim, or defense for organized access during brief writing."
+          />
+          <FeatureCard
+            icon="📚"
+            title="Memo Library"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="Organize case law, statutes, regulations, and secondary sources with custom tagging and categorization. Previously known as Legal Research Library."
           />
           <FeatureCard
             icon="🔗"
-            title="Evidence Linking"
-            badge="Integration"
+            title="Fact Finder"
+            badge="Core Feature"
             priority="high"
             color="teal"
-            description="Link legal authorities directly to supporting facts and evidence, creating a unified legal and factual narrative."
+            description="AI links facts to legal issues. Connect legal authorities directly to supporting facts and evidence, creating a unified legal and factual narrative."
+          />
+          <FeatureCard
+            icon="⚖️"
+            title="Authority List"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="A list of the key caselaw or legislation being relied on. Keep track of the last time each authority was noted up to ensure your research stays current."
+          />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="💬"
+            title="Research Chat"
+            badge="AI-Powered"
+            color="indigo"
+            description="AI chatbot answers questions based on the memo library. Get instant insights from your organized legal research."
+          />
+          <FeatureCard
+            icon="🔍"
+            title="Gap Finder"
+            badge="AI-Powered"
+            color="indigo"
+            description="Through chatting with the AI, the AI identifies gaps and conflicting authorities in your legal research."
           />
           <FeatureCard
             icon="📝"
@@ -58,13 +95,6 @@
             badge="Quality Control"
             color="emerald"
             description="Track citations, validate cite formats, and ensure consistent legal citation throughout documents."
-          />
-          <FeatureCard
-            icon="🏷️"
-            title="Issue Spotting"
-            badge="Strategic Tool"
-            color="purple"
-            description="Tag research by legal issue, claim, or defense for organized access during brief writing."
           />
         </div>
       </div>
