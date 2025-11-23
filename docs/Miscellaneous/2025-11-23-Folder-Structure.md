@@ -527,3 +527,200 @@ Total: 800 lines (108 lines of additional code due to module boundaries)
 
 - `@docs/Features/Pleadings/CLAUDE.md` - Pleadings feature documentation (if exists)
 - `@CLAUDE.md` - Core directives and streamline workflow
+
+---
+
+## Matters Module Structure
+
+The Matters view has been decomposed from a single 701-line file into multiple focused modules following the streamline workflow.
+
+### Directory Structure
+
+```
+src/features/matters/
+├── views/
+│   └── Matters.vue                      # Main orchestrator (198 lines)
+├── components/
+│   ├── MattersNotification.vue          # Notification banner (74 lines)
+│   ├── MattersFilterControls.vue        # Filter controls (272 lines)
+│   └── MattersTable.vue                 # Data table (227 lines)
+└── composables/
+    └── useDocumentCounts.js             # Document counting logic (73 lines)
+```
+
+### Module Responsibilities
+
+#### `Matters.vue` - Main Orchestrator (198 lines)
+**Responsibilities:**
+- PageLayout wrapper with gradient background
+- Orchestrates child components (notification, filters, table)
+- Handles route query parameters for redirect notifications
+- Handles matter selection and navigation
+- Manages notification auto-dismiss (8 seconds)
+- Click-outside handler for dropdown
+- Filtering logic (user assignment, status, search text)
+
+**Key Computed Properties:**
+- `visibleMatters` - Filters by user assignment and archived status
+- `filteredMatters` - Applies search text filtering with case-sensitive and whole-word options
+- `emptyStateMessage` - Dynamic message based on search state
+
+#### `MattersNotification.vue` - Notification Banner (74 lines)
+**Responsibilities:**
+- Displays notification banner with icons (warning/info)
+- Conditional styling based on type
+- Dismiss button
+- Auto-dismiss timer (controlled by parent)
+
+**Props:**
+- `message` (String) - Notification message
+- `type` (String) - 'info' or 'warning'
+- `modelValue` (Boolean) - Visibility control
+
+**Emits:**
+- `update:modelValue` - For v-model support
+
+#### `MattersFilterControls.vue` - Filter Controls (272 lines)
+**Responsibilities:**
+- Segmented control (My Matters / Firm Matters) with sliding indicator
+- Status dropdown (Active / Archived / All)
+- Search input with integrated actions (case sensitive, whole word, clear)
+- New Matter button
+- All control styling and animations
+- Hover state management for anticipatory nudge
+- Uses mattersFilterStore directly
+
+**Key Features:**
+- Sliding indicator with text that moves with selection
+- Anticipatory nudge on hover (5px shift when hovering inactive button)
+- Smooth transitions and animations (0.3s cubic-bezier)
+- Case sensitive toggle (Aa/aA button)
+- Whole word toggle (Word/Wo__ button)
+
+#### `MattersTable.vue` - Data Table (227 lines)
+**Responsibilities:**
+- Table rendering with 6 columns (Matter No., Clients, Description, Adverse Parties, Documents, Last Accessed)
+- Loading state with spinner
+- Error state with retry button
+- Empty state with icon and message
+- Row selection highlighting (amber background for selected)
+- Alternating row colors (white/gray-50)
+- Document count display with loading spinner
+
+**Props:**
+- `matters` (Array) - Filtered matters to display
+- `loading` (Boolean) - Loading state
+- `error` (String) - Error message
+- `documentCounts` (Object) - Document counts by matter ID
+- `selectedMatterId` (String) - Currently selected matter ID
+- `emptyStateMessage` (String) - Dynamic empty state message
+
+**Emits:**
+- `select-matter` - When a row is clicked (passes matter object)
+- `retry-fetch` - When retry button is clicked
+
+**Table Columns:**
+1. **Matter No.** - Matter number with optional "Archived" badge
+2. **Clients** - Client names (comma-separated if multiple)
+3. **Description** - Matter description
+4. **Adverse Parties** - Adverse party names (comma-separated if multiple)
+5. **Documents** - Document count with loading spinner
+6. **Last Accessed** - Last accessed date (YYYY-MM-DD format)
+
+#### `useDocumentCounts.js` - Document Counting Composable (73 lines)
+**Responsibilities:**
+- Fetch document counts for all matters in parallel
+- Use `getCountFromServer` for efficient counting
+- Error handling for individual matter count failures (returns 0 on error)
+- Returns reactive documentCounts ref
+
+**Exported API:**
+- `documentCounts` (Ref<Object>) - Map of matter IDs to document counts
+- `fetchDocumentCounts(matters, firmId)` - Async function to fetch counts
+
+**Implementation Details:**
+- Uses `Promise.all()` for parallel fetching
+- Gracefully handles individual matter failures (logs error, returns 0 count)
+- Updates reactive ref with all counts at once
+
+### Migration Notes
+
+**Old Structure:**
+```
+src/features/matters/views/Matters.vue (701 lines)
+```
+
+**New Structure:**
+```
+src/features/matters/
+├── views/Matters.vue (198 lines)
+├── components/ (3 components, 573 lines total)
+└── composables/useDocumentCounts.js (73 lines)
+Total: 844 lines (143 lines of additional code due to module boundaries and documentation)
+```
+
+**Deprecated:**
+- Original file moved to `/deprecated/Matters.vue.backup-20251123`
+
+**Backward Compatibility:**
+- Component interface unchanged (same URL route)
+- All existing functionality preserved
+- No changes required in router configuration
+
+### Benefits of Decomposition
+
+1. **Single Responsibility** - Each component has one clear purpose
+2. **Reusability** - Filter controls, table, and notification can be reused independently
+3. **Testability** - Smaller components are easier to unit test
+4. **Maintainability** - All files are under 300 lines (most under 230 lines)
+5. **Readability** - Clear separation of concerns
+6. **Performance** - Document counting logic can be optimized independently
+7. **Composability** - useDocumentCounts composable can be used in other views
+
+### Testing Strategy
+
+**Suggested Test Coverage:**
+1. **Notification Banner:**
+   - Verify notification appears when redirected with query params (reason=no_matter_selected, reason=archived_matter)
+   - Verify notification auto-dismisses after 8 seconds
+   - Test dismiss button
+   - Verify correct styling for info vs warning types
+
+2. **Filter Controls:**
+   - Toggle between "My Matters" and "Firm Matters"
+   - Verify sliding indicator animates smoothly
+   - Hover over inactive button to see anticipatory nudge (5px shift)
+   - Test status dropdown (Active, Archived, All)
+   - Test search input with various queries
+   - Toggle case sensitive (Aa/aA button)
+   - Toggle whole word (Word/Wo__ button)
+   - Test clear button (X icon)
+   - Click "New Matter" button to navigate
+
+3. **Table Display:**
+   - Verify all matters display with correct data in 6 columns
+   - Click on a matter row to select and navigate
+   - Verify selected row has amber background (bg-amber-50)
+   - Verify document counts load and display correctly
+   - Test loading state (spinner and "Loading matters..." message)
+   - Test error state (error message and "Try Again" button)
+   - Test empty state (icon and message)
+   - Verify alternating row colors (white/gray-50)
+
+4. **Filtering Logic:**
+   - Filter by "My Matters" vs "Firm Matters"
+   - Filter by status (Active, Archived, All)
+   - Search by matter number, client, description, adverse party
+   - Test case-sensitive search
+   - Test whole-word search
+   - Combine multiple filters
+
+5. **Document Counts:**
+   - Verify counts load for all matters
+   - Verify loading spinner while counts are being fetched
+   - Test error handling (should show 0 count on error)
+
+### Related Documentation
+
+- `@docs/Features/Matters/CLAUDE.md` - Matters feature documentation (if exists)
+- `@CLAUDE.md` - Core directives and streamline workflow
