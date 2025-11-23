@@ -1,34 +1,115 @@
-name: Claude Task
-description: Create a task specifically for the Claude Night Shift workflow.
-title: "[Claude] "
-labels: ["status: ready-for-ai"]
-assignees: []
-body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for creating a task for Claude! This issue will be picked up between Midnight and 6 AM PST.
-  
-  - type: textarea
-    id: description
-    attributes:
-      label: Task Description
-      description: What specifically do you want Claude to do? Be as detailed as possible.
-      placeholder: "Please refactor the login function to use async/await..."
-    validations:
-      required: true
+name: Claude Night Shift (Fail-Safe)
 
-  - type: input
-    id: files
-    attributes:
-      label: Relevant Files (Optional)
-      description: Guide Claude to the right place. e.g., src/auth/login.ts
-      placeholder: src/components/Header.tsx
-    validations:
-      required: false
+on:
+  schedule:
+    # Runs at minute 0 and 30, hours 8-13 UTC (Midnight-6am PST)
+    - cron: '0,30 8-13 * * *'
+  workflow_dispatch:
 
-  - type: textarea
-    id: context
-    attributes:
-      label: Additional Context
-      description: Any constraints, libraries to use, or error logs?
+# PREVENT OVERLAP: 
+# This ensures that if a job takes 35 minutes, the next scheduled run 
+# waits for it to finish instead of running in parallel and causing chaos.
+concurrency: 
+  group: claude-night-shift
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-issue:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      # --- RECOVERY PHASE ---
+      # Checks if the PREVIOUS run left something "in-progress" (Zombie issue).
+      # If found, we assume the previous run crashed, and we mark it as Error.
+      - name: Check for Stalled Issues
+        run: |
+          # Find issues that are STILL marked 'in-progress'
+          STALLED_ISSUE=$(gh issue list --label "status: in-progress" --limit 1 --json number --jq '.[0].number')
+
+          if [ ! -z "$STALLED_ISSUE" ]; then
+            echo "⚠️ Found a stalled issue from a previous run: #$STALLED_ISSUE"
+            
+            gh issue edit "$STALLED_ISSUE" \
+              --remove-label "status: in-progress" \
+              --add-label "status: ai-error" \
+              --comment "❌ **System Recovery:** This issue was marked 'in-progress' but the workflow terminated unexpectedly (or timed out). Marking as error to release the queue."
+            
+            echo "Stalled issue cleaned up. Proceeding to next task."
+          else
+            echo "No stalled issues found. System is clean."
+          fi
+
+      # --- SELECTION PHASE ---
+      - name: Find New Issue & Lock It
+        id: pick_issue
+        run: |
+          # Find one issue waiting in the queue
+          ISSUE_NUMBER=$(gh issue list --label "status: ready-for-ai" --limit 1 --json number --jq '.[0].number')
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "No issues found with label 'status: ready-for-ai'. Going back to sleep."
+            exit 0
+          fi
+
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "Selected Issue: #$ISSUE_NUMBER"
+
+          # Mark as IN-PROGRESS immediately
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label "status: ready-for-ai" \
+            --add-label "status: in-progress" \
+            --comment "🤖 Claude is starting work on this task..."
+
+      # --- EXECUTION PHASE ---
+      - name: Run Claude (Headless)
+        id: run_claude
+        continue-on-error: true
+        if: steps.pick_issue.outputs.issue_number != ''
+        run: |
+          ISSUE_NUMBER=${{ steps.pick_issue.outputs.issue_number }}
+          
+          # Run Claude
+          claude -p "Please review issue #$ISSUE_NUMBER. 
+          1. Read the issue details.
+          2. Create a fix.
+          3. Create a Pull Request."
+
+      # --- COMPLETION PHASE ---
+      - name: Handle Success
+        if: steps.pick_issue.outputs.issue_number != '' && steps.run_claude.outcome == 'success'
+        run: |
+          ISSUE_NUMBER=${{ steps.pick_issue.outputs.issue_number }}
+          
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label "status: in-progress" \
+            --add-label "status: ai-complete" \
+            --comment "✅ Work complete. Please review the generated Pull Request."
+
+      - name: Handle Failure (Out of Credits / Error)
+        if: steps.pick_issue.outputs.issue_number != '' && steps.run_claude.outcome == 'failure'
+        run: |
+          ISSUE_NUMBER=${{ steps.pick_issue.outputs.issue_number }}
+          
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label "status: in-progress" \
+            --add-label "status: ai-error" \
+            --comment "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Likely causes: Out of credits, API timeout, or confusing instructions."
