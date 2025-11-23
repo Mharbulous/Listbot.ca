@@ -68,7 +68,7 @@
       <div class="bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden">
         <!-- Table -->
         <table class="w-full">
-          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+          <thead class="border-b border-slate-200 sticky top-0" style="background-color: #e0f2fe;">
             <tr>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -480,8 +480,8 @@ function openActionMenu(pleading) {
 
 /* Active Tab - Appears raised and connected to table */
 .folder-tab-active {
-  background: white;
-  color: #6b21a8;
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0f172a; /* slate-900 */
   transform: translateY(1px);
   z-index: 10;
   border-color: #cbd5e1;
