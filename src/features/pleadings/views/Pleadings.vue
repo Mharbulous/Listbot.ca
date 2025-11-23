@@ -526,7 +526,6 @@ function openActionMenu(pleading) {
   top: 0;
   z-index: 10; /* Above scrolling title drawer */
   background: transparent;
-  padding-top: 8px;
   padding-bottom: 0px; /* Ensure tabs sit flush against table header */
 }
 
