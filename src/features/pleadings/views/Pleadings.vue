@@ -47,7 +47,7 @@
               v-for="proceeding in mockProceedings"
               :key="proceeding.id"
               @click="selectedProceeding = proceeding.id"
-              class="folder-tab px-5 py-3 text-sm transition-all whitespace-nowrap relative"
+              class="folder-tab px-5 py-0 text-sm transition-all whitespace-nowrap relative"
               :class="selectedProceeding === proceeding.id ? 'folder-tab-active' : 'folder-tab-inactive'"
             >
               <div class="flex flex-col items-start">
@@ -60,7 +60,7 @@
           <!-- Right-aligned "ALL" tab -->
           <button
             @click="selectedProceeding = null"
-            class="folder-tab px-5 py-3 text-sm font-medium transition-all whitespace-nowrap relative"
+            class="folder-tab px-5 py-0 text-sm font-medium transition-all whitespace-nowrap relative"
             :class="selectedProceeding === null ? 'folder-tab-active' : 'folder-tab-inactive'"
           >
             ALL
@@ -548,7 +548,7 @@ function openActionMenu(pleading) {
   border: 1px solid #cbd5e1;
   border-bottom: none;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
-  min-height: 60px; /* Ensure consistent height across all tabs */
+  height: 60px; /* Fixed height for all tabs */
   display: flex;
   align-items: center; /* Vertically center content */
 }
