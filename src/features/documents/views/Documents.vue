@@ -13,6 +13,12 @@
       @drop="onDrop"
       @retry="handleRetry"
     >
+      <!-- Categories button in title-drawer -->
+      <template #controls>
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
+          Categories
+        </v-btn>
+      </template>
       <!-- Custom cell rendering for File Type column -->
       <template #cell-fileType="{ row, value }">
         <span
@@ -106,7 +112,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -122,6 +128,7 @@ import DocumentTable from '@/features/documents/components/table/DocumentTable.v
 
 // Get route for accessing params
 const route = useRoute();
+const router = useRouter();
 
 // Initialize performance monitor
 const perfMonitor = new PerformanceMonitor('Cloud Table');
@@ -279,6 +286,16 @@ const onDrop = (event) => {
  */
 const handleRetry = () => {
   window.location.reload();
+};
+
+/**
+ * Navigate to categories page for the current matter
+ */
+const navigateToCategories = () => {
+  const matterId = route.params.matterId;
+  if (matterId) {
+    router.push(`/matters/${matterId}/categories`);
+  }
 };
 
 // Component lifecycle

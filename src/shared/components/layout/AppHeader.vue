@@ -117,13 +117,6 @@
         </v-menu>
       </div>
 
-      <!-- Categories button (Collect page only) -->
-      <div v-if="isOnMatterDocumentsPage" class="flex items-center">
-        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
-          Categories
-        </v-btn>
-      </div>
-
       <!-- Collect button (Matter Categories page only) -->
       <div v-if="isOnMatterCategoriesPage" class="flex items-center">
         <v-btn
@@ -183,11 +176,6 @@ const isOnMatterDetailPage = computed(() => {
   return matterId ? route.path === `/matters/${matterId}` : false;
 });
 
-const isOnMatterDocumentsPage = computed(() => {
-  // Match routes like /matters/:matterId/documents
-  return route.path.match(/^\/matters\/[^/]+\/documents$/);
-});
-
 const isOnMatterCategoriesPage = computed(() => {
   // Match routes like /matters/:matterId/categories
   return route.path.match(/^\/matters\/[^/]+\/categories$/);
@@ -204,14 +192,6 @@ function navigateToMatter() {
   const matterId = matterViewStore.selectedMatter?.id;
   if (matterId) {
     router.push(`/matters/${matterId}`);
-  }
-}
-
-function navigateToCategories() {
-  // Extract matterId from current route path
-  const match = route.path.match(/^\/matters\/([^/]+)\/documents$/);
-  if (match && match[1]) {
-    router.push(`/matters/${match[1]}/categories`);
   }
 }
 
