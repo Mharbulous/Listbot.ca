@@ -59,7 +59,7 @@
       </div>
 
       <!-- Table Container -->
-      <div class="flex-1 overflow-auto">
+      <div class="table-content">
       <!-- Loading State -->
       <div
         v-if="loading"
@@ -458,5 +458,10 @@ const selectMatter = async (matter) => {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
   flex-shrink: 0;
+}
+
+.table-content {
+  position: relative;
+  z-index: 1;
 }
 </style>

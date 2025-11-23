@@ -500,14 +500,11 @@ const handleFolderRecursiveSelect = (event) => {
 }
 
 .table-section {
-  flex: 1; /* Take up remaining space */
-  /* Removed width: 100% to allow table to size based on content, not viewport */
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center; /* Center the upload-table-container horizontally */
-  overflow-x: auto; /* Add horizontal scrollbar when table exceeds viewport width */
-  min-height: 0; /* Allow flex shrinking */
-  position: relative;
-  z-index: 1;
+  min-width: max-content;
 }
 </style>
