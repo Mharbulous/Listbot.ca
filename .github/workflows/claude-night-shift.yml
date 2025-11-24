@@ -1,12 +1,14 @@
-name: Claude Night Shift (Prioritized)
+name: Claude Night Shift (Prioritized Autonomous Agent)
 
 on:
   schedule:
-    # Runs at minute 0 and 30, hours 8-13 UTC (Midnight-6am PST)
+    # Runs at minute 0 and 30, hours 8-13 UTC.
+    # This corresponds to Midnight (00:00) to 5:59 AM (05:59) PST/PDT.
     - cron: '0,30 8-13 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual triggering for testing
 
-# Ensures runs do not overlap.
+# CONCURRENCY CONTROL: 
+# This prevents a new run from starting if the previous one is still active (e.g., if a task takes 40 minutes).
 concurrency: 
   group: claude-night-shift
   cancel-in-progress: false
@@ -20,6 +22,7 @@ jobs:
   autonomous-agent:
     runs-on: ubuntu-latest
     env:
+      # Ensure these secrets are configured in your repository settings
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -35,87 +38,100 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
-      # --- DECISION ENGINE ---
+      # --- DECISION ENGINE & PRIORITY CHECK ---
       - name: Determine Task Priority
         id: decision
         run: |
-          # 1. CHECK PRIORITY 1: Is there an issue already 'in-progress'?
-          # If yes, we resume it (Rescue Mission).
+          # 1. CHECK PRIORITY 1 (RESUME STALLED): Is there an issue already 'in-progress'?
           RESUME_ID=$(gh issue list --label "status: in-progress" --limit 1 --json number --jq '.[0].number')
           
           if [ ! -z "$RESUME_ID" ]; then
             echo "mode=resume" >> $GITHUB_OUTPUT
             echo "issue_id=$RESUME_ID" >> $GITHUB_OUTPUT
             echo "✅ Priority 1: Resuming stalled issue #$RESUME_ID"
+            # Add a comment to the issue indicating resumption (optional)
+            gh issue comment "$RESUME_ID" --body "🤖 **Resuming Task:** Workflow detected a previous stalled state and is attempting to finish this issue."
             exit 0
           fi
 
-          # 2. CHECK PRIORITY 2: Is there a new issue 'ready-for-ai'?
-          # If yes, we start it.
+          # 2. CHECK PRIORITY 2 (NEW WORK): Is there a new issue 'ready-for-ai'?
           NEW_ID=$(gh issue list --label "status: ready-for-ai" --limit 1 --json number --jq '.[0].number')
           
           if [ ! -z "$NEW_ID" ]; then
             echo "mode=new" >> $GITHUB_OUTPUT
             echo "issue_id=$NEW_ID" >> $GITHUB_OUTPUT
             
-            # Lock the issue immediately
+            # LOCK the issue immediately by swapping the label
             gh issue edit "$NEW_ID" \
               --remove-label "status: ready-for-ai" \
               --add-label "status: in-progress" \
-              --comment "🤖 Claude is starting work on this task..."
+              --comment "🤖 Claude is starting work on this task (Priority 2)."
             
             echo "✅ Priority 2: Starting new issue #$NEW_ID"
             exit 0
           fi
 
-          # 3. CHECK PRIORITY 3: Maintenance Mode
+          # 3. PRIORITY 3 (MAINTENANCE MODE)
           echo "mode=maintenance" >> $GITHUB_OUTPUT
-          echo "✅ Priority 3: No issues found. Running maintenance."
+          echo "✅ Priority 3: No issues found. Entering maintenance mode."
 
       # --- EXECUTION: ISSUE MODE (Resume or New) ---
       - name: Work on Issue
         id: run_issue
+        # Only runs if mode is 'resume' or 'new'
         if: steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new'
-        continue-on-error: true # Prevent workflow fail so we can log the error label
+        continue-on-error: true
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          
           echo "Working on Issue #$ISSUE_NUMBER..."
           
-          # We pass the prompt + instruction to create a PR
+          # Runs the Claude Code CLI tool
           claude -p "Please process issue #$ISSUE_NUMBER. 
           1. Analyze the requirements.
           2. Implement the fix.
           3. Create a Pull Request with the changes."
 
-      # --- EXECUTION: MAINTENANCE MODE ---
-      - name: Run Maintenance Command
+      # --- EXECUTION: MAINTENANCE MODE CASCADE ---
+      - name: Run Maintenance Cascade
         id: run_maintenance
+        # Only runs if mode is 'maintenance'
         if: steps.decision.outputs.mode == 'maintenance'
-        continue-on-error: true
+        continue-on-error: true 
         run: |
-          echo "Running documentation streamline..."
+          echo "Running documentation and code maintenance cascade..."
           
-          # We run the slash command, and ensure it creates a PR if it makes changes
-          claude -p "/doc-streamline. 
-          If you make any changes to the documentation, please create a Pull Request titled 'Nightly Doc Reconcile'."
+          # P3a: Run Doc Streamline (Requires .claude/commands/doc-streamline.md to exist)
+          echo "-> Running /doc-streamline..."
+          claude -p "/doc-streamline. If any changes are made, create a PR titled 'Nightly Maintenance: Doc Streamline'." || true
+          
+          # P3b: Run Doc Reconcile (Requires .claude/commands/doc-reconcile.md to exist)
+          echo "-> Running /doc-reconcile..."
+          claude -p "/doc-reconcile. If any changes are made, create a separate PR titled 'Nightly Maintenance: Doc Reconcile'." || true
+
+          # P3c: Run General Streamline (Requires .claude/commands/streamline.md to exist)
+          echo "-> Running /streamline..."
+          claude -p "/streamline. If any changes are made, create a separate PR titled 'Nightly Maintenance: General Streamlining'." || true
+          
+          echo "Maintenance cascade complete."
 
       # --- POST-PROCESSING: SUCCESS (Issues Only) ---
       - name: Mark Issue Complete
+        # Only runs if mode was an issue and the Claude step succeeded
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
           gh issue edit "$ISSUE_NUMBER" \
             --remove-label "status: in-progress" \
             --add-label "status: ai-complete" \
-            --comment "✅ Task completed successfully."
+            --comment "✅ Task completed successfully. A Pull Request should be linked to this issue."
 
       # --- POST-PROCESSING: FAILURE (Issues Only) ---
       - name: Mark Issue Error
+        # Only runs if mode was an issue and the Claude step failed (e.g., out of credits)
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'failure'
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
           gh issue edit "$ISSUE_NUMBER" \
             --remove-label "status: in-progress" \
             --add-label "status: ai-error" \
-            --comment "⚠️ Claude attempted this task but failed (Exit Code 1). Please check logs."
+            --comment "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."
