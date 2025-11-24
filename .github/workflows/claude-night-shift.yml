@@ -40,13 +40,13 @@ jobs:
         id: decision
         run: |
           # Define bot user for filtering
-          BOT_USER="Listbot.ca"
+          BOT_USER="Mharbulous"
 
           # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status AND assignee, sort oldest first.
           RESUME_ID=$(gh issue list \
             --label "status: in-progress" \
             --assignee "$BOT_USER" \
-            --sort created-asc \
+            --order asc \
             --limit 1 \
             --json number \
             --jq '.[0].number')
@@ -63,7 +63,7 @@ jobs:
           NEW_ID=$(gh issue list \
             --label "status: ready-for-ai" \
             --assignee "$BOT_USER" \
-            --sort created-asc \
+            --order asc \
             --limit 1 \
             --json number \
             --jq '.[0].number')
