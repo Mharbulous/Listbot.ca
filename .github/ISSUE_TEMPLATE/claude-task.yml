@@ -3,7 +3,7 @@ description: Create a task specifically for the Claude Night Shift workflow.
 title: "[Claude] "
 labels: ["status: ready-for-ai"]
 assignees: 
-  - Listbot.ca # Automatically assigns the issue to the Listbot.ca app for processing
+  - mathhew-manuel # Automatically assigns the issue to the mathhew-manuel app for processing
 
 body:
   - type: markdown
