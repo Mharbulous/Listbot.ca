@@ -19,7 +19,15 @@
           @mouseenter="$emit('item-hover', $event, item.key)"
           @mouseleave="$emit('item-leave')"
         >
-          <span class="nav-icon">{{ getItemIcon(item, hoveredItemKey, route.path) }}</span>
+          <span class="nav-icon">
+            <img
+              v-if="isImageIcon(getItemIcon(item, hoveredItemKey, route.path))"
+              :src="getItemIcon(item, hoveredItemKey, route.path)"
+              :alt="item.label"
+              class="nav-icon-img"
+            />
+            <template v-else>{{ getItemIcon(item, hoveredItemKey, route.path) }}</template>
+          </span>
           <span v-if="!isCollapsed" class="nav-label">{{ item.label }}</span>
         </RouterLink>
         <RouterLink
@@ -58,6 +66,21 @@ defineProps({
 defineEmits(['item-hover', 'item-leave']);
 
 const route = useRoute();
+
+/**
+ * Check if icon is an image path (imported PNG/JPG/SVG) vs emoji string
+ */
+const isImageIcon = (icon) => {
+  return typeof icon === 'string' && (
+    icon.includes('.png') ||
+    icon.includes('.jpg') ||
+    icon.includes('.svg') ||
+    icon.includes('.jpeg') ||
+    icon.startsWith('/') ||
+    icon.startsWith('data:') ||
+    icon.startsWith('http')
+  );
+};
 </script>
 
 <style scoped>
@@ -178,6 +201,21 @@ const route = useRoute();
   height: 30px;
   font-size: 20px;
   flex-shrink: 0;
+}
+
+.nav-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: brightness(0.9);
+}
+
+.nav-item:hover .nav-icon-img {
+  filter: brightness(1.1);
+}
+
+.nav-item-active .nav-icon-img {
+  filter: brightness(1.2);
 }
 
 .nav-label {
