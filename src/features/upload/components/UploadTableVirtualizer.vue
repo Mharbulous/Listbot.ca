@@ -44,7 +44,7 @@
 <template>
   <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
   <!-- Merged table-wrapper and scroll-container into single container -->
-  <PageLayout ref="scrollContainerRef" class="upload-layout">
+  <PageLayout ref="pageLayoutRef" class="upload-layout">
     <!-- Title Drawer -->
     <TitleDrawer title="Upload Queue">
         <!-- Add to Queue button -->
@@ -225,8 +225,8 @@ const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'des
 // Get shared queue state for resetting completion flag
 const { queueAdditionComplete } = useQueueState();
 
-// Scroll container ref for virtual scrolling
-const scrollContainerRef = ref(null);
+// PageLayout component ref (contains the scroll container)
+const pageLayoutRef = ref(null);
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -241,7 +241,7 @@ const ROW_HEIGHT = 48;
 // See: docs/TanStackAndVue3.md - "The Critical Pattern"
 const virtualizerOptions = computed(() => ({
   count: props.files?.length || 0, // Plain number, NOT computed()!
-  getScrollElement: () => scrollContainerRef.value,
+  getScrollElement: () => pageLayoutRef.value?.scrollContainerRef || null,
   estimateSize: () => ROW_HEIGHT,
   overscan: 5, // Render 5 extra rows above/below viewport for smooth scrolling
   enableSmoothScroll: true,
@@ -372,8 +372,9 @@ const triggerFolderRecursiveSelect = () => {
 };
 
 // Expose scroll container ref for parent component
+// This provides access to the actual scrolling DOM element through PageLayout
 defineExpose({
-  scrollContainerRef,
+  scrollContainerRef: computed(() => pageLayoutRef.value?.scrollContainerRef || null),
 });
 </script>
 

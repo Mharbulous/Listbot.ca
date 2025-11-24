@@ -12,11 +12,23 @@
     Add remaining page content as siblings
 -->
 <template>
-  <div class="scroll-container">
+  <div ref="scrollContainerRef" class="scroll-container">
     <div class="gradient-background"></div>
     <slot />
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue';
+
+// Expose the scroll container element so parent components can access it
+// This is needed for TanStack Virtual and other scroll-dependent libraries
+const scrollContainerRef = ref(null);
+
+defineExpose({
+  scrollContainerRef,
+});
+</script>
 
 <style scoped>
 .scroll-container {
