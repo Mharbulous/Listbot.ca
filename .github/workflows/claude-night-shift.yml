@@ -46,7 +46,7 @@ jobs:
           RESUME_ID=$(gh issue list \
             --label "status: in-progress" \
             --assignee "$BOT_USER" \
-            --order asc \
+             \
             --limit 1 \
             --json number \
             --jq '.[0].number')
@@ -63,7 +63,7 @@ jobs:
           NEW_ID=$(gh issue list \
             --label "status: ready-for-ai" \
             --assignee "$BOT_USER" \
-            --order asc \
+             \
             --limit 1 \
             --json number \
             --jq '.[0].number')
