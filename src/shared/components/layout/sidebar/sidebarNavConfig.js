@@ -2,7 +2,7 @@ import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
-import factsIcon from '@/assets/icons/nav-items/facts.png';
+import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
 
 /**
  * Navigation items configuration for the sidebar
