@@ -89,33 +89,80 @@ jobs:
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
           echo "Working on Issue #$ISSUE_NUMBER..."
-          
-          claude -p "Please process issue #$ISSUE_NUMBER. 
-          1. Analyze the requirements.
-          2. Implement the fix.
-          3. Create a Pull Request with the changes."
+
+          # Fetch the full issue content (title, body, comments)
+          ISSUE_CONTENT=$(gh issue view "$ISSUE_NUMBER" --json title,body,comments --jq '{title: .title, body: .body, comments: [.comments[].body]}')
+
+          # Validate that we successfully fetched the issue
+          if [ -z "$ISSUE_CONTENT" ] || [ "$ISSUE_CONTENT" = "{}" ]; then
+            echo "❌ Error: Failed to fetch issue #$ISSUE_NUMBER content"
+            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Fetch Error:** Claude could not retrieve the issue content. Please check the issue format and try again."
+            exit 1
+          fi
+
+          # Extract title and body for the prompt
+          ISSUE_TITLE=$(echo "$ISSUE_CONTENT" | jq -r '.title')
+          ISSUE_BODY=$(echo "$ISSUE_CONTENT" | jq -r '.body // "No description provided"')
+
+          echo "📋 Issue Title: $ISSUE_TITLE"
+          echo "📝 Processing issue content..."
+
+          # Construct the prompt for Claude
+          # TODO: Consider verifying PR was created by checking recent PRs or parsing Claude output
+          CLAUDE_PROMPT="Please process GitHub issue #$ISSUE_NUMBER.
+
+          ISSUE TITLE: $ISSUE_TITLE
+
+          ISSUE DESCRIPTION: $ISSUE_BODY
+
+          TASK INSTRUCTIONS:
+          1. Analyze the requirements described in the issue
+          2. Implement the requested changes following the project's coding standards
+          3. Run any necessary tests to verify your changes
+          4. Create a Pull Request with:
+             - A clear title referencing issue #$ISSUE_NUMBER
+             - A description of what was changed and why
+             - Link to issue #$ISSUE_NUMBER using 'Closes #$ISSUE_NUMBER' or 'Fixes #$ISSUE_NUMBER'
+
+          Remember: You are working in the ListBot.ca repository. Follow all guidelines in CLAUDE.md and the @docs folder."
+
+          # Pass the prompt to Claude
+          claude -p "$CLAUDE_PROMPT"
 
       # --- EXECUTION: MAINTENANCE MODE CASCADE ---
       - name: Run Maintenance Cascade
         id: run_maintenance
         if: steps.decision.outputs.mode == 'maintenance'
-        continue-on-error: true 
+        continue-on-error: true
         run: |
-          echo "Running documentation and code maintenance cascade..."
-          
-          # P3a: Run Doc Streamline
-          echo "-> Running /doc-streamline..."
-          claude -p "/doc-streamline. If any changes are made, create a PR titled 'Nightly Maintenance: Doc Streamline'." || true
-          
-          # P3b: Run Doc Reconcile
-          echo "-> Running /doc-reconcile..."
-          claude -p "/doc-reconcile. If any changes are made, create a separate PR titled 'Nightly Maintenance: Doc Reconcile'." || true
+          echo "⚙️ Entering Maintenance Mode..."
+          echo "ℹ️  Maintenance tasks are currently disabled. See TODO comments below."
 
-          # P3c: Run General Streamline
-          echo "-> Running /streamline..."
-          claude -p "/streamline. If any changes are made, create a separate PR titled 'Nightly Maintenance: General Streamlining'." || true
-          
-          echo "Maintenance cascade complete."
+          # TODO: Implement P3a - Documentation Streamlining
+          # Purpose: Review docs/ folder for inconsistencies, outdated content, broken links
+          # Suggested prompt: "Review all files in the docs/ folder for consistency with the codebase.
+          #                   Check for outdated information, broken cross-references, and missing documentation.
+          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Streamline'."
+          # echo "-> Running doc streamline..."
+          # claude -p "Review all files in docs/ for consistency..." || true
+
+          # TODO: Implement P3b - Documentation Reconciliation
+          # Purpose: Ensure CLAUDE.md and sub-docs match actual codebase structure and conventions
+          # Suggested prompt: "Reconcile documentation in CLAUDE.md and @docs with the actual codebase.
+          #                   Verify that documented patterns match implementation, update any discrepancies.
+          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Reconcile'."
+          # echo "-> Running doc reconcile..."
+          # claude -p "Reconcile CLAUDE.md and @docs with codebase..." || true
+
+          # TODO: Implement P3c - General Code Streamlining
+          # Purpose: Identify and fix code quality issues (unused imports, console.logs, etc.)
+          # Suggested prompt: "Review codebase for quality improvements: remove unused imports,
+          #                   debug console.logs, fix obvious linting issues, simplify overly complex functions.
+          #                   If changes are made, create a PR titled 'Nightly Maintenance: Code Streamline'."
+          # echo "-> Running code streamline..."
+          # claude -p "Review codebase for quality improvements..." || true
+
+          echo "✅ Maintenance mode complete (no active tasks)."
 
       # --- POST-PROCESSING: SUCCESS (Issues Only) ---
       - name: Mark Issue Complete
