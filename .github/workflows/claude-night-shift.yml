@@ -40,7 +40,7 @@ jobs:
         id: decision
         run: |
           # Define bot user for filtering
-          BOT_USER="mathhew-manuel"
+          BOT_USER="matthew-manuel"
 
           # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status AND assignee, sort oldest first.
           RESUME_ID=$(gh issue list \
