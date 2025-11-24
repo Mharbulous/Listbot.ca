@@ -204,8 +204,8 @@ const isImageIcon = (icon) => {
 }
 
 .nav-icon-img {
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   filter: brightness(0.9);
 }
