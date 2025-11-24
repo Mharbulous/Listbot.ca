@@ -26,6 +26,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Claude Night Shift"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -107,24 +114,35 @@ jobs:
           echo "📋 Issue Title: $ISSUE_TITLE"
           echo "📝 Processing issue content..."
 
-          # Construct the prompt for Claude
-          # TODO: Consider verifying PR was created by checking recent PRs or parsing Claude output
+          # Construct the prompt for Claude - PUSH DIRECTLY TO MAIN
           CLAUDE_PROMPT="Please process GitHub issue #$ISSUE_NUMBER.
 
-          ISSUE TITLE: $ISSUE_TITLE
+ISSUE TITLE: $ISSUE_TITLE
 
-          ISSUE DESCRIPTION: $ISSUE_BODY
+ISSUE DESCRIPTION:
+$ISSUE_BODY
 
-          TASK INSTRUCTIONS:
-          1. Analyze the requirements described in the issue
-          2. Implement the requested changes following the project's coding standards
-          3. Run any necessary tests to verify your changes
-          4. Create a Pull Request with:
-             - A clear title referencing issue #$ISSUE_NUMBER
-             - A description of what was changed and why
-             - Link to issue #$ISSUE_NUMBER using 'Closes #$ISSUE_NUMBER' or 'Fixes #$ISSUE_NUMBER'
+TASK INSTRUCTIONS:
+1. Analyze the requirements described in the issue
+2. Implement the requested changes following the project's coding standards
+3. Test your changes to ensure they work correctly
+4. Commit your changes with a clear, descriptive commit message
+   - Use format: 'Fix: <description> (fixes #$ISSUE_NUMBER)' or 'Feature: <description> (closes #$ISSUE_NUMBER)'
+   - Example: 'Fix: Remove bottom padding from upload table (fixes #$ISSUE_NUMBER)'
+5. Push your changes DIRECTLY to the main branch using: git push origin main
+6. After successfully pushing, close the issue with:
+   gh issue close $ISSUE_NUMBER --comment \"✅ Changes pushed to main branch. Review commit history for details.\"
 
-          Remember: You are working in the ListBot.ca repository. Follow all guidelines in CLAUDE.md and the @docs folder."
+CRITICAL: 
+- Push directly to main - do NOT create a pull request
+- Ensure you commit and push before closing the issue
+- If you encounter any errors during push, do NOT close the issue
+
+CONTEXT:
+- Repository: ListBot.ca (EDRM litigation document management)
+- Tech stack: Vue 3, Vuetify 3, Firebase, Gemini API
+- Main branch is NOT production (promotion model is used)
+- Follow all guidelines in CLAUDE.md and @docs folder"
 
           # Pass the prompt to Claude
           claude -p "$CLAUDE_PROMPT"
@@ -142,7 +160,8 @@ jobs:
           # Purpose: Review docs/ folder for inconsistencies, outdated content, broken links
           # Suggested prompt: "Review all files in the docs/ folder for consistency with the codebase.
           #                   Check for outdated information, broken cross-references, and missing documentation.
-          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Streamline'."
+          #                   If changes are needed, commit and push directly to main with message:
+          #                   'Docs: Nightly maintenance - streamline documentation'."
           # echo "-> Running doc streamline..."
           # claude -p "Review all files in docs/ for consistency..." || true
 
@@ -150,7 +169,8 @@ jobs:
           # Purpose: Ensure CLAUDE.md and sub-docs match actual codebase structure and conventions
           # Suggested prompt: "Reconcile documentation in CLAUDE.md and @docs with the actual codebase.
           #                   Verify that documented patterns match implementation, update any discrepancies.
-          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Reconcile'."
+          #                   If changes are needed, commit and push directly to main with message:
+          #                   'Docs: Nightly maintenance - reconcile documentation with codebase'."
           # echo "-> Running doc reconcile..."
           # claude -p "Reconcile CLAUDE.md and @docs with codebase..." || true
 
@@ -158,23 +178,32 @@ jobs:
           # Purpose: Identify and fix code quality issues (unused imports, console.logs, etc.)
           # Suggested prompt: "Review codebase for quality improvements: remove unused imports,
           #                   debug console.logs, fix obvious linting issues, simplify overly complex functions.
-          #                   If changes are made, create a PR titled 'Nightly Maintenance: Code Streamline'."
+          #                   If changes are made, commit and push directly to main with message:
+          #                   'Chore: Nightly maintenance - code quality improvements'."
           # echo "-> Running code streamline..."
           # claude -p "Review codebase for quality improvements..." || true
 
-          echo "✅ Maintenance mode complete (no active tasks)."
+echo "✅ Maintenance mode complete (no active tasks)."
 
       # --- POST-PROCESSING: SUCCESS (Issues Only) ---
       - name: Mark Issue Complete
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          gh issue edit "$ISSUE_NUMBER" \
-            --remove-label "status: in-progress" \
-            --add-label "status: ai-complete"
           
-          gh issue comment "$ISSUE_NUMBER" \
-            --body "✅ Task completed successfully. A Pull Request should be linked to this issue."
+          # Check if issue is still open (Claude might have closed it)
+          ISSUE_STATE=$(gh issue view "$ISSUE_NUMBER" --json state --jq '.state')
+          
+          if [ "$ISSUE_STATE" = "OPEN" ]; then
+            gh issue edit "$ISSUE_NUMBER" \
+              --remove-label "status: in-progress" \
+              --add-label "status: ai-complete"
+            
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "✅ Task completed successfully. Changes have been pushed to the main branch."
+          else
+            echo "Issue #$ISSUE_NUMBER was already closed by Claude."
+          fi
 
       # --- POST-PROCESSING: FAILURE (Issues Only) ---
       - name: Mark Issue Error
