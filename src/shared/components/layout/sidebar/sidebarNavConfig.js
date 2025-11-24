@@ -2,6 +2,7 @@ import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
+import factsIcon from '@/assets/icons/nav-items/facts.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -16,7 +17,7 @@ export function useNavItems() {
     { key: 'matters', path: '/matters', icon: briefcaseIcon, label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
+    { key: 'facts', path: '/facts', icon: factsIcon, label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
     { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
     { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
     { key: 'theory', path: '/theory', icon: '♙', label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
