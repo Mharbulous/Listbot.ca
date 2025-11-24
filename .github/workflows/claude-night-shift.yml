@@ -69,7 +69,9 @@ jobs:
             gh issue edit "$NEW_ID" \
               --remove-label "status: ready-for-ai" \
               --add-label "status: in-progress" \
-              --comment "🤖 Claude is starting work on this task (Priority 2)."
+            
+            gh issue comment "$NEW_ID" \
+              --body "🤖 Claude is starting work on this task (Priority 2)."
             
             echo "✅ Priority 2: Starting new issue #$NEW_ID (Oldest first)."
             exit 0
@@ -123,7 +125,9 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" \
             --remove-label "status: in-progress" \
             --add-label "status: ai-complete" \
-            --comment "✅ Task completed successfully. A Pull Request should be linked to this issue."
+          
+          gh issue comment "$ISSUE_NUMBER" \  
+            --body "✅ Task completed successfully. A Pull Request should be linked to this issue."
 
       # --- POST-PROCESSING: FAILURE (Issues Only) ---
       - name: Mark Issue Error
@@ -133,4 +137,6 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" \
             --remove-label "status: in-progress" \
             --add-label "status: ai-error" \
-            --comment "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."
+          
+          gh issue comment "$ISSUE_NUMBER" \  
+            --body "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."
