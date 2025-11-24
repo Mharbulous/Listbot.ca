@@ -7,7 +7,6 @@
 ## Files Exceeding 700 Lines (Streamlining Candidates)
 
 ### Priority 1: Files WITHOUT Date Prefix
-- `Features/Organizer/AIAnalysis/ai-requirements.md` - **1430 lines** ⚠️ CRITICAL
 - `Features/Upload/Deduplication/deduplication-complexity-analysis.md` - **759 lines**
 
 ### Priority 2: Files WITH Date Prefix (Oldest First)
@@ -52,8 +51,15 @@
 - `solo-firm-matters.md` - 236 lines *(no date prefix)*
 
 ### Features/Organizer/AIAnalysis/
+- `25-11-09-ai-requirements-architecture.md` - 372 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-business.md` - 70 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-functional.md` - 459 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-project.md` - 123 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-reference.md` - 136 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-stories.md` - 290 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements-ui.md` - 109 lines *(decomposed from ai-requirements.md)*
+- `25-11-09-ai-requirements.md` - 79 lines *(index file)*
 - `25-11-19-ai-analysis-overview.md` - 816 lines ⚠️
-- `ai-requirements.md` - 1430 lines ⚠️ **CRITICAL - No date prefix**
 
 ### Features/Organizer/Categories/
 - `25-11-18-category-system-overview.md` - 431 lines
@@ -124,12 +130,18 @@
 
 ## Summary Statistics
 
-- **Total documentation files:** 49 (excluding CLAUDE.md index files)
-- **Total lines:** 20,921
-- **Files >700 lines:** 6
+- **Total documentation files:** 56 (excluding CLAUDE.md index files)
+- **Total lines:** 21,129
+- **Files >700 lines:** 5
 - **Files 600-700 lines:** 4
-- **Files without date prefix:** 18
-- **Average file size:** 427 lines
+- **Files without date prefix:** 17
+- **Average file size:** 377 lines
+
+### Recent Changes (2025-11-23)
+- **Decomposed:** `Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines)
+  - Split into 8 focused files by area of concern (business, functional, architecture, UI, stories, project, reference)
+  - Original file moved to `deprecated/25-11-09-ai-requirements-ORIGINAL.md`
+  - All decomposed files inherit `25-11-09` date prefix from original document
 
 ---
 
@@ -137,7 +149,7 @@
 
 **Recommended decomposition order:**
 
-1. `Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)
+1. ~~`Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)~~ ✅ **COMPLETED 2025-11-23**
 2. `Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines, no date prefix)
 3. `Testing/25-11-18-vitest-test-suites.md` (1629 lines)
 4. `Features/Upload/old-upload-page.md` (1109 lines)
