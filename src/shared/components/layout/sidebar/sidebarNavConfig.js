@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useOrganizerStore } from '@/features/documents/stores/organizer';
 
 /**
  * Navigation items configuration for the sidebar
@@ -7,6 +8,7 @@ import { useMatterViewStore } from '@/features/matters/stores/matterView';
  */
 export function useNavItems() {
   const matterViewStore = useMatterViewStore();
+  const organizerStore = useOrganizerStore();
 
   return [
     // Matters (Special - not part of EDRM workflow)
