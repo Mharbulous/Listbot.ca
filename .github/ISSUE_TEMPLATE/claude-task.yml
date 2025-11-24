@@ -2,14 +2,12 @@ name: Claude Task
 description: Create a task specifically for the Claude Night Shift workflow.
 title: "[Claude] "
 labels: ["status: ready-for-ai"]
-assignees: 
-  - matthew-manuel # Automatically assigns the issue to the matthew-manuel app for processing
 
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for creating a task for Claude! This issue has been automatically labeled and assigned to ensure it is picked up by the Night Shift workflow.
+        Thanks for creating a task for Claude! This issue has been automatically labeled with `status: ready-for-ai` so the Night Shift workflow will pick it up.
   
   - type: textarea
     id: description

@@ -39,14 +39,9 @@ jobs:
       - name: Determine Task Priority
         id: decision
         run: |
-          # Define bot user for filtering
-          BOT_USER="matthew-manuel"
-
-          # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status AND assignee, sort oldest first.
+          # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status only, oldest first.
           RESUME_ID=$(gh issue list \
             --label "status: in-progress" \
-            --assignee "$BOT_USER" \
-             \
             --limit 1 \
             --json number \
             --jq '.[0].number')
@@ -59,11 +54,9 @@ jobs:
             exit 0
           fi
 
-          # 2. CHECK PRIORITY 2 (NEW WORK): Filter by status AND assignee, sort oldest first.
+          # 2. CHECK PRIORITY 2 (NEW WORK): Filter by status only, oldest first.
           NEW_ID=$(gh issue list \
             --label "status: ready-for-ai" \
-            --assignee "$BOT_USER" \
-             \
             --limit 1 \
             --json number \
             --jq '.[0].number')
