@@ -2,13 +2,11 @@ name: Claude Night Shift (Prioritized Autonomous Agent)
 
 on:
   schedule:
-    # Runs at minute 0 and 30, hours 8-13 UTC.
-    # This corresponds to Midnight (00:00) to 5:59 AM (05:59) PST/PDT.
+    # Runs at minute 0 and 30, hours 8-13 UTC (Midnight-6am PST/PDT).
     - cron: '0,30 8-13 * * *'
-  workflow_dispatch: # Allows manual triggering for testing
+  workflow_dispatch:
 
-# CONCURRENCY CONTROL: 
-# This prevents a new run from starting if the previous one is still active (e.g., if a task takes 40 minutes).
+# Ensures runs do not overlap.
 concurrency: 
   group: claude-night-shift
   cancel-in-progress: false
@@ -22,7 +20,6 @@ jobs:
   autonomous-agent:
     runs-on: ubuntu-latest
     env:
-      # Ensure these secrets are configured in your repository settings
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -38,36 +35,50 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
-      # --- DECISION ENGINE & PRIORITY CHECK ---
+      # --- DECISION ENGINE (Filtered and Sorted) ---
       - name: Determine Task Priority
         id: decision
         run: |
-          # 1. CHECK PRIORITY 1 (RESUME STALLED): Is there an issue already 'in-progress'?
-          RESUME_ID=$(gh issue list --label "status: in-progress" --limit 1 --json number --jq '.[0].number')
+          # Define bot user for filtering
+          BOT_USER="Listbot.ca"
+
+          # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status AND assignee, sort oldest first.
+          RESUME_ID=$(gh issue list \
+            --label "status: in-progress" \
+            --assignee "$BOT_USER" \
+            --sort created-asc \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number')
           
           if [ ! -z "$RESUME_ID" ]; then
             echo "mode=resume" >> $GITHUB_OUTPUT
             echo "issue_id=$RESUME_ID" >> $GITHUB_OUTPUT
-            echo "✅ Priority 1: Resuming stalled issue #$RESUME_ID"
-            # Add a comment to the issue indicating resumption (optional)
+            echo "✅ Priority 1: Resuming stalled issue #$RESUME_ID (Oldest first)."
             gh issue comment "$RESUME_ID" --body "🤖 **Resuming Task:** Workflow detected a previous stalled state and is attempting to finish this issue."
             exit 0
           fi
 
-          # 2. CHECK PRIORITY 2 (NEW WORK): Is there a new issue 'ready-for-ai'?
-          NEW_ID=$(gh issue list --label "status: ready-for-ai" --limit 1 --json number --jq '.[0].number')
+          # 2. CHECK PRIORITY 2 (NEW WORK): Filter by status AND assignee, sort oldest first.
+          NEW_ID=$(gh issue list \
+            --label "status: ready-for-ai" \
+            --assignee "$BOT_USER" \
+            --sort created-asc \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number')
           
           if [ ! -z "$NEW_ID" ]; then
             echo "mode=new" >> $GITHUB_OUTPUT
             echo "issue_id=$NEW_ID" >> $GITHUB_OUTPUT
             
-            # LOCK the issue immediately by swapping the label
+            # Lock the issue immediately
             gh issue edit "$NEW_ID" \
               --remove-label "status: ready-for-ai" \
               --add-label "status: in-progress" \
               --comment "🤖 Claude is starting work on this task (Priority 2)."
             
-            echo "✅ Priority 2: Starting new issue #$NEW_ID"
+            echo "✅ Priority 2: Starting new issue #$NEW_ID (Oldest first)."
             exit 0
           fi
 
@@ -78,14 +89,12 @@ jobs:
       # --- EXECUTION: ISSUE MODE (Resume or New) ---
       - name: Work on Issue
         id: run_issue
-        # Only runs if mode is 'resume' or 'new'
         if: steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new'
         continue-on-error: true
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
           echo "Working on Issue #$ISSUE_NUMBER..."
           
-          # Runs the Claude Code CLI tool
           claude -p "Please process issue #$ISSUE_NUMBER. 
           1. Analyze the requirements.
           2. Implement the fix.
@@ -94,21 +103,20 @@ jobs:
       # --- EXECUTION: MAINTENANCE MODE CASCADE ---
       - name: Run Maintenance Cascade
         id: run_maintenance
-        # Only runs if mode is 'maintenance'
         if: steps.decision.outputs.mode == 'maintenance'
         continue-on-error: true 
         run: |
           echo "Running documentation and code maintenance cascade..."
           
-          # P3a: Run Doc Streamline (Requires .claude/commands/doc-streamline.md to exist)
+          # P3a: Run Doc Streamline
           echo "-> Running /doc-streamline..."
           claude -p "/doc-streamline. If any changes are made, create a PR titled 'Nightly Maintenance: Doc Streamline'." || true
           
-          # P3b: Run Doc Reconcile (Requires .claude/commands/doc-reconcile.md to exist)
+          # P3b: Run Doc Reconcile
           echo "-> Running /doc-reconcile..."
           claude -p "/doc-reconcile. If any changes are made, create a separate PR titled 'Nightly Maintenance: Doc Reconcile'." || true
 
-          # P3c: Run General Streamline (Requires .claude/commands/streamline.md to exist)
+          # P3c: Run General Streamline
           echo "-> Running /streamline..."
           claude -p "/streamline. If any changes are made, create a separate PR titled 'Nightly Maintenance: General Streamlining'." || true
           
@@ -116,7 +124,6 @@ jobs:
 
       # --- POST-PROCESSING: SUCCESS (Issues Only) ---
       - name: Mark Issue Complete
-        # Only runs if mode was an issue and the Claude step succeeded
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
@@ -127,7 +134,6 @@ jobs:
 
       # --- POST-PROCESSING: FAILURE (Issues Only) ---
       - name: Mark Issue Error
-        # Only runs if mode was an issue and the Claude step failed (e.g., out of credits)
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'failure'
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
