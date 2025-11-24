@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
+import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -12,7 +13,7 @@ export function useNavItems() {
 
   return [
     // Matters (Special - not part of EDRM workflow)
-    { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
+    { key: 'matters', path: '/matters', icon: briefcaseIcon, label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
     { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
