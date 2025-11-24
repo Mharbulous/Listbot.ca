@@ -45,6 +45,8 @@ jobs:
       # --- DECISION ENGINE (Filtered and Sorted) ---
       - name: Determine Task Priority
         id: decision
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status only, oldest first.
           RESUME_ID=$(gh issue list \
@@ -93,6 +95,8 @@ jobs:
         id: run_issue
         if: steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new'
         continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
           echo "Working on Issue #$ISSUE_NUMBER..."
@@ -183,36 +187,39 @@ CONTEXT:
           # echo "-> Running code streamline..."
           # claude -p "Review codebase for quality improvements..." || true
 
-echo "✅ Maintenance mode complete (no active tasks)."
+          echo "✅ Maintenance mode complete (no active tasks)."
 
       # --- POST-PROCESSING: SUCCESS (Issues Only) ---
       - name: Mark Issue Complete
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.decision.outputs.issue_id }}
         run: |
-          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          
           # Check if issue is still open (Claude might have closed it)
-          ISSUE_STATE=$(gh issue view "$ISSUE_NUMBER" --json state --jq '.state')
+          ISSUE_STATE=$(gh issue view "${ISSUE_NUMBER}" --json state --jq '.state')
           
           if [ "$ISSUE_STATE" = "OPEN" ]; then
-            gh issue edit "$ISSUE_NUMBER" \
+            gh issue edit "${ISSUE_NUMBER}" \
               --remove-label "status: in-progress" \
               --add-label "status: ai-complete"
             
-            gh issue comment "$ISSUE_NUMBER" \
+            gh issue comment "${ISSUE_NUMBER}" \
               --body "✅ Task completed successfully. Changes have been pushed to the main branch."
           else
-            echo "Issue #$ISSUE_NUMBER was already closed by Claude."
+            echo "Issue #${ISSUE_NUMBER} was already closed by Claude."
           fi
 
       # --- POST-PROCESSING: FAILURE (Issues Only) ---
       - name: Mark Issue Error
         if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.decision.outputs.issue_id }}
         run: |
-          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          gh issue edit "$ISSUE_NUMBER" \
+          gh issue edit "${ISSUE_NUMBER}" \
             --remove-label "status: in-progress" \
             --add-label "status: ai-error"
           
-          gh issue comment "$ISSUE_NUMBER" \
+          gh issue comment "${ISSUE_NUMBER}" \
             --body "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."
