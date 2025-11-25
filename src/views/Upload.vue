@@ -437,7 +437,7 @@ const handleFolderRecursiveSelect = (event) => {
 
 <style scoped>
 .main-viewport {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  height: 100%; /* Fill parent container (App.vue's main content area) */
   width: 100%; /* Full width of parent */
   background: #FCFCF5;
   padding: 0; /* No padding - table fills entire viewport */
