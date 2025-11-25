@@ -207,15 +207,6 @@ const isImageIcon = (icon) => {
   width: 30px;
   height: 30px;
   object-fit: contain;
-  filter: brightness(0.9);
-}
-
-.nav-item:hover .nav-icon-img {
-  filter: brightness(1.1);
-}
-
-.nav-item-active .nav-icon-img {
-  filter: brightness(1.2);
 }
 
 .nav-label {
