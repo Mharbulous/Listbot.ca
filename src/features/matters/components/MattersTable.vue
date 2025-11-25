@@ -340,6 +340,13 @@ function formatDate(timestamp) {
    Sortable Column Header Styles
    =================================== */
 
+/* Sticky header row styles */
+thead.sticky-table-header {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 /* Header cell base styles */
 .header-cell {
   padding: 12px 24px;
@@ -351,6 +358,9 @@ function formatDate(timestamp) {
   cursor: pointer;
   user-select: none;
   position: relative;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  color: #374151;
   transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
