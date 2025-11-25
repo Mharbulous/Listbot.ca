@@ -68,40 +68,106 @@
         <thead class="sticky-table-header">
           <tr>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('matterNumber') && getSortInfo('matterNumber')?.direction === 'asc',
+                'sorted-desc': isSorted('matterNumber') && getSortInfo('matterNumber')?.direction === 'desc',
+              }"
+              @click="toggleSort('matterNumber')"
+              :title="`Click to sort by Matter No.${isSorted('matterNumber') ? ' (sorted)' : ''}`"
             >
-              Client(s)
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('matterNumber')">
+                <span class="sort-arrow">{{ getSortInfo('matterNumber')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('matterNumber')?.priority }}</span>
+              </span>
+              <span class="header-label">Matter No.</span>
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('clients') && getSortInfo('clients')?.direction === 'asc',
+                'sorted-desc': isSorted('clients') && getSortInfo('clients')?.direction === 'desc',
+              }"
+              @click="toggleSort('clients')"
+              :title="`Click to sort by Client(s)${isSorted('clients') ? ' (sorted)' : ''}`"
             >
-              Matter No.
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('clients')">
+                <span class="sort-arrow">{{ getSortInfo('clients')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('clients')?.priority }}</span>
+              </span>
+              <span class="header-label">Client(s)</span>
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('description') && getSortInfo('description')?.direction === 'asc',
+                'sorted-desc': isSorted('description') && getSortInfo('description')?.direction === 'desc',
+              }"
+              @click="toggleSort('description')"
+              :title="`Click to sort by Description${isSorted('description') ? ' (sorted)' : ''}`"
             >
-              Description
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('description')">
+                <span class="sort-arrow">{{ getSortInfo('description')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('description')?.priority }}</span>
+              </span>
+              <span class="header-label">Description</span>
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('adverseParties') && getSortInfo('adverseParties')?.direction === 'asc',
+                'sorted-desc': isSorted('adverseParties') && getSortInfo('adverseParties')?.direction === 'desc',
+              }"
+              @click="toggleSort('adverseParties')"
+              :title="`Click to sort by Adverse Parties${isSorted('adverseParties') ? ' (sorted)' : ''}`"
             >
-              Adverse Parties
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('adverseParties')">
+                <span class="sort-arrow">{{ getSortInfo('adverseParties')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('adverseParties')?.priority }}</span>
+              </span>
+              <span class="header-label">Adverse Parties</span>
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('documents') && getSortInfo('documents')?.direction === 'asc',
+                'sorted-desc': isSorted('documents') && getSortInfo('documents')?.direction === 'desc',
+              }"
+              @click="toggleSort('documents')"
+              :title="`Click to sort by Documents${isSorted('documents') ? ' (sorted)' : ''}`"
             >
-              Documents
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('documents')">
+                <span class="sort-arrow">{{ getSortInfo('documents')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('documents')?.priority }}</span>
+              </span>
+              <span class="header-label">Documents</span>
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              class="header-cell"
+              :class="{
+                'sorted-asc': isSorted('lastAccessed') && getSortInfo('lastAccessed')?.direction === 'asc',
+                'sorted-desc': isSorted('lastAccessed') && getSortInfo('lastAccessed')?.direction === 'desc',
+              }"
+              @click="toggleSort('lastAccessed')"
+              :title="`Click to sort by Last Accessed${isSorted('lastAccessed') ? ' (sorted)' : ''}`"
             >
-              Last Accessed
+              <!-- Sort Indicator -->
+              <span class="sort-indicator" v-if="isSorted('lastAccessed')">
+                <span class="sort-arrow">{{ getSortInfo('lastAccessed')?.direction === 'asc' ? '↑' : '↓' }}</span>
+                <span class="sort-priority" v-if="sortColumns.length > 1">{{ getSortInfo('lastAccessed')?.priority }}</span>
+              </span>
+              <span class="header-label">Last Accessed</span>
             </th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-slate-200">
           <tr
-            v-for="(matter, index) in matters"
+            v-for="(matter, index) in sortedMatters"
             :key="matter.id"
             :class="[
               'cursor-pointer transition-colors',
@@ -183,6 +249,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useMattersSort } from '../composables/useMattersSort.js';
+
 defineOptions({
   name: 'MattersTable',
 });
@@ -216,6 +285,23 @@ const props = defineProps({
 
 defineEmits(['select-matter', 'retry-fetch']);
 
+// Compute enriched matters with document counts for sorting
+const enrichedMatters = computed(() => {
+  return props.matters.map((matter) => ({
+    ...matter,
+    documents: props.documentCounts[matter.id] || 0,
+  }));
+});
+
+// Use sorting composable
+const {
+  sortedData: sortedMatters,
+  toggleSort,
+  isSorted,
+  getSortInfo,
+  sortColumns,
+} = useMattersSort(enrichedMatters);
+
 /**
  * Check if a matter is currently selected
  */
@@ -248,5 +334,122 @@ function formatDate(timestamp) {
 .table-content {
   position: relative;
   z-index: 1;
+}
+
+/* ===================================
+   Sortable Column Header Styles
+   =================================== */
+
+/* Header cell base styles */
+.header-cell {
+  padding: 12px 24px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Hover state for entire header cell - show faint sort indicator */
+.header-cell:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.header-cell:hover .header-label::before {
+  content: '⇅';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: normal;
+  color: #667eea;
+  line-height: 1;
+}
+
+/* Hide hover indicator when column is actively sorted */
+.header-cell.sorted-asc:hover .header-label::before,
+.header-cell.sorted-desc:hover .header-label::before {
+  content: none;
+}
+
+/* Sorted Ascending - Convex Appearance (entire cell) */
+.header-cell.sorted-asc {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),  /* Top highlight */
+    inset 0 -1px 2px rgba(0, 0, 0, 0.1),       /* Bottom shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-cell.sorted-asc .header-label {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.header-cell.sorted-asc .sort-indicator {
+  color: #667eea;
+}
+
+/* Sorted Descending - Concave Appearance (entire cell) */
+.header-cell.sorted-desc {
+  background: linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%);
+  box-shadow:
+    inset 0 -1px 2px rgba(255, 255, 255, 0.8), /* Bottom highlight */
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),        /* Top shadow */
+    0 1px 3px rgba(102, 126, 234, 0.15);       /* Outer glow */
+}
+
+.header-cell.sorted-desc .header-label {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.header-cell.sorted-desc .sort-indicator {
+  color: #667eea;
+}
+
+/* Header label styling */
+.header-label {
+  position: relative;
+  padding-left: 0;
+  display: inline-block;
+}
+
+/* Sort Indicator (Arrow + Priority) - positioned in left padding, vertically centered */
+.sort-indicator {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Sort arrow within indicator */
+.sort-arrow {
+  display: inline-block;
+}
+
+/* Sort priority number (shown when multiple columns sorted) */
+.sort-priority {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: 600;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.15);
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1.2;
+  min-width: 12px;
+  text-align: center;
 }
 </style>
