@@ -104,50 +104,75 @@
             v-for="(matter, index) in matters"
             :key="matter.id"
             :class="[
-              'hover:!bg-slate-200 cursor-pointer transition-colors',
+              'cursor-pointer transition-colors',
               isSelected(matter)
-                ? '!bg-blue-700 !text-white border-l-4 border-l-blue-700'
-                : index % 2 === 0
-                  ? 'bg-white'
-                  : 'bg-gray-50',
+                ? '!bg-blue-700 border-l-4 border-l-blue-700'
+                : [
+                    'hover:!bg-slate-200',
+                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50',
+                  ],
             ]"
             @click="$emit('select-matter', matter)"
           >
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+            <td
+              class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
+            >
               <div class="flex items-center gap-2">
                 {{ matter.matterNumber }}
                 <span
                   v-if="matter.archived"
-                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                  :class="
+                    isSelected(matter)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-100 text-slate-600'
+                  "
                 >
                   Archived
                 </span>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-900">
+            <td
+              class="px-6 py-4 text-sm"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
+            >
               {{ Array.isArray(matter.clients) ? matter.clients.join(', ') : matter.clients }}
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700">
+            <td
+              class="px-6 py-4 text-sm"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-700'"
+            >
               {{ matter.description }}
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700">
+            <td
+              class="px-6 py-4 text-sm"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-700'"
+            >
               {{
                 Array.isArray(matter.adverseParties)
                   ? matter.adverseParties.join(', ')
                   : matter.adverseParties
               }}
             </td>
-            <td class="px-6 py-4 text-sm text-slate-900 text-center">
+            <td
+              class="px-6 py-4 text-sm text-center"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
+            >
               <span v-if="documentCounts[matter.id] !== undefined" class="font-medium">
                 {{ documentCounts[matter.id] }}
               </span>
-              <span v-else class="text-slate-400">
+              <span v-else :class="isSelected(matter) ? 'text-white' : 'text-slate-400'">
                 <div
-                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-400 mx-auto"
+                  class="animate-spin rounded-full h-4 w-4 border-b-2 mx-auto"
+                  :class="isSelected(matter) ? 'border-white' : 'border-slate-400'"
                 ></div>
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+            <td
+              class="px-6 py-4 whitespace-nowrap text-sm"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-500'"
+            >
               {{ formatDate(matter.lastAccessed) }}
             </td>
           </tr>
