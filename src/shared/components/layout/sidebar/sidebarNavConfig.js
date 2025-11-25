@@ -6,7 +6,7 @@ import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
 import cloudUploadIcon from '@/assets/icons/nav-items/fluffy-cloud-upload.png';
 import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn.png';
-import castOfCharactersIcon from '@/assets/icons/nav-items/cast-of-characters.png';
+import castOfCharactersIcon from '@/assets/icons/nav-items/theatre-lowrez.png';
 
 /**
  * Navigation items configuration for the sidebar
