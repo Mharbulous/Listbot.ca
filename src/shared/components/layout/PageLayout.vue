@@ -43,7 +43,7 @@ defineExpose({
   top: 0;
   left: 0;
   right: 0;
-  height: 800px;
+  height: 100%;
   background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
   z-index: 0;
   pointer-events: none;

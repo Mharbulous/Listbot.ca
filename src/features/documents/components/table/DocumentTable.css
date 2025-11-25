@@ -23,7 +23,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 800px; /* Extended height for smoother gradient blend */
+  height: 100%; /* Fill container height */
   background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
   z-index: 0; /* Behind all content */
   pointer-events: none; /* Don't interfere with clicks */
