@@ -44,91 +44,93 @@
 <template>
   <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
   <!-- Merged table-wrapper and scroll-container into single container -->
-  <PageLayout ref="pageLayoutRef" class="upload-layout">
-    <!-- Title Drawer -->
-    <TitleDrawer title="Upload Queue">
-        <!-- Add to Queue button -->
-        <div class="flex items-center">
-          <v-menu location="bottom">
-            <template v-slot:activator="{ props: menuProps }">
-              <v-btn
-                color="primary"
-                size="default"
-                variant="elevated"
-                prepend-icon="mdi-plus"
-                append-icon="mdi-chevron-down"
-                v-bind="menuProps"
-              >
-                Add to Queue
-              </v-btn>
-            </template>
+  <div class="virtualizer-wrapper">
+    <PageLayout ref="pageLayoutRef" class="upload-layout">
+      <!-- Title Drawer -->
+      <TitleDrawer title="Upload Queue">
+          <!-- Add to Queue button -->
+          <div class="flex items-center">
+            <v-menu location="bottom">
+              <template v-slot:activator="{ props: menuProps }">
+                <v-btn
+                  color="primary"
+                  size="default"
+                  variant="elevated"
+                  prepend-icon="mdi-plus"
+                  append-icon="mdi-chevron-down"
+                  v-bind="menuProps"
+                >
+                  Add to Queue
+                </v-btn>
+              </template>
 
-            <v-list density="compact">
-              <v-list-item
-                prepend-icon="mdi-file-multiple"
-                title="Files"
-                @click="triggerFileSelect"
-              />
-              <v-list-item
-                prepend-icon="mdi-folder-multiple"
-                title="Folder"
-                @click="triggerFolderRecursiveSelect"
-              />
-            </v-list>
-          </v-menu>
-        </div>
-    </TitleDrawer>
+              <v-list density="compact">
+                <v-list-item
+                  prepend-icon="mdi-file-multiple"
+                  title="Files"
+                  @click="triggerFileSelect"
+                />
+                <v-list-item
+                  prepend-icon="mdi-folder-multiple"
+                  title="Folder"
+                  @click="triggerFolderRecursiveSelect"
+                />
+              </v-list>
+            </v-menu>
+          </div>
+      </TitleDrawer>
 
-    <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
-    <UploadTableHeader
-      :all-selected="props.allSelected"
-      :some-selected="props.someSelected"
-      :is-uploading="props.isUploading"
-      @select-all="handleSelectAll"
-      @deselect-all="handleDeselectAll"
-    />
+      <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
+      <UploadTableHeader
+        :all-selected="props.allSelected"
+        :some-selected="props.someSelected"
+        :is-uploading="props.isUploading"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
+      />
 
-    <!-- Content wrapper for rows (no flex properties) -->
-    <div class="content-wrapper">
-      <!-- Virtual container with dynamic height based on total content size -->
-      <div class="virtual-container" :style="{ height: totalSize + 'px' }">
-        <!-- Only render visible rows + overscan buffer -->
-        <div
-          v-for="virtualRow in virtualItems"
-          :key="virtualRow.key"
-          class="virtual-row"
-          :style="{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: virtualRow.size + 'px',
-            transform: `translateY(${virtualRow.start}px)`,
-          }"
-        >
-          <UploadTableRow
-            :file="props.files[virtualRow.index]"
-            :scrollbar-width="0"
-            :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
-            :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
-            :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
-            :disabled="props.isUploading"
-            @cancel="handleCancel"
-            @undo="handleUndo"
-            @remove="handleRemove"
-            @swap="handleSwap"
-          />
+      <!-- Content wrapper for rows (no flex properties) -->
+      <div class="content-wrapper">
+        <!-- Virtual container with dynamic height based on total content size -->
+        <div class="virtual-container" :style="{ height: totalSize + 'px' }">
+          <!-- Only render visible rows + overscan buffer -->
+          <div
+            v-for="virtualRow in virtualItems"
+            :key="virtualRow.key"
+            class="virtual-row"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: virtualRow.size + 'px',
+              transform: `translateY(${virtualRow.start}px)`,
+            }"
+          >
+            <UploadTableRow
+              :file="props.files[virtualRow.index]"
+              :scrollbar-width="0"
+              :background-color="props.getGroupBackground?.(props.files[virtualRow.index], props.files)"
+              :is-first-in-group="props.isFirstInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+              :is-last-in-group="props.isLastInGroup?.(props.files[virtualRow.index], virtualRow.index, props.files)"
+              :disabled="props.isUploading"
+              @cancel="handleCancel"
+              @undo="handleUndo"
+              @remove="handleRemove"
+              @swap="handleSwap"
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
-    <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
-    <div class="dropzone-cell">
-      <UploadTableDropzone />
-    </div>
+      <!-- Visual Dropzone Indicator (no drag handlers - purely visual) -->
+      <!-- Drag-drop functionality is handled by parent UploadTable.vue -->
+      <div class="dropzone-cell">
+        <UploadTableDropzone />
+      </div>
+    </PageLayout>
 
-    <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
+    <!-- Sticky Footer OUTSIDE scroll container - sticks to viewport bottom -->
     <UploadTableFooter
       :stats="props.footerStats"
       :is-uploading="props.isUploading"
@@ -145,7 +147,7 @@
       @cancel="handleCancel"
       @retry-failed="handleRetryFailed"
     />
-  </PageLayout>
+  </div>
 </template>
 
 <script setup>
@@ -379,8 +381,17 @@ defineExpose({
 </script>
 
 <style scoped>
+/* Wrapper for entire virtualizer component including footer */
+.virtualizer-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 /* Custom layout styling for Upload table */
 .upload-layout {
+  flex: 1; /* Take up remaining space, allowing footer to stay at bottom */
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
