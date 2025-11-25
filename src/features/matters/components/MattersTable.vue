@@ -366,7 +366,7 @@ thead.sticky-table-header {
 
 /* Hover state for entire header cell - show faint sort indicator */
 .header-cell:hover {
-  background: rgba(102, 126, 234, 0.08);
+  background: #eff1fd;
 }
 
 .header-cell:hover .header-label::before {
