@@ -200,15 +200,6 @@ let uploadConfirmed = false;
 onMounted(() => {
   window.addEventListener('upload-trigger-file-select', triggerFileSelect);
   window.addEventListener('upload-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
-
-  // Diagnostic logging for height measurements
-  nextTick(() => {
-    const viewport = mainViewport.value;
-    console.log('🔍 [HEIGHT DIAGNOSTICS] Upload.vue:');
-    console.log('  - mainViewport height:', viewport?.offsetHeight, 'px');
-    console.log('  - mainViewport parent height:', viewport?.parentElement?.offsetHeight, 'px');
-    console.log('  - Expected (vh - header - footer):', window.innerHeight - 64, 'px');
-  });
 });
 
 onUnmounted(() => {
