@@ -4,6 +4,7 @@ import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
 import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
 import cloudUploadIcon from '@/assets/icons/nav-items/Cloud-upload.png';
+import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -31,7 +32,7 @@ export function useNavItems() {
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
+    { key: 'identify', path: '/identify', icon: flashlightIcon, label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
     { key: 'preserve', path: '/upload', icon: cloudUploadIcon, label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
