@@ -335,12 +335,13 @@ const handleRetryFailed = () => {
   display: flex;
   flex-direction: column;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0; /* No border radius for full viewport fill */
+  border: 1px solid #e2e8f0; /* Match Facts table border color (slate-200) */
+  border-radius: 0; /* Sharp corners as requested */
   overflow: hidden;
-  margin: 0;
-  width: 100%; /* Fill parent viewport width (was fit-content - caused width constraint) */
-  height: 100%; /* Fill parent container height */
+  margin: 0 1.5rem 1.5rem 1.5rem; /* Left/right/bottom margins to match Facts table (mx-6 mb-6) */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* Subtle shadow to match Facts table (shadow-sm) */
+  width: calc(100% - 3rem); /* Adjust width to account for horizontal margins */
+  height: calc(100% - 1.5rem); /* Adjust height to account for bottom margin */
   min-height: 0; /* Allow flex shrinking */
 }
 
