@@ -258,14 +258,6 @@ const rowVirtualizer = useVirtualizer(virtualizerOptions);
 const virtualItems = computed(() => rowVirtualizer.value.getVirtualItems());
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
 
-// Computed gradient height - extends to cover all content including dropzone
-// Accounts for: title drawer (~80px), header (~48px), virtual content, dropzone (~200px min)
-const gradientHeight = computed(() => {
-  const minDropzoneHeight = 200; // Minimum space for dropzone visibility
-  const headerAndTitleHeight = 128; // Approximate combined height
-  return Math.max(totalSize.value + headerAndTitleHeight + minDropzoneHeight, 800);
-});
-
 // ============================================================================
 // QUEUE METRICS: Track when files are ready for rendering
 // Note: Initial paint timing is now tracked in useUploadTable.js using RAF
@@ -387,13 +379,18 @@ defineExpose({
   scrollContainerRef: computed(() => pageLayoutRef.value?.scrollContainerRef || null),
 });
 
-// Watch gradient height and update the gradient element dynamically
-watch(gradientHeight, (newHeight) => {
+// Watch for content changes and update gradient height dynamically
+// Solution: Use scroll container's actual scrollHeight instead of computing from components
+// This ensures the gradient fills exactly to the bottom (no gaps) when empty,
+// and extends to cover the dropzone when files are listed and user scrolls down
+watch(totalSize, () => {
   nextTick(() => {
     const scrollContainer = pageLayoutRef.value?.scrollContainerRef;
     const gradientBg = scrollContainer?.querySelector('.gradient-background');
-    if (gradientBg) {
-      gradientBg.style.height = `${newHeight}px`;
+    if (gradientBg && scrollContainer) {
+      // Measure the actual scrollable content height (includes header + virtual content + dropzone)
+      const actualHeight = scrollContainer.scrollHeight;
+      gradientBg.style.height = `${actualHeight}px`;
     }
   });
 }, { immediate: true });
@@ -410,7 +407,7 @@ onMounted(() => {
     console.log('  - scrollContainer height:', scrollContainer?.offsetHeight, 'px');
     console.log('  - scrollContainer scrollHeight:', scrollContainer?.scrollHeight, 'px');
     console.log('  - gradientBg height:', gradientBg?.offsetHeight, 'px');
-    console.log('  - gradientBg computed height:', gradientHeight.value, 'px');
+    console.log('  - gradientBg applied height (from scrollHeight):', scrollContainer?.scrollHeight, 'px');
     console.log('  - totalSize (virtual content):', totalSize.value, 'px');
     console.log('  - viewport height:', window.innerHeight, 'px');
     console.log('  - Expected scrollContainer (vh - header):', window.innerHeight - 64, 'px');
