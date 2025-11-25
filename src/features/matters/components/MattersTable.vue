@@ -106,7 +106,7 @@
             :class="[
               'hover:!bg-slate-200 cursor-pointer transition-colors',
               isSelected(matter)
-                ? '!bg-amber-50 border-l-4 border-l-amber-300'
+                ? '!bg-blue-700 !text-white border-l-4 border-l-blue-700'
                 : index % 2 === 0
                   ? 'bg-white'
                   : 'bg-gray-50',
