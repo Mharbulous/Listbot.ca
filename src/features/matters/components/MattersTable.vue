@@ -172,7 +172,7 @@
             :class="[
               'cursor-pointer transition-colors',
               isSelected(matter)
-                ? '!bg-blue-700 border-l-4 border-l-blue-700'
+                ? '!bg-blue-700'
                 : [
                     'hover:!bg-slate-200',
                     index % 2 === 0 ? 'bg-white' : 'bg-gray-50',
