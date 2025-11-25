@@ -105,10 +105,9 @@ const emit = defineEmits([
   background: #f9fafb;
   border-top: 2px solid #e5e7eb;
   padding: 0.75rem 1.5rem;
-  position: sticky;
-  bottom: 0;
   z-index: 10;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .footer-content {
