@@ -7,7 +7,6 @@
 ## Files Exceeding 700 Lines (Streamlining Candidates)
 
 ### Priority 1: Files WITHOUT Date Prefix
-- `Features/Upload/Deduplication/deduplication-complexity-analysis.md` - **759 lines**
 - `Features/Upload/old-upload-page.md` - **1109 lines**
 
 ### Priority 2: Files WITH Date Prefix (Oldest First)
@@ -86,9 +85,10 @@
 #### Features/Upload/Deduplication/
 - `2025-11-16-ClientDeDupeLogic.md` - 561 lines
 - `2025-11-16-MMD-ClientDeDupeLogic.md` - 345 lines
+- `25-11-16-deduplication-complexity-empirical.md` - 180 lines *(decomposed from deduplication-complexity-analysis.md)*
+- `25-11-16-deduplication-complexity-theoretical.md` - 576 lines *(decomposed from deduplication-complexity-analysis.md)*
 - `25-11-18-client-deduplication-logic.md` - 807 lines ⚠️
 - `25-11-18-client-deduplication-stories.md` - 140 lines
-- `deduplication-complexity-analysis.md` - 759 lines ⚠️ *(no date prefix)*
 
 #### Features/Upload/Processing/
 - `25-11-23-performance-analysis-summary.md` - 271 lines
@@ -130,19 +130,28 @@
 
 ### Deprecated/
 - `25-11-09-ai-requirements-ORIGINAL.md` - 1430 lines *(original before decomposition)*
+- `25-11-16-deduplication-complexity-analysis-ORIGINAL.md` - 759 lines *(original before decomposition)*
 
 ---
 
 ## Summary Statistics
 
-- **Total documentation files:** 63 (excluding CLAUDE.md index files)
-- **Total lines:** 22,695
-- **Files >700 lines:** 6
+- **Total documentation files:** 64 (excluding CLAUDE.md index files)
+- **Total lines:** 22,692
+- **Files >700 lines:** 5
 - **Files 600-700 lines:** 5
-- **Files without date prefix:** 18
-- **Average file size:** 360 lines
+- **Files without date prefix:** 17
+- **Average file size:** 355 lines
 
-### Recent Changes (2025-11-23)
+### Recent Changes
+
+**2025-11-25:**
+- **Decomposed:** `Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines)
+  - Split into 2 focused files by area of concern (theoretical analysis, empirical validation)
+  - Original file moved to `deprecated/25-11-16-deduplication-complexity-analysis-ORIGINAL.md`
+  - All decomposed files inherit `25-11-16` date prefix from original document
+
+**2025-11-23:**
 - **Decomposed:** `Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines)
   - Split into 8 focused files by area of concern (business, functional, architecture, UI, stories, project, reference)
   - Original file moved to `deprecated/25-11-09-ai-requirements-ORIGINAL.md`
@@ -155,7 +164,7 @@
 **Recommended decomposition order:**
 
 1. ~~`Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)~~ ✅ **COMPLETED 2025-11-23**
-2. `Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines, no date prefix)
+2. ~~`Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines, no date prefix)~~ ✅ **COMPLETED 2025-11-25**
 3. `Features/Upload/old-upload-page.md` (1109 lines, no date prefix)
 4. `Testing/25-11-18-vitest-test-suites.md` (1629 lines)
 5. `Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md` (807 lines)
