@@ -181,6 +181,12 @@
             @click="$emit('select-matter', matter)"
           >
             <td
+              class="px-6 py-4 text-sm"
+              :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
+            >
+              {{ Array.isArray(matter.clients) ? matter.clients.join(', ') : matter.clients }}
+            </td>
+            <td
               class="px-6 py-4 whitespace-nowrap text-sm font-medium"
               :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
             >
@@ -198,12 +204,6 @@
                   Archived
                 </span>
               </div>
-            </td>
-            <td
-              class="px-6 py-4 text-sm"
-              :class="isSelected(matter) ? 'text-white' : 'text-slate-900'"
-            >
-              {{ Array.isArray(matter.clients) ? matter.clients.join(', ') : matter.clients }}
             </td>
             <td
               class="px-6 py-4 text-sm"
