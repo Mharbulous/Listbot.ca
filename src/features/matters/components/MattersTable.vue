@@ -350,7 +350,7 @@ thead.sticky-table-header {
 /* Header cell base styles */
 .header-cell {
   padding: 12px 24px;
-  text-align: left;
+  text-align: center;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -423,11 +423,13 @@ thead.sticky-table-header {
   color: #667eea;
 }
 
-/* Header label styling */
+/* Header label styling - centered to avoid overlap with sort indicator */
 .header-label {
   position: relative;
   padding-left: 0;
   display: inline-block;
+  width: 100%;
+  text-align: center;
 }
 
 /* Sort Indicator (Arrow + Priority) - positioned in left padding, vertically centered */
