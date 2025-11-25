@@ -1,6 +1,7 @@
 <template>
   <!-- Merged upload-table-container and table-positioning-wrapper into single container -->
   <div
+    ref="uploadTableContainer"
     class="upload-table-container"
     @dragover.prevent="handleDragOver"
     @dragleave.prevent="handleDragLeave"
@@ -68,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onMounted, nextTick } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import { useFileDropHandler } from '../composables/useFileDropHandler';
 import { getGroupBackgroundColor, isFirstInGroup, isLastInGroup } from '../composables/useGroupStyling';
@@ -147,6 +148,7 @@ const handleDrop = (event) => {
 
 // Refs
 const virtualizerRef = ref(null); // For virtualized content
+const uploadTableContainer = ref(null); // For diagnostic logging
 
 // Selection state for Select All checkbox
 // Only counts "best" or "primary" files (excludes copies)
@@ -325,6 +327,16 @@ const handleCancelUpload = () => {
 const handleRetryFailed = () => {
   emit('retry-failed');
 };
+
+// Diagnostic logging for height measurements
+onMounted(() => {
+  nextTick(() => {
+    const container = uploadTableContainer.value;
+    console.log('🔍 [HEIGHT DIAGNOSTICS] UploadTable:');
+    console.log('  - uploadTableContainer height:', container?.offsetHeight, 'px');
+    console.log('  - uploadTableContainer parent height:', container?.parentElement?.offsetHeight, 'px');
+  });
+});
 </script>
 
 <style scoped>

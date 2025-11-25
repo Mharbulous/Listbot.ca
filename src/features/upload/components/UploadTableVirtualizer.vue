@@ -151,7 +151,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
@@ -377,6 +377,23 @@ const triggerFolderRecursiveSelect = () => {
 // This provides access to the actual scrolling DOM element through PageLayout
 defineExpose({
   scrollContainerRef: computed(() => pageLayoutRef.value?.scrollContainerRef || null),
+});
+
+// Diagnostic logging for height measurements
+onMounted(() => {
+  nextTick(() => {
+    const scrollContainer = pageLayoutRef.value?.scrollContainerRef;
+    const virtualizerWrapper = scrollContainer?.closest('.virtualizer-wrapper');
+    const gradientBg = scrollContainer?.querySelector('.gradient-background');
+
+    console.log('🔍 [HEIGHT DIAGNOSTICS] UploadTableVirtualizer:');
+    console.log('  - virtualizerWrapper height:', virtualizerWrapper?.offsetHeight, 'px');
+    console.log('  - scrollContainer height:', scrollContainer?.offsetHeight, 'px');
+    console.log('  - scrollContainer scrollHeight:', scrollContainer?.scrollHeight, 'px');
+    console.log('  - gradientBg height:', gradientBg?.offsetHeight, 'px');
+    console.log('  - viewport height:', window.innerHeight, 'px');
+    console.log('  - Expected scrollContainer (vh - header):', window.innerHeight - 64, 'px');
+  });
 });
 </script>
 

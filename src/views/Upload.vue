@@ -1,5 +1,5 @@
 <template>
-  <div class="main-viewport">
+  <div ref="mainViewport" class="main-viewport">
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
       v-if="queueProgress.isQueueing || queueProgress.cancelled"
@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import UploadPreviewModal from '../features/upload/components/UploadPreviewModal.vue';
@@ -171,6 +171,7 @@ const { verificationState } = useSequentialVerification(
 // Refs for file inputs
 const fileInput = ref(null);
 const folderRecursiveInput = ref(null);
+const mainViewport = ref(null);
 
 // Modal state
 const showPreviewModal = ref(false);
@@ -199,6 +200,15 @@ let uploadConfirmed = false;
 onMounted(() => {
   window.addEventListener('upload-trigger-file-select', triggerFileSelect);
   window.addEventListener('upload-trigger-folder-recursive-select', triggerFolderRecursiveSelect);
+
+  // Diagnostic logging for height measurements
+  nextTick(() => {
+    const viewport = mainViewport.value;
+    console.log('🔍 [HEIGHT DIAGNOSTICS] Upload.vue:');
+    console.log('  - mainViewport height:', viewport?.offsetHeight, 'px');
+    console.log('  - mainViewport parent height:', viewport?.parentElement?.offsetHeight, 'px');
+    console.log('  - Expected (vh - header - footer):', window.innerHeight - 64, 'px');
+  });
 });
 
 onUnmounted(() => {
