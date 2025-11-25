@@ -3,7 +3,7 @@ import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
 import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
-import cloudUploadIcon from '@/assets/icons/nav-items/Cloud-upload.png';
+import cloudUploadIcon from '@/assets/icons/nav-items/fluffy-cloud-upload.png';
 import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn.png';
 
