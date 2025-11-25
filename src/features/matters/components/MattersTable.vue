@@ -178,7 +178,8 @@
                     index % 2 === 0 ? 'bg-white' : 'bg-gray-50',
                   ],
             ]"
-            @click="$emit('select-matter', matter)"
+            @click="handleSingleClick(matter)"
+            @dblclick="handleDoubleClick(matter)"
           >
             <td
               class="px-6 py-4 text-sm"
@@ -283,7 +284,7 @@ const props = defineProps({
   },
 });
 
-defineEmits(['select-matter', 'retry-fetch']);
+const emit = defineEmits(['select-matter', 'navigate-matter', 'retry-fetch']);
 
 // Compute enriched matters with document counts for sorting
 const enrichedMatters = computed(() => {
@@ -301,6 +302,20 @@ const {
   getSortInfo,
   sortColumns,
 } = useMattersSort(enrichedMatters);
+
+/**
+ * Handle single click - select matter without navigation
+ */
+function handleSingleClick(matter) {
+  emit('select-matter', matter);
+}
+
+/**
+ * Handle double click - navigate to documents
+ */
+function handleDoubleClick(matter) {
+  emit('navigate-matter', matter);
+}
 
 /**
  * Check if a matter is currently selected

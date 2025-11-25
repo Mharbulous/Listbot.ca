@@ -21,7 +21,8 @@
         :document-counts="documentCounts"
         :selected-matter-id="matterViewStore.selectedMatter?.id"
         :empty-state-message="emptyStateMessage"
-        @select-matter="selectMatter"
+        @select-matter="selectMatterOnly"
+        @navigate-matter="navigateToMatter"
         @retry-fetch="fetchMatters"
       />
     </PageLayout>
@@ -142,9 +143,17 @@ const emptyStateMessage = computed(() => {
 });
 
 /**
- * Handle matter selection
+ * Handle matter selection (single-click) - updates selection without navigation
  */
-async function selectMatter(matter) {
+function selectMatterOnly(matter) {
+  // Set the matter in the store (persists to localStorage)
+  matterViewStore.setMatter(matter);
+}
+
+/**
+ * Handle matter navigation (double-click) - navigates to documents view
+ */
+async function navigateToMatter(matter) {
   // Set the matter in the store (persists to localStorage)
   matterViewStore.setMatter(matter);
 
