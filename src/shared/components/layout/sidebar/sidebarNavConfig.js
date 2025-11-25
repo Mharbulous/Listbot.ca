@@ -3,6 +3,7 @@ import { useMatterViewStore } from '@/features/matters/stores/matterView';
 import { useOrganizerStore } from '@/features/documents/stores/organizer';
 import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
 import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
+import cloudUploadIcon from '@/assets/icons/nav-items/Locked-Cloud-Upload.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -33,7 +34,7 @@ export function useNavItems() {
     { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
+    { key: 'preserve', path: '/upload', icon: cloudUploadIcon, label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
 
     // EDRM Stage 3: Collect
     {
