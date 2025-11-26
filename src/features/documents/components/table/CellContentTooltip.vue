@@ -12,6 +12,8 @@
       }"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
+      @mousedown="handleMouseDown"
+      @mouseup="handleMouseUp"
       @click.stop="handleClick"
     >
       {{ content }}
@@ -46,9 +48,13 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['mouseenter', 'mouseleave', 'click']);
+const emit = defineEmits(['mouseenter', 'mouseleave', 'click', 'close']);
 
 const tooltipElement = ref(null);
+
+// Click detection state
+const mouseDownTime = ref(0);
+const mouseDownPosition = ref({ x: 0, y: 0 });
 
 const handleMouseEnter = () => {
   emit('mouseenter');
@@ -58,8 +64,33 @@ const handleMouseLeave = () => {
   emit('mouseleave');
 };
 
+const handleMouseDown = (event) => {
+  // Record time and position for click detection
+  mouseDownTime.value = Date.now();
+  mouseDownPosition.value = { x: event.clientX, y: event.clientY };
+};
+
+const handleMouseUp = (event) => {
+  // Calculate time and distance delta
+  const timeDelta = Date.now() - mouseDownTime.value;
+  const distanceDelta = Math.sqrt(
+    Math.pow(event.clientX - mouseDownPosition.value.x, 2) +
+    Math.pow(event.clientY - mouseDownPosition.value.y, 2)
+  );
+
+  // Consider it a click if:
+  // - Time delta < 300ms (quick press-and-release)
+  // - Distance delta < 5px (no significant movement)
+  const isClick = timeDelta < 300 && distanceDelta < 5;
+
+  if (isClick) {
+    // Close the tooltip
+    emit('close');
+  }
+};
+
 const handleClick = (event) => {
-  // Allow text selection - don't close tooltip when clicking on it
+  // Stop propagation to prevent closing from outside click handler
   event.stopPropagation();
   emit('click', event);
 };

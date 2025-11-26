@@ -3,7 +3,11 @@ import { ref, computed } from 'vue';
 /**
  * Composable for managing cell content tooltips
  * Shows tooltip on single click
- * Closes on click outside, click on same cell, or 1-second hover outside tooltip
+ * Closes on:
+ * - Click outside tooltip and cells
+ * - Click on same cell that has the tooltip
+ * - Click on the tooltip itself (quick click, not drag)
+ * - 1-second hover away from both tooltip and its cell
  *
  * @returns {Object} Tooltip state and methods
  */
@@ -18,7 +22,7 @@ export function useCellTooltip() {
   // Timing
   const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
-  const HOVER_AWAY_DELAY = 3000; // 3 seconds - delay before closing when hovering away
+  const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
 
   // Timers
   let showTimer = null;
@@ -118,10 +122,24 @@ export function useCellTooltip() {
     // Mark that cell is being hovered
     isCellHovered = true;
 
-    // Clear hide timer if hovering over the cell that has the tooltip
+    // If hovering over the cell that has the tooltip, clear hide timer
     if (hideTimer && isVisible.value && currentCellElement === cellElement) {
       clearTimeout(hideTimer);
       hideTimer = null;
+    }
+    // If hovering over a DIFFERENT cell while tooltip is visible, start hide timer
+    else if (isVisible.value && currentCellElement !== cellElement) {
+      // Clear any existing hide timer
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+
+      // Start new hide timer
+      hideTimer = setTimeout(() => {
+        if (!isTooltipHovered) {
+          hideTooltip();
+        }
+      }, HOVER_AWAY_DELAY);
     }
 
     // Clear any pending show timers from previous hover events
@@ -263,6 +281,14 @@ export function useCellTooltip() {
   };
 
   /**
+   * Handle close event from tooltip
+   * Called when user clicks on the tooltip (not drag, not double-click)
+   */
+  const handleTooltipClose = () => {
+    hideTooltip();
+  };
+
+  /**
    * Handle clicks outside tooltip and cells
    * Used to close tooltip when clicking elsewhere
    */
@@ -330,6 +356,7 @@ export function useCellTooltip() {
     handleTooltipMouseEnter,
     handleTooltipMouseLeave,
     handleTooltipClick,
+    handleTooltipClose,
 
     // Global handlers
     handleOutsideClick,
