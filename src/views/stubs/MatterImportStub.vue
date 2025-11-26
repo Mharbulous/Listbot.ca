@@ -43,7 +43,7 @@
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="📁"
-            title="Folder Structure Import"
+            title="Import from Folders"
             badge="Path 1: Quick Setup"
             priority="high"
             color="blue"
@@ -51,7 +51,7 @@
           />
           <FeatureCard
             icon="📄"
-            title="Import Matter List"
+            title="Import from Matter List"
             badge="Path 2: Detailed Data"
             priority="high"
             color="blue"
