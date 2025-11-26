@@ -308,7 +308,7 @@
                 />
                 <button
                   class="w-full flex flex-col items-center gap-2"
-                  @click="$refs.fileInputRef.click()"
+                  @click="fileInputRef.click()"
                 >
                   <svg
                     class="w-12 h-12"
@@ -555,6 +555,9 @@ import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 defineOptions({
   name: 'MatterImportView',
 });
+
+// Refs
+const fileInputRef = ref(null);
 
 // State
 const selectedPath = ref(null);
