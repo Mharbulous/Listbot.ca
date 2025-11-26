@@ -34,7 +34,7 @@
 
       <!-- Core Features -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Planned Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="📊"
@@ -45,26 +45,47 @@
             description="Upload spreadsheets containing matter information with automatic mapping of columns to matter fields (name, description, client info, dates, etc.)."
           />
           <FeatureCard
+            icon="🔗"
+            title="CRM/PMS Integration"
+            badge="Advanced Integration"
+            priority="high"
+            color="blue"
+            description="Direct integration with popular legal practice management systems (Clio, MyCase, PracticePanther) for seamless matter synchronization."
+          />
+          <FeatureCard
+            icon="📁"
+            title="Folder Import"
+            badge="Foundation Feature"
+            priority="high"
+            color="blue"
+            description="Import matters from folder structures, automatically creating matter records based on folder organization and metadata."
+          />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
             icon="🔍"
             title="Data Validation & Preview"
             badge="Quality Assurance"
-            priority="high"
-            color="blue"
+            color="indigo"
             description="Preview imported data before creation with validation checks for required fields, duplicate detection, and format verification to prevent errors."
           />
           <FeatureCard
             icon="✅"
             title="Batch Processing"
             badge="Core Workflow"
-            priority="high"
-            color="blue"
+            color="indigo"
             description="Process multiple matters in a single operation with progress tracking, error handling, and automatic rollback if issues are detected."
           />
           <FeatureCard
             icon="🔄"
             title="Template Mapping"
             badge="Reusability"
-            color="indigo"
+            color="purple"
             description="Save column mappings as templates for repeated imports from the same source system, making future imports even faster."
           />
           <FeatureCard
@@ -73,13 +94,6 @@
             badge="Compliance"
             color="purple"
             description="Track all import operations with timestamps, user attribution, and detailed logs of what was imported and when."
-          />
-          <FeatureCard
-            icon="🔗"
-            title="CRM/PMS Integration"
-            badge="Advanced Integration"
-            color="emerald"
-            description="Direct integration with popular legal practice management systems (Clio, MyCase, PracticePanther) for seamless matter synchronization."
           />
         </div>
       </div>
