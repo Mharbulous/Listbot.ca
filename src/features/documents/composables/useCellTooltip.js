@@ -23,14 +23,19 @@ export function useCellTooltip() {
   const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
   const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
+  const CLICK_DELAY = 300; // milliseconds - delay to distinguish single vs double click
 
   // Timers
   let showTimer = null;
   let fadeTimer = null;
   let hideTimer = null;
+  let clickTimer = null;
 
   // Current cell element
   let currentCellElement = null;
+
+  // Track tooltip element for text selection
+  let tooltipElement = null;
 
   // Track if tooltip is being hovered
   let isTooltipHovered = false;
@@ -151,9 +156,7 @@ export function useCellTooltip() {
 
   /**
    * Handle click on cell
-   * If tooltip is visible for same cell, closes it
-   * If tooltip is visible for different cell, closes it and opens new one
-   * If no tooltip is visible, opens new one
+   * Delays action to allow double-click detection
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -165,29 +168,61 @@ export function useCellTooltip() {
       return;
     }
 
-    // If clicking the same cell that has the tooltip, just close it
-    if (isVisible.value && currentCellElement === cellElement) {
-      hideTooltip();
-      return;
+    // Clear any existing click timer
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
     }
 
-    // Clear any pending timers
-    clearTimers();
+    // Delay the click action to allow double-click detection
+    clickTimer = setTimeout(() => {
+      // Single click confirmed
 
-    // Store cell element and background color
-    currentCellElement = cellElement;
-    backgroundColor.value = bgColor;
+      // If clicking the same cell that has the tooltip, close it
+      if (isVisible.value && currentCellElement === cellElement) {
+        hideTooltip();
+        return;
+      }
 
-    // Set content
-    content.value = text;
+      // Clear any pending timers
+      clearTimers();
 
-    // Calculate position based on cell element
-    position.value = calculatePosition(currentCellElement);
+      // Store cell element and background color
+      currentCellElement = cellElement;
+      backgroundColor.value = bgColor;
 
-    // Show tooltip immediately (no delay)
-    isVisible.value = true;
-    opacity.value = 1;
-    openedByClick = true;
+      // Set content
+      content.value = text;
+
+      // Calculate position based on cell element
+      position.value = calculatePosition(currentCellElement);
+
+      // Show tooltip
+      isVisible.value = true;
+      opacity.value = 1;
+      openedByClick = true;
+    }, CLICK_DELAY);
+  };
+
+  /**
+   * Handle double-click on cell
+   * If tooltip is open for this cell, select all text
+   * Otherwise, allow navigation to document (handled by row's @dblclick)
+   * @param {HTMLElement} cellElement - The cell element
+   */
+  const handleCellDoubleClick = (event, cellElement) => {
+    // Cancel any pending single-click action
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+
+    // If tooltip is visible for this cell, select all text
+    if (isVisible.value && currentCellElement === cellElement) {
+      event.stopPropagation(); // Prevent navigation
+      selectAllTooltipText();
+    }
+    // Otherwise, let the event bubble to the row's @dblclick handler for navigation
   };
 
   /**
@@ -281,11 +316,36 @@ export function useCellTooltip() {
   };
 
   /**
-   * Handle close event from tooltip
-   * Called when user clicks on the tooltip (not drag, not double-click)
+   * Handle double-click on tooltip
+   * Selects all text in the tooltip
    */
-  const handleTooltipClose = () => {
-    hideTooltip();
+  const handleTooltipDoubleClick = (event) => {
+    selectAllTooltipText();
+  };
+
+  /**
+   * Select all text in the tooltip
+   */
+  const selectAllTooltipText = () => {
+    if (!tooltipElement) return;
+
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(tooltipElement);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } catch (error) {
+      console.error('Failed to select tooltip text:', error);
+    }
+  };
+
+  /**
+   * Set tooltip element reference
+   * Called from the tooltip component when mounted
+   */
+  const setTooltipElement = (element) => {
+    tooltipElement = element;
   };
 
   /**
@@ -329,6 +389,10 @@ export function useCellTooltip() {
       clearTimeout(hideTimer);
       hideTimer = null;
     }
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
   };
 
   /**
@@ -351,12 +415,14 @@ export function useCellTooltip() {
     handleCellMouseEnter,
     handleCellMouseLeave,
     handleCellClick,
+    handleCellDoubleClick,
 
     // Tooltip event handlers
     handleTooltipMouseEnter,
     handleTooltipMouseLeave,
     handleTooltipClick,
-    handleTooltipClose,
+    handleTooltipDoubleClick,
+    setTooltipElement,
 
     // Global handlers
     handleOutsideClick,
