@@ -182,6 +182,7 @@
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
               @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
+              @dblclick="(e) => cellTooltip.handleCellDoubleClick(e, e.currentTarget)"
               @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
               @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
@@ -244,7 +245,8 @@
       @mouseenter="cellTooltip.handleTooltipMouseEnter"
       @mouseleave="cellTooltip.handleTooltipMouseLeave"
       @click="cellTooltip.handleTooltipClick"
-      @close="cellTooltip.handleTooltipClose"
+      @dblclick="cellTooltip.handleTooltipDoubleClick"
+      @mounted="cellTooltip.setTooltipElement"
     />
 
     <!-- Snackbar for notifications -->
