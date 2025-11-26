@@ -18,7 +18,7 @@ export function useCellTooltip() {
   // Timing
   const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
-  const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
+  const HOVER_AWAY_DELAY = 3000; // 3 seconds - delay before closing when hovering away
 
   // Timers
   let showTimer = null;
