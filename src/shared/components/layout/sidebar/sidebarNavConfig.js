@@ -5,9 +5,9 @@ import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
 import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
 import cloudUploadIcon from '@/assets/icons/nav-items/fluffy-cloud-upload.png';
 import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
-import whitePawnIcon from '@/assets/icons/nav-items/white-pawn.png';
+import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
-import legalMemosIcon from '@/assets/icons/nav-items/legal-memos-smallbook.png';
+import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
 
 /**
  * Navigation items configuration for the sidebar
