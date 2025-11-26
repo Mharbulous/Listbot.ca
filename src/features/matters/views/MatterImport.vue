@@ -35,7 +35,7 @@
       </TitleDrawer>
 
       <!-- Import Path Selection -->
-      <div v-if="!selectedPath" class="mx-6 mb-6">
+      <div v-if="!selectedPath" class="mx-6 mb-6 relative z-10">
         <div class="grid gap-6 md:grid-cols-2">
           <!-- Path 1: Folder Structure Import -->
           <button
@@ -78,7 +78,7 @@
       </div>
 
       <!-- Folder Import Table -->
-      <div v-if="selectedPath === 'folder'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px]">
+      <div v-if="selectedPath === 'folder'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px] relative z-10">
         <table class="w-full min-w-[720px]">
           <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
             <tr>
@@ -148,7 +148,7 @@
       </div>
 
       <!-- Document Import Table -->
-      <div v-if="selectedPath === 'document'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px]">
+      <div v-if="selectedPath === 'document'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px] relative z-10">
         <table class="w-full min-w-[720px]">
           <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
             <tr>
