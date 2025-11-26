@@ -262,6 +262,16 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> Edit' },
     },
     {
+      path: '/firm',
+      redirect: '/firm/stub',
+    },
+    {
+      path: '/firm/stub',
+      name: 'firm-stub',
+      component: () => import('../views/stubs/FirmStub.vue'),
+      meta: { requiresAuth: true, title: 'Firm' },
+    },
+    {
       path: '/matters',
       name: 'matters',
       component: () => import('../features/matters/views/Matters.vue'),

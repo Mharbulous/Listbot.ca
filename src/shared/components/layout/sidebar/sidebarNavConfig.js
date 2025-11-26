@@ -18,6 +18,9 @@ export function useNavItems() {
   const organizerStore = useOrganizerStore();
 
   return [
+    // Firm (Special - not part of EDRM workflow)
+    { key: 'firm', path: '/firm', icon: '🏢', label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
+
     // Matters (Special - not part of EDRM workflow)
     { key: 'matters', path: '/matters', icon: briefcaseIcon, label: 'Matters' },
 
