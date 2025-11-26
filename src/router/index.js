@@ -280,6 +280,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Import Matters' },
     },
     {
+      path: '/matters/import/stub',
+      name: 'import-matters-stub',
+      component: () => import('../views/stubs/MatterImportStub.vue'),
+      meta: { requiresAuth: true, title: 'Matter Import Blueprint' },
+    },
+    {
       path: '/matters/edit/:matterId',
       name: 'edit-matter',
       component: () => import('../features/matters/views/EditMatter.vue'),
