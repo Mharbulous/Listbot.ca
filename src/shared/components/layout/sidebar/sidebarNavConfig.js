@@ -7,6 +7,7 @@ import cloudUploadIcon from '@/assets/icons/nav-items/fluffy-cloud-upload.png';
 import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
+import legalMemosIcon from '@/assets/icons/nav-items/legal-memos-smallbook.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -23,7 +24,7 @@ export function useNavItems() {
     // Pleadings and Issues (not part of EDRM workflow)
     { key: 'facts', path: '/facts', icon: factsIcon, label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
     { key: 'cast', path: '/cast', icon: castOfCharactersIcon, label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
+    { key: 'law', path: '/law', icon: legalMemosIcon, label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
     { key: 'theory', path: '/theory', icon: whitePawnIcon, label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
     { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
