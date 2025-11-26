@@ -4,17 +4,17 @@
       <PageHeader
         badge-text="Case Management: Matter Import"
         badge-color="blue"
-        title="Bulk Matter Import Workflow"
-        description="Streamline matter creation by importing multiple matters at once from spreadsheets, CRM systems, or practice management software—eliminating repetitive data entry and ensuring consistent matter setup across your firm."
+        title="AI-Powered Bulk Matter Import"
+        description="Import matters from folder structures or practice management exports using frontier AI to intelligently discover patterns, extract data, and validate imports—adapting to your firm's unique naming conventions without custom configuration."
       />
     </template>
 
     <template #key-impact>
-      <KeyImpactBox icon="⚡" title="Time Savings & Efficiency" color="blue">
-        Bulk matter import can reduce matter setup time from
-        <span class="font-bold text-blue-700">5-10 minutes per matter to seconds</span>, allowing
-        firms to onboard dozens or hundreds of cases quickly while maintaining data consistency and
-        reducing human error.
+      <KeyImpactBox icon="🤖" title="AI-Powered Pattern Discovery" color="blue">
+        AI-powered import eliminates the need for custom parsers and complex configuration by
+        <span class="font-bold text-blue-700">automatically discovering your firm's unique naming patterns and data structure</span>.
+        Import hundreds of matters from folder hierarchies or practice management exports in minutes,
+        not hours—with intelligent validation and cross-referencing to ensure accuracy.
       </KeyImpactBox>
     </template>
 
@@ -23,12 +23,17 @@
       <div
         class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg"
       >
-        <h3 class="text-lg font-semibold text-slate-900 mb-2">🎯 Workflow Acceleration</h3>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">🎯 AI-First Import Philosophy</h3>
+        <p class="text-slate-700 mb-3">
+          Traditional bulk import tools require custom parsers for each practice management system—a
+          brittle approach that becomes obsolete as systems evolve. ListBot takes a different approach:
+          <span class="font-bold text-blue-700">let frontier AI discover your data patterns automatically</span>.
+        </p>
         <p class="text-slate-700">
-          <span class="font-bold text-blue-700">Bulk matter import</span>
-          transforms matter setup from a tedious manual process into a streamlined batch operation,
-          perfect for firms migrating from other systems, handling mass tort cases, or onboarding
-          multiple clients simultaneously.
+          Whether importing from folder structures organized by your firm's unique conventions, or from
+          CSV/Excel/PDF exports from any practice management system, AI analyzes your data, discovers
+          the schema, and presents it for human verification—adapting to your reality instead of
+          forcing you into rigid templates.
         </p>
       </div>
 
@@ -37,28 +42,36 @@
         <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
-            icon="📊"
-            title="CSV/Excel Import"
-            badge="Foundation Feature"
-            priority="high"
-            color="blue"
-            description="Upload spreadsheets containing matter information with automatic mapping of columns to matter fields (name, description, client info, dates, etc.)."
-          />
-          <FeatureCard
-            icon="🔗"
-            title="CRM/PMS Integration"
-            badge="Advanced Integration"
-            priority="high"
-            color="blue"
-            description="Direct integration with popular legal practice management systems (Clio, MyCase, PracticePanther) for seamless matter synchronization."
-          />
-          <FeatureCard
             icon="📁"
-            title="Folder Import"
-            badge="Foundation Feature"
+            title="Folder Structure Import"
+            badge="Path 1: Quick Setup"
             priority="high"
             color="blue"
-            description="Import matters from folder structures, automatically creating matter records based on folder organization and metadata."
+            description="Select your client files root folder. AI scans the hierarchy, discovers your firm's naming patterns (client names, matter numbers, dates), and extracts structured data from folder names—no manual mapping required."
+          />
+          <FeatureCard
+            icon="📄"
+            title="Document Analysis Import"
+            badge="Path 2: Detailed Data"
+            priority="high"
+            color="blue"
+            description="Upload CSV/Excel/PDF exports from any practice management system. AI discovers the source schema, extracts matter data, and can validate/enrich existing matters imported from folders."
+          />
+          <FeatureCard
+            icon="🔍"
+            title="AI Pattern Discovery"
+            badge="Zero Configuration"
+            priority="high"
+            color="cyan"
+            description="AI automatically identifies your firm's unique naming conventions and data structure—whether it's client initials, matter numbers, compound IDs, or custom patterns. No templates or parsers to configure."
+          />
+          <FeatureCard
+            icon="✅"
+            title="Interactive Verification"
+            badge="Human-in-the-Loop"
+            priority="high"
+            color="cyan"
+            description="Review AI-generated tables with drag-drop column reordering, 3-state checkboxes (import/skip/uncertain), and confidence indicators. Approve page-by-page with full control before import."
           />
         </div>
       </div>
@@ -68,32 +81,46 @@
         <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
-            icon="🔍"
-            title="Data Validation & Preview"
-            badge="Quality Assurance"
+            icon="🔗"
+            title="Cross-Reference Validation"
+            badge="Data Quality"
             color="indigo"
-            description="Preview imported data before creation with validation checks for required fields, duplicate detection, and format verification to prevent errors."
+            description="When combining folder and document imports, AI cross-references data to detect duplicates, conflicts, and enrichment opportunities—flagging fuzzy matches for human review."
           />
           <FeatureCard
-            icon="✅"
-            title="Batch Processing"
-            badge="Core Workflow"
+            icon="⚠️"
+            title="Confidence-Based Flagging"
+            badge="Smart Verification"
             color="indigo"
-            description="Process multiple matters in a single operation with progress tracking, error handling, and automatic rollback if issues are detected."
+            description="AI highlights low-confidence extractions with warning icons, enabling focused review on uncertain data while batch-approving high-confidence items."
+          />
+          <FeatureCard
+            icon="🗂️"
+            title="Custom Field Mapping"
+            badge="Flexibility"
+            color="purple"
+            description="Map discovered columns that don't match standard ListBot fields to custom metadata fields, preserving firm-specific data for future use."
           />
           <FeatureCard
             icon="🔄"
-            title="Template Mapping"
-            badge="Reusability"
+            title="Multi-Document Matter Building"
+            badge="Advanced AI"
             color="purple"
-            description="Save column mappings as templates for repeated imports from the same source system, making future imports even faster."
+            description="AI analyzes multiple related documents (retainer agreement, intake form, case notes) to build a comprehensive matter record from disparate sources."
+          />
+          <FeatureCard
+            icon="📊"
+            title="Data Transformation Layer"
+            badge="Future Enhancement"
+            color="slate"
+            description="Advanced mapping with data transformations: date parsing, name concatenation, regex extraction, and formula-based field generation."
           />
           <FeatureCard
             icon="📋"
             title="Import History & Audit Trail"
             badge="Compliance"
-            color="purple"
-            description="Track all import operations with timestamps, user attribution, and detailed logs of what was imported and when."
+            color="slate"
+            description="Complete audit trail of all import operations with timestamps, user attribution, AI confidence scores, and rollback capability."
           />
         </div>
       </div>
@@ -106,9 +133,9 @@
       <StubFooter
         variant="coming-soon"
         color="blue"
-        coming-soon-title="Bulk Matter Import Coming Soon"
-        coming-soon-text="ListBot.ca will offer a robust bulk matter import system that makes onboarding multiple cases fast, accurate, and auditable."
-        coming-soon-subtext="This feature will be particularly valuable for firms migrating from other systems, handling mass tort cases, or managing high-volume practices."
+        coming-soon-title="AI-Powered Bulk Import Coming Soon"
+        coming-soon-text="ListBot.ca will leverage frontier AI (Gemini) to intelligently import matters from any source—folder structures, CSV/Excel exports, or PDF reports—without requiring custom parsers or rigid templates."
+        coming-soon-subtext="This AI-first approach adapts to your firm's unique conventions and handles new practice management systems automatically, making bulk import a one-time setup instead of an ongoing maintenance burden."
       />
     </template>
   </StubPageLayout>
@@ -124,34 +151,39 @@ import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
   {
-    title: 'Prepare Import File',
+    title: 'Choose Import Path',
     description:
-      'Export matter data from existing system or create a spreadsheet with matter information (name, description, client, dates, etc.).',
+      'Select Folder Import (quick bulk setup from client file structure) or Document Import (detailed data from PM system exports). Paths can be combined for best results.',
   },
   {
-    title: 'Upload & Map Columns',
+    title: 'AI Pattern Discovery',
     description:
-      'Upload the CSV/Excel file and map spreadsheet columns to ListBot.ca matter fields using an intuitive mapping interface.',
+      'AI analyzes your data source (folder names or document structure), automatically discovers naming patterns and data components your firm uses—no manual configuration needed.',
   },
   {
-    title: 'Validate & Preview',
+    title: 'Review Dynamic Table',
     description:
-      'Review imported data with validation checks for required fields, duplicates, and format issues. Make corrections before committing.',
+      'AI presents extracted data in a table with discovered schema as headers. Drag-drop columns/cells to fix any errors. Use 3-state checkboxes to select matters: ✅ import, ☐ skip, ❓ uncertain.',
   },
   {
-    title: 'Process Import',
+    title: 'Verify Low-Confidence Items',
     description:
-      'Execute the bulk import with progress tracking. System creates all matters in a single batch operation with automatic error handling.',
+      'AI flags uncertain extractions with ⚠️ icons. Review and correct these items while batch-approving high-confidence data. AI learns your firm\'s patterns.',
   },
   {
-    title: 'Review Results',
+    title: 'Map to ListBot Fields',
     description:
-      'View import summary showing successful creations, any errors encountered, and detailed audit log of the operation.',
+      'Map discovered columns to ListBot fields (clientName, matterNumber, etc.). AI suggests mappings, you confirm. Unmapped columns can become custom fields.',
   },
   {
-    title: 'Save Mapping Template',
+    title: 'Approve & Import Page',
     description:
-      'Optionally save the column mapping as a reusable template for future imports from the same source system.',
+      'Review one page (~20 matters) at a time. Click "Approve & Import All on Page" to process batch. Continue through pages with real-time progress tracking.',
+  },
+  {
+    title: 'Cross-Reference & Enrich (Optional)',
+    description:
+      'If combining folder + document imports, AI cross-references to validate existing matters, detect duplicates, and enrich with additional data from documents.',
   },
 ];
 </script>
