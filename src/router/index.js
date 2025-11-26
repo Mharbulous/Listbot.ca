@@ -277,7 +277,7 @@ const router = createRouter({
       path: '/import',
       name: 'import-matters',
       component: () => import('../features/matters/views/MatterImport.vue'),
-      meta: { requiresAuth: true, title: 'Import Matters' },
+      meta: { requiresAuth: true, title: 'Bulk Import' },
     },
     {
       path: '/matters/import/stub',
