@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col bg-viewport-bg">
     <PageLayout>
-      <TitleDrawer title="Import Matters">
+      <TitleDrawer title="Bulk Import">
         <button
           v-if="selectedPath"
           class="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
