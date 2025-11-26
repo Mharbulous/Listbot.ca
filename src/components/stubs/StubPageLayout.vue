@@ -3,8 +3,6 @@
     <slot name="header" />
     <slot name="key-impact" />
     <slot name="content" />
-    <slot name="competitive-advantage" />
-    <slot name="timeline" />
     <slot name="footer" />
   </div>
 </template>

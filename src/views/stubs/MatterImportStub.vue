@@ -88,18 +88,6 @@
       <WorkflowSteps title="Matter Import Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="blue"
-        description="ListBot.ca's matter import will provide a streamlined, error-resistant approach to bulk matter creation:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         variant="coming-soon"
@@ -118,8 +106,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -152,42 +138,6 @@ const workflowSteps = [
     title: 'Save Mapping Template',
     description:
       'Optionally save the column mapping as a reusable template for future imports from the same source system.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Template mappings', text: 'reuse column configurations for repeated imports' },
-  { label: 'Preview & validation', text: 'catch errors before committing changes' },
-  { label: 'Batch processing', text: 'create dozens of matters in seconds' },
-  { label: 'Audit trail', text: 'complete history of import operations' },
-  { label: 'Error handling', text: 'automatic rollback prevents partial failures' },
-  { label: 'PMS integration', text: 'direct sync with practice management systems' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Basic CSV Import',
-    color: 'blue',
-    items: [
-      'CSV/Excel file upload with drag-and-drop support',
-      'Column mapping interface with field detection',
-      'Data validation and duplicate checking',
-      'Preview table showing all matters to be created',
-      'Batch processing with progress tracking',
-      'Import summary and error reporting',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    color: 'indigo',
-    items: [
-      'Mapping templates for reusable configurations',
-      'Import history and audit trail',
-      'Update existing matters (not just create new)',
-      'Custom field mapping and transformation rules',
-      'Direct integration with Clio, MyCase, PracticePanther',
-      'Scheduled/automated imports from external systems',
-    ],
   },
 ];
 </script>

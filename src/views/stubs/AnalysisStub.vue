@@ -80,18 +80,6 @@
       <WorkflowSteps title="Analysis Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="purple"
-        description="ListBot.ca's analysis capabilities will deliver enterprise-grade insights:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Analysis stage will differentiate ListBot.ca from basic platforms with AI-powered insights that reveal the story behind the data."
@@ -107,8 +95,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -139,38 +125,6 @@ const workflowSteps = [
     title: 'Generate Insights Report',
     description:
       'Create visual analytics dashboards and strategic insights for case team (planned).',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'AI concept clustering', text: 'uncovers hidden themes' },
-  { label: 'Relationship mapping', text: 'reveals key players and communication patterns' },
-  { label: 'Timeline analysis', text: 'identifies critical events and patterns' },
-  { label: 'Anomaly detection', text: 'flags suspicious patterns' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Analytics',
-    timeframe: '3-4 months',
-    color: 'purple',
-    items: [
-      'Relationship mapping and visualization',
-      'Timeline analysis with interactive views',
-      'Basic clustering algorithms',
-      'Visual analytics dashboard',
-    ],
-  },
-  {
-    title: 'Phase 2: AI-Powered Insights',
-    timeframe: '6-9 months',
-    color: 'indigo',
-    items: [
-      'AI concept clustering with machine learning',
-      'Anomaly detection algorithms',
-      'Communication network analysis',
-      'Predictive coding and TAR integration',
-    ],
   },
 ];
 </script>

@@ -103,18 +103,6 @@
       <WorkflowSteps title="Legal Research Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="teal"
-        description="ListBot.ca's Law module will integrate legal research with evidence:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Law module will transform legal research from isolated work into an integrated component of your case strategy."
@@ -130,8 +118,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -159,36 +145,6 @@ const workflowSteps = [
   {
     title: 'Brief Integration',
     description: 'Pull research and citations directly into briefs and pleadings.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Evidence linking', text: 'connects law to facts seamlessly' },
-  { label: 'Integrated citations', text: 'ensures consistent legal citations' },
-  { label: 'Issue organization', text: 'enables strategic access to research' },
-  { label: 'AI assistance', text: 'suggests relevant authorities' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Research Library',
-    color: 'teal',
-    items: [
-      'Legal research library with custom tagging',
-      'Evidence linking system',
-      'Basic citation management',
-      'Issue-based organization',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    color: 'blue',
-    items: [
-      'AI legal research assistant',
-      'Research memo generator',
-      'Citation validation and formatting',
-      'Integration with brief writing tools',
-    ],
   },
 ];
 </script>

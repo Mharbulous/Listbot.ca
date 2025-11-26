@@ -73,18 +73,6 @@
       <WorkflowSteps title="Presentation Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="indigo"
-        description="ListBot.ca's presentation features will provide professional trial capabilities:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Present stage will transform your evidence into persuasive visual narratives for depositions and trials."
@@ -100,8 +88,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -131,38 +117,6 @@ const workflowSteps = [
     title: 'Export Annotations',
     description:
       'Save annotated versions for record or share with trial team for strategic review.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Full-screen mode', text: 'provides professional courtroom display' },
-  { label: 'Real-time annotation', text: 'highlights evidence during proceedings' },
-  { label: 'Side-by-side comparison', text: 'creates powerful visual arguments' },
-  { label: 'Exhibit management', text: 'organizes presentation workflow' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Presentation',
-    timeframe: '3-4 months',
-    color: 'indigo',
-    items: [
-      'Full-screen presentation mode',
-      'Exhibit list management',
-      'Basic annotation tools (highlight, circle, text)',
-      'Zoom and pan controls',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    timeframe: '5-7 months',
-    color: 'violet',
-    items: [
-      'Side-by-side document comparison',
-      'Deposition mode with witness notes',
-      'Advanced annotation tools (arrows, shapes, measurements)',
-      'Integration with trial notebooks and outlines',
-    ],
   },
 ];
 </script>

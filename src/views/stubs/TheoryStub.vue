@@ -163,18 +163,6 @@
       />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="purple"
-        description="ListBot.ca's Theory module transforms abstract legal concepts into actionable case strategy:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Theory module will help you develop compelling case theories that integrate facts, law, and narrative into winning strategies."
@@ -190,8 +178,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -219,36 +205,6 @@ const workflowSteps = [
     title: 'Test & Refine',
     description:
       'Identify weaknesses in your theory, develop responses to opposing arguments, and refine your approach based on discovery and legal research.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Element-to-evidence mapping', text: 'ensures you can prove every claim' },
-  { label: 'AI-powered theory development', text: 'uncovers stronger approaches' },
-  { label: 'Integrated fact-law narrative', text: 'creates compelling storytelling' },
-  { label: 'Weakness analysis', text: 'prepares you for opposition arguments' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Theory Tools',
-    color: 'purple',
-    items: [
-      'Theory statement builder with templates and examples',
-      'Legal elements checklist with fact-to-element mapping',
-      'Theme and narrative development workspace',
-      'Weakness analysis and response planning tool',
-    ],
-  },
-  {
-    title: 'Phase 2: AI & Advanced Features',
-    color: 'blue',
-    items: [
-      'AI theory development assistant with smart suggestions',
-      'Alternative theory comparison and evaluation tools',
-      'Timeline-theory integration for visual storytelling',
-      'Opening statement and closing argument generators',
-    ],
   },
 ];
 </script>

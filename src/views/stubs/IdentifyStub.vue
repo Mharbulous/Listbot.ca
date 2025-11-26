@@ -84,18 +84,6 @@
       <WorkflowSteps title="Identification Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="blue"
-        description="ListBot.ca's identification tools will enable precise, defensible scoping:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Identify stage is critical for cost-effective e-discovery, and ListBot.ca will deliver comprehensive identification tools."
@@ -111,8 +99,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -142,38 +128,6 @@ const workflowSteps = [
     title: 'Refine Scope & Prioritize',
     description:
       'Based on responses and volume estimates, prioritize high-value sources and refine criteria.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Custodian database', text: 'ensures comprehensive coverage' },
-  { label: 'Volume estimation', text: 'enables accurate budgeting' },
-  { label: 'Automated questionnaires', text: 'streamline custodian interviews' },
-  { label: 'Visual data mapping', text: 'clarifies collection strategy' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Identification',
-    timeframe: '2-3 months',
-    color: 'blue',
-    items: [
-      'Custodian management database',
-      'Data source inventory with categorization',
-      'Volume estimation calculator',
-      'Preservation questionnaire templates',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    timeframe: '4-6 months',
-    color: 'indigo',
-    items: [
-      'Visual data mapping with custodian-source relationships',
-      'Date range analysis across sources',
-      'Keyword scoping and hit count estimation',
-      'Integration with Collection stage',
-    ],
   },
 ];
 </script>

@@ -72,18 +72,6 @@
       <WorkflowSteps title="Cast Management Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="indigo"
-        description="ListBot.ca's Cast module will provide comprehensive character tracking:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Cast module will ensure you never lose track of the people involved in your case."
@@ -99,8 +87,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -127,36 +113,6 @@ const workflowSteps = [
   {
     title: 'Generate Reports',
     description: 'Create witness lists, party summaries, and relationship reports.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Comprehensive database', text: 'tracks all case participants' },
-  { label: 'Relationship mapping', text: 'visualizes connections' },
-  { label: 'Cross-referencing', text: 'links to facts, documents, and timeline' },
-  { label: 'Role tracking', text: 'monitors deposition and procedural status' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Character Management',
-    color: 'indigo',
-    items: [
-      'Character database with custom fields',
-      'Role and status tracking',
-      'Contact information management',
-      'Basic relationship tracking',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    color: 'blue',
-    items: [
-      'Visual relationship mapping',
-      'Timeline and document integration',
-      'Deposition scheduling',
-      'Automated witness lists and reports',
-    ],
   },
 ];
 </script>
