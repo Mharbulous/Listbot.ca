@@ -47,15 +47,15 @@
             badge="Path 1: Quick Setup"
             priority="high"
             color="blue"
-            description="Select your client files root folder. AI scans the hierarchy, discovers your firm's naming patterns (client names, matter numbers, dates), and extracts structured data from folder names—no manual mapping required."
+            description="Select the root folder containing your client matters. Listbot will identify and reproduce your client schema automatically by scanning the folder hierarchy and discovering your firm's naming patterns."
           />
           <FeatureCard
             icon="📄"
-            title="Document Analysis Import"
+            title="Import Matter List"
             badge="Path 2: Detailed Data"
             priority="high"
             color="blue"
-            description="Upload CSV/Excel/PDF exports from any practice management system. AI discovers the source schema, extracts matter data, and can validate/enrich existing matters imported from folders."
+            description="Upload a client matter list in CSV/Excel/PDF format. Listbot will identify and reproduce your matter schema by discovering the source structure and extracting matter data automatically."
           />
           <FeatureCard
             icon="🔍"
