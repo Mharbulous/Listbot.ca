@@ -10,7 +10,7 @@
 _(None currently >700 lines - old-upload-page.md was moved to deprecated/)_
 
 ### Priority 2: Files WITH Date Prefix (Oldest First)
-- `Testing/25-11-18-vitest-test-suites.md` - **1629 lines**
+- `Testing/25-11-18-vitest-component-testing-standards.md` - **998 lines**
 - `Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md` - **807 lines**
 - `Features/Organizer/AIAnalysis/25-11-19-ai-analysis-overview.md` - **816 lines**
 
@@ -126,27 +126,35 @@ _(None currently >700 lines - old-upload-page.md was moved to deprecated/)_
 - `25-11-18-build-debt.md` - 235 lines
 
 ### Testing/
-- `25-11-18-vitest-test-suites.md` - 1629 lines ⚠️
+- `25-11-18-vitest-component-testing-standards.md` - 998 lines ⚠️
+- `25-11-18-vitest-history-and-guidelines.md` - 223 lines
+- `25-11-18-vitest-test-suites-detailed.md` - 425 lines
 
 ### Deprecated/
 - `25-11-09-ai-requirements-ORIGINAL.md` - 1430 lines *(original before decomposition)*
 - `25-11-16-deduplication-complexity-analysis-ORIGINAL.md` - 759 lines *(original before decomposition)*
+- `25-11-18-vitest-test-suites-ORIGINAL.md` - 1629 lines *(original before decomposition)*
 - `old-upload-page.md` - 1109 lines *(moved from Features/Upload/ on 2025-11-26)*
 
 ---
 
 ## Summary Statistics
 
-- **Total documentation files:** 65 (excluding CLAUDE.md index files)
-- **Total lines:** ~23,583
+- **Total documentation files:** 67 (excluding CLAUDE.md index files)
+- **Total lines:** ~23,600
 - **Files >700 lines:** 3
 - **Files 600-700 lines:** 5
 - **Files without date prefix:** 17
-- **Average file size:** ~363 lines
+- **Average file size:** ~352 lines
 
 ### Recent Changes
 
 **2025-11-26:**
+- **Decomposed:** `Testing/25-11-18-vitest-test-suites.md` (1629 lines)
+  - Split into 3 focused files by area of concern (test suite details, component testing standards, history/guidelines)
+  - Original file moved to `deprecated/25-11-18-vitest-test-suites-ORIGINAL.md`
+  - All decomposed files inherit `25-11-18` date prefix from original document
+  - New files: test-suites-detailed (425 lines), component-testing-standards (998 lines), history-and-guidelines (223 lines)
 - **Moved to deprecated:** `Features/Upload/old-upload-page.md` (1109 lines)
   - Old upload page documentation no longer actively maintained
   - Preserved in deprecated folder for historical reference
@@ -172,7 +180,8 @@ _(None currently >700 lines - old-upload-page.md was moved to deprecated/)_
 1. ~~`Features/Organizer/AIAnalysis/ai-requirements.md` (1430 lines, no date prefix)~~ ✅ **COMPLETED 2025-11-23**
 2. ~~`Features/Upload/Deduplication/deduplication-complexity-analysis.md` (759 lines, no date prefix)~~ ✅ **COMPLETED 2025-11-25**
 3. ~~`Features/Upload/old-upload-page.md` (1109 lines, no date prefix)~~ ✅ **MOVED TO DEPRECATED 2025-11-26**
-4. `Testing/25-11-18-vitest-test-suites.md` (1629 lines) - **NEXT PRIORITY**
-5. `Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md` (807 lines)
-6. `Features/Organizer/AIAnalysis/25-11-19-ai-analysis-overview.md` (816 lines)
-7. `Miscellaneous/2025-11-23-Folder-Structure.md` (931 lines)
+4. ~~`Testing/25-11-18-vitest-test-suites.md` (1629 lines)~~ ✅ **COMPLETED 2025-11-26**
+5. `Testing/25-11-18-vitest-component-testing-standards.md` (998 lines) - **NEXT PRIORITY**
+6. `Features/Upload/Deduplication/25-11-18-client-deduplication-logic.md` (807 lines)
+7. `Features/Organizer/AIAnalysis/25-11-19-ai-analysis-overview.md` (816 lines)
+8. `Miscellaneous/2025-11-23-Folder-Structure.md` (931 lines)
