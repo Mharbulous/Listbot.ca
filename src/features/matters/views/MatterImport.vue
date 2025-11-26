@@ -46,17 +46,14 @@
               <div class="text-4xl">📁</div>
               <div>
                 <h3 class="text-lg font-bold text-slate-900">Folder Structure Import</h3>
-                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                  AI Pattern Discovery
-                </span>
               </div>
             </div>
             <p class="text-sm text-slate-600 leading-relaxed">
-              Import from folder hierarchy. AI discovers naming patterns and extracts matter data automatically.
+              Select the root folder containing your client matters. Listbot will identify and reproduce your client schema automatically.
             </p>
           </button>
 
-          <!-- Path 2: Document Analysis Import -->
+          <!-- Path 2: Import Matter List -->
           <button
             class="bg-white border-2 border-slate-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left"
             @click="selectPath('document')"
@@ -64,14 +61,11 @@
             <div class="flex items-center gap-3 mb-4">
               <div class="text-4xl">📄</div>
               <div>
-                <h3 class="text-lg font-bold text-slate-900">Document Analysis Import</h3>
-                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                  Schema Discovery
-                </span>
+                <h3 class="text-lg font-bold text-slate-900">Import Matter List</h3>
               </div>
             </div>
             <p class="text-sm text-slate-600 leading-relaxed">
-              Import from CSV/Excel/PDF exports. AI discovers schema and extracts structured data.
+              Upload a client matter list in CSV/Excel/PDF format. Listbot will identify and reproduce your matter schema.
             </p>
           </button>
         </div>
