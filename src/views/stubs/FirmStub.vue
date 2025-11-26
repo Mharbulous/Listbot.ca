@@ -36,11 +36,33 @@
             </template>
           </FeatureCard>
 
+          <router-link to="/import" class="no-underline block transition-transform hover:scale-[1.02] cursor-pointer">
+            <FeatureCard
+              icon="📥"
+              title="Bulk Import"
+              badge="Foundation Feature"
+              color="blue"
+              description="Bulk import matters from your folder structure or from a scan of your matter list using AI-powered pattern discovery, subject to human final approval."
+            >
+              <template #extra-content>
+                <div class="text-sm text-slate-500">
+                  <span class="font-medium">Benefit:</span> Quickly migrate existing matters into ListBot
+                </div>
+              </template>
+            </FeatureCard>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="👥"
             title="Team Management"
             badge="Foundation Feature"
-            color="blue"
+            color="amber"
             description="Manage team members, roles, and permissions to ensure proper access control and collaboration."
           >
             <template #extra-content>
@@ -49,13 +71,7 @@
               </div>
             </template>
           </FeatureCard>
-        </div>
-      </div>
 
-      <!-- Wishlist Features -->
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
-        <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="📊"
             title="Firm Analytics"
