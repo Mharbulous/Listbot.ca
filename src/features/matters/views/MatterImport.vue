@@ -19,8 +19,13 @@
         </button>
       </TitleDrawer>
 
+      <!-- DEBUG: Test element -->
+      <div style="background: red; color: white; padding: 20px; margin: 20px; z-index: 9999; position: relative;">
+        TEST CONTENT - If you see this, content is rendering. selectedPath = {{ selectedPath }}
+      </div>
+
       <!-- Introduction Section -->
-      <div v-if="!selectedPath" class="mx-6 mb-6">
+      <div v-if="!selectedPath" class="mx-6 mb-6 relative z-10">
         <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-6 rounded-lg shadow-sm">
           <div class="flex items-start gap-3 mb-3">
             <div class="text-3xl">🤖</div>
@@ -37,7 +42,7 @@
       </div>
 
       <!-- Import Path Selection -->
-      <div v-if="!selectedPath" class="mx-6 mb-6">
+      <div v-if="!selectedPath" class="mx-6 mb-6 relative z-10">
         <h2 class="text-xl font-bold text-slate-900 mb-4">Choose Your Import Path</h2>
         <p class="text-sm text-slate-600 mb-4">
           Select the import method that best fits your data source. Both paths use AI to automatically
@@ -98,7 +103,7 @@
       </div>
 
       <!-- Folder Structure Import Interface -->
-      <div v-if="selectedPath === 'folder'" class="mx-6 mb-6">
+      <div v-if="selectedPath === 'folder'" class="mx-6 mb-6 relative z-10">
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
           <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
             <div class="flex items-center gap-2">
@@ -270,7 +275,7 @@
       </div>
 
       <!-- Document Analysis Import Interface -->
-      <div v-if="selectedPath === 'document'" class="mx-6 mb-6">
+      <div v-if="selectedPath === 'document'" class="mx-6 mb-6 relative z-10">
         <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
           <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
             <div class="flex items-center gap-2">
@@ -308,7 +313,7 @@
                 />
                 <button
                   class="w-full flex flex-col items-center gap-2"
-                  @click="$refs.fileInputRef.click()"
+                  @click="fileInputRef.click()"
                 >
                   <svg
                     class="w-12 h-12"
@@ -555,6 +560,9 @@ import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 defineOptions({
   name: 'MatterImportView',
 });
+
+// Refs
+const fileInputRef = ref(null);
 
 // State
 const selectedPath = ref(null);
