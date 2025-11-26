@@ -5,8 +5,8 @@ Generated: 2025-11-26
 - Total Plans: 107
 - 🟢 Completed (pending documentation): 39
 - 🟡 Active: 37
-- 🔴 Abandoned (pending cleanup): 4
-- ⚪ Unknown (pending triage): 27
+- 🔴 Abandoned (pending cleanup): 6
+- ⚪ Unknown (pending triage): 25
 
 ## Active Plans by Priority
 
@@ -121,13 +121,13 @@ Generated: 2025-11-26
 | `planning/6. Aborted/Tag-Architecture-Migration-to-Subcollections.md` | Tag Architecture Migration: Embedded Arrays to Subcollections | Pending cleanup |
 | `planning/6. Aborted/AsynchronousTaskRegistry.md` | Vue-Concurrency Async Management: Project Plan | Pending cleanup |
 | `planning/6. Aborted/CloudFileDetectionMVP.md` | Cloud File Detection MVP - Time-Based Warning System | Pending cleanup |
+| `planning/abandoned/human-functional-tests.md` | Human Functional Tests - Organizer v1.3 | Testing halted - virtual folder features not implemented |
+| `planning/abandoned/automated-test-specifications.md` | Automated Test Specifications - Organizer v1.3 | Test specs for unimplemented virtual folder features |
 
 ## Unknown (Pending Triage)
 | File | Description | Last Modified |
 |------|-------------|---------------|
 | `planning/optimization/Reminders.md` | Don't get stuck in premature optimization, | 2025-11-25 |
-| `planning/4. Testing/human-functional-tests.md` | Human Functional Tests - Organizer v1.3 | 2025-11-25 |
-| `planning/4. Testing/automated-test-specifications.md` | Automated Test Specifications - Organizer v1.3 | 2025-11-25 |
 | `planning/4. Testing/Console-Logging-Standardization.md` | Console Logging Standardization Plan | 2025-11-25 |
 | `planning/4. Testing/test-strategy.md` | Organizer v1.3 Testing Strategy - Comprehensive Test Inventory | 2025-11-25 |
 | `planning/research/PDFViewer-Performance-Research.md` | PDF Viewer Performance Research & Optimization Recommendations | 2025-11-25 |
