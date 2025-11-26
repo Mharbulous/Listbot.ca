@@ -1,461 +1,556 @@
 <template>
-  <div class="matter-import">
-    <!-- Page Header -->
-    <div class="mb-6">
-      <div class="d-flex align-center gap-2 mb-2">
-        <v-chip color="blue" size="small" variant="flat">
-          Case Management: Matter Import
-        </v-chip>
-      </div>
-      <h1 class="text-h4 font-weight-bold mb-2">AI-Powered Bulk Matter Import</h1>
-      <p class="text-body-1 text-medium-emphasis">
-        Import matters from folder structures or practice management exports using AI to
-        intelligently discover patterns and extract data.
-      </p>
-    </div>
+  <div class="h-full flex flex-col bg-viewport-bg">
+    <PageLayout>
+      <TitleDrawer title="AI-Powered Matter Import">
+        <button
+          v-if="selectedPath"
+          class="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          @click="resetPath"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Change Import Path
+        </button>
+      </TitleDrawer>
 
-    <!-- Key Impact Box -->
-    <v-alert
-      type="info"
-      variant="tonal"
-      color="blue"
-      class="mb-6"
-      border="start"
-      border-color="blue"
-    >
-      <div class="d-flex align-start">
-        <div class="text-h6 mr-2">🤖</div>
-        <div>
-          <div class="font-weight-bold mb-1">AI-Powered Pattern Discovery</div>
-          <div class="text-body-2">
-            AI-powered import eliminates the need for custom parsers and complex configuration
-            by <strong>automatically discovering your firm's unique naming patterns and data
-            structure</strong>. Import hundreds of matters in minutes, not hours.
+      <!-- Introduction Section -->
+      <div v-if="!selectedPath" class="mx-6 mb-6">
+        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-6 rounded-lg shadow-sm">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="text-3xl">🤖</div>
+            <div class="flex-1">
+              <h2 class="text-xl font-bold text-slate-900 mb-2">AI-Powered Pattern Discovery</h2>
+              <p class="text-slate-700 text-sm leading-relaxed">
+                Import matters from folder structures or practice management exports using AI to intelligently
+                discover patterns and extract data. <span class="font-semibold text-blue-700">Automatically discovers your firm's unique naming patterns</span>
+                without custom configuration—import hundreds of matters in minutes, not hours.
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </v-alert>
 
-    <!-- Import Path Selection or Active Import View -->
-    <v-card v-if="!selectedPath" variant="outlined">
-      <v-card-title class="text-h6">Choose Your Import Path</v-card-title>
-      <v-card-text>
-        <p class="text-body-2 text-medium-emphasis mb-4">
-          Select the import method that best fits your data source. Both paths use AI to
-          automatically discover and extract matter information.
+      <!-- Import Path Selection -->
+      <div v-if="!selectedPath" class="mx-6 mb-6">
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Choose Your Import Path</h2>
+        <p class="text-sm text-slate-600 mb-4">
+          Select the import method that best fits your data source. Both paths use AI to automatically
+          discover and extract matter information.
         </p>
 
-        <div class="d-flex flex-column flex-md-row gap-4">
+        <div class="grid gap-6 md:grid-cols-2">
           <!-- Path 1: Folder Structure Import -->
-          <v-card
-            variant="outlined"
-            class="flex-grow-1 cursor-pointer import-path-card"
-            hover
+          <div
+            class="bg-white border-2 border-slate-200 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200"
             @click="selectPath('folder')"
           >
-            <v-card-text class="pa-4">
-              <div class="d-flex align-center mb-3">
-                <div class="text-h4 mr-3">📁</div>
-                <div>
-                  <div class="text-h6 font-weight-bold">Folder Structure Import</div>
-                  <v-chip size="x-small" color="blue" variant="flat" class="mt-1">
-                    Path 1: Quick Setup
-                  </v-chip>
-                </div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="text-4xl">📁</div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">Folder Structure Import</h3>
+                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                  Path 1: Quick Setup
+                </span>
               </div>
-              <p class="text-body-2">
-                Select your client files root folder. AI scans the hierarchy, discovers your
-                firm's naming patterns (client names, matter numbers, dates), and extracts
-                structured data from folder names—no manual mapping required.
-              </p>
-            </v-card-text>
-          </v-card>
-
-          <!-- Path 2: Document Analysis Import -->
-          <v-card
-            variant="outlined"
-            class="flex-grow-1 cursor-pointer import-path-card"
-            hover
-            @click="selectPath('document')"
-          >
-            <v-card-text class="pa-4">
-              <div class="d-flex align-center mb-3">
-                <div class="text-h4 mr-3">📄</div>
-                <div>
-                  <div class="text-h6 font-weight-bold">Document Analysis Import</div>
-                  <v-chip size="x-small" color="blue" variant="flat" class="mt-1">
-                    Path 2: Detailed Data
-                  </v-chip>
-                </div>
-              </div>
-              <p class="text-body-2">
-                Upload CSV/Excel/PDF exports from any practice management system. AI discovers
-                the source schema, extracts matter data, and can validate/enrich existing
-                matters imported from folders.
-              </p>
-            </v-card-text>
-          </v-card>
-        </div>
-      </v-card-text>
-    </v-card>
-
-    <!-- Folder Structure Import Interface -->
-    <div v-if="selectedPath === 'folder'">
-      <v-card variant="outlined">
-        <v-card-title class="d-flex align-center">
-          <v-icon class="mr-2">mdi-folder-open</v-icon>
-          Folder Structure Import
-          <v-spacer />
-          <v-btn
-            variant="text"
-            size="small"
-            @click="resetPath"
-          >
-            <v-icon start>mdi-arrow-left</v-icon>
-            Change Path
-          </v-btn>
-        </v-card-title>
-        <v-divider />
-        <v-card-text class="pa-6">
-          <!-- Step 1: Folder Selection -->
-          <div class="mb-6">
-            <h3 class="text-h6 mb-3">Step 1: Select Client Files Folder</h3>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Choose the root folder containing your client files. AI will scan the folder
-              structure to discover your naming patterns.
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              Select your client files root folder. AI scans the hierarchy, discovers your firm's naming
+              patterns (client names, matter numbers, dates), and extracts structured data from folder
+              names—no manual mapping required.
             </p>
-
-            <v-file-input
-              v-model="folderSelection"
-              label="Select folder containing client files"
-              prepend-icon="mdi-folder"
-              variant="outlined"
-              density="comfortable"
-              hint="Note: This is a mockup. Actual implementation will use directory picker API."
-              persistent-hint
-              accept="*"
-              chips
-              @click="showFolderMockDialog = true"
-            />
           </div>
 
-          <!-- Mock Preview of Discovered Structure -->
-          <div v-if="folderSelection.length > 0" class="mb-6">
-            <h3 class="text-h6 mb-3">Step 2: AI Pattern Discovery</h3>
-            <v-alert type="success" variant="tonal" class="mb-4">
-              <div class="d-flex align-center">
-                <v-progress-circular
-                  indeterminate
-                  size="20"
-                  width="2"
-                  class="mr-3"
+          <!-- Path 2: Document Analysis Import -->
+          <div
+            class="bg-white border-2 border-slate-200 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200"
+            @click="selectPath('document')"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div class="text-4xl">📄</div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">Document Analysis Import</h3>
+                <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                  Path 2: Detailed Data
+                </span>
+              </div>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+              Upload CSV/Excel/PDF exports from any practice management system. AI discovers the source
+              schema, extracts matter data, and can validate/enrich existing matters imported from folders.
+            </p>
+          </div>
+        </div>
+
+        <!-- Pro Tip -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p class="text-sm text-slate-700">
+            <span class="font-semibold text-blue-700">💡 Pro Tip:</span> For best results, combine both
+            import paths—start with Folder Structure Import for quick bulk setup, then use Document Analysis
+            Import to enrich matters with detailed data from your practice management system.
+          </p>
+        </div>
+      </div>
+
+      <!-- Folder Structure Import Interface -->
+      <div v-if="selectedPath === 'folder'" class="mx-6 mb-6">
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                 />
-                <div>
-                  AI is analyzing folder structure and discovering naming patterns...
+              </svg>
+              <h3 class="text-lg font-bold text-slate-900">Folder Structure Import</h3>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <!-- Step 1: Folder Selection -->
+            <div class="mb-6">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 1: Select Client Files Folder</h4>
+              <p class="text-sm text-slate-600 mb-4">
+                Choose the root folder containing your client files. AI will scan the folder structure to
+                discover your naming patterns.
+              </p>
+
+              <button
+                class="w-full px-4 py-3 bg-white border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-sm text-slate-600 flex items-center justify-center gap-2"
+                @click="mockFolderSelect"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  />
+                </svg>
+                {{ folderSelected ? 'Client Files (Mock Folder)' : 'Click to Select Folder' }}
+              </button>
+              <p class="text-xs text-slate-500 mt-2">
+                Note: This is a mockup. Actual implementation will use the File System Access API.
+              </p>
+            </div>
+
+            <!-- Mock Preview of Discovered Structure -->
+            <div v-if="folderSelected" class="mb-6">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 2: AI Pattern Discovery</h4>
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                  <p class="text-sm text-green-800">
+                    AI is analyzing folder structure and discovering naming patterns...
+                  </p>
                 </div>
               </div>
-            </v-alert>
 
-            <!-- Mock discovered patterns -->
-            <v-card variant="tonal" color="blue-grey-lighten-5">
-              <v-card-text>
-                <div class="text-subtitle-2 font-weight-bold mb-2">
-                  🔍 Discovered Patterns (Mockup):
-                </div>
-                <ul class="text-body-2 ml-4">
+              <!-- Discovered patterns -->
+              <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <p class="text-sm font-semibold text-slate-900 mb-2">🔍 Discovered Patterns:</p>
+                <ul class="text-sm text-slate-700 space-y-1 ml-4 list-disc">
                   <li>Found 47 client folders</li>
                   <li>Pattern detected: [ClientName] - [MatterNumber]</li>
                   <li>Date format: YYYY-MM-DD</li>
                   <li>Average confidence: 92%</li>
                 </ul>
-              </v-card-text>
-            </v-card>
-          </div>
+              </div>
+            </div>
 
-          <!-- Mock Data Table Preview -->
-          <div v-if="folderSelection.length > 0" class="mb-4">
-            <h3 class="text-h6 mb-3">Step 3: Review Extracted Data</h3>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Review AI-extracted data. Check/uncheck matters to import, edit any values that
-              need correction.
-            </p>
+            <!-- Mock Data Table Preview -->
+            <div v-if="folderSelected" class="mb-4">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 3: Review Extracted Data</h4>
+              <p class="text-sm text-slate-600 mb-4">
+                Review AI-extracted data. Check/uncheck matters to import, edit any values that need correction.
+              </p>
 
-            <v-data-table
-              :headers="folderTableHeaders"
-              :items="mockFolderData"
-              density="comfortable"
-              class="border"
-            >
-              <template #item.import="{ item }">
-                <v-checkbox
-                  v-model="item.import"
-                  hide-details
-                  density="compact"
-                />
-              </template>
-              <template #item.confidence="{ item }">
-                <v-chip
-                  :color="item.confidence >= 90 ? 'success' : item.confidence >= 70 ? 'warning' : 'error'"
-                  size="small"
-                  variant="flat"
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full">
+                  <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                        Import
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Client Name
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Matter Number
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Folder Path
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Confidence
+                      </th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-slate-200">
+                    <tr
+                      v-for="item in mockFolderData"
+                      :key="item.matterNumber"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="px-4 py-3">
+                        <input
+                          v-model="item.import"
+                          type="checkbox"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.folderPath }}</td>
+                      <td class="px-4 py-3">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="{
+                            'bg-green-100 text-green-800': item.confidence >= 90,
+                            'bg-yellow-100 text-yellow-800': item.confidence >= 70 && item.confidence < 90,
+                            'bg-red-100 text-red-800': item.confidence < 70,
+                          }"
+                        >
+                          {{ item.confidence }}%
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-right">
+                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="flex justify-end gap-3 mt-4">
+                <button
+                  class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                  @click="resetPath"
                 >
-                  {{ item.confidence }}%
-                </v-chip>
-              </template>
-              <template #item.actions="{ item }">
-                <v-btn
-                  icon="mdi-pencil"
-                  size="x-small"
-                  variant="text"
-                  density="comfortable"
-                />
-              </template>
-            </v-data-table>
-
-            <div class="d-flex justify-end gap-2 mt-4">
-              <v-btn variant="outlined" @click="resetPath">
-                Cancel
-              </v-btn>
-              <v-btn color="primary" variant="flat" @click="mockImport">
-                <v-icon start>mdi-upload</v-icon>
-                Import Selected Matters (3)
-              </v-btn>
+                  Cancel
+                </button>
+                <button
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  @click="mockImport"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                  Import Selected Matters ({{ selectedFolderCount }})
+                </button>
+              </div>
             </div>
           </div>
-        </v-card-text>
-      </v-card>
-    </div>
+        </div>
+      </div>
 
-    <!-- Document Analysis Import Interface -->
-    <div v-if="selectedPath === 'document'">
-      <v-card variant="outlined">
-        <v-card-title class="d-flex align-center">
-          <v-icon class="mr-2">mdi-file-document</v-icon>
-          Document Analysis Import
-          <v-spacer />
-          <v-btn
-            variant="text"
-            size="small"
-            @click="resetPath"
-          >
-            <v-icon start>mdi-arrow-left</v-icon>
-            Change Path
-          </v-btn>
-        </v-card-title>
-        <v-divider />
-        <v-card-text class="pa-6">
-          <!-- Step 1: Document Upload -->
-          <div class="mb-6">
-            <h3 class="text-h6 mb-3">Step 1: Upload Practice Management Export</h3>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Upload a CSV, Excel, or PDF export from your practice management system.
-              AI will automatically discover the schema and extract matter data.
-            </p>
-
-            <v-file-input
-              v-model="documentFile"
-              label="Upload CSV, Excel, or PDF file"
-              prepend-icon="mdi-file-upload"
-              variant="outlined"
-              density="comfortable"
-              accept=".csv,.xlsx,.xls,.pdf"
-              show-size
-              chips
-              hint="Supported formats: CSV, Excel (.xlsx, .xls), PDF"
-              persistent-hint
-              @change="onDocumentUpload"
-            />
+      <!-- Document Analysis Import Interface -->
+      <div v-if="selectedPath === 'document'" class="mx-6 mb-6">
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <h3 class="text-lg font-bold text-slate-900">Document Analysis Import</h3>
+            </div>
           </div>
 
-          <!-- Mock Analysis Results -->
-          <div v-if="documentFile.length > 0" class="mb-6">
-            <h3 class="text-h6 mb-3">Step 2: AI Schema Discovery</h3>
-            <v-alert type="success" variant="tonal" class="mb-4">
-              <div class="d-flex align-center">
-                <v-icon class="mr-3">mdi-check-circle</v-icon>
-                <div>
-                  <div class="font-weight-bold">Document analyzed successfully!</div>
-                  <div class="text-body-2">
-                    Detected {{ mockDocumentData.length }} potential matters
+          <div class="p-6">
+            <!-- Step 1: Document Upload -->
+            <div class="mb-6">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 1: Upload Practice Management Export</h4>
+              <p class="text-sm text-slate-600 mb-4">
+                Upload a CSV, Excel, or PDF export from your practice management system. AI will automatically
+                discover the schema and extract matter data.
+              </p>
+
+              <div
+                class="relative border-2 border-dashed rounded-lg p-8 text-center"
+                :class="documentUploaded ? 'border-green-400 bg-green-50' : 'border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50'"
+              >
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept=".csv,.xlsx,.xls,.pdf"
+                  class="hidden"
+                  @change="handleDocumentUpload"
+                />
+                <button
+                  class="w-full flex flex-col items-center gap-2"
+                  @click="$refs.fileInputRef.click()"
+                >
+                  <svg
+                    class="w-12 h-12"
+                    :class="documentUploaded ? 'text-green-600' : 'text-slate-400'"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <div v-if="!documentUploaded">
+                    <p class="text-sm font-medium text-slate-900">Click to upload file</p>
+                    <p class="text-xs text-slate-500 mt-1">CSV, Excel (.xlsx, .xls), or PDF</p>
+                  </div>
+                  <div v-else>
+                    <p class="text-sm font-medium text-green-900">{{ uploadedFileName }}</p>
+                    <p class="text-xs text-green-600 mt-1">Click to upload a different file</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mock Analysis Results -->
+            <div v-if="documentUploaded" class="mb-6">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 2: AI Schema Discovery</h4>
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div>
+                    <p class="text-sm font-semibold text-green-900">Document analyzed successfully!</p>
+                    <p class="text-xs text-green-700">Detected {{ mockDocumentData.length }} potential matters</p>
                   </div>
                 </div>
               </div>
-            </v-alert>
 
-            <!-- Discovered Schema -->
-            <v-card variant="tonal" color="blue-grey-lighten-5" class="mb-4">
-              <v-card-text>
-                <div class="text-subtitle-2 font-weight-bold mb-2">
-                  🔍 Discovered Schema (Mockup):
-                </div>
-                <ul class="text-body-2 ml-4">
-                  <li>File type: {{ documentFile[0]?.name.split('.').pop().toUpperCase() }}</li>
+              <!-- Discovered Schema -->
+              <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+                <p class="text-sm font-semibold text-slate-900 mb-2">🔍 Discovered Schema:</p>
+                <ul class="text-sm text-slate-700 space-y-1 ml-4 list-disc">
+                  <li>File type: {{ fileType.toUpperCase() }}</li>
                   <li>Columns detected: Client Name, Matter Number, Description, Status, Date Opened</li>
                   <li>Total rows: {{ mockDocumentData.length }}</li>
                   <li>Confidence: High</li>
                 </ul>
-              </v-card-text>
-            </v-card>
-          </div>
+              </div>
+            </div>
 
-          <!-- Mock Field Mapping -->
-          <div v-if="documentFile.length > 0" class="mb-6">
-            <h3 class="text-h6 mb-3">Step 3: Map Fields to ListBot Schema</h3>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              AI has suggested field mappings. Verify or adjust as needed.
-            </p>
+            <!-- Mock Field Mapping -->
+            <div v-if="documentUploaded" class="mb-6">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 3: Map Fields to ListBot Schema</h4>
+              <p class="text-sm text-slate-600 mb-4">
+                AI has suggested field mappings. Verify or adjust as needed.
+              </p>
 
-            <v-row>
-              <v-col
-                v-for="mapping in fieldMappings"
-                :key="mapping.source"
-                cols="12"
-                md="6"
-              >
-                <v-card variant="outlined" class="pa-3">
-                  <div class="d-flex align-center justify-space-between">
-                    <div class="flex-grow-1">
-                      <div class="text-caption text-medium-emphasis">Source Field</div>
-                      <div class="font-weight-bold">{{ mapping.source }}</div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div
+                  v-for="mapping in fieldMappings"
+                  :key="mapping.source"
+                  class="bg-slate-50 border border-slate-200 rounded-lg p-4"
+                >
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex-1">
+                      <p class="text-xs text-slate-500 mb-1">Source Field</p>
+                      <p class="text-sm font-medium text-slate-900">{{ mapping.source }}</p>
                     </div>
-                    <v-icon class="mx-3">mdi-arrow-right</v-icon>
-                    <div class="flex-grow-1">
-                      <div class="text-caption text-medium-emphasis">ListBot Field</div>
-                      <v-select
-                        v-model="mapping.target"
-                        :items="listbotFields"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
+                    <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
                       />
+                    </svg>
+                    <div class="flex-1">
+                      <p class="text-xs text-slate-500 mb-1">ListBot Field</p>
+                      <select
+                        v-model="mapping.target"
+                        class="w-full text-sm border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option v-for="field in listbotFields" :key="field" :value="field">
+                          {{ field }}
+                        </option>
+                      </select>
                     </div>
                   </div>
-                  <v-chip
-                    v-if="mapping.confidence"
-                    size="x-small"
-                    color="success"
-                    variant="flat"
-                    class="mt-2"
-                  >
-                    AI Confidence: {{ mapping.confidence }}%
-                  </v-chip>
-                </v-card>
-              </v-col>
-            </v-row>
-          </div>
+                  <div v-if="mapping.confidence" class="mt-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                      AI Confidence: {{ mapping.confidence }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <!-- Mock Data Table Preview -->
-          <div v-if="documentFile.length > 0" class="mb-4">
-            <h3 class="text-h6 mb-3">Step 4: Review and Import</h3>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Review extracted data and select which matters to import.
-            </p>
+            <!-- Mock Data Table Preview -->
+            <div v-if="documentUploaded" class="mb-4">
+              <h4 class="text-base font-semibold text-slate-900 mb-2">Step 4: Review and Import</h4>
+              <p class="text-sm text-slate-600 mb-4">
+                Review extracted data and select which matters to import.
+              </p>
 
-            <v-data-table
-              :headers="documentTableHeaders"
-              :items="mockDocumentData"
-              density="comfortable"
-              class="border"
-            >
-              <template #item.import="{ item }">
-                <v-checkbox
-                  v-model="item.import"
-                  hide-details
-                  density="compact"
-                />
-              </template>
-              <template #item.status="{ item }">
-                <v-chip
-                  :color="getStatusColor(item.status)"
-                  size="small"
-                  variant="flat"
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full">
+                  <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                        Import
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Client Name
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Matter Number
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Status
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Date Opened
+                      </th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-slate-200">
+                    <tr
+                      v-for="item in mockDocumentData"
+                      :key="item.matterNumber"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="px-4 py-3">
+                        <input
+                          v-model="item.import"
+                          type="checkbox"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.description }}</td>
+                      <td class="px-4 py-3">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="getStatusClass(item.status)"
+                        >
+                          {{ item.status }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.dateOpened }}</td>
+                      <td class="px-4 py-3 text-right">
+                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="flex justify-end gap-3 mt-4">
+                <button
+                  class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                  @click="resetPath"
                 >
-                  {{ item.status }}
-                </v-chip>
-              </template>
-              <template #item.actions="{ item }">
-                <v-btn
-                  icon="mdi-pencil"
-                  size="x-small"
-                  variant="text"
-                  density="comfortable"
-                />
-              </template>
-            </v-data-table>
-
-            <div class="d-flex justify-end gap-2 mt-4">
-              <v-btn variant="outlined" @click="resetPath">
-                Cancel
-              </v-btn>
-              <v-btn color="primary" variant="flat" @click="mockImport">
-                <v-icon start>mdi-upload</v-icon>
-                Import Selected Matters (5)
-              </v-btn>
+                  Cancel
+                </button>
+                <button
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  @click="mockImport"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                  Import Selected Matters ({{ selectedDocumentCount }})
+                </button>
+              </div>
             </div>
           </div>
-        </v-card-text>
-      </v-card>
-    </div>
-
-    <!-- Info Footer -->
-    <v-alert
-      v-if="!selectedPath"
-      type="info"
-      variant="tonal"
-      color="blue"
-      class="mt-6"
-      border="start"
-    >
-      <div class="text-body-2">
-        <strong>💡 Pro Tip:</strong> For best results, you can combine both import paths—start
-        with Folder Structure Import for quick bulk setup, then use Document Analysis Import
-        to enrich matters with detailed data from your practice management system.
+        </div>
       </div>
-    </v-alert>
+    </PageLayout>
 
-    <!-- Mock Dialog for Folder Selection -->
-    <v-dialog v-model="showFolderMockDialog" max-width="500">
-      <v-card>
-        <v-card-title>Folder Selection (Mockup)</v-card-title>
-        <v-card-text>
-          <p class="mb-4">
-            This mockup simulates folder selection. In the actual implementation, this would
-            use the File System Access API to allow you to select a folder from your computer.
-          </p>
-          <p class="text-body-2 text-medium-emphasis">
-            Click "Select Folder" below to simulate choosing a client files folder.
-          </p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="showFolderMockDialog = false">
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            @click="mockFolderSelect"
-          >
-            Select Folder
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Success Snackbar -->
-    <v-snackbar
-      v-model="showSuccessSnackbar"
-      color="success"
-      timeout="3000"
+    <!-- Success Notification (Snackbar) -->
+    <div
+      v-if="showSuccessNotification"
+      class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-slide-up z-50"
     >
-      <v-icon start>mdi-check-circle</v-icon>
-      Mock import successful! (This is a mockup - no data was actually imported)
-    </v-snackbar>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <span class="text-sm font-medium">Mock import successful! (This is a mockup - no data was actually imported)</span>
+      <button class="ml-2 hover:text-green-100" @click="showSuccessNotification = false">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import PageLayout from '@/shared/components/layout/PageLayout.vue';
+import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 
 defineOptions({
   name: 'MatterImportView',
@@ -463,21 +558,13 @@ defineOptions({
 
 // State
 const selectedPath = ref(null);
-const folderSelection = ref([]);
-const documentFile = ref([]);
-const showFolderMockDialog = ref(false);
-const showSuccessSnackbar = ref(false);
+const folderSelected = ref(false);
+const documentUploaded = ref(false);
+const uploadedFileName = ref('');
+const fileType = ref('csv');
+const showSuccessNotification = ref(false);
 
 // Mock Data for Folder Import
-const folderTableHeaders = [
-  { title: 'Import', key: 'import', width: '80px', sortable: false },
-  { title: 'Client Name', key: 'clientName', width: '200px' },
-  { title: 'Matter Number', key: 'matterNumber', width: '150px' },
-  { title: 'Folder Path', key: 'folderPath' },
-  { title: 'Confidence', key: 'confidence', width: '120px' },
-  { title: '', key: 'actions', width: '60px', sortable: false },
-];
-
 const mockFolderData = ref([
   {
     import: true,
@@ -503,16 +590,6 @@ const mockFolderData = ref([
 ]);
 
 // Mock Data for Document Import
-const documentTableHeaders = [
-  { title: 'Import', key: 'import', width: '80px', sortable: false },
-  { title: 'Client Name', key: 'clientName', width: '180px' },
-  { title: 'Matter Number', key: 'matterNumber', width: '140px' },
-  { title: 'Description', key: 'description' },
-  { title: 'Status', key: 'status', width: '120px' },
-  { title: 'Date Opened', key: 'dateOpened', width: '130px' },
-  { title: '', key: 'actions', width: '60px', sortable: false },
-];
-
 const mockDocumentData = ref([
   {
     import: true,
@@ -578,6 +655,15 @@ const listbotFields = [
   'customField2',
 ];
 
+// Computed
+const selectedFolderCount = computed(() => {
+  return mockFolderData.value.filter(item => item.import).length;
+});
+
+const selectedDocumentCount = computed(() => {
+  return mockDocumentData.value.filter(item => item.import).length;
+});
+
 // Methods
 function selectPath(path) {
   selectedPath.value = path;
@@ -585,56 +671,59 @@ function selectPath(path) {
 
 function resetPath() {
   selectedPath.value = null;
-  folderSelection.value = [];
-  documentFile.value = [];
+  folderSelected.value = false;
+  documentUploaded.value = false;
+  uploadedFileName.value = '';
 }
 
 function mockFolderSelect() {
-  folderSelection.value = [{ name: 'Client Files (Mock)', size: 0 }];
-  showFolderMockDialog.value = false;
+  folderSelected.value = true;
 }
 
-function onDocumentUpload() {
-  // Simulate document analysis
-  if (documentFile.value.length > 0) {
-    console.log('Document uploaded:', documentFile.value[0].name);
+function handleDocumentUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    documentUploaded.value = true;
+    uploadedFileName.value = file.name;
+    fileType.value = file.name.split('.').pop();
   }
 }
 
 function mockImport() {
-  showSuccessSnackbar.value = true;
+  showSuccessNotification.value = true;
   setTimeout(() => {
+    showSuccessNotification.value = false;
     resetPath();
-  }, 1500);
+  }, 3000);
 }
 
-function getStatusColor(status) {
-  const colors = {
-    Active: 'success',
-    Pending: 'warning',
-    Closed: 'grey',
+function getStatusClass(status) {
+  const classes = {
+    Active: 'bg-green-100 text-green-800',
+    Pending: 'bg-yellow-100 text-yellow-800',
+    Closed: 'bg-slate-100 text-slate-600',
   };
-  return colors[status] || 'default';
+  return classes[status] || 'bg-slate-100 text-slate-600';
 }
 </script>
 
 <style scoped>
-.matter-import {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
+.bg-viewport-bg {
+  background-color: #faf8f3;
 }
 
-.import-path-card {
-  transition: all 0.2s ease;
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-.import-path-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.cursor-pointer {
-  cursor: pointer;
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
 }
 </style>
