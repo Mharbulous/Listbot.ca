@@ -178,18 +178,6 @@
       <WorkflowSteps title="Preservation Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="purple"
-        description="ListBot.ca's preservation capabilities provide enterprise-grade security at an accessible price point:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Preserve stage is the foundation of defensible e-discovery, and ListBot.ca delivers enterprise-grade preservation through modern cloud technology."
@@ -205,8 +193,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -242,37 +228,6 @@ const workflowSteps = [
   {
     title: 'Evidence Ready for Collection',
     description: 'Preserved files are now securely stored and ready for collection and processing stages.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Cryptographic hashing', text: 'ensures tamper-proof evidence' },
-  { label: 'Automatic deduplication', text: 'reduces storage costs by 30-50%' },
-  { label: 'Cloud redundancy', text: 'protects against data loss' },
-  { label: 'Modern web workers', text: 'provide non-blocking performance' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Enhanced Preservation',
-    timeframe: '1-2 months',
-    color: 'amber',
-    items: [
-      'Legal hold notification system with acknowledgment tracking',
-      'Chain of custody logging with Firestore audit trail',
-      'Preservation dashboard with Chart.js visualizations',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    timeframe: '3-6 months',
-    color: 'blue',
-    items: [
-      'Custodian self-service portal for direct uploads',
-      'Automated file format validation and corruption detection',
-      'Preservation report generation for compliance documentation',
-      'Enhanced metadata extraction and custom field mapping',
-    ],
   },
 ];
 </script>

@@ -218,10 +218,6 @@
       </div>
     </template>
 
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         variant="coming-soon"
@@ -238,7 +234,6 @@
 import StubPageLayout from '@/components/stubs/StubPageLayout.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -279,31 +274,6 @@ const workflowSteps = [
   {
     title: 'Document & Track',
     description: 'Generate production reports and maintain audit trail for defensibility (planned).',
-  },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Essential Production Tools',
-    timeframe: '1-2 months',
-    color: 'emerald',
-    items: [
-      'Flexible Bates numbering with customizable prefixes and formatting',
-      'Multiple production formats (native, TIFF, searchable PDF)',
-      'Quality control workflows with automated validation checks',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Production Management',
-    timeframe: '3-6 months',
-    color: 'purple',
-    items: [
-      'Automated privilege log generation from review metadata',
-      'Rolling production tracking with version control',
-      'Secure delivery mechanisms (FTP, cloud portal, encrypted transfer)',
-      'Production profiles and templates for workflow efficiency',
-      'Comprehensive production reports and documentation',
-    ],
   },
 ];
 </script>

@@ -94,18 +94,6 @@
       <WorkflowSteps title="Collection Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="emerald"
-        description="ListBot.ca's collection features provide enterprise-grade document management:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Collect stage provides the foundation for efficient document review and analysis."
@@ -121,8 +109,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -156,38 +142,6 @@ const workflowSteps = [
     title: 'Analyze & Export',
     description:
       'Generate analytics and export filtered document sets for further review (planned).',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'Advanced filtering', text: 'enables precise document selection' },
-  { label: 'Integrated viewer', text: 'streamlines document review' },
-  { label: 'Flexible categorization', text: 'supports custom workflows' },
-  { label: 'Modern Vue 3 UI', text: 'provides responsive, fast interface' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Enhanced Collection',
-    timeframe: '1-2 months',
-    color: 'emerald',
-    items: [
-      'Bulk tagging and batch operations',
-      'Collection analytics dashboard',
-      'Saved filters and custom views',
-      'Enhanced export options (Excel, CSV, load files)',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    timeframe: '3-4 months',
-    color: 'blue',
-    items: [
-      'Custom metadata fields',
-      'Document comparison tools',
-      'Collaboration features (notes, annotations)',
-      'Integration with Review and Analysis stages',
-    ],
   },
 ];
 </script>

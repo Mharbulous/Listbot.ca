@@ -149,18 +149,6 @@
       />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="amber"
-        description="ListBot.ca's Facts module transforms traditional chronology-building from a manual, time-consuming process into an intelligent, integrated workflow:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         message="The Facts module will transform how you organize and analyze case information, providing a strategic advantage in trial preparation and settlement negotiations."
@@ -176,8 +164,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -205,36 +191,6 @@ const workflowSteps = [
     title: 'Generate Chronologies',
     description:
       'Export professional chronologies and fact summaries for pleadings, negotiations, or trial preparation.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'AI-powered extraction', text: 'pulls facts directly from documents' },
-  { label: 'Visual timeline', text: 'reveals patterns and gaps instantly' },
-  { label: 'Direct evidence linking', text: 'connects facts to supporting documents' },
-  { label: 'Automated conflict detection', text: 'catches inconsistencies early' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Functionality',
-    color: 'amber',
-    items: [
-      'Interactive timeline with date filtering and visual organization',
-      'Structured fact cards with rich metadata fields',
-      'Document cross-reference linking to evidence collection',
-      'Basic export to chronology format',
-    ],
-  },
-  {
-    title: 'Phase 2: AI & Advanced Features',
-    color: 'blue',
-    items: [
-      'AI-powered fact extraction from documents',
-      'Automated conflict and inconsistency detection',
-      'Custom tags and categorization system',
-      'Professional chronology generation with formatting options',
-    ],
   },
 ];
 </script>

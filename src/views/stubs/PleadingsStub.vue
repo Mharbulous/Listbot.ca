@@ -107,18 +107,6 @@
       <WorkflowSteps title="Pleadings Workflow" :steps="workflowSteps" />
     </template>
 
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="purple"
-        description="ListBot.ca's pleadings feature will be unique in the e-discovery market:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
-
     <template #footer>
       <StubFooter
         variant="coming-soon"
@@ -136,8 +124,6 @@ import StubPageLayout from '@/components/stubs/StubPageLayout.vue';
 import PageHeader from '@/components/stubs/PageHeader.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -179,44 +165,6 @@ const workflowSteps = [
     description:
       'Create status reports showing proof progress and draft discovery responses organized by allegation and proceeding.',
     status: 'Wishlist',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'First-to-market', text: 'no other platform treats pleadings this way' },
-  { label: 'Auto-identification', text: 'identifies pleadings during processing automatically' },
-  { label: 'Proceeding management', text: 'organizes by jurisdiction, venue, and court file' },
-  { label: 'Version tracking', text: 'maintains complete amendment history with dates' },
-  { label: 'AI extraction', text: 'automatically parses allegations from pleadings' },
-  { label: 'Systematic linking', text: 'connects every piece of evidence to claims' },
-  { label: 'Burden tracking', text: 'visualizes proof requirements and status' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Core Pleadings Integration',
-    color: 'purple',
-    items: [
-      'Document identification during Process step',
-      'Proceeding management (Jurisdiction, Venue, Court File No.)',
-      'Version control and amendment tracking',
-      'Pleading upload and parsing',
-      'AI-powered allegation extraction',
-      'Evidence-allegation linking system',
-      'Proof status tracking dashboard',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    color: 'indigo',
-    items: [
-      'Multi-proceeding organization and views',
-      'Cross-proceeding evidence analysis',
-      'AI suggestion engine for relevant documents',
-      'Automated discovery response generation',
-      'Burden of proof visualization',
-      'Integration with legal elements checklist',
-    ],
   },
 ];
 </script>

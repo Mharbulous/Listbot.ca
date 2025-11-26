@@ -320,58 +320,9 @@
       </div>
     </div>
 
-    <!-- Competitive Advantage -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-bold text-slate-900 mb-3">Competitive Advantage</h2>
-      <p class="text-slate-700 mb-4">
-        ListBot.ca's processing capabilities will put it ahead of basic platforms while remaining more
-        accessible than enterprise solutions:
-      </p>
-      <div class="grid gap-3 md:grid-cols-2">
-        <div class="flex items-start gap-2">
-          <div class="text-blue-600 mt-1">✓</div>
-          <div class="text-slate-700">
-            <span class="font-medium">AI fuzzy deduplication</span> will surpass basic hash-only
-            platforms
-          </div>
-        </div>
-        <div class="flex items-start gap-2">
-          <div class="text-blue-600 mt-1">✓</div>
-          <div class="text-slate-700">
-            <span class="font-medium">Email threading</span> will deliver 40-74% review time reduction
-          </div>
-        </div>
-        <div class="flex items-start gap-2">
-          <div class="text-blue-600 mt-1">✓</div>
-          <div class="text-slate-700">
-            <span class="font-medium">Processing analytics</span> will provide real-time insights
-          </div>
-        </div>
-        <div class="flex items-start gap-2">
-          <div class="text-blue-600 mt-1">✓</div>
-          <div class="text-slate-700">
-            <span class="font-medium">Modern tech stack</span> (Vue 3, Firebase) ensures
-            performance
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Workflow Steps -->
     <WorkflowSteps title="Processing Workflow" :steps="workflowSteps" />
     </div>
-
-    <template #competitive-advantage>
-      <CompetitiveAdvantageGrid
-        color="blue"
-        description="ListBot.ca's processing capabilities will put it ahead of basic platforms while remaining more accessible than enterprise solutions:"
-        :advantages="competitiveAdvantages"
-      />
-    </template>
-
-    <template #timeline>
-      <ImplementationTimeline :phases="timelinePhases" />
-    </template>
 
     <template #footer>
       <StubFooter
@@ -388,8 +339,6 @@ import PageHeader from '@/components/stubs/PageHeader.vue';
 import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
 import FeatureCard from '@/components/stubs/FeatureCard.vue';
 import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
-import CompetitiveAdvantageGrid from '@/components/stubs/CompetitiveAdvantageGrid.vue';
-import ImplementationTimeline from '@/components/stubs/ImplementationTimeline.vue';
 import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
@@ -423,36 +372,6 @@ const workflowSteps = [
     title: 'Review-Ready Corpus',
     description:
       'Processed documents are now optimized for review, with volume reduced by 50-75% and organized for efficient analysis.',
-  },
-];
-
-const competitiveAdvantages = [
-  { label: 'AI fuzzy deduplication', text: 'will surpass basic hash-only platforms' },
-  { label: 'Email threading', text: 'will deliver 40-74% review time reduction' },
-  { label: 'Processing analytics', text: 'will provide real-time insights' },
-  { label: 'Modern tech stack', text: '(Vue 3, Firebase) ensures performance' },
-];
-
-const timelinePhases = [
-  {
-    title: 'Phase 1: Quick Wins',
-    timeframe: '1-2 months',
-    color: 'amber',
-    items: [
-      'Email threading with header parsing and conversation reconstruction',
-      'Processing analytics dashboard with Chart.js visualizations',
-    ],
-  },
-  {
-    title: 'Phase 2: Advanced Features',
-    timeframe: '3-6 months',
-    color: 'blue',
-    items: [
-      'Processing profiles for workflow reuse',
-      'Exception handling workflows and manual review queues',
-      'Metadata field mapping and customization',
-      'Enhanced email threading visualization',
-    ],
   },
 ];
 </script>
