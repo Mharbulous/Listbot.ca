@@ -15,6 +15,7 @@
       @mousedown="handleMouseDown"
       @mouseup="handleMouseUp"
       @click.stop="handleClick"
+      @dblclick.stop
     >
       {{ content }}
     </div>
