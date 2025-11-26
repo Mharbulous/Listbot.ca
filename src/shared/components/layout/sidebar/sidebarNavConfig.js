@@ -8,6 +8,7 @@ import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
 import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
+import shingleIcon from '@/assets/icons/nav-items/Shingle.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -19,7 +20,7 @@ export function useNavItems() {
 
   return [
     // Firm (Special - not part of EDRM workflow)
-    { key: 'firm', path: '/firm', icon: '🏢', label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
+    { key: 'firm', path: '/firm', icon: shingleIcon, label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
 
     // Matters (Special - not part of EDRM workflow)
     { key: 'matters', path: '/matters', icon: briefcaseIcon, label: 'Matters' },
