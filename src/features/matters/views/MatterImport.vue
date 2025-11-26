@@ -8,15 +8,24 @@
           <p class="text-body-1 mt-2 text-grey">
             The bulk matter import feature is coming soon.
           </p>
-          <v-btn
-            variant="outlined"
-            color="primary"
-            :to="{ name: 'matters' }"
-            class="mt-6"
-          >
-            <v-icon start>mdi-arrow-left</v-icon>
-            Back to Matters
-          </v-btn>
+          <div class="d-flex gap-3 mt-6 flex-wrap justify-center">
+            <v-btn
+              variant="outlined"
+              color="primary"
+              :to="{ name: 'matters' }"
+            >
+              <v-icon start>mdi-arrow-left</v-icon>
+              Back to Matters
+            </v-btn>
+            <v-btn
+              variant="flat"
+              color="primary"
+              :to="{ name: 'import-matters-stub' }"
+            >
+              <v-icon start>mdi-information-outline</v-icon>
+              View Import Blueprint
+            </v-btn>
+          </div>
         </div>
       </v-card-text>
     </v-card>
