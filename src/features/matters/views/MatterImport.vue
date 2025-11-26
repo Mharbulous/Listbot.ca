@@ -30,13 +30,13 @@
             <v-tab value="folder">
               <div class="flex items-center gap-2">
                 <span class="text-2xl">📁</span>
-                <span class="font-medium">Folder Structure Import</span>
+                <span class="font-medium">Import from Folders</span>
               </div>
             </v-tab>
             <v-tab value="document">
               <div class="flex items-center gap-2">
                 <span class="text-2xl">📄</span>
-                <span class="font-medium">Import Matter List</span>
+                <span class="font-medium">Import from Matter List</span>
               </div>
             </v-tab>
           </v-tabs>
