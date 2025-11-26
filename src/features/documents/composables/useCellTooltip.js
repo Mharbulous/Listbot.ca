@@ -2,7 +2,8 @@ import { ref, computed } from 'vue';
 
 /**
  * Composable for managing cell content tooltips
- * Shows tooltip for all cells with content after 1-second hover or immediate on click
+ * Shows tooltip on single click (only if no other tooltip is visible)
+ * Closes on click outside or 3-second hover outside tooltip
  *
  * @returns {Object} Tooltip state and methods
  */
@@ -15,9 +16,9 @@ export function useCellTooltip() {
   const backgroundColor = ref('white');
 
   // Timing
-  const HOVER_DELAY = 1000; // 1 second
+  const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
-  const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
+  const HOVER_AWAY_DELAY = 3000; // 3 seconds - delay before closing when hovering away
 
   // Timers
   let showTimer = null;
@@ -108,6 +109,7 @@ export function useCellTooltip() {
 
   /**
    * Handle mouse enter on cell
+   * Hover no longer triggers tooltip display - only manages hover state for closing logic
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -116,64 +118,23 @@ export function useCellTooltip() {
     // Mark that cell is being hovered
     isCellHovered = true;
 
-    // Clear hide timer if it exists
-    if (hideTimer) {
+    // Clear hide timer if hovering over the cell that has the tooltip
+    if (hideTimer && isVisible.value && currentCellElement === cellElement) {
       clearTimeout(hideTimer);
       hideTimer = null;
     }
 
-    // Get the text content
-    const text = getTextContent(cellElement);
-    if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
-      return;
-    }
-
-    // If tooltip is already visible for this cell, just update hover state
-    if (isVisible.value && currentCellElement === cellElement) {
-      return;
-    }
-
-    // If tooltip is visible for a DIFFERENT cell, hide it first
-    // This prevents the content from updating while showing at the old position
-    if (isVisible.value && currentCellElement !== cellElement) {
-      hideTooltip();
-    }
-
-    // Clear any existing show timers
+    // Clear any pending show timers from previous hover events
     if (showTimer) {
       clearTimeout(showTimer);
       showTimer = null;
     }
-
-    // Store pending data to be applied when tooltip becomes visible
-    const pendingCellElement = cellElement;
-    const pendingBgColor = bgColor;
-    const pendingText = text;
-
-    // Start timer to show tooltip after delay
-    showTimer = setTimeout(() => {
-      // Only update state when tooltip actually becomes visible
-      currentCellElement = pendingCellElement;
-      backgroundColor.value = pendingBgColor;
-      content.value = pendingText;
-
-      // Calculate position based on cell element
-      position.value = calculatePosition(currentCellElement);
-
-      // Show tooltip
-      isVisible.value = true;
-      openedByClick = false;
-
-      // Fade in
-      opacity.value = 0;
-      fadeTimer = setTimeout(() => {
-        opacity.value = 1;
-      }, 10);
-    }, HOVER_DELAY);
   };
 
   /**
-   * Handle click on cell (show tooltip immediately)
+   * Handle click on cell
+   * Shows tooltip only if no tooltip is currently visible
+   * If a tooltip is visible, closes it instead
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -185,8 +146,8 @@ export function useCellTooltip() {
       return;
     }
 
-    // If tooltip is already visible for this cell, hide it (toggle behavior)
-    if (isVisible.value && currentCellElement === cellElement) {
+    // If ANY tooltip is currently visible, close it (don't open a new one)
+    if (isVisible.value) {
       hideTooltip();
       return;
     }
