@@ -2,8 +2,8 @@ import { ref, computed } from 'vue';
 
 /**
  * Composable for managing cell content tooltips
- * Shows tooltip on single click (only if no other tooltip is visible)
- * Closes on click outside or 3-second hover outside tooltip
+ * Shows tooltip on single click
+ * Closes on click outside, click on same cell, or 1-second hover outside tooltip
  *
  * @returns {Object} Tooltip state and methods
  */
@@ -18,7 +18,7 @@ export function useCellTooltip() {
   // Timing
   const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
-  const HOVER_AWAY_DELAY = 3000; // 3 seconds - delay before closing when hovering away
+  const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
 
   // Timers
   let showTimer = null;
@@ -133,8 +133,9 @@ export function useCellTooltip() {
 
   /**
    * Handle click on cell
-   * Shows tooltip only if no tooltip is currently visible
-   * If a tooltip is visible, closes it instead
+   * If tooltip is visible for same cell, closes it
+   * If tooltip is visible for different cell, closes it and opens new one
+   * If no tooltip is visible, opens new one
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -146,8 +147,8 @@ export function useCellTooltip() {
       return;
     }
 
-    // If ANY tooltip is currently visible, close it (don't open a new one)
-    if (isVisible.value) {
+    // If clicking the same cell that has the tooltip, just close it
+    if (isVisible.value && currentCellElement === cellElement) {
       hideTooltip();
       return;
     }
