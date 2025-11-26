@@ -244,6 +244,7 @@
       @mouseenter="cellTooltip.handleTooltipMouseEnter"
       @mouseleave="cellTooltip.handleTooltipMouseLeave"
       @click="cellTooltip.handleTooltipClick"
+      @close="cellTooltip.handleTooltipClose"
     />
 
     <!-- Snackbar for notifications -->
