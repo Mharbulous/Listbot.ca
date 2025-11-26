@@ -19,11 +19,6 @@
         </button>
       </TitleDrawer>
 
-      <!-- DEBUG: Test element -->
-      <div style="background: red; color: white; padding: 20px; margin: 20px; z-index: 9999; position: relative;">
-        TEST CONTENT - If you see this, content is rendering. selectedPath = {{ selectedPath }}
-      </div>
-
       <!-- Introduction Section -->
       <div v-if="!selectedPath" class="mx-6 mb-6 relative z-10">
         <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-6 rounded-lg shadow-sm">
