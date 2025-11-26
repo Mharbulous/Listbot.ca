@@ -3,22 +3,6 @@
     <PageLayout>
       <TitleDrawer title="Bulk Import">
         <button
-          v-if="selectedPath"
-          class="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          @click="resetPath"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Change Import Path
-        </button>
-        <button
-          v-if="selectedPath"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           @click="mockImport"
         >
@@ -34,181 +18,175 @@
         </button>
       </TitleDrawer>
 
-      <!-- Import Path Selection -->
-      <div v-if="!selectedPath" class="mx-6 mb-6 relative z-10">
-        <div class="grid gap-6 md:grid-cols-2">
-          <!-- Path 1: Folder Structure Import -->
-          <button
-            class="bg-white border-2 border-slate-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left"
-            @click="selectPath('folder')"
+      <!-- Tabbed Import Tables -->
+      <div class="mx-6 mb-6 relative z-10">
+        <v-card class="shadow-sm">
+          <v-tabs
+            v-model="activeTab"
+            bg-color="white"
+            color="blue"
+            grow
           >
-            <div class="flex items-center gap-3 mb-4">
-              <div class="text-4xl">📁</div>
-              <div>
-                <h3 class="text-lg font-bold text-slate-900">Folder Structure Import</h3>
+            <v-tab value="folder">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📁</span>
+                <span class="font-medium">Folder Structure Import</span>
               </div>
-            </div>
-            <p class="text-sm text-slate-600 leading-relaxed">
-              Select the root folder containing your client matters. Listbot will identify and reproduce your client schema automatically.
-            </p>
-          </button>
-
-          <!-- Path 2: Import Matter List -->
-          <button
-            class="bg-white border-2 border-slate-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-left"
-            @click="selectPath('document')"
-          >
-            <div class="flex items-center gap-3 mb-4">
-              <div class="text-4xl">📄</div>
-              <div>
-                <h3 class="text-lg font-bold text-slate-900">Import Matter List</h3>
+            </v-tab>
+            <v-tab value="document">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📄</span>
+                <span class="font-medium">Import Matter List</span>
               </div>
-            </div>
-            <p class="text-sm text-slate-600 leading-relaxed">
-              Upload a client matter list in CSV/Excel/PDF format. Listbot will identify and reproduce your matter schema.
-            </p>
-          </button>
-        </div>
-      </div>
+            </v-tab>
+          </v-tabs>
 
-      <!-- Folder Import Table -->
-      <div v-if="selectedPath === 'folder'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px] relative z-10">
-        <table class="w-full min-w-[720px]">
-          <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
-                Import
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Client Name
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Matter Number
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Folder Path
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
-                Confidence
-              </th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-slate-200">
-            <tr
-              v-for="item in mockFolderData"
-              :key="item.matterNumber"
-              class="hover:bg-slate-50 transition-colors"
-            >
-              <td class="px-4 py-3">
-                <input
-                  v-model="item.import"
-                  type="checkbox"
-                  class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-              </td>
-              <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
-              <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ item.folderPath }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="{
-                    'bg-green-100 text-green-800': item.confidence >= 90,
-                    'bg-yellow-100 text-yellow-800': item.confidence >= 70 && item.confidence < 90,
-                    'bg-red-100 text-red-800': item.confidence < 70,
-                  }"
-                >
-                  {{ item.confidence }}%
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <v-window v-model="activeTab">
+            <!-- Folder Import Table -->
+            <v-window-item value="folder">
+              <div class="table-container bg-white overflow-hidden min-w-[720px]">
+                <table class="w-full min-w-[720px]">
+                  <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                        Import
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Client Name
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Matter Number
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Folder Path
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Confidence
+                      </th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-slate-200">
+                    <tr
+                      v-for="item in mockFolderData"
+                      :key="item.matterNumber"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="px-4 py-3">
+                        <input
+                          v-model="item.import"
+                          type="checkbox"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.folderPath }}</td>
+                      <td class="px-4 py-3">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="{
+                            'bg-green-100 text-green-800': item.confidence >= 90,
+                            'bg-yellow-100 text-yellow-800': item.confidence >= 70 && item.confidence < 90,
+                            'bg-red-100 text-red-800': item.confidence < 70,
+                          }"
+                        >
+                          {{ item.confidence }}%
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-right">
+                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </v-window-item>
 
-      <!-- Document Import Table -->
-      <div v-if="selectedPath === 'document'" class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px] relative z-10">
-        <table class="w-full min-w-[720px]">
-          <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
-                Import
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Client Name
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Matter Number
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
-                Status
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
-                Date Opened
-              </th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-slate-200">
-            <tr
-              v-for="item in mockDocumentData"
-              :key="item.matterNumber"
-              class="hover:bg-slate-50 transition-colors"
-            >
-              <td class="px-4 py-3">
-                <input
-                  v-model="item.import"
-                  type="checkbox"
-                  class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-              </td>
-              <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
-              <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ item.description }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getStatusClass(item.status)"
-                >
-                  {{ item.status }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ item.dateOpened }}</td>
-              <td class="px-4 py-3 text-right">
-                <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            <!-- Document Import Table -->
+            <v-window-item value="document">
+              <div class="table-container bg-white overflow-hidden min-w-[720px]">
+                <table class="w-full min-w-[720px]">
+                  <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                        Import
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Client Name
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Matter Number
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Status
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                        Date Opened
+                      </th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-slate-200">
+                    <tr
+                      v-for="item in mockDocumentData"
+                      :key="item.matterNumber"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="px-4 py-3">
+                        <input
+                          v-model="item.import"
+                          type="checkbox"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.description }}</td>
+                      <td class="px-4 py-3">
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          :class="getStatusClass(item.status)"
+                        >
+                          {{ item.status }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.dateOpened }}</td>
+                      <td class="px-4 py-3 text-right">
+                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </v-window-item>
+          </v-window>
+        </v-card>
       </div>
     </PageLayout>
 
@@ -250,7 +228,7 @@ defineOptions({
 });
 
 // State
-const selectedPath = ref(null);
+const activeTab = ref('folder');
 const showSuccessNotification = ref(false);
 
 // Mock Data for Folder Import
@@ -338,24 +316,15 @@ const mockDocumentData = ref([
 
 // Computed
 const selectedCount = computed(() => {
-  const data = selectedPath.value === 'folder' ? mockFolderData.value : mockDocumentData.value;
+  const data = activeTab.value === 'folder' ? mockFolderData.value : mockDocumentData.value;
   return data.filter(item => item.import).length;
 });
 
 // Methods
-function selectPath(path) {
-  selectedPath.value = path;
-}
-
-function resetPath() {
-  selectedPath.value = null;
-}
-
 function mockImport() {
   showSuccessNotification.value = true;
   setTimeout(() => {
     showSuccessNotification.value = false;
-    resetPath();
   }, 3000);
 }
 
