@@ -36,7 +36,7 @@ ListBot App
 ├── 🗄️ Matters Management
 │   ├── /matters ......................... Matters List
 │   ├── /matters/new ..................... Create New Matter
-│   ├── /matters/import .................. Import Matters
+│   ├── /import .......................... Import Matters
 │   ├── /matters/edit/:matterId .......... Edit Matter
 │   └── /matters/:id ..................... Matter Detail View
 │
@@ -154,7 +154,7 @@ The router applies two global `beforeEach` guards:
 /matters ─────────────────────► List all matters
     │
     ├─► /matters/new ─────────► Create new matter
-    ├─► /matters/import ──────► Import matters from file
+    ├─► /import ──────────────► Import matters from file
     ├─► /matters/:id ─────────► View matter details
     └─► /matters/edit/:id ────► Edit matter
 ```
