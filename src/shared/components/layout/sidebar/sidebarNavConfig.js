@@ -8,7 +8,7 @@ import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
 import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
-import shingleIcon from '@/assets/icons/nav-items/Shingle.png';
+import shingleIcon from '@/assets/icons/nav-items/shingle.png';
 
 /**
  * Navigation items configuration for the sidebar
