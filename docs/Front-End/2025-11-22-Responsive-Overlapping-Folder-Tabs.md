@@ -1,7 +1,7 @@
 # Responsive Overlapping Folder Tabs - Best Practices
 
 **Date:** 2025-11-22
-**Updated:** 2025-11-23
+**Updated:** 2025-11-27
 **Topic:** Implementing browser-style skeuomorphic tabs with responsive overlap behavior
 
 ## Problem Statement
@@ -284,6 +284,52 @@ This is the **CSS-only** approach that actually works. The key insight is using 
   width: 220px;  /* Fixed - no flex properties */
 }
 ```
+
+---
+
+❌ **WRONG - Parent wrapper with z-index creates stacking context:**
+```html
+<!-- Import Tabs -->
+<ImportTabs v-model="activeTab" />
+
+<!-- Tabbed Import Content -->
+<div class="mx-6 mb-6 relative z-0">  <!-- ❌ PROBLEM: relative z-0 -->
+  <div class="content-container">
+    <!-- Content here -->
+  </div>
+</div>
+```
+
+**Problem:** The `relative z-0` on the parent wrapper creates a **new stacking context** that isolates all child elements (including `.content-container` with `z-index: 25`) from the tabs above. This prevents the folder-tab layering effect from working - all tabs will appear at the same visual layer as the content.
+
+✅ **CORRECT - No z-index isolation on parent wrapper:**
+```html
+<!-- Import Tabs -->
+<ImportTabs v-model="activeTab" />
+
+<!-- Tabbed Import Content -->
+<div class="mx-6 mb-6">  <!-- ✅ No relative z-0 -->
+  <div class="content-container">
+    <!-- Content here -->
+  </div>
+</div>
+```
+
+**Key Principle:** The **tabs and content container must be in the same stacking context** to compete for z-index positioning. Any parent element between them that has `position: relative/absolute` AND a `z-index` value will create a barrier that breaks the layering.
+
+**What creates a new stacking context:**
+- `position: relative/absolute/fixed` + ANY `z-index` value (including `z-0`)
+- `position: sticky` + ANY `z-index` value
+- `opacity` less than 1
+- `transform`, `filter`, `perspective` properties
+- `isolation: isolate`
+
+**When to be careful:**
+- When applying Tailwind classes like `relative z-0` or `relative z-10` to wrappers
+- When using CSS-in-JS that might add positioning by default
+- When wrapping components in layout divs that have stacking context properties
+
+**Reference:** See the fix in `MatterImport.vue` (commit da8c278) where removing `relative z-0` from the wrapper fixed the tab layering.
 
 ---
 
