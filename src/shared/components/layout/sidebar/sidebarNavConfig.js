@@ -9,6 +9,7 @@ import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
 import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
 import shingleIcon from '@/assets/icons/nav-items/shingle.png';
+import scrollIcon from '@/assets/icons/nav-items/scroll.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -30,7 +31,7 @@ export function useNavItems() {
     { key: 'cast', path: computed(() => '/cast'), icon: castOfCharactersIcon, label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
     { key: 'law', path: computed(() => '/law'), icon: legalMemosIcon, label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
     { key: 'theory', path: computed(() => '/theory'), icon: whitePawnIcon, label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
-    { key: 'pleadings', path: computed(() => '/pleadings'), icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
+    { key: 'pleadings', path: computed(() => '/pleadings'), icon: scrollIcon, label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
     // Spacer for visual separation
     { key: 'spacer-1', type: 'spacer' },
