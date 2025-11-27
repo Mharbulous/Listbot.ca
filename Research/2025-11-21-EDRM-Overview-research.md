@@ -96,7 +96,7 @@ Modern platforms process at **high speeds** (Everlaw: 900K-1M docs/hour; Casepoi
 
 Increasingly, lawyers expect **Early Case Assessment (ECA) during processing** using AI to provide insights before formal review begins. Processing systems should handle **600+ file types** including modern collaboration data (Slack messages, Teams conversations, short message formats) and preserve all metadata fields critical for downstream analysis.
 
-**Competitive Benchmark:** ListBot.ca's AI fuzzy dedupe puts you ahead of basic platforms but consider adding **exact hash-based deduplication** (quick win), **email threading** (40-74% review reduction - critical feature), and **processing analytics dashboards** showing volume reduction achieved.
+**Competitive Benchmark:** ListBot.ca's AI fuzzy dedupe puts you ahead of basic platforms but consider adding **exact hash-based deduplication** (quick win), **email threading** (40-74% review reduction - critical feature - see `@planning/1. PRDs/Email-Threading-PRD.md`), and **processing analytics dashboards** showing volume reduction achieved.
 
 **Cross-Workflow Enhancement Opportunities:**
 
@@ -116,13 +116,13 @@ Review is the **highest-cost stage** (up to 80% of total e-discovery budget) whe
 
 Modern platforms integrate **Technology Assisted Review (TAR)** with Continuous Active Learning (CAL) that learns from reviewer decisions in real-time, promoting relevant documents to the top of review queues. **AI-powered features** now include document summarization (automatic 2-3 sentence summaries), tag suggestions with confidence scores, similar document identification, and privilege prediction.
 
-Collaboration features are essential: **shared notes and annotations** visible to all team members, document-level comment threads with @mentions, real-time review progress dashboards, and reviewer productivity metrics. **Email threading visualization** showing conversation structure and inclusive/non-inclusive designation saves massive review time.
+Collaboration features are essential: **shared notes and annotations** visible to all team members, document-level comment threads with @mentions, real-time review progress dashboards, and reviewer productivity metrics. **Email threading visualization** showing conversation structure and inclusive/non-inclusive designation saves massive review time (see `@planning/1. PRDs/Email-Threading-PRD.md` for full specification).
 
 **Competitive Benchmark:** Major platforms (Relativity, Everlaw, DISCO) offer sophisticated review environments with AI assistance, predictive coding, and advanced collaboration. ListBot.ca's current human review is foundational but needs enhancement with AI suggestions, faster navigation, and team collaboration features.
 
 **Cross-Workflow Enhancement Opportunities:**
 
-Prioritize **email threading visualization** (40-74% time savings - highest ROI feature). Add **Gemini-powered document summaries** for quick content understanding without reading entire documents. Implement **review batching system** with automatic load balancing across team members. Create **review progress dashboards** showing documents reviewed per hour, coding distribution, and estimated completion dates. Build **quality control sampling** that automatically selects random documents for secondary review with disagreement tracking.
+Prioritize **email threading visualization** (40-74% time savings - highest ROI feature - full PRD at `@planning/1. PRDs/Email-Threading-PRD.md`). Add **Gemini-powered document summaries** for quick content understanding without reading entire documents. Implement **review batching system** with automatic load balancing across team members. Create **review progress dashboards** showing documents reviewed per hour, coding distribution, and estimated completion dates. Build **quality control sampling** that automatically selects random documents for secondary review with disagreement tracking.
 
 ### 6. Analyze (Future) → EDRM Analysis Stage
 
@@ -147,7 +147,7 @@ Lawyers expect **timeline visualization tools** showing chronological event sequ
 **Recommended Implementation (Phased):**
 
 **Phase 1 - Quick Wins (1-2 months):**
-Build **Basic Timeline Visualization** using vis.js Timeline component with filtering by custodian/type/tags, zoom controls, and PDF export via html2canvas. Implement **exact duplicate detection** with MD5/SHA256 hashing on upload processed by Firebase Cloud Functions, grouping duplicates in UI with "review one, tag all" functionality. Create **basic email threading** by parsing email headers (Subject, In-Reply-To, References) to build thread relationships with Vue 3 tree component visualization.
+Build **Basic Timeline Visualization** using vis.js Timeline component with filtering by custodian/type/tags, zoom controls, and PDF export via html2canvas. Implement **exact duplicate detection** with MD5/SHA256 hashing on upload processed by Firebase Cloud Functions, grouping duplicates in UI with "review one, tag all" functionality. Create **basic email threading** by parsing email headers (Subject, In-Reply-To, References) to build thread relationships with Vue 3 tree component visualization (full PRD at `@planning/1. PRDs/Email-Threading-PRD.md`).
 
 **Phase 2 - Medium Complexity (3-6 months):**
 Develop **Gemini-Powered Concept Clustering**: generate document embeddings via Gemini API, perform k-means clustering with ml.js, create D3.js sunburst visualizations, and use Gemini to generate descriptive cluster labels. Cost estimate: $8-10 per 1,000 documents using Gemini Flash. Build **Gemini Document Summarization** for one-click summaries, entity extraction, document type identification, and key passage highlighting with results cached in Firestore to avoid repeated API calls.

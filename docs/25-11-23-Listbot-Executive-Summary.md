@@ -53,7 +53,7 @@ EDRM Stub Pages (12 views in src/views/stubs/):
   - These are placeholder routes with planned features, not functional implementations
 
 High-Value Planned Features:
-  - Email Threading - 40-74% time savings (highest ROI feature)
+  - Email Threading - 40-74% time savings (highest ROI feature) - See `@planning/1. PRDs/Email-Threading-PRD.md`
   - Pleadings - AI fact extraction with semantic deduplication, version control
   - Facts - Witness interview processing with hearsay tracking, RAG search
   - Advanced Analysis - Timeline visualization, concept clustering, network analysis, sentiment analysis

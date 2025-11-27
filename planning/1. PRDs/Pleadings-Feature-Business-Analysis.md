@@ -1295,7 +1295,7 @@ Market research reveals **NO existing e-discovery platform specifically extracts
    - Key findings: $35.4B (2025) → $72.5B (2035); 72% positive sentiment on AI
 
 3. **EDRM Framework & Costs**: ListBot EDRM research document
-   - Key findings: Review = 80% of costs; email threading = 40-74% time reduction; AI transforming analysis stage
+   - Key findings: Review = 80% of costs; email threading = 40-74% time reduction (see `@planning/1. PRDs/Email-Threading-PRD.md`); AI transforming analysis stage
 
 **User Research:**
 1. Interviews with 5 litigation lawyers (informal, pre-project)
