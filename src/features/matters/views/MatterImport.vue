@@ -62,7 +62,7 @@
           <v-window v-model="activeTab">
             <!-- Folder Import Table -->
             <v-window-item value="folder">
-              <div class="table-container bg-white overflow-hidden min-w-[720px]">
+              <div class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
                   <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
                     <tr>
@@ -134,7 +134,7 @@
 
             <!-- Document Import Table -->
             <v-window-item value="document">
-              <div class="table-container bg-white overflow-hidden min-w-[720px]">
+              <div class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
                   <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
                     <tr>
@@ -326,8 +326,4 @@ function getStatusClass(status) {
   z-index: 10;
 }
 
-.table-container {
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
 </style>
