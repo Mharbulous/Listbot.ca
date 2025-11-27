@@ -18,51 +18,14 @@
         </button>
       </TitleDrawer>
 
-      <!-- Tabbed Import Tables -->
-      <div class="mx-6 mb-6 relative z-10">
-        <v-card class="shadow-sm">
-          <v-tabs
-            v-model="activeTab"
-            bg-color="white"
-            color="blue"
-            grow
-          >
-            <v-tab value="folder">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">📁</span>
-                <span class="font-medium">Import from Folders</span>
-              </div>
-            </v-tab>
-            <v-tab value="document">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">📄</span>
-                <span class="font-medium">Import from Matter List</span>
-              </div>
-            </v-tab>
-            <v-tab value="map-fields">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">🤖</span>
-                <span class="font-medium">Map Fields with AI</span>
-              </div>
-            </v-tab>
-            <v-tab value="review-mappings">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">🔍</span>
-                <span class="font-medium">Review Field Mappings</span>
-              </div>
-            </v-tab>
-            <v-tab value="confirm-import">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">✅</span>
-                <span class="font-medium">Confirm Import</span>
-              </div>
-            </v-tab>
-          </v-tabs>
+      <!-- Import Tabs -->
+      <ImportTabs v-model="activeTab" />
 
-          <v-window v-model="activeTab">
-            <!-- Folder Import Table -->
-            <v-window-item value="folder">
-              <div class="table-container bg-white min-w-[720px]">
+      <!-- Tabbed Import Content -->
+      <div class="mx-6 mb-6 relative z-0">
+        <div class="content-container">
+          <!-- Folder Import Table -->
+          <div v-if="activeTab === 'folder'" class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
                   <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
                     <tr>
@@ -130,11 +93,9 @@
                   </tbody>
                 </table>
               </div>
-            </v-window-item>
 
-            <!-- Document Import Table -->
-            <v-window-item value="document">
-              <div class="table-container bg-white min-w-[720px]">
+          <!-- Document Import Table -->
+          <div v-if="activeTab === 'document'" class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
                   <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
                     <tr>
@@ -202,42 +163,34 @@
                   </tbody>
                 </table>
               </div>
-            </v-window-item>
 
-            <!-- Map Fields with AI Tab -->
-            <v-window-item value="map-fields">
-              <div class="bg-white p-8">
+          <!-- Map Fields with AI Tab -->
+          <div v-if="activeTab === 'map-fields'" class="bg-white p-8">
                 <div class="text-center text-slate-500">
                   <span class="text-4xl mb-4 block">🤖</span>
                   <h3 class="text-lg font-semibold mb-2">Map Fields with AI</h3>
                   <p class="text-sm">AI-powered field mapping will be displayed here</p>
                 </div>
               </div>
-            </v-window-item>
 
-            <!-- Review Field Mappings Tab -->
-            <v-window-item value="review-mappings">
-              <div class="bg-white p-8">
+          <!-- Review Field Mappings Tab -->
+          <div v-if="activeTab === 'review-mappings'" class="bg-white p-8">
                 <div class="text-center text-slate-500">
                   <span class="text-4xl mb-4 block">🔍</span>
                   <h3 class="text-lg font-semibold mb-2">Review Field Mappings</h3>
                   <p class="text-sm">Field mapping review interface will be displayed here</p>
                 </div>
               </div>
-            </v-window-item>
 
-            <!-- Confirm Import Tab -->
-            <v-window-item value="confirm-import">
-              <div class="bg-white p-8">
+          <!-- Confirm Import Tab -->
+          <div v-if="activeTab === 'confirm-import'" class="bg-white p-8">
                 <div class="text-center text-slate-500">
                   <span class="text-4xl mb-4 block">✅</span>
                   <h3 class="text-lg font-semibold mb-2">Confirm Import</h3>
                   <p class="text-sm">Import confirmation and summary will be displayed here</p>
                 </div>
               </div>
-            </v-window-item>
-          </v-window>
-        </v-card>
+        </div>
       </div>
     </PageLayout>
 
@@ -273,6 +226,7 @@
 import { ref, computed } from 'vue';
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
+import ImportTabs from '../components/ImportTabs.vue';
 import folderImportData from '../data/import-from-folders.json';
 import documentImportData from '../data/import-from-matter-list.json';
 
@@ -319,6 +273,14 @@ function getStatusClass(status) {
   background-color: #faf8f3;
 }
 
+.content-container {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 0 12px 12px 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
 .sticky-table-header {
   position: sticky;
   top: 0;
@@ -326,4 +288,7 @@ function getStatusClass(status) {
   z-index: 10;
 }
 
+.table-container {
+  overflow-x: auto;
+}
 </style>
