@@ -146,7 +146,7 @@
             </p>
             <p>
               3. Click
-              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium"
+              <span class="bg-teal-100 text-teal-800 px-2 py-1 rounded text-xs font-medium"
                 >"Add domain"</span
               >
             </p>
@@ -154,7 +154,7 @@
               4. Add your new app's domain (e.g.,
               <code class="bg-slate-100 px-1 rounded">app2.yourdomain.com</code>)
             </p>
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+            <div class="bg-teal-50 border-l-4 border-teal-400 p-3 rounded">
               💡 Your authorized domains list should look like:
               <div class="mt-2 font-mono text-xs">
                 <div>• app1.yourdomain.com</div>

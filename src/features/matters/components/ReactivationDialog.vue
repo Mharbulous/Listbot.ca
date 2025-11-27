@@ -61,7 +61,7 @@
           <button
             v-if="isResponsibleLawyer || hasAssumedResponsibility"
             @click="handleReactivate"
-            class="px-4 py-2 border border-blue-600 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            class="px-4 py-2 border border-teal-600 rounded text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 transition-colors"
           >
             Reactivate Matter
           </button>

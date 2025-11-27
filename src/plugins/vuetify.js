@@ -15,13 +15,13 @@ const vuetify = createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#3b82f6', // brand-blue
-          'primary-darken-1': '#1d4ed8', // brand-blue-dark
+          primary: '#0d9488', // teal-600
+          'primary-darken-1': '#0f766e', // teal-700
           secondary: '#64748b', // slate-500
           accent: '#f1f5f9', // slate-100
           error: '#ef4444', // red-500
           warning: '#f59e0b', // amber-500
-          info: '#3b82f6', // blue-500
+          info: '#0d9488', // teal-600
           success: '#10b981', // emerald-500
           surface: '#ffffff',
           'surface-variant': '#f8fafc', // slate-50
@@ -31,13 +31,13 @@ const vuetify = createVuetify({
       },
       dark: {
         colors: {
-          primary: '#3b82f6', // brand-blue
-          'primary-darken-1': '#1d4ed8', // brand-blue-dark
+          primary: '#0d9488', // teal-600
+          'primary-darken-1': '#0f766e', // teal-700
           secondary: '#64748b', // slate-500
           accent: '#1e293b', // slate-800
           error: '#ef4444', // red-500
           warning: '#f59e0b', // amber-500
-          info: '#3b82f6', // blue-500
+          info: '#0d9488', // teal-600
           success: '#10b981', // emerald-500
           surface: '#1e293b', // slate-800
           'surface-variant': '#334155', // slate-700

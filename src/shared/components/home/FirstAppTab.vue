@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center mb-6">
       <div
-        class="bg-blue-500 text-white text-2xl font-bold rounded-full w-12 h-12 flex items-center justify-center mr-4"
+        class="bg-teal-600 text-white text-2xl font-bold rounded-full w-12 h-12 flex items-center justify-center mr-4"
       >
         🆕
       </div>
@@ -17,7 +17,7 @@
       <!-- Step 1: Create Repository -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           1
         </div>
@@ -49,7 +49,7 @@
       <!-- Step 2: Set up Firebase -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           2
         </div>
@@ -67,7 +67,7 @@
             </p>
             <p>
               2. Click
-              <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium"
+              <span class="bg-teal-100 text-teal-800 px-2 py-1 rounded text-xs font-medium"
                 >"Create a project"</span
               >
             </p>
@@ -80,7 +80,7 @@
                 >"Create project"</span
               >
             </p>
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+            <div class="bg-teal-50 border-l-4 border-teal-400 p-3 rounded">
               💡 <strong>Remember:</strong> All your future apps will use this same Firebase
               project for SSO.
             </div>
@@ -91,7 +91,7 @@
       <!-- Step 3: Enable Services -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           3
         </div>
@@ -112,7 +112,7 @@
       <!-- Step 4: Configure Environment -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           4
         </div>
@@ -134,7 +134,7 @@
               <div>VITE_FIREBASE_APP_ID=1:123456789:web:abcdef123456</div>
               <div class="text-blue-600">VITE_APP_DOMAIN=yourdomain.com</div>
             </div>
-            <p class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+            <p class="bg-teal-50 border-l-4 border-teal-400 p-3 rounded">
               💡 <strong>Save these values:</strong> You'll need the exact same
               configuration for all future apps in your SSO network.
             </p>
@@ -145,7 +145,7 @@
       <!-- Step 5: Deploy Firestore Rules -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           5
         </div>
@@ -178,7 +178,7 @@
       <!-- Step 6: Deploy App -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           6
         </div>
@@ -251,7 +251,7 @@
       <!-- Step 7: Configure Authorized Domains -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           7
         </div>
@@ -289,7 +289,7 @@
       <!-- Step 8: Test SSO -->
       <div class="flex items-start space-x-4">
         <div
-          class="bg-blue-500 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
+          class="bg-teal-600 text-white text-lg font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0"
         >
           8
         </div>
