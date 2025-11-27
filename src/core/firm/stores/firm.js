@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { FirmService } from '../services/firmService';
+import { FirmService } from '../../../services/firmService';
 
 export const useFirmStore = defineStore('firm', {
   state: () => ({
