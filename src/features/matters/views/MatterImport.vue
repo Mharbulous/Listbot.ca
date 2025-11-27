@@ -2,20 +2,36 @@
   <div class="h-full flex flex-col bg-viewport-bg">
     <PageLayout>
       <TitleDrawer title="Bulk Import">
-        <button
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          @click="mockImport"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-            />
-          </svg>
-          Import Selected ({{ selectedCount }})
-        </button>
+        <div class="flex items-center gap-3">
+          <button
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            @click="importFolders"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
+            </svg>
+            Import Folders
+          </button>
+          <button
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            @click="importList"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
+            </svg>
+            Import List
+          </button>
+        </div>
       </TitleDrawer>
 
       <!-- 
@@ -257,7 +273,18 @@ const selectedCount = computed(() => {
 });
 
 // Methods
-function mockImport() {
+function importFolders() {
+  const selectedFolders = mockFolderData.value.filter(item => item.import);
+  console.log('Importing folders:', selectedFolders);
+  showSuccessNotification.value = true;
+  setTimeout(() => {
+    showSuccessNotification.value = false;
+  }, 3000);
+}
+
+function importList() {
+  const selectedDocuments = mockDocumentData.value.filter(item => item.import);
+  console.log('Importing list:', selectedDocuments);
   showSuccessNotification.value = true;
   setTimeout(() => {
     showSuccessNotification.value = false;
