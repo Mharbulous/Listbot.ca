@@ -164,7 +164,7 @@ const getTabWrapperStyle = (tabId) => {
 .import-tabs-sticky {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 50; /* Higher than content-container (25) so active tab appears in front */
   background: transparent;
   padding-bottom: 0;
 }
