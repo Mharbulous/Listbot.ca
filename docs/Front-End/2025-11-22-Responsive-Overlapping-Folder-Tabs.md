@@ -251,7 +251,7 @@ This is the **CSS-only** approach that actually works. The key insight is using 
      z-index: 25; /* Higher than inactive tabs, lower than active tab */
      border: 1px solid #cbd5e1;
      border-top: none; /* Tab connects to content */
-     border-radius: 0 12px 12px 12px; /* No top-left radius where tab connects */
+     border-radius: 0 0 12px 12px; /* Square top corners, rounded bottom corners */
    }
    ```
 

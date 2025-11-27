@@ -278,7 +278,7 @@ function getStatusClass(status) {
   z-index: 25; /* Higher than inactive tabs (1-10), lower than active tab (100) */
   background: white;
   border: 1px solid #cbd5e1;
-  border-radius: 0 12px 12px 12px;
+  border-radius: 0 0 12px 12px; /* Square top corners, rounded bottom corners */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
