@@ -30,16 +30,23 @@
           </button>
       </TitleDrawer>
 
+      <!--
+        FIX: ProceedingsTabs now wraps the content via slot.
+        This puts tabs and content in the SAME stacking context,
+        allowing z-index values to properly compete.
+      -->
       <ProceedingsTabs
         v-model="selectedProceeding"
         :proceedings="mockProceedings"
-      />
-
-      <PleadingsTable
-        :pleadings="filteredPleadings"
-        @show-version-history="handleShowVersionHistory"
-        @open-action-menu="handleOpenActionMenu"
-      />
+      >
+        <template #content>
+          <PleadingsTable
+            :pleadings="filteredPleadings"
+            @show-version-history="handleShowVersionHistory"
+            @open-action-menu="handleOpenActionMenu"
+          />
+        </template>
+      </ProceedingsTabs>
     </PageLayout>
 
     <VersionHistoryModal
