@@ -1,7 +1,9 @@
 <template>
-  <div class="table-container bg-white border border-slate-200 mx-6 mb-6 rounded-b-lg border-t-0 shadow-sm overflow-hidden min-w-[720px]">
-    <table class="w-full min-w-[720px]">
-      <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
+  <div class="mx-6 mb-6">
+    <div class="content-container">
+      <div class="table-container bg-white min-w-[720px]">
+        <table class="w-full min-w-[720px]">
+          <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
         <tr>
           <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
             Document Name
@@ -102,6 +104,8 @@
       <p class="text-lg font-medium mb-2">No pleadings found</p>
       <p class="text-sm">Upload your first pleading to get started</p>
     </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -125,8 +129,26 @@ function handleActionMenu(pleading) {
 </script>
 
 <style scoped>
-.table-container {
+.content-container {
   position: relative;
-  z-index: 25;
+  z-index: 25; /* Now competes with tab wrappers in SAME stacking context! */
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-top: none; /* Tab connects to content - no visible line between active tab and table header */
+  border-radius: 0 0 12px 12px; /* Square top corners, rounded bottom corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.sticky-table-header {
+  position: sticky;
+  top: 0;
+  background: #e0f2fe;
+  z-index: 10;
+  border-top: 1px solid #cbd5e1; /* Matches tab border - creates seamless connection with active tab */
+}
+
+.table-container {
+  overflow-x: auto;
 }
 </style>

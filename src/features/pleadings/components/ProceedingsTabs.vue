@@ -1,46 +1,58 @@
 <template>
-  <div class="proceedings-tabs-sticky px-6">
-    <div class="tabs-container">
-      <!-- Proceeding tabs (left-aligned) - wrapped in containers that shrink -->
-      <div
-        v-for="(proceeding, index) in proceedings"
-        :key="proceeding.id"
-        class="tab-wrapper"
-        :class="{ 'last-tab-wrapper': index === proceedings.length - 1 }"
-        :style="getTabWrapperStyle(proceeding.id)"
-      >
-        <button
-          @click="selectTab(proceeding.id)"
-          @mouseenter="setHoveredTab(proceeding.id)"
-          @mouseleave="clearHoveredTab"
-          class="folder-tab proceeding-tab"
-          :class="getTabStateClass(proceeding.id)"
+  <!--
+    FIX: Wrapper creates a SINGLE stacking context for both tabs AND content.
+    This allows tab z-index values to properly compete with the content container below.
+  -->
+  <div class="proceedings-tabs-wrapper">
+    <div class="proceedings-tabs-row px-6">
+      <div class="tabs-container">
+        <!-- Proceeding tabs (left-aligned) - wrapped in containers that shrink -->
+        <div
+          v-for="(proceeding, index) in proceedings"
+          :key="proceeding.id"
+          class="tab-wrapper"
+          :class="{ 'last-tab-wrapper': index === proceedings.length - 1 }"
+          :style="getTabWrapperStyle(proceeding.id)"
         >
-          <div class="tab-content">
-            <div class="tab-title">{{ proceeding.styleCause }}</div>
-            <div class="tab-subtitle">
-              {{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}
+          <button
+            @click="selectTab(proceeding.id)"
+            @mouseenter="setHoveredTab(proceeding.id)"
+            @mouseleave="clearHoveredTab"
+            class="folder-tab proceeding-tab"
+            :class="getTabStateClass(proceeding.id)"
+          >
+            <div class="tab-content">
+              <div class="tab-title">{{ proceeding.styleCause }}</div>
+              <div class="tab-subtitle">
+                {{ proceeding.venue }} • {{ proceeding.registry }} • {{ proceeding.courtFileNo }}
+              </div>
             </div>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
 
-      <!-- Super spacer to absorb extra space and push ALL tab to the right -->
-      <div class="super-spacer"></div>
+        <!-- Super spacer to absorb extra space and push ALL tab to the right -->
+        <div class="super-spacer"></div>
 
-      <!-- ALL tab (right-aligned, never shrinks) -->
-      <div class="all-tab-wrapper" :style="getTabWrapperStyle(null)">
-        <button
-          @click="selectTab(null)"
-          @mouseenter="setHoveredTab(ALL_TAB_ID)"
-          @mouseleave="clearHoveredTab"
-          class="folder-tab all-tab"
-          :class="getTabStateClass(null)"
-        >
-          ALL
-        </button>
+        <!-- ALL tab (right-aligned, never shrinks) -->
+        <div class="all-tab-wrapper" :style="getTabWrapperStyle(null)">
+          <button
+            @click="selectTab(null)"
+            @mouseenter="setHoveredTab(ALL_TAB_ID)"
+            @mouseleave="clearHoveredTab"
+            class="folder-tab all-tab"
+            :class="getTabStateClass(null)"
+          >
+            ALL
+          </button>
+        </div>
       </div>
     </div>
+
+    <!--
+      FIX: Content slot is NOW INSIDE the same stacking context as tabs.
+      This allows tab z-index values to properly compete with content-container.
+    -->
+    <slot name="content"></slot>
   </div>
 </template>
 
@@ -52,7 +64,8 @@ import { ref, computed } from 'vue';
 // ============================================================================
 
 const Z_INDEX_ACTIVE = 100;
-const Z_INDEX_HOVERED = 99;
+const Z_INDEX_HOVERED = 20; // Hovered inactive tabs stay BEHIND content (25) but in front of other inactive tabs
+const Z_INDEX_CONTENT = 25; // Content container z-index for reference
 const ALL_TAB_ID = 'all';
 
 // ============================================================================
@@ -117,24 +130,24 @@ const getTabStateClass = (tabId) => {
 };
 
 // ============================================================================
-// TAB STYLING (CSS-only adaptive approach)
+// TAB STYLING - Z-index values now compete in same stacking context as content
 // ============================================================================
 
 const getTabWrapperStyle = (tabId) => {
-  // Calculate z-index for the wrapper - this controls stacking order
   let zIndex = 1;
   if (isActive(tabId)) {
+    // Active tab: z-index 100 > content container's 25 = APPEARS IN FRONT
     zIndex = Z_INDEX_ACTIVE;
   } else if (isHovered(tabId)) {
     zIndex = Z_INDEX_HOVERED;
   } else {
-    // Find the index for non-active, non-hovered tabs
+    // Inactive tabs: z-index 1-10 < content container's 25 = APPEARS BEHIND
     const proceedingIndex = props.proceedings.findIndex((p) => p.id === tabId);
     if (proceedingIndex !== -1) {
       zIndex = proceedingIndex + 1;
     } else if (tabId === null) {
       // ALL tab gets a base z-index
-      zIndex = 50;
+      zIndex = 10;
     }
   }
 
@@ -144,13 +157,21 @@ const getTabWrapperStyle = (tabId) => {
 
 <style scoped>
 /* ========================================================================== */
-/* CONTAINER                                                                  */
+/* FIX: OUTER WRAPPER - Creates single stacking context for tabs + content    */
 /* ========================================================================== */
 
-.proceedings-tabs-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.proceedings-tabs-wrapper {
+  position: relative;
+  /* This wrapper contains both tabs and content, so they share stacking context */
+}
+
+/* ========================================================================== */
+/* TABS ROW - No longer sticky (wrapper handles positioning if needed)        */
+/* ========================================================================== */
+
+.proceedings-tabs-row {
+  position: relative;
+  /* NO position: sticky here - that was creating the isolated stacking context */
   background: transparent;
   padding-bottom: 0;
 }
