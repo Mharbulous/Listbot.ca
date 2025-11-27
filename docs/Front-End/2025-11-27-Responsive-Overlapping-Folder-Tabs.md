@@ -288,51 +288,6 @@ This is the **CSS-only** approach that actually works. The key insight is using 
 
 ---
 
-âŒ **WRONG - Parent wrapper with z-index creates stacking context:**
-```html
-<!-- Import Tabs -->
-<ImportTabs v-model="activeTab" />
-
-<!-- Tabbed Import Content -->
-<div class="mx-6 mb-6 relative z-0">  <!-- âŒ PROBLEM: relative z-0 -->
-  <div class="content-container">
-    <!-- Content here -->
-  </div>
-</div>
-```
-
-**Problem:** The `relative z-0` on the parent wrapper creates a **new stacking context** that isolates all child elements (including `.content-container` with `z-index: 25`) from the tabs above. This prevents the folder-tab layering effect from working - all tabs will appear at the same visual layer as the content.
-
-âœ… **CORRECT - No z-index isolation on parent wrapper:**
-```html
-<!-- Import Tabs -->
-<ImportTabs v-model="activeTab" />
-
-<!-- Tabbed Import Content -->
-<div class="mx-6 mb-6">  <!-- âœ… No relative z-0 -->
-  <div class="content-container">
-    <!-- Content here -->
-  </div>
-</div>
-```
-
-**Key Principle:** The **tabs and content container must be in the same stacking context** to compete for z-index positioning. Any parent element between them that has `position: relative/absolute` AND a `z-index` value will create a barrier that breaks the layering.
-
-**What creates a new stacking context:**
-- `position: relative/absolute/fixed` + ANY `z-index` value (including `z-0`)
-- `position: sticky` + ANY `z-index` value
-- `opacity` less than 1
-- `transform`, `filter`, `perspective` properties
-- `isolation: isolate`
-
-**When to be careful:**
-- When applying Tailwind classes like `relative z-0` or `relative z-10` to wrappers
-- When using CSS-in-JS that might add positioning by default
-- When wrapping components in layout divs that have stacking context properties
-
-**Reference:** See the fix in `MatterImport.vue` (commit da8c278) where removing `relative z-0` from the wrapper fixed the tab layering.
-
----
 
 ## âš ï¸ CRITICAL: The `position: sticky` Stacking Context Trap
 
@@ -479,18 +434,11 @@ FIXED STRUCTURE:
 </template>
 
 <style scoped>
-.content-container {
-  position: relative;
-  z-index: 25; /* Now competes with tabs in SAME stacking context */
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-}
+/* See "Critical Implementation Details" section for full .content-container styling */
 </style>
 ```
-
 ### If You Still Need Sticky Behavior
+
 
 If you need the tabs to stick to the top while scrolling, you have options:
 
@@ -751,30 +699,6 @@ INACTIVE TAB VIEW (z-index 1-10 < 25):
 
 ---
 
-### Quick Checklist: Implementing Tabs Without These Issues
-
-When implementing new skeuomorphic tabs, verify:
-
-- [ ] **No `!important` on hover z-index** - Use JavaScript state management instead
-- [ ] **Hover z-index < content z-index** - Inactive tabs stay behind even when hovered (e.g., 20 < 25 < 100)
-- [ ] **Solid background colors** - No gradients on tabs
-- [ ] **No box-shadows on tabs** - Only on content container if needed
-- [ ] **Single `translateY` value for active tabs** - No overrides creating gaps
-- [ ] **Matching backgrounds** - Active tab color matches table header exactly
-- [ ] **Border strategy:**
-  - [ ] Tabs: `border-bottom: none`
-  - [ ] Content container: `border-top: none`
-  - [ ] Table header: `border-top: 1px solid` (creates line with inactive tabs)
-- [ ] **Slot-based pattern** - Tabs and content in same stacking context
-- [ ] **No `position: sticky` on tabs** - Use wrapper pattern if sticky needed
-
-**Files to Reference:**
-- `src/features/pleadings/components/ProceedingsTabs.vue` - Tabs component with slot
-- `src/features/pleadings/components/PleadingsTable.vue` - Content container styling
-- `src/features/pleadings/views/Pleadings.vue` - Parent view using slot pattern
-
----
-
 ## 📌 Sticky Table Headers Below Tabs
 
 **Date Added:** 2025-11-27
@@ -991,6 +915,7 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 
 <style scoped>
 .content-container {
+  /* Pattern from "Critical Implementation Details" section - ensures folder-tab z-index layering */
   position: relative;
   z-index: 25;
   background: white;
@@ -1060,6 +985,7 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 
 <style scoped>
 .table-container {
+  /* Pattern from "Critical Implementation Details" - z-index: 25 for folder-tab layering */
   position: relative;
   z-index: 25;
   background: white;
@@ -1579,7 +1505,6 @@ When implementing overlapping tabs, verify:
 - [ ] **Sticky table header sticks at correct `top` value** (see "Sticky Table Headers Below Tabs" section)
 - [ ] **Sticky table header doesn't overlap tabs** when scrolling
 
-**Pro Tip:** Use the "Quick Checklist" in the "Common Problems & Fixes" section for detailed verification steps.
 
 ---
 
