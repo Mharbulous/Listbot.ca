@@ -10,6 +10,7 @@ import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transpa
 import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
 import shingleIcon from '@/assets/icons/nav-items/Law-shingle.png';
 import scrollIcon from '@/assets/icons/nav-items/scroll.png';
+import cuteDroidIcon from '@/assets/icons/nav-items/CuteDroid.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -60,7 +61,7 @@ export function useNavItems() {
     },
 
     // EDRM Stage 4: Process
-    { key: 'process', path: computed(() => '/process'), icon: '🤖', label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
+    { key: 'process', path: computed(() => '/process'), icon: cuteDroidIcon, label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 5: Review
     {
