@@ -20,17 +20,17 @@ export function useNavItems() {
 
   return [
     // Firm (Special - not part of EDRM workflow)
-    { key: 'firm', path: '/firm', icon: shingleIcon, label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
+    { key: 'firm', path: computed(() => '/firm'), icon: shingleIcon, label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
 
     // Matters (Special - not part of EDRM workflow)
-    { key: 'matters', path: '/matters', icon: briefcaseIcon, label: 'Matters' },
+    { key: 'matters', path: computed(() => '/matters'), icon: briefcaseIcon, label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'facts', path: '/facts', icon: factsIcon, label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
-    { key: 'cast', path: '/cast', icon: castOfCharactersIcon, label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
-    { key: 'law', path: '/law', icon: legalMemosIcon, label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
-    { key: 'theory', path: '/theory', icon: whitePawnIcon, label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
-    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
+    { key: 'facts', path: computed(() => '/facts'), icon: factsIcon, label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
+    { key: 'cast', path: computed(() => '/cast'), icon: castOfCharactersIcon, label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
+    { key: 'law', path: computed(() => '/law'), icon: legalMemosIcon, label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
+    { key: 'theory', path: computed(() => '/theory'), icon: whitePawnIcon, label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
+    { key: 'pleadings', path: computed(() => '/pleadings'), icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
     // Spacer for visual separation
     { key: 'spacer-1', type: 'spacer' },
@@ -39,10 +39,10 @@ export function useNavItems() {
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify', icon: flashlightIcon, label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
+    { key: 'identify', path: computed(() => '/identify'), icon: flashlightIcon, label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: cloudUploadIcon, label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
+    { key: 'preserve', path: computed(() => '/upload'), icon: cloudUploadIcon, label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
 
     // EDRM Stage 3: Collect
     {
@@ -59,7 +59,7 @@ export function useNavItems() {
     },
 
     // EDRM Stage 4: Process
-    { key: 'process', path: '/process', icon: '🤖', label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
+    { key: 'process', path: computed(() => '/process'), icon: '🤖', label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 5: Review
     {
@@ -90,13 +90,13 @@ export function useNavItems() {
     },
 
     // EDRM Stage 6: Analysis
-    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
+    { key: 'analysis', path: computed(() => '/analysis'), icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 7: Produce
-    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/produce/stub', stubStatus: 'placeholder' },
+    { key: 'produce', path: computed(() => '/produce'), icon: '📃', label: 'Produce', stubPath: '/produce/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    
+    { key: 'present', path: computed(() => '/present'), icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    
   ];
 }
 
