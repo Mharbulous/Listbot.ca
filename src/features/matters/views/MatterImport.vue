@@ -287,7 +287,7 @@ function getStatusClass(status) {
 .sticky-table-header {
   position: sticky;
   top: 0;
-  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%); /* Match active tab background */
+  background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%); /* Seamlessly continues from active tab bottom */
   z-index: 10;
 }
 
