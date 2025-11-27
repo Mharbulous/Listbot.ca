@@ -44,7 +44,7 @@ export function useNavItems() {
     { key: 'identify', path: computed(() => '/identify'), icon: flashlightIcon, label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: computed(() => '/upload'), icon: cloudUploadIcon, label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
+    { key: 'preserve', path: computed(() => '/upload'), icon: cloudUploadIcon, label: 'Upload', stubPath: '/upload/stub', stubStatus: 'complete' },
 
     // EDRM Stage 3: Collect
     {
