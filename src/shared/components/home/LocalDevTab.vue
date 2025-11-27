@@ -43,7 +43,7 @@
               <div>127.0.0.1 files.localhost</div>
               <div>127.0.0.1 admin.localhost</div>
             </div>
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+            <div class="bg-teal-50 border-l-4 border-teal-400 p-3 rounded">
               💡 <strong>Tip:</strong> You may need to restart your browser after editing
               the hosts file.
             </div>
@@ -196,9 +196,9 @@
           <h3 class="font-semibold text-slate-800 mb-2">Development Tips</h3>
           <div class="text-slate-600 text-sm space-y-2">
             <div class="grid md:grid-cols-2 gap-4">
-              <div class="bg-blue-50 p-3 rounded">
-                <p class="font-medium text-blue-800 mb-2">🚀 Hot Reloading</p>
-                <p class="text-blue-700 text-xs">
+              <div class="bg-teal-50 p-3 rounded">
+                <p class="font-medium text-teal-800 mb-2">🚀 Hot Reloading</p>
+                <p class="text-teal-700 text-xs">
                   All apps support hot reloading. Changes will appear instantly without
                   losing authentication state.
                 </p>

@@ -56,7 +56,7 @@
     <div class="relative flex-shrink-0" data-matters-dropdown>
       <button
         @click="mattersFilterStore.toggleStatusDropdown()"
-        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-xl font-medium text-white transition-colors flex items-center gap-2"
+        class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 rounded-lg text-xl font-medium text-white transition-colors flex items-center gap-2"
       >
         <span>Status: {{ mattersFilterStore.statusFilterLabel }}</span>
         <svg
@@ -84,7 +84,7 @@
           class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'active'
-              ? 'text-blue-600 font-medium'
+              ? 'text-teal-600 font-medium'
               : 'text-slate-700'
           "
         >
@@ -95,7 +95,7 @@
           class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'archived'
-              ? 'text-blue-600 font-medium'
+              ? 'text-teal-600 font-medium'
               : 'text-slate-700'
           "
         >
@@ -106,7 +106,7 @@
           class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'all'
-              ? 'text-blue-600 font-medium'
+              ? 'text-teal-600 font-medium'
               : 'text-slate-700'
           "
         >
@@ -121,7 +121,7 @@
         v-model="mattersFilterStore.searchText"
         type="text"
         placeholder="filter matters..."
-        class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xl transition-all placeholder:text-slate-400"
+        class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-xl transition-all placeholder:text-slate-400"
       />
       <!-- Integrated Search Actions -->
       <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -131,7 +131,7 @@
           :class="[
             'p-1.5 rounded text-lg font-semibold transition-colors',
             mattersFilterStore.caseSensitive
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-teal-600 text-white hover:bg-teal-700'
               : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
           ]"
           :title="mattersFilterStore.caseSensitive ? 'Case sensitive' : 'Case insensitive'"
@@ -144,7 +144,7 @@
           :class="[
             'px-1.5 py-1.5 rounded text-lg font-semibold transition-colors',
             mattersFilterStore.wholeWord
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-teal-600 text-white hover:bg-teal-700'
               : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
           ]"
           :title="mattersFilterStore.wholeWord ? 'Match whole words only' : 'Match partial words'"
@@ -172,7 +172,7 @@
     <!-- New Matter Button -->
     <router-link
       to="/matters/new"
-      class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xl font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
+      class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-xl font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

@@ -4,7 +4,7 @@
       <TitleDrawer title="Bulk Import">
         <div class="flex items-center gap-3">
           <button
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             @click="importFolders"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -18,7 +18,7 @@
             Import Folders
           </button>
           <button
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             @click="importList"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@
                             <input
                               v-model="item.import"
                               type="checkbox"
-                              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                              class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                             />
                           </td>
                           <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
@@ -152,7 +152,7 @@
                             <input
                               v-model="item.import"
                               type="checkbox"
-                              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                              class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                             />
                           </td>
                           <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>

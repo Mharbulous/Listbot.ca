@@ -92,7 +92,7 @@
                   <input
                     v-model="formData.matterNumber"
                     type="text"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     placeholder="e.g., MAT-2025-001"
                   />
                 </div>
@@ -105,7 +105,7 @@
                   <textarea
                     v-model="formData.description"
                     rows="4"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
                     placeholder="Briefly describe this matter..."
                   ></textarea>
                 </div>
@@ -143,7 +143,7 @@
                       <input
                         v-model="formData.clients[index]"
                         type="text"
-                        class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         placeholder="Client name"
                       />
                       <button
@@ -211,7 +211,7 @@
                       <input
                         v-model="formData.adverseParties[index]"
                         type="text"
-                        class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         placeholder="Adverse party name"
                       />
                       <button
@@ -274,7 +274,7 @@
                   </label>
                   <select
                     v-model="formData.responsibleLawyer"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     :class="{ 'border-red-500': showLawyerError }"
                   >
                     <option value="" disabled>Select lawyer</option>
