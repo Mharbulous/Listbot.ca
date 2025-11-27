@@ -302,14 +302,10 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-active {
-  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 90%, #e0f2fe 100%);
+  background: #e0f2fe;
   color: #0f172a;
-  transform: translateY(5px);
+  transform: translateY(1px);
   border-color: #cbd5e1;
-  box-shadow:
-    0 -3px 6px rgba(0, 0, 0, 0.08),
-    -2px 0 4px rgba(0, 0, 0, 0.03),
-    2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
 /* ========================================================================== */
@@ -317,7 +313,7 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-inactive {
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: #e2e8f0;
   color: #64748b;
   transform: translateY(8px);
   border-color: #cbd5e1;
@@ -329,7 +325,7 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-inactive:hover {
-  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: #cbd5e1;
   color: #334155;
   transform: translateY(6px);
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.07);
