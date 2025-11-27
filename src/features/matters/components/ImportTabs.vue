@@ -252,7 +252,6 @@ const getTabWrapperStyle = (tabId) => {
   border-top-right-radius: 12px;
   border: 1px solid #cbd5e1;
   border-bottom: none;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
