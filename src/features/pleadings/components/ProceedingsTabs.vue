@@ -299,10 +299,6 @@ const getTabWrapperStyle = (tabId) => {
   border-color: #cbd5e1;
 }
 
-.proceeding-tab.folder-tab-active {
-  transform: translateY(5px);
-}
-
 /* ========================================================================== */
 /* INACTIVE TAB STATE                                                         */
 /* ========================================================================== */
