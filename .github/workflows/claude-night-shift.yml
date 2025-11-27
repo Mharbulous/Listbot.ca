@@ -1,12 +1,12 @@
-name: Claude Night Shift (Prioritized Autonomous Agent)
+name: Claude Night Shift
 
 on:
   schedule:
-    # Runs at minute 0 and 30, hours 8-13 UTC (Midnight-6am PST/PDT).
-    - cron: '0,30 8-13 * * *'
-  workflow_dispatch:
+    # 2:00 AM Vancouver time (covers both PST and PDT)
+    - cron: '0 10 * * *'  # 2 AM PST (winter)
+    # - cron: '0 9 * * *'  # Uncomment for 2 AM PDT (summer) if needed
+  workflow_dispatch:  # Manual trigger for testing
 
-# Ensures runs do not overlap.
 concurrency: 
   group: claude-night-shift
   cancel-in-progress: false
@@ -17,15 +17,17 @@ permissions:
   pull-requests: write
 
 jobs:
-  autonomous-agent:
+  night-shift:
     runs-on: ubuntu-latest
     env:
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for branching
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,155 +37,143 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
-      # --- DECISION ENGINE (Filtered and Sorted) ---
-      - name: Determine Task Priority
-        id: decision
+      - name: Configure Git
         run: |
-          # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status only, oldest first.
-          RESUME_ID=$(gh issue list \
-            --label "status: in-progress" \
-            --limit 1 \
-            --json number \
-            --jq '.[0].number')
-          
-          if [ ! -z "$RESUME_ID" ]; then
-            echo "mode=resume" >> $GITHUB_OUTPUT
-            echo "issue_id=$RESUME_ID" >> $GITHUB_OUTPUT
-            echo "✅ Priority 1: Resuming stalled issue #$RESUME_ID (Oldest first)."
-            gh issue comment "$RESUME_ID" --body "🤖 **Resuming Task:** Workflow detected a previous stalled state and is attempting to finish this issue."
-            exit 0
-          fi
+          git config --global user.name "Claude Code"
+          git config --global user.email "claude@listbot.ca"
 
-          # 2. CHECK PRIORITY 2 (NEW WORK): Filter by status only, oldest first.
-          NEW_ID=$(gh issue list \
+      - name: Find Ready Issue
+        id: find_issue
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
             --label "status: ready-for-ai" \
+            --state open \
             --limit 1 \
             --json number \
-            --jq '.[0].number')
+            --jq '.[0].number // empty')
           
-          if [ ! -z "$NEW_ID" ]; then
-            echo "mode=new" >> $GITHUB_OUTPUT
-            echo "issue_id=$NEW_ID" >> $GITHUB_OUTPUT
-            
-            # Lock the issue immediately
-            gh issue edit "$NEW_ID" \
-              --remove-label "status: ready-for-ai" \
-              --add-label "status: in-progress" \
-            
-            gh issue comment "$NEW_ID" \
-              --body "🤖 Claude is starting work on this task (Priority 2)."
-            
-            echo "✅ Priority 2: Starting new issue #$NEW_ID (Oldest first)."
-            exit 0
+          if [ -n "$ISSUE_NUMBER" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+            echo "✅ Found issue #$ISSUE_NUMBER"
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No ready issues found"
           fi
 
-          # 3. PRIORITY 3 (MAINTENANCE MODE)
-          echo "mode=maintenance" >> $GITHUB_OUTPUT
-          echo "✅ Priority 3: No issues found. Entering maintenance mode."
+      # ============ ISSUE PROCESSING MODE ============
+      - name: Start Issue Work
+        if: steps.find_issue.outputs.found == 'true'
+        id: start_work
+        run: |
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          
+          # Post starting comment and capture comment ID
+          COMMENT_URL=$(gh issue comment "$ISSUE_NUMBER" \
+            --body "🤖 **Claude Code is working on this issue...**
 
-      # --- EXECUTION: ISSUE MODE (Resume or New) ---
-      - name: Work on Issue
-        id: run_issue
-        if: steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new'
+          ⏳ Started: $(date -u '+%Y-%m-%d %H:%M UTC')
+          📋 Status: In Progress" \
+            | grep -oP 'https://github.com[^\s]+')
+          
+          # Update label
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label "status: ready-for-ai" \
+            --add-label "status: in-progress"
+          
+          echo "comment_url=$COMMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Code on Issue
+        if: steps.find_issue.outputs.found == 'true'
+        id: claude_work
         continue-on-error: true
         run: |
-          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          echo "Working on Issue #$ISSUE_NUMBER..."
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          
+          # Fetch issue details
+          ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq '.title')
+          ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body // "No description"')
+          
+          # Create branch name
+          BRANCH_NAME="claude/issue-${ISSUE_NUMBER}"
+          git checkout -b "$BRANCH_NAME"
+          
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Run Claude Code
+          claude --dangerously-skip-permissions -p "
+          You are working on GitHub issue #$ISSUE_NUMBER for the ListBot.ca project.
+          
+          **Issue Title:** $ISSUE_TITLE
+          
+          **Issue Description:**
+          $ISSUE_BODY
+          
+          **Instructions:**
+          1. Read CLAUDE.md and relevant docs in the @docs folder first
+          2. Implement the requested changes following project conventions
+          3. Test your changes if applicable
+          4. Commit your changes with clear commit messages referencing #$ISSUE_NUMBER
+          5. Do NOT create a PR - just make commits to the current branch
+          
+          Work carefully and follow all project guidelines."
 
-          # Fetch the full issue content (title, body, comments)
-          ISSUE_CONTENT=$(gh issue view "$ISSUE_NUMBER" --json title,body,comments --jq '{title: .title, body: .body, comments: [.comments[].body]}')
+      - name: Push Branch and Update Issue
+        if: steps.find_issue.outputs.found == 'true'
+        run: |
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          BRANCH_NAME=${{ steps.claude_work.outputs.branch }}
+          OUTCOME=${{ steps.claude_work.outcome }}
+          
+          # Check if there are commits to push
+          if git log origin/main..HEAD --oneline | grep -q .; then
+            git push -u origin "$BRANCH_NAME"
+            
+            # Generate PR creation URL
+            PR_URL="https://github.com/${{ github.repository }}/compare/main...${BRANCH_NAME}?expand=1&title=Issue%20%23${ISSUE_NUMBER}&body=Closes%20%23${ISSUE_NUMBER}"
+            
+            if [ "$OUTCOME" == "success" ]; then
+              gh issue edit "$ISSUE_NUMBER" \
+                --remove-label "status: in-progress" \
+                --add-label "status: ai-complete"
+              
+              gh issue comment "$ISSUE_NUMBER" --body "✅ **Claude Code completed this task!**
 
-          # Validate that we successfully fetched the issue
-          if [ -z "$ISSUE_CONTENT" ] || [ "$ISSUE_CONTENT" = "{}" ]; then
-            echo "❌ Error: Failed to fetch issue #$ISSUE_NUMBER content"
-            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Fetch Error:** Claude could not retrieve the issue content. Please check the issue format and try again."
-            exit 1
+          🕐 Finished: $(date -u '+%Y-%m-%d %H:%M UTC')
+          🌿 Branch: \`$BRANCH_NAME\`
+
+          **[👉 Click here to create Pull Request]($PR_URL)**"
+            else
+              gh issue edit "$ISSUE_NUMBER" \
+                --remove-label "status: in-progress" \
+                --add-label "status: ai-error"
+              
+              gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Claude Code encountered an error**
+
+          🕐 Time: $(date -u '+%Y-%m-%d %H:%M UTC')
+          🌿 Partial work may be on branch: \`$BRANCH_NAME\`
+
+          Check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+          
+          **[👉 Review partial changes]($PR_URL)**"
+            fi
+          else
+            gh issue comment "$ISSUE_NUMBER" --body "ℹ️ **No changes were made**
+
+          Claude reviewed the issue but did not make any code changes.
+          This may require manual attention."
+            
+            gh issue edit "$ISSUE_NUMBER" \
+              --remove-label "status: in-progress" \
+              --add-label "status: needs-review"
           fi
 
-          # Extract title and body for the prompt
-          ISSUE_TITLE=$(echo "$ISSUE_CONTENT" | jq -r '.title')
-          ISSUE_BODY=$(echo "$ISSUE_CONTENT" | jq -r '.body // "No description provided"')
-
-          echo "📋 Issue Title: $ISSUE_TITLE"
-          echo "📝 Processing issue content..."
-
-          # Construct the prompt for Claude
-          # TODO: Consider verifying PR was created by checking recent PRs or parsing Claude output
-          CLAUDE_PROMPT="Please process GitHub issue #$ISSUE_NUMBER.
-
-          ISSUE TITLE: $ISSUE_TITLE
-
-          ISSUE DESCRIPTION: $ISSUE_BODY
-
-          TASK INSTRUCTIONS:
-          1. Analyze the requirements described in the issue
-          2. Implement the requested changes following the project's coding standards
-          3. Run any necessary tests to verify your changes
-          4. Create a Pull Request with:
-             - A clear title referencing issue #$ISSUE_NUMBER
-             - A description of what was changed and why
-             - Link to issue #$ISSUE_NUMBER using 'Closes #$ISSUE_NUMBER' or 'Fixes #$ISSUE_NUMBER'
-
-          Remember: You are working in the ListBot.ca repository. Follow all guidelines in CLAUDE.md and the @docs folder."
-
-          # Pass the prompt to Claude
-          claude -p "$CLAUDE_PROMPT"
-
-      # --- EXECUTION: MAINTENANCE MODE CASCADE ---
-      - name: Run Maintenance Cascade
-        id: run_maintenance
-        if: steps.decision.outputs.mode == 'maintenance'
-        continue-on-error: true
+      # ============ MAINTENANCE MODE ============
+      - name: Run Maintenance
+        if: steps.find_issue.outputs.found == 'false'
         run: |
-          echo "⚙️ Entering Maintenance Mode..."
-          echo "ℹ️  Maintenance tasks are currently disabled. See TODO comments below."
-
-          # TODO: Implement P3a - Documentation Streamlining
-          # Purpose: Review docs/ folder for inconsistencies, outdated content, broken links
-          # Suggested prompt: "Review all files in the docs/ folder for consistency with the codebase.
-          #                   Check for outdated information, broken cross-references, and missing documentation.
-          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Streamline'."
-          # echo "-> Running doc streamline..."
-          # claude -p "Review all files in docs/ for consistency..." || true
-
-          # TODO: Implement P3b - Documentation Reconciliation
-          # Purpose: Ensure CLAUDE.md and sub-docs match actual codebase structure and conventions
-          # Suggested prompt: "Reconcile documentation in CLAUDE.md and @docs with the actual codebase.
-          #                   Verify that documented patterns match implementation, update any discrepancies.
-          #                   If changes are needed, create a PR titled 'Nightly Maintenance: Doc Reconcile'."
-          # echo "-> Running doc reconcile..."
-          # claude -p "Reconcile CLAUDE.md and @docs with codebase..." || true
-
-          # TODO: Implement P3c - General Code Streamlining
-          # Purpose: Identify and fix code quality issues (unused imports, console.logs, etc.)
-          # Suggested prompt: "Review codebase for quality improvements: remove unused imports,
-          #                   debug console.logs, fix obvious linting issues, simplify overly complex functions.
-          #                   If changes are made, create a PR titled 'Nightly Maintenance: Code Streamline'."
-          # echo "-> Running code streamline..."
-          # claude -p "Review codebase for quality improvements..." || true
-
-          echo "✅ Maintenance mode complete (no active tasks)."
-
-      # --- POST-PROCESSING: SUCCESS (Issues Only) ---
-      - name: Mark Issue Complete
-        if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
-        run: |
-          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          gh issue edit "$ISSUE_NUMBER" \
-            --remove-label "status: in-progress" \
-            --add-label "status: ai-complete" \
+          echo "🔧 Running maintenance mode..."
           
-          gh issue comment "$ISSUE_NUMBER" \  
-            --body "✅ Task completed successfully. A Pull Request should be linked to this issue."
-
-      # --- POST-PROCESSING: FAILURE (Issues Only) ---
-      - name: Mark Issue Error
-        if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'failure'
-        run: |
-          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
-          gh issue edit "$ISSUE_NUMBER" \
-            --remove-label "status: in-progress" \
-            --add-label "status: ai-error" \
+          claude --dangerously-skip-permissions -p "/doc-streamline" --yolo || true
           
-          gh issue comment "$ISSUE_NUMBER" \  
-            --body "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."
+          echo "✅ Maintenance complete"
