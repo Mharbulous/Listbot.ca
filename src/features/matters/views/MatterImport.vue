@@ -27,24 +27,24 @@
           <!-- Folder Import Table -->
           <div v-if="activeTab === 'folder'" class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
-                  <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
+                  <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
                         Import
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Client Name
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Matter Number
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Folder Path
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
                         Confidence
                       </th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
                         Actions
                       </th>
                     </tr>
@@ -97,27 +97,27 @@
           <!-- Document Import Table -->
           <div v-if="activeTab === 'document'" class="table-container bg-white min-w-[720px]">
                 <table class="w-full min-w-[720px]">
-                  <thead class="sticky-table-header border-b border-slate-200 min-w-[720px]">
+                  <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
                         Import
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Client Name
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Matter Number
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
                         Description
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
                         Status
                       </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
                         Date Opened
                       </th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-20">
+                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
                         Actions
                       </th>
                     </tr>
@@ -278,6 +278,7 @@ function getStatusClass(status) {
   z-index: 25; /* Higher than inactive tabs (1-10), lower than active tab (100) */
   background: white;
   border: 1px solid #cbd5e1;
+  border-top: none; /* Tab connects to content - no visible line between active tab and table header */
   border-radius: 0 0 12px 12px; /* Square top corners, rounded bottom corners */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -286,7 +287,7 @@ function getStatusClass(status) {
 .sticky-table-header {
   position: sticky;
   top: 0;
-  background-color: #f8fafc;
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%); /* Match active tab background */
   z-index: 10;
 }
 
