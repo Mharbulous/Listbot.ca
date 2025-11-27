@@ -263,13 +263,15 @@ const router = createRouter({
     },
     {
       path: '/firm',
-      redirect: '/firm/stub',
+      name: 'firm',
+      component: () => import('../core/firm/views/FirmSettings.vue'),
+      meta: { requiresAuth: true, title: 'Firm Settings' },
     },
     {
       path: '/firm/stub',
       name: 'firm-stub',
       component: () => import('../views/stubs/FirmStub.vue'),
-      meta: { requiresAuth: true, title: 'Firm' },
+      meta: { requiresAuth: true, title: 'Firm Blueprint' },
     },
     {
       path: '/matters',
