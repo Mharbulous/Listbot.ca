@@ -22,7 +22,7 @@
       <ImportTabs v-model="activeTab" />
 
       <!-- Tabbed Import Content -->
-      <div class="mx-6 mb-6 relative z-0">
+      <div class="mx-6 mb-6">
         <div class="content-container">
           <!-- Folder Import Table -->
           <div v-if="activeTab === 'folder'" class="table-container bg-white min-w-[720px]">
