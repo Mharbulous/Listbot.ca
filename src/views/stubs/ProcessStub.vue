@@ -57,6 +57,27 @@
     <!-- Current Implementation Status -->
     <div class="mb-8">
       <h2 class="text-2xl font-bold text-slate-900 mb-4">Implementation Status (Granular)</h2>
+
+      <!-- Preserve Stage Notice -->
+      <div class="bg-gradient-to-r from-emerald-100 to-emerald-50 border-l-4 border-emerald-500 p-4 mb-6 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-emerald-900 mb-1">
+              🛡️ Preserve Stage (EDRM Stage 3)
+            </h3>
+            <p class="text-sm text-emerald-800">
+              Stage 1 (Upload & BLAKE3 Hashing) and Stage 2 (Exact Deduplication) are both handled during the <strong>Preserve</strong> workflow at the Upload page.
+            </p>
+          </div>
+          <router-link
+            to="/upload"
+            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium whitespace-nowrap ml-4"
+          >
+            → Go to Preserve
+          </router-link>
+        </div>
+      </div>
+
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <!-- Exact Deduplication -->
         <div class="bg-white border-2 border-emerald-500 rounded-lg p-6">
@@ -64,7 +85,7 @@
             <div class="text-2xl">✅</div>
             <div>
               <h3 class="text-lg font-semibold text-slate-900">BLAKE3 Hash Deduplication</h3>
-              <p class="text-sm text-emerald-600 font-medium">✓ Implemented (Upload Stage)</p>
+              <p class="text-sm text-emerald-600 font-medium">✓ Implemented (Preserve Stage)</p>
             </div>
           </div>
           <p class="text-slate-600 mb-3 text-sm">
@@ -343,14 +364,21 @@ import StubFooter from '@/components/stubs/StubFooter.vue';
 
 const workflowSteps = [
   {
-    title: 'Collection & Upload',
-    description: 'Documents are collected and uploaded to the platform with original metadata preserved.',
+    title: 'Preserve Stage (EDRM Stage 3)',
+    description: 'The Preserve stage handles file upload, BLAKE3 hashing, and exact deduplication. This encompasses both Stage 1 and Stage 2 of the processing workflow.',
+    status: 'Implemented - See Upload page',
   },
   {
-    title: 'Hash Calculation & Exact Deduplication',
+    title: 'Stage 1: Upload & BLAKE3 Hashing',
     description:
-      'BLAKE3 hashes are calculated during upload to identify and group exact duplicates, reducing storage and processing costs.',
-    status: 'Implemented at Preserve stage',
+      'Web Worker-based hashing with hardware calibration. Two-stage deduplication strategy: size-based pre-filter (Stage 1a) → hash verification for size-matched files (Stage 1b).',
+    status: 'Part of Preserve workflow',
+  },
+  {
+    title: 'Stage 2: Exact Database-level Deduplication',
+    description:
+      'Hash-based document IDs provide automatic database-level deduplication. Files are categorized as duplicate, copy, best, or redundant based on hash matching and metadata analysis.',
+    status: 'Part of Preserve workflow',
   },
   {
     title: 'AI Fuzzy Deduplication',
