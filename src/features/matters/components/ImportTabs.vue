@@ -3,10 +3,10 @@
     <div class="tabs-container">
       <!-- Import tabs (left-aligned) - wrapped in containers that shrink -->
       <div
-        v-for="(tab, index) in importTabs"
+        v-for="(tab, index) in leftImportTabs"
         :key="tab.value"
         class="tab-wrapper"
-        :class="{ 'last-tab-wrapper': index === importTabs.length - 1 }"
+        :class="{ 'last-tab-wrapper': index === leftImportTabs.length - 1 }"
         :style="getTabWrapperStyle(tab.value)"
       >
         <button
@@ -23,8 +23,24 @@
         </button>
       </div>
 
-      <!-- Super spacer to absorb extra space -->
+      <!-- Super spacer to absorb extra space and push Confirm Import tab to the right -->
       <div class="super-spacer"></div>
+
+      <!-- Confirm Import tab (right-aligned, never shrinks) -->
+      <div class="confirm-tab-wrapper" :style="getTabWrapperStyle('confirm-import')">
+        <button
+          @click="selectTab('confirm-import')"
+          @mouseenter="setHoveredTab('confirm-import')"
+          @mouseleave="clearHoveredTab"
+          class="folder-tab import-tab"
+          :class="getTabStateClass('confirm-import')"
+        >
+          <div class="tab-content">
+            <div class="tab-icon">✅</div>
+            <div class="tab-title">Confirm Import</div>
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -38,8 +54,9 @@ import { ref, computed } from 'vue';
 
 const Z_INDEX_ACTIVE = 100;
 const Z_INDEX_HOVERED = 99;
+const CONFIRM_IMPORT_TAB_ID = 'confirm-import';
 
-const importTabs = [
+const leftImportTabs = [
   {
     value: 'folder',
     label: 'Import from Folders',
@@ -59,11 +76,6 @@ const importTabs = [
     value: 'review-mappings',
     label: 'Review Field Mappings',
     icon: '🔍',
-  },
-  {
-    value: 'confirm-import',
-    label: 'Confirm Import',
-    icon: '✅',
   },
 ];
 
@@ -131,9 +143,12 @@ const getTabWrapperStyle = (tabId) => {
     zIndex = Z_INDEX_HOVERED;
   } else {
     // Find the index for non-active, non-hovered tabs
-    const tabIndex = importTabs.findIndex((t) => t.value === tabId);
+    const tabIndex = leftImportTabs.findIndex((t) => t.value === tabId);
     if (tabIndex !== -1) {
       zIndex = tabIndex + 1;
+    } else if (tabId === CONFIRM_IMPORT_TAB_ID) {
+      // Confirm Import tab gets a base z-index
+      zIndex = 50;
     }
   }
 
@@ -186,8 +201,19 @@ const getTabWrapperStyle = (tabId) => {
   z-index: 100 !important;
 }
 
+/* Confirm Import tab wrapper - never shrinks */
+.confirm-tab-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.confirm-tab-wrapper:hover,
+.confirm-tab-wrapper:has(:focus-visible) {
+  z-index: 100 !important;
+}
+
 /* ========================================================================== */
-/* SUPER SPACER - Absorbs extra space                                        */
+/* SUPER SPACER - Absorbs extra space and pushes Confirm Import to the right */
 /* ========================================================================== */
 
 .super-spacer {
