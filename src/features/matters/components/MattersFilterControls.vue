@@ -29,7 +29,7 @@
         @mouseenter="isHoveringMyMatters = true"
         @mouseleave="isHoveringMyMatters = false"
         :class="[
-          'px-3 py-1.5 rounded-md text-xl font-medium transition-all duration-300 relative',
+          'px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 relative',
           mattersFilterStore.showMyMattersOnly
             ? 'text-transparent'
             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
@@ -42,7 +42,7 @@
         @mouseenter="isHoveringFirmMatters = true"
         @mouseleave="isHoveringFirmMatters = false"
         :class="[
-          'px-3 py-1.5 rounded-md text-xl font-medium transition-all duration-300 relative',
+          'px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 relative',
           !mattersFilterStore.showMyMattersOnly
             ? 'text-transparent'
             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/40',
@@ -56,7 +56,7 @@
     <div class="relative flex-shrink-0" data-matters-dropdown>
       <button
         @click="mattersFilterStore.toggleStatusDropdown()"
-        class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 rounded-lg text-xl font-medium text-white transition-colors flex items-center gap-2"
+        class="px-4 py-2 bg-teal-600 hover:bg-teal-700 rounded-lg text-sm font-medium text-white transition-colors flex items-center gap-2"
       >
         <span>Status: {{ mattersFilterStore.statusFilterLabel }}</span>
         <svg
@@ -81,7 +81,7 @@
       >
         <button
           @click="mattersFilterStore.setStatusFilter('active')"
-          class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
+          class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'active'
               ? 'text-teal-600 font-medium'
@@ -92,7 +92,7 @@
         </button>
         <button
           @click="mattersFilterStore.setStatusFilter('archived')"
-          class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
+          class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'archived'
               ? 'text-teal-600 font-medium'
@@ -103,7 +103,7 @@
         </button>
         <button
           @click="mattersFilterStore.setStatusFilter('all')"
-          class="w-full px-4 py-2 text-left text-xl hover:bg-slate-50 transition-colors"
+          class="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors"
           :class="
             mattersFilterStore.statusFilter === 'all'
               ? 'text-teal-600 font-medium'
@@ -121,7 +121,7 @@
         v-model="mattersFilterStore.searchText"
         type="text"
         placeholder="filter matters..."
-        class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-xl transition-all placeholder:text-slate-400"
+        class="w-full pl-3 pr-24 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm transition-all placeholder:text-slate-400"
       />
       <!-- Integrated Search Actions -->
       <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -129,7 +129,7 @@
         <button
           @click="mattersFilterStore.toggleCaseSensitive()"
           :class="[
-            'p-1.5 rounded text-lg font-semibold transition-colors',
+            'p-1.5 rounded text-sm font-medium transition-colors',
             mattersFilterStore.caseSensitive
               ? 'bg-teal-600 text-white hover:bg-teal-700'
               : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
@@ -142,7 +142,7 @@
         <button
           @click="mattersFilterStore.toggleWholeWord()"
           :class="[
-            'px-1.5 py-1.5 rounded text-lg font-semibold transition-colors',
+            'px-1.5 py-1.5 rounded text-sm font-medium transition-colors',
             mattersFilterStore.wholeWord
               ? 'bg-teal-600 text-white hover:bg-teal-700'
               : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
@@ -172,7 +172,7 @@
     <!-- New Matter Button -->
     <router-link
       to="/matters/new"
-      class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-xl font-medium transition-colors flex items-center gap-1.5 flex-shrink-0"
+      class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 flex-shrink-0"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -210,7 +210,7 @@ const isHoveringFirmMatters = ref(false);
   left: 2px;
   width: calc(50% - 2px);
   height: calc(100% - 4px);
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
   border-radius: 6px;
   box-shadow:
     0 1px 3px 0 rgba(0, 0, 0, 0.1),
@@ -239,7 +239,7 @@ const isHoveringFirmMatters = ref(false);
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 1.25rem;
+  font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
   pointer-events: none;
