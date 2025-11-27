@@ -45,22 +45,22 @@
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <h2 class="text-xl font-bold text-slate-900 mb-4">Processing Pipeline Status</h2>
       <div class="space-y-3">
-        <!-- Preserve Stage Header -->
+        <!-- Upload Stage Header -->
         <div class="bg-gradient-to-r from-emerald-100 to-emerald-50 border-2 border-emerald-400 rounded-lg p-4 mb-2">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-lg font-bold text-emerald-900 mb-1">
-                🛡️ Preserve Stage (EDRM Stage 3)
+                🛡️ Upload Stage (EDRM Stage 3)
               </h3>
               <p class="text-sm text-emerald-800">
-                Stages 1 & 2 are handled during the <strong>Preserve</strong> workflow
+                Stages 1 & 2 are handled during the <strong>Upload</strong> workflow
               </p>
             </div>
             <router-link
               to="/upload"
               class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium whitespace-nowrap"
             >
-              → Go to Preserve Page
+              → Go to Upload Page
             </router-link>
           </div>
         </div>
