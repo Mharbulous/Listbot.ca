@@ -147,8 +147,8 @@ const getTabWrapperStyle = (tabId) => {
     if (tabIndex !== -1) {
       zIndex = tabIndex + 1;
     } else if (tabId === CONFIRM_IMPORT_TAB_ID) {
-      // Confirm Import tab gets a base z-index
-      zIndex = 50;
+      // Confirm Import tab gets a base z-index (below content-container)
+      zIndex = 10;
     }
   }
 
@@ -164,7 +164,7 @@ const getTabWrapperStyle = (tabId) => {
 .import-tabs-sticky {
   position: sticky;
   top: 0;
-  z-index: 50; /* Higher than content-container (25) so active tab appears in front */
+  /* No z-index - allows child tab wrappers to compete individually with content-container */
   background: transparent;
   padding-bottom: 0;
 }
