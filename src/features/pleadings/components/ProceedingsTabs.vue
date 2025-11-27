@@ -202,21 +202,10 @@ const getTabWrapperStyle = (tabId) => {
   min-width: 140px;
 }
 
-/* Hover and focus bring tab wrapper to front */
-.tab-wrapper:hover,
-.tab-wrapper:has(:focus-visible) {
-  z-index: 100 !important;
-}
-
 /* ALL tab wrapper - never shrinks */
 .all-tab-wrapper {
   position: relative;
   flex-shrink: 0;
-}
-
-.all-tab-wrapper:hover,
-.all-tab-wrapper:has(:focus-visible) {
-  z-index: 100 !important;
 }
 
 /* ========================================================================== */
@@ -238,7 +227,6 @@ const getTabWrapperStyle = (tabId) => {
   border-top-right-radius: 12px;
   border: 1px solid #cbd5e1;
   border-bottom: none;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -305,14 +293,10 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-active {
-  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  background: #e0f2fe;
   color: #0f172a;
   transform: translateY(1px);
   border-color: #cbd5e1;
-  box-shadow:
-    0 -3px 6px rgba(0, 0, 0, 0.08),
-    -2px 0 4px rgba(0, 0, 0, 0.03),
-    2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
 .proceeding-tab.folder-tab-active {
@@ -324,7 +308,7 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-inactive {
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: #e2e8f0;
   color: #64748b;
   transform: translateY(4px);
   border-color: #cbd5e1;
@@ -340,7 +324,7 @@ const getTabWrapperStyle = (tabId) => {
 /* ========================================================================== */
 
 .folder-tab-inactive:hover {
-  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: #cbd5e1;
   color: #334155;
   transform: translateY(2px);
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.07);
