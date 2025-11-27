@@ -171,23 +171,6 @@
           </div>
         </div>
 
-        <!-- Performance Monitoring -->
-        <div class="bg-white border-2 border-amber-400 rounded-lg p-6">
-          <div class="flex items-start gap-3 mb-3">
-            <div class="text-2xl">⚠️</div>
-            <div>
-              <h3 class="text-lg font-semibold text-slate-900">Performance Analysis</h3>
-              <p class="text-sm text-amber-600 font-medium">⚙️ In Progress (Bottleneck Detected)</p>
-            </div>
-          </div>
-          <p class="text-slate-600 mb-3 text-sm">
-            Known bottleneck: Tentative verification taking 88ms/file (expected: 3-14ms/file).
-          </p>
-          <div class="text-xs text-slate-500 space-y-1">
-            <div><strong>Doc:</strong> <code>docs/Features/Upload/Processing/performance-analysis-summary.md</code></div>
-            <div><strong>Status:</strong> Under investigation</div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -381,14 +364,14 @@ const workflowSteps = [
     status: 'Part of Preserve workflow',
   },
   {
-    title: 'AI Fuzzy Deduplication',
-    description:
-      'Advanced AI analysis identifies near-duplicate documents with similar but not identical content (planned).',
-  },
-  {
-    title: 'Email Threading',
+    title: 'Stage 3: Email Threading',
     description:
       'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages (planned).',
+  },
+  {
+    title: 'Stage 4: AI Fuzzy Deduplication',
+    description:
+      'Advanced AI analysis identifies near-duplicate documents with similar but not identical content (planned).',
   },
   {
     title: 'Categorization',
