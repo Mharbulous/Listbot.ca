@@ -304,12 +304,8 @@ const getTabWrapperStyle = (tabId) => {
 .folder-tab-active {
   background: #e0f2fe;
   color: #0f172a;
-  transform: translateY(5px);
+  transform: translateY(1px);
   border-color: #cbd5e1;
-  box-shadow:
-    0 -3px 6px rgba(0, 0, 0, 0.08),
-    -2px 0 4px rgba(0, 0, 0, 0.03),
-    2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
 /* ========================================================================== */
