@@ -45,8 +45,28 @@
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <h2 class="text-xl font-bold text-slate-900 mb-4">Processing Pipeline Status</h2>
       <div class="space-y-3">
+        <!-- Preserve Stage Header -->
+        <div class="bg-gradient-to-r from-emerald-100 to-emerald-50 border-2 border-emerald-400 rounded-lg p-4 mb-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-emerald-900 mb-1">
+                🛡️ Preserve Stage (EDRM Stage 3)
+              </h3>
+              <p class="text-sm text-emerald-800">
+                Stages 1 & 2 are handled during the <strong>Preserve</strong> workflow
+              </p>
+            </div>
+            <router-link
+              to="/upload"
+              class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              → Go to Preserve Page
+            </router-link>
+          </div>
+        </div>
+
         <!-- Stage 1: Upload & Hash -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 ml-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-emerald-600">✅ LIVE</div>
           <div class="flex-1 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg p-4">
             <div class="font-semibold text-slate-900">Stage 1: Upload & BLAKE3 Hashing</div>
@@ -61,10 +81,10 @@
         </div>
 
         <!-- Stage 2: Deduplication Logic -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 ml-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-emerald-600">✅ LIVE</div>
           <div class="flex-1 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg p-4">
-            <div class="font-semibold text-slate-900">Stage 2: Exact Deduplication</div>
+            <div class="font-semibold text-slate-900">Stage 2: Exact Database-level Deduplication</div>
             <div class="text-sm text-slate-600 mt-1">
               Hash-based document IDs provide database-level deduplication • Terminology: duplicate, copy, best, redundant
             </div>
