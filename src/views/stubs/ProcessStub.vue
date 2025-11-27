@@ -211,27 +211,6 @@
               <div><strong>Implementation:</strong> Review only final inclusive emails</div>
             </div>
           </div>
-
-          <!-- Processing Analytics Dashboard -->
-          <div class="bg-white border-2 border-blue-300 rounded-lg p-6">
-            <div class="flex items-start gap-3 mb-3">
-              <div class="text-2xl">📈</div>
-              <div>
-                <h4 class="text-lg font-semibold text-blue-600">Processing Analytics Dashboard</h4>
-                <p class="text-sm text-blue-600 font-medium">📋 PLANNED - Quick Win</p>
-              </div>
-            </div>
-            <p class="text-blue-700 mb-3 text-sm">
-              Real-time visualization showing processing progress, deduplication statistics, error
-              rates, and volume reduction achieved.
-            </p>
-            <div class="text-xs text-blue-600 space-y-1">
-              <div><strong>Metrics:</strong> Before/after document counts, deduplication breakdown</div>
-              <div><strong>Tracking:</strong> Processing errors, bottlenecks, volume reduction</div>
-              <div><strong>Visualization:</strong> Chart.js for progress tracking</div>
-              <div><strong>Data Source:</strong> Firestore upload queue + processing status</div>
-            </div>
-          </div>
         </div>
       </div>
 

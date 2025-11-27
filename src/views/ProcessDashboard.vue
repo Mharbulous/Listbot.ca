@@ -95,25 +95,11 @@
           </div>
         </div>
 
-        <!-- Stage 3: Performance Monitoring -->
-        <div class="flex items-center gap-4">
-          <div class="flex-shrink-0 w-24 text-sm font-semibold text-amber-600">⚙️ WIP</div>
-          <div class="flex-1 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4">
-            <div class="font-semibold text-slate-900">Stage 3: Performance Analysis</div>
-            <div class="text-sm text-slate-600 mt-1">
-              Known bottleneck: Tentative verification (88ms/file, expected 3-14ms) • Under investigation
-            </div>
-            <div class="text-xs text-slate-500 mt-2">
-              📄 <code>docs/Features/Upload/Processing/performance-analysis-summary.md</code>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stage 4: Email Threading (PLANNED) -->
+        <!-- Stage 3: Email Threading (PLANNED) -->
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
           <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
-            <div class="font-semibold text-blue-900">Stage 4: Email Threading</div>
+            <div class="font-semibold text-blue-900">Stage 3: Email Threading</div>
             <div class="text-sm text-blue-700 mt-1">
               Conversation reconstruction • Inclusive vs. non-inclusive detection • 40-74% review time reduction
             </div>
@@ -123,11 +109,11 @@
           </div>
         </div>
 
-        <!-- Stage 5: AI Fuzzy Dedup (PLANNED) -->
+        <!-- Stage 4: AI Fuzzy Dedup (PLANNED) -->
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
           <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
-            <div class="font-semibold text-blue-900">Stage 5: AI Fuzzy Deduplication</div>
+            <div class="font-semibold text-blue-900">Stage 4: AI Fuzzy Deduplication</div>
             <div class="text-sm text-blue-700 mt-1">
               Near-duplicate detection using embeddings • Similarity threshold analysis
             </div>
@@ -137,11 +123,11 @@
           </div>
         </div>
 
-        <!-- Stage 6: Categorization -->
+        <!-- Stage 5: Categorization -->
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-emerald-600">✅ LIVE</div>
           <div class="flex-1 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg p-4">
-            <div class="font-semibold text-slate-900">Stage 6: Categorization</div>
+            <div class="font-semibold text-slate-900">Stage 5: Categorization</div>
             <div class="text-sm text-slate-600 mt-1">
               Automated document classification • Content-based organization
             </div>
@@ -273,42 +259,6 @@
                 <div><strong>Priority:</strong> HIGH - Phase 1 (Highest ROI)</div>
                 <div><strong>Impact:</strong> 40-74% review time reduction</div>
                 <div><strong>Technical:</strong> Parse email headers, reconstruct conversation tree</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Processing Analytics Dashboard Mockup -->
-        <div class="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
-          <div class="flex items-start gap-3">
-            <div class="text-2xl">📈</div>
-            <div class="flex-1">
-              <h3 class="font-semibold text-blue-900 mb-1">Processing Analytics Dashboard</h3>
-              <div class="bg-white rounded border border-blue-300 p-3 mt-2 text-xs">
-                <div class="font-semibold text-blue-900 mb-2">Mockup: Real-time Metrics</div>
-                <div class="grid grid-cols-2 gap-2 text-blue-700">
-                  <div class="bg-blue-50 p-2 rounded">
-                    <div class="text-lg font-bold">1,247</div>
-                    <div>Files Uploaded</div>
-                  </div>
-                  <div class="bg-blue-50 p-2 rounded">
-                    <div class="text-lg font-bold">623</div>
-                    <div>Duplicates Removed</div>
-                  </div>
-                  <div class="bg-blue-50 p-2 rounded">
-                    <div class="text-lg font-bold">50%</div>
-                    <div>Volume Reduction</div>
-                  </div>
-                  <div class="bg-blue-50 p-2 rounded">
-                    <div class="text-lg font-bold">3.2s</div>
-                    <div>Avg Processing Time</div>
-                  </div>
-                </div>
-              </div>
-              <div class="text-xs text-blue-600 mt-2 space-y-1">
-                <div><strong>Priority:</strong> HIGH - Phase 1</div>
-                <div><strong>Visualization:</strong> Chart.js for progress tracking</div>
-                <div><strong>Data Source:</strong> Firestore upload queue + processing status</div>
               </div>
             </div>
           </div>
