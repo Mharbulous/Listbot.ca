@@ -532,6 +532,248 @@ Per CSS spec, these properties create a new stacking context (isolating children
 
 ---
 
+## 🚨 COMMON PROBLEMS & FIXES (Lessons from Production)
+
+**Date Added:** 2025-11-27
+**Context:** Fixes applied to pleadings page tabs (commits 5057266, ca827cd, 5d53f29)
+
+When implementing skeuomorphic tabs, you may encounter these specific issues. Here are the proven fixes:
+
+### Problem 1: Hover Z-Index Override Breaking Tab Layering
+
+**Symptom:** When hovering over inactive tabs, they jump in front of the content container (breaking the folder-tab metaphor).
+
+**Root Cause:** CSS hover rules with `!important` override the carefully orchestrated z-index values:
+```css
+/* ❌ WRONG - Forces hovered tab in front of content */
+.tab-wrapper:hover {
+  z-index: 100 !important;
+}
+```
+
+**The Fix:** Remove `!important` hover overrides. Instead, set hover z-index through JavaScript state:
+```javascript
+const Z_INDEX_ACTIVE = 100;
+const Z_INDEX_HOVERED = 20;  // Higher than inactive (1-10) but LOWER than content (25)
+const Z_INDEX_CONTENT = 25;
+
+const getTabWrapperStyle = (tabId) => {
+  let zIndex = 1;
+  if (isActive(tabId)) {
+    zIndex = Z_INDEX_ACTIVE;  // 100: In front of everything
+  } else if (isHovered(tabId)) {
+    zIndex = Z_INDEX_HOVERED;  // 20: In front of other inactive tabs, but BEHIND content
+  } else {
+    zIndex = index + 1;  // 1-10: Behind content
+  }
+  return { zIndex };
+};
+```
+
+**Key Principle:** Hovered inactive tabs should be `Z_INDEX_HOVERED (20) < Z_INDEX_CONTENT (25) < Z_INDEX_ACTIVE (100)`.
+
+**Reference:** Fixed in commit ca827cd
+
+---
+
+### Problem 2: Box Shadows Breaking Visual Seamlessness
+
+**Symptom:** Active tab appears to "float" above content instead of being seamlessly connected. Color rendering doesn't match between active tab and table header.
+
+**Root Cause:** Box shadows and gradient backgrounds create visual artifacts:
+```css
+/* ❌ WRONG - Creates visual separation */
+.folder-tab {
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.folder-tab-active {
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  box-shadow:
+    0 -3px 6px rgba(0, 0, 0, 0.08),
+    -2px 0 4px rgba(0, 0, 0, 0.03),
+    2px 0 4px rgba(0, 0, 0, 0.03);
+}
+```
+
+**The Fix:** Use solid colors and remove box shadows from tabs (content container can have shadow):
+```css
+/* ✅ CORRECT - Clean, seamless appearance */
+.folder-tab {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  /* NO box-shadow on base class */
+}
+
+.folder-tab-active {
+  background: #e0f2fe;  /* Solid color - no gradient */
+  transform: translateY(1px);
+  border-color: #cbd5e1;
+  /* NO box-shadow */
+}
+
+.folder-tab-inactive {
+  background: #e2e8f0;  /* Solid color - no gradient */
+  transform: translateY(4px);
+}
+
+.folder-tab-inactive:hover {
+  background: #cbd5e1;  /* Solid color - no gradient */
+  transform: translateY(2px);
+}
+
+/* Apply shadow to content container only */
+.content-container {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+```
+
+**Why This Works:**
+- Solid colors ensure exact color matching between active tab and table header
+- No visual "seam" or shadow artifacts between connected elements
+- Content shadow creates depth without interfering with tab connection
+
+**Reference:** Fixed in commit ca827cd
+
+---
+
+### Problem 3: Active Tab Vertical Alignment (Y-Axis Position)
+
+**Symptom:** Active tab doesn't align tightly with content header - there's a visible gap or misalignment.
+
+**Root Cause:** Conflicting `translateY` values on base class vs. specific tab type override:
+```css
+/* ❌ WRONG - Override creates 4px gap */
+.folder-tab-active {
+  transform: translateY(1px);  /* Base value */
+}
+
+.proceeding-tab.folder-tab-active {
+  transform: translateY(5px);  /* Override pushes tab DOWN, away from content */
+}
+```
+
+**The Fix:** Remove the specific override and let the base `translateY(1px)` apply to all active tabs:
+```css
+/* ✅ CORRECT - Single consistent value */
+.folder-tab-active {
+  transform: translateY(1px);  /* Moves tab UP 3px from inactive position */
+}
+
+/* Remove this override entirely */
+/* .proceeding-tab.folder-tab-active {
+  transform: translateY(5px);
+} */
+
+.folder-tab-inactive {
+  transform: translateY(4px);  /* Inactive tabs sit lower */
+}
+```
+
+**Visual Effect:**
+- Inactive tabs: `translateY(4px)` - sit lower, appear "behind"
+- Active tab: `translateY(1px)` - moves UP 3px, creating tight connection with content header
+- The 3px difference creates the "pulling forward" effect
+
+**Reference:** Fixed in commit 5d53f29
+
+---
+
+### Problem 4: Border Styling for Seamless Connection
+
+**Symptom:** Visible border line between active tab and content, or no border separation between inactive tabs and content.
+
+**The Complete Border Solution:**
+```css
+/* Tab styling */
+.folder-tab {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;  /* ⚠️ CRITICAL: No bottom border on tabs */
+}
+
+/* Content container */
+.content-container {
+  position: relative;
+  z-index: 25;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-top: none;  /* ⚠️ CRITICAL: No top border on container */
+  border-radius: 0 0 12px 12px;  /* Square top, rounded bottom */
+}
+
+/* Table header (inside content container) */
+.sticky-table-header {
+  background: #e0f2fe;  /* ⚠️ CRITICAL: Same color as active tab */
+  border-top: 1px solid #cbd5e1;  /* ⚠️ CRITICAL: Creates separation for inactive tabs */
+}
+```
+
+**How This Creates the Folder Effect:**
+
+1. **Active tab (z-index 100) in front of content:**
+   - Tab has no bottom border
+   - Content has no top border
+   - Tab background (#e0f2fe) flows seamlessly into table header background (#e0f2fe)
+   - **Result:** No visible line = seamless connection ✅
+
+2. **Inactive tabs (z-index 1-10) behind content:**
+   - Content container (z-index 25) overlaps inactive tabs
+   - Table header's `border-top: 1px solid #cbd5e1` creates visible separation
+   - **Result:** Visible line between inactive tab and content = tabs appear "behind" ✅
+
+**Visual Breakdown:**
+```
+ACTIVE TAB VIEW (z-index 100 > 25):
+┌─────────────┐
+│ Active Tab  │ ← background: #e0f2fe, border-bottom: none
+│  (no line)  │
+├─────────────┤ ← NO VISIBLE LINE (both #e0f2fe, no borders)
+│Table Header │ ← background: #e0f2fe, border-top creates line with inactive tabs
+└─────────────┘
+
+INACTIVE TAB VIEW (z-index 1-10 < 25):
+    ┌─────────────┐
+    │Inactive Tab │ ← background: #e2e8f0, gets covered by content
+    └─────────────┘
+┌─────────────────┐
+│  Content Edge   │ ← border-top: 1px solid #cbd5e1 (VISIBLE LINE)
+├─────────────────┤
+│  Table Header   │ ← background: #e0f2fe
+└─────────────────┘
+```
+
+**Reference:** Fixed in commit 5057266
+
+---
+
+### Quick Checklist: Implementing Tabs Without These Issues
+
+When implementing new skeuomorphic tabs, verify:
+
+- [ ] **No `!important` on hover z-index** - Use JavaScript state management instead
+- [ ] **Hover z-index < content z-index** - Inactive tabs stay behind even when hovered (e.g., 20 < 25 < 100)
+- [ ] **Solid background colors** - No gradients on tabs
+- [ ] **No box-shadows on tabs** - Only on content container if needed
+- [ ] **Single `translateY` value for active tabs** - No overrides creating gaps
+- [ ] **Matching backgrounds** - Active tab color matches table header exactly
+- [ ] **Border strategy:**
+  - [ ] Tabs: `border-bottom: none`
+  - [ ] Content container: `border-top: none`
+  - [ ] Table header: `border-top: 1px solid` (creates line with inactive tabs)
+- [ ] **Slot-based pattern** - Tabs and content in same stacking context
+- [ ] **No `position: sticky` on tabs** - Use wrapper pattern if sticky needed
+
+**Files to Reference:**
+- `src/features/pleadings/components/ProceedingsTabs.vue` - Tabs component with slot
+- `src/features/pleadings/components/PleadingsTable.vue` - Content container styling
+- `src/features/pleadings/views/Pleadings.vue` - Parent view using slot pattern
+
+---
+
 ## Alternative Approaches (For Reference)
 
 **Note:** The following approaches were researched from internet sources but are **NOT RECOMMENDED** for new implementations. They are kept here for reference only. Use the **Wrapper-Based Overflow** technique above instead.
@@ -820,11 +1062,16 @@ When implementing overlapping tabs, verify:
 - [ ] **Active tab appears IN FRONT of content container** (z-index layering works)
 - [ ] **Inactive tabs appear BEHIND content container** (folder-tab metaphor intact)
 - [ ] Hover states are visible (z-index adjusts if needed)
+- [ ] **Hovered inactive tabs stay BEHIND content** (not jumping in front - see Problem 1 in "Common Problems & Fixes")
+- [ ] **No visual seam between active tab and content** (see Problem 2 & 4 in "Common Problems & Fixes")
+- [ ] **Active tab aligns tightly with content header** (see Problem 3 in "Common Problems & Fixes")
 - [ ] Shadows/borders aren't clipped by overflow
 - [ ] Transitions are smooth when resizing
 - [ ] Works with variable tab widths
 - [ ] No horizontal scrollbar appears unintentionally
 - [ ] **No `position: sticky` isolating tabs from content** (or using slot pattern if sticky needed)
+
+**Pro Tip:** Use the "Quick Checklist" in the "Common Problems & Fixes" section for detailed verification steps.
 
 ---
 
@@ -882,14 +1129,22 @@ When implementing overlapping tabs, verify:
 4. Last wrapper: `min-width: 140px` (prevents complete collapse)
 5. Super spacer: `flex-shrink: 10000` (shrinks first)
 6. Apply **incremental z-index** from left to right (1, 2, 3...)
-7. Give **active/hovered tab highest z-index** (e.g., 100)
-8. **Content container: `position: relative; z-index: 25;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
-9. ALL tab: `flex-shrink: 0` (never shrinks)
-10. Container: `overflow: visible` (allows button overflow)
-11. **⚠️ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
+7. Give **active tab highest z-index** (e.g., 100)
+8. Give **hovered inactive tabs intermediate z-index** (e.g., 20) - LOWER than content (25)
+9. **Content container: `position: relative; z-index: 25;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
+10. ALL tab: `flex-shrink: 0` (never shrinks)
+11. Container: `overflow: visible` (allows button overflow)
+12. **⚠️ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
 
 **⚠️ CRITICAL GOTCHA: `position: sticky` Trap**
 If using `position: sticky` on your tabs container, it creates an **isolated stacking context** that breaks z-index layering with the content. Solution: Use a **slot-based pattern** where the content is rendered INSIDE the tabs component, so both share the same stacking context. See "The `position: sticky` Stacking Context Trap" section above.
+
+**🚨 AVOID THESE COMMON MISTAKES:**
+See the "Common Problems & Fixes" section for production-proven solutions to:
+1. Hover z-index overrides breaking tab layering
+2. Box shadows and gradients creating visual artifacts
+3. Active tab vertical misalignment (Y-axis position)
+4. Border styling for seamless tab-content connection
 
 **Why This Works:**
 - When wrapper shrinks below button width, button overflows → creates overlap
