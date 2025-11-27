@@ -238,7 +238,24 @@ This is the **CSS-only** approach that actually works. The key insight is using 
    - Hovered tab: z-index: 99 or 100
    - This mimics physical folder tabs
 
-5. **Text truncation inside buttons:**
+5. **Content container MUST have intermediate z-index (CRITICAL!):**
+   - Content container (below tabs): `position: relative; z-index: 25;`
+   - This creates the folder-tab metaphor:
+     - Inactive tabs (z-index 1-10) appear **behind** the content
+     - Active tab (z-index 100) appears **in front** of the content
+     - Makes it look like the active tab is "attached" to the content area
+   - **Without this**, all tabs will appear behind or in front of content - breaking the visual effect
+   ```css
+   .content-container {
+     position: relative;
+     z-index: 25; /* Higher than inactive tabs, lower than active tab */
+     border: 1px solid #cbd5e1;
+     border-top: none; /* Tab connects to content */
+     border-radius: 0 12px 12px 12px; /* No top-left radius where tab connects */
+   }
+   ```
+
+6. **Text truncation inside buttons:**
    ```css
    .tab-content {
      overflow: hidden;
@@ -618,8 +635,9 @@ When implementing overlapping tabs, verify:
 5. Super spacer: `flex-shrink: 10000` (shrinks first)
 6. Apply **incremental z-index** from left to right (1, 2, 3...)
 7. Give **active/hovered tab highest z-index** (e.g., 100)
-8. ALL tab: `flex-shrink: 0` (never shrinks)
-9. Container: `overflow: visible` (allows button overflow)
+8. **Content container: `position: relative; z-index: 25;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
+9. ALL tab: `flex-shrink: 0` (never shrinks)
+10. Container: `overflow: visible` (allows button overflow)
 
 **Why This Works:**
 - When wrapper shrinks below button width, button overflows → creates overlap
