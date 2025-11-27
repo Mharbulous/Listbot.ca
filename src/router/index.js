@@ -55,14 +55,12 @@ const router = createRouter({
     {
       path: '/process/stub',
       name: 'process-stub',
-      component: () => import('../views/stubs/ProcessStub.vue'),
-      meta: { requiresAuth: true, title: 'Process Blueprint' },
+      component: () => import('../views/ProcessDashboard.vue'),
+      meta: { requiresAuth: true, title: 'Processing Dashboard' },
     },
     {
       path: '/process',
-      name: 'process',
-      component: () => import('../views/ProcessDashboard.vue'),
-      meta: { requiresAuth: true, title: 'Processing Dashboard' },
+      redirect: '/process/stub',
     },
     {
       path: '/analysis/stub',
