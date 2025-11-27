@@ -18,180 +18,186 @@
         </button>
       </TitleDrawer>
 
-      <!-- Import Tabs -->
-      <ImportTabs v-model="activeTab" />
-
-      <!-- Tabbed Import Content -->
-      <div class="mx-6 mb-6">
-        <div class="content-container">
-          <!-- Folder Import Table -->
-          <div v-if="activeTab === 'folder'" class="table-container bg-white min-w-[720px]">
-                <table class="w-full min-w-[720px]">
-                  <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
-                    <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
-                        Import
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Client Name
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Matter Number
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Folder Path
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
-                        Confidence
-                      </th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-slate-200">
-                    <tr
-                      v-for="item in mockFolderData"
-                      :key="item.matterNumber"
-                      class="hover:bg-slate-50 transition-colors"
-                    >
-                      <td class="px-4 py-3">
-                        <input
-                          v-model="item.import"
-                          type="checkbox"
-                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                      </td>
-                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
-                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
-                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.folderPath }}</td>
-                      <td class="px-4 py-3">
-                        <span
-                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          :class="{
-                            'bg-green-100 text-green-800': item.confidence >= 90,
-                            'bg-yellow-100 text-yellow-800': item.confidence >= 70 && item.confidence < 90,
-                            'bg-red-100 text-red-800': item.confidence < 70,
-                          }"
+      <!-- 
+        FIX: Import Tabs now wraps the content via slot.
+        This puts tabs and content in the SAME stacking context,
+        allowing z-index values to properly compete.
+      -->
+      <ImportTabs v-model="activeTab">
+        <template #content>
+          <!-- Tabbed Import Content - now INSIDE ImportTabs component -->
+          <div class="mx-6 mb-6">
+            <div class="content-container">
+              <!-- Folder Import Table -->
+              <div v-if="activeTab === 'folder'" class="table-container bg-white min-w-[720px]">
+                    <table class="w-full min-w-[720px]">
+                      <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
+                            Import
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Client Name
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Matter Number
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Folder Path
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
+                            Confidence
+                          </th>
+                          <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-slate-200">
+                        <tr
+                          v-for="item in mockFolderData"
+                          :key="item.matterNumber"
+                          class="hover:bg-slate-50 transition-colors"
                         >
-                          {{ item.confidence }}%
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 text-right">
-                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          <td class="px-4 py-3">
+                            <input
+                              v-model="item.import"
+                              type="checkbox"
+                              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                             />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                          <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                          <td class="px-4 py-3 text-sm text-slate-600">{{ item.folderPath }}</td>
+                          <td class="px-4 py-3">
+                            <span
+                              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                              :class="{
+                                'bg-green-100 text-green-800': item.confidence >= 90,
+                                'bg-yellow-100 text-yellow-800': item.confidence >= 70 && item.confidence < 90,
+                                'bg-red-100 text-red-800': item.confidence < 70,
+                              }"
+                            >
+                              {{ item.confidence }}%
+                            </span>
+                          </td>
+                          <td class="px-4 py-3 text-right">
+                            <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
 
-          <!-- Document Import Table -->
-          <div v-if="activeTab === 'document'" class="table-container bg-white min-w-[720px]">
-                <table class="w-full min-w-[720px]">
-                  <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
-                    <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
-                        Import
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Client Name
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Matter Number
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
-                        Status
-                      </th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
-                        Date Opened
-                      </th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-slate-200">
-                    <tr
-                      v-for="item in mockDocumentData"
-                      :key="item.matterNumber"
-                      class="hover:bg-slate-50 transition-colors"
-                    >
-                      <td class="px-4 py-3">
-                        <input
-                          v-model="item.import"
-                          type="checkbox"
-                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                      </td>
-                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
-                      <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
-                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.description }}</td>
-                      <td class="px-4 py-3">
-                        <span
-                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                          :class="getStatusClass(item.status)"
+              <!-- Document Import Table -->
+              <div v-if="activeTab === 'document'" class="table-container bg-white min-w-[720px]">
+                    <table class="w-full min-w-[720px]">
+                      <thead class="sticky-table-header border-b border-slate-300 min-w-[720px]">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-16">
+                            Import
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Client Name
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Matter Number
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider">
+                            Description
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
+                            Status
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-slate-900 uppercase tracking-wider w-32">
+                            Date Opened
+                          </th>
+                          <th class="px-4 py-3 text-right text-xs font-medium text-slate-900 uppercase tracking-wider w-20">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-slate-200">
+                        <tr
+                          v-for="item in mockDocumentData"
+                          :key="item.matterNumber"
+                          class="hover:bg-slate-50 transition-colors"
                         >
-                          {{ item.status }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 text-sm text-slate-600">{{ item.dateOpened }}</td>
-                      <td class="px-4 py-3 text-right">
-                        <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          <td class="px-4 py-3">
+                            <input
+                              v-model="item.import"
+                              type="checkbox"
+                              class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                             />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-slate-900">{{ item.clientName }}</td>
+                          <td class="px-4 py-3 text-sm text-slate-900">{{ item.matterNumber }}</td>
+                          <td class="px-4 py-3 text-sm text-slate-600">{{ item.description }}</td>
+                          <td class="px-4 py-3">
+                            <span
+                              class="inline-flex items-center px-2.5 py-0.5 rounded-wider text-xs font-medium"
+                              :class="getStatusClass(item.status)"
+                            >
+                              {{ item.status }}
+                            </span>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-slate-600">{{ item.dateOpened }}</td>
+                          <td class="px-4 py-3 text-right">
+                            <button class="text-slate-400 hover:text-slate-600 transition-colors">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
 
-          <!-- Map Fields with AI Tab -->
-          <div v-if="activeTab === 'map-fields'" class="bg-white p-8">
-                <div class="text-center text-slate-500">
-                  <span class="text-4xl mb-4 block">🤖</span>
-                  <h3 class="text-lg font-semibold mb-2">Map Fields with AI</h3>
-                  <p class="text-sm">AI-powered field mapping will be displayed here</p>
-                </div>
-              </div>
+              <!-- Map Fields with AI Tab -->
+              <div v-if="activeTab === 'map-fields'" class="bg-white p-8">
+                    <div class="text-center text-slate-500">
+                      <span class="text-4xl mb-4 block">🤖</span>
+                      <h3 class="text-lg font-semibold mb-2">Map Fields with AI</h3>
+                      <p class="text-sm">AI-powered field mapping will be displayed here</p>
+                    </div>
+                  </div>
 
-          <!-- Review Field Mappings Tab -->
-          <div v-if="activeTab === 'review-mappings'" class="bg-white p-8">
-                <div class="text-center text-slate-500">
-                  <span class="text-4xl mb-4 block">🔍</span>
-                  <h3 class="text-lg font-semibold mb-2">Review Field Mappings</h3>
-                  <p class="text-sm">Field mapping review interface will be displayed here</p>
-                </div>
-              </div>
+              <!-- Review Field Mappings Tab -->
+              <div v-if="activeTab === 'review-mappings'" class="bg-white p-8">
+                    <div class="text-center text-slate-500">
+                      <span class="text-4xl mb-4 block">🔍</span>
+                      <h3 class="text-lg font-semibold mb-2">Review Field Mappings</h3>
+                      <p class="text-sm">Field mapping review interface will be displayed here</p>
+                    </div>
+                  </div>
 
-          <!-- Confirm Import Tab -->
-          <div v-if="activeTab === 'confirm-import'" class="bg-white p-8">
-                <div class="text-center text-slate-500">
-                  <span class="text-4xl mb-4 block">✅</span>
-                  <h3 class="text-lg font-semibold mb-2">Confirm Import</h3>
-                  <p class="text-sm">Import confirmation and summary will be displayed here</p>
-                </div>
-              </div>
-        </div>
-      </div>
+              <!-- Confirm Import Tab -->
+              <div v-if="activeTab === 'confirm-import'" class="bg-white p-8">
+                    <div class="text-center text-slate-500">
+                      <span class="text-4xl mb-4 block">✅</span>
+                      <h3 class="text-lg font-semibold mb-2">Confirm Import</h3>
+                      <p class="text-sm">Import confirmation and summary will be displayed here</p>
+                    </div>
+                  </div>
+            </div>
+          </div>
+        </template>
+      </ImportTabs>
     </PageLayout>
 
     <!-- Success Notification -->
@@ -275,7 +281,7 @@ function getStatusClass(status) {
 
 .content-container {
   position: relative;
-  z-index: 25; /* Higher than inactive tabs (1-10), lower than active tab (100) */
+  z-index: 25; /* Now competes with tab wrappers in SAME stacking context! */
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none; /* Tab connects to content - no visible line between active tab and table header */

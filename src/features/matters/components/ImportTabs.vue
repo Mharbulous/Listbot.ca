@@ -1,47 +1,60 @@
 <template>
-  <div class="import-tabs-sticky px-6">
-    <div class="tabs-container">
-      <!-- Import tabs (left-aligned) - wrapped in containers that shrink -->
-      <div
-        v-for="(tab, index) in leftImportTabs"
-        :key="tab.value"
-        class="tab-wrapper"
-        :class="{ 'last-tab-wrapper': index === leftImportTabs.length - 1 }"
-        :style="getTabWrapperStyle(tab.value)"
-      >
-        <button
-          @click="selectTab(tab.value)"
-          @mouseenter="setHoveredTab(tab.value)"
-          @mouseleave="clearHoveredTab"
-          class="folder-tab import-tab"
-          :class="getTabStateClass(tab.value)"
+  <!-- 
+    FIX: Wrapper creates a SINGLE stacking context for both tabs AND content.
+    The sticky positioning is moved to this outer wrapper, so all z-index values
+    compete within the same context.
+  -->
+  <div class="import-tabs-wrapper">
+    <div class="import-tabs-row px-6">
+      <div class="tabs-container">
+        <!-- Import tabs (left-aligned) - wrapped in containers that shrink -->
+        <div
+          v-for="(tab, index) in leftImportTabs"
+          :key="tab.value"
+          class="tab-wrapper"
+          :class="{ 'last-tab-wrapper': index === leftImportTabs.length - 1 }"
+          :style="getTabWrapperStyle(tab.value)"
         >
-          <div class="tab-content">
-            <div class="tab-icon">{{ tab.icon }}</div>
-            <div class="tab-title">{{ tab.label }}</div>
-          </div>
-        </button>
-      </div>
+          <button
+            @click="selectTab(tab.value)"
+            @mouseenter="setHoveredTab(tab.value)"
+            @mouseleave="clearHoveredTab"
+            class="folder-tab import-tab"
+            :class="getTabStateClass(tab.value)"
+          >
+            <div class="tab-content">
+              <div class="tab-icon">{{ tab.icon }}</div>
+              <div class="tab-title">{{ tab.label }}</div>
+            </div>
+          </button>
+        </div>
 
-      <!-- Super spacer to absorb extra space and push Confirm Import tab to the right -->
-      <div class="super-spacer"></div>
+        <!-- Super spacer to absorb extra space and push Confirm Import tab to the right -->
+        <div class="super-spacer"></div>
 
-      <!-- Confirm Import tab (right-aligned, never shrinks) -->
-      <div class="confirm-tab-wrapper" :style="getTabWrapperStyle('confirm-import')">
-        <button
-          @click="selectTab('confirm-import')"
-          @mouseenter="setHoveredTab('confirm-import')"
-          @mouseleave="clearHoveredTab"
-          class="folder-tab import-tab"
-          :class="getTabStateClass('confirm-import')"
-        >
-          <div class="tab-content">
-            <div class="tab-icon">✅</div>
-            <div class="tab-title">Confirm Import</div>
-          </div>
-        </button>
+        <!-- Confirm Import tab (right-aligned, never shrinks) -->
+        <div class="confirm-tab-wrapper" :style="getTabWrapperStyle('confirm-import')">
+          <button
+            @click="selectTab('confirm-import')"
+            @mouseenter="setHoveredTab('confirm-import')"
+            @mouseleave="clearHoveredTab"
+            class="folder-tab import-tab"
+            :class="getTabStateClass('confirm-import')"
+          >
+            <div class="tab-content">
+              <div class="tab-icon">✅</div>
+              <div class="tab-title">Confirm Import</div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
+    
+    <!-- 
+      FIX: Content slot is NOW INSIDE the same stacking context as tabs.
+      This allows tab z-index values to properly compete with content-container.
+    -->
+    <slot name="content"></slot>
   </div>
 </template>
 
@@ -54,6 +67,7 @@ import { ref, computed } from 'vue';
 
 const Z_INDEX_ACTIVE = 100;
 const Z_INDEX_HOVERED = 99;
+const Z_INDEX_CONTENT = 25; // Content container z-index for reference
 const CONFIRM_IMPORT_TAB_ID = 'confirm-import';
 
 const leftImportTabs = [
@@ -131,23 +145,22 @@ const getTabStateClass = (tabId) => {
 };
 
 // ============================================================================
-// TAB STYLING (CSS-only adaptive approach)
+// TAB STYLING - Z-index values now compete in same stacking context as content
 // ============================================================================
 
 const getTabWrapperStyle = (tabId) => {
-  // Calculate z-index for the wrapper - this controls stacking order
   let zIndex = 1;
   if (isActive(tabId)) {
+    // Active tab: z-index 100 > content container's 25 = APPEARS IN FRONT
     zIndex = Z_INDEX_ACTIVE;
   } else if (isHovered(tabId)) {
     zIndex = Z_INDEX_HOVERED;
   } else {
-    // Find the index for non-active, non-hovered tabs
+    // Inactive tabs: z-index 1-10 < content container's 25 = APPEARS BEHIND
     const tabIndex = leftImportTabs.findIndex((t) => t.value === tabId);
     if (tabIndex !== -1) {
       zIndex = tabIndex + 1;
     } else if (tabId === CONFIRM_IMPORT_TAB_ID) {
-      // Confirm Import tab gets a base z-index (below content-container)
       zIndex = 10;
     }
   }
@@ -158,13 +171,21 @@ const getTabWrapperStyle = (tabId) => {
 
 <style scoped>
 /* ========================================================================== */
-/* CONTAINER                                                                  */
+/* FIX: OUTER WRAPPER - Creates single stacking context for tabs + content    */
 /* ========================================================================== */
 
-.import-tabs-sticky {
-  position: sticky;
-  top: 0;
-  /* No z-index - allows child tab wrappers to compete individually with content-container */
+.import-tabs-wrapper {
+  position: relative;
+  /* This wrapper contains both tabs and content, so they share stacking context */
+}
+
+/* ========================================================================== */
+/* TABS ROW - No longer sticky (wrapper handles positioning if needed)        */
+/* ========================================================================== */
+
+.import-tabs-row {
+  position: relative;
+  /* NO position: sticky here - that was creating the isolated stacking context */
   background: transparent;
   padding-bottom: 0;
 }

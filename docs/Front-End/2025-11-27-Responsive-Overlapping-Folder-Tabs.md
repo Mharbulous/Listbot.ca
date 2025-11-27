@@ -333,6 +333,205 @@ This is the **CSS-only** approach that actually works. The key insight is using 
 
 ---
 
+## ⚠️ CRITICAL: The `position: sticky` Stacking Context Trap
+
+**Date Added:** 2025-11-27
+**Status:** Production-proven fix
+
+### The Problem
+
+If your tabs container uses `position: sticky` (e.g., to keep tabs visible while scrolling), you will encounter a **stacking context isolation problem** that breaks the folder-tab z-index layering effect.
+
+**Why it happens:** Per the CSS specification, `position: sticky` **ALWAYS creates a new stacking context**, even without an explicit `z-index`. This means:
+
+```
+BROKEN STRUCTURE:
+┌─────────────────────────────────────────┐
+│ .import-tabs-sticky (position: sticky)  │  ← Creates ISOLATED stacking context
+│   └── tab wrappers (z-index: 1-100)     │  ← Can only compete with EACH OTHER
+└─────────────────────────────────────────┘
+                    ↕ Z-INDEX CANNOT COMPETE ACROSS THIS BOUNDARY!
+┌─────────────────────────────────────────┐
+│ .content-container (z-index: 25)        │  ← Different stacking context
+└─────────────────────────────────────────┘
+```
+
+**Symptoms:**
+- ALL tabs appear behind the content container (or all in front)
+- Changing z-index values on tabs has no effect relative to content
+- Active tab doesn't appear "in front of" the content header
+- The folder-tab metaphor is completely broken
+
+### Failed Approaches (Don't Try These)
+
+❌ **Setting z-index on the sticky container:**
+```css
+.import-tabs-sticky {
+  position: sticky;
+  z-index: 50; /* Makes ALL tabs appear in front - not what we want */
+}
+```
+
+❌ **Removing z-index from the sticky container:**
+```css
+.import-tabs-sticky {
+  position: sticky;
+  /* No z-index - but sticky STILL creates stacking context! */
+}
+```
+
+❌ **Adjusting individual tab z-index values:**
+```javascript
+// Doesn't matter what values you use - they can't escape the sticky context
+zIndex: isActive ? 9999 : index + 1
+```
+
+### ✅ THE SOLUTION: Slot-Based Shared Stacking Context
+
+**The fix:** Put both the tabs AND the content container **inside the same parent element**. Use a Vue slot (or React children) to achieve this while keeping components modular.
+
+```
+FIXED STRUCTURE:
+┌─────────────────────────────────────────────────┐
+│ .import-tabs-wrapper (position: relative)       │  ← SINGLE stacking context
+│   ├── .import-tabs-row                          │
+│   │     └── tab wrappers (z-index: 1-100)       │  ← NOW competes with content!
+│   └── <slot name="content">                     │
+│         └── .content-container (z-index: 25)    │  ← SAME stacking context
+└─────────────────────────────────────────────────┘
+```
+
+**Result:**
+- Active tab (z-index: 100) > Content (z-index: 25) = **Tab appears IN FRONT** ✅
+- Inactive tabs (z-index: 1-10) < Content (z-index: 25) = **Tabs appear BEHIND** ✅
+
+### Vue 3 Implementation
+
+**ImportTabs.vue - Add wrapper and content slot:**
+```vue
+<template>
+  <!-- Wrapper creates single stacking context for both tabs and content -->
+  <div class="import-tabs-wrapper">
+    <div class="import-tabs-row px-6">
+      <div class="tabs-container">
+        <!-- Tab wrappers here -->
+        <div
+          v-for="(tab, index) in tabs"
+          :key="tab.value"
+          class="tab-wrapper"
+          :style="{ zIndex: isActive(tab.value) ? 100 : index + 1 }"
+        >
+          <button
+            @click="selectTab(tab.value)"
+            class="folder-tab"
+            :class="isActive(tab.value) ? 'folder-tab-active' : 'folder-tab-inactive'"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+        
+        <!-- Super spacer and other tabs... -->
+      </div>
+    </div>
+    
+    <!-- Content slot - NOW IN SAME STACKING CONTEXT AS TABS -->
+    <slot name="content"></slot>
+  </div>
+</template>
+
+<style scoped>
+/* Wrapper - creates single stacking context */
+.import-tabs-wrapper {
+  position: relative;
+  /* NO position: sticky here! */
+}
+
+/* Tabs row - no sticky positioning */
+.import-tabs-row {
+  position: relative;
+  background: transparent;
+}
+
+/* Rest of tab styles unchanged... */
+</style>
+```
+
+**MatterImport.vue - Pass content through slot:**
+```vue
+<template>
+  <PageLayout>
+    <TitleDrawer title="Bulk Import">
+      <!-- Header content -->
+    </TitleDrawer>
+
+    <!-- Tabs now WRAP the content via slot -->
+    <ImportTabs v-model="activeTab">
+      <template #content>
+        <div class="mx-6 mb-6">
+          <div class="content-container">
+            <!-- Table content here -->
+          </div>
+        </div>
+      </template>
+    </ImportTabs>
+  </PageLayout>
+</template>
+
+<style scoped>
+.content-container {
+  position: relative;
+  z-index: 25; /* Now competes with tabs in SAME stacking context */
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+}
+</style>
+```
+
+### If You Still Need Sticky Behavior
+
+If you need the tabs to stick to the top while scrolling, you have options:
+
+**Option A: Make the entire wrapper sticky**
+```css
+.import-tabs-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 50; /* Entire section (tabs + visible content) sticks together */
+}
+```
+Note: This makes the whole tabbed section sticky, not just the tabs row.
+
+**Option B: Accept the visual tradeoff**
+Keep tabs sticky but use design tricks (matching colors, shadows, border manipulation) to create the illusion of connection without actual z-index layering.
+
+**Option C: JavaScript scroll detection**
+Dynamically toggle the visual effect based on scroll position - more complex but allows true sticky tabs with layering effect when not scrolled.
+
+### Quick Reference: What Creates Stacking Context
+
+Per CSS spec, these properties create a new stacking context (isolating children from competing with outside elements):
+
+| Property | Creates Stacking Context? |
+|----------|--------------------------|
+| `position: sticky` | ✅ **ALWAYS** (even without z-index!) |
+| `position: fixed` | ✅ Always |
+| `position: relative` + `z-index` | ✅ When both present |
+| `position: absolute` + `z-index` | ✅ When both present |
+| `opacity: 0.99` (or less than 1) | ✅ Always |
+| `transform: any` | ✅ Always |
+| `filter: any` | ✅ Always |
+| `isolation: isolate` | ✅ Always |
+| `will-change: transform` | ✅ Always |
+| `contain: layout` or `paint` | ✅ Always |
+
+**Key insight:** `position: sticky` is the sneakiest because it creates a stacking context **even without a z-index value**, unlike `position: relative` which only creates one when combined with z-index.
+
+**Reference:** See fix implemented in `ImportTabs.vue` and `MatterImport.vue` (2025-11-27)
+
+---
+
 ## Alternative Approaches (For Reference)
 
 **Note:** The following approaches were researched from internet sources but are **NOT RECOMMENDED** for new implementations. They are kept here for reference only. Use the **Wrapper-Based Overflow** technique above instead.
@@ -618,11 +817,14 @@ When implementing overlapping tabs, verify:
 - [ ] Tabs overlap smoothly when container shrinks
 - [ ] Rightmost tabs appear on top of leftmost tabs
 - [ ] Active tab always appears on top (regardless of position)
+- [ ] **Active tab appears IN FRONT of content container** (z-index layering works)
+- [ ] **Inactive tabs appear BEHIND content container** (folder-tab metaphor intact)
 - [ ] Hover states are visible (z-index adjusts if needed)
 - [ ] Shadows/borders aren't clipped by overflow
 - [ ] Transitions are smooth when resizing
 - [ ] Works with variable tab widths
 - [ ] No horizontal scrollbar appears unintentionally
+- [ ] **No `position: sticky` isolating tabs from content** (or using slot pattern if sticky needed)
 
 ---
 
@@ -684,6 +886,10 @@ When implementing overlapping tabs, verify:
 8. **Content container: `position: relative; z-index: 25;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
 9. ALL tab: `flex-shrink: 0` (never shrinks)
 10. Container: `overflow: visible` (allows button overflow)
+11. **⚠️ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
+
+**⚠️ CRITICAL GOTCHA: `position: sticky` Trap**
+If using `position: sticky` on your tabs container, it creates an **isolated stacking context** that breaks z-index layering with the content. Solution: Use a **slot-based pattern** where the content is rendered INSIDE the tabs component, so both share the same stacking context. See "The `position: sticky` Stacking Context Trap" section above.
 
 **Why This Works:**
 - When wrapper shrinks below button width, button overflows → creates overlap
