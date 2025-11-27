@@ -273,6 +273,8 @@
 import { ref, computed } from 'vue';
 import PageLayout from '@/shared/components/layout/PageLayout.vue';
 import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
+import folderImportData from '../data/import-from-folders.json';
+import documentImportData from '../data/import-from-matter-list.json';
 
 defineOptions({
   name: 'MatterImportView',
@@ -283,87 +285,10 @@ const activeTab = ref('folder');
 const showSuccessNotification = ref(false);
 
 // Mock Data for Folder Import
-const mockFolderData = ref([
-  {
-    import: true,
-    clientName: 'Smith, John',
-    matterNumber: 'M-2024-001',
-    folderPath: '/Clients/Smith, John - M-2024-001',
-    confidence: 95,
-  },
-  {
-    import: true,
-    clientName: 'Johnson Corp',
-    matterNumber: 'M-2024-002',
-    folderPath: '/Clients/Johnson Corp - M-2024-002',
-    confidence: 92,
-  },
-  {
-    import: true,
-    clientName: 'Williams Estate',
-    matterNumber: 'M-2024-003',
-    folderPath: '/Clients/Williams Estate - M-2024-003',
-    confidence: 88,
-  },
-  {
-    import: true,
-    clientName: 'Davis & Associates',
-    matterNumber: 'M-2024-004',
-    folderPath: '/Clients/Davis & Associates - M-2024-004',
-    confidence: 96,
-  },
-  {
-    import: false,
-    clientName: 'Miller Corp',
-    matterNumber: 'M-2024-005',
-    folderPath: '/Clients/Miller Corp - M-2024-005',
-    confidence: 68,
-  },
-]);
+const mockFolderData = ref(folderImportData);
 
 // Mock Data for Document Import
-const mockDocumentData = ref([
-  {
-    import: true,
-    clientName: 'Anderson, Sarah',
-    matterNumber: 'M-2024-101',
-    description: 'Real Estate Transaction',
-    status: 'Active',
-    dateOpened: '2024-01-15',
-  },
-  {
-    import: true,
-    clientName: 'Brown Industries',
-    matterNumber: 'M-2024-102',
-    description: 'Contract Review',
-    status: 'Active',
-    dateOpened: '2024-02-01',
-  },
-  {
-    import: true,
-    clientName: 'Davis Family Trust',
-    matterNumber: 'M-2024-103',
-    description: 'Estate Planning',
-    status: 'Active',
-    dateOpened: '2024-02-10',
-  },
-  {
-    import: true,
-    clientName: 'Miller & Associates',
-    matterNumber: 'M-2024-104',
-    description: 'Corporate Restructuring',
-    status: 'Pending',
-    dateOpened: '2024-03-05',
-  },
-  {
-    import: false,
-    clientName: 'Wilson, Robert',
-    matterNumber: 'M-2024-105',
-    description: 'Litigation Support',
-    status: 'Closed',
-    dateOpened: '2024-01-20',
-  },
-]);
+const mockDocumentData = ref(documentImportData);
 
 // Computed
 const selectedCount = computed(() => {

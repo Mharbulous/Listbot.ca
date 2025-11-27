@@ -1,0 +1,37 @@
+[
+  {
+    "import": true,
+    "clientName": "Smith, John",
+    "matterNumber": "M-2024-001",
+    "folderPath": "/Clients/Smith, John - M-2024-001",
+    "confidence": 95
+  },
+  {
+    "import": true,
+    "clientName": "Johnson Corp",
+    "matterNumber": "M-2024-002",
+    "folderPath": "/Clients/Johnson Corp - M-2024-002",
+    "confidence": 92
+  },
+  {
+    "import": true,
+    "clientName": "Williams Estate",
+    "matterNumber": "M-2024-003",
+    "folderPath": "/Clients/Williams Estate - M-2024-003",
+    "confidence": 88
+  },
+  {
+    "import": true,
+    "clientName": "Davis & Associates",
+    "matterNumber": "M-2024-004",
+    "folderPath": "/Clients/Davis & Associates - M-2024-004",
+    "confidence": 96
+  },
+  {
+    "import": false,
+    "clientName": "Miller Corp",
+    "matterNumber": "M-2024-005",
+    "folderPath": "/Clients/Miller Corp - M-2024-005",
+    "confidence": 68
+  }
+]
