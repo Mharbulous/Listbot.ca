@@ -66,7 +66,7 @@ import { ref, computed } from 'vue';
 // ============================================================================
 
 const Z_INDEX_ACTIVE = 100;
-const Z_INDEX_HOVERED = 99;
+const Z_INDEX_HOVERED = 20; // Hovered inactive tabs stay BEHIND content (25) but in front of other inactive tabs
 const Z_INDEX_CONTENT = 25; // Content container z-index for reference
 const CONFIRM_IMPORT_TAB_ID = 'confirm-import';
 
@@ -216,21 +216,10 @@ const getTabWrapperStyle = (tabId) => {
   min-width: 140px;
 }
 
-/* Hover and focus bring tab wrapper to front */
-.tab-wrapper:hover,
-.tab-wrapper:has(:focus-visible) {
-  z-index: 100 !important;
-}
-
 /* Confirm Import tab wrapper - never shrinks */
 .confirm-tab-wrapper {
   position: relative;
   flex-shrink: 0;
-}
-
-.confirm-tab-wrapper:hover,
-.confirm-tab-wrapper:has(:focus-visible) {
-  z-index: 100 !important;
 }
 
 /* ========================================================================== */
