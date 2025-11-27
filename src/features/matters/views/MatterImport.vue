@@ -39,6 +39,24 @@
                 <span class="font-medium">Import from Matter List</span>
               </div>
             </v-tab>
+            <v-tab value="map-fields">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🤖</span>
+                <span class="font-medium">Map Fields with AI</span>
+              </div>
+            </v-tab>
+            <v-tab value="review-mappings">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🔍</span>
+                <span class="font-medium">Review Field Mappings</span>
+              </div>
+            </v-tab>
+            <v-tab value="confirm-import">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">✅</span>
+                <span class="font-medium">Confirm Import</span>
+              </div>
+            </v-tab>
           </v-tabs>
 
           <v-window v-model="activeTab">
@@ -183,6 +201,39 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </v-window-item>
+
+            <!-- Map Fields with AI Tab -->
+            <v-window-item value="map-fields">
+              <div class="bg-white p-8">
+                <div class="text-center text-slate-500">
+                  <span class="text-4xl mb-4 block">🤖</span>
+                  <h3 class="text-lg font-semibold mb-2">Map Fields with AI</h3>
+                  <p class="text-sm">AI-powered field mapping will be displayed here</p>
+                </div>
+              </div>
+            </v-window-item>
+
+            <!-- Review Field Mappings Tab -->
+            <v-window-item value="review-mappings">
+              <div class="bg-white p-8">
+                <div class="text-center text-slate-500">
+                  <span class="text-4xl mb-4 block">🔍</span>
+                  <h3 class="text-lg font-semibold mb-2">Review Field Mappings</h3>
+                  <p class="text-sm">Field mapping review interface will be displayed here</p>
+                </div>
+              </div>
+            </v-window-item>
+
+            <!-- Confirm Import Tab -->
+            <v-window-item value="confirm-import">
+              <div class="bg-white p-8">
+                <div class="text-center text-slate-500">
+                  <span class="text-4xl mb-4 block">✅</span>
+                  <h3 class="text-lg font-semibold mb-2">Confirm Import</h3>
+                  <p class="text-sm">Import confirmation and summary will be displayed here</p>
+                </div>
               </div>
             </v-window-item>
           </v-window>
