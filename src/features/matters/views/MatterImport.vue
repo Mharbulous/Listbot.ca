@@ -289,6 +289,7 @@ function getStatusClass(status) {
   top: 0;
   background: #e0f2fe;
   z-index: 10;
+  border-top: 1px solid #cbd5e1; /* Matches border-slate-300 bottom border */
 }
 
 .table-container {
