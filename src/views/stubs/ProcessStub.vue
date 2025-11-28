@@ -154,19 +154,20 @@
         </div>
 
         <!-- Categorization -->
-        <div class="bg-white border-2 border-emerald-500 rounded-lg p-6">
+        <div class="bg-white border-2 border-amber-500 rounded-lg p-6">
           <div class="flex items-start gap-3 mb-3">
             <div class="text-2xl">🗂️</div>
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">Categorization System</h3>
-              <p class="text-sm text-emerald-600 font-medium">✓ Implemented</p>
+              <h3 class="text-lg font-semibold text-slate-900">Stage 5: Categorization</h3>
+              <p class="text-sm text-amber-600 font-medium">🔴 LIVE but Under Construction</p>
             </div>
           </div>
           <p class="text-slate-600 mb-3 text-sm">
-            Automated document classification based on content analysis for efficient organization.
+            Automated document classification based on content analysis for efficient organization. Currently implemented as part of the Review feature, being migrated to Process feature.
           </p>
           <div class="text-xs text-slate-500 space-y-1">
-            <div><strong>Feature:</strong> Organize → Categories</div>
+            <div><strong>Current Location:</strong> Organize → Categories</div>
+            <div><strong>Future Location:</strong> Process feature (migration planned)</div>
             <div><strong>Benefit:</strong> Streamlines document review</div>
           </div>
         </div>
@@ -197,10 +198,10 @@
               </div>
             </div>
             <p class="text-blue-700 mb-3 text-sm">
-              <strong>Stage 1c (Email Extraction):</strong> Parse .msg/.eml files to extract individual messages and attachments.
-              Attachments are deduplicated across all emails before storage.<br><br>
-              <strong>Stage 3 (Email Threading):</strong> Automatically identifies and groups email conversations, marking inclusive emails
-              (containing all prior conversation content) vs. non-inclusive replies.
+              <strong>Stage 3 (Email Extraction):</strong> Parse .msg/.eml files to extract individual messages (native + quoted) and attachments.
+              Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files.<br><br>
+              <strong>Stage 4 (Email Threading):</strong> Automatically identifies and groups email conversations, marking inclusive emails
+              (containing all prior conversation content) vs. non-inclusive replies. Builds on extracted message data from Stage 3.
             </p>
             <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
               <div class="text-sm font-medium text-blue-900 mb-1">Expected Impact:</div>
@@ -211,7 +212,7 @@
               <div><strong>Libraries:</strong> @kenjiuno/msgreader, mailparser</div>
               <div><strong>Storage:</strong> /emails (messages), /uploads (attachments)</div>
               <div><strong>Terminology:</strong> Native (current message), Quoted (thread history)</div>
-              <div><strong>Docs:</strong> docs/Features/Upload/Email-Extraction/</div>
+              <div><strong>Docs:</strong> docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</div>
             </div>
           </div>
         </div>
@@ -346,31 +347,33 @@ const workflowSteps = [
     status: 'Part of Preserve workflow',
   },
   {
-    title: 'Stage 1c: Email Extraction (NEW)',
+    title: 'Stage 3: Email Extraction',
     description:
-      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files. See docs/Features/Upload/Email-Extraction/',
-    status: 'Designed - Ready for Implementation',
+      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files. Native messages have reliable metadata from .msg headers, while quoted messages are parsed from email body with variable metadata quality. See docs/Features/Upload/Email-Extraction/email-extraction-architecture.md',
+    status: 'Planned - Architecture Designed',
   },
   {
-    title: 'Stage 3: Email Threading',
+    title: 'Stage 4: Email Threading',
     description:
-      'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages. Works with data from Stage 1c Email Extraction (planned).',
+      'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages. Builds on data from Stage 3 Email Extraction to create conversation threads and identify which messages contain complete thread history.',
+    status: 'Planned - Depends on Stage 3',
   },
   {
-    title: 'Stage 4: AI Fuzzy Deduplication',
+    title: 'Stage 5: Categorization',
     description:
-      'Advanced AI analysis identifies near-duplicate documents with similar but not identical content (planned).',
+      'Automated document classification based on content analysis for efficient organization. Currently live as part of the Review feature (Organize → Categories), with plans to migrate to the Process feature for enhanced workflow integration.',
+    status: 'Live but Under Construction',
   },
   {
-    title: 'Categorization',
+    title: 'Stage 6: AI Fuzzy Deduplication',
     description:
-      'Documents are automatically categorized based on content analysis for efficient organization.',
-    status: 'Implemented',
+      'Advanced AI analysis identifies near-duplicate documents with similar but not identical content, using embeddings and similarity thresholds to detect substantive duplicates that exact hash matching would miss.',
+    status: 'Planned - Advanced AI',
   },
   {
     title: 'Review-Ready Corpus',
     description:
-      'Processed documents are now optimized for review, with volume reduced by 50-75% and organized for efficient analysis.',
+      'Processed documents are now optimized for review, with volume reduced by 50-75% through comprehensive deduplication, email threading, and intelligent categorization.',
   },
 ];
 </script>
