@@ -14,7 +14,7 @@ How do you create folder-style tabs that:
 5. Never exceed container width (no horizontal scrollbar)
 6. **Support sticky table headers** that stick below the tabs when scrolling
 
-## âœ… PROVEN TECHNIQUE: Wrapper-Based Overflow (RECOMMENDED)
+## [✓] PROVEN TECHNIQUE: Wrapper-Based Overflow (RECOMMENDED)
 
 **Status:** Successfully implemented in production (ProceedingsTabs.vue)
 **Example:** See `docs/Front-End/25-11-22-Adaptive-folder-tabs.md`
@@ -220,7 +220,7 @@ The wrapper-based overflow approach is pure CSS with automatic, smooth adaptatio
 
 3. **Super spacer gets very high shrink value (10000)**
    - Ensures it shrinks completely before tabs start overlapping
-   - Creates two-phase behavior: normal â†’ overlapping
+   - Creates two-phase behavior: normal -> overlapping
 
 4. **Z-index layering (proximity-based stacking):**
    - Content container/table header: `z-index: 50` (reference point)
@@ -253,7 +253,7 @@ The wrapper-based overflow approach is pure CSS with automatic, smooth adaptatio
 
 ### Common Mistakes to Avoid
 
-âŒ **WRONG - Making button shrink:**
+[X] **WRONG - Making button shrink:**
 ```css
 .tab-button {
   flex-shrink: 1;  /* NO! Button will squeeze, not overlap */
@@ -261,7 +261,7 @@ The wrapper-based overflow approach is pure CSS with automatic, smooth adaptatio
 }
 ```
 
-âœ… **CORRECT - Only wrapper shrinks:**
+[✓] **CORRECT - Only wrapper shrinks:**
 ```css
 .tab-wrapper {
   flex-shrink: 1;  /* YES! Wrapper shrinks */
@@ -275,7 +275,7 @@ The wrapper-based overflow approach is pure CSS with automatic, smooth adaptatio
 ---
 
 
-## âš ï¸ CRITICAL: The `position: sticky` Stacking Context Trap
+## [!] CRITICAL: The `position: sticky` Stacking Context Trap
 
 **Date Added:** 2025-11-27
 **Status:** Production-proven fix
@@ -288,14 +288,14 @@ If your tabs container uses `position: sticky` (e.g., to keep tabs visible while
 
 ```
 BROKEN STRUCTURE:
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ .import-tabs-sticky (position: sticky)  â”‚  â† Creates ISOLATED stacking context
-â”‚   â””â”€â”€ tab wrappers (proximity-based z-index)     â”‚  â† Can only compete with EACH OTHER
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                    â†• Z-INDEX CANNOT COMPETE ACROSS THIS BOUNDARY!
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ .content-container (z-index: 50)        â”‚  â† Different stacking context
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++-----------------------------------------+
+| .import-tabs-sticky (position: sticky)  |  -> Creates ISOLATED stacking context
+|   +-- tab wrappers (proximity-based z-index)     |  -> Can only compete with EACH OTHER
++-----------------------------------------+
+                    <-> Z-INDEX CANNOT COMPETE ACROSS THIS BOUNDARY!
++-----------------------------------------+
+| .content-container (z-index: 50)        |  -> Different stacking context
++-----------------------------------------+
 ```
 
 **Symptoms:**
@@ -306,7 +306,7 @@ BROKEN STRUCTURE:
 
 ### Failed Approaches (Don't Try These)
 
-âŒ **Setting z-index on the sticky container:**
+[X] **Setting z-index on the sticky container:**
 ```css
 .import-tabs-sticky {
   position: sticky;
@@ -314,7 +314,7 @@ BROKEN STRUCTURE:
 }
 ```
 
-âŒ **Removing z-index from the sticky container:**
+[X] **Removing z-index from the sticky container:**
 ```css
 .import-tabs-sticky {
   position: sticky;
@@ -322,33 +322,33 @@ BROKEN STRUCTURE:
 }
 ```
 
-âŒ **Adjusting individual tab z-index values:**
+[X] **Adjusting individual tab z-index values:**
 ```javascript
 // Doesn't matter what values you use - they can't escape the sticky context
 zIndex: isActive ? 9999 : index + 1
 ```
 
-### âœ… THE SOLUTION: Slot-Based Shared Stacking Context
+### [✓] THE SOLUTION: Slot-Based Shared Stacking Context
 
 **The fix:** Put both the tabs AND the content container **inside the same parent element**. Use a Vue slot (or React children) to achieve this while keeping components modular.
 
 ```
 FIXED STRUCTURE:
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ .import-tabs-wrapper (position: relative)       â”‚  â† SINGLE stacking context
-â”‚   â”œâ”€â”€ .import-tabs-row                          â”‚
++-------------------------------------------------+
+| .import-tabs-wrapper (position: relative)       |  -> SINGLE stacking context
+|   +-- .import-tabs-row                          |
 │   │     └── tab wrappers (proximity-based)     │  ← NOW competes with content!
 │   │          - Active: z-index 51              │
 │   │          - Neighbors: z-index 49           │
 │   │          - Further: z-index 48, 47...      │
-â”‚   â””â”€â”€ <slot name="content">                     â”‚
-â”‚         â””â”€â”€ .content-container (z-index: 50)    â”‚  â† SAME stacking context
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+|   +-- <slot name="content">                     |
+|         +-- .content-container (z-index: 50)    |  -> SAME stacking context
++-------------------------------------------------+
 ```
 
 **Result:**
-- Active tab (z-index: 51) > Content (z-index: 50) = **Tab appears IN FRONT** âœ…
-- Inactive tabs (z-index < 50) < Content (z-index: 50) = **Tabs appear BEHIND** âœ…
+- Active tab (z-index: 51) > Content (z-index: 50) = **Tab appears IN FRONT** [✓]
+- Inactive tabs (z-index < 50) < Content (z-index: 50) = **Tabs appear BEHIND** [✓]
 
 ### Vue 3 Implementation
 
@@ -447,7 +447,7 @@ Keep tabs sticky but use design tricks (matching colors, shadows, border manipul
 **Option C: JavaScript scroll detection**
 Dynamically toggle the visual effect based on scroll position - more complex but allows true sticky tabs with layering effect when not scrolled.
 
-## ðŸš¨ COMMON PROBLEMS & FIXES (Lessons from Production)
+## [!!] COMMON PROBLEMS & FIXES (Lessons from Production)
 
 **Date Added:** 2025-11-27
 **Context:** Fixes applied to pleadings page tabs (commits 5057266, ca827cd, 5d53f29)
@@ -460,7 +460,7 @@ When implementing skeuomorphic tabs, you may encounter these specific issues. He
 
 **Root Cause:** CSS hover rules with `!important` override the carefully orchestrated z-index values:
 ```css
-/* âŒ WRONG - Forces hovered tab in front of content */
+/* [X] WRONG - Forces hovered tab in front of content */
 .tab-wrapper:hover {
   z-index: 100 !important;
 }
@@ -504,7 +504,7 @@ const getTabWrapperStyle = (tabId, index) => {
 
 **Root Cause:** Box shadows and gradient backgrounds create visual artifacts:
 ```css
-/* âŒ WRONG - Creates visual separation */
+/* [X] WRONG - Creates visual separation */
 .folder-tab {
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -520,7 +520,7 @@ const getTabWrapperStyle = (tabId, index) => {
 
 **The Fix:** Use solid colors and remove box shadows from tabs (content container can have shadow):
 ```css
-/* âœ… CORRECT - Clean, seamless appearance */
+/* [✓] CORRECT - Clean, seamless appearance */
 .folder-tab {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
@@ -567,7 +567,7 @@ const getTabWrapperStyle = (tabId, index) => {
 
 **Root Cause:** Conflicting `translateY` values on base class vs. specific tab type override:
 ```css
-/* âŒ WRONG - Override creates 4px gap */
+/* [X] WRONG - Override creates 4px gap */
 .folder-tab-active {
   transform: translateY(1px);  /* Base value */
 }
@@ -579,7 +579,7 @@ const getTabWrapperStyle = (tabId, index) => {
 
 **The Fix:** Remove the specific override and let the base `translateY(1px)` apply to all active tabs:
 ```css
-/* âœ… CORRECT - Single consistent value */
+/* [✓] CORRECT - Single consistent value */
 .folder-tab-active {
   transform: translateY(1px);  /* Moves tab UP 3px from inactive position */
 }
@@ -614,7 +614,7 @@ const getTabWrapperStyle = (tabId, index) => {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   border: 1px solid #cbd5e1;
-  border-bottom: none;  /* âš ï¸ CRITICAL: No bottom border on tabs */
+  border-bottom: none;  /* [!] CRITICAL: No bottom border on tabs */
 }
 
 /* Content container */
@@ -623,14 +623,14 @@ const getTabWrapperStyle = (tabId, index) => {
   z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
-  border-top: none;  /* âš ï¸ CRITICAL: No top border on container */
+  border-top: none;  /* [!] CRITICAL: No top border on container */
   border-radius: 0 0 12px 12px;  /* Square top, rounded bottom */
 }
 
 /* Table header (inside content container) */
 .sticky-table-header {
-  background: #e0f2fe;  /* âš ï¸ CRITICAL: Same color as active tab */
-  border-top: 1px solid #cbd5e1;  /* âš ï¸ CRITICAL: Creates separation for inactive tabs */
+  background: #e0f2fe;  /* [!] CRITICAL: Same color as active tab */
+  border-top: 1px solid #cbd5e1;  /* [!] CRITICAL: Creates separation for inactive tabs */
 }
 ```
 
@@ -640,39 +640,39 @@ const getTabWrapperStyle = (tabId, index) => {
    - Tab has no bottom border
    - Content has no top border
    - Tab background (#e0f2fe) flows seamlessly into table header background (#e0f2fe)
-   - **Result:** No visible line = seamless connection âœ…
+   - **Result:** No visible line = seamless connection [✓]
 
 2. **Inactive tabs (z-index 1-10) behind content:**
    - Content container (z-index 25) overlaps inactive tabs
    - Table header's `border-top: 1px solid #cbd5e1` creates visible separation
-   - **Result:** Visible line between inactive tab and content = tabs appear "behind" âœ…
+   - **Result:** Visible line between inactive tab and content = tabs appear "behind" [✓]
 
 **Visual Breakdown:**
 ```
 ACTIVE TAB VIEW (z-index 100 > 25):
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ Active Tab  â”‚ â† background: #e0f2fe, border-bottom: none
-â”‚  (no line)  â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤ â† NO VISIBLE LINE (both #e0f2fe, no borders)
-â”‚Table Header â”‚ â† background: #e0f2fe, border-top creates line with inactive tabs
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++-------------+
+| Active Tab  | -> background: #e0f2fe, border-bottom: none
+|  (no line)  |
++-------------+ -> NO VISIBLE LINE (both #e0f2fe, no borders)
+|Table Header | -> background: #e0f2fe, border-top creates line with inactive tabs
++-------------+
 
 INACTIVE TAB VIEW (z-index 1-10 < 25):
-    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-    â”‚Inactive Tab â”‚ â† background: #e2e8f0, gets covered by content
-    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  Content Edge   â”‚ â† border-top: 1px solid #cbd5e1 (VISIBLE LINE)
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚  Table Header   â”‚ â† background: #e0f2fe
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+    +-------------+
+    |Inactive Tab | -> background: #e2e8f0, gets covered by content
+    +-------------+
++-----------------+
+|  Content Edge   | -> border-top: 1px solid #cbd5e1 (VISIBLE LINE)
++-----------------+
+|  Table Header   | -> background: #e0f2fe
++-----------------+
 ```
 
 **Reference:** Fixed in commit 5057266
 
 ---
 
-## 📌 Sticky Table Headers Below Tabs
+## [*] Sticky Table Headers Below Tabs
 
 **Date Added:** 2025-11-27
 **Status:** Implementation guidance for production use
@@ -812,7 +812,7 @@ PageLayout (scroll-container, overflow: auto)
 /* Table header sticks BELOW the tabs */
 .sticky-table-header {
   position: sticky;
-  top: 80px; /* ⚠️ CRITICAL: Height of tabs container */
+  top: 80px; /* [!] CRITICAL: Height of tabs container */
   z-index: 10;
   background: #e0f2fe;
   border-top: 1px solid #cbd5e1;
@@ -824,7 +824,7 @@ PageLayout (scroll-container, overflow: auto)
 - Table header must stick below that
 - `top: 80px` = tabs height, so header appears immediately below tabs
 
-**⚠️ CAUTION: Stacking Context Isolation**
+**[!] CAUTION: Stacking Context Isolation**
 
 Remember that `position: sticky` creates a stacking context! If your sticky tabs create an isolated stacking context, the folder-tab z-index layering effect (active tab in front, inactive behind) will be broken.
 
@@ -1069,16 +1069,16 @@ onUnmounted(() => {
 ```
 
 **Trade-offs:**
-- ✅ Full folder-tab layering when not scrolled
-- ✅ Sticky tabs when scrolled down
-- ⚠️ More complex implementation
-- ⚠️ Visual "snap" when switching between modes
+- [✓] Full folder-tab layering when not scrolled
+- [✓] Sticky tabs when scrolled down
+- [!] More complex implementation
+- [!] Visual "snap" when switching between modes
 
 ---
 
 ### Common Mistakes with Sticky Table Headers
 
-❌ **WRONG - Table header overlaps sticky tabs:**
+[X] **WRONG - Table header overlaps sticky tabs:**
 ```css
 .sticky-table-header {
   position: sticky;
@@ -1086,7 +1086,7 @@ onUnmounted(() => {
 }
 ```
 
-✅ **CORRECT - Account for tabs height:**
+[✓] **CORRECT - Account for tabs height:**
 ```css
 .sticky-table-header {
   position: sticky;
@@ -1096,7 +1096,7 @@ onUnmounted(() => {
 
 ---
 
-❌ **WRONG - Table header z-index too high:**
+[X] **WRONG - Table header z-index too high:**
 ```css
 .sticky-table-header {
   position: sticky;
@@ -1104,7 +1104,7 @@ onUnmounted(() => {
 }
 ```
 
-✅ **CORRECT - Table header z-index below content container:**
+[✓] **CORRECT - Table header z-index below content container:**
 ```css
 .sticky-table-header {
   position: sticky;
@@ -1114,14 +1114,14 @@ onUnmounted(() => {
 
 ---
 
-❌ **WRONG - Background color mismatch:**
+[X] **WRONG - Background color mismatch:**
 ```css
 .sticky-table-header {
   background: white; /* Doesn't match active tab (#e0f2fe) */
 }
 ```
 
-✅ **CORRECT - Background matches active tab:**
+[✓] **CORRECT - Background matches active tab:**
 ```css
 .sticky-table-header {
   background: #e0f2fe; /* Same as active tab for seamless connection */
@@ -1130,7 +1130,7 @@ onUnmounted(() => {
 
 ---
 
-❌ **WRONG - Missing border-top on table header:**
+[X] **WRONG - Missing border-top on table header:**
 ```css
 .sticky-table-header {
   background: #e0f2fe;
@@ -1138,7 +1138,7 @@ onUnmounted(() => {
 }
 ```
 
-✅ **CORRECT - Border-top creates separation with inactive tabs:**
+[✓] **CORRECT - Border-top creates separation with inactive tabs:**
 ```css
 .sticky-table-header {
   background: #e0f2fe;
@@ -1168,9 +1168,9 @@ When implementing sticky table headers with folder tabs, verify:
 
 | Pattern | Tabs Position | Header `top` | Header `z-index` | Folder Layering |
 |---------|---------------|--------------|------------------|-----------------|
-| A (Slot) | `relative` | `0` | `10` | ✅ Full support |
-| B (Standalone) | `sticky; top: 0` | `80px` | `10` | ⚠️ Limited (use design tricks) |
-| Hybrid | `relative` → `sticky` | `0` → `80px` | `10` | ✅ When not scrolled |
+| A (Slot) | `relative` | `0` | `10` | [✓] Full support |
+| B (Standalone) | `sticky; top: 0` | `80px` | `10` | [!] Limited (use design tricks) |
+| Hybrid | `relative` → `sticky` | `0` → `80px` | `10` | [✓] When not scrolled |
 
 **Files to Reference:**
 - `src/features/matters/views/MatterImport.vue` - Pattern A example (lines 320-326)
@@ -1232,7 +1232,7 @@ When implementing overlapping tabs, verify:
 
 ## Summary
 
-**âœ… RECOMMENDED: Wrapper-Based Overflow (Proven in Production)**
+**[✓] RECOMMENDED: Wrapper-Based Overflow (Proven in Production)**
 
 **The Golden Rules:**
 1. Use **two-layer structure**: wrapper (shrinks) + button (fixed width)
@@ -1249,26 +1249,26 @@ When implementing overlapping tabs, verify:
 8. **Content container: `position: relative; z-index: 50;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
 9. ALL tab: `flex-shrink: 0` (never shrinks)
 10. Container: `overflow: visible` (allows button overflow)
-11. **âš ï¸ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
+11. **[!] Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
 
-**âš ï¸ CRITICAL GOTCHA: `position: sticky` Trap**
+**[!] CRITICAL GOTCHA: `position: sticky` Trap**
 If using `position: sticky` on your tabs container, it creates an **isolated stacking context** that breaks z-index layering with the content. Solution: Use a **slot-based pattern** where the content is rendered INSIDE the tabs component, so both share the same stacking context. See "The `position: sticky` Stacking Context Trap" section above.
 
-**ðŸš¨ AVOID THESE COMMON MISTAKES:**
+**[!!] AVOID THESE COMMON MISTAKES:**
 See the "Common Problems & Fixes" section for production-proven solutions to:
 1. Hover z-index overrides breaking tab layering
 2. Box shadows and gradients creating visual artifacts
 3. Active tab vertical misalignment (Y-axis position)
 4. Border styling for seamless tab-content connection
 
-**📌 STICKY TABLE HEADERS:**
+**[*] STICKY TABLE HEADERS:**
 When combining folder tabs with data tables, table headers often need to stick below the tabs while scrolling. See the "Sticky Table Headers Below Tabs" section for:
 - Pattern A (slot-based tabs): Use `top: 0` — tabs scroll away first
 - Pattern B (sticky tabs): Use `top: 80px` — header sticks below tabs
 - Z-index coordination to preserve folder-tab layering
 
 **Why This Works:**
-- When wrapper shrinks below button width, button overflows â†’ creates overlap
+- When wrapper shrinks below button width, button overflows -> creates overlap
 - Pure CSS solution - no JavaScript needed for overlap detection
 - Smooth, automatic adaptation to any container width
 - Works reliably across modern frameworks (React, Vue, Svelte)
