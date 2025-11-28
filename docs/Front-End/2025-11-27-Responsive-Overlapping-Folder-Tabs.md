@@ -176,54 +176,20 @@ This is the **CSS-only** approach that actually works. The key insight is using 
 </style>
 ```
 
-### How Overlap Works (Step-by-Step)
+### How It Works
 
-1. **Wide container (lots of space):**
-   - Super spacer absorbs extra space
-   - All tab wrappers stay at full 220px width
-   - Buttons fit perfectly in wrappers
-   - Tabs have 8px gaps between them (margin-right)
+When the container shrinks:
+1. Super spacer (flex-shrink: 10000) shrinks first
+2. When exhausted, tab wrappers start shrinking
+3. Buttons stay fixed at 220px, overflowing their shrinking wrappers
+4. This overflow creates automatic overlap with adjacent tabs
 
-2. **Container starts shrinking:**
-   - Super spacer shrinks first (shrink: 10000)
-   - Tab wrappers still at 220px
-   - No overlap yet
+### Why This Works
 
-3. **Spacer exhausted, container continues shrinking:**
-   - Tab wrappers start shrinking (e.g., 220px â†’ 200px â†’ 180px)
-   - Buttons stay at FIXED 220px width
-   - Buttons overflow their wrappers
-   - **Example:** Wrapper is 180px, button is 220px = 40px overflow
-   - Next wrapper is 8px away (margin-right)
-   - **Result:** ~32px overlap with next tab
-
-4. **Container very narrow:**
-   - Tab wrappers shrink to minimum (140px for last tab, 0px for others)
-   - Buttons still 220px wide
-   - Maximum overlap achieved
-   - ALL tab stays full 80px (never shrinks)
-
-### Why This Works Better Than Other Approaches
-
-âœ… **Advantages:**
-- Pure CSS (no JavaScript needed for overlap detection)
-- Smooth, automatic adaptation to any container width
-- True overlap (not just negative margins)
-- No layout shifts or recalculations
-- Works with flexbox naturally
-- Easy to understand and maintain
-
-âŒ **What NOT to do:**
-- Don't make buttons shrink (flex-shrink on button) - this squeezes but doesn't overlap
-- Don't use negative margins - harder to control and less predictable
-- Don't use JavaScript for overlap detection - unnecessary complexity
-
+The wrapper-based overflow approach is pure CSS with automatic, smooth adaptation to any container width. No JavaScript needed for overlap detection or layout calculations.
 ### Critical Implementation Details
 
-1. **`min-width: 0` is ESSENTIAL** on tab wrappers
-   - Default flex minimum is `auto` (content size)
-   - `min-width: 0` allows shrinking below content/button size
-   - Without this, wrappers won't shrink below 220px
+1. **`min-width: 0` is ESSENTIAL** on tab wrappers - allows shrinking below the button width
 
 2. **Last wrapper gets `min-width: 140px`**
    - Prevents the last tab from completely disappearing
@@ -256,13 +222,6 @@ This is the **CSS-only** approach that actually works. The key insight is using 
    }
    ```
 
-6. **Text truncation inside buttons:**
-   ```css
-   .tab-content {
-     overflow: hidden;
-     text-overflow: ellipsis;
-     white-space: nowrap;
-   }
    ```
 
 ### Common Mistakes to Avoid
@@ -288,51 +247,6 @@ This is the **CSS-only** approach that actually works. The key insight is using 
 
 ---
 
-âŒ **WRONG - Parent wrapper with z-index creates stacking context:**
-```html
-<!-- Import Tabs -->
-<ImportTabs v-model="activeTab" />
-
-<!-- Tabbed Import Content -->
-<div class="mx-6 mb-6 relative z-0">  <!-- âŒ PROBLEM: relative z-0 -->
-  <div class="content-container">
-    <!-- Content here -->
-  </div>
-</div>
-```
-
-**Problem:** The `relative z-0` on the parent wrapper creates a **new stacking context** that isolates all child elements (including `.content-container` with `z-index: 25`) from the tabs above. This prevents the folder-tab layering effect from working - all tabs will appear at the same visual layer as the content.
-
-âœ… **CORRECT - No z-index isolation on parent wrapper:**
-```html
-<!-- Import Tabs -->
-<ImportTabs v-model="activeTab" />
-
-<!-- Tabbed Import Content -->
-<div class="mx-6 mb-6">  <!-- âœ… No relative z-0 -->
-  <div class="content-container">
-    <!-- Content here -->
-  </div>
-</div>
-```
-
-**Key Principle:** The **tabs and content container must be in the same stacking context** to compete for z-index positioning. Any parent element between them that has `position: relative/absolute` AND a `z-index` value will create a barrier that breaks the layering.
-
-**What creates a new stacking context:**
-- `position: relative/absolute/fixed` + ANY `z-index` value (including `z-0`)
-- `position: sticky` + ANY `z-index` value
-- `opacity` less than 1
-- `transform`, `filter`, `perspective` properties
-- `isolation: isolate`
-
-**When to be careful:**
-- When applying Tailwind classes like `relative z-0` or `relative z-10` to wrappers
-- When using CSS-in-JS that might add positioning by default
-- When wrapping components in layout divs that have stacking context properties
-
-**Reference:** See the fix in `MatterImport.vue` (commit da8c278) where removing `relative z-0` from the wrapper fixed the tab layering.
-
----
 
 ## âš ï¸ CRITICAL: The `position: sticky` Stacking Context Trap
 
@@ -479,18 +393,11 @@ FIXED STRUCTURE:
 </template>
 
 <style scoped>
-.content-container {
-  position: relative;
-  z-index: 25; /* Now competes with tabs in SAME stacking context */
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-}
+/* See "Critical Implementation Details" section for full .content-container styling */
 </style>
 ```
-
 ### If You Still Need Sticky Behavior
+
 
 If you need the tabs to stick to the top while scrolling, you have options:
 
@@ -509,29 +416,6 @@ Keep tabs sticky but use design tricks (matching colors, shadows, border manipul
 
 **Option C: JavaScript scroll detection**
 Dynamically toggle the visual effect based on scroll position - more complex but allows true sticky tabs with layering effect when not scrolled.
-
-### Quick Reference: What Creates Stacking Context
-
-Per CSS spec, these properties create a new stacking context (isolating children from competing with outside elements):
-
-| Property | Creates Stacking Context? |
-|----------|--------------------------|
-| `position: sticky` | âœ… **ALWAYS** (even without z-index!) |
-| `position: fixed` | âœ… Always |
-| `position: relative` + `z-index` | âœ… When both present |
-| `position: absolute` + `z-index` | âœ… When both present |
-| `opacity: 0.99` (or less than 1) | âœ… Always |
-| `transform: any` | âœ… Always |
-| `filter: any` | âœ… Always |
-| `isolation: isolate` | âœ… Always |
-| `will-change: transform` | âœ… Always |
-| `contain: layout` or `paint` | âœ… Always |
-
-**Key insight:** `position: sticky` is the sneakiest because it creates a stacking context **even without a z-index value**, unlike `position: relative` which only creates one when combined with z-index.
-
-**Reference:** See fix implemented in `ImportTabs.vue` and `MatterImport.vue` (2025-11-27)
-
----
 
 ## ðŸš¨ COMMON PROBLEMS & FIXES (Lessons from Production)
 
@@ -751,30 +635,6 @@ INACTIVE TAB VIEW (z-index 1-10 < 25):
 
 ---
 
-### Quick Checklist: Implementing Tabs Without These Issues
-
-When implementing new skeuomorphic tabs, verify:
-
-- [ ] **No `!important` on hover z-index** - Use JavaScript state management instead
-- [ ] **Hover z-index < content z-index** - Inactive tabs stay behind even when hovered (e.g., 20 < 25 < 100)
-- [ ] **Solid background colors** - No gradients on tabs
-- [ ] **No box-shadows on tabs** - Only on content container if needed
-- [ ] **Single `translateY` value for active tabs** - No overrides creating gaps
-- [ ] **Matching backgrounds** - Active tab color matches table header exactly
-- [ ] **Border strategy:**
-  - [ ] Tabs: `border-bottom: none`
-  - [ ] Content container: `border-top: none`
-  - [ ] Table header: `border-top: 1px solid` (creates line with inactive tabs)
-- [ ] **Slot-based pattern** - Tabs and content in same stacking context
-- [ ] **No `position: sticky` on tabs** - Use wrapper pattern if sticky needed
-
-**Files to Reference:**
-- `src/features/pleadings/components/ProceedingsTabs.vue` - Tabs component with slot
-- `src/features/pleadings/components/PleadingsTable.vue` - Content container styling
-- `src/features/pleadings/views/Pleadings.vue` - Parent view using slot pattern
-
----
-
 ## 📌 Sticky Table Headers Below Tabs
 
 **Date Added:** 2025-11-27
@@ -991,6 +851,7 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 
 <style scoped>
 .content-container {
+  /* Pattern from "Critical Implementation Details" section - ensures folder-tab z-index layering */
   position: relative;
   z-index: 25;
   background: white;
@@ -1060,6 +921,7 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 
 <style scoped>
 .table-container {
+  /* Pattern from "Critical Implementation Details" - z-index: 25 for folder-tab layering */
   position: relative;
   z-index: 25;
   background: white;
@@ -1282,280 +1144,9 @@ When implementing sticky table headers with folder tabs, verify:
 
 ## Alternative Approaches (For Reference)
 
-**Note:** The following approaches were researched from internet sources but are **NOT RECOMMENDED** for new implementations. They are kept here for reference only. Use the **Wrapper-Based Overflow** technique above instead.
+**Note:** The Wrapper-Based Overflow technique above is the recommended approach. Alternative methods (JavaScript-detected overlap with ResizeObserver, CSS container queries, float-based layouts) exist but are less preferred due to complexity, maintainability, and layout shift risks.
 
-**Why these are less preferred:**
-- More complex (JavaScript needed for overlap detection)
-- Harder to maintain (conditional logic, ResizeObserver management)
-- Less predictable (negative margins can conflict with other styles)
-- Layout shift risks (switching between gap/overlap modes)
-
-**See working example:** `docs/Front-End/25-11-22-Adaptive-folder-tabs.md` (React)
-**Production implementation:** `src/features/pleadings/components/ProceedingsTabs.vue` (Vue 3)
-
----
-
-### Approach 1: JavaScript-Detected Overlap (NOT Recommended)
-
-Use JavaScript to detect when tabs overflow their container, then apply negative margins conditionally.
-
-**Key Principles:**
-1. Use **`ResizeObserver`** to monitor container width changes
-2. Compare `scrollWidth` vs `offsetWidth` to detect overflow
-3. Apply **negative `margin-left`** (not `left` positioning) for overlap
-4. Use **incremental z-index** from left to right
-5. Boost active tab z-index significantly higher
-
-**JavaScript Detection Pattern:**
-```javascript
-function checkOverlapNeeded() {
-  const container = containerRef.value;
-  const scrollWidth = container.scrollWidth;
-  const offsetWidth = container.offsetWidth;
-
-  // If content scrolls (wider than container), enable overlap
-  needsOverlap.value = scrollWidth > offsetWidth;
-}
-
-// Watch for resize
-const resizeObserver = new ResizeObserver(checkOverlapNeeded);
-resizeObserver.observe(containerRef.value);
-```
-
-**Styling Pattern:**
-```javascript
-function getTabStyle(index) {
-  const baseZIndex = index + 1; // Right tabs higher
-  const overlapAmount = 40; // pixels
-  const normalGap = 8; // pixels
-
-  if (!needsOverlap) {
-    return {
-      marginRight: `${normalGap}px`,
-      zIndex: isActive ? 100 : baseZIndex
-    };
-  }
-
-  return {
-    marginLeft: index === 0 ? '0' : `-${overlapAmount}px`,
-    zIndex: isActive ? 100 : baseZIndex,
-    position: 'relative' // Required for z-index
-  };
-}
-```
-
-**Why This Works:**
-- Negative `margin-left` works with flexbox flow (unlike `left` positioning)
-- First tab never overlaps (acts as anchor)
-- Each subsequent tab overlaps the previous one
-- Z-index naturally increases left-to-right
-
----
-
-### Approach 2: Container Queries (NOT Recommended - Fixed Breakpoint)
-
-Use CSS container queries to automatically switch between gapped and overlapped layouts.
-
-**HTML Structure:**
-```html
-<div class="tabs-wrapper">
-  <div class="tabs-container">
-    <button class="tab">Tab 1</button>
-    <button class="tab">Tab 2</button>
-    <button class="tab">Tab 3</button>
-  </div>
-</div>
-```
-
-**CSS Pattern:**
-```css
-.tabs-wrapper {
-  container-type: inline-size;
-}
-
-.tabs-container {
-  display: flex;
-  gap: 8px; /* Default gap when space allows */
-}
-
-.tab {
-  position: relative;
-  z-index: 1;
-}
-
-.tab:nth-child(2) { z-index: 2; }
-.tab:nth-child(3) { z-index: 3; }
-.tab:nth-child(4) { z-index: 4; }
-/* ... increment z-index for each tab */
-
-.tab.active {
-  z-index: 100; /* Active tab always on top */
-}
-
-/* When container is constrained, remove gap and add overlap */
-@container (max-width: 800px) {
-  .tabs-container {
-    gap: 0;
-  }
-
-  .tab:not(:first-child) {
-    margin-left: -40px; /* Create overlap */
-  }
-}
-```
-
-**Advantages:**
-- No JavaScript required
-- Automatically responsive
-- Clean separation of concerns
-
-**Limitations:**
-- Fixed breakpoint (not dynamic based on actual content)
-- Browser support (Safari 16+, Chrome 105+)
-
----
-
-### Approach 3: Float-Based (NOT Recommended - Legacy)
-
-The classic approach using floats and negative margins.
-
-**CSS Pattern:**
-```css
-.tabs-container {
-  overflow: hidden; /* Contain floats */
-}
-
-.tab {
-  float: left;
-  margin-right: 8px; /* Default gap */
-  position: relative;
-  z-index: 1;
-}
-
-.tab:nth-child(2) { z-index: 2; }
-.tab:nth-child(3) { z-index: 3; }
-/* ... increment z-index */
-
-.tab.active {
-  z-index: 100;
-}
-
-/* On small screens, overlap */
-@media (max-width: 768px) {
-  .tab {
-    margin-right: 0;
-    margin-left: -40px;
-  }
-
-  .tab:first-child {
-    margin-left: 0;
-  }
-}
-```
-
-**Why Float Left (Not Right)?**
-- Floating left + negative left margins maintains left-to-right order
-- Floating right would reverse tab order (unless you reverse HTML)
-- Z-index increments handle the stacking order
-
----
-
-## Critical Implementation Rules
-
-### 1. Use Negative Margins, NOT Positioning
-âŒ **WRONG:**
-```css
-.tab {
-  left: -40px; /* Breaks flexbox flow */
-}
-```
-
-âœ… **CORRECT:**
-```css
-.tab:not(:first-child) {
-  margin-left: -40px; /* Works with flexbox */
-}
-```
-
-**Why:** The `left` property only works with `position: absolute/relative` and removes elements from normal flow. Negative margins work within flexbox/grid layouts.
-
-### 2. Z-Index Requires Position Context
-âŒ **WRONG:**
-```css
-.tab {
-  z-index: 5; /* Won't work without position */
-}
-```
-
-âœ… **CORRECT:**
-```css
-.tab {
-  position: relative; /* Creates stacking context */
-  z-index: 5;
-}
-```
-
-### 3. First Tab Never Overlaps
-The first tab acts as the anchor. Only subsequent tabs apply negative margins:
-
-```css
-.tab:not(:first-child) {
-  margin-left: -40px;
-}
-```
-
-### 4. Active Tab Needs Highest Z-Index
-Use a significantly higher z-index for the active tab to ensure it's always visible:
-
-```javascript
-zIndex: isActive ? 100 : baseZIndex
-```
-
-### 5. Flexbox Gap vs Margin
-- **Use `gap`** for normal spacing (when not overlapping)
-- **Use `margin-left`** for overlap (gap doesn't support negative values)
-- **Don't mix** - switch between them based on overlap state
-
----
-
-## Common Pitfalls (Especially with Tailwind CSS)
-
-### Pitfall 1: Transform Conflicts
-If you're using `transform` for vertical positioning, don't use it for horizontal overlap:
-
-âŒ **WRONG:**
-```javascript
-transform: `translateX(-${overlap}px) translateY(4px)`
-```
-
-âœ… **CORRECT:**
-```javascript
-// Use margin for horizontal, transform for vertical
-marginLeft: `-${overlap}px`,
-transform: 'translateY(4px)'
-```
-
-### Pitfall 2: Tailwind Class Specificity
-Inline styles override Tailwind classes. Be consistent:
-
-```javascript
-// Either use inline styles
-:style="{ marginLeft: '-40px', zIndex: 5 }"
-
-// OR Tailwind classes (but can't be dynamic easily)
-:class="needsOverlap ? '-ml-10 z-[5]' : 'mr-2 z-[5]'"
-```
-
-### Pitfall 3: Overflow Clipping
-Parent containers may clip overlapping tabs:
-
-```css
-.tabs-container {
-  overflow: visible; /* Don't clip shadows/overlap */
-}
-```
-
----
+**Production implementation reference:** `src/features/pleadings/components/ProceedingsTabs.vue` (Vue 3)
 
 ## Testing Checklist
 
@@ -1579,40 +1170,15 @@ When implementing overlapping tabs, verify:
 - [ ] **Sticky table header sticks at correct `top` value** (see "Sticky Table Headers Below Tabs" section)
 - [ ] **Sticky table header doesn't overlap tabs** when scrolling
 
-**Pro Tip:** Use the "Quick Checklist" in the "Common Problems & Fixes" section for detailed verification steps.
 
 ---
 
-## Browser Compatibility Notes
-
-| Approach | IE11 | Edge | Chrome | Firefox | Safari |
-|----------|------|------|--------|---------|--------|
-| Float-based | âœ… | âœ… | âœ… | âœ… | âœ… |
-| Flexbox + JS | âŒ | âœ… | âœ… | âœ… | âœ… |
-| Container Queries | âŒ | âœ… | 105+ | 110+ | 16+ |
-
-**Recommendation:** Use Flexbox + JavaScript for best balance of compatibility and control.
-
----
-
-## Performance Considerations
-
-1. **ResizeObserver** is efficient - debouncing not needed for most cases
 2. **Avoid recalculating styles on scroll** - only on resize
 3. **Use `will-change: transform`** if animating tab positions
 4. **Limit number of tabs** - 20+ tabs may need virtualization
 
 ---
 
-## Accessibility Notes
-
-- Ensure tab labels remain readable when overlapped
-- Don't hide tab text under other tabs (adjust overlap amount)
-- Maintain keyboard focus indicators (z-index for `:focus`)
-- Use `aria-selected` for active tab state
-- Ensure sufficient color contrast in overlapped states
-
----
 
 ## References
 
