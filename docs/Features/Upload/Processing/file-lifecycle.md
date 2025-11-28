@@ -37,6 +37,18 @@ The application distinguishes between related but distinct concepts in the file 
 
 9. **Document** - Refers in general to all versions of evidence, from **Original** to **Storage**, for situations where we are talking about all versions of the file. For example, 'Document Description' would be used to refer to text that is a description of the **Original** and of the **Source** and the **Storage** files in Firebase storage.
 
+### Email Message Types (For Email Processing)
+
+10. **Native** - The current/top-level message in an email file (.msg, .eml) for which we have actual metadata from the email file's binary structure
+   - High metadata reliability - extracted directly from email file headers
+   - Forensically trustworthy for chain of custody
+   - Example: The reply email you just received (has authoritative From, To, Date, Subject)
+
+11. **Quoted** - Previous messages in an email thread extracted from quoted text in the email body
+   - Variable metadata reliability - parsed from text blocks that can be edited
+   - Cannot be verified without original email file
+   - Example: "On Jan 5, John wrote: ..." (sender could have modified this text)
+
 ### Example Flow
 
 ```
