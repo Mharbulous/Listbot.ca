@@ -766,7 +766,7 @@ firebase deploy --only storage
 |------|------|------|--------|
 | 1 | Create `constants.js`, `parsers.js` | 30 min | ✅ **DONE** (2025-11-28) |
 | 2 | Create `emailExtraction.js` | 1.5 hours | ✅ **DONE** (2025-11-28) |
-| 3 | Create `index.js` with triggers | 30 min | Pending |
+| 3 | Create `index.js` with triggers | 30 min | ✅ **DONE** (2025-11-28) |
 | 4 | Test with emulator | 45 min | Pending |
 | 5 | Client upload flow update | 30 min | Pending |
 | 6 | Client status composable + component | 30 min | Pending |
@@ -849,3 +849,41 @@ firebase deploy --only storage
 
 **What's Next**:
 - Step 3: Create `index.js` with Firestore triggers and callable functions
+
+---
+
+### Step 3: Create `index.js` with triggers ✅ COMPLETED (2025-11-28)
+
+**Commit**: `06c107d` - "STEP 3: Create index.js with Firestore triggers and callable functions (#858)"
+
+**Files Created**:
+- `functions/index.js` (70 lines)
+
+**Implementation Details**:
+- Firebase Admin initialization with `admin.initializeApp()`
+- **onUploadCreated** Firestore trigger:
+  - Triggers on document creation in `uploads/{fileHash}` collection
+  - Only processes documents with `hasEmailAttachments: true`
+  - Calls `processEmailFile()` to extract email and attachments
+  - Configuration: 2GiB memory, 300s timeout, max 10 instances
+- **retryEmailExtraction** callable function:
+  - Allows manual retry from UI with proper authentication
+  - Validates user permissions (userId must match)
+  - Checks retry count limit (MAX_RETRY = 3)
+  - Resets parseStatus to PENDING before retry
+  - Returns success/error results to client
+
+**Security**:
+- Authentication required for retry function
+- User ownership validation (userId check)
+- Precondition checks (failed status, retry count)
+- Proper error types (HttpsError with codes)
+
+**Testing**:
+- Module syntax verified successfully
+- Dependencies installed (359 packages)
+- Both exports confirmed: `onUploadCreated`, `retryEmailExtraction`
+- Node.js v22 (engine specifies v18, works with warnings)
+
+**What's Next**:
+- Step 4: Test with Firebase emulator
