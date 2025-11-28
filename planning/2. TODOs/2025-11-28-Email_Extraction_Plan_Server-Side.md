@@ -762,15 +762,15 @@ firebase deploy --only storage
 
 ## Implementation Order
 
-| Step | Task | Time |
-|------|------|------|
-| 1 | Create `constants.js`, `parsers.js` | 30 min |
-| 2 | Create `emailExtraction.js` | 1.5 hours |
-| 3 | Create `index.js` with triggers | 30 min |
-| 4 | Test with emulator | 45 min |
-| 5 | Client upload flow update | 30 min |
-| 6 | Client status composable + component | 30 min |
-| 7 | Deploy and verify | 30 min |
+| Step | Task | Time | Status |
+|------|------|------|--------|
+| 1 | Create `constants.js`, `parsers.js` | 30 min | ✅ **DONE** (2025-11-28) |
+| 2 | Create `emailExtraction.js` | 1.5 hours | Pending |
+| 3 | Create `index.js` with triggers | 30 min | Pending |
+| 4 | Test with emulator | 45 min | Pending |
+| 5 | Client upload flow update | 30 min | Pending |
+| 6 | Client status composable + component | 30 min | Pending |
+| 7 | Deploy and verify | 30 min | Pending |
 
 **Total: ~5 hours**
 
@@ -783,7 +783,38 @@ firebase deploy --only storage
 - [ ] Nested .msg/.eml files cascade correctly
 - [ ] `hasEmailAttachments` transitions: `true` → `false`
 - [ ] Files >100MB rejected
-- [ ] Depth >10 rejected  
+- [ ] Depth >10 rejected
 - [ ] Failed extractions show error + retry button
 - [ ] Manual retry works
 - [ ] BLAKE3 hashes match client/server
+
+---
+
+## Progress Tracking
+
+### Step 1: Create `constants.js`, `parsers.js` ✅ COMPLETED (2025-11-28)
+
+**Commit**: `1cd29c5` - "STEP 1: Create constants.js and parsers.js for email extraction"
+
+**Files Created**:
+- `functions/constants.js` (300 bytes)
+- `functions/parsers.js` (2,649 bytes)
+- `functions/package.json` (678 bytes)
+- `functions/.gitignore`
+- `functions/package-lock.json` (153KB)
+
+**Dependencies Installed**:
+- `firebase-admin` ^12.0.0
+- `firebase-functions` ^4.5.0
+- `blake3` ^2.1.7
+- `@kenjiuno/msgreader` ^1.2.2
+- `mailparser` ^3.6.5
+
+**Implementation Notes**:
+- Implementation matched the plan exactly with no deviations
+- All modules load and test successfully
+- Email file detection (.msg/.eml) working correctly
+- Node engine set to v18 (running on v22 with warnings, but functional)
+
+**What's Next**:
+- Step 2: Create `emailExtraction.js` with main extraction logic (~250 lines)
