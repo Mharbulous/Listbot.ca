@@ -48,21 +48,244 @@ firms/{firmId}/
 
 ## Terminology
 
+### ⚠️ CRITICAL: Add these terms to file-lifecycle.md
+
+The following terms are specific to email processing and must be added to `docs/Features/Upload/Processing/file-lifecycle.md` for consistency:
+
 ### Email Message Types
 
-| Term | Definition | Metadata Reliability | Example |
-|------|-----------|---------------------|---------|
-| **Native** | The current/top-level message in a .msg file | ✅ High - from actual .msg metadata | The reply you just received |
-| **Quoted** | Previous messages in the thread extracted from body/headers | ⚠️ Variable - parsed from quoted text | "On Jan 5, John wrote..." |
+**STRICT DEFINITION REQUIRED** - These terms distinguish between reliable and potentially-tampered email content:
 
-### Attachment Deduplication Types
+| Term | Definition | Metadata Reliability | Forensic Value | Example |
+|------|-----------|---------------------|----------------|---------|
+| **Native** | The current/top-level message in a .msg file for which we have actual .msg metadata | ✅ High - extracted from binary .msg structure | ✅ Trustworthy - direct from email file | The reply you just received |
+| **Quoted** | Previous messages in the thread extracted from email body text or headers | ⚠️ Variable - parsed from quoted text blocks | ⚠️ Unverifiable - can be edited before sending | "On Jan 5, John wrote..." |
 
-| Term | Definition | Storage Action | Metadata Action |
-|------|-----------|----------------|-----------------|
-| **Best/Primary** | First occurrence or best metadata version | ✅ Upload to `/uploads` | ✅ Full record created |
-| **Copy** | Duplicate hash with meaningful metadata differences | ❌ Skip upload | ✅ Record metadata only |
+**Critical Distinction:**
+- **Native** messages have metadata directly from the .msg file binary structure (From, To, Date, Subject headers are authoritative)
+- **Quoted** messages are text reconstructions from the email body - **can be modified** by sender before sending
+- Example: Alice replies to Bob's email but edits Bob's quoted text before sending - the Quoted message does not match Bob's original Native message
+
+**Use Cases:**
+- **Native** messages: Chain of custody, legal evidence, timestamp verification
+- **Quoted** messages: Context reconstruction, thread visualization, detecting tampering (compare to original Native if available)
+
+**Detection of Tampering:**
+When the same email appears both as Native (in its own .msg file) and Quoted (in a reply), compare bodyText hashes to detect if quoted content was altered.
+
+### Email Attachment Deduplication Types
+
+| Term | Definition | Storage Action | Metadata Action | Firestore Collection |
+|------|-----------|----------------|-----------------|---------------------|
+| **Best/Primary** | First occurrence or best metadata version | ✅ Upload to `/uploads` | ✅ Full record created | `uploads` collection |
+| **Copy** | Duplicate hash with meaningful metadata differences | ❌ Skip upload | ✅ Record metadata in `copies` array | `files` collection (update) |
 
 **Note:** These terms align with existing ListBot deduplication terminology from `docs/Features/Upload/Deduplication/CLAUDE.md`.
+
+**Storage Path Clarification:**
+- `/uploads` is a **Firebase Storage path**, not a Firestore collection
+- Firestore collections are `uploads`, `emails`, and `files`
+- Do not confuse `/uploads` (storage) with `uploads` collection (database)
+
+---
+
+## Non-Obvious Implementation Details
+
+### Why `emails` Collection Uses Auto-Generated IDs (Not Hashes)
+
+**Critical Design Decision:** Email messages use auto-generated IDs instead of content hashes.
+
+**Rationale:**
+1. **Quoted messages can be identical across multiple .msg files** - If Bob forwards Alice's email to 3 people, we get 3 .msg files with identical quoted content
+2. **We need to track each occurrence separately** - Each instance of the quoted message has different context (which .msg file it came from)
+3. **Threading requires source tracking** - Need to know which .msg file contained which message for reconstruction
+4. **Hash-based IDs would lose information** - Same quoted content → same hash → only one record → lost context
+
+**Example Problem with Hash-Based IDs:**
+```javascript
+// BAD: Using content hash as ID
+{
+  id: 'hash-of-quoted-email-body',
+  bodyText: 'Let's meet at 3pm',
+  extractedFromFile: 'hash-abc123'  // ❌ Can only store ONE source
+}
+
+// GOOD: Auto-generated ID allows multiple occurrences
+{
+  id: 'msg-001',
+  bodyText: 'Let's meet at 3pm',
+  extractedFromFile: 'hash-abc123'  // ✅ First occurrence
+}
+{
+  id: 'msg-002',
+  bodyText: 'Let's meet at 3pm',  // Identical content
+  extractedFromFile: 'hash-def456'  // ✅ Second occurrence from different .msg
+}
+```
+
+**Implementation:**
+- Use Firestore auto-generated IDs: `doc(collection(db, 'emails')).id`
+- Store bidirectional references: message → .msg file (extractedFromFile), .msg file → messages (extractedMessages array)
+
+### Why Original .msg Files Are Never Deleted
+
+**Legal/Evidentiary Requirement:** Original .msg files must be preserved even after extraction.
+
+**Reasons:**
+1. **Chain of custody** - Original file is legal evidence of what was received
+2. **Metadata authenticity** - Proves message headers weren't tampered with
+3. **Format preservation** - Some email properties may not be extracted (embedded images, formatting, etc.)
+4. **Audit trail** - Can always verify extraction was performed correctly
+
+**Storage Impact:**
+- Original .msg might be 500 KB
+- After extraction: attachments deduplicated, messages in `/emails`
+- Still store 500 KB original + extracted components
+- **Trade-off:** Storage cost vs. legal defensibility
+
+**Implementation:**
+- Upload original to `/uploads/<hash>`
+- Extract components
+- Mark as `hasBeenParsed: true`
+- NEVER delete original
+
+### Why Attachments Are Processed BEFORE Email Saving
+
+**Critical Workflow Order:** Attachments must be hashed and deduplicated before saving email messages.
+
+**Reason:**
+Email message documents reference attachment hashes in their `attachments` array:
+```javascript
+{
+  id: 'msg-001',
+  attachments: [
+    { fileHash: 'abc123', fileName: 'contract.pdf', isDuplicate: false }
+  ]
+}
+```
+
+If we save the email message first, we don't know the attachment hashes yet.
+
+**Correct Flow:**
+1. Parse .msg → extract attachments
+2. Hash each attachment (BLAKE3)
+3. Check if hash exists → determine isDuplicate
+4. Upload new attachments to `/uploads`
+5. Build attachments array with hashes
+6. Save email message with complete attachment references
+
+**Incorrect Flow:**
+1. Parse .msg → save email message → ❌ don't know attachment hashes yet
+2. Extract attachments → hash them
+3. Try to update email message → ❌ inefficient, atomic issues
+
+### Recursive Depth Limit: Why 10 Levels?
+
+**Safety Constraint:** `processEmailFile()` has max depth of 10.
+
+**Reasoning:**
+1. **Prevents infinite loops** - Circular references, malformed files
+2. **Realistic upper bound** - Real email threads rarely exceed 5-6 levels of nesting
+3. **Performance protection** - Each level adds processing time
+4. **Memory constraints** - Deep recursion can exhaust stack
+
+**Real-World Context:**
+- Normal case: 1-2 levels (email with .msg attachment)
+- Edge case: 3-4 levels (forwarded email chains)
+- Suspicious: 5+ levels (potential malformed data)
+- Attack vector: 10+ levels (deliberate exploit attempt)
+
+**Implementation:**
+```javascript
+if (depth > 10) {
+  throw new Error(`Email nesting exceeded maximum depth of 10`)
+}
+```
+
+### Why Firestore Collection Names Don't Match Storage Paths
+
+**Potential Confusion:** Firestore `uploads` collection vs. Firebase Storage `/uploads` path.
+
+**Clarification:**
+- **Firestore collections:** `uploads`, `emails`, `files` (database schema)
+- **Storage paths:** `/firms/{firmId}/uploads/`, `/firms/{firmId}/emails/` (file storage)
+
+**Why Different:**
+- Firestore = structured data with queries (metadata, relationships)
+- Storage = blob storage (actual file bytes)
+- They serve different purposes and have different access patterns
+
+**Example:**
+```javascript
+// Firestore: Document metadata in `uploads` collection
+const uploadDoc = await getDoc(doc(db, 'uploads', fileHash))
+// Returns: { fileType: 'email', hasBeenParsed: true, ... }
+
+// Storage: Actual .msg file bytes at `/uploads` path
+const storageRef = ref(storage, `firms/${firmId}/uploads/${fileHash}`)
+const bytes = await getBytes(storageRef)
+// Returns: Binary .msg file data
+```
+
+### Why .eml Parsing Needs Different Library Than .msg
+
+**Format Differences:**
+- **.msg**: Microsoft proprietary binary format (requires `@kenjiuno/msgreader`)
+- **.eml**: Standard MIME text format (requires `mailparser`)
+
+**Cannot Use Same Parser:**
+- `.msg` files have binary structures, compound document format
+- `.eml` files are text-based MIME with headers and parts
+- Attempting to parse .msg with mailparser → fails
+- Attempting to parse .eml with msgreader → fails
+
+**Implementation:**
+```javascript
+function parseEmailFile(buffer, fileName) {
+  const ext = fileName.toLowerCase().split('.').pop()
+
+  if (ext === 'msg') {
+    return parseMsgFile(buffer)  // Uses @kenjiuno/msgreader
+  } else if (ext === 'eml') {
+    return parseEmlFile(buffer)  // Uses mailparser
+  }
+}
+```
+
+### Why Quoted Message Extraction Is Imperfect
+
+**Limitation:** Extracting quoted messages from email bodies is heuristic, not guaranteed.
+
+**Challenges:**
+1. **No standard format** - Different email clients quote differently
+2. **Text can be edited** - Senders can modify quoted text
+3. **Incomplete headers** - Quoted sections often lack full metadata
+4. **Parsing complexity** - Nested quotes, inline replies, HTML formatting
+
+**Common Patterns:**
+```
+On Jan 5, 2024, John Doe wrote:
+> Original message text
+
+-----Original Message-----
+From: Jane Smith
+Sent: Monday, January 5, 2024 2:30 PM
+
+From: Bob Johnson <bob@example.com>
+Date: Jan 5, 2024 at 2:30 PM
+Subject: Re: Meeting
+```
+
+**Implementation Strategy:**
+1. Use regex patterns for common quote formats
+2. Extract as much metadata as possible
+3. Mark as `isNative: false` to indicate lower reliability
+4. Accept that some quoted messages may be missed or incomplete
+
+**Future Improvement:**
+- Machine learning model to detect quoted sections
+- Parse HTML structure for better accuracy
+- Cross-reference with other .msg files in system
 
 ---
 
