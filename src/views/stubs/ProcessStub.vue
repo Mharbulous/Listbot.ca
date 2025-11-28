@@ -132,6 +132,10 @@
                 <div class="text-xs text-blue-600 mt-2">
                   🔧 Libraries: @kenjiuno/msgreader, mailparser • Storage: /emails, /uploads • Priority: HIGH (Phase 1)
                 </div>
+                <div class="text-xs text-blue-600 mt-2">
+                  📖 <code>docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</code> •
+                  <code>CLAUDE.md</code>
+                </div>
               </div>
             </div>
 
@@ -550,7 +554,10 @@
                   <div><strong>Libraries:</strong> @kenjiuno/msgreader, mailparser</div>
                   <div><strong>Storage:</strong> /emails (messages), /uploads (attachments)</div>
                   <div><strong>Terminology:</strong> Native (current message), Quoted (thread history)</div>
-                  <div><strong>Docs:</strong> docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</div>
+                  <div><strong>📖 Docs:</strong>
+                    <code>docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</code> •
+                    <code>CLAUDE.md</code>
+                  </div>
                 </div>
               </div>
             </div>
