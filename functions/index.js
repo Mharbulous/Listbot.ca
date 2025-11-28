@@ -10,6 +10,7 @@ const { PARSE_STATUS, MAX_RETRY } = require('./constants');
 // Primary trigger: fires when upload document created
 exports.onUploadCreated = onDocumentCreated({
   document: 'uploads/{fileHash}',
+  region: 'us-west1',
   memory: '2GiB',
   timeoutSeconds: 300,
   maxInstances: 10,
@@ -33,6 +34,7 @@ exports.onUploadCreated = onDocumentCreated({
 
 // Manual retry from UI
 exports.retryEmailExtraction = onCall({
+  region: 'us-west1',
   memory: '2GiB',
   timeoutSeconds: 300,
 }, async (request) => {
