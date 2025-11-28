@@ -768,8 +768,8 @@ firebase deploy --only storage
 | 2 | Create `emailExtraction.js` | 1.5 hours | ✅ **DONE** (2025-11-28) |
 | 3 | Create `index.js` with triggers | 30 min | ✅ **DONE** (2025-11-28) |
 | 4 | Test with validation script | 45 min | ✅ **DONE** (2025-11-28) |
-| 5 | Client upload flow update | 30 min | Pending |
-| 6 | Client status composable + component | 30 min | Pending |
+| 5 | Client upload flow update | 30 min | ✅ **DONE** (2025-11-28) |
+| 6 | Client status composable + component | 30 min | ✅ **DONE** (2025-11-28) |
 | 7 | Deploy and verify | 30 min | Pending |
 
 **Total: ~5 hours**
@@ -944,3 +944,95 @@ node functions/test-parsers.js
 
 **What's Next**:
 - Step 5: Client upload flow update
+
+---
+
+### Step 5: Client upload flow update ✅ COMPLETED (2025-11-28)
+
+**Files Modified**:
+- `src/features/upload/composables/useFileMetadata.js`
+
+**Implementation Details**:
+- Added `uploads` collection document creation alongside `evidence` collection
+- Created upload documents for ALL files (email and non-email) with email-specific fields
+- Email files (.msg/.eml) get `hasEmailAttachments: true` to trigger Cloud Function processing
+- Non-email files get `hasEmailAttachments: null` (no processing needed)
+- Added duplicate check to avoid overwriting existing uploads documents
+- Integrated with existing upload flow in `createMetadataRecord()` function
+
+**Fields Added to Uploads Document**:
+```javascript
+{
+  id: fileHash,
+  firmId, userId, matterId,
+  sourceFileName, fileType, fileSize, storagePath, uploadedAt,
+  hasEmailAttachments: isEmail ? true : null,
+  parseStatus: isEmail ? 'pending' : null,
+  parseError: null,
+  parsedAt: null,
+  retryCount: 0,
+  extractedMessageId: null,
+  extractedAttachmentHashes: [],
+  isEmailAttachment: false,
+  extractedFromEmails: [],
+  nestingDepth: 0
+}
+```
+
+**Integration Points**:
+- Document created BEFORE evidence document to ensure Cloud Function can listen
+- Uses same fileHash as document ID for consistency with evidence collection
+- Detects email files by extension (.msg/.eml) case-insensitively
+- Uses same storagePath format as evidence collection
+
+**Testing**:
+- ✅ Build completed successfully (no TypeScript/compilation errors)
+- ✅ Code integrates cleanly with existing upload flow
+- ✅ Duplicate detection prevents overwriting existing documents
+
+**What's Next**:
+- Step 6: Client status composable + component
+
+---
+
+### Step 6: Client status composable + component ✅ COMPLETED (2025-11-28)
+
+**Files Created**:
+- `src/features/upload/composables/useEmailExtractionStatus.js` (44 lines)
+- `src/features/upload/components/EmailExtractionStatus.vue` (42 lines)
+
+**Implementation Details**:
+
+**Composable (`useEmailExtractionStatus.js`)**:
+- Provides real-time monitoring of email extraction status
+- Uses Firestore `onSnapshot` for live updates
+- Tracks `parseStatus`, `parseError`, and `retryCount` from uploads document
+- Exposes `status`, `error`, `canRetry`, and `retry()` function
+- Handles cleanup with `onUnmounted` lifecycle hook
+- Integrates with Firebase Functions `retryEmailExtraction` callable
+
+**Component (`EmailExtractionStatus.vue`)**:
+- Displays extraction status with appropriate icons and colors
+- Shows 4 states: pending, processing, completed, failed
+- Provides retry button for failed extractions (max 3 retries)
+- Only renders for email files (`fileType === 'email'`)
+- Uses Vuetify components (v-progress-circular, v-icon, v-btn)
+- Tailwind CSS for layout and styling
+
+**Status States**:
+1. **Pending**: Clock icon, gray text, "Pending"
+2. **Processing**: Spinner, gray text, "Processing..."
+3. **Completed**: Check circle, success color, "Extracted"
+4. **Failed**: Alert circle, red text, error message, retry button
+
+**Props**:
+- `fileHash` (String, required) - BLAKE3 hash of uploaded file
+- `fileType` (String, required) - File type to determine if email
+
+**Integration**:
+- Component can be added to upload table rows for email files
+- Composable can be reused in other contexts (e.g., file viewer)
+- Ready for integration with existing upload UI components
+
+**What's Next**:
+- Step 7: Deploy and verify
