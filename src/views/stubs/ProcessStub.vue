@@ -1,6 +1,7 @@
 <template>
   <StubPageLayout>
-    <div class="max-w-6xl mx-auto p-8">
+    <template #content>
+      <div class="max-w-6xl mx-auto p-8">
       <!-- Header with Toggle -->
       <div class="mb-8">
         <div
@@ -647,7 +648,8 @@
         <!-- Workflow Steps -->
         <WorkflowSteps title="Processing Workflow" :steps="workflowSteps" />
       </div>
-    </div>
+      </div>
+    </template>
 
     <template #footer>
       <StubFooter
