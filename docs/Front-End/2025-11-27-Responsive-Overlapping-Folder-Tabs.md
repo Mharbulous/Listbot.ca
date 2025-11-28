@@ -9,7 +9,7 @@
 How do you create folder-style tabs that:
 1. **Left-align with gaps** when space allows
 2. **Overlap each other** when space is constrained
-3. **Stack with rightmost tabs on top** (like browser tabs)
+3. **Stack based on proximity to active tab** (tabs closer to active tab appear on top)
 4. Transition smoothly between these states
 5. Never exceed container width (no horizontal scrollbar)
 6. **Support sticky table headers** that stick below the tabs when scrolling
@@ -123,7 +123,7 @@ This is the **CSS-only** approach that actually works. The key insight is using 
       :key="tab.id"
       class="tab-wrapper"
       :class="{ 'last-tab-wrapper': index === tabs.length - 1 }"
-      :style="{ zIndex: isActive(tab.id) ? 100 : index + 1 }"
+      :style="{ zIndex: calculateZIndex(index) }"
     >
       <button
         @click="selectTab(tab.id)"
@@ -145,6 +145,29 @@ This is the **CSS-only** approach that actually works. The key insight is using 
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed } from 'vue';
+
+const Z_INDEX_CONTENT = 50;  // Table header/content base z-index
+const Z_INDEX_ACTIVE = Z_INDEX_CONTENT + 1;  // Active tab (51)
+
+// Calculate z-index based on proximity to active tab
+const calculateZIndex = (index) => {
+  const activeIndex = tabs.value.findIndex(tab => isActive(tab.id));
+
+  if (activeIndex === -1) return Z_INDEX_CONTENT - 1;  // No active tab
+  if (index === activeIndex) return Z_INDEX_ACTIVE;  // Active tab
+
+  // Calculate distance from active tab
+  const distance = Math.abs(index - activeIndex);
+
+  // Closer tabs get higher z-index
+  // Active tab neighbors: Z_INDEX_CONTENT - 1 = 49
+  // Next neighbors: Z_INDEX_CONTENT - 2 = 48, etc.
+  return Z_INDEX_CONTENT - distance;
+};
+</script>
 
 <style scoped>
 .tab-wrapper {
@@ -199,23 +222,27 @@ The wrapper-based overflow approach is pure CSS with automatic, smooth adaptatio
    - Ensures it shrinks completely before tabs start overlapping
    - Creates two-phase behavior: normal â†’ overlapping
 
-4. **Z-index layering:**
-   - Base z-index increases left-to-right (1, 2, 3...)
-   - Active tab: z-index: 100
-   - Hovered tab: z-index: 99 or 100
-   - This mimics physical folder tabs
+4. **Z-index layering (proximity-based stacking):**
+   - Content container/table header: `z-index: 50` (reference point)
+   - Active tab: `z-index: 51` (always on top, in front of content)
+   - Tabs are stacked by proximity to active tab:
+     - Immediate neighbors (±1): `z-index: 49`
+     - Next neighbors (±2): `z-index: 48`
+     - Further tabs: `z-index: 47, 46, 45...`
+   - This prevents tabs from becoming fully obscured behind multiple overlapping tabs
+   - Closer tabs to the active tab are more visible, creating a natural focal point
 
 5. **Content container MUST have intermediate z-index (CRITICAL!):**
-   - Content container (below tabs): `position: relative; z-index: 25;`
+   - Content container (below tabs): `position: relative; z-index: 50;`
    - This creates the folder-tab metaphor:
-     - Inactive tabs (z-index 1-10) appear **behind** the content
-     - Active tab (z-index 100) appears **in front** of the content
+     - Inactive tabs (z-index < 50) appear **behind** the content
+     - Active tab (z-index: 51) appears **in front** of the content
      - Makes it look like the active tab is "attached" to the content area
    - **Without this**, all tabs will appear behind or in front of content - breaking the visual effect
    ```css
    .content-container {
      position: relative;
-     z-index: 25; /* Higher than inactive tabs, lower than active tab */
+     z-index: 50; /* Reference point - inactive tabs below, active tab above */
      border: 1px solid #cbd5e1;
      border-top: none; /* Tab connects to content */
      border-radius: 0 0 12px 12px; /* Square top corners, rounded bottom corners */
@@ -263,11 +290,11 @@ If your tabs container uses `position: sticky` (e.g., to keep tabs visible while
 BROKEN STRUCTURE:
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚ .import-tabs-sticky (position: sticky)  â”‚  â† Creates ISOLATED stacking context
-â”‚   â””â”€â”€ tab wrappers (z-index: 1-100)     â”‚  â† Can only compete with EACH OTHER
+â”‚   â””â”€â”€ tab wrappers (proximity-based z-index)     â”‚  â† Can only compete with EACH OTHER
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                     â†• Z-INDEX CANNOT COMPETE ACROSS THIS BOUNDARY!
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ .content-container (z-index: 25)        â”‚  â† Different stacking context
+â”‚ .content-container (z-index: 50)        â”‚  â† Different stacking context
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
@@ -310,15 +337,18 @@ FIXED STRUCTURE:
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚ .import-tabs-wrapper (position: relative)       â”‚  â† SINGLE stacking context
 â”‚   â”œâ”€â”€ .import-tabs-row                          â”‚
-â”‚   â”‚     â””â”€â”€ tab wrappers (z-index: 1-100)       â”‚  â† NOW competes with content!
+│   │     └── tab wrappers (proximity-based)     │  ← NOW competes with content!
+│   │          - Active: z-index 51              │
+│   │          - Neighbors: z-index 49           │
+│   │          - Further: z-index 48, 47...      │
 â”‚   â””â”€â”€ <slot name="content">                     â”‚
-â”‚         â””â”€â”€ .content-container (z-index: 25)    â”‚  â† SAME stacking context
+â”‚         â””â”€â”€ .content-container (z-index: 50)    â”‚  â† SAME stacking context
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **Result:**
-- Active tab (z-index: 100) > Content (z-index: 25) = **Tab appears IN FRONT** âœ…
-- Inactive tabs (z-index: 1-10) < Content (z-index: 25) = **Tabs appear BEHIND** âœ…
+- Active tab (z-index: 51) > Content (z-index: 50) = **Tab appears IN FRONT** âœ…
+- Inactive tabs (z-index < 50) < Content (z-index: 50) = **Tabs appear BEHIND** âœ…
 
 ### Vue 3 Implementation
 
@@ -334,7 +364,7 @@ FIXED STRUCTURE:
           v-for="(tab, index) in tabs"
           :key="tab.value"
           class="tab-wrapper"
-          :style="{ zIndex: isActive(tab.value) ? 100 : index + 1 }"
+          :style="{ zIndex: calculateZIndex(index) }"
         >
           <button
             @click="selectTab(tab.value)"
@@ -436,26 +466,33 @@ When implementing skeuomorphic tabs, you may encounter these specific issues. He
 }
 ```
 
-**The Fix:** Remove `!important` hover overrides. Instead, set hover z-index through JavaScript state:
+**The Fix:** Remove `!important` hover overrides. Instead, set hover z-index through JavaScript state using proximity-based stacking:
 ```javascript
-const Z_INDEX_ACTIVE = 100;
-const Z_INDEX_HOVERED = 20;  // Higher than inactive (1-10) but LOWER than content (25)
-const Z_INDEX_CONTENT = 25;
+const Z_INDEX_CONTENT = 50;  // Table header/content base z-index
+const Z_INDEX_ACTIVE = Z_INDEX_CONTENT + 1;  // Active tab (51)
+const Z_INDEX_HOVERED_BOOST = 5;  // Boost for hovered tabs
 
-const getTabWrapperStyle = (tabId) => {
-  let zIndex = 1;
+const getTabWrapperStyle = (tabId, index) => {
+  const activeIndex = tabs.value.findIndex(tab => isActive(tab.id));
+
   if (isActive(tabId)) {
-    zIndex = Z_INDEX_ACTIVE;  // 100: In front of everything
-  } else if (isHovered(tabId)) {
-    zIndex = Z_INDEX_HOVERED;  // 20: In front of other inactive tabs, but BEHIND content
-  } else {
-    zIndex = index + 1;  // 1-10: Behind content
+    return { zIndex: Z_INDEX_ACTIVE };  // 51: In front of everything
   }
+
+  // Calculate proximity-based z-index
+  const distance = Math.abs(index - activeIndex);
+  let zIndex = Z_INDEX_CONTENT - distance;
+
+  // Boost hovered tabs while keeping them below content
+  if (isHovered(tabId)) {
+    zIndex = Math.min(zIndex + Z_INDEX_HOVERED_BOOST, Z_INDEX_CONTENT - 1);
+  }
+
   return { zIndex };
 };
 ```
 
-**Key Principle:** Hovered inactive tabs should be `Z_INDEX_HOVERED (20) < Z_INDEX_CONTENT (25) < Z_INDEX_ACTIVE (100)`.
+**Key Principle:** Hovered inactive tabs get a boost but remain `< Z_INDEX_CONTENT (50) < Z_INDEX_ACTIVE (51)`.
 
 **Reference:** Fixed in commit ca827cd
 
@@ -583,7 +620,7 @@ const getTabWrapperStyle = (tabId) => {
 /* Content container */
 .content-container {
   position: relative;
-  z-index: 25;
+  z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none;  /* âš ï¸ CRITICAL: No top border on container */
@@ -694,7 +731,7 @@ PageLayout (scroll-container, overflow: auto)
   ├── TitleDrawer (scrolls away)
   ├── ImportTabs (wrapper, NOT sticky)
   │     └── [content slot]
-  │           └── .content-container (z-index: 25)
+  │           └── .content-container (z-index: 50)
   │                 └── table
   │                       └── thead.sticky-table-header (top: 0)
   └── Footer (scrolls away)
@@ -705,7 +742,7 @@ PageLayout (scroll-container, overflow: auto)
 /* Content container - maintains folder-tab z-index layering */
 .content-container {
   position: relative;
-  z-index: 25;
+  z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none;
@@ -747,7 +784,7 @@ PageLayout (scroll-container, overflow: auto)
   ├── TitleDrawer (scrolls away)
   ├── ProceedingsTabs (position: sticky, top: 0, z-index: 10)
   └── PleadingsTable
-        └── .table-container (z-index: 25)
+        └── .table-container (z-index: 50)
               └── table
                     └── thead.sticky-table-header (top: 80px) ← MUST account for tabs!
 ```
@@ -765,7 +802,7 @@ PageLayout (scroll-container, overflow: auto)
 /* Content container */
 .table-container {
   position: relative;
-  z-index: 25;
+  z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none;
@@ -853,7 +890,7 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 .content-container {
   /* Pattern from "Critical Implementation Details" section - ensures folder-tab z-index layering */
   position: relative;
-  z-index: 25;
+  z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none;
@@ -921,9 +958,9 @@ Remember that `position: sticky` creates a stacking context! If your sticky tabs
 
 <style scoped>
 .table-container {
-  /* Pattern from "Critical Implementation Details" - z-index: 25 for folder-tab layering */
+  /* Pattern from "Critical Implementation Details" - z-index: 50 for folder-tab layering */
   position: relative;
-  z-index: 25;
+  z-index: 50;
   background: white;
   border: 1px solid #cbd5e1;
   border-top: none;
@@ -1154,8 +1191,9 @@ When implementing overlapping tabs, verify:
 
 - [ ] Tabs align left with visible gaps when space allows
 - [ ] Tabs overlap smoothly when container shrinks
-- [ ] Rightmost tabs appear on top of leftmost tabs
+- [ ] Tabs stack by proximity to active tab (closer tabs more visible)
 - [ ] Active tab always appears on top (regardless of position)
+- [ ] No tab becomes fully obscured behind multiple overlapping tabs
 - [ ] **Active tab appears IN FRONT of content container** (z-index layering works)
 - [ ] **Inactive tabs appear BEHIND content container** (folder-tab metaphor intact)
 - [ ] Hover states are visible (z-index adjusts if needed)
@@ -1202,13 +1240,16 @@ When implementing overlapping tabs, verify:
 3. Set button: `width: 220px` (fixed - no flex properties)
 4. Last wrapper: `min-width: 140px` (prevents complete collapse)
 5. Super spacer: `flex-shrink: 10000` (shrinks first)
-6. Apply **incremental z-index** from left to right (1, 2, 3...)
-7. Give **active tab highest z-index** (e.g., 100)
-8. Give **hovered inactive tabs intermediate z-index** (e.g., 20) - LOWER than content (25)
-9. **Content container: `position: relative; z-index: 25;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
-10. ALL tab: `flex-shrink: 0` (never shrinks)
-11. Container: `overflow: visible` (allows button overflow)
-12. **âš ï¸ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
+6. Apply **proximity-based z-index stacking**:
+   - Content container: `z-index: 50` (reference point)
+   - Active tab: `z-index: 51` (in front of content)
+   - Tabs stack by distance from active: neighbors at 49, next at 48, etc.
+   - Prevents tabs from becoming fully obscured behind multiple overlapping tabs
+7. Give **hovered inactive tabs a boost** while keeping them below content (< 50)
+8. **Content container: `position: relative; z-index: 50;`** (CRITICAL! - appears in front of inactive tabs, behind active tab)
+9. ALL tab: `flex-shrink: 0` (never shrinks)
+10. Container: `overflow: visible` (allows button overflow)
+11. **âš ï¸ Tabs and content MUST share the same stacking context** - use a slot pattern if needed (see section above)
 
 **âš ï¸ CRITICAL GOTCHA: `position: sticky` Trap**
 If using `position: sticky` on your tabs container, it creates an **isolated stacking context** that breaks z-index layering with the content. Solution: Use a **slot-based pattern** where the content is rendered INSIDE the tabs component, so both share the same stacking context. See "The `position: sticky` Stacking Context Trap" section above.
