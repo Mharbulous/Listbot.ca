@@ -32,7 +32,7 @@
         <div class="text-sm text-slate-600">In Progress</div>
       </div>
       <div class="bg-white border-2 border-blue-500 rounded-lg p-4">
-        <div class="text-3xl font-bold text-blue-600">5</div>
+        <div class="text-3xl font-bold text-blue-600">6</div>
         <div class="text-sm text-slate-600">Planned Features</div>
       </div>
       <div class="bg-white border-2 border-slate-300 rounded-lg p-4">
@@ -95,44 +95,58 @@
           </div>
         </div>
 
-        <!-- Stage 3: Email Threading (PLANNED) -->
+        <!-- Stage 3: Email Extraction (PLANNED) -->
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
           <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
-            <div class="font-semibold text-blue-900">Stage 3: Email Threading</div>
+            <div class="font-semibold text-blue-900">Stage 3: Email Extraction</div>
             <div class="text-sm text-blue-700 mt-1">
-              Conversation reconstruction • Inclusive vs. non-inclusive detection • 40-74% review time reduction
+              Parse .msg/.eml files to extract messages (native + quoted) and attachments • Recursive nested email support
             </div>
             <div class="text-xs text-blue-600 mt-2">
-              🔧 Libraries: mailparser, email-reply-parser • Priority: HIGH (Phase 1)
+              🔧 Libraries: @kenjiuno/msgreader, mailparser • Storage: /emails, /uploads • Priority: HIGH (Phase 1)
             </div>
           </div>
         </div>
 
-        <!-- Stage 4: AI Fuzzy Dedup (PLANNED) -->
+        <!-- Stage 4: Email Threading (PLANNED) -->
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
           <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
-            <div class="font-semibold text-blue-900">Stage 4: AI Fuzzy Deduplication</div>
+            <div class="font-semibold text-blue-900">Stage 4: Email Threading</div>
+            <div class="text-sm text-blue-700 mt-1">
+              Conversation reconstruction • Inclusive vs. non-inclusive detection • 40-74% review time reduction
+            </div>
+            <div class="text-xs text-blue-600 mt-2">
+              🔧 Builds on Stage 3 data • Priority: HIGH (Phase 1)
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage 5: Categorization (LIVE - WIP) -->
+        <div class="flex items-center gap-4">
+          <div class="flex-shrink-0 w-24 text-sm font-semibold text-amber-600">🔴 LIVE WIP</div>
+          <div class="flex-1 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4">
+            <div class="font-semibold text-slate-900">Stage 5: Categorization</div>
+            <div class="text-sm text-slate-600 mt-1">
+              Automated document classification • Content-based organization • Currently in Review, migrating to Process
+            </div>
+            <div class="text-xs text-slate-500 mt-2">
+              📁 Current: Organize → Categories • Future: Process feature
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage 6: AI Fuzzy Dedup (PLANNED) -->
+        <div class="flex items-center gap-4">
+          <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
+          <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
+            <div class="font-semibold text-blue-900">Stage 6: AI Fuzzy Deduplication</div>
             <div class="text-sm text-blue-700 mt-1">
               Near-duplicate detection using embeddings • Similarity threshold analysis
             </div>
             <div class="text-xs text-blue-600 mt-2">
               🔧 Approach: Document embeddings + cosine similarity • Priority: MEDIUM (Phase 2)
-            </div>
-          </div>
-        </div>
-
-        <!-- Stage 5: Categorization -->
-        <div class="flex items-center gap-4">
-          <div class="flex-shrink-0 w-24 text-sm font-semibold text-emerald-600">✅ LIVE</div>
-          <div class="flex-1 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg p-4">
-            <div class="font-semibold text-slate-900">Stage 5: Categorization</div>
-            <div class="text-sm text-slate-600 mt-1">
-              Automated document classification • Content-based organization
-            </div>
-            <div class="text-xs text-slate-500 mt-2">
-              📁 Feature: Organize → Categories
             </div>
           </div>
         </div>
