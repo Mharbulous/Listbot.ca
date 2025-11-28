@@ -58,7 +58,7 @@
             <div class="text-sm text-slate-600">In Progress</div>
           </div>
           <div class="bg-white border-2 border-blue-500 rounded-lg p-4">
-            <div class="text-3xl font-bold text-blue-600">5</div>
+            <div class="text-3xl font-bold text-blue-600">6</div>
             <div class="text-sm text-slate-600">Planned Features</div>
           </div>
           <div class="bg-white border-2 border-slate-300 rounded-lg p-4">
@@ -117,6 +117,20 @@
                 <div class="text-xs text-slate-500 mt-2">
                   📄 <code>docs/Features/Upload/Deduplication/</code> •
                   Firestore doc ID = BLAKE3 hash
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 3: Email Extraction (PLANNED) -->
+            <div class="flex items-center gap-4">
+              <div class="flex-shrink-0 w-24 text-sm font-semibold text-blue-600">📋 PLANNED</div>
+              <div class="flex-1 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4">
+                <div class="font-semibold text-blue-900">Stage 3: Email Extraction</div>
+                <div class="text-sm text-blue-700 mt-1">
+                  Parse .msg/.eml files to extract messages (native + quoted) and attachments • Recursive nested email support
+                </div>
+                <div class="text-xs text-blue-600 mt-2">
+                  🔧 Server-side extraction planned • Storage: /emails, /uploads • Priority: HIGH (Phase 1)
                 </div>
               </div>
             </div>
@@ -350,10 +364,6 @@
               <div class="font-semibold text-slate-900 mb-1">File Processing Details</div>
               <code class="text-xs text-blue-600">docs/Features/Upload/Processing/file-processing.md</code>
             </div>
-            <div class="bg-white rounded border border-slate-200 p-3">
-              <div class="font-semibold text-slate-900 mb-1">Email Extraction Architecture</div>
-              <code class="text-xs text-blue-600">docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</code>
-            </div>
           </div>
         </div>
       </div>
@@ -512,18 +522,20 @@
               Quick Wins - Phase 1
             </h3>
             <div class="grid gap-4 md:grid-cols-2">
-              <!-- Email Threading -->
+              <!-- Email Extraction & Threading -->
               <div class="bg-white border-2 border-blue-300 rounded-lg p-6">
                 <div class="flex items-start gap-3 mb-3">
                   <div class="text-2xl">📧</div>
                   <div>
-                    <h4 class="text-lg font-semibold text-blue-600">Email Threading</h4>
-                    <p class="text-sm text-blue-600 font-medium">📋 PLANNED - Highest ROI Feature</p>
+                    <h4 class="text-lg font-semibold text-blue-600">Email Extraction & Threading</h4>
+                    <p class="text-sm text-blue-600 font-medium">📋 DESIGNED - Highest ROI Feature</p>
                   </div>
                 </div>
                 <p class="text-blue-700 mb-3 text-sm">
-                  Automatically identifies and groups email conversations, marking inclusive emails
-                  (containing all prior conversation content) vs. non-inclusive replies. Builds on extracted message data from Email Extraction.
+                  <strong>Stage 3 (Email Extraction):</strong> Parse .msg/.eml files to extract individual messages (native + quoted) and attachments.
+                  Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files.<br><br>
+                  <strong>Stage 4 (Email Threading):</strong> Automatically identifies and groups email conversations, marking inclusive emails
+                  (containing all prior conversation content) vs. non-inclusive replies. Builds on extracted message data from Stage 3.
                 </p>
                 <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
                   <div class="text-sm font-medium text-blue-900 mb-1">Expected Impact:</div>
@@ -531,8 +543,9 @@
                   <div class="text-sm text-blue-800">Review time reduction</div>
                 </div>
                 <div class="text-xs text-blue-600 space-y-1">
-                  <div><strong>Depends on:</strong> Email Extraction (Preserve stage)</div>
-                  <div><strong>Terminology:</strong> Inclusive vs. Non-inclusive messages</div>
+                  <div><strong>Approach:</strong> Server-side extraction with Firebase Functions</div>
+                  <div><strong>Storage:</strong> /emails (messages), /uploads (attachments)</div>
+                  <div><strong>Terminology:</strong> Native (current message), Quoted (thread history)</div>
                 </div>
               </div>
             </div>
@@ -671,8 +684,8 @@ const workflowSteps = [
   {
     title: 'Stage 3: Email Extraction',
     description:
-      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. This stage is handled during the Preserve workflow at the Upload page. See /upload/stub for details. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files.',
-    status: 'Part of Preserve workflow - See Upload page',
+      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files. Native messages have reliable metadata from .msg headers, while quoted messages are parsed from email body with variable metadata quality. Server-side implementation with Firebase Functions.',
+    status: 'Planned - Server-side approach',
   },
   {
     title: 'Stage 4: Email Threading',

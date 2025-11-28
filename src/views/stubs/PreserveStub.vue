@@ -19,9 +19,9 @@
     </template>
 
     <template #content>
-      <!-- Core Features -->
+      <!-- Current Implementation -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Current Implementation</h2>
         <div class="grid gap-4 md:grid-cols-2">
           <FeatureCard
             icon="✅"
@@ -78,27 +78,6 @@
               <div class="text-sm text-slate-500">
                 <span class="font-medium">Benefit:</span> Transparent visibility into preservation
                 process
-              </div>
-            </template>
-          </FeatureCard>
-
-          <FeatureCard
-            icon="📧"
-            title="Email Extraction"
-            badge="PLANNED - Phase 1"
-            color="blue"
-            description="Parse .msg/.eml files to extract messages (native + quoted) and attachments • Recursive nested email support"
-          >
-            <template #extra-content>
-              <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
-                <div class="text-sm font-medium text-blue-900 mb-1">Expected Impact:</div>
-                <div class="text-2xl font-bold text-blue-700">40-74%</div>
-                <div class="text-sm text-blue-800">Review time reduction</div>
-              </div>
-              <div class="text-sm text-slate-500 space-y-1">
-                <div><span class="font-medium">Libraries:</span> @kenjiuno/msgreader, mailparser</div>
-                <div><span class="font-medium">Storage:</span> /emails (messages), /uploads (attachments)</div>
-                <div><span class="font-medium">📖 Docs:</span> <code class="text-xs">docs/Features/Upload/Email-Extraction/email-extraction-architecture.md</code></div>
               </div>
             </template>
           </FeatureCard>
@@ -240,12 +219,6 @@ const workflowSteps = [
     description:
       'Unique files are uploaded to Firebase Cloud Storage with progress tracking and error handling.',
     status: 'Implemented',
-  },
-  {
-    title: 'Email Extraction',
-    description:
-      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files.',
-    status: 'Planned - Phase 1',
   },
   {
     title: 'Chain of Custody Logging',
