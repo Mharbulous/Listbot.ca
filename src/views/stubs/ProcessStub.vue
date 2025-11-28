@@ -187,17 +187,19 @@
           Quick Wins - Phase 1
         </h3>
         <div class="grid gap-4 md:grid-cols-2">
-          <!-- Email Threading -->
+          <!-- Email Extraction & Threading -->
           <div class="bg-white border-2 border-blue-300 rounded-lg p-6">
             <div class="flex items-start gap-3 mb-3">
               <div class="text-2xl">📧</div>
               <div>
-                <h4 class="text-lg font-semibold text-blue-600">Email Threading</h4>
-                <p class="text-sm text-blue-600 font-medium">📋 PLANNED - Highest ROI Feature</p>
+                <h4 class="text-lg font-semibold text-blue-600">Email Extraction & Threading</h4>
+                <p class="text-sm text-blue-600 font-medium">📋 DESIGNED - Highest ROI Feature</p>
               </div>
             </div>
             <p class="text-blue-700 mb-3 text-sm">
-              Automatically identifies and groups email conversations, marking inclusive emails
+              <strong>Stage 1c (Email Extraction):</strong> Parse .msg/.eml files to extract individual messages and attachments.
+              Attachments are deduplicated across all emails before storage.<br><br>
+              <strong>Stage 3 (Email Threading):</strong> Automatically identifies and groups email conversations, marking inclusive emails
               (containing all prior conversation content) vs. non-inclusive replies.
             </p>
             <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
@@ -206,9 +208,10 @@
               <div class="text-sm text-blue-800">Review time reduction</div>
             </div>
             <div class="text-xs text-blue-600 space-y-1">
-              <div><strong>Approach:</strong> Email header parsing + conversation reconstruction</div>
-              <div><strong>Library:</strong> TBD (mailparser, email-reply-parser)</div>
-              <div><strong>Implementation:</strong> Review only final inclusive emails</div>
+              <div><strong>Libraries:</strong> @kenjiuno/msgreader, mailparser</div>
+              <div><strong>Storage:</strong> /emails (messages), /uploads (attachments)</div>
+              <div><strong>Terminology:</strong> Native (current message), Quoted (thread history)</div>
+              <div><strong>Docs:</strong> docs/Features/Upload/Email-Extraction/</div>
             </div>
           </div>
         </div>
@@ -343,9 +346,15 @@ const workflowSteps = [
     status: 'Part of Preserve workflow',
   },
   {
+    title: 'Stage 1c: Email Extraction (NEW)',
+    description:
+      'Email files (.msg, .eml) are parsed to extract individual messages (native + quoted) and attachments. Attachments are deduplicated across all emails before storage. Supports recursive processing of nested .msg files. See docs/Features/Upload/Email-Extraction/',
+    status: 'Designed - Ready for Implementation',
+  },
+  {
     title: 'Stage 3: Email Threading',
     description:
-      'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages (planned).',
+      'Email conversations are reconstructed and analyzed to identify inclusive vs. non-inclusive messages. Works with data from Stage 1c Email Extraction (planned).',
   },
   {
     title: 'Stage 4: AI Fuzzy Deduplication',
