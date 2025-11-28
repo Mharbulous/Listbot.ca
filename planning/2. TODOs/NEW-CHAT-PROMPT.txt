@@ -1,0 +1,45 @@
+I need to implement client-side email extraction for .msg/.eml files in the ListBot upload system.
+
+## Status
+- All decisions finalized
+- Implementation plan ready
+- Ready to start Phase 1 (install dependencies, build parsers)
+
+## Key Files to Read
+1. `planning/2. TODOs/2025-11-28-Email_Extraction_Plan.md` - Implementation plan (READ FIRST)
+2. `docs/Features/Upload/Email-Extraction/email-extraction-architecture.md` - Detailed architecture (skim if needed)
+3. `planning/2. TODOs/HANDOVER-email-extraction.md` - Additional context
+
+## Critical Decisions
+- **Client-side only** (no Cloud Functions)
+- **100MB limit** for email files and attachments
+- **v1 scope**: Native messages only (skip quoted message parsing)
+- **Failures**: Upload file anyway, mark for manual retry
+- **Bodies in Storage**, metadata in Firestore
+
+## File Structure
+```
+src/features/upload/
+├── parsers/           # NEW: msgParser.js, emlParser.js, emailParserFactory.js
+├── services/          # NEW: emailExtractionService.js
+└── composables/       # NEW: useEmailExtraction.js
+```
+
+## Dependencies to Install
+```bash
+npm install @kenjiuno/msgreader mailparser mime-types
+```
+
+## What NOT to Read
+- `docs/Features/Organizer/*` - Not relevant
+- `src/features/organizer/*` - Not relevant
+- `planning/7. Completed/*` - Historical only
+
+## Git
+**Branch**: `claude/email-extraction-v1-<new-session-id>`
+**Commit**: After each phase completes
+
+## Task
+Start with Phase 1: Install dependencies and create the three parser files (`msgParser.js`, `emlParser.js`, `emailParserFactory.js`). Code templates are in the implementation plan.
+
+Ready to begin?
