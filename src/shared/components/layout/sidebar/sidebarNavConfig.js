@@ -8,7 +8,6 @@ import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
 import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
 import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
 import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
-import shingleIcon from '@/assets/icons/nav-items/Law-shingle.png';
 import scrollIcon from '@/assets/icons/nav-items/scroll.png';
 import cuteDroidIcon from '@/assets/icons/nav-items/CuteDroid.png';
 
@@ -21,9 +20,6 @@ export function useNavItems() {
   const organizerStore = useOrganizerStore();
 
   return [
-    // Firm (Special - not part of EDRM workflow)
-    { key: 'firm', path: computed(() => '/firm'), icon: shingleIcon, label: 'Firm', stubPath: '/firm/stub', stubStatus: 'placeholder' },
-
     // Matters (Special - not part of EDRM workflow)
     { key: 'matters', path: computed(() => '/matters'), icon: briefcaseIcon, label: 'Matters' },
 
