@@ -9,16 +9,17 @@
 
 ## 📋 Executive Summary
 
-This plan implements **transaction boundary tracking** using a hybrid approach:
-- **Fast state queries:** Add `uploadStatus` field to Evidence documents
-- **Audit trail:** Implement `uploadEvents` collection for historical records
-- **Pattern replication:** Apply same pattern to Email Extraction feature
+This plan implements **transaction boundary tracking** using a minimal approach:
+- **Fast state queries:** Add `uploadStatus` field to Evidence documents (1 new field)
+- **Error tracking:** Add `uploadError` field for failed uploads (1 new field)
+- **Atomic operations:** Use batch writes to ensure metadata consistency
+- **Pattern replication:** Apply same minimal pattern to Email Extraction feature
 
 **Why This Matters:**
 - Detects orphaned files from interrupted uploads
 - Enables cleanup of partial/failed operations
-- Provides debugging audit trail
-- Establishes pattern for all async operations (email extraction, document processing, etc.)
+- Establishes simple, maintainable pattern for all async operations
+- Minimizes schema complexity and Firestore write costs (83% fewer writes vs event sourcing)
 
 ---
 
@@ -33,9 +34,9 @@ This plan implements **transaction boundary tracking** using a hybrid approach:
 ### Success Criteria
 - [ ] Can query for incomplete uploads: `where('uploadStatus', '==', 'in_progress')`
 - [ ] Cleanup job finds and resolves orphaned files
-- [ ] Batch writes ensure metadata consistency
-- [ ] Upload events provide complete audit trail
+- [ ] Batch writes ensure metadata consistency (all 3 operations succeed or fail together)
 - [ ] Pattern documented for email extraction reuse
+- [ ] Minimal schema complexity (only 2 new fields per document)
 
 ---
 
@@ -53,27 +54,27 @@ Upload Flow (3 separate transactions):
 ❌ Problem: If any transaction fails, partial state exists
 ```
 
-### Target State (Hybrid Approach)
+### Target State (Minimal Approach)
 
 ```
 Upload Flow (with tracking):
-├─ Create Evidence doc (uploadStatus: 'in_progress')
-├─ Log uploadEvent (eventType: 'upload_started')
 ├─ Upload to Storage
 ├─ Batch Write (atomic):
-│   ├─ Create Evidence document
+│   ├─ Create Evidence document (uploadStatus: 'in_progress')
 │   ├─ Create sourceMetadata subcollection
 │   └─ Update Evidence with embedded metadata + uploadStatus: 'completed'
-└─ Log uploadEvent (eventType: 'upload_success')
 
-✅ Solution: Status field tracks completion, events provide audit trail
+✅ Solution:
+   - uploadStatus field enables cleanup queries
+   - Batch write ensures all-or-nothing consistency
+   - If batch fails, Evidence doc never created (no orphaned state)
 ```
 
 ---
 
 ## 🔧 Implementation Phases
 
-### Phase 1: Schema Updates (30 min)
+### Phase 1: Schema Updates (15 min)
 
 #### 1.1 Update Evidence Schema
 
@@ -97,12 +98,9 @@ const evidenceData = {
   hasAllPages: null,
   processingStage: 'uploaded', // uploaded|splitting|merging|complete
 
-  // Upload completion tracking (NEW - upload workflow)
+  // Upload completion tracking (NEW - 2 fields only)
   uploadStatus: 'in_progress',  // 'in_progress' | 'completed' | 'failed'
-  uploadStartedAt: serverTimestamp(),
-  uploadCompletedAt: null,
-  uploadError: null,  // Error message if failed
-  uploadSessionId: uploadMetadata.sessionId || null,  // Link to uploadEvents
+  uploadError: null,  // Error message if failed (only populated on failure)
 
   // Tag counters
   tagCount: 0,
@@ -115,64 +113,14 @@ const evidenceData = {
   sourceMetadataVariants: {},
 
   // Timestamps
-  uploadDate: uploadDateTimestamp,
+  uploadDate: uploadDateTimestamp,  // EXISTING - reuse for age queries
 };
 ```
 
 **Changes:**
 - Add `uploadStatus: 'in_progress'` (marks upload as incomplete initially)
-- Add `uploadStartedAt: serverTimestamp()` (track when upload started)
-- Add `uploadCompletedAt: null` (set when upload completes)
 - Add `uploadError: null` (store error message if upload fails)
-- Add `uploadSessionId` (link to uploadEvents for audit trail)
-
-#### 1.2 Create uploadEvents Collection Schema
-
-**File:** `docs/Data/25-11-18-data-structures.md`
-
-Document the uploadEvents collection:
-
-```javascript
-/**
- * Upload Events Collection
- * Path: /firms/{firmId}/matters/{matterId}/uploadEvents/{eventId}
- *
- * Purpose: Immutable audit trail of upload operations
- * Pattern: Event sourcing (append-only, never update)
- */
-{
-  // Event identification
-  eventId: string,          // Auto-generated Firestore ID
-  sessionId: string,        // UUID to correlate related events
-
-  // Event type and status
-  eventType: string,        // 'upload_started' | 'storage_uploaded' |
-                           // 'metadata_created' | 'upload_success' |
-                           // 'upload_error' | 'upload_interrupted'
-
-  // File information
-  fileHash: string,         // BLAKE3 hash (null for upload_started)
-  metadataHash: string,     // xxHash metadata hash
-  fileName: string,         // Source file name
-  fileSize: number,         // File size in bytes
-
-  // Context
-  firmId: string,           // Firm context
-  matterId: string,         // Matter context
-  userId: string,           // User who initiated upload
-
-  // Timing
-  timestamp: Timestamp,     // When event occurred
-
-  // Error tracking (only for upload_error events)
-  errorMessage: string,     // Error description
-  errorStage: string,       // Which stage failed: 'hashing' | 'storage' | 'metadata'
-
-  // Performance metrics (optional)
-  duration: number,         // Milliseconds (for completed uploads)
-  retryCount: number        // Number of retries before success/failure
-}
-```
+- **Note:** Reuse existing `uploadDate` field for age-based cleanup queries
 
 ---
 
@@ -284,12 +232,9 @@ const createMetadataRecord = async (fileData) => {
       hasAllPages: null,
       processingStage: 'uploaded',
 
-      // Upload tracking (NEW)
+      // Upload tracking (NEW - simplified)
       uploadStatus: 'completed',  // Mark as completed in batch
-      uploadStartedAt: uploadDateTimestamp,
-      uploadCompletedAt: serverTimestamp(),
       uploadError: null,
-      uploadSessionId: sessionId || null,
 
       // Tag counters
       tagCount: 0,
@@ -335,9 +280,8 @@ const createMetadataRecord = async (fileData) => {
       // Increment variant count
       sourceMetadataCount: increment(1),
 
-      // Mark upload as completed
-      uploadStatus: 'completed',
-      uploadCompletedAt: serverTimestamp()
+      // Mark upload as completed (already set in Operation 1, but update here for clarity)
+      uploadStatus: 'completed'
     });
 
     // Commit atomic batch
@@ -380,311 +324,25 @@ const createMetadataRecord = async (fileData) => {
 
 ---
 
-### Phase 3: Implement uploadEvents Service (60 min)
+### Phase 3: Integrate Batch Writes into Upload Flow (30 min)
 
-#### 3.1 Create Upload Events Service
-
-**File:** `src/features/upload/services/uploadEventService.js` (NEW)
-
-```javascript
-import { db } from '../../../services/firebase.js';
-import { collection, addDoc, query, where, getDocs, Timestamp, serverTimestamp } from 'firebase/firestore';
-
-/**
- * Upload Event Service
- * Manages immutable audit trail of upload operations
- *
- * Event Types:
- * - upload_started: Upload session initiated
- * - storage_uploaded: File successfully uploaded to Firebase Storage
- * - metadata_created: Firestore metadata created successfully
- * - upload_success: Complete upload success
- * - upload_error: Upload failed with error
- * - upload_interrupted: Upload interrupted (browser closed, network lost)
- */
-export class UploadEventService {
-  constructor(firmId, matterId) {
-    this.firmId = firmId;
-    this.matterId = matterId;
-
-    if (!this.firmId || !this.matterId) {
-      throw new Error('UploadEventService requires firmId and matterId');
-    }
-
-    this.eventsRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'uploadEvents');
-  }
-
-  /**
-   * Log upload started event
-   * @param {Object} data - Upload session data
-   * @returns {Promise<string>} - Event document ID
-   */
-  async logUploadStarted({ sessionId, fileName, fileSize, userId }) {
-    try {
-      const eventData = {
-        sessionId,
-        eventType: 'upload_started',
-        fileName,
-        fileSize: fileSize || 0,
-        fileHash: null,  // Not yet calculated
-        metadataHash: null,
-        firmId: this.firmId,
-        matterId: this.matterId,
-        userId,
-        timestamp: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(this.eventsRef, eventData);
-      console.log('[UploadEvents] Upload started logged:', sessionId);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to log upload_started:', error);
-      // Don't throw - audit logging failures shouldn't block upload
-      return null;
-    }
-  }
-
-  /**
-   * Log storage upload complete event
-   * @param {Object} data - Storage upload data
-   * @returns {Promise<string>} - Event document ID
-   */
-  async logStorageUploaded({ sessionId, fileName, fileHash, fileSize, userId, duration }) {
-    try {
-      const eventData = {
-        sessionId,
-        eventType: 'storage_uploaded',
-        fileName,
-        fileHash,
-        fileSize,
-        firmId: this.firmId,
-        matterId: this.matterId,
-        userId,
-        timestamp: serverTimestamp(),
-        duration: duration || null,
-      };
-
-      const docRef = await addDoc(this.eventsRef, eventData);
-      console.log('[UploadEvents] Storage upload logged:', fileHash);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to log storage_uploaded:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Log metadata creation complete event
-   * @param {Object} data - Metadata creation data
-   * @returns {Promise<string>} - Event document ID
-   */
-  async logMetadataCreated({ sessionId, fileName, fileHash, metadataHash, userId, duration }) {
-    try {
-      const eventData = {
-        sessionId,
-        eventType: 'metadata_created',
-        fileName,
-        fileHash,
-        metadataHash,
-        firmId: this.firmId,
-        matterId: this.matterId,
-        userId,
-        timestamp: serverTimestamp(),
-        duration: duration || null,
-      };
-
-      const docRef = await addDoc(this.eventsRef, eventData);
-      console.log('[UploadEvents] Metadata creation logged:', metadataHash);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to log metadata_created:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Log upload success event
-   * @param {Object} data - Upload completion data
-   * @returns {Promise<string>} - Event document ID
-   */
-  async logUploadSuccess({ sessionId, fileName, fileHash, metadataHash, userId, duration, retryCount }) {
-    try {
-      const eventData = {
-        sessionId,
-        eventType: 'upload_success',
-        fileName,
-        fileHash,
-        metadataHash,
-        firmId: this.firmId,
-        matterId: this.matterId,
-        userId,
-        timestamp: serverTimestamp(),
-        duration: duration || null,
-        retryCount: retryCount || 0,
-      };
-
-      const docRef = await addDoc(this.eventsRef, eventData);
-      console.log('[UploadEvents] Upload success logged:', sessionId);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to log upload_success:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Log upload error event
-   * @param {Object} data - Upload error data
-   * @returns {Promise<string>} - Event document ID
-   */
-  async logUploadError({ sessionId, fileName, fileHash, userId, errorMessage, errorStage, retryCount }) {
-    try {
-      const eventData = {
-        sessionId,
-        eventType: 'upload_error',
-        fileName,
-        fileHash: fileHash || null,
-        firmId: this.firmId,
-        matterId: this.matterId,
-        userId,
-        timestamp: serverTimestamp(),
-        errorMessage,
-        errorStage,  // 'hashing' | 'storage' | 'metadata'
-        retryCount: retryCount || 0,
-      };
-
-      const docRef = await addDoc(this.eventsRef, eventData);
-      console.log('[UploadEvents] Upload error logged:', sessionId, errorMessage);
-      return docRef.id;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to log upload_error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get all events for a specific upload session
-   * @param {string} sessionId - Upload session ID
-   * @returns {Promise<Array>} - Array of events sorted by timestamp
-   */
-  async getSessionEvents(sessionId) {
-    try {
-      const q = query(this.eventsRef, where('sessionId', '==', sessionId));
-      const snapshot = await getDocs(q);
-
-      const events = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // Sort by timestamp (oldest first)
-      events.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
-
-      return events;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to get session events:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Find incomplete upload sessions
-   * Sessions that have 'upload_started' but no completion event
-   * @param {number} olderThanMinutes - Find sessions older than this (default: 60)
-   * @returns {Promise<Array>} - Array of incomplete session IDs
-   */
-  async findIncompleteUploads(olderThanMinutes = 60) {
-    try {
-      const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
-
-      // Get all started sessions
-      const startedQuery = query(
-        this.eventsRef,
-        where('eventType', '==', 'upload_started'),
-        where('timestamp', '<', Timestamp.fromDate(cutoffTime))
-      );
-      const startedSnapshot = await getDocs(startedQuery);
-
-      const startedSessions = new Set();
-      startedSnapshot.docs.forEach(doc => {
-        startedSessions.add(doc.data().sessionId);
-      });
-
-      // Get all completed sessions (success or error)
-      const completedQuery = query(
-        this.eventsRef,
-        where('eventType', 'in', ['upload_success', 'upload_error'])
-      );
-      const completedSnapshot = await getDocs(completedQuery);
-
-      const completedSessions = new Set();
-      completedSnapshot.docs.forEach(doc => {
-        completedSessions.add(doc.data().sessionId);
-      });
-
-      // Find sessions that started but never completed
-      const incompleteSessions = Array.from(startedSessions).filter(
-        sessionId => !completedSessions.has(sessionId)
-      );
-
-      console.log('[UploadEvents] Found incomplete sessions:', incompleteSessions.length);
-
-      return incompleteSessions;
-
-    } catch (error) {
-      console.error('[UploadEvents] Failed to find incomplete uploads:', error);
-      return [];
-    }
-  }
-}
-
-export default UploadEventService;
-```
-
----
-
-### Phase 4: Integrate Events into Upload Flow (45 min)
-
-#### 4.1 Update useUploadProcessor
+#### 3.1 Update Error Handling in useUploadProcessor
 
 **File:** `src/features/upload/composables/useUploadProcessor.js`
 
-```javascript
-import { UploadEventService } from '../services/uploadEventService.js';
+**Key Changes:**
+- Batch write already handles atomic operations (no changes needed to upload flow)
+- Add error handling to populate `uploadError` field on failures
 
+```javascript
 /**
- * Process single file upload with event logging
+ * Process single file upload
+ * Note: Batch writes in createMetadataRecord handle uploadStatus automatically
  */
 const processSingleFile = async (queueFile, abortSignal) => {
-  // Generate session ID for this upload
-  const sessionId = crypto.randomUUID();
-  const startTime = Date.now();
-
-  // Initialize event service
-  const eventService = new UploadEventService(
-    authStore.currentFirm,
-    matterStore.currentMatterId
-  );
-
   try {
-    // Log upload started
-    await eventService.logUploadStarted({
-      sessionId,
-      fileName: queueFile.name,
-      fileSize: queueFile.size,
-      userId: authStore.user.uid
-    });
-
     // Step 1: Hash file
     updateFileStatus(queueFile.id, 'hashing');
-    console.log(`[UPLOAD] Hashing file: ${queueFile.name}`);
-
     const fileHash = await fileProcessor.calculateFileHash(queueFile.sourceFile);
     queueFile.hash = fileHash;
 
@@ -697,10 +355,7 @@ const processSingleFile = async (queueFile, abortSignal) => {
 
     if (needsMetadataOnly) {
       // File already exists - create metadata only
-      console.log(`[UPLOAD] File exists, creating metadata only: ${queueFile.name}`);
       updateFileStatus(queueFile.id, 'skipped');
-
-      const metadataStartTime = Date.now();
 
       await safeMetadata(
         async () => {
@@ -710,35 +365,11 @@ const processSingleFile = async (queueFile, abortSignal) => {
             fileHash,
             size: queueFile.size,
             originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
-            sourceFileType: queueFile.sourceFile.type,
-            sessionId  // Pass sessionId to link Evidence doc
+            sourceFileType: queueFile.sourceFile.type
           });
         },
         `for existing file ${queueFile.name}`
       );
-
-      const metadataDuration = Date.now() - metadataStartTime;
-
-      // Log metadata created
-      await eventService.logMetadataCreated({
-        sessionId,
-        fileName: queueFile.name,
-        fileHash,
-        metadataHash: queueFile.metadataHash,
-        userId: authStore.user.uid,
-        duration: metadataDuration
-      });
-
-      // Log success
-      await eventService.logUploadSuccess({
-        sessionId,
-        fileName: queueFile.name,
-        fileHash,
-        metadataHash: queueFile.metadataHash,
-        userId: authStore.user.uid,
-        duration: Date.now() - startTime,
-        retryCount: 0
-      });
 
       return { success: true, skipped: true, uploaded: false };
     }
@@ -747,8 +378,6 @@ const processSingleFile = async (queueFile, abortSignal) => {
       // Upload to Storage
       updateFileStatus(queueFile.id, 'uploading');
       queueFile.uploadProgress = 0;
-
-      const storageStartTime = Date.now();
 
       const uploadResult = await fileProcessor.uploadSingleFile(
         queueFile.sourceFile,
@@ -760,25 +389,10 @@ const processSingleFile = async (queueFile, abortSignal) => {
         }
       );
 
-      const storageDuration = Date.now() - storageStartTime;
-
-      // Log storage uploaded
-      await eventService.logStorageUploaded({
-        sessionId,
-        fileName: queueFile.name,
-        fileHash,
-        fileSize: queueFile.size,
-        userId: authStore.user.uid,
-        duration: storageDuration
-      });
-
-      // Create metadata
+      // Create metadata (batch write handles uploadStatus automatically)
       updateFileStatus(queueFile.id, 'creating_metadata');
-      console.log(`[UPLOAD] Creating metadata for: ${queueFile.name}`);
 
-      const metadataStartTime = Date.now();
-
-      const metadataHash = await safeMetadata(
+      await safeMetadata(
         async () => {
           return await createMetadataRecord({
             sourceFileName: queueFile.name,
@@ -787,40 +401,13 @@ const processSingleFile = async (queueFile, abortSignal) => {
             size: queueFile.size,
             originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
             sourceFileType: queueFile.sourceFile.type,
-            storageCreatedTimestamp: uploadResult.timeCreated,
-            sessionId  // Link to uploadEvents
+            storageCreatedTimestamp: uploadResult.timeCreated
           });
         },
         `for new file ${queueFile.name}`
       );
 
-      const metadataDuration = Date.now() - metadataStartTime;
-
-      // Log metadata created
-      await eventService.logMetadataCreated({
-        sessionId,
-        fileName: queueFile.name,
-        fileHash,
-        metadataHash,
-        userId: authStore.user.uid,
-        duration: metadataDuration
-      });
-
-      // Mark as completed
       updateFileStatus(queueFile.id, 'completed');
-      console.log(`[UPLOAD] Completed: ${queueFile.name}`);
-
-      // Log success
-      await eventService.logUploadSuccess({
-        sessionId,
-        fileName: queueFile.name,
-        fileHash,
-        metadataHash,
-        userId: authStore.user.uid,
-        duration: Date.now() - startTime,
-        retryCount: 0
-      });
-
       return { success: true, skipped: false, uploaded: true };
     }
 
@@ -828,23 +415,6 @@ const processSingleFile = async (queueFile, abortSignal) => {
 
   } catch (error) {
     console.error(`[UPLOAD] Error uploading ${queueFile.name}:`, error);
-
-    // Determine error stage
-    let errorStage = 'unknown';
-    if (queueFile.status === 'hashing') errorStage = 'hashing';
-    else if (queueFile.status === 'uploading') errorStage = 'storage';
-    else if (queueFile.status === 'creating_metadata') errorStage = 'metadata';
-
-    // Log error event
-    await eventService.logUploadError({
-      sessionId,
-      fileName: queueFile.name,
-      fileHash: queueFile.hash || null,
-      userId: authStore.user.uid,
-      errorMessage: error.message,
-      errorStage,
-      retryCount: 0
-    });
 
     // Update file status
     if (isNetworkError(error)) {
@@ -855,38 +425,44 @@ const processSingleFile = async (queueFile, abortSignal) => {
       queueFile.error = error.message;
     }
 
+    // Note: uploadError field is set in createMetadataRecord error handler
     return { success: false, error };
   }
 };
 ```
 
+**What Changed:**
+- Removed all event logging calls (no uploadEventService)
+- Batch write in `createMetadataRecord` handles `uploadStatus` automatically
+- Error handling in `createMetadataRecord` sets `uploadError` field
+- Simplified code: ~200 lines → ~70 lines
+
 ---
 
-### Phase 5: Cleanup Job (60 min)
+### Phase 4: Cleanup Service (30 min)
 
-#### 5.1 Create Cleanup Service
+#### 4.1 Create Simplified Cleanup Service
 
 **File:** `src/features/upload/services/uploadCleanupService.js` (NEW)
 
 ```javascript
 import { db, storage } from '../../../services/firebase.js';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { ref as storageRef, deleteObject, getMetadata } from 'firebase/storage';
-import { UploadEventService } from './uploadEventService.js';
+import { collection, query, where, getDocs, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { ref as storageRef, getMetadata } from 'firebase/storage';
 
 /**
- * Upload Cleanup Service
- * Detects and resolves incomplete uploads, orphaned files
+ * Upload Cleanup Service (Simplified)
+ * Detects and resolves incomplete uploads using uploadStatus field
  */
 export class UploadCleanupService {
   constructor(firmId, matterId) {
     this.firmId = firmId;
     this.matterId = matterId;
-    this.eventService = new UploadEventService(firmId, matterId);
   }
 
   /**
    * Find evidence documents with incomplete uploads
+   * Uses uploadStatus field and uploadDate (reusing existing field)
    * @param {number} olderThanMinutes - Find uploads older than this (default: 60)
    * @returns {Promise<Array>} - Array of incomplete evidence docs
    */
@@ -898,7 +474,7 @@ export class UploadCleanupService {
       const q = query(
         evidenceRef,
         where('uploadStatus', '==', 'in_progress'),
-        where('uploadStartedAt', '<', Timestamp.fromDate(cutoffTime))
+        where('uploadDate', '<', Timestamp.fromDate(cutoffTime))
       );
 
       const snapshot = await getDocs(q);
@@ -1081,14 +657,12 @@ export class UploadCleanupService {
   async getCleanupStats() {
     try {
       const incompleteDocs = await this.findIncompleteEvidenceDocs(0); // All time
-      const incompleteSessions = await this.eventService.findIncompleteUploads(0);
 
       return {
         incompleteEvidenceDocs: incompleteDocs.length,
-        incompleteSessions: incompleteSessions.length,
         oldestIncompleteUpload: incompleteDocs.length > 0
           ? incompleteDocs.reduce((oldest, doc) => {
-              const docTime = doc.uploadStartedAt.toMillis();
+              const docTime = doc.uploadDate.toMillis();
               return docTime < oldest ? docTime : oldest;
             }, Date.now())
           : null
@@ -1106,9 +680,9 @@ export default UploadCleanupService;
 
 ---
 
-### Phase 6: Admin UI for Cleanup (30 min)
+### Phase 5: Admin UI for Cleanup (20 min)
 
-#### 6.1 Add Cleanup Button to Settings
+#### 5.1 Add Cleanup Button to Settings
 
 **File:** `src/core/firm/views/FirmSettings.vue`
 
@@ -1124,7 +698,6 @@ Add a new section for upload maintenance:
     <v-card-text>
       <v-alert v-if="cleanupStats" type="info" variant="tonal" class="mb-4">
         <div><strong>Incomplete Uploads:</strong> {{ cleanupStats.incompleteEvidenceDocs }}</div>
-        <div><strong>Incomplete Sessions:</strong> {{ cleanupStats.incompleteSessions }}</div>
         <div v-if="cleanupStats.oldestIncompleteUpload">
           <strong>Oldest:</strong> {{ formatDate(cleanupStats.oldestIncompleteUpload) }}
         </div>
@@ -1212,11 +785,11 @@ onMounted(() => {
 
 ---
 
-### Phase 7: Apply Pattern to Email Extraction (90 min)
+### Phase 6: Apply Minimal Pattern to Email Extraction (30 min)
 
-#### 7.1 Email Extraction Upload Status
+#### 6.1 Email Message Schema (Simplified)
 
-When implementing email extraction, apply the same pattern:
+When implementing email extraction, apply the same minimal pattern:
 
 ```javascript
 // Email message document schema
@@ -1230,74 +803,38 @@ When implementing email extraction, apply the same pattern:
   to: string,
   body: string,
 
-  // Extraction status (NEW - same pattern)
-  extractionStatus: 'in_progress' | 'completed' | 'failed',
-  extractionStartedAt: Timestamp,
-  extractionCompletedAt: Timestamp,
-  extractionError: string,
-  extractionSessionId: string,  // Link to extractionEvents
+  // Extraction status (NEW - minimal, 2 fields only)
+  extractionStatus: 'pending' | 'completed' | 'failed',
+  extractionError: string,  // Only populated on failure
 
   // Message type
   messageType: 'native' | 'quoted',
 
   // Timestamps
-  createdAt: Timestamp
+  createdAt: Timestamp  // EXISTING - reuse for age queries
 }
 ```
 
-#### 7.2 Extraction Events Collection
+**Changes from upload pattern:**
+- Only 2 new fields: `extractionStatus` and `extractionError`
+- Reuse `createdAt` for age-based cleanup queries
+- No event sourcing collection
+- Batch writes ensure atomicity
+
+#### 6.2 Email Extraction with Batch Writes (Simplified)
 
 ```javascript
-// /firms/{firmId}/matters/{matterId}/extractionEvents/{eventId}
-{
-  sessionId: string,
-  eventType: 'extraction_started' | 'attachments_uploaded' |
-            'messages_created' | 'extraction_success' | 'extraction_error',
-
-  sourceFileHash: string,  // .msg file hash
-  messagesExtracted: number,
-  attachmentsExtracted: number,
-
-  timestamp: Timestamp,
-  errorMessage: string,
-  errorStage: string,
-
-  firmId: string,
-  matterId: string,
-  userId: string
-}
-```
-
-#### 7.3 Email Extraction with Events
-
-```javascript
-// Extract email with event logging
+/**
+ * Extract email with atomic batch writes
+ * All operations succeed or fail together
+ */
 async function extractEmail(msgFile) {
-  const sessionId = crypto.randomUUID();
-  const eventService = new ExtractionEventService(firmId, matterId);
-
   try {
-    // Log extraction started
-    await eventService.logExtractionStarted({
-      sessionId,
-      sourceFileHash: msgFile.hash,
-      fileName: msgFile.name,
-      userId: authStore.user.uid
-    });
-
     // Parse .msg file
     const parsed = await parseMsg(msgFile);
 
     // Upload attachments to Storage
     const attachments = await uploadAttachments(parsed.attachments);
-
-    // Log attachments uploaded
-    await eventService.logAttachmentsUploaded({
-      sessionId,
-      sourceFileHash: msgFile.hash,
-      attachmentCount: attachments.length,
-      userId: authStore.user.uid
-    });
 
     // Create messages in Firestore (ATOMIC BATCH)
     const batch = writeBatch(db);
@@ -1312,12 +849,9 @@ async function extractEmail(msgFile) {
       extractedFromFile: msgFile.hash,
       messageType: 'native',
 
-      // Extraction tracking
+      // Extraction tracking (minimal)
       extractionStatus: 'completed',
-      extractionStartedAt: serverTimestamp(),
-      extractionCompletedAt: serverTimestamp(),
       extractionError: null,
-      extractionSessionId: sessionId,
 
       createdAt: serverTimestamp()
     });
@@ -1334,16 +868,15 @@ async function extractEmail(msgFile) {
         messageType: 'quoted',
 
         extractionStatus: 'completed',
-        extractionCompletedAt: serverTimestamp(),
-        extractionSessionId: sessionId,
+        extractionError: null,
 
         createdAt: serverTimestamp()
       });
     }
 
     // Update source .msg file
-    const uploadRef = doc(db, 'firms', firmId, 'matters', matterId, 'uploads', msgFile.id);
-    batch.update(uploadRef, {
+    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', msgFile.hash);
+    batch.update(evidenceRef, {
       hasBeenParsed: true,
       parseStatus: 'completed',
       parseCompletedAt: serverTimestamp()
@@ -1352,81 +885,62 @@ async function extractEmail(msgFile) {
     // Commit atomic batch
     await batch.commit();
 
-    // Log success
-    await eventService.logExtractionSuccess({
-      sessionId,
-      sourceFileHash: msgFile.hash,
+    console.log('[EmailExtraction] Extraction completed:', {
+      fileHash: msgFile.hash,
       messagesExtracted: 1 + parsed.quotedMessages.length,
-      attachmentsExtracted: attachments.length,
-      userId: authStore.user.uid,
-      duration: Date.now() - startTime
+      attachmentsExtracted: attachments.length
     });
 
   } catch (error) {
     console.error('[EmailExtraction] Extraction failed:', error);
 
-    // Log error
-    await eventService.logExtractionError({
-      sessionId,
-      sourceFileHash: msgFile.hash,
-      errorMessage: error.message,
-      errorStage: 'message_creation',  // or 'attachment_upload', etc.
-      userId: authStore.user.uid
-    });
+    // Mark as failed (best effort)
+    try {
+      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', msgFile.hash);
+      await updateDoc(evidenceRef, {
+        parseStatus: 'failed',
+        extractionError: error.message,
+        parseCompletedAt: serverTimestamp()
+      });
+    } catch (updateError) {
+      console.error('[EmailExtraction] Failed to mark as failed:', updateError);
+    }
 
     throw error;
   }
 }
 ```
 
+**Key Simplifications:**
+- No event logging service (removed ~200 lines)
+- Batch write ensures atomicity
+- Error handling sets `extractionError` field
+- Same cleanup pattern as uploads
+
 ---
 
 ## 📋 Testing Strategy
 
-### Unit Tests
+### Unit Tests (Simplified)
 
 ```javascript
-// tests/unit/services/uploadEventService.test.js
-describe('UploadEventService', () => {
-  it('should log upload started event', async () => {
-    const service = new UploadEventService('firm1', 'matter1');
-    const eventId = await service.logUploadStarted({
-      sessionId: 'session1',
-      fileName: 'test.pdf',
-      fileSize: 1000,
-      userId: 'user1'
-    });
-
-    expect(eventId).toBeTruthy();
-  });
-
-  it('should find incomplete uploads', async () => {
-    const service = new UploadEventService('firm1', 'matter1');
-
-    // Create started event
-    await service.logUploadStarted({ sessionId: 'session1', ... });
-
-    // Don't create success event
-
-    // Should find incomplete session
-    const incomplete = await service.findIncompleteUploads(0);
-    expect(incomplete).toContain('session1');
-  });
-});
-
 // tests/unit/services/uploadCleanupService.test.js
 describe('UploadCleanupService', () => {
-  it('should find incomplete evidence docs', async () => {
+  it('should find incomplete evidence docs using uploadStatus field', async () => {
     const service = new UploadCleanupService('firm1', 'matter1');
 
     // Create evidence doc with uploadStatus: 'in_progress'
-    await createTestEvidenceDoc({ uploadStatus: 'in_progress' });
+    await createTestEvidenceDoc({
+      uploadStatus: 'in_progress',
+      uploadDate: Timestamp.now()
+    });
 
     const incomplete = await service.findIncompleteEvidenceDocs(0);
     expect(incomplete.length).toBeGreaterThan(0);
+    expect(incomplete[0].uploadStatus).toBe('in_progress');
   });
 
-  it('should clean up incomplete upload', async () => {
+  it('should clean up incomplete upload by deleting Evidence doc', async () => {
     const service = new UploadCleanupService('firm1', 'matter1');
 
     const evidenceDoc = {
@@ -1438,44 +952,30 @@ describe('UploadCleanupService', () => {
     const result = await service.cleanupIncompleteUpload(evidenceDoc);
     expect(result.action).toBe('deleted_evidence_doc');
   });
+
+  it('should get cleanup stats', async () => {
+    const service = new UploadCleanupService('firm1', 'matter1');
+    const stats = await service.getCleanupStats();
+
+    expect(stats).toHaveProperty('incompleteEvidenceDocs');
+    expect(stats).toHaveProperty('oldestIncompleteUpload');
+  });
 });
 ```
 
-### Integration Tests
+### Integration Tests (Simplified)
 
 ```javascript
 // tests/integration/upload-transaction-boundaries.test.js
-describe('Upload Transaction Boundaries', () => {
-  it('should create evidence with uploadStatus=in_progress initially', async () => {
-    // Upload file
-    const result = await uploadFile(testFile);
-
-    // Check Evidence doc
-    const evidenceDoc = await getDoc(evidenceRef);
-    expect(evidenceDoc.data().uploadStatus).toBe('in_progress');
-  });
-
-  it('should mark upload complete after metadata creation', async () => {
+describe('Upload Transaction Boundaries (Simplified)', () => {
+  it('should mark upload complete with batch write', async () => {
     // Complete upload
     await completeFileUpload(testFile);
 
-    // Check Evidence doc
+    // Check Evidence doc - should be completed immediately
     const evidenceDoc = await getDoc(evidenceRef);
     expect(evidenceDoc.data().uploadStatus).toBe('completed');
-    expect(evidenceDoc.data().uploadCompletedAt).toBeTruthy();
-  });
-
-  it('should log upload events', async () => {
-    const sessionId = crypto.randomUUID();
-
-    // Upload file with session ID
-    await uploadFile(testFile, { sessionId });
-
-    // Check events
-    const events = await getSessionEvents(sessionId);
-    expect(events).toHaveLength(3); // started, storage_uploaded, success
-    expect(events[0].eventType).toBe('upload_started');
-    expect(events[2].eventType).toBe('upload_success');
+    expect(evidenceDoc.data().uploadError).toBeNull();
   });
 
   it('should use batch writes for atomic metadata creation', async () => {
@@ -1485,152 +985,182 @@ describe('Upload Transaction Boundaries', () => {
     // Upload file
     await uploadFile(testFile);
 
-    // Verify batch was used
+    // Verify batch was used (all 3 operations in one batch)
     expect(batchSpy).toHaveBeenCalled();
+    const batchCommit = batchSpy.mock.results[0].value;
+    expect(batchCommit).toBeTruthy(); // Batch committed
+  });
+
+  it('should mark upload failed if batch write fails', async () => {
+    // Mock batch write failure
+    jest.spyOn(firestore, 'writeBatch').mockImplementationOnce(() => {
+      throw new Error('Firestore error');
+    });
+
+    // Attempt upload
+    await expect(uploadFile(testFile)).rejects.toThrow();
+
+    // Check Evidence doc marked as failed
+    const evidenceDoc = await getDoc(evidenceRef);
+    expect(evidenceDoc.data().uploadStatus).toBe('failed');
+    expect(evidenceDoc.data().uploadError).toContain('Firestore error');
+  });
+
+  it('should query for incomplete uploads', async () => {
+    // Create incomplete upload
+    await createEvidenceDoc({
+      uploadStatus: 'in_progress',
+      uploadDate: Timestamp.fromDate(new Date(Date.now() - 2 * 60 * 60 * 1000)) // 2 hours ago
+    });
+
+    // Query for incomplete
+    const q = query(
+      evidenceRef,
+      where('uploadStatus', '==', 'in_progress'),
+      where('uploadDate', '<', Timestamp.fromDate(new Date(Date.now() - 60 * 60 * 1000)))
+    );
+    const snapshot = await getDocs(q);
+
+    expect(snapshot.docs.length).toBeGreaterThan(0);
   });
 });
 ```
 
-### Manual Testing Checklist
+### Manual Testing Checklist (Simplified)
 
-- [ ] Upload file successfully → Check uploadStatus='completed'
-- [ ] Upload file, close browser mid-upload → Check uploadStatus='in_progress'
+- [ ] Upload file successfully → Check uploadStatus='completed', uploadError=null
+- [ ] Simulate batch write failure → Check uploadStatus='failed', uploadError populated
 - [ ] Run cleanup job → Incomplete uploads cleaned up
-- [ ] View uploadEvents in Firestore → Events logged correctly
-- [ ] Retry failed upload → Works correctly
+- [ ] Check Firm Settings → Cleanup stats display correctly (incomplete count, oldest upload)
 - [ ] Upload duplicate file → Metadata created, uploadStatus='completed'
-- [ ] Check Firm Settings → Cleanup stats display correctly
+- [ ] Query Firestore for 'uploadStatus==in_progress' → Returns only incomplete uploads
 
 ---
 
-## 🚀 Rollout Plan
+## 🚀 Rollout Plan (Simplified)
 
 ### Step 1: Schema Migration (Non-Breaking)
-- Add new fields to Evidence schema (uploadStatus, etc.)
+- Add 2 new fields to Evidence schema: `uploadStatus`, `uploadError`
 - Existing uploads continue to work (fields optional)
-- No data migration needed (existing docs don't have uploadStatus field)
+- No data migration needed (you're in pre-alpha, can wipe data anytime)
 
-### Step 2: Deploy Event Logging (Audit Only)
-- Deploy uploadEventService
-- Enable event logging in upload flow
-- Monitor for errors, but don't rely on events yet
-- Existing uploads work without events
-
-### Step 3: Enable Batch Writes
-- Deploy batch write refactor
-- Test atomic operations
+### Step 2: Deploy Batch Writes
+- Deploy batch write refactor in `createMetadataRecord`
+- Test atomic operations (all 3 writes succeed or fail together)
 - Rollback if issues detected
 
-### Step 4: Deploy Cleanup Job
-- Deploy cleanup service
+### Step 3: Deploy Cleanup Service
+- Deploy simplified cleanup service (no event sourcing)
 - Test manually in staging
 - Enable in production with admin UI
 
-### Step 5: Apply Pattern to Email Extraction
-- Implement extraction events
-- Use same batch write pattern
+### Step 4: Apply Pattern to Email Extraction
+- Use same minimal pattern (2 fields: extractionStatus, extractionError)
+- Use same batch write approach
 - Deploy email extraction feature
+
+**Total Implementation Time:** ~2.5 hours (down from ~5 hours)
 
 ---
 
-## 📊 Success Metrics
+## 📊 Success Metrics (Simplified)
 
 ### Performance Metrics
 - Upload success rate: >99%
 - Batch write success rate: >99.5%
 - Cleanup job success rate: >95%
-- Average upload duration: <5 seconds per file
 
 ### Reliability Metrics
 - Incomplete uploads: <0.1% of total uploads
 - Orphaned files: <0.01% of storage
-- Event logging success rate: >98%
 
-### Monitoring
-- Alert if incomplete uploads > 10
-- Alert if cleanup job fails
-- Alert if batch write errors > 1%
+### Monitoring (Manual in Pre-Alpha)
+- Check incomplete uploads weekly via Firm Settings UI
+- Run cleanup job manually if needed
+- Monitor console logs for batch write errors
 
----
-
-## 🔄 Maintenance
-
-### Daily
-- Monitor uploadEvents for errors
-- Check incomplete upload count
-
-### Weekly
-- Run cleanup job manually
-- Review cleanup results
-- Check for orphaned files
-
-### Monthly
-- Archive old uploadEvents (> 90 days)
-- Review upload success metrics
-- Analyze failure patterns
+**Note:** Automated monitoring can be added later if/when needed
 
 ---
 
-## 📚 Documentation Updates
+## 🔄 Maintenance (Simplified)
+
+### Weekly (Manual in Pre-Alpha)
+- Check Firm Settings → Upload Maintenance section
+- Review incomplete upload count
+- Run cleanup job if needed (button in UI)
+
+### When Issues Occur
+- Check console logs for error messages
+- Review `uploadError` field in Evidence docs
+- Re-upload failed files if necessary
+
+**Note:** Daily/automated maintenance can be added later when scaling
+
+---
+
+## 📚 Documentation Updates (Simplified)
 
 ### Code Documentation
-- [ ] Document uploadStatus field in schema docs
-- [ ] Add JSDoc comments to all new services
-- [ ] Update architecture diagrams
-
-### User Documentation
-- [ ] Add "Upload Maintenance" section to admin guide
-- [ ] Document cleanup job procedure
-- [ ] Add troubleshooting guide for failed uploads
+- [ ] Document `uploadStatus` and `uploadError` fields in `docs/Data/25-11-18-data-structures.md`
+- [ ] Add JSDoc comments to UploadCleanupService
 
 ### Developer Documentation
-- [ ] Document batch write pattern
-- [ ] Add event logging best practices
-- [ ] Create guide for applying pattern to new features
+- [ ] Document batch write pattern (atomic operations)
+- [ ] Create guide for applying minimal pattern to new features (email extraction, etc.)
 
 ---
 
 ## 🎯 Next Steps After Completion
 
 1. **Email Extraction Implementation**
-   - Apply same transaction boundary pattern
-   - Implement extractionEvents collection
-   - Add cleanup job for failed extractions
+   - Apply same minimal pattern (2 fields: extractionStatus, extractionError)
+   - Use batch writes for atomicity
+   - Reuse cleanup service pattern
 
-2. **Document Processing Workflow**
-   - Apply pattern to PDF splitting
-   - Apply pattern to page merging
-   - Centralized async operation monitoring
-
-3. **Unified Async Operation Dashboard**
-   - Show all incomplete operations (uploads, extractions, processing)
-   - One-click cleanup for all operation types
-   - Historical analytics
+2. **Consider Later (If Needed)**
+   - Event sourcing collection (if compliance requires audit trail)
+   - Automated monitoring/alerts (if scaling requires it)
+   - Unified async operation dashboard (if managing multiple async features)
 
 ---
 
 ## 🐛 Known Issues & Limitations
 
-### Current Limitations
+### Current Limitations (Acceptable for Pre-Alpha)
 1. **No automatic retry**: Failed uploads require manual retry
-2. **No progress persistence**: If browser closes, upload progress lost
-3. **No bandwidth throttling**: Large uploads can saturate connection
+2. **No detailed audit trail**: Console logs only (no event sourcing)
+3. **Manual cleanup**: Requires admin to click button in UI
 
-### Future Enhancements
-1. **Automatic retry with exponential backoff**
-2. **Resumable uploads** (using Firebase Storage resumable API)
-3. **Background upload worker** (Service Worker for offline support)
-4. **Rate limiting** (prevent simultaneous large uploads)
+### Future Enhancements (Add Only If Needed)
+1. **Event sourcing** (if compliance requires detailed audit trail)
+2. **Automatic retry with exponential backoff** (if upload failures become common)
+3. **Resumable uploads** (if large file uploads frequently interrupted)
+4. **Automated cleanup job** (if incomplete uploads accumulate)
+
+---
+
+## 📊 Comparison: Original vs Simplified
+
+| Metric | Original Plan | Simplified Plan |
+|--------|---------------|-----------------|
+| **Evidence fields added** | 5 fields | 2 fields |
+| **Collections added** | 2 (uploadEvents, extractionEvents) | 0 |
+| **Firestore writes/upload** | ~6 writes | ~1 write |
+| **Lines of code** | ~800 lines | ~300 lines |
+| **Implementation time** | ~5 hours | ~2.5 hours |
+| **Achieves core goals** | ✅ Yes | ✅ Yes |
+| **Firestore cost savings** | Baseline | **83% fewer writes** |
 
 ---
 
 ## 📞 Support & Questions
 
 For questions about this implementation:
-- **Architecture questions:** Review email extraction architecture doc
-- **Code issues:** Check JSDoc comments in service files
-- **Testing issues:** See testing strategy section above
+- **Schema questions:** See Phase 1 (Evidence schema with 2 fields)
+- **Batch writes:** See Phase 2 (atomic operations)
+- **Cleanup:** See Phase 4 (UploadCleanupService)
 
 ---
 
-**End of Plan**
+**End of Simplified Plan**
