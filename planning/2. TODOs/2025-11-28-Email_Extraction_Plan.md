@@ -1,1166 +1,847 @@
-# Transaction Boundary Implementation Plan
-## Upload System & Email Extraction
+# Email Extraction Implementation Plan (v1)
 
-**Created:** 2025-11-28
-**Status:** Planning
-**Priority:** High (Prerequisite for Email Extraction feature)
+**Date**: 2025-11-28
+**Status**: Ready for Implementation
+**Priority**: High
+**Branch**: `claude/email-extraction-v1-<session-id>`
 
----
-
-## 📋 Executive Summary
-
-This plan implements **transaction boundary tracking** using a minimal approach:
-- **Fast state queries:** Add `uploadStatus` field to Evidence documents (1 new field)
-- **Error tracking:** Add `uploadError` field for failed uploads (1 new field)
-- **Atomic operations:** Use batch writes to ensure metadata consistency
-- **Pattern replication:** Apply same minimal pattern to Email Extraction feature
-
-**Why This Matters:**
-- Detects orphaned files from interrupted uploads
-- Enables cleanup of partial/failed operations
-- Establishes simple, maintainable pattern for all async operations
-- Minimizes schema complexity and Firestore write costs (83% fewer writes vs event sourcing)
+**Architecture Document**: `docs/Features/Upload/Email-Extraction/email-extraction-architecture.md`
 
 ---
 
-## 🎯 Goals
+## Decision Summary
 
-### Primary Goals
-1. ✅ Add transaction boundary tracking to existing upload system
-2. ✅ Implement cleanup mechanism for incomplete uploads
-3. ✅ Create reusable pattern for email extraction feature
-4. ✅ Ensure atomic metadata creation (batch writes)
+### ✅ Finalized Decisions (2025-11-28)
 
-### Success Criteria
-- [ ] Can query for incomplete uploads: `where('uploadStatus', '==', 'in_progress')`
-- [ ] Cleanup job finds and resolves orphaned files
-- [ ] Batch writes ensure metadata consistency (all 3 operations succeed or fail together)
-- [ ] Pattern documented for email extraction reuse
-- [ ] Minimal schema complexity (only 2 new fields per document)
+1. **Storage Strategy**: Email message bodies → Firebase Storage; Metadata → Firestore
+2. **File Formats**: Both .msg and .eml
+3. **Message Extraction**: Native messages only (skip quoted messages in v1)
+4. **Failure Handling**: Upload as regular file, mark `hasBeenParsed: false` for manual retry
+5. **Size Limits**: 100MB max for .msg/.eml files; fail extraction if any attachment >100MB
+6. **Processing**: Parallel with other uploads (use existing web worker pattern)
+7. **UI Detail**: Minimal ("Processing email...", "Extracting attachments...")
+8. **Depth Limit**: 10 levels for nested .msg files; mark `hasBeenParsed: false` if exceeded
 
----
+### ⚙️ Implementation Approach
 
-## 📐 Architecture Overview
-
-### Current State (Upload System)
-
-```
-Upload Flow (3 separate transactions):
-├─ Transaction 1: Upload to Storage
-├─ Transaction 2: Create Evidence document
-├─ Transaction 3: Create sourceMetadata subcollection
-└─ Transaction 4: Update Evidence with embedded metadata
-
-❌ Problem: If any transaction fails, partial state exists
-```
-
-### Target State (Minimal Approach)
-
-```
-Upload Flow (with tracking):
-├─ Upload to Storage
-├─ Batch Write (atomic):
-│   ├─ Create Evidence document (uploadStatus: 'in_progress')
-│   ├─ Create sourceMetadata subcollection
-│   └─ Update Evidence with embedded metadata + uploadStatus: 'completed'
-
-✅ Solution:
-   - uploadStatus field enables cleanup queries
-   - Batch write ensures all-or-nothing consistency
-   - If batch fails, Evidence doc never created (no orphaned state)
-```
+- **Client-side extraction only** (no Cloud Functions)
+- **100MB limit** prevents browser memory issues
+- **Deduplication BEFORE upload** (saves bandwidth and storage costs)
+- **Integrates with existing Stage 1 pipeline** (Hash → Dedupe → Upload)
+- **Email bodies in Storage** (avoids Firestore 1MB document limit)
 
 ---
 
-## 🔧 Implementation Phases
+## 📦 Phase 1: Dependencies & Setup
 
-### Phase 1: Schema Updates (15 min)
+### Install Required Libraries
 
-#### 1.1 Update Evidence Schema
+```bash
+npm install @kenjiuno/msgreader mailparser mime-types
+```
 
-**File:** `src/features/documents/services/evidenceService.js`
+**Library Purposes:**
+- `@kenjiuno/msgreader` (~150KB) - Parse .msg files (Microsoft Outlook)
+- `mailparser` (~200KB) - Parse .eml files (standard email format)
+- `mime-types` (~50KB) - MIME type detection for attachments
 
-Add new fields to `createEvidenceFromUpload` method:
+**Total Bundle Size Impact**: ~400KB
+
+---
+
+## 📁 Phase 2: File Structure
+
+Create these new files in the upload feature folder:
+
+```
+src/features/upload/
+├── services/
+│   └── emailExtractionService.js        # Core extraction logic
+│
+├── parsers/
+│   ├── msgParser.js                     # .msg file parser
+│   ├── emlParser.js                     # .eml file parser
+│   └── emailParserFactory.js            # Router: .msg vs .eml
+│
+├── composables/
+│   ├── useEmailExtraction.js            # Vue composable for extraction
+│   └── useEmailStorage.js               # Firebase Storage operations
+│
+└── utils/
+    ├── emailValidation.js               # Size/depth validation
+    └── emailHelpers.js                  # Common email utilities
+```
+
+---
+
+## 🗄️ Phase 3: Firestore Schema
+
+### New Collections
+
+#### `emails` Collection (Email message metadata)
 
 ```javascript
-// Lines 57-85: Modify evidenceData object
-
-const evidenceData = {
-  // Display configuration
-  sourceID: metadataHash,
-
-  // Source file properties
-  fileSize: uploadMetadata.size || 0,
-  fileType: uploadMetadata.fileType || '',
-
-  // Processing status (EXISTING - document workflow)
-  isProcessed: false,
-  hasAllPages: null,
-  processingStage: 'uploaded', // uploaded|splitting|merging|complete
-
-  // Upload completion tracking (NEW - 2 fields only)
-  uploadStatus: 'in_progress',  // 'in_progress' | 'completed' | 'failed'
-  uploadError: null,  // Error message if failed (only populated on failure)
-
-  // Tag counters
-  tagCount: 0,
-  autoApprovedCount: 0,
-  reviewRequiredCount: 0,
-
-  // Embedded data
-  tags: {},
-  sourceMetadata: {},
-  sourceMetadataVariants: {},
-
-  // Timestamps
-  uploadDate: uploadDateTimestamp,  // EXISTING - reuse for age queries
-};
-```
-
-**Changes:**
-- Add `uploadStatus: 'in_progress'` (marks upload as incomplete initially)
-- Add `uploadError: null` (store error message if upload fails)
-- **Note:** Reuse existing `uploadDate` field for age-based cleanup queries
-
----
-
-### Phase 2: Implement Batch Writes (45 min)
-
-#### 2.1 Refactor createMetadataRecord to Use Batch Writes
-
-**File:** `src/features/upload/composables/useFileMetadata.js`
-
-**Current Code (Lines 134-207):**
-```javascript
-// STEP 1: Create Evidence document
-const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata)
-
-// STEP 2: Create sourceMetadata subcollection
-await setDoc(docRef, metadataRecord)
-
-// STEP 3: Update evidence with embedded metadata
-await updateDoc(evidenceRef, { ... })
-```
-
-**New Code (Atomic Batch Write):**
-```javascript
-/**
- * Create metadata record with atomic batch write
- * All Firestore operations succeed or fail together
- */
-const createMetadataRecord = async (fileData) => {
-  try {
-    const { sourceFileName, lastModified, fileHash, size, originalPath,
-            sourceFileType, storageCreatedTimestamp, sessionId } = fileData;
-
-    if (!sourceFileName || !lastModified || !fileHash) {
-      throw new Error('Missing required metadata fields');
-    }
-
-    const firmId = authStore.currentFirm;
-    const matterId = matterStore.currentMatterId;
-
-    if (!firmId || !matterId) {
-      throw new Error('Missing firmId or matterId');
-    }
-
-    // Extract folder path
-    let currentFolderPath = '';
-    if (originalPath) {
-      const pathParts = originalPath.split('/');
-      if (pathParts.length > 1) {
-        currentFolderPath = pathParts.slice(0, -1).join('/');
-      }
-    }
-
-    // Generate metadata hash
-    const metadataHash = await generateMetadataHash(
-      sourceFileName,
-      lastModified,
-      fileHash,
-      currentFolderPath
-    );
-
-    // Get existing folder paths for pattern recognition
-    let existingFolderPaths = '';
-    try {
-      const metadataDocRef = doc(db, 'firms', firmId, 'matters', matterId,
-                                 'evidence', fileHash, 'sourceMetadata', metadataHash);
-      const existingDoc = await getDoc(metadataDocRef);
-      if (existingDoc.exists()) {
-        existingFolderPaths = existingDoc.data().sourceFolderPath || '';
-      }
-    } catch (error) {
-      // Silently catch - new metadata record
-    }
-
-    // Update folder paths using pattern recognition
-    const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
-
-    // Convert Storage timestamp
-    let uploadDateTimestamp;
-    if (storageCreatedTimestamp) {
-      try {
-        uploadDateTimestamp = Timestamp.fromDate(new Date(storageCreatedTimestamp));
-      } catch (error) {
-        console.warn('[MetadataService] Failed to convert timestamp, using serverTimestamp');
-        uploadDateTimestamp = serverTimestamp();
-      }
-    } else {
-      uploadDateTimestamp = serverTimestamp();
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // ATOMIC BATCH WRITE - All operations succeed or fail together
-    // ═══════════════════════════════════════════════════════════
-
-    const batch = writeBatch(db);
-
-    // Define document references
-    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', fileHash);
-    const metadataDocRef = doc(db, 'firms', firmId, 'matters', matterId,
-                               'evidence', fileHash, 'sourceMetadata', metadataHash);
-
-    // Operation 1: Create/Update Evidence document
-    const evidenceData = {
-      sourceID: metadataHash,
-      fileSize: size || 0,
-      fileType: sourceFileType || '',
-
-      // Processing status
-      isProcessed: false,
-      hasAllPages: null,
-      processingStage: 'uploaded',
-
-      // Upload tracking (NEW - simplified)
-      uploadStatus: 'completed',  // Mark as completed in batch
-      uploadError: null,
-
-      // Tag counters
-      tagCount: 0,
-      autoApprovedCount: 0,
-      reviewRequiredCount: 0,
-
-      // Embedded data
-      tags: {},
-      sourceMetadata: {},
-      sourceMetadataVariants: {},
-
-      // Timestamps
-      uploadDate: uploadDateTimestamp,
-    };
-
-    batch.set(evidenceRef, evidenceData, { merge: true });
-
-    // Operation 2: Create sourceMetadata subcollection document
-    const metadataRecord = {
-      sourceFileName: sourceFileName,
-      sourceLastModified: Timestamp.fromMillis(lastModified),
-      fileHash: fileHash,
-      sourceFolderPath: pathUpdate.folderPaths,
-    };
-
-    batch.set(metadataDocRef, metadataRecord);
-
-    // Operation 3: Update Evidence with embedded metadata
-    batch.update(evidenceRef, {
-      // Primary source metadata (for fast table rendering)
-      sourceFileName: sourceFileName,
-      sourceLastModified: Timestamp.fromMillis(lastModified),
-      sourceFolderPath: pathUpdate.folderPaths,
-
-      // Add to sourceMetadataVariants map
-      [`sourceMetadataVariants.${metadataHash}`]: {
-        sourceFileName: sourceFileName,
-        sourceLastModified: Timestamp.fromMillis(lastModified),
-        sourceFolderPath: pathUpdate.folderPaths,
-        uploadDate: Timestamp.now()
-      },
-
-      // Increment variant count
-      sourceMetadataCount: increment(1),
-
-      // Mark upload as completed (already set in Operation 1, but update here for clarity)
-      uploadStatus: 'completed'
-    });
-
-    // Commit atomic batch
-    await batch.commit();
-
-    console.log('[MetadataService] Metadata created atomically:', {
-      fileHash,
-      metadataHash,
-      operationsCount: 3
-    });
-
-    return metadataHash;
-
-  } catch (error) {
-    console.error('[MetadataService] Batch write failed:', error);
-
-    // Mark upload as failed in Evidence doc (best effort)
-    try {
-      const evidenceRef = doc(db, 'firms', authStore.currentFirm, 'matters',
-                             matterStore.currentMatterId, 'evidence', fileData.fileHash);
-      await updateDoc(evidenceRef, {
-        uploadStatus: 'failed',
-        uploadError: error.message,
-        uploadCompletedAt: serverTimestamp()
-      });
-    } catch (updateError) {
-      console.error('[MetadataService] Failed to mark upload as failed:', updateError);
-    }
-
-    throw error;
-  }
-};
-```
-
-**Key Changes:**
-- All 3 Firestore operations in single `writeBatch()`
-- Atomic commit - all succeed or all fail
-- Set `uploadStatus: 'completed'` in the batch
-- Error handling marks upload as 'failed' if batch fails
-
----
-
-### Phase 3: Integrate Batch Writes into Upload Flow (30 min)
-
-#### 3.1 Update Error Handling in useUploadProcessor
-
-**File:** `src/features/upload/composables/useUploadProcessor.js`
-
-**Key Changes:**
-- Batch write already handles atomic operations (no changes needed to upload flow)
-- Add error handling to populate `uploadError` field on failures
-
-```javascript
-/**
- * Process single file upload
- * Note: Batch writes in createMetadataRecord handle uploadStatus automatically
- */
-const processSingleFile = async (queueFile, abortSignal) => {
-  try {
-    // Step 1: Hash file
-    updateFileStatus(queueFile.id, 'hashing');
-    const fileHash = await fileProcessor.calculateFileHash(queueFile.sourceFile);
-    queueFile.hash = fileHash;
-
-    // Step 2: Check existence
-    updateFileStatus(queueFile.id, 'checking');
-    const existsResult = await fileProcessor.checkFileExists(fileHash, queueFile.name);
-
-    const needsStorageUpload = !existsResult.existsInStorage;
-    const needsMetadataOnly = existsResult.existsInFirestore && existsResult.existsInStorage;
-
-    if (needsMetadataOnly) {
-      // File already exists - create metadata only
-      updateFileStatus(queueFile.id, 'skipped');
-
-      await safeMetadata(
-        async () => {
-          await createMetadataRecord({
-            sourceFileName: queueFile.name,
-            lastModified: queueFile.sourceLastModified,
-            fileHash,
-            size: queueFile.size,
-            originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
-            sourceFileType: queueFile.sourceFile.type
-          });
-        },
-        `for existing file ${queueFile.name}`
-      );
-
-      return { success: true, skipped: true, uploaded: false };
-    }
-
-    if (needsStorageUpload) {
-      // Upload to Storage
-      updateFileStatus(queueFile.id, 'uploading');
-      queueFile.uploadProgress = 0;
-
-      const uploadResult = await fileProcessor.uploadSingleFile(
-        queueFile.sourceFile,
-        fileHash,
-        queueFile.name,
-        abortSignal,
-        (progress) => {
-          queueFile.uploadProgress = progress;
-        }
-      );
-
-      // Create metadata (batch write handles uploadStatus automatically)
-      updateFileStatus(queueFile.id, 'creating_metadata');
-
-      await safeMetadata(
-        async () => {
-          return await createMetadataRecord({
-            sourceFileName: queueFile.name,
-            lastModified: queueFile.sourceLastModified,
-            fileHash,
-            size: queueFile.size,
-            originalPath: queueFile.folderPath ? `${queueFile.folderPath}/${queueFile.name}` : queueFile.name,
-            sourceFileType: queueFile.sourceFile.type,
-            storageCreatedTimestamp: uploadResult.timeCreated
-          });
-        },
-        `for new file ${queueFile.name}`
-      );
-
-      updateFileStatus(queueFile.id, 'completed');
-      return { success: true, skipped: false, uploaded: true };
-    }
-
-    throw new Error('Unexpected state in file upload logic');
-
-  } catch (error) {
-    console.error(`[UPLOAD] Error uploading ${queueFile.name}:`, error);
-
-    // Update file status
-    if (isNetworkError(error)) {
-      updateFileStatus(queueFile.id, 'network_error');
-      queueFile.error = 'Network error - check connection';
-    } else {
-      updateFileStatus(queueFile.id, 'error');
-      queueFile.error = error.message;
-    }
-
-    // Note: uploadError field is set in createMetadataRecord error handler
-    return { success: false, error };
-  }
-};
-```
-
-**What Changed:**
-- Removed all event logging calls (no uploadEventService)
-- Batch write in `createMetadataRecord` handles `uploadStatus` automatically
-- Error handling in `createMetadataRecord` sets `uploadError` field
-- Simplified code: ~200 lines → ~70 lines
-
----
-
-### Phase 4: Cleanup Service (30 min)
-
-#### 4.1 Create Simplified Cleanup Service
-
-**File:** `src/features/upload/services/uploadCleanupService.js` (NEW)
-
-```javascript
-import { db, storage } from '../../../services/firebase.js';
-import { collection, query, where, getDocs, doc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { ref as storageRef, getMetadata } from 'firebase/storage';
-
-/**
- * Upload Cleanup Service (Simplified)
- * Detects and resolves incomplete uploads using uploadStatus field
- */
-export class UploadCleanupService {
-  constructor(firmId, matterId) {
-    this.firmId = firmId;
-    this.matterId = matterId;
-  }
-
-  /**
-   * Find evidence documents with incomplete uploads
-   * Uses uploadStatus field and uploadDate (reusing existing field)
-   * @param {number} olderThanMinutes - Find uploads older than this (default: 60)
-   * @returns {Promise<Array>} - Array of incomplete evidence docs
-   */
-  async findIncompleteEvidenceDocs(olderThanMinutes = 60) {
-    try {
-      const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
-
-      const evidenceRef = collection(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence');
-      const q = query(
-        evidenceRef,
-        where('uploadStatus', '==', 'in_progress'),
-        where('uploadDate', '<', Timestamp.fromDate(cutoffTime))
-      );
-
-      const snapshot = await getDocs(q);
-      const incompleteDocs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      console.log('[Cleanup] Found incomplete evidence docs:', incompleteDocs.length);
-      return incompleteDocs;
-
-    } catch (error) {
-      console.error('[Cleanup] Failed to find incomplete evidence docs:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Check if file exists in Storage
-   * @param {string} fileHash - File hash
-   * @param {string} fileType - File MIME type
-   * @returns {Promise<boolean>}
-   */
-  async checkStorageExists(fileHash, fileType) {
-    try {
-      const extension = fileType.split('/').pop() || 'bin';
-      const storagePath = `firms/${this.firmId}/matters/${this.matterId}/uploads/${fileHash}.${extension}`;
-      const storageReference = storageRef(storage, storagePath);
-
-      await getMetadata(storageReference);
-      return true;
-
-    } catch (error) {
-      if (error.code === 'storage/object-not-found') {
-        return false;
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Delete orphaned file from Storage
-   * @param {string} fileHash - File hash
-   * @param {string} fileType - File MIME type
-   * @returns {Promise<boolean>} - True if deleted, false if not found
-   */
-  async deleteOrphanedStorageFile(fileHash, fileType) {
-    try {
-      const extension = fileType.split('/').pop() || 'bin';
-      const storagePath = `firms/${this.firmId}/matters/${this.matterId}/uploads/${fileHash}.${extension}`;
-      const storageReference = storageRef(storage, storagePath);
-
-      await deleteObject(storageReference);
-      console.log('[Cleanup] Deleted orphaned storage file:', fileHash);
-      return true;
-
-    } catch (error) {
-      if (error.code === 'storage/object-not-found') {
-        console.log('[Cleanup] Storage file not found (already deleted):', fileHash);
-        return false;
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Clean up incomplete upload
-   * Strategy:
-   * 1. If storage exists but metadata incomplete → Delete evidence doc (will retry on next upload)
-   * 2. If storage missing and metadata incomplete → Delete evidence doc
-   *
-   * @param {Object} evidenceDoc - Incomplete evidence document
-   * @returns {Promise<Object>} - Cleanup result
-   */
-  async cleanupIncompleteUpload(evidenceDoc) {
-    try {
-      const { id: fileHash, fileType, uploadSessionId } = evidenceDoc;
-
-      console.log('[Cleanup] Processing incomplete upload:', fileHash);
-
-      // Check if storage file exists
-      const storageExists = await this.checkStorageExists(fileHash, fileType);
-
-      if (storageExists) {
-        // Storage exists but metadata incomplete
-        // Strategy: Delete Evidence doc, keep Storage file
-        // Next upload will detect existing storage and complete metadata
-        console.log('[Cleanup] Storage exists, deleting incomplete Evidence doc:', fileHash);
-
-        const evidenceRef = doc(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence', fileHash);
-        await deleteDoc(evidenceRef);
-
-        return {
-          fileHash,
-          action: 'deleted_evidence_doc',
-          reason: 'storage_exists_metadata_incomplete',
-          storageKept: true
-        };
-
-      } else {
-        // Storage missing and metadata incomplete
-        // Strategy: Delete Evidence doc (nothing to keep)
-        console.log('[Cleanup] Storage missing, deleting Evidence doc:', fileHash);
-
-        const evidenceRef = doc(db, 'firms', this.firmId, 'matters', this.matterId, 'evidence', fileHash);
-        await deleteDoc(evidenceRef);
-
-        return {
-          fileHash,
-          action: 'deleted_evidence_doc',
-          reason: 'storage_missing_metadata_incomplete',
-          storageKept: false
-        };
-      }
-
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up incomplete upload:', error);
-      return {
-        fileHash: evidenceDoc.id,
-        action: 'error',
-        error: error.message
-      };
-    }
-  }
-
-  /**
-   * Run cleanup job
-   * Finds and resolves all incomplete uploads
-   * @param {number} olderThanMinutes - Process uploads older than this (default: 60)
-   * @returns {Promise<Object>} - Cleanup summary
-   */
-  async runCleanupJob(olderThanMinutes = 60) {
-    try {
-      console.log('[Cleanup] Starting cleanup job...');
-      const startTime = Date.now();
-
-      // Find incomplete uploads
-      const incompleteDocs = await this.findIncompleteEvidenceDocs(olderThanMinutes);
-
-      if (incompleteDocs.length === 0) {
-        console.log('[Cleanup] No incomplete uploads found');
-        return {
-          totalFound: 0,
-          totalCleaned: 0,
-          results: [],
-          duration: Date.now() - startTime
-        };
-      }
-
-      console.log('[Cleanup] Found incomplete uploads:', incompleteDocs.length);
-
-      // Clean up each incomplete upload
-      const results = [];
-      for (const doc of incompleteDocs) {
-        const result = await this.cleanupIncompleteUpload(doc);
-        results.push(result);
-      }
-
-      const summary = {
-        totalFound: incompleteDocs.length,
-        totalCleaned: results.filter(r => r.action !== 'error').length,
-        totalErrors: results.filter(r => r.action === 'error').length,
-        results,
-        duration: Date.now() - startTime
-      };
-
-      console.log('[Cleanup] Cleanup job completed:', summary);
-      return summary;
-
-    } catch (error) {
-      console.error('[Cleanup] Cleanup job failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get cleanup job statistics
-   * @returns {Promise<Object>} - Statistics about incomplete uploads
-   */
-  async getCleanupStats() {
-    try {
-      const incompleteDocs = await this.findIncompleteEvidenceDocs(0); // All time
-
-      return {
-        incompleteEvidenceDocs: incompleteDocs.length,
-        oldestIncompleteUpload: incompleteDocs.length > 0
-          ? incompleteDocs.reduce((oldest, doc) => {
-              const docTime = doc.uploadDate.toMillis();
-              return docTime < oldest ? docTime : oldest;
-            }, Date.now())
-          : null
-      };
-
-    } catch (error) {
-      console.error('[Cleanup] Failed to get cleanup stats:', error);
-      return null;
-    }
-  }
-}
-
-export default UploadCleanupService;
-```
-
----
-
-### Phase 5: Admin UI for Cleanup (20 min)
-
-#### 5.1 Add Cleanup Button to Settings
-
-**File:** `src/core/firm/views/FirmSettings.vue`
-
-Add a new section for upload maintenance:
-
-```vue
-<template>
-  <!-- Existing settings sections -->
-
-  <!-- Upload Maintenance Section -->
-  <v-card class="mb-4">
-    <v-card-title>Upload Maintenance</v-card-title>
-    <v-card-text>
-      <v-alert v-if="cleanupStats" type="info" variant="tonal" class="mb-4">
-        <div><strong>Incomplete Uploads:</strong> {{ cleanupStats.incompleteEvidenceDocs }}</div>
-        <div v-if="cleanupStats.oldestIncompleteUpload">
-          <strong>Oldest:</strong> {{ formatDate(cleanupStats.oldestIncompleteUpload) }}
-        </div>
-      </v-alert>
-
-      <v-btn
-        color="warning"
-        variant="elevated"
-        :loading="cleanupLoading"
-        :disabled="cleanupLoading"
-        @click="runCleanup"
-      >
-        <v-icon start>mdi-broom</v-icon>
-        Clean Up Incomplete Uploads
-      </v-btn>
-
-      <v-alert v-if="cleanupResult" type="success" variant="tonal" class="mt-4">
-        <div><strong>Cleanup Complete</strong></div>
-        <div>Found: {{ cleanupResult.totalFound }}</div>
-        <div>Cleaned: {{ cleanupResult.totalCleaned }}</div>
-        <div>Duration: {{ cleanupResult.duration }}ms</div>
-      </v-alert>
-    </v-card-text>
-  </v-card>
-</template>
-
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useAuthStore } from '@/core/auth/stores/authStore.js';
-import { useMatterViewStore } from '@/features/matters/stores/matterView.js';
-import { UploadCleanupService } from '@/features/upload/services/uploadCleanupService.js';
-
-const authStore = useAuthStore();
-const matterStore = useMatterViewStore();
-
-const cleanupStats = ref(null);
-const cleanupLoading = ref(false);
-const cleanupResult = ref(null);
-
-const loadCleanupStats = async () => {
-  try {
-    const cleanupService = new UploadCleanupService(
-      authStore.currentFirm,
-      matterStore.currentMatterId
-    );
-    cleanupStats.value = await cleanupService.getCleanupStats();
-  } catch (error) {
-    console.error('Failed to load cleanup stats:', error);
-  }
-};
-
-const runCleanup = async () => {
-  try {
-    cleanupLoading.value = true;
-    cleanupResult.value = null;
-
-    const cleanupService = new UploadCleanupService(
-      authStore.currentFirm,
-      matterStore.currentMatterId
-    );
-
-    const result = await cleanupService.runCleanupJob(60); // Clean up > 1 hour old
-    cleanupResult.value = result;
-
-    // Reload stats
-    await loadCleanupStats();
-
-  } catch (error) {
-    console.error('Cleanup failed:', error);
-    alert(`Cleanup failed: ${error.message}`);
-  } finally {
-    cleanupLoading.value = false;
-  }
-};
-
-const formatDate = (timestamp) => {
-  return new Date(timestamp).toLocaleString();
-};
-
-onMounted(() => {
-  loadCleanupStats();
-});
-</script>
-```
-
----
-
-### Phase 6: Apply Minimal Pattern to Email Extraction (30 min)
-
-#### 6.1 Email Message Schema (Simplified)
-
-When implementing email extraction, apply the same minimal pattern:
-
-```javascript
-// Email message document schema
 {
-  messageId: string,  // Auto-generated
-  extractedFromFile: string,  // Hash of .msg file
+  // Document ID = Auto-generated unique ID
+  id: string,                            // Auto-generated
 
-  // Message content
-  subject: string,
-  from: string,
-  to: string,
-  body: string,
+  // Context
+  firmId: string,                        // Solo firm = userId
+  userId: string,
+  matterId: string,                      // Current matter
 
-  // Extraction status (NEW - minimal, 2 fields only)
-  extractionStatus: 'pending' | 'completed' | 'failed',
-  extractionError: string,  // Only populated on failure
+  // Source tracking
+  extractedFromFile: string,             // Hash of .msg/.eml file
+  extractionDate: Timestamp,
 
   // Message type
-  messageType: 'native' | 'quoted',
+  messageType: 'native',                 // Always 'native' in v1
+
+  // Email metadata
+  subject: string,
+  from: {
+    name: string | null,
+    email: string
+  },
+  to: Array<{ name: string | null, email: string }>,
+  cc: Array<{ name: string | null, email: string }>,
+  date: Timestamp,
+
+  // Storage paths (bodies in Firebase Storage)
+  bodyTextPath: string,                  // 'firms/{firmId}/emails/{id}/body.txt'
+  bodyHtmlPath: string | null,           // 'firms/{firmId}/emails/{id}/body.html'
+
+  // Attachments (references)
+  attachments: Array<{
+    fileHash: string,                    // Hash in files collection
+    fileName: string,
+    size: number,
+    mimeType: string,
+    isDuplicate: boolean,
+    storagePath: string | null           // null if duplicate
+  }>,
 
   // Timestamps
-  createdAt: Timestamp  // EXISTING - reuse for age queries
+  createdAt: Timestamp,
+  updatedAt: Timestamp
 }
 ```
 
-**Changes from upload pattern:**
-- Only 2 new fields: `extractionStatus` and `extractionError`
-- Reuse `createdAt` for age-based cleanup queries
-- No event sourcing collection
-- Batch writes ensure atomicity
+### Update Existing Collections
 
-#### 6.2 Email Extraction with Batch Writes (Simplified)
+#### `uploads` Collection (Add email extraction fields)
 
 ```javascript
+{
+  // Existing fields...
+  id: string,                            // BLAKE3 hash
+  firmId: string,
+  sourceFileName: string,
+  fileType: string,                      // 'email' for .msg/.eml
+  // ... other existing fields
+
+  // NEW: Email extraction status
+  hasBeenParsed: boolean,                // false initially
+  parsedAt: Timestamp | null,
+  parseStatus: 'pending' | 'processing' | 'completed' | 'failed',
+  parseError: string | null,
+
+  // NEW: Extraction results
+  extractedMessageCount: number,         // Always 1 in v1 (native only)
+  extractedAttachmentCount: number,
+  extractedMessages: Array<{
+    messageId: string,                   // ID in emails collection
+    subject: string,
+    from: string,
+    date: Timestamp
+  }>,
+  extractedAttachments: Array<{
+    fileHash: string,
+    fileName: string,
+    size: number,
+    wasUploaded: boolean,                // false if duplicate
+    isDuplicate: boolean,
+    nestedEmail: boolean                 // true if .msg/.eml attachment
+  }>,
+
+  // NEW: Nested email tracking
+  isNestedEmail: boolean,                // true if extracted from another .msg
+  parentEmailFile: string | null,        // hash of parent .msg
+  nestingDepth: number                   // 0 for top-level, 1+ for nested
+}
+```
+
+#### `files` Collection (Track extracted attachments)
+
+```javascript
+{
+  // Existing fields...
+  id: string,                            // BLAKE3 hash
+  firmId: string,
+  sourceFileName: string,
+  // ... other existing fields
+
+  // NEW: Email attachment tracking
+  isEmailAttachment: boolean,            // true if from email
+  extractedFromEmails: string[],         // Array of .msg hashes
+  firstSeenInEmail: string | null        // Hash of first .msg
+}
+```
+
+---
+
+## 🔨 Phase 4: Implementation Steps
+
+### Step 1: Email File Type Detection
+
+**File**: `src/features/upload/utils/fileTypeChecker.js`
+
+Add to existing `detectFileType` function:
+
+```javascript
+// Add to existing detectFileType function
+export function detectFileType(fileName) {
+  const ext = fileName.toLowerCase().split('.').pop();
+
+  // NEW: Email types
+  if (ext === 'msg' || ext === 'eml') return 'email';
+
+  // Existing types...
+  if (ext === 'pdf') return 'pdf';
+  // ... etc
+}
+```
+
+---
+
+### Step 2: Email Parser Factory
+
+**File**: `src/features/upload/parsers/emailParserFactory.js` (NEW)
+
+```javascript
+import { parseMsgFile } from './msgParser.js';
+import { parseEmlFile } from './emlParser.js';
+
 /**
- * Extract email with atomic batch writes
- * All operations succeed or fail together
+ * Route to appropriate parser based on file extension
+ * @param {ArrayBuffer} fileBuffer - File binary data
+ * @param {string} fileName - Original filename
+ * @returns {Promise<Object>} - Parsed email data
  */
-async function extractEmail(msgFile) {
+export async function parseEmailFile(fileBuffer, fileName) {
+  const ext = fileName.toLowerCase().split('.').pop();
+
+  if (ext === 'msg') {
+    return await parseMsgFile(fileBuffer);
+  } else if (ext === 'eml') {
+    return await parseEmlFile(fileBuffer);
+  } else {
+    throw new Error(`Unsupported email format: ${ext}`);
+  }
+}
+```
+
+---
+
+### Step 3: .msg Parser
+
+**File**: `src/features/upload/parsers/msgParser.js` (NEW)
+
+```javascript
+import MsgReader from '@kenjiuno/msgreader';
+
+/**
+ * Parse Microsoft Outlook .msg file
+ * @param {ArrayBuffer} buffer - .msg file binary data
+ * @returns {Promise<Object>} - Parsed email structure
+ */
+export async function parseMsgFile(buffer) {
   try {
-    // Parse .msg file
-    const parsed = await parseMsg(msgFile);
+    const msgReader = new MsgReader(buffer);
+    const fileData = msgReader.getFileData();
 
-    // Upload attachments to Storage
-    const attachments = await uploadAttachments(parsed.attachments);
+    return {
+      subject: fileData.subject || '(No Subject)',
+      from: {
+        name: fileData.senderName || null,
+        email: fileData.senderEmail || ''
+      },
+      to: (fileData.recipients || [])
+        .filter(r => r.recipType === 1) // To recipients
+        .map(r => ({
+          name: r.name || null,
+          email: r.email || r.smtpAddress || ''
+        })),
+      cc: (fileData.recipients || [])
+        .filter(r => r.recipType === 2) // CC recipients
+        .map(r => ({
+          name: r.name || null,
+          email: r.email || r.smtpAddress || ''
+        })),
+      date: fileData.creationTime ? new Date(fileData.creationTime) : new Date(),
+      bodyHtml: fileData.bodyHTML || null,
+      bodyText: fileData.body || '',
+      attachments: (fileData.attachments || []).map(att => ({
+        fileName: att.fileName || 'unnamed',
+        data: att.content,
+        size: att.content?.length || 0,
+        mimeType: att.mimeType || 'application/octet-stream'
+      }))
+    };
+  } catch (error) {
+    throw new Error(`Failed to parse .msg file: ${error.message}`);
+  }
+}
+```
 
-    // Create messages in Firestore (ATOMIC BATCH)
-    const batch = writeBatch(db);
+---
 
-    // Create native message
-    const nativeMessageRef = doc(collection(db, 'firms', firmId, 'matters', matterId, 'emails'));
-    batch.set(nativeMessageRef, {
+### Step 4: .eml Parser
+
+**File**: `src/features/upload/parsers/emlParser.js` (NEW)
+
+```javascript
+import { simpleParser } from 'mailparser';
+
+/**
+ * Parse standard .eml email file
+ * @param {ArrayBuffer} buffer - .eml file binary data
+ * @returns {Promise<Object>} - Parsed email structure
+ */
+export async function parseEmlFile(buffer) {
+  try {
+    const parsed = await simpleParser(buffer);
+
+    return {
+      subject: parsed.subject || '(No Subject)',
+      from: {
+        name: parsed.from?.value?.[0]?.name || null,
+        email: parsed.from?.value?.[0]?.address || ''
+      },
+      to: (parsed.to?.value || []).map(addr => ({
+        name: addr.name || null,
+        email: addr.address || ''
+      })),
+      cc: (parsed.cc?.value || []).map(addr => ({
+        name: addr.name || null,
+        email: addr.address || ''
+      })),
+      date: parsed.date || new Date(),
+      bodyHtml: parsed.html || null,
+      bodyText: parsed.text || '',
+      attachments: (parsed.attachments || []).map(att => ({
+        fileName: att.filename || 'unnamed',
+        data: att.content,
+        size: att.size || 0,
+        mimeType: att.contentType || 'application/octet-stream'
+      }))
+    };
+  } catch (error) {
+    throw new Error(`Failed to parse .eml file: ${error.message}`);
+  }
+}
+```
+
+---
+
+### Step 5: Email Extraction Service (Core Logic)
+
+**File**: `src/features/upload/services/emailExtractionService.js` (NEW)
+
+```javascript
+import { ref, uploadBytes } from 'firebase/storage';
+import { doc, setDoc, updateDoc, getDoc, collection, arrayUnion } from 'firebase/firestore';
+import { parseEmailFile } from '../parsers/emailParserFactory.js';
+import { hashBlake3 } from '../workers/fileHashWorker.js'; // Use existing hasher
+import { storage, db } from '@/firebase';
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_DEPTH = 10;
+
+/**
+ * Process email file and extract messages + attachments
+ * Handles recursive extraction for nested .msg/.eml files
+ *
+ * @param {string} fileHash - BLAKE3 hash of email file
+ * @param {ArrayBuffer} fileBuffer - Email file binary data
+ * @param {string} fileName - Original filename
+ * @param {string} firmId - Firm ID
+ * @param {string} userId - User ID
+ * @param {string} matterId - Matter ID
+ * @param {string|null} parentEmailHash - Parent .msg hash (for nested emails)
+ * @param {number} depth - Nesting depth (0 for top-level)
+ * @param {Function|null} onProgress - Progress callback (message: string) => void
+ * @returns {Promise<Object>} - Extraction result
+ */
+export async function processEmailFile(
+  fileHash,
+  fileBuffer,
+  fileName,
+  firmId,
+  userId,
+  matterId,
+  parentEmailHash = null,
+  depth = 0,
+  onProgress = null
+) {
+  // Validation
+  if (depth >= MAX_DEPTH) {
+    throw new Error('Email nesting exceeded maximum depth of 10');
+  }
+
+  if (fileBuffer.byteLength > MAX_FILE_SIZE) {
+    throw new Error('Email file exceeds 100MB limit');
+  }
+
+  onProgress?.('Parsing email file...');
+
+  try {
+    // 1. Parse email
+    const parsed = await parseEmailFile(fileBuffer, fileName);
+
+    // 2. Validate attachment sizes
+    for (const att of parsed.attachments) {
+      if (att.size > MAX_FILE_SIZE) {
+        throw new Error(`Attachment "${att.fileName}" exceeds 100MB limit`);
+      }
+    }
+
+    onProgress?.(`Extracting ${parsed.attachments.length} attachments...`);
+
+    // 3. Process attachments
+    const processedAttachments = [];
+
+    for (const attachment of parsed.attachments) {
+      const attHash = await hashBlake3(attachment.data);
+      const isNestedEmail = /\.(msg|eml)$/i.test(attachment.fileName);
+
+      if (isNestedEmail) {
+        // Nested email: upload and recurse
+        const nestedPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}`;
+        await uploadBytes(ref(storage, nestedPath), attachment.data);
+
+        await setDoc(doc(db, 'uploads', attHash), {
+          id: attHash,
+          firmId,
+          userId,
+          matterId,
+          sourceFileName: attachment.fileName,
+          fileType: 'email',
+          fileSize: attachment.size,
+          storagePath: nestedPath,
+          isNestedEmail: true,
+          parentEmailFile: fileHash,
+          nestingDepth: depth + 1,
+          hasBeenParsed: false,
+          parseStatus: 'pending',
+          uploadedAt: new Date()
+        });
+
+        // Recursive extraction
+        await processEmailFile(
+          attHash,
+          attachment.data,
+          attachment.fileName,
+          firmId,
+          userId,
+          matterId,
+          fileHash,
+          depth + 1,
+          onProgress
+        );
+
+        processedAttachments.push({
+          fileHash: attHash,
+          fileName: attachment.fileName,
+          size: attachment.size,
+          mimeType: attachment.mimeType,
+          wasUploaded: true,
+          isDuplicate: false,
+          nestedEmail: true
+        });
+
+      } else {
+        // Regular attachment
+        const existingDoc = await getDoc(doc(db, 'files', attHash));
+        const isDuplicate = existingDoc.exists();
+
+        if (!isDuplicate) {
+          // Upload new attachment
+          const attPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}`;
+          await uploadBytes(ref(storage, attPath), attachment.data);
+
+          await setDoc(doc(db, 'files', attHash), {
+            id: attHash,
+            firmId,
+            userId,
+            matterId,
+            sourceFileName: attachment.fileName,
+            fileType: getFileType(attachment.fileName),
+            fileSize: attachment.size,
+            storagePath: attPath,
+            isEmailAttachment: true,
+            extractedFromEmails: [fileHash],
+            firstSeenInEmail: fileHash,
+            uploadedAt: new Date()
+          });
+        } else {
+          // Update existing file record
+          await updateDoc(doc(db, 'files', attHash), {
+            extractedFromEmails: arrayUnion(fileHash)
+          });
+        }
+
+        processedAttachments.push({
+          fileHash: attHash,
+          fileName: attachment.fileName,
+          size: attachment.size,
+          mimeType: attachment.mimeType,
+          wasUploaded: !isDuplicate,
+          isDuplicate,
+          nestedEmail: false
+        });
+      }
+    }
+
+    onProgress?.('Saving email message...');
+
+    // 4. Save email message to Firestore & Storage
+    const messageId = doc(collection(db, 'emails')).id;
+
+    // Save body text to Storage
+    const bodyTextPath = `firms/${firmId}/emails/${messageId}/body.txt`;
+    await uploadBytes(
+      ref(storage, bodyTextPath),
+      new TextEncoder().encode(parsed.bodyText)
+    );
+
+    // Save body HTML to Storage (if exists)
+    let bodyHtmlPath = null;
+    if (parsed.bodyHtml) {
+      bodyHtmlPath = `firms/${firmId}/emails/${messageId}/body.html`;
+      await uploadBytes(
+        ref(storage, bodyHtmlPath),
+        new TextEncoder().encode(parsed.bodyHtml)
+      );
+    }
+
+    // Save message metadata to Firestore
+    await setDoc(doc(db, 'emails', messageId), {
+      id: messageId,
+      firmId,
+      userId,
+      matterId,
+      extractedFromFile: fileHash,
+      extractionDate: new Date(),
+      messageType: 'native',
       subject: parsed.subject,
       from: parsed.from,
       to: parsed.to,
-      body: parsed.body,
-      extractedFromFile: msgFile.hash,
-      messageType: 'native',
-
-      // Extraction tracking (minimal)
-      extractionStatus: 'completed',
-      extractionError: null,
-
-      createdAt: serverTimestamp()
+      cc: parsed.cc,
+      date: parsed.date,
+      bodyTextPath,
+      bodyHtmlPath,
+      attachments: processedAttachments.map(att => ({
+        fileHash: att.fileHash,
+        fileName: att.fileName,
+        size: att.size,
+        mimeType: att.mimeType,
+        isDuplicate: att.isDuplicate,
+        storagePath: att.wasUploaded ? `firms/${firmId}/matters/${matterId}/uploads/${att.fileHash}` : null
+      })),
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
-    // Create quoted messages (if any)
-    for (const quotedMsg of parsed.quotedMessages) {
-      const quotedRef = doc(collection(db, 'firms', firmId, 'matters', matterId, 'emails'));
-      batch.set(quotedRef, {
-        subject: quotedMsg.subject,
-        from: quotedMsg.from,
-        to: quotedMsg.to,
-        body: quotedMsg.body,
-        extractedFromFile: msgFile.hash,
-        messageType: 'quoted',
-
-        extractionStatus: 'completed',
-        extractionError: null,
-
-        createdAt: serverTimestamp()
-      });
-    }
-
-    // Update source .msg file
-    const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', msgFile.hash);
-    batch.update(evidenceRef, {
+    // 5. Update original .msg file record
+    await updateDoc(doc(db, 'uploads', fileHash), {
       hasBeenParsed: true,
+      parsedAt: new Date(),
       parseStatus: 'completed',
-      parseCompletedAt: serverTimestamp()
+      extractedMessageCount: 1,
+      extractedAttachmentCount: processedAttachments.length,
+      extractedMessages: [{
+        messageId,
+        subject: parsed.subject,
+        from: parsed.from.email,
+        date: parsed.date
+      }],
+      extractedAttachments: processedAttachments
     });
 
-    // Commit atomic batch
-    await batch.commit();
+    onProgress?.('Email extraction complete');
 
-    console.log('[EmailExtraction] Extraction completed:', {
-      fileHash: msgFile.hash,
-      messagesExtracted: 1 + parsed.quotedMessages.length,
-      attachmentsExtracted: attachments.length
-    });
+    return {
+      success: true,
+      messageId,
+      attachmentCount: processedAttachments.length
+    };
 
   } catch (error) {
-    console.error('[EmailExtraction] Extraction failed:', error);
-
-    // Mark as failed (best effort)
-    try {
-      const evidenceRef = doc(db, 'firms', firmId, 'matters', matterId, 'evidence', msgFile.hash);
-      await updateDoc(evidenceRef, {
-        parseStatus: 'failed',
-        extractionError: error.message,
-        parseCompletedAt: serverTimestamp()
-      });
-    } catch (updateError) {
-      console.error('[EmailExtraction] Failed to mark as failed:', updateError);
-    }
+    // Mark as failed
+    await updateDoc(doc(db, 'uploads', fileHash), {
+      hasBeenParsed: false,
+      parseStatus: 'failed',
+      parseError: error.message
+    });
 
     throw error;
   }
 }
-```
 
-**Key Simplifications:**
-- No event logging service (removed ~200 lines)
-- Batch write ensures atomicity
-- Error handling sets `extractionError` field
-- Same cleanup pattern as uploads
+/**
+ * Detect file type from filename extension
+ * @param {string} fileName - Filename
+ * @returns {string} - File type
+ */
+function getFileType(fileName) {
+  const ext = fileName.toLowerCase().split('.').pop();
+  if (ext === 'pdf') return 'pdf';
+  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'image';
+  if (['doc', 'docx'].includes(ext)) return 'word';
+  if (['xls', 'xlsx'].includes(ext)) return 'excel';
+  return 'other';
+}
+
+export default { processEmailFile };
+```
 
 ---
 
-## 📋 Testing Strategy
+### Step 6: Integration with Upload Pipeline
 
-### Unit Tests (Simplified)
+**File**: `src/features/upload/composables/useFileProcessor.js`
+
+Modify existing upload processor to detect and extract emails:
 
 ```javascript
-// tests/unit/services/uploadCleanupService.test.js
-describe('UploadCleanupService', () => {
-  it('should find incomplete evidence docs using uploadStatus field', async () => {
-    const service = new UploadCleanupService('firm1', 'matter1');
+import { processEmailFile } from '../services/emailExtractionService.js';
 
-    // Create evidence doc with uploadStatus: 'in_progress'
-    await createTestEvidenceDoc({
-      uploadStatus: 'in_progress',
-      uploadDate: Timestamp.now()
-    });
+/**
+ * Process file upload
+ * Detect email files and trigger extraction
+ */
+async function processFile(file, fileHash) {
+  // ... existing upload logic (hash, upload to storage, create metadata)
 
-    const incomplete = await service.findIncompleteEvidenceDocs(0);
-    expect(incomplete.length).toBeGreaterThan(0);
-    expect(incomplete[0].uploadStatus).toBe('in_progress');
+  // NEW: Email extraction
+  if (file.type === 'email') {
+    try {
+      updateStatus(file.id, 'Processing email...');
+
+      const fileBuffer = await file.arrayBuffer();
+
+      await processEmailFile(
+        fileHash,
+        fileBuffer,
+        file.name,
+        currentFirmId,
+        currentUserId,
+        currentMatterId,
+        null, // no parent
+        0,    // depth 0
+        (message) => updateStatus(file.id, message)
+      );
+
+      updateStatus(file.id, 'Email processed successfully');
+
+    } catch (error) {
+      console.error('Email extraction failed:', error);
+      updateStatus(file.id, `Email extraction failed: ${error.message}`);
+      // File is still uploaded, just not parsed
+    }
+  }
+
+  // ... continue with rest of upload
+}
+```
+
+---
+
+## 🧪 Phase 5: Testing Strategy
+
+### Unit Tests (`/tests/unit/email-extraction/`)
+
+#### `msgParser.test.js`
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { parseMsgFile } from '@/features/upload/parsers/msgParser.js';
+import { loadTestFile } from '../helpers/fileLoader.js';
+
+describe('msgParser', () => {
+  it('should extract subject from .msg file', async () => {
+    const buffer = await loadTestFile('simple.msg');
+    const result = await parseMsgFile(buffer);
+    expect(result.subject).toBe('Test Email');
   });
 
-  it('should clean up incomplete upload by deleting Evidence doc', async () => {
-    const service = new UploadCleanupService('firm1', 'matter1');
-
-    const evidenceDoc = {
-      id: 'hash123',
-      fileType: 'application/pdf',
-      uploadStatus: 'in_progress'
-    };
-
-    const result = await service.cleanupIncompleteUpload(evidenceDoc);
-    expect(result.action).toBe('deleted_evidence_doc');
+  it('should extract attachments', async () => {
+    const buffer = await loadTestFile('with-attachments.msg');
+    const result = await parseMsgFile(buffer);
+    expect(result.attachments).toHaveLength(2);
   });
 
-  it('should get cleanup stats', async () => {
-    const service = new UploadCleanupService('firm1', 'matter1');
-    const stats = await service.getCleanupStats();
-
-    expect(stats).toHaveProperty('incompleteEvidenceDocs');
-    expect(stats).toHaveProperty('oldestIncompleteUpload');
+  it('should handle missing subject', async () => {
+    const buffer = await loadTestFile('no-subject.msg');
+    const result = await parseMsgFile(buffer);
+    expect(result.subject).toBe('(No Subject)');
   });
 });
 ```
 
-### Integration Tests (Simplified)
+#### `emailExtractionService.test.js`
 
 ```javascript
-// tests/integration/upload-transaction-boundaries.test.js
-describe('Upload Transaction Boundaries (Simplified)', () => {
-  it('should mark upload complete with batch write', async () => {
-    // Complete upload
-    await completeFileUpload(testFile);
+import { describe, it, expect } from 'vitest';
+import { processEmailFile } from '@/features/upload/services/emailExtractionService.js';
 
-    // Check Evidence doc - should be completed immediately
-    const evidenceDoc = await getDoc(evidenceRef);
-    expect(evidenceDoc.data().uploadStatus).toBe('completed');
-    expect(evidenceDoc.data().uploadError).toBeNull();
+describe('processEmailFile', () => {
+  it('should reject files > 100MB', async () => {
+    const largeBuffer = new ArrayBuffer(101 * 1024 * 1024);
+    await expect(
+      processEmailFile('hash', largeBuffer, 'large.msg', 'firm1', 'user1', 'matter1')
+    ).rejects.toThrow('exceeds 100MB');
   });
 
-  it('should use batch writes for atomic metadata creation', async () => {
-    // Spy on Firestore batch
-    const batchSpy = jest.spyOn(firestore, 'writeBatch');
-
-    // Upload file
-    await uploadFile(testFile);
-
-    // Verify batch was used (all 3 operations in one batch)
-    expect(batchSpy).toHaveBeenCalled();
-    const batchCommit = batchSpy.mock.results[0].value;
-    expect(batchCommit).toBeTruthy(); // Batch committed
+  it('should reject attachments > 100MB', async () => {
+    // Mock parsed email with large attachment
+    const buffer = await createMockMsgWithLargeAttachment(101 * 1024 * 1024);
+    await expect(
+      processEmailFile('hash', buffer, 'test.msg', 'firm1', 'user1', 'matter1')
+    ).rejects.toThrow('Attachment "large.pdf" exceeds 100MB limit');
   });
 
-  it('should mark upload failed if batch write fails', async () => {
-    // Mock batch write failure
-    jest.spyOn(firestore, 'writeBatch').mockImplementationOnce(() => {
-      throw new Error('Firestore error');
-    });
-
-    // Attempt upload
-    await expect(uploadFile(testFile)).rejects.toThrow();
-
-    // Check Evidence doc marked as failed
-    const evidenceDoc = await getDoc(evidenceRef);
-    expect(evidenceDoc.data().uploadStatus).toBe('failed');
-    expect(evidenceDoc.data().uploadError).toContain('Firestore error');
+  it('should handle nested emails up to depth 10', async () => {
+    // Test with nested .msg files
+    // Create mock email with 10 levels of nesting
+    // Verify 10th level succeeds, 11th fails
   });
 
-  it('should query for incomplete uploads', async () => {
-    // Create incomplete upload
-    await createEvidenceDoc({
-      uploadStatus: 'in_progress',
-      uploadDate: Timestamp.fromDate(new Date(Date.now() - 2 * 60 * 60 * 1000)) // 2 hours ago
-    });
-
-    // Query for incomplete
-    const q = query(
-      evidenceRef,
-      where('uploadStatus', '==', 'in_progress'),
-      where('uploadDate', '<', Timestamp.fromDate(new Date(Date.now() - 60 * 60 * 1000)))
-    );
-    const snapshot = await getDocs(q);
-
-    expect(snapshot.docs.length).toBeGreaterThan(0);
+  it('should deduplicate attachments', async () => {
+    // Upload email with attachment
+    // Upload same email again
+    // Verify attachment uploaded only once
   });
 });
 ```
 
-### Manual Testing Checklist (Simplified)
+### Integration Tests
 
-- [ ] Upload file successfully → Check uploadStatus='completed', uploadError=null
-- [ ] Simulate batch write failure → Check uploadStatus='failed', uploadError populated
-- [ ] Run cleanup job → Incomplete uploads cleaned up
-- [ ] Check Firm Settings → Cleanup stats display correctly (incomplete count, oldest upload)
-- [ ] Upload duplicate file → Metadata created, uploadStatus='completed'
-- [ ] Query Firestore for 'uploadStatus==in_progress' → Returns only incomplete uploads
+Test with real .msg/.eml files from your legal work.
 
 ---
 
-## 🚀 Rollout Plan (Simplified)
+## 📊 Phase 6: UI Updates
 
-### Step 1: Schema Migration (Non-Breaking)
-- Add 2 new fields to Evidence schema: `uploadStatus`, `uploadError`
-- Existing uploads continue to work (fields optional)
-- No data migration needed (you're in pre-alpha, can wipe data anytime)
+### Minimal Progress Indicators
 
-### Step 2: Deploy Batch Writes
-- Deploy batch write refactor in `createMetadataRecord`
-- Test atomic operations (all 3 writes succeed or fail together)
-- Rollback if issues detected
+**File**: `src/features/upload/components/StatusCell.vue`
 
-### Step 3: Deploy Cleanup Service
-- Deploy simplified cleanup service (no event sourcing)
-- Test manually in staging
-- Enable in production with admin UI
-
-### Step 4: Apply Pattern to Email Extraction
-- Use same minimal pattern (2 fields: extractionStatus, extractionError)
-- Use same batch write approach
-- Deploy email extraction feature
-
-**Total Implementation Time:** ~2.5 hours (down from ~5 hours)
+```vue
+<template>
+  <div v-if="file.fileType === 'email'" class="email-status">
+    <v-icon v-if="file.parseStatus === 'processing'" size="small">
+      mdi-email-sync
+    </v-icon>
+    <span>{{ file.statusMessage }}</span>
+    <!-- "Processing email...", "Extracting 3 attachments..." -->
+  </div>
+</template>
+```
 
 ---
 
-## 📊 Success Metrics (Simplified)
+## 🔒 Phase 7: Security Rules
 
-### Performance Metrics
-- Upload success rate: >99%
-- Batch write success rate: >99.5%
-- Cleanup job success rate: >95%
+### Firestore Rules
 
-### Reliability Metrics
-- Incomplete uploads: <0.1% of total uploads
-- Orphaned files: <0.01% of storage
+```javascript
+// firestore.rules
 
-### Monitoring (Manual in Pre-Alpha)
-- Check incomplete uploads weekly via Firm Settings UI
-- Run cleanup job manually if needed
-- Monitor console logs for batch write errors
+// Email messages
+match /emails/{messageId} {
+  allow read: if request.auth != null
+    && request.auth.uid == resource.data.userId;
+  allow create: if request.auth != null
+    && request.auth.uid == request.resource.data.userId;
+}
 
-**Note:** Automated monitoring can be added later if/when needed
+// Upload documents (add email extraction fields)
+match /uploads/{fileHash} {
+  allow update: if request.auth != null
+    && request.auth.uid == resource.data.userId
+    && onlyUpdatingEmailExtractionFields();
+}
 
----
+function onlyUpdatingEmailExtractionFields() {
+  return request.resource.data.diff(resource.data)
+    .affectedKeys()
+    .hasOnly(['hasBeenParsed', 'parsedAt', 'parseStatus',
+              'extractedMessageCount', 'extractedMessages',
+              'extractedAttachments', 'parseError']);
+}
+```
 
-## 🔄 Maintenance (Simplified)
+### Storage Rules
 
-### Weekly (Manual in Pre-Alpha)
-- Check Firm Settings → Upload Maintenance section
-- Review incomplete upload count
-- Run cleanup job if needed (button in UI)
+```javascript
+// storage.rules
 
-### When Issues Occur
-- Check console logs for error messages
-- Review `uploadError` field in Evidence docs
-- Re-upload failed files if necessary
-
-**Note:** Daily/automated maintenance can be added later when scaling
-
----
-
-## 📚 Documentation Updates (Simplified)
-
-### Code Documentation
-- [ ] Document `uploadStatus` and `uploadError` fields in `docs/Data/25-11-18-data-structures.md`
-- [ ] Add JSDoc comments to UploadCleanupService
-
-### Developer Documentation
-- [ ] Document batch write pattern (atomic operations)
-- [ ] Create guide for applying minimal pattern to new features (email extraction, etc.)
-
----
-
-## 🎯 Next Steps After Completion
-
-1. **Email Extraction Implementation**
-   - Apply same minimal pattern (2 fields: extractionStatus, extractionError)
-   - Use batch writes for atomicity
-   - Reuse cleanup service pattern
-
-2. **Consider Later (If Needed)**
-   - Event sourcing collection (if compliance requires audit trail)
-   - Automated monitoring/alerts (if scaling requires it)
-   - Unified async operation dashboard (if managing multiple async features)
+// Email message bodies
+match /firms/{firmId}/emails/{messageId}/{fileName} {
+  allow read: if request.auth != null
+    && request.auth.uid == getFirmUserId(firmId);
+  allow write: if request.auth != null
+    && request.auth.uid == getFirmUserId(firmId);
+}
+```
 
 ---
 
-## 🐛 Known Issues & Limitations
+## 📈 Phase 8: Rollout Plan
 
-### Current Limitations (Acceptable for Pre-Alpha)
-1. **No automatic retry**: Failed uploads require manual retry
-2. **No detailed audit trail**: Console logs only (no event sourcing)
-3. **Manual cleanup**: Requires admin to click button in UI
-
-### Future Enhancements (Add Only If Needed)
-1. **Event sourcing** (if compliance requires detailed audit trail)
-2. **Automatic retry with exponential backoff** (if upload failures become common)
-3. **Resumable uploads** (if large file uploads frequently interrupted)
-4. **Automated cleanup job** (if incomplete uploads accumulate)
+1. **Deploy to Dev** - Test with sample .msg/.eml files
+2. **Internal Testing** - Use on real case files (your work)
+3. **Monitor Errors** - Check `parseStatus: 'failed'` records
+4. **Deploy to Production** - All users get feature immediately
 
 ---
 
-## 📊 Comparison: Original vs Simplified
+## 🎯 Success Criteria
 
-| Metric | Original Plan | Simplified Plan |
-|--------|---------------|-----------------|
-| **Evidence fields added** | 5 fields | 2 fields |
-| **Collections added** | 2 (uploadEvents, extractionEvents) | 0 |
-| **Firestore writes/upload** | ~6 writes | ~1 write |
-| **Lines of code** | ~800 lines | ~300 lines |
-| **Implementation time** | ~5 hours | ~2.5 hours |
-| **Achieves core goals** | ✅ Yes | ✅ Yes |
-| **Firestore cost savings** | Baseline | **83% fewer writes** |
+- ✅ .msg and .eml files upload successfully
+- ✅ Native message extracted to `emails` collection
+- ✅ Attachments deduplicated correctly
+- ✅ Nested .msg files process up to 10 levels
+- ✅ Files >100MB rejected with clear error
+- ✅ Failed extractions don't block file upload
+- ✅ UI shows minimal, clear progress messages
 
 ---
 
-## 📞 Support & Questions
+## 🚀 Implementation Order (Recommended)
 
-For questions about this implementation:
-- **Schema questions:** See Phase 1 (Evidence schema with 2 fields)
-- **Batch writes:** See Phase 2 (atomic operations)
-- **Cleanup:** See Phase 4 (UploadCleanupService)
+1. **Install libraries** (Phase 1)
+2. **Build parsers** (Step 2, 3, 4)
+3. **Test parsers with sample files** (Phase 5)
+4. **Build extraction service** (Step 5)
+5. **Integrate with upload pipeline** (Step 6)
+6. **Add UI updates** (Phase 6)
+7. **Deploy security rules** (Phase 7)
+
+**Total Estimated Time**: 6-8 hours
 
 ---
 
-**End of Simplified Plan**
+## 📝 Notes
+
+- Email bodies stored in Firebase Storage to avoid Firestore 1MB document limit
+- Deduplication happens BEFORE upload (saves bandwidth)
+- All extraction metadata in Firestore for fast queries
+- Failed extractions still upload .msg file for manual retry
+- Nested emails handled recursively with depth limit
+
+---
+
+**End of Implementation Plan**
