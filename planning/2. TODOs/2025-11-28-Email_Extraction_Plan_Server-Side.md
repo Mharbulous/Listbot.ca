@@ -765,7 +765,7 @@ firebase deploy --only storage
 | Step | Task | Time | Status |
 |------|------|------|--------|
 | 1 | Create `constants.js`, `parsers.js` | 30 min | ✅ **DONE** (2025-11-28) |
-| 2 | Create `emailExtraction.js` | 1.5 hours | Pending |
+| 2 | Create `emailExtraction.js` | 1.5 hours | ✅ **DONE** (2025-11-28) |
 | 3 | Create `index.js` with triggers | 30 min | Pending |
 | 4 | Test with emulator | 45 min | Pending |
 | 5 | Client upload flow update | 30 min | Pending |
@@ -818,3 +818,34 @@ firebase deploy --only storage
 
 **What's Next**:
 - Step 2: Create `emailExtraction.js` with main extraction logic (~250 lines)
+
+---
+
+### Step 2: Create `emailExtraction.js` ✅ COMPLETED (2025-11-28)
+
+**Files Created**:
+- `functions/emailExtraction.js` (6,446 bytes)
+
+**Implementation Details**:
+- Core extraction logic with BLAKE3 hashing
+- Transaction-based processing lock to prevent duplicate processing
+- Recursive extraction support with nesting depth limit (MAX_DEPTH=10)
+- File size validation (MAX_FILE_SIZE=100MB)
+- Attachment deduplication with hash-based checking
+- Email body storage (text and HTML) with truncation support
+- Creates both `uploads` and `emails` collection documents
+- Proper error handling with retry count tracking
+
+**Key Functions**:
+- `hashBlake3(data)` - BLAKE3 hashing for attachments
+- `claimLock(fileHash)` - Transaction-based processing lock
+- `processEmailFile(fileHash, uploadData)` - Main extraction orchestrator
+- `detectFileType(fileName)` - File type detection helper
+
+**Testing**:
+- Module syntax verified successfully
+- All dependencies (constants.js, parsers.js) verified
+- Firebase Admin initialization handled properly (deferred to index.js)
+
+**What's Next**:
+- Step 3: Create `index.js` with Firestore triggers and callable functions
