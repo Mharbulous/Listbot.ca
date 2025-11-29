@@ -31,7 +31,7 @@ async function claimLock(fileHash, firmId, matterId) {
 
 // Main extraction function
 async function processEmailFile(fileHash, uploadData) {
-  const { firmId, userId, matterId, sourceFileName, storagePath, nestingDepth = 0 } = uploadData;
+  const { firmId, userId, matterId, sourceFileName = 'unknown.msg', storagePath, nestingDepth = 0 } = uploadData;
   const ref = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('evidence').doc(fileHash);
 
   try {
