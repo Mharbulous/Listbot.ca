@@ -13,8 +13,8 @@ function hashBlake3(data) {
 }
 
 // Claim processing lock via transaction
-async function claimLock(fileHash) {
-  const ref = db.collection('uploads').doc(fileHash);
+async function claimLock(fileHash, firmId, matterId) {
+  const ref = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('evidence').doc(fileHash);
 
   return db.runTransaction(async (tx) => {
     const doc = await tx.get(ref);
@@ -32,14 +32,14 @@ async function claimLock(fileHash) {
 // Main extraction function
 async function processEmailFile(fileHash, uploadData) {
   const { firmId, userId, matterId, sourceFileName, storagePath, nestingDepth = 0 } = uploadData;
-  const ref = db.collection('uploads').doc(fileHash);
+  const ref = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('evidence').doc(fileHash);
 
   try {
     if (nestingDepth >= MAX_DEPTH) {
       throw new Error(`Exceeded max nesting depth of ${MAX_DEPTH}`);
     }
 
-    const lock = await claimLock(fileHash);
+    const lock = await claimLock(fileHash, firmId, matterId);
     if (!lock.success) {
       console.log(`Skipping ${fileHash}: ${lock.reason}`);
       return { success: false, reason: lock.reason };
@@ -68,8 +68,9 @@ async function processEmailFile(fileHash, uploadData) {
       attachmentHashes.push(attHash);
       const isNested = isEmailFile(att.fileName);
 
-      // Check for duplicate
-      const existing = await db.collection('uploads').doc(attHash).get();
+      // Check for duplicate in evidence collection
+      const evidenceRef = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('evidence');
+      const existing = await evidenceRef.doc(attHash).get();
       const isDuplicate = existing.exists;
 
       if (!isDuplicate) {
@@ -78,19 +79,36 @@ async function processEmailFile(fileHash, uploadData) {
         const attPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}.${attExtension}`;
         await bucket.file(attPath).save(att.data);
 
-        // Create upload document
-        await db.collection('uploads').doc(attHash).set({
-          id: attHash,
+        // Create evidence document for attachment
+        await evidenceRef.doc(attHash).set({
+          // Identity fields
           firmId,
           userId,
           matterId,
-          sourceFileName: att.fileName,
-          fileType: isNested ? 'email' : detectFileType(att.fileName),
-          fileSize: att.size,
-          storagePath: attPath,
-          uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
 
-          // Email fields
+          // Source file properties
+          sourceFileName: att.fileName,
+          fileSize: att.size,
+          fileType: detectFileType(att.fileName),
+          storagePath: attPath,
+          uploadDate: admin.firestore.FieldValue.serverTimestamp(),
+
+          // Processing status
+          isProcessed: false,
+          hasAllPages: null,
+          processingStage: 'uploaded',
+
+          // Tag counters
+          tagCount: 0,
+          autoApprovedCount: 0,
+          reviewRequiredCount: 0,
+
+          // Embedded structures
+          tags: {},
+          sourceMetadata: {},
+          sourceMetadataVariants: {},
+
+          // Email extraction fields
           hasEmailAttachments: isNested ? true : null,
           parseStatus: isNested ? PARSE_STATUS.PENDING : null,
           parseError: null,
@@ -106,7 +124,7 @@ async function processEmailFile(fileHash, uploadData) {
         });
       } else {
         // Update existing with additional source
-        await db.collection('uploads').doc(attHash).update({
+        await evidenceRef.doc(attHash).update({
           extractedFromEmails: admin.firestore.FieldValue.arrayUnion(fileHash)
         });
       }
@@ -120,8 +138,8 @@ async function processEmailFile(fileHash, uploadData) {
       });
     }
 
-    // Save email message
-    const messageRef = db.collection('emails').doc();
+    // Save email message to matter-scoped collection
+    const messageRef = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('emails').doc();
     const messageId = messageRef.id;
 
     // Save bodies to storage (organized by matter for better data organization)

@@ -1,24 +1,21 @@
-# Email Extraction Implementation Plan (v4 - Simplified)
+# Email Extraction Implementation Plan (v5 - Matter-Scoped)
 
-**Date**: 2025-11-28  
-**Status**: Ready for Implementation  
-**Priority**: High  
+**Date**: 2025-11-29
+**Status**: Refactored - Matter Isolation
+**Priority**: High
 
 ---
 
-## Changes from v3
+## Changes from v4 (Matter-Scoped Refactoring)
 
 | Change | Rationale |
 |--------|-----------|
-| Removed `files` collection | Use `uploads` only with `hasEmailAttachments` flag |
-| Removed `emailValidation.js` | Never implemented |
-| Removed `verifyHash()` | Never used |
-| Removed lazy parser loading | Premature optimization |
-| Removed granular progress updates | Server-side doesn't need them |
-| Removed scheduled retry function | Manual retry sufficient for v1 |
-| Removed search denormalization fields | Defer until search is built |
-| Flattened file structure | Fewer files, same functionality |
-| Added `hasEmailAttachments` flag | Enables simple recursive extraction |
+| Removed `uploads` collection | Violates matter isolation - merged into `evidence` |
+| Matter-scoped `emails` collection | Changed from root-level to `/firms/{firmId}/matters/{matterId}/emails/` |
+| Email fields in `evidence` collection | All email extraction fields now part of evidence documents |
+| Updated Cloud Function trigger | Changed from `uploads/{fileHash}` to `firms/{firmId}/matters/{matterId}/evidence/{fileHash}` |
+| Simplified security rules | Single evidence collection rule instead of separate uploads/evidence |
+| Better data organization | All matter data properly isolated for security and queries |
 
 ---
 
@@ -31,7 +28,7 @@
 │  1. User drops .msg/.eml file                                   │
 │  2. Client hashes with BLAKE3                                   │
 │  3. Client uploads to Storage                                   │
-│  4. Client creates Firestore doc (fileType: 'email')            │
+│  4. Client creates evidence doc with email extraction fields    │
 │  5. Client listens for status updates                           │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
@@ -39,13 +36,13 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      CLOUD FUNCTIONS                             │
 ├─────────────────────────────────────────────────────────────────┤
-│  onUploadCreated (Firestore trigger)                            │
+│  onEvidenceCreated (Firestore trigger - matter-scoped)          │
 │    ├── Claim processing lock (transaction)                      │
 │    ├── Download and parse email                                 │
 │    ├── Hash attachments with BLAKE3                             │
 │    ├── Deduplicate and upload new attachments                   │
-│    ├── Create emails collection doc                             │
-│    ├── Set hasEmailAttachments flag on nested .msg/.eml         │
+│    ├── Create matter-scoped emails collection doc               │
+│    ├── Create evidence docs for attachments (nested if .msg)    │
 │    └── Mark complete (triggers cascade for nested emails)       │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -54,7 +51,7 @@
 
 ## Key Design: `hasEmailAttachments` Flag
 
-The `hasEmailAttachments` field on `uploads` documents enables recursive extraction:
+The `hasEmailAttachments` field on `evidence` documents enables recursive extraction:
 
 | Value | Meaning |
 |-------|---------|
@@ -63,9 +60,9 @@ The `hasEmailAttachments` field on `uploads` documents enables recursive extract
 | `null` | Not an email file (PDF, image, etc.) |
 
 **Extraction loop:**
-1. Firestore trigger fires on new upload with `hasEmailAttachments: true`
+1. Firestore trigger fires on new evidence doc with `hasEmailAttachments: true`
 2. Extract email, upload attachments
-3. For any `.msg/.eml` attachments: create upload doc with `hasEmailAttachments: true`
+3. For any `.msg/.eml` attachments: create evidence doc with `hasEmailAttachments: true`
 4. Mark parent as `hasEmailAttachments: false`
 5. Trigger fires again for nested emails → repeat until none left
 
@@ -85,46 +82,60 @@ functions/
 
 ## Firestore Schema
 
-### `uploads` Collection
+### `evidence` Collection (Matter-Scoped)
+
+**Path**: `/firms/{firmId}/matters/{matterId}/evidence/{fileHash}`
 
 ```javascript
 {
-  // Identity
-  id: string,                           // BLAKE3 hash
+  // Identity fields
   firmId: string,
-  userId: string,
   matterId: string,
-  
-  // File info
-  sourceFileName: string,
-  fileType: string,                     // 'email' | 'pdf' | 'image' | etc.
+  userId: string,
+
+  // Display configuration
+  sourceID: string,                     // metadataHash for source identification
+
+  // Source file properties
   fileSize: number,
-  storagePath: string,
-  uploadedAt: Timestamp,
-  
-  // Email extraction (null for non-emails)
+  fileType: string,                     // MIME type from source file
+
+  // Processing status
+  isProcessed: boolean,
+  hasAllPages: boolean | null,
+  processingStage: 'uploaded' | 'splitting' | 'merging' | 'complete',
+
+  // Tag counters
+  tagCount: number,
+  autoApprovedCount: number,
+  reviewRequiredCount: number,
+
+  // Embedded structures
+  tags: object,
+  sourceMetadata: object,
+  sourceMetadataVariants: object,
+
+  // Timestamps
+  uploadDate: Timestamp,
+
+  // Email extraction fields (null for non-emails)
+  storagePath: string | null,
   hasEmailAttachments: boolean | null,  // true=needs extraction, false=done, null=not email
   parseStatus: 'pending' | 'processing' | 'completed' | 'failed' | null,
   parseError: string | null,
   parsedAt: Timestamp | null,
-  
-  // Retry
   retryCount: number,                   // Default: 0, max: 3
-  
-  // Results (populated after extraction)
   extractedMessageId: string | null,    // ID in emails collection
   extractedAttachmentHashes: string[],  // BLAKE3 hashes of attachments
-  
-  // Attachment tracking (for files extracted FROM emails)
   isEmailAttachment: boolean,           // true if extracted from an email
   extractedFromEmails: string[],        // Array of parent email hashes
-  
-  // Nesting (for recursive .msg/.eml)
   nestingDepth: number                  // 0 for user uploads, 1+ for nested
 }
 ```
 
-### `emails` Collection
+### `emails` Collection (Matter-Scoped)
+
+**Path**: `/firms/{firmId}/matters/{matterId}/emails/{messageId}`
 
 ```javascript
 {
@@ -133,23 +144,23 @@ functions/
   firmId: string,
   userId: string,
   matterId: string,
-  
+
   // Source
   sourceFileHash: string,               // BLAKE3 hash of .msg/.eml
   extractedAt: Timestamp,
-  
+
   // Email metadata
   subject: string,
   from: { name: string | null, email: string },
   to: Array<{ name: string | null, email: string }>,
   cc: Array<{ name: string | null, email: string }>,
   date: Timestamp,
-  
+
   // Bodies (stored in Firebase Storage)
-  bodyTextPath: string,
-  bodyHtmlPath: string | null,
+  bodyTextPath: string,                 // firms/{firmId}/matters/{matterId}/emails/{messageId}/body.txt
+  bodyHtmlPath: string | null,          // firms/{firmId}/matters/{matterId}/emails/{messageId}/body.html
   bodyPreview: string,                  // First 500 chars
-  
+
   // Attachments
   hasAttachments: boolean,
   attachmentCount: number,
@@ -160,7 +171,7 @@ functions/
     mimeType: string,
     isDuplicate: boolean
   }>,
-  
+
   createdAt: Timestamp
 }
 ```
@@ -168,6 +179,13 @@ functions/
 ---
 
 ## Implementation
+
+**NOTE**: The code samples in this section reflect the v4 architecture (root-level `uploads` collection). The actual implementation has been refactored to v5 (matter-scoped `evidence` collection). For current implementation, see:
+- `src/features/upload/composables/useFileMetadata.js` (client-side)
+- `src/features/documents/services/evidenceService.js` (client-side)
+- `functions/emailExtraction.js` (server-side)
+- `functions/index.js` (server-side triggers)
+- `firestore.rules` (security rules)
 
 ### constants.js
 
@@ -687,31 +705,34 @@ const { status, error, canRetry, retry } = useEmailExtractionStatus(toRef(props,
 
 ## Security Rules
 
-### Firestore
+### Firestore (v5 - Matter-Scoped)
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    match /emails/{messageId} {
-      allow read, write: if request.auth != null 
+
+    // Matter-scoped email messages extracted from .msg/.eml files
+    match /firms/{firmId}/matters/{matterId}/emails/{messageId} {
+      allow read, write: if request.auth != null
         && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
+      allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userId;
     }
-    
-    match /uploads/{fileHash} {
-      allow read: if request.auth != null 
+
+    // Matter-scoped evidence collection
+    match /firms/{firmId}/matters/{matterId}/evidence/{fileHash} {
+      allow read: if request.auth != null
         && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
+      allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth != null 
+      allow update: if request.auth != null
         && (request.auth.uid == resource.data.userId || isCloudFunctionUpdate());
-      allow delete: if request.auth != null 
+      allow delete: if request.auth != null
         && request.auth.uid == resource.data.userId;
     }
-    
+
+    // Helper function: allows Cloud Functions to update email extraction fields in evidence
     function isCloudFunctionUpdate() {
       return request.resource.data.diff(resource.data)
         .affectedKeys()
@@ -721,20 +742,27 @@ service cloud.firestore {
           'isEmailAttachment', 'extractedFromEmails'
         ]);
     }
+
+    // Fallback rule for other collections
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
 ```
 
-### Storage
+### Storage (v5 - Matter-Scoped)
 
 ```javascript
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /firms/{firmId}/emails/{messageId}/{fileName} {
+    // Matter-scoped email bodies
+    match /firms/{firmId}/matters/{matterId}/emails/{messageId}/{fileName} {
       allow read, write: if request.auth != null && request.auth.uid == firmId;
     }
-    
+
+    // Matter-scoped file uploads
     match /firms/{firmId}/matters/{matterId}/uploads/{fileHash} {
       allow read, write: if request.auth != null && request.auth.uid == firmId;
     }
