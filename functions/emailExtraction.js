@@ -73,8 +73,9 @@ async function processEmailFile(fileHash, uploadData) {
       const isDuplicate = existing.exists;
 
       if (!isDuplicate) {
-        // Upload to storage
-        const attPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}`;
+        // Upload to storage (with file extension to match client upload pattern)
+        const attExtension = att.fileName.split('.').pop().toLowerCase();
+        const attPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}.${attExtension}`;
         await bucket.file(attPath).save(att.data);
 
         // Create upload document
@@ -123,13 +124,13 @@ async function processEmailFile(fileHash, uploadData) {
     const messageRef = db.collection('emails').doc();
     const messageId = messageRef.id;
 
-    // Save bodies to storage
+    // Save bodies to storage (organized by matter for better data organization)
     let bodyText = parsed.bodyText;
     if (bodyText.length > MAX_BODY_SIZE) {
       bodyText = bodyText.substring(0, MAX_BODY_SIZE) + '\n\n[Truncated]';
     }
 
-    const bodyTextPath = `firms/${firmId}/emails/${messageId}/body.txt`;
+    const bodyTextPath = `firms/${firmId}/matters/${matterId}/emails/${messageId}/body.txt`;
     await bucket.file(bodyTextPath).save(Buffer.from(bodyText, 'utf-8'));
 
     let bodyHtmlPath = null;
@@ -138,7 +139,7 @@ async function processEmailFile(fileHash, uploadData) {
       if (html.length > MAX_BODY_SIZE) {
         html = html.substring(0, MAX_BODY_SIZE);
       }
-      bodyHtmlPath = `firms/${firmId}/emails/${messageId}/body.html`;
+      bodyHtmlPath = `firms/${firmId}/matters/${matterId}/emails/${messageId}/body.html`;
       await bucket.file(bodyHtmlPath).save(Buffer.from(html, 'utf-8'));
     }
 
