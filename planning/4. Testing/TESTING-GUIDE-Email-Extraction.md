@@ -1,8 +1,14 @@
 # Email Extraction Testing Guide
 
+**Version**: 3.0 (v5 Matter-Scoped Architecture)
 **Status**: Ready for Testing
 **Environment**: Production (us-west1)
-**Date Created**: 2025-11-28
+**Last Updated**: 2025-11-29
+
+> **Note**: This guide reflects the v5 architecture where all data is matter-scoped.
+> - `uploads` collection → `evidence` collection (within matter scope)
+> - `emails` collection → matter-scoped `emails` subcollection
+> - All paths include `firmId` and `matterId`
 
 ---
 
@@ -74,14 +80,14 @@ You'll need to prepare or obtain the following test files:
 
 **Expected Logs**:
 - "File hashed: [64-char hash]"
-- "Uploaded to Storage: firms/.../uploads/[hash]"
-- "Created uploads document with hasEmailAttachments: true"
+- "Uploaded to Storage: firms/{firmId}/matters/{matterId}/evidence/[hash]"
+- "Created evidence document with hasEmailAttachments: true"
 
 ### Step 1.3: Verify Firestore Documents
 
 **Open Firebase Console → Firestore Database**
 
-**Check `uploads` collection**:
+**Navigate to**: `firms/{firmId}/matters/{matterId}/evidence`
 
 1. Find document with ID = your file hash
 2. Verify initial state:
@@ -91,11 +97,28 @@ You'll need to prepare or obtain the following test files:
      firmId: "[your-firm-id]",
      userId: "[your-user-id]",
      matterId: "[matter-id]",
+
+     // Source tracking (v5)
+     sourceID: "[hash]",           // Same as id for original uploads
+     sourceType: "original",       // "original" | "copy" | "duplicate"
+
+     // File metadata
      sourceFileName: "test-email.msg",
      fileType: "email",
      fileSize: [number],
-     storagePath: "firms/.../uploads/[hash]",
+     storagePath: "firms/{firmId}/matters/{matterId}/evidence/[hash]",
      uploadedAt: [timestamp],
+
+     // Deduplication metadata (v5)
+     tags: [],
+     sourceMetadataVariants: [{
+       firmId: "[firm-id]",
+       matterId: "[matter-id]",
+       userId: "[user-id]",
+       sourceFileName: "test-email.msg",
+       uploadedAt: [timestamp],
+       path: "original-path"
+     }],
 
      // Email extraction fields
      hasEmailAttachments: true,  // Initially TRUE
@@ -125,7 +148,7 @@ You'll need to prepare or obtain the following test files:
    }
    ```
 
-**Check `emails` collection**:
+**Navigate to**: `firms/{firmId}/matters/{matterId}/emails`
 
 1. Find the new document (ID should match `extractedMessageId` from above)
 2. Verify structure:
@@ -145,9 +168,9 @@ You'll need to prepare or obtain the following test files:
      cc: [],
      date: [email-date-timestamp],
 
-     // Body storage paths
-     bodyTextPath: "firms/.../emails/[msg-id]/body.txt",
-     bodyHtmlPath: "firms/.../emails/[msg-id]/body.html",  // May be null
+     // Body storage paths (matter-scoped)
+     bodyTextPath: "firms/{firmId}/matters/{matterId}/emails/[msg-id]/body.txt",
+     bodyHtmlPath: "firms/{firmId}/matters/{matterId}/emails/[msg-id]/body.html",  // May be null
      bodyPreview: "First 500 characters of email body...",
 
      // Attachments
@@ -163,7 +186,7 @@ You'll need to prepare or obtain the following test files:
 
 **Open Firebase Console → Storage**
 
-1. Navigate to `firms/[firm-id]/emails/[msg-id]/`
+1. Navigate to `firms/{firmId}/matters/{matterId}/emails/[msg-id]/`
 2. Verify files exist:
    - `body.txt` - Plain text email body
    - `body.html` - HTML email body (if present)
@@ -174,23 +197,23 @@ You'll need to prepare or obtain the following test files:
 ### Step 1.5: Check Function Logs
 
 **Via Firebase Console**:
-1. Go to Functions → onUploadCreated → Logs
+1. Go to Functions → onEvidenceCreated → Logs
 2. Look for recent execution
 3. Expected log: `"Extracted [hash]: 0 attachments"`
 
 **Via CLI** (optional):
 ```bash
-firebase functions:log --only onUploadCreated --limit 10
+firebase functions:log --only onEvidenceCreated --limit 10
 ```
 
 ### ✅ Test 1 Success Criteria
 
 - [ ] File uploaded to Storage successfully
-- [ ] `uploads` document created with correct initial state
+- [ ] `evidence` document created with correct initial state (including v5 fields)
 - [ ] `parseStatus` transitioned: `pending` → `processing` → `completed`
 - [ ] `hasEmailAttachments` changed: `true` → `false`
-- [ ] `emails` document created with correct metadata
-- [ ] Email body saved to Storage (body.txt)
+- [ ] `emails` document created in matter-scoped subcollection with correct metadata
+- [ ] Email body saved to Storage at matter-scoped path (body.txt)
 - [ ] Function logs show successful extraction
 - [ ] No errors in browser console or function logs
 
@@ -207,11 +230,11 @@ firebase functions:log --only onUploadCreated --limit 10
 
 ### Step 2.2: Monitor Processing
 
-Watch the `uploads` document for the parent email as it processes.
+Watch the `evidence` document for the parent email as it processes.
 
 ### Step 2.3: Verify Attachment Extraction
 
-**Check `uploads` collection**:
+**Navigate to**: `firms/{firmId}/matters/{matterId}/evidence`
 
 1. Find the parent email document (should now be `parseStatus: "completed"`)
 2. Check `extractedAttachmentHashes` array:
@@ -225,7 +248,7 @@ Watch the `uploads` document for the parent email as it processes.
    }
    ```
 
-3. For EACH hash in the array, find the corresponding upload document:
+3. For EACH hash in the array, find the corresponding evidence document:
    ```javascript
    // Document ID = attachment hash
    {
@@ -233,11 +256,21 @@ Watch the `uploads` document for the parent email as it processes.
      firmId: "[same-firm]",
      userId: "[same-user]",
      matterId: "[same-matter]",
+
+     // Source tracking (v5)
+     sourceID: "abc123def456...",
+     sourceType: "original",
+
+     // File metadata
      sourceFileName: "attachment.pdf",
      fileType: "pdf",  // Detected from extension
      fileSize: [number],
-     storagePath: "firms/.../uploads/abc123def456...",
+     storagePath: "firms/{firmId}/matters/{matterId}/evidence/abc123def456...",
      uploadedAt: [timestamp],
+
+     // Deduplication metadata (v5)
+     tags: [],
+     sourceMetadataVariants: [{...}],
 
      // Email fields (null for non-email attachments)
      hasEmailAttachments: null,
@@ -255,7 +288,7 @@ Watch the `uploads` document for the parent email as it processes.
    }
    ```
 
-**Check `emails` collection**:
+**Navigate to**: `firms/{firmId}/matters/{matterId}/emails`
 
 1. Find the email document (ID from `extractedMessageId`)
 2. Verify `attachments` array:
@@ -293,7 +326,7 @@ Watch the `uploads` document for the parent email as it processes.
 
 **Check Firebase Storage**:
 
-1. Navigate to `firms/[firm-id]/matters/[matter-id]/uploads/`
+1. Navigate to `firms/{firmId}/matters/{matterId}/evidence/`
 2. Verify each attachment file exists with hash as filename
 3. Download and verify file integrity
 
@@ -303,7 +336,7 @@ Watch the `uploads` document for the parent email as it processes.
 
 1. Upload the identical email file (same attachments)
 2. Wait for processing to complete
-3. Check `uploads` collection for attachment hashes
+3. Check `evidence` collection for attachment hashes
 4. Verify `isDuplicate: true` in the new email's attachment array
 5. Confirm NO new files created in Storage (attachments reused)
 6. Verify `extractedFromEmails` array updated with new parent:
@@ -319,10 +352,10 @@ Watch the `uploads` document for the parent email as it processes.
 ### ✅ Test 2 Success Criteria
 
 - [ ] All attachments extracted and uploaded to Storage
-- [ ] Each attachment has correct `uploads` document with `isEmailAttachment: true`
+- [ ] Each attachment has correct `evidence` document with `isEmailAttachment: true`
 - [ ] `extractedAttachmentHashes` array contains all attachment hashes
 - [ ] `emails` document has correct `attachments` array metadata
-- [ ] Attachment files accessible in Storage
+- [ ] Attachment files accessible in matter-scoped Storage path
 - [ ] Duplicate attachments detected (`isDuplicate: true`)
 - [ ] Duplicate attachments NOT re-uploaded to Storage
 - [ ] `extractedFromEmails` array updated for duplicates
@@ -345,7 +378,7 @@ Watch the `uploads` document for the parent email as it processes.
 
 1. **First execution**: Processes parent email
    - Extracts nested .msg/.eml file
-   - Creates `uploads` document for nested email with `hasEmailAttachments: true`
+   - Creates `evidence` document for nested email with `hasEmailAttachments: true`
    - Marks parent as `parseStatus: "completed"`
 
 2. **Second execution**: Processes nested email (triggered automatically)
@@ -354,7 +387,7 @@ Watch the `uploads` document for the parent email as it processes.
 
 ### Step 3.3: Verify Parent Email
 
-**Check `uploads` collection** (parent email document):
+**Navigate to**: `firms/{firmId}/matters/{matterId}/evidence` (parent email document)
 
 ```javascript
 {
@@ -371,7 +404,7 @@ Watch the `uploads` document for the parent email as it processes.
 }
 ```
 
-**Check `emails` collection** (parent email document):
+**Navigate to**: `firms/{firmId}/matters/{matterId}/emails` (parent email document)
 
 ```javascript
 {
@@ -390,7 +423,7 @@ Watch the `uploads` document for the parent email as it processes.
 
 ### Step 3.4: Verify Nested Email
 
-**Check `uploads` collection** (nested email document):
+**Navigate to**: `firms/{firmId}/matters/{matterId}/evidence` (nested email document)
 
 ```javascript
 {
@@ -409,7 +442,7 @@ Watch the `uploads` document for the parent email as it processes.
 }
 ```
 
-**Check `emails` collection** (nested email document):
+**Navigate to**: `firms/{firmId}/matters/{matterId}/emails` (nested email document)
 
 ```javascript
 {
@@ -444,7 +477,8 @@ Watch the `uploads` document for the parent email as it processes.
 
 - [ ] Parent email processed successfully
 - [ ] Nested email detected and extracted
-- [ ] Both emails have separate `emails` collection documents
+- [ ] Both emails have separate documents in matter-scoped `emails` subcollection
+- [ ] Both emails have `evidence` documents in matter-scoped `evidence` collection
 - [ ] `nestingDepth` increments correctly (0, 1, 2, ...)
 - [ ] `extractedFromEmails` tracks parent relationship
 - [ ] Function triggered twice (once for each email)
@@ -551,7 +585,11 @@ import { functions } from '@/firebase';
 const retry = httpsCallable(functions, 'retryEmailExtraction');
 
 try {
-  const result = await retry({ fileHash: '[failed-file-hash]' });
+  const result = await retry({
+    fileHash: '[failed-file-hash]',
+    firmId: '[your-firm-id]',
+    matterId: '[matter-id]'
+  });
   console.log('Retry result:', result.data);
 } catch (error) {
   console.error('Retry failed:', error.code, error.message);
@@ -602,7 +640,7 @@ await retry({ fileHash: 'any-hash' });
 
 **Via Firebase Console**:
 
-1. Navigate to Functions → onUploadCreated
+1. Navigate to Functions → onEvidenceCreated
 2. Click "Logs" tab
 3. Set filter to "Last 1 hour"
 4. Look for:
@@ -614,18 +652,18 @@ await retry({ fileHash: 'any-hash' });
 
 ```bash
 # Stream live logs
-firebase functions:log --only onUploadCreated
+firebase functions:log --only onEvidenceCreated
 
 # View recent logs with limit
-firebase functions:log --only onUploadCreated --limit 20
+firebase functions:log --only onEvidenceCreated --limit 20
 
 # Filter by severity
-firebase functions:log --only onUploadCreated --filter "severity=ERROR"
+firebase functions:log --only onEvidenceCreated --filter "severity=ERROR"
 ```
 
 ### Step 6.2: Check Function Performance Metrics
 
-**In Firebase Console → Functions → onUploadCreated → Metrics**:
+**In Firebase Console → Functions → onEvidenceCreated → Metrics**:
 
 Review:
 - **Invocations**: Total trigger count
@@ -680,16 +718,16 @@ Review:
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 
-// Test 1: Read own upload
-const myDoc = await getDoc(doc(db, 'uploads', '[my-file-hash]'));
-console.log('Read own upload:', myDoc.exists());  // Should be true
+// Test 1: Read own evidence document
+const myDoc = await getDoc(doc(db, 'firms/[firm-id]/matters/[matter-id]/evidence', '[my-file-hash]'));
+console.log('Read own evidence:', myDoc.exists());  // Should be true
 
-// Test 2: Try to read another user's upload
-const otherDoc = await getDoc(doc(db, 'uploads', '[other-user-hash]'));
-console.log('Read other upload:', otherDoc.exists());  // Should fail with permission-denied
+// Test 2: Try to read another user's evidence in different matter
+const otherDoc = await getDoc(doc(db, 'firms/[other-firm]/matters/[other-matter]/evidence', '[other-hash]'));
+console.log('Read other evidence:', otherDoc.exists());  // Should fail with permission-denied
 
 // Test 3: Try to update protected field
-await updateDoc(doc(db, 'uploads', '[my-file-hash]'), {
+await updateDoc(doc(db, 'firms/[firm-id]/matters/[matter-id]/evidence', '[my-file-hash]'), {
   userId: 'different-user'  // Should fail
 });
 ```
@@ -766,7 +804,7 @@ Mark each item when verified:
 
 **Debugging Steps**:
 1. Check function deployment: `firebase functions:list`
-2. Check function logs: `firebase functions:log --only onUploadCreated`
+2. Check function logs: `firebase functions:log --only onEvidenceCreated`
 3. Verify trigger configuration in Firebase Console
 
 ---
@@ -795,7 +833,7 @@ Mark each item when verified:
 **Debugging Steps**:
 1. Check function logs for parser errors
 2. Verify attachment size < 100MB
-3. Check `parseError` field in `uploads` document
+3. Check `parseError` field in `evidence` document
 4. Test with simpler email file
 
 ---
@@ -809,9 +847,9 @@ Mark each item when verified:
 
 **Debugging Steps**:
 1. Compare client hash vs. server hash (check logs)
-2. Verify `uploads` document created before extraction
+2. Verify `evidence` document created before extraction
 3. Check `isDuplicate` flag in email's `attachments` array
-4. Review storage paths for consistency
+4. Review storage paths for consistency (matter-scoped)
 
 ---
 
@@ -900,7 +938,7 @@ After completing all tests, document your results:
 
 ```bash
 # View function logs
-firebase functions:log --only onUploadCreated --limit 20
+firebase functions:log --only onEvidenceCreated --limit 20
 
 # Deploy functions
 firebase deploy --only functions
@@ -917,7 +955,11 @@ firebase functions:list
 
 # Test retry function (browser console)
 const fn = httpsCallable(functions, 'retryEmailExtraction');
-await fn({ fileHash: '[hash]' });
+await fn({
+  fileHash: '[hash]',
+  firmId: '[firm-id]',
+  matterId: '[matter-id]'
+});
 ```
 
 ---
