@@ -90,49 +90,70 @@ You'll need to prepare or obtain the following test files:
 **Navigate to**: `firms/{firmId}/matters/{matterId}/evidence`
 
 1. Find document with ID = your file hash
-2. Verify initial state:
+2. Verify initial state (fields shown in Firebase Console alphabetical order):
    ```javascript
    {
-     id: "[hash]",
-     firmId: "[your-firm-id]",
-     userId: "[your-user-id]",
-     matterId: "[matter-id]",
-
-     // Source tracking (v5)
-     sourceID: "[hash]",           // Same as id for original uploads
-     sourceType: "original",       // "original" | "copy" | "duplicate"
-
-     // File metadata
-     sourceFileName: "test-email.msg",
-     fileType: "email",
-     fileSize: [number],
-     storagePath: "firms/{firmId}/matters/{matterId}/evidence/[hash]",
-     uploadedAt: [timestamp],
-
-     // Deduplication metadata (v5)
-     tags: [],
-     sourceMetadataVariants: [{
-       firmId: "[firm-id]",
-       matterId: "[matter-id]",
-       userId: "[user-id]",
-       sourceFileName: "test-email.msg",
-       uploadedAt: [timestamp],
-       path: "original-path"
-     }],
+     // Tag counters (alphabetically first)
+     autoApprovedCount: 0,
 
      // Email extraction fields
-     hasEmailAttachments: true,  // Initially TRUE
-     parseStatus: "pending",     // Then "processing" → "completed"
-     parseError: null,
-     parsedAt: null,
-     retryCount: 0,
-     extractedMessageId: null,
      extractedAttachmentHashes: [],
+     extractedFromEmails: [],
+     extractedMessageId: null,
+
+     // File metadata
+     fileSize: [number],
+     fileType: "email",
+     firmId: "[your-firm-id]",
+
+     // Processing status
+     hasAllPages: null,
+     hasEmailAttachments: true,  // Initially TRUE
 
      // Attachment tracking
      isEmailAttachment: false,
-     extractedFromEmails: [],
-     nestingDepth: 0
+     isProcessed: false,
+
+     // Identity
+     matterId: "[matter-id]",
+     nestingDepth: 0,
+
+     // Parsing status
+     parseError: null,
+     parseStatus: "pending",     // Then "processing" → "completed"
+     parsedAt: null,
+     processingStage: "uploaded",
+     retryCount: 0,
+     reviewRequiredCount: 0,
+
+     // Source tracking
+     sourceFileName: "test-email.msg",
+     sourceFolderPath: "",
+     sourceID: "[hash]",           // Same as id for original uploads
+     sourceLastModified: [timestamp],
+     sourceMetadata: {},
+     sourceMetadataCount: 1,
+     sourceMetadataVariants: {
+       "[hash]": {
+         sourceFileName: "test-email.msg",
+         sourceFolderPath: "",
+         sourceLastModified: [timestamp],
+         uploadDate: [timestamp]
+       }
+     },
+
+     // Storage
+     storagePath: "firms/{firmId}/matters/{matterId}/uploads/[hash].msg",
+
+     // Tags
+     tagCount: 0,
+     tags: {},
+
+     // Timestamps
+     uploadDate: [timestamp],
+
+     // User
+     userId: "[your-user-id]"
    }
    ```
 
@@ -248,43 +269,71 @@ Watch the `evidence` document for the parent email as it processes.
    }
    ```
 
-3. For EACH hash in the array, find the corresponding evidence document:
+3. For EACH hash in the array, find the corresponding evidence document (alphabetical order):
    ```javascript
    // Document ID = attachment hash
    {
-     id: "abc123def456...",
-     firmId: "[same-firm]",
-     userId: "[same-user]",
-     matterId: "[same-matter]",
-
-     // Source tracking (v5)
-     sourceID: "abc123def456...",
-     sourceType: "original",
-
-     // File metadata
-     sourceFileName: "attachment.pdf",
-     fileType: "pdf",  // Detected from extension
-     fileSize: [number],
-     storagePath: "firms/{firmId}/matters/{matterId}/evidence/abc123def456...",
-     uploadedAt: [timestamp],
-
-     // Deduplication metadata (v5)
-     tags: [],
-     sourceMetadataVariants: [{...}],
+     // Tag counters
+     autoApprovedCount: 0,
 
      // Email fields (null for non-email attachments)
-     hasEmailAttachments: null,
-     parseStatus: null,
-     parseError: null,
-     parsedAt: null,
-     retryCount: 0,
-     extractedMessageId: null,
      extractedAttachmentHashes: [],
+     extractedFromEmails: ["[parent-hash]"],  // Parent email hash
+     extractedMessageId: null,
+
+     // File metadata
+     fileSize: [number],
+     fileType: "pdf",  // Detected from extension
+     firmId: "[same-firm]",
+
+     // Processing status
+     hasAllPages: null,
+     hasEmailAttachments: null,
 
      // Attachment tracking
      isEmailAttachment: true,            // TRUE - extracted from email
-     extractedFromEmails: ["[parent-hash]"],  // Parent email hash
-     nestingDepth: 1                      // One level deep
+     isProcessed: false,
+
+     // Identity
+     matterId: "[same-matter]",
+     nestingDepth: 1,                    // One level deep
+
+     // Parsing status (null for non-email attachments)
+     parseError: null,
+     parseStatus: null,
+     parsedAt: null,
+     processingStage: "uploaded",
+     retryCount: 0,
+     reviewRequiredCount: 0,
+
+     // Source tracking
+     sourceFileName: "attachment.pdf",
+     sourceFolderPath: "",
+     sourceID: "abc123def456...",
+     sourceLastModified: [timestamp],
+     sourceMetadata: {},
+     sourceMetadataCount: 1,
+     sourceMetadataVariants: {
+       "abc123def456...": {
+         sourceFileName: "attachment.pdf",
+         sourceFolderPath: "",
+         sourceLastModified: [timestamp],
+         uploadDate: [timestamp]
+       }
+     },
+
+     // Storage
+     storagePath: "firms/{firmId}/matters/{matterId}/uploads/abc123def456...",
+
+     // Tags
+     tagCount: 0,
+     tags: {},
+
+     // Timestamps
+     uploadDate: [timestamp],
+
+     // User
+     userId: "[same-user]"
    }
    ```
 
@@ -391,16 +440,16 @@ Watch the `evidence` document for the parent email as it processes.
 
 ```javascript
 {
-  id: "[parent-hash]",
-  sourceFileName: "parent-email.msg",
-  fileType: "email",
-  hasEmailAttachments: false,      // Completed
-  parseStatus: "completed",
+  // Key fields only (alphabetical order):
   extractedAttachmentHashes: [
     "[nested-email-hash]",         // Hash of nested .msg file
     "[other-attachment-hash]"      // Other attachments (if any)
   ],
-  nestingDepth: 0                  // Top level
+  fileType: "email",
+  hasEmailAttachments: false,      // Completed
+  nestingDepth: 0,                 // Top level
+  parseStatus: "completed",
+  sourceFileName: "parent-email.msg"
 }
 ```
 
@@ -427,18 +476,16 @@ Watch the `evidence` document for the parent email as it processes.
 
 ```javascript
 {
-  id: "[nested-email-hash]",
-  sourceFileName: "nested-email.msg",
+  // Key fields only (alphabetical order):
+  extractedAttachmentHashes: [...], // Nested email's attachments
+  extractedFromEmails: ["[parent-hash]"],
+  extractedMessageId: "[nested-msg-id]",
   fileType: "email",
   hasEmailAttachments: false,      // Completed (initially was true)
-  parseStatus: "completed",
-  extractedMessageId: "[nested-msg-id]",
-  extractedAttachmentHashes: [...], // Nested email's attachments
-
-  // Lineage tracking
   isEmailAttachment: true,          // TRUE - extracted from parent
-  extractedFromEmails: ["[parent-hash]"],
-  nestingDepth: 1                   // One level deeper
+  nestingDepth: 1,                  // One level deeper
+  parseStatus: "completed",
+  sourceFileName: "nested-email.msg"
 }
 ```
 
