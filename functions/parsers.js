@@ -72,6 +72,7 @@ function parseEmail(buffer, fileName) {
 }
 
 function isEmailFile(fileName) {
+  if (!fileName || typeof fileName !== 'string') return false;
   const ext = fileName.toLowerCase().split('.').pop();
   return ext === 'msg' || ext === 'eml';
 }
