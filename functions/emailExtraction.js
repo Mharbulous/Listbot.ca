@@ -60,13 +60,15 @@ async function processEmailFile(fileHash, uploadData) {
     const attachmentHashes = [];
 
     for (const att of parsed.attachments) {
+      const safeFileName = att.fileName || 'unnamed';
+
       if (att.size > MAX_FILE_SIZE) {
-        throw new Error(`Attachment "${att.fileName}" exceeds 100MB limit`);
+        throw new Error(`Attachment "${safeFileName}" exceeds 100MB limit`);
       }
 
       const attHash = hashBlake3(att.data);
       attachmentHashes.push(attHash);
-      const isNested = isEmailFile(att.fileName);
+      const isNested = isEmailFile(safeFileName);
 
       // Check for duplicate in evidence collection
       const evidenceRef = db.collection('firms').doc(firmId).collection('matters').doc(matterId).collection('evidence');
@@ -75,7 +77,7 @@ async function processEmailFile(fileHash, uploadData) {
 
       if (!isDuplicate) {
         // Upload to storage (with file extension to match client upload pattern)
-        const attExtension = att.fileName.split('.').pop().toLowerCase();
+        const attExtension = safeFileName.split('.').pop().toLowerCase();
         const attPath = `firms/${firmId}/matters/${matterId}/uploads/${attHash}.${attExtension}`;
         await bucket.file(attPath).save(att.data);
 
@@ -87,9 +89,9 @@ async function processEmailFile(fileHash, uploadData) {
           matterId,
 
           // Source file properties
-          sourceFileName: att.fileName,
+          sourceFileName: safeFileName,
           fileSize: att.size,
-          fileType: detectFileType(att.fileName),
+          fileType: detectFileType(safeFileName),
           storagePath: attPath,
           uploadDate: admin.firestore.FieldValue.serverTimestamp(),
 
@@ -131,7 +133,7 @@ async function processEmailFile(fileHash, uploadData) {
 
       attachmentResults.push({
         fileHash: attHash,
-        fileName: att.fileName,
+        fileName: safeFileName,
         size: att.size,
         mimeType: att.mimeType,
         isDuplicate
@@ -213,6 +215,7 @@ async function processEmailFile(fileHash, uploadData) {
 }
 
 function detectFileType(fileName) {
+  if (!fileName || typeof fileName !== 'string') return 'other';
   const ext = fileName.toLowerCase().split('.').pop();
   const map = {
     pdf: 'pdf', jpg: 'image', jpeg: 'image', png: 'image', gif: 'image',
