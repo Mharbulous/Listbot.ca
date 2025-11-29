@@ -160,6 +160,9 @@ export function useFileMetadata() {
         const userId = authStore.user?.uid;
 
         // Create uploads document (all files, email and non-email)
+        // Extract file extension for storage path (must match actual Storage upload path)
+        const fileExtension = sourceFileName.split('.').pop().toLowerCase();
+
         await setDoc(uploadsRef, {
           id: fileHash,
           firmId: firmId,
@@ -170,7 +173,7 @@ export function useFileMetadata() {
           sourceFileName: sourceFileName,
           fileType: isEmailFile ? 'email' : detectFileType(sourceFileName),
           fileSize: size || 0,
-          storagePath: `firms/${firmId}/matters/${matterId}/uploads/${fileHash}`,
+          storagePath: `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${fileExtension}`,
           uploadedAt: Timestamp.now(),
 
           // Email extraction (null for non-emails)
