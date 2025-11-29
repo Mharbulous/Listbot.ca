@@ -59,6 +59,11 @@ export class EvidenceService {
         // Display configuration (simplified to just metadataHash string)
         sourceID: metadataHash,
 
+        // Identity fields (for Cloud Function access)
+        firmId: this.firmId,
+        matterId: this.matterId,
+        userId: uploadMetadata.userId || null,
+
         // Source file properties (for quick access)
         fileSize: uploadMetadata.size || 0,
         fileType: uploadMetadata.fileType || '', // MIME type from source file
@@ -82,6 +87,19 @@ export class EvidenceService {
 
         // Timestamps
         uploadDate: uploadDateTimestamp,
+
+        // Email extraction fields (null for non-emails)
+        storagePath: uploadMetadata.storagePath || null,
+        hasEmailAttachments: uploadMetadata.hasEmailAttachments || null,
+        parseStatus: uploadMetadata.parseStatus || null,
+        parseError: uploadMetadata.parseError || null,
+        parsedAt: uploadMetadata.parsedAt || null,
+        retryCount: uploadMetadata.retryCount || 0,
+        extractedMessageId: uploadMetadata.extractedMessageId || null,
+        extractedAttachmentHashes: uploadMetadata.extractedAttachmentHashes || [],
+        isEmailAttachment: uploadMetadata.isEmailAttachment || false,
+        extractedFromEmails: uploadMetadata.extractedFromEmails || [],
+        nestingDepth: uploadMetadata.nestingDepth || 0,
       };
 
       // Use setDoc with fileHash as document ID (automatic deduplication)

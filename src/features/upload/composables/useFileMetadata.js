@@ -131,75 +131,17 @@ export function useFileMetadata() {
       // Update folder paths using pattern recognition
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
 
-      // STEP 1A: Create Uploads document for email extraction tracking
-      // All files get an uploads document, email files trigger Cloud Function processing
-      const uploadsRef = doc(db, 'uploads', fileHash);
+      // Detect if file is an email file (.msg or .eml) for email extraction fields
+      const isEmailFile = ['msg', 'eml'].includes(
+        sourceFileName.toLowerCase().split('.').pop()
+      );
 
-      // Check if uploads document already exists (e.g., from a previous upload of same file)
-      const existingUploadsDoc = await getDoc(uploadsRef);
-
-      if (!existingUploadsDoc.exists()) {
-        // Detect if file is an email file (.msg or .eml)
-        const isEmailFile = ['msg', 'eml'].includes(
-          sourceFileName.toLowerCase().split('.').pop()
-        );
-
-        // Detect file type for uploads collection
-        const detectFileType = (fileName) => {
-          const ext = fileName.toLowerCase().split('.').pop();
-          const typeMap = {
-            pdf: 'pdf',
-            jpg: 'image', jpeg: 'image', png: 'image', gif: 'image',
-            doc: 'word', docx: 'word',
-            xls: 'excel', xlsx: 'excel',
-            msg: 'email', eml: 'email',
-          };
-          return typeMap[ext] || 'other';
-        };
-
-        const userId = authStore.user?.uid;
-
-        // Create uploads document (all files, email and non-email)
-        // Extract file extension for storage path (must match actual Storage upload path)
-        const fileExtension = sourceFileName.split('.').pop().toLowerCase();
-
-        await setDoc(uploadsRef, {
-          id: fileHash,
-          firmId: firmId,
-          userId: userId,
-          matterId: matterId,
-
-          // File info
-          sourceFileName: sourceFileName,
-          fileType: isEmailFile ? 'email' : detectFileType(sourceFileName),
-          fileSize: size || 0,
-          storagePath: `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${fileExtension}`,
-          uploadedAt: Timestamp.now(),
-
-          // Email extraction (null for non-emails)
-          hasEmailAttachments: isEmailFile ? true : null,
-          parseStatus: isEmailFile ? 'pending' : null,
-          parseError: null,
-          parsedAt: null,
-
-          // Retry tracking
-          retryCount: 0,
-
-          // Results (populated after extraction)
-          extractedMessageId: null,
-          extractedAttachmentHashes: [],
-
-          // Attachment tracking (for files extracted FROM emails)
-          isEmailAttachment: false,
-          extractedFromEmails: [],
-
-          // Nesting (for recursive .msg/.eml)
-          nestingDepth: 0,
-        });
-      }
-
-      // STEP 1B: Create Evidence document (parent document must exist before subcollections)
+      // STEP 1: Create Evidence document (parent document must exist before subcollections)
       const evidenceService = new EvidenceService(firmId, matterId);
+
+      // Extract file extension for storage path (must match actual Storage upload path)
+      const fileExtension = sourceFileName.split('.').pop().toLowerCase();
+      const userId = authStore.user?.uid;
 
       const uploadMetadata = {
         hash: fileHash,
@@ -209,6 +151,21 @@ export function useFileMetadata() {
         metadataHash: metadataHash,
         storageCreatedTimestamp: storageCreatedTimestamp,
         fileType: sourceFileType || '', // MIME type from source file
+        userId: userId,
+
+        // Email extraction fields (null for non-emails)
+        isEmailFile: isEmailFile,
+        storagePath: `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${fileExtension}`,
+        hasEmailAttachments: isEmailFile ? true : null,
+        parseStatus: isEmailFile ? 'pending' : null,
+        parseError: null,
+        parsedAt: null,
+        retryCount: 0,
+        extractedMessageId: null,
+        extractedAttachmentHashes: [],
+        isEmailAttachment: false,
+        extractedFromEmails: [],
+        nestingDepth: 0,
       };
 
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);

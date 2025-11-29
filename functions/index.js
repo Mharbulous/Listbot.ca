@@ -7,9 +7,9 @@ admin.initializeApp();
 const { processEmailFile } = require('./emailExtraction');
 const { PARSE_STATUS, MAX_RETRY } = require('./constants');
 
-// Primary trigger: fires when upload document created
-exports.onUploadCreated = onDocumentCreated({
-  document: 'uploads/{fileHash}',
+// Primary trigger: fires when evidence document created
+exports.onEvidenceCreated = onDocumentCreated({
+  document: 'firms/{firmId}/matters/{matterId}/evidence/{fileHash}',
   region: 'us-west1',
   memory: '2GiB',
   timeoutSeconds: 300,
@@ -38,13 +38,17 @@ exports.retryEmailExtraction = onCall({
   memory: '2GiB',
   timeoutSeconds: 300,
 }, async (request) => {
-  const { fileHash } = request.data;
+  const { fileHash, firmId, matterId } = request.data;
   const uid = request.auth?.uid;
 
   if (!uid) throw new HttpsError('unauthenticated', 'Must be logged in');
-  if (!fileHash) throw new HttpsError('invalid-argument', 'fileHash required');
+  if (!fileHash || !firmId || !matterId) throw new HttpsError('invalid-argument', 'fileHash, firmId, and matterId required');
 
-  const doc = await admin.firestore().collection('uploads').doc(fileHash).get();
+  const doc = await admin.firestore()
+    .collection('firms').doc(firmId)
+    .collection('matters').doc(matterId)
+    .collection('evidence').doc(fileHash)
+    .get();
   if (!doc.exists) throw new HttpsError('not-found', 'File not found');
 
   const data = doc.data();
