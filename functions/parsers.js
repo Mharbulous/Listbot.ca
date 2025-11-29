@@ -65,6 +65,9 @@ async function parseEmlFile(buffer) {
 }
 
 function parseEmail(buffer, fileName) {
+  if (!fileName || typeof fileName !== 'string') {
+    throw new Error('Invalid fileName provided to parseEmail');
+  }
   const ext = fileName.toLowerCase().split('.').pop();
   if (ext === 'msg') return parseMsgFile(buffer);
   if (ext === 'eml') return parseEmlFile(buffer);
