@@ -4,7 +4,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 
 admin.initializeApp();
 
-const { processEmailFile } = require('./emailExtraction');
+const { processEmailFile } = require('./orchestrator');
 const { PARSE_STATUS, MAX_RETRY } = require('./constants');
 
 // Primary trigger: fires when evidence document created
@@ -24,10 +24,10 @@ exports.onEvidenceCreated = onDocumentCreated({
   }
 
   try {
-    await processEmailFile(fileHash, data);
-    return { success: true };
+    const result = await processEmailFile(fileHash, data);
+    return { success: result.success, messageId: result.messageId };
   } catch (error) {
-    console.error(`Extraction failed for ${fileHash}:`, error);
+    // Error already logged and recorded in orchestrator
     return { success: false, error: error.message };
   }
 });
@@ -68,8 +68,14 @@ exports.retryEmailExtraction = onCall({
   });
 
   try {
-    const result = await processEmailFile(fileHash, data);
-    return { success: true, ...result };
+    const result = await processEmailFile(fileHash, {
+      ...data,
+      // Ensure these are present
+      firmId,
+      matterId,
+      userId: uid
+    });
+    return { success: true, messageId: result.messageId };
   } catch (error) {
     throw new HttpsError('internal', error.message);
   }
