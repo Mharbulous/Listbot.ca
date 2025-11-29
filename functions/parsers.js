@@ -26,13 +26,27 @@ async function parseMsgFile(buffer) {
         : new Date(),
     bodyHtml: data.bodyHTML || null,
     bodyText: data.body || '',
-    attachments: (data.attachments || []).map(att => {
+    attachments: (data.attachments || []).map((att, index) => {
       let content = att.content;
       if (!content && att.dataId !== undefined) {
         content = reader.getAttachment(att.dataId).content;
       }
+
+      // DEBUG: Log attachment object to understand what msgreader returns
+      const detectedFileName = att.fileName || att.name || null;
+      if (!detectedFileName) {
+        console.warn(`[PARSER-DEBUG] Attachment ${index} has no fileName or name:`, {
+          hasFileName: 'fileName' in att,
+          fileNameValue: att.fileName,
+          hasName: 'name' in att,
+          nameValue: att.name,
+          hasPidContentId: 'pidContentId' in att,
+          keys: Object.keys(att)
+        });
+      }
+
       return {
-        fileName: att.fileName || att.name || 'unnamed',
+        fileName: detectedFileName || 'unnamed',
         data: content ? Buffer.from(content) : Buffer.alloc(0),
         size: content?.length || 0,
         mimeType: att.mimeType || 'application/octet-stream'
