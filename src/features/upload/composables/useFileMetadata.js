@@ -131,8 +131,17 @@ export function useFileMetadata() {
       // Update folder paths using pattern recognition
       const pathUpdate = updateFolderPaths(currentFolderPath, existingFolderPaths);
 
-      // STEP 1: Create Evidence document FIRST (parent document must exist before subcollections)
+      // Detect if file is an email file (.msg or .eml) for email extraction fields
+      const isEmailFile = ['msg', 'eml'].includes(
+        sourceFileName.toLowerCase().split('.').pop()
+      );
+
+      // STEP 1: Create Evidence document (parent document must exist before subcollections)
       const evidenceService = new EvidenceService(firmId, matterId);
+
+      // Extract file extension for storage path (must match actual Storage upload path)
+      const fileExtension = sourceFileName.split('.').pop().toLowerCase();
+      const userId = authStore.user?.uid;
 
       const uploadMetadata = {
         hash: fileHash,
@@ -142,6 +151,21 @@ export function useFileMetadata() {
         metadataHash: metadataHash,
         storageCreatedTimestamp: storageCreatedTimestamp,
         fileType: sourceFileType || '', // MIME type from source file
+        userId: userId,
+
+        // Email extraction fields (null for non-emails)
+        isEmailFile: isEmailFile,
+        storagePath: `firms/${firmId}/matters/${matterId}/uploads/${fileHash}.${fileExtension}`,
+        hasEmailAttachments: isEmailFile ? true : null,
+        parseStatus: isEmailFile ? 'pending' : null,
+        parseError: null,
+        parsedAt: null,
+        retryCount: 0,
+        extractedMessageId: null,
+        extractedAttachmentHashes: [],
+        isEmailAttachment: false,
+        extractedFromEmails: [],
+        nestingDepth: 0,
       };
 
       const evidenceId = await evidenceService.createEvidenceFromUpload(uploadMetadata);

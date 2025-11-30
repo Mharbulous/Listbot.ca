@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { FirmService } from '../services/firmService';
+import { FirmService } from '../../../services/firmService';
 
 export const useFirmStore = defineStore('firm', {
   state: () => ({
@@ -86,7 +86,7 @@ export const useFirmStore = defineStore('firm', {
         await FirmService.createFirm(firmId, firmData);
 
         // Reload user firms to include the new firm
-        const authStore = await import('./auth').then((m) => m.useAuthStore());
+        const authStore = await import('../../auth/stores/authStore').then((m) => m.useAuthStore());
         if (authStore.user?.uid) {
           await this.loadUserFirms(authStore.user.uid);
         }

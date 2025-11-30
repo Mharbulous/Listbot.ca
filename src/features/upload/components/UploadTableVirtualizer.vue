@@ -42,10 +42,44 @@
 -->
 
 <template>
-  <!-- Wrapper for table (no drag-drop - that's handled by parent UploadTable.vue) -->
-  <div class="table-wrapper">
-    <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
-    <div ref="scrollContainerRef" class="scroll-container">
+  <!-- Virtual Scrolling with TanStack Virtual (Phase 1.5) -->
+  <!-- Merged table-wrapper and scroll-container into single container -->
+  <div class="virtualizer-wrapper">
+    <PageLayout ref="pageLayoutRef" class="upload-layout">
+      <!-- Title Drawer -->
+      <TitleDrawer title="Upload Queue">
+          <!-- Add to Queue button -->
+          <div class="flex items-center">
+            <v-menu location="bottom">
+              <template v-slot:activator="{ props: menuProps }">
+                <v-btn
+                  color="primary"
+                  size="default"
+                  variant="elevated"
+                  prepend-icon="mdi-plus"
+                  append-icon="mdi-chevron-down"
+                  v-bind="menuProps"
+                >
+                  Add to Queue
+                </v-btn>
+              </template>
+
+              <v-list density="compact">
+                <v-list-item
+                  prepend-icon="mdi-file-multiple"
+                  title="Files"
+                  @click="triggerFileSelect"
+                />
+                <v-list-item
+                  prepend-icon="mdi-folder-multiple"
+                  title="Folder"
+                  @click="triggerFolderRecursiveSelect"
+                />
+              </v-list>
+            </v-menu>
+          </div>
+      </TitleDrawer>
+
       <!-- Sticky Header INSIDE scroll container - ensures perfect alignment -->
       <UploadTableHeader
         :all-selected="props.allSelected"
@@ -94,25 +128,25 @@
       <div class="dropzone-cell">
         <UploadTableDropzone />
       </div>
+    </PageLayout>
 
-      <!-- Sticky Footer INSIDE scroll container - ensures perfect alignment -->
-      <UploadTableFooter
-        :stats="props.footerStats"
-        :is-uploading="props.isUploading"
-        :is-paused="props.isPaused"
-        :duplicates-hidden="props.duplicatesHidden"
-        :verification-state="props.verificationState"
-        @upload="handleUpload"
-        @clear-queue="handleClearQueue"
-        @clear-duplicates="handleClearDuplicates"
-        @clear-skipped="handleClearSkipped"
-        @toggle-duplicates="handleToggleDuplicates"
-        @pause="handlePause"
-        @resume="handleResume"
-        @cancel="handleCancel"
-        @retry-failed="handleRetryFailed"
-      />
-    </div>
+    <!-- Sticky Footer OUTSIDE scroll container - sticks to viewport bottom -->
+    <UploadTableFooter
+      :stats="props.footerStats"
+      :is-uploading="props.isUploading"
+      :is-paused="props.isPaused"
+      :duplicates-hidden="props.duplicatesHidden"
+      :verification-state="props.verificationState"
+      @upload="handleUpload"
+      @clear-queue="handleClearQueue"
+      @clear-duplicates="handleClearDuplicates"
+      @clear-skipped="handleClearSkipped"
+      @toggle-duplicates="handleToggleDuplicates"
+      @pause="handlePause"
+      @resume="handleResume"
+      @cancel="handleCancel"
+      @retry-failed="handleRetryFailed"
+    />
   </div>
 </template>
 
@@ -122,6 +156,8 @@ import { useVirtualizer } from '@tanstack/vue-virtual';
 import UploadTableHeader from './UploadTableHeader.vue';
 import UploadTableRow from './UploadTableRow.vue';
 import UploadTableFooter from './UploadTableFooter.vue';
+import PageLayout from '@/shared/components/layout/PageLayout.vue';
+import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 import UploadTableDropzone from './UploadTableDropzone.vue';
 import { useQueueState } from '../composables/useQueueState.js';
 
@@ -191,8 +227,8 @@ const emit = defineEmits(['cancel', 'undo', 'remove', 'swap', 'select-all', 'des
 // Get shared queue state for resetting completion flag
 const { queueAdditionComplete } = useQueueState();
 
-// Scroll container ref for virtual scrolling
-const scrollContainerRef = ref(null);
+// PageLayout component ref (contains the scroll container)
+const pageLayoutRef = ref(null);
 
 // ============================================================================
 // PERFORMANCE METRICS TRACKING
@@ -207,7 +243,7 @@ const ROW_HEIGHT = 48;
 // See: docs/TanStackAndVue3.md - "The Critical Pattern"
 const virtualizerOptions = computed(() => ({
   count: props.files?.length || 0, // Plain number, NOT computed()!
-  getScrollElement: () => scrollContainerRef.value,
+  getScrollElement: () => pageLayoutRef.value?.scrollContainerRef || null,
   estimateSize: () => ROW_HEIGHT,
   overscan: 5, // Render 5 extra rows above/below viewport for smooth scrolling
   enableSmoothScroll: true,
@@ -328,30 +364,55 @@ const handleRetryFailed = () => {
   emit('retry-failed');
 };
 
+// File selection triggers for Add to Queue button
+const triggerFileSelect = () => {
+  window.dispatchEvent(new CustomEvent('upload-trigger-file-select'));
+};
+
+const triggerFolderRecursiveSelect = () => {
+  window.dispatchEvent(new CustomEvent('upload-trigger-folder-recursive-select'));
+};
+
 // Expose scroll container ref for parent component
+// This provides access to the actual scrolling DOM element through PageLayout
 defineExpose({
-  scrollContainerRef,
+  scrollContainerRef: computed(() => pageLayoutRef.value?.scrollContainerRef || null),
 });
+
+// Watch for content changes and update gradient height dynamically
+// Solution: Use scroll container's actual scrollHeight instead of computing from components
+// This ensures the gradient fills exactly to the bottom (no gaps) when empty,
+// and extends to cover the dropzone when files are listed and user scrolls down
+watch(totalSize, () => {
+  nextTick(() => {
+    const scrollContainer = pageLayoutRef.value?.scrollContainerRef;
+    const gradientBg = scrollContainer?.querySelector('.gradient-background');
+    if (gradientBg && scrollContainer) {
+      // Measure the actual scrollable content height (includes header + virtual content + dropzone)
+      const actualHeight = scrollContainer.scrollHeight;
+      gradientBg.style.height = `${actualHeight}px`;
+    }
+  });
+}, { immediate: true });
 </script>
 
 <style scoped>
-/* Wrapper for table + overlay - enables absolute positioning of overlay */
-.table-wrapper {
-  flex: 1;
-  position: relative; /* Creates positioning context for absolute overlay */
-  min-height: 0; /* Allow flex shrinking */
+/* Wrapper for entire virtualizer component including footer */
+.virtualizer-wrapper {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-.scroll-container {
-  flex: 1;
-  position: relative;
-  overflow-y: auto;
+/* Custom layout styling for Upload table */
+.upload-layout {
+  flex: 1; /* Take up remaining space, allowing footer to stay at bottom */
   min-height: 0; /* Allow flex shrinking and enable scrolling */
   display: flex;
   flex-direction: column;
 }
+
 
 /* Content wrapper for virtual rows (no flex properties) */
 .content-wrapper {
@@ -378,6 +439,6 @@ defineExpose({
 .dropzone-cell {
   flex: 1; /* Fill remaining space to push footer to bottom */
   display: flex; /* Allow dropzone to flex and fill space */
-  padding: 1rem 0; /* Vertical padding above and below dropzone */
+  padding: 1rem; /* Equal padding on all sides for visual consistency */
 }
 </style>

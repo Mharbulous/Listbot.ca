@@ -37,6 +37,11 @@ This folder contains THE definitive source for file lifecycle terminology. All c
 - **Storage**: General term for all Firebase Storage files
 - **Document**: General term for all versions of evidence
 
+### Email Processing Terms (See file-lifecycle.md)
+
+- **Native**: Current message in .msg file (reliable metadata)
+- **Quoted**: Previous messages in thread (potentially edited)
+
 ## Related Documentation
 
 - Deduplication: @docs/Features/Upload/Deduplication/CLAUDE.md

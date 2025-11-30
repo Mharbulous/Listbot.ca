@@ -1,0 +1,179 @@
+name: Claude Night Shift
+
+on:
+  schedule:
+    # 2:00 AM Vancouver time (covers both PST and PDT)
+    - cron: '0 10 * * *'  # 2 AM PST (winter)
+    # - cron: '0 9 * * *'  # Uncomment for 2 AM PDT (summer) if needed
+  workflow_dispatch:  # Manual trigger for testing
+
+concurrency: 
+  group: claude-night-shift
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  night-shift:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for branching
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Claude Code"
+          git config --global user.email "claude@listbot.ca"
+
+      - name: Find Ready Issue
+        id: find_issue
+        run: |
+          ISSUE_NUMBER=$(gh issue list \
+            --label "status: ready-for-ai" \
+            --state open \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number // empty')
+          
+          if [ -n "$ISSUE_NUMBER" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+            echo "✅ Found issue #$ISSUE_NUMBER"
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No ready issues found"
+          fi
+
+      # ============ ISSUE PROCESSING MODE ============
+      - name: Start Issue Work
+        if: steps.find_issue.outputs.found == 'true'
+        id: start_work
+        run: |
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          
+          # Post starting comment and capture comment ID
+          COMMENT_URL=$(gh issue comment "$ISSUE_NUMBER" \
+            --body "🤖 **Claude Code is working on this issue...**
+
+          ⏳ Started: $(date -u '+%Y-%m-%d %H:%M UTC')
+          📋 Status: In Progress" \
+            | grep -oP 'https://github.com[^\s]+')
+          
+          # Update label
+          gh issue edit "$ISSUE_NUMBER" \
+            --remove-label "status: ready-for-ai" \
+            --add-label "status: in-progress"
+          
+          echo "comment_url=$COMMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Code on Issue
+        if: steps.find_issue.outputs.found == 'true'
+        id: claude_work
+        continue-on-error: true
+        run: |
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          
+          # Fetch issue details
+          ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq '.title')
+          ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body // "No description"')
+          
+          # Create branch name
+          BRANCH_NAME="claude/issue-${ISSUE_NUMBER}"
+          git checkout -b "$BRANCH_NAME"
+          
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Run Claude Code
+          claude --dangerously-skip-permissions -p "
+          You are working on GitHub issue #$ISSUE_NUMBER for the ListBot.ca project.
+          
+          **Issue Title:** $ISSUE_TITLE
+          
+          **Issue Description:**
+          $ISSUE_BODY
+          
+          **Instructions:**
+          1. Read CLAUDE.md and relevant docs in the @docs folder first
+          2. Implement the requested changes following project conventions
+          3. Test your changes if applicable
+          4. Commit your changes with clear commit messages referencing #$ISSUE_NUMBER
+          5. Do NOT create a PR - just make commits to the current branch
+          
+          Work carefully and follow all project guidelines."
+
+      - name: Push Branch and Update Issue
+        if: steps.find_issue.outputs.found == 'true'
+        run: |
+          ISSUE_NUMBER=${{ steps.find_issue.outputs.number }}
+          BRANCH_NAME=${{ steps.claude_work.outputs.branch }}
+          OUTCOME=${{ steps.claude_work.outcome }}
+          
+          # Check if there are commits to push
+          if git log origin/main..HEAD --oneline | grep -q .; then
+            git push -u origin "$BRANCH_NAME"
+            
+            # Generate PR creation URL
+            PR_URL="https://github.com/${{ github.repository }}/compare/main...${BRANCH_NAME}?expand=1&title=Issue%20%23${ISSUE_NUMBER}&body=Closes%20%23${ISSUE_NUMBER}"
+            
+            if [ "$OUTCOME" == "success" ]; then
+              gh issue edit "$ISSUE_NUMBER" \
+                --remove-label "status: in-progress" \
+                --add-label "status: ai-complete"
+              
+              gh issue comment "$ISSUE_NUMBER" --body "✅ **Claude Code completed this task!**
+
+          🕐 Finished: $(date -u '+%Y-%m-%d %H:%M UTC')
+          🌿 Branch: \`$BRANCH_NAME\`
+
+          **[👉 Click here to create Pull Request]($PR_URL)**"
+            else
+              gh issue edit "$ISSUE_NUMBER" \
+                --remove-label "status: in-progress" \
+                --add-label "status: ai-error"
+              
+              gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Claude Code encountered an error**
+
+          🕐 Time: $(date -u '+%Y-%m-%d %H:%M UTC')
+          🌿 Partial work may be on branch: \`$BRANCH_NAME\`
+
+          Check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+          
+          **[👉 Review partial changes]($PR_URL)**"
+            fi
+          else
+            gh issue comment "$ISSUE_NUMBER" --body "ℹ️ **No changes were made**
+
+          Claude reviewed the issue but did not make any code changes.
+          This may require manual attention."
+            
+            gh issue edit "$ISSUE_NUMBER" \
+              --remove-label "status: in-progress" \
+              --add-label "status: needs-review"
+          fi
+
+      # ============ MAINTENANCE MODE ============
+      - name: Run Maintenance
+        if: steps.find_issue.outputs.found == 'false'
+        run: |
+          echo "🔧 Running maintenance mode..."
+          
+          claude --dangerously-skip-permissions -p "/doc-streamline" --yolo || true
+          
+          echo "✅ Maintenance complete"

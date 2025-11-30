@@ -1,0 +1,23 @@
+/**
+ * sticky-table-header.css
+ *
+ * Shared CSS class for consistent sticky table headers across all pages.
+ *
+ * Features:
+ * - Light blue/cyan background (#e0f2fe - "cloudy sky")
+ * - Multi-directional box shadow for depth
+ * - Sticks to scroll container top
+ * - Z-index ensures proper layering
+ *
+ * Usage:
+ *   Apply "sticky-table-header" class to <thead> element
+ *   Example: <thead class="sticky-table-header">
+ */
+
+.sticky-table-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #e0f2fe;
+  border-top-right-radius: 0;
+}

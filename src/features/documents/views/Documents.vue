@@ -7,11 +7,18 @@
       :error="error"
       :row-height="48"
       :overscan="5"
+      :page-title="'Document Collection'"
       column-selector-label="Cols"
       @dragover="onDragOver"
       @drop="onDrop"
       @retry="handleRetry"
     >
+      <!-- Categories button in title-drawer -->
+      <template #controls>
+        <v-btn color="primary" size="default" variant="elevated" @click="navigateToCategories">
+          Categories
+        </v-btn>
+      </template>
       <!-- Custom cell rendering for File Type column -->
       <template #cell-fileType="{ row, value }">
         <span
@@ -105,7 +112,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/services/firebase';
@@ -121,6 +128,7 @@ import DocumentTable from '@/features/documents/components/table/DocumentTable.v
 
 // Get route for accessing params
 const route = useRoute();
+const router = useRouter();
 
 // Initialize performance monitor
 const perfMonitor = new PerformanceMonitor('Cloud Table');
@@ -280,6 +288,16 @@ const handleRetry = () => {
   window.location.reload();
 };
 
+/**
+ * Navigate to categories page for the current matter
+ */
+const navigateToCategories = () => {
+  const matterId = route.params.matterId;
+  if (matterId) {
+    router.push(`/matters/${matterId}/categories`);
+  }
+};
+
 // Component lifecycle
 onMounted(async () => {
   const mountStart = performance.now();
@@ -387,9 +405,9 @@ onMounted(async () => {
 <style scoped>
 /* Page Container - Full viewport height minus header */
 .analyze-mockup-page {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  height: calc(100vh - 64px); /* Full viewport height minus AppHeader (h-16 = 64px) */
   width: 100%; /* Full width of parent */
-  background: white;
+  background: #FCFCF5;
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;

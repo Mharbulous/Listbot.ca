@@ -135,7 +135,35 @@ User and firm management processes:
 /firms/{firmId}/matters/{matterId}/evidence/{fileHash}             // File metadata (PRIMARY collection)
 /firms/{firmId}/matters/{matterId}/evidence/{fileHash}/sourceMetadata/{metadataHash}  // Source file variants
 /firms/{firmId}/matters/{matterId}/categories/{categoryId}         // Document organization categories
+/firms/{firmId}/emails/{messageId}                                 // Individual parsed email messages
 ```
+
+### Email Messages Collection (NEW)
+
+**Path**: `/firms/{firmId}/emails/{messageId}`
+
+Individual email messages parsed from .msg/.eml files during email extraction.
+
+**Purpose**:
+- Store parsed Native and Quoted messages separately for threading
+- Enable full-text search across email content
+- Support modification detection (compare Quoted vs original Native)
+
+**Document ID**: Auto-generated (not hash-based) to allow duplicate quoted content across multiple .msg files
+
+**Key Fields**:
+- `isNative`: boolean - Native (reliable) vs Quoted (potentially edited)
+- `extractedFromFile`: string - Hash of original .msg file
+- `attachments`: array - References to attachment hashes
+- `bodyText`, `bodyHtml`: Email content
+- `from`, `to`, `cc`, `bcc`: Email addresses
+- `subject`, `date`: Message metadata
+
+**See**: `docs/Features/Upload/Email-Extraction/email-extraction-architecture.md` for complete schema
+
+**Integration**:
+- Stage 1c (Email Extraction) populates this collection
+- Stage 3 (Email Threading) consumes this data
 
 ### Evidence Collection (File Metadata)
 

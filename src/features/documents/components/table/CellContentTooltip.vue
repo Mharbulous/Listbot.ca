@@ -13,6 +13,7 @@
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
       @click.stop="handleClick"
+      @dblclick.stop="handleDoubleClick"
     >
       {{ content }}
     </div>
@@ -20,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
 defineProps({
   isVisible: {
@@ -46,7 +47,7 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['mouseenter', 'mouseleave', 'click']);
+const emit = defineEmits(['mouseenter', 'mouseleave', 'click', 'dblclick', 'mounted']);
 
 const tooltipElement = ref(null);
 
@@ -59,10 +60,30 @@ const handleMouseLeave = () => {
 };
 
 const handleClick = (event) => {
-  // Allow text selection - don't close tooltip when clicking on it
+  // Stop propagation to prevent closing from outside click handler
   event.stopPropagation();
   emit('click', event);
 };
+
+const handleDoubleClick = (event) => {
+  // Stop propagation to prevent navigation
+  event.stopPropagation();
+  emit('dblclick', event);
+};
+
+// Emit mounted event with element reference when component is mounted
+onMounted(() => {
+  if (tooltipElement.value) {
+    emit('mounted', tooltipElement.value);
+  }
+});
+
+// Also emit when element ref changes (e.g., when tooltip becomes visible)
+watch(tooltipElement, (newElement) => {
+  if (newElement) {
+    emit('mounted', newElement);
+  }
+});
 </script>
 
 <style scoped>

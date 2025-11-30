@@ -1,5 +1,15 @@
 import { computed } from 'vue';
 import { useMatterViewStore } from '@/features/matters/stores/matterView';
+import { useOrganizerStore } from '@/features/documents/stores/organizer';
+import briefcaseIcon from '@/assets/icons/nav-items/briefcase.png';
+import factsIcon from '@/assets/icons/nav-items/scales-of-justice.png';
+import cloudUploadIcon from '@/assets/icons/nav-items/fluffy-cloud-upload.png';
+import flashlightIcon from '@/assets/icons/nav-items/flash-light.png';
+import whitePawnIcon from '@/assets/icons/nav-items/white-pawn-cpu.png';
+import castOfCharactersIcon from '@/assets/icons/nav-items/make-all-eyes-transparent.png';
+import legalMemosIcon from '@/assets/icons/nav-items/Memo&Research.png';
+import scrollIcon from '@/assets/icons/nav-items/scroll.png';
+import cuteDroidIcon from '@/assets/icons/nav-items/CuteDroid.png';
 
 /**
  * Navigation items configuration for the sidebar
@@ -7,17 +17,18 @@ import { useMatterViewStore } from '@/features/matters/stores/matterView';
  */
 export function useNavItems() {
   const matterViewStore = useMatterViewStore();
+  const organizerStore = useOrganizerStore();
 
   return [
     // Matters (Special - not part of EDRM workflow)
-    { key: 'matters', path: '/matters', icon: '🗄️', label: 'Matters' },
+    { key: 'matters', path: computed(() => '/matters'), icon: briefcaseIcon, label: 'Matters' },
 
     // Pleadings and Issues (not part of EDRM workflow)
-    { key: 'facts', path: '/facts', icon: '⚖️', label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
-    { key: 'cast', path: '/cast', icon: '🎭', label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
-    { key: 'law', path: '/law', icon: '📚', label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
-    { key: 'theory', path: '/theory', icon: '♙', label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
-    { key: 'pleadings', path: '/pleadings', icon: '📜', label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
+    { key: 'facts', path: computed(() => '/facts'), icon: factsIcon, label: 'Facts', stubPath: '/facts/stub', stubStatus: 'placeholder' },
+    { key: 'cast', path: computed(() => '/cast'), icon: castOfCharactersIcon, label: 'Characters', stubPath: '/cast/stub', stubStatus: 'placeholder' },
+    { key: 'law', path: computed(() => '/law'), icon: legalMemosIcon, label: 'Law', stubPath: '/law/stub', stubStatus: 'placeholder' },
+    { key: 'theory', path: computed(() => '/theory'), icon: whitePawnIcon, label: 'Theory', stubPath: '/theory/stub', stubStatus: 'placeholder' },
+    { key: 'pleadings', path: computed(() => '/pleadings'), icon: scrollIcon, label: 'Pleadings', stubPath: '/pleadings/stub', stubStatus: 'placeholder' },
 
     // Spacer for visual separation
     { key: 'spacer-1', type: 'spacer' },
@@ -26,10 +37,10 @@ export function useNavItems() {
     { key: 'edrm-header', type: 'header', label: 'Document Discovery' },
 
     // EDRM Stage 1: Identify
-    { key: 'identify', path: '/identify', icon: '🕵️', label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
+    { key: 'identify', path: computed(() => '/identify'), icon: flashlightIcon, label: 'Identify', stubPath: '/identify/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 2: Preserve
-    { key: 'preserve', path: '/upload', icon: '☁️', label: 'Preserve', stubPath: '/upload/stub', stubStatus: 'complete' },
+    { key: 'preserve', path: computed(() => '/upload'), icon: cloudUploadIcon, label: 'Upload', stubPath: '/upload/stub', stubStatus: 'complete' },
 
     // EDRM Stage 3: Collect
     {
@@ -46,7 +57,7 @@ export function useNavItems() {
     },
 
     // EDRM Stage 4: Process
-    { key: 'process', path: '/process', icon: '🤖', label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
+    { key: 'process', path: computed(() => '/process'), icon: cuteDroidIcon, label: 'Process', stubPath: '/process/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 5: Review
     {
@@ -77,13 +88,13 @@ export function useNavItems() {
     },
 
     // EDRM Stage 6: Analysis
-    { key: 'analysis', path: '/analysis', icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
+    { key: 'analysis', path: computed(() => '/analysis'), icon: '🧠', label: 'Analysis', stubPath: '/analysis/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 7: Produce
-    { key: 'produce', path: '/produce', icon: '📃', label: 'Produce', stubPath: '/list/stub', stubStatus: 'placeholder' },
+    { key: 'produce', path: computed(() => '/produce'), icon: '📃', label: 'Produce', stubPath: '/produce/stub', stubStatus: 'placeholder' },
 
     // EDRM Stage 8: Present
-    { key: 'present', path: '/present', icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    
+    { key: 'present', path: computed(() => '/present'), icon: '🏛️', label: 'Present', stubPath: '/present/stub', stubStatus: 'placeholder' },    
   ];
 }
 

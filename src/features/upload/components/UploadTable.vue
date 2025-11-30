@@ -1,52 +1,50 @@
 <template>
-  <div class="upload-table-container">
-    <!-- Wrapper for drag-and-drop handling (positioned relative for absolute overlay) -->
-    <div
-      class="table-positioning-wrapper"
-      @dragover.prevent="handleDragOver"
-      @dragleave.prevent="handleDragLeave"
-      @drop.prevent.stop="handleDrop"
-    >
-      <!-- Drag overlay - positioned absolutely over entire table -->
-      <div v-if="isDragOver" class="drag-overlay">
-        <div class="drag-overlay-content">
-          <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
-          <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
-          <p class="drag-overlay-text-secondary">Release to add files to the upload queue</p>
-        </div>
+  <!-- Merged upload-table-container and table-positioning-wrapper into single container -->
+  <div
+    class="upload-table-container"
+    @dragover.prevent="handleDragOver"
+    @dragleave.prevent="handleDragLeave"
+    @drop.prevent.stop="handleDrop"
+  >
+    <!-- Drag overlay - positioned absolutely over entire table -->
+    <div v-if="isDragOver" class="drag-overlay">
+      <div class="drag-overlay-content">
+        <v-icon icon="mdi-cloud-upload-outline" size="64" color="primary" class="drag-overlay-icon" />
+        <p class="drag-overlay-text-primary">Drop files or folders to add to queue</p>
+        <p class="drag-overlay-text-secondary">Release to add files to the upload queue</p>
       </div>
-
-      <!-- VIRTUALIZED CONTENT (handles both empty and populated states) -->
-      <UploadTableVirtualizer
-        ref="virtualizerRef"
-        :files="props.files"
-        :all-selected="allFilesSelected"
-        :some-selected="someFilesSelected"
-        :footer-stats="footerStats"
-        :is-uploading="props.isUploading"
-        :is-paused="props.isPaused"
-        :duplicates-hidden="props.duplicatesHidden"
-        :verification-state="props.verificationState"
-        :get-group-background="getGroupBackgroundColor"
-        :is-first-in-group="isFirstInGroup"
-        :is-last-in-group="isLastInGroup"
-        @cancel="handleCancel"
-        @undo="handleUndo"
-        @remove="handleRemove"
-        @swap="handleSwap"
-        @select-all="handleSelectAll"
-        @deselect-all="handleDeselectAll"
-        @upload="handleUpload"
-        @clear-queue="handleClearQueue"
-        @clear-duplicates="handleClearDuplicates"
-        @clear-skipped="handleClearSkipped"
-        @toggle-duplicates="handleToggleDuplicates"
-        @pause="handlePause"
-        @resume="handleResume"
-        @cancel-upload="handleCancelUpload"
-        @retry-failed="handleRetryFailed"
-      />
     </div>
+
+    <!-- VIRTUALIZED CONTENT (handles both empty and populated states) -->
+    <UploadTableVirtualizer
+      ref="virtualizerRef"
+      :files="props.files"
+      :all-selected="allFilesSelected"
+      :some-selected="someFilesSelected"
+      :footer-stats="footerStats"
+      :is-uploading="props.isUploading"
+      :is-paused="props.isPaused"
+      :duplicates-hidden="props.duplicatesHidden"
+      :verification-state="props.verificationState"
+      :get-group-background="getGroupBackgroundColor"
+      :is-first-in-group="isFirstInGroup"
+      :is-last-in-group="isLastInGroup"
+      @cancel="handleCancel"
+      @undo="handleUndo"
+      @remove="handleRemove"
+      @swap="handleSwap"
+      @select-all="handleSelectAll"
+      @deselect-all="handleDeselectAll"
+      @upload="handleUpload"
+      @clear-queue="handleClearQueue"
+      @clear-duplicates="handleClearDuplicates"
+      @clear-skipped="handleClearSkipped"
+      @toggle-duplicates="handleToggleDuplicates"
+      @pause="handlePause"
+      @resume="handleResume"
+      @cancel-upload="handleCancelUpload"
+      @retry-failed="handleRetryFailed"
+    />
 
     <!-- Accessibility: Live region for state changes -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
@@ -70,7 +68,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue';
+import { computed, ref } from 'vue';
 import UploadTableVirtualizer from './UploadTableVirtualizer.vue';
 import { useFileDropHandler } from '../composables/useFileDropHandler';
 import { getGroupBackgroundColor, isFirstInGroup, isLastInGroup } from '../composables/useGroupStyling';
@@ -330,7 +328,10 @@ const handleRetryFailed = () => {
 </script>
 
 <style scoped>
+/* Merged upload-table-container and table-positioning-wrapper styles */
 .upload-table-container {
+  flex: 1;
+  position: relative; /* Creates positioning context for absolute overlay */
   display: flex;
   flex-direction: column;
   background: white;
@@ -338,19 +339,9 @@ const handleRetryFailed = () => {
   border-radius: 0; /* No border radius for full viewport fill */
   overflow: hidden;
   margin: 0;
-  /* Size table based on column widths, not viewport */
-  width: fit-content;
-  height: 100%; /* Fill parent container */
+  width: 100%; /* Fill parent viewport width (was fit-content - caused width constraint) */
+  height: 100%; /* Fill parent container height */
   min-height: 0; /* Allow flex shrinking */
-}
-
-/* Wrapper for drag-and-drop - enables absolute positioning of overlay */
-.table-positioning-wrapper {
-  flex: 1;
-  position: relative; /* Creates positioning context for absolute overlay */
-  min-height: 0; /* Allow flex shrinking */
-  display: flex;
-  flex-direction: column;
 }
 
 /* Drag overlay - positioned absolutely to cover entire table (outside scroll container) */

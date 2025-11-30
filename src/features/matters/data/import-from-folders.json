@@ -1,0 +1,142 @@
+[
+  {
+    "import": true,
+    "clientName": "Smith, John",
+    "matterNumber": "M-2024-001",
+    "folderPath": "/Clients/Smith, John - M-2024-001",
+    "confidence": 95
+  },
+  {
+    "import": true,
+    "clientName": "Johnson Corp",
+    "matterNumber": "M-2024-002",
+    "folderPath": "/Clients/Johnson Corp - M-2024-002",
+    "confidence": 92
+  },
+  {
+    "import": true,
+    "clientName": "Williams Estate",
+    "matterNumber": "M-2024-003",
+    "folderPath": "/Clients/Williams Estate - M-2024-003",
+    "confidence": 88
+  },
+  {
+    "import": true,
+    "clientName": "Davis & Associates",
+    "matterNumber": "M-2024-004",
+    "folderPath": "/Clients/Davis & Associates - M-2024-004",
+    "confidence": 96
+  },
+  {
+    "import": false,
+    "clientName": "Miller Corp",
+    "matterNumber": "M-2024-005",
+    "folderPath": "/Clients/Miller Corp - M-2024-005",
+    "confidence": 68
+  },
+  {
+    "import": true,
+    "clientName": "Thompson, Mary",
+    "matterNumber": "M-2024-006",
+    "folderPath": "/Clients/Thompson, Mary - M-2024-006",
+    "confidence": 91
+  },
+  {
+    "import": true,
+    "clientName": "Garcia Industries",
+    "matterNumber": "M-2024-007",
+    "folderPath": "/Clients/Garcia Industries - M-2024-007",
+    "confidence": 94
+  },
+  {
+    "import": true,
+    "clientName": "Martinez Holdings",
+    "matterNumber": "M-2024-008",
+    "folderPath": "/Clients/Martinez Holdings - M-2024-008",
+    "confidence": 87
+  },
+  {
+    "import": true,
+    "clientName": "Robinson, James",
+    "matterNumber": "M-2024-009",
+    "folderPath": "/Clients/Robinson, James - M-2024-009",
+    "confidence": 93
+  },
+  {
+    "import": false,
+    "clientName": "Clark Enterprises",
+    "matterNumber": "M-2024-010",
+    "folderPath": "/Clients/Clark Enterprises - M-2024-010",
+    "confidence": 72
+  },
+  {
+    "import": true,
+    "clientName": "Lewis & Partners",
+    "matterNumber": "M-2024-011",
+    "folderPath": "/Clients/Lewis & Partners - M-2024-011",
+    "confidence": 89
+  },
+  {
+    "import": true,
+    "clientName": "Walker, Patricia",
+    "matterNumber": "M-2024-012",
+    "folderPath": "/Clients/Walker, Patricia - M-2024-012",
+    "confidence": 97
+  },
+  {
+    "import": true,
+    "clientName": "Young Technologies",
+    "matterNumber": "M-2024-013",
+    "folderPath": "/Clients/Young Technologies - M-2024-013",
+    "confidence": 85
+  },
+  {
+    "import": true,
+    "clientName": "Allen Trust",
+    "matterNumber": "M-2024-014",
+    "folderPath": "/Clients/Allen Trust - M-2024-014",
+    "confidence": 90
+  },
+  {
+    "import": false,
+    "clientName": "King, Michael",
+    "matterNumber": "M-2024-015",
+    "folderPath": "/Clients/King, Michael - M-2024-015",
+    "confidence": 65
+  },
+  {
+    "import": true,
+    "clientName": "Wright Manufacturing",
+    "matterNumber": "M-2024-016",
+    "folderPath": "/Clients/Wright Manufacturing - M-2024-016",
+    "confidence": 92
+  },
+  {
+    "import": true,
+    "clientName": "Scott, Jennifer",
+    "matterNumber": "M-2024-017",
+    "folderPath": "/Clients/Scott, Jennifer - M-2024-017",
+    "confidence": 88
+  },
+  {
+    "import": true,
+    "clientName": "Green Properties",
+    "matterNumber": "M-2024-018",
+    "folderPath": "/Clients/Green Properties - M-2024-018",
+    "confidence": 94
+  },
+  {
+    "import": true,
+    "clientName": "Adams Family LLC",
+    "matterNumber": "M-2024-019",
+    "folderPath": "/Clients/Adams Family LLC - M-2024-019",
+    "confidence": 86
+  },
+  {
+    "import": true,
+    "clientName": "Baker, William",
+    "matterNumber": "M-2024-020",
+    "folderPath": "/Clients/Baker, William - M-2024-020",
+    "confidence": 91
+  }
+]

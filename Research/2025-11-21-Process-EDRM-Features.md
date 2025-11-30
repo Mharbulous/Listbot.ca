@@ -579,222 +579,24 @@ AI-powered similarity analysis to identify and group near-duplicate documents.
 
 **Priority**: ⭐⭐⭐ **CRITICAL** (High Impact, Medium Complexity)
 
-**Problem Statement**:
-Email conversations are fragmented across multiple individual messages, forcing lawyers to review each message separately without context. This leads to inefficient review and missed insights.
+**Status**: Full PRD available at `@planning/1. PRDs/Email-Threading-PRD.md`
 
-**Solution**:
-Automatic email thread reconstruction and conversation-based review.
+**Quick Summary**:
+- **Impact**: 40-74% reduction in email review time
+- **Problem**: Email conversations fragmented across multiple messages
+- **Solution**: Automatic thread reconstruction using email headers
+- **Key Features**: Thread visualization, most inclusive identification, timeline view
+- **Timeline**: 7 weeks implementation (Phase 1 Quick Wins)
 
-#### Technical Approach
+**For complete details including**:
+- Technical architecture and algorithms
+- Data models and Firestore schema
+- UI component specifications
+- Implementation timeline and dependencies
+- User stories and acceptance criteria
+- Risk mitigation strategies
 
-**Email Header Analysis**:
-```javascript
-// Parse email headers
-{
-  messageId: '<abc123@example.com>',
-  inReplyTo: '<xyz789@example.com>',
-  references: ['<msg1@example.com>', '<msg2@example.com>'],
-  subject: 'RE: Contract Negotiation',
-  from: 'john@example.com',
-  to: ['jane@example.com'],
-  cc: ['bob@example.com'],
-  date: '2024-03-15T14:30:00Z'
-}
-```
-
-**Threading Algorithm**:
-1. Parse Message-ID, In-Reply-To, References headers
-2. Build conversation tree (parent-child relationships)
-3. Identify root message (no parent)
-4. Identify most inclusive message (contains all previous messages)
-5. Calculate thread depth and participant list
-
-**Data Model**:
-```javascript
-// Add to evidence document (for emails)
-{
-  isEmail: true,
-  emailThread: {
-    threadId: 'thread_abc123',           // Unique thread identifier
-    messageId: '<abc@example.com>',      // Email Message-ID
-    inReplyTo: '<xyz@example.com>',      // Parent message
-    references: ['<msg1>', '<msg2>'],    // Thread ancestry
-    isRootMessage: false,                // First message in thread
-    isMostInclusive: true,               // Contains all previous messages
-    threadDepth: 5,                      // Messages in thread
-    threadParticipants: ['john', 'jane', 'bob'],
-    threadSubject: 'Contract Negotiation'
-  }
-}
-```
-
-**Processing Workflow**:
-1. User navigates to Process page
-2. System identifies email documents (via fileType or MIME type)
-3. User clicks "Build Email Threads" button
-4. System:
-   - Extracts email headers from all email documents
-   - Runs threading algorithm
-   - Assigns threadId to related messages
-   - Identifies most inclusive messages
-   - Updates Firestore
-5. ProcessTable displays threads (collapsed by default)
-6. User can:
-   - Expand thread to see all messages
-   - Review entire thread with single decision
-   - View thread timeline
-   - Filter to most inclusive messages only
-
-#### Implementation Details
-
-**UI Components**:
-- `EmailThreadBuilder.vue` - Threading trigger + progress
-- `EmailThreadTable.vue` - Display threaded emails
-- `EmailThreadViewer.vue` - Expand thread to see all messages
-- `ThreadTimelineView.vue` - Visual timeline of thread
-
-**Email Header Extraction**:
-```javascript
-// Service: src/services/emailHeaderService.js
-
-async function extractEmailHeaders(evidence, firmId, matterId) {
-  // Retrieve email file from Storage
-  const emailContent = await fileProcessingService.getFileForProcessing(
-    evidence, firmId, matterId
-  );
-
-  // Parse email headers (use library like 'mailparser' or custom parser)
-  const parsed = await parseEmail(emailContent);
-
-  return {
-    messageId: parsed.headers.get('message-id'),
-    inReplyTo: parsed.headers.get('in-reply-to'),
-    references: parsed.headers.get('references')?.split(' ') || [],
-    subject: parsed.headers.get('subject'),
-    from: parsed.headers.get('from'),
-    to: parsed.headers.get('to'),
-    cc: parsed.headers.get('cc'),
-    date: parsed.headers.get('date')
-  };
-}
-```
-
-**Threading Algorithm**:
-```javascript
-// Service: src/services/emailThreadingService.js
-
-function buildThreads(emails) {
-  const messageMap = new Map(); // messageId -> email
-  const threads = new Map();    // threadId -> [emails]
-
-  // Build message lookup
-  emails.forEach(email => {
-    messageMap.set(email.emailThread.messageId, email);
-  });
-
-  // Identify thread roots and assign threadIds
-  emails.forEach(email => {
-    if (!email.emailThread.inReplyTo) {
-      // Root message - create new thread
-      const threadId = generateThreadId(email.emailThread.messageId);
-      email.emailThread.threadId = threadId;
-      email.emailThread.isRootMessage = true;
-    } else {
-      // Reply message - find parent thread
-      const parentEmail = messageMap.get(email.emailThread.inReplyTo);
-      if (parentEmail && parentEmail.emailThread.threadId) {
-        email.emailThread.threadId = parentEmail.emailThread.threadId;
-      } else {
-        // Parent not found - create orphan thread
-        email.emailThread.threadId = generateThreadId(email.emailThread.messageId);
-      }
-    }
-  });
-
-  // Group by threadId
-  emails.forEach(email => {
-    const threadId = email.emailThread.threadId;
-    if (!threads.has(threadId)) {
-      threads.set(threadId, []);
-    }
-    threads.get(threadId).push(email);
-  });
-
-  // Identify most inclusive message in each thread
-  threads.forEach((threadEmails, threadId) => {
-    const mostInclusive = findMostInclusiveMessage(threadEmails);
-    mostInclusive.emailThread.isMostInclusive = true;
-
-    // Update thread metadata
-    threadEmails.forEach(email => {
-      email.emailThread.threadDepth = threadEmails.length;
-      email.emailThread.threadParticipants = extractParticipants(threadEmails);
-    });
-  });
-
-  return threads;
-}
-```
-
-**Most Inclusive Message Logic**:
-```javascript
-function findMostInclusiveMessage(threadEmails) {
-  // Most inclusive = last message chronologically (usually contains all quoted replies)
-  return threadEmails.sort((a, b) => {
-    return new Date(b.emailThread.date) - new Date(a.emailThread.date);
-  })[0];
-}
-```
-
-#### User Stories
-
-**US-2.1: Build Email Threads**
-> As a lawyer reviewing email communications, I want to automatically group related emails into conversation threads so that I can understand the context and flow of discussions.
-
-**Acceptance Criteria**:
-- Click "Build Email Threads" on Process page
-- System analyzes all email documents
-- Groups emails into conversation threads
-- Displays threads in ProcessTable
-- Shows thread depth and participant count
-
-**US-2.2: Review Email Thread**
-> As a lawyer, I want to expand an email thread to see all messages in chronological order so that I can review the entire conversation at once.
-
-**Acceptance Criteria**:
-- Click on email thread in ProcessTable
-- Thread expands to show all messages
-- Messages displayed in chronological order
-- Most inclusive message highlighted
-- Can collapse thread to hide messages
-
-**US-2.3: Review Most Inclusive Only**
-> As a lawyer, I want to review only the most inclusive message in each thread so that I can skip redundant quoted replies.
-
-**Acceptance Criteria**:
-- Toggle "Show Most Inclusive Only" filter
-- ProcessTable hides non-inclusive messages
-- Review queue contains only most inclusive messages
-- Can still expand thread to see all messages if needed
-
-#### Benefits
-
-- **Massive Time Savings**: 60-80% reduction in email review time
-- **Context Preservation**: See full conversation flow
-- **Participant Tracking**: Identify who was involved
-- **Timeline Understanding**: See when conversation occurred
-- **Reduced Errors**: Less likely to miss context clues
-
-#### Risks & Mitigations
-
-**Risk**: Broken threads (missing messages)
-- **Mitigation**: Display orphan messages separately, allow manual thread assignment
-
-**Risk**: Cross-platform header inconsistencies
-- **Mitigation**: Robust parsing logic, fallback to subject-based threading
-
-**Risk**: Forwarded messages breaking thread structure
-- **Mitigation**: Detect forwarded messages, create sub-threads
+**See**: `@planning/1. PRDs/Email-Threading-PRD.md`
 
 ---
 
@@ -1329,36 +1131,13 @@ async function generateClusterLabel(sampleDocs) {
 
 ### 2. Email Header Parsing
 
+**Note**: Email header parsing implementation details have been moved to the Email Threading PRD.
+
+**See**: `@planning/1. PRDs/Email-Threading-PRD.md` - Technical Implementation section
+
 **Libraries**:
 - `mailparser` (npm) - Robust email parsing
 - `emailjs-mime-parser` - Lightweight alternative
-
-**Implementation**:
-```javascript
-// Service: src/services/emailHeaderService.js
-import { simpleParser } from 'mailparser';
-
-async function parseEmailHeaders(emailContent) {
-  try {
-    const parsed = await simpleParser(emailContent);
-
-    return {
-      messageId: parsed.messageId,
-      inReplyTo: parsed.inReplyTo,
-      references: parsed.references || [],
-      subject: parsed.subject,
-      from: parsed.from?.value?.[0]?.address,
-      to: parsed.to?.value?.map(t => t.address) || [],
-      cc: parsed.cc?.value?.map(c => c.address) || [],
-      date: parsed.date,
-      headers: parsed.headers
-    };
-  } catch (error) {
-    console.error('Email parsing failed:', error);
-    return null;
-  }
-}
-```
 
 ### 3. Batch Firestore Operations
 

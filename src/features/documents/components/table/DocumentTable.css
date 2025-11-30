@@ -2,7 +2,7 @@
 .document-table {
   height: 100%; /* Fill parent container */
   width: 100%; /* Full width of parent */
-  background: white;
+  background: transparent;
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
@@ -17,11 +17,73 @@
   min-width: 0; /* Allow flex child to shrink below content size */
 }
 
-/* Sticky Header - Sticks within scroll container */
+/* Extended Gradient Background - Provides vertical blending space */
+.gradient-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%; /* Fill container height */
+  background: linear-gradient(179deg, #B2EBF2 0%, #FCFCF5 30%, #FCFCF5 100%);
+  z-index: 0; /* Behind all content */
+  pointer-events: none; /* Don't interfere with clicks */
+}
+
+/* Title Drawer - Scrollable drawer that slides up behind sticky header */
+.title-drawer {
+  padding: 20px 24px;
+  min-width: max-content; /* Match table width */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  z-index: 1; /* Above gradient background */
+}
+
+.title-drawer-text {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: inherit; /* Inherit color from parent .title-drawer */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.title-drawer-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.color-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.color-hex-label {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  color: inherit; /* Inherit color from parent .title-drawer */
+  opacity: 0.9;
+}
+
+.search-field {
+  flex-shrink: 0;
+}
+
+/* Table Header - Sticky drawer front panel */
 .table-mockup-header {
   position: sticky;
   top: 0; /* Stick to top of scroll container */
-  z-index: 10;
+  z-index: 10; /* Above scrolling title (drawer effect) */
   display: flex;
   background: #f9fafb;
   border-bottom: 2px solid #e5e7eb;
@@ -245,6 +307,8 @@
 .table-mockup-body {
   background: white;
   width: max-content; /* Match header width exactly */
+  position: relative;
+  z-index: 1; /* Above gradient background */
 }
 
 /* Virtual Container - Required for absolutely positioned rows */

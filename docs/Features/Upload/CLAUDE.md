@@ -7,6 +7,9 @@ Complete file upload system including deduplication, processing pipeline, storag
 ### Deduplication
 @docs/Features/Upload/Deduplication/CLAUDE.md - Client-side and server-side file deduplication logic
 
+### Email Extraction
+@docs/Features/Upload/Email-Extraction/CLAUDE.md - Email parsing, attachment extraction, message threading prep
+
 ### Processing
 @docs/Features/Upload/Processing/CLAUDE.md - File processing pipeline, lifecycle, and workflow
 

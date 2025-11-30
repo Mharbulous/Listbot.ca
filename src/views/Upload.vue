@@ -1,5 +1,5 @@
 <template>
-  <div class="main-viewport">
+  <div ref="mainViewport" class="main-viewport">
     <!-- Queue Progress Indicator (shown during large batch processing) -->
     <QueueProgressIndicator
       v-if="queueProgress.isQueueing || queueProgress.cancelled"
@@ -16,9 +16,7 @@
     />
 
     <!-- Upload Table (ALWAYS SHOWN - contains integrated empty state) -->
-    <div class="table-section">
-      <!-- Upload Table with integrated empty state -->
-      <UploadTable
+    <UploadTable
         :files="filteredUploadQueue"
         :all-files="uploadQueue"
         :is-empty="uploadQueue.length === 0"
@@ -42,27 +40,26 @@
         @resume="handleResume"
         @cancel-upload="handleCancelUpload"
         @retry-failed="handleRetryFailed"
-      />
+    />
 
-      <!-- Hidden file inputs -->
-      <input
-        ref="fileInput"
-        type="file"
-        multiple
-        accept="*/*"
-        style="display: none"
-        @change="handleFileSelect"
-      />
+    <!-- Hidden file inputs -->
+    <input
+      ref="fileInput"
+      type="file"
+      multiple
+      accept="*/*"
+      style="display: none"
+      @change="handleFileSelect"
+    />
 
-      <input
-        ref="folderRecursiveInput"
-        type="file"
-        webkitdirectory
-        multiple
-        style="display: none"
-        @change="handleFolderRecursiveSelect"
-      />
-    </div>
+    <input
+      ref="folderRecursiveInput"
+      type="file"
+      webkitdirectory
+      multiple
+      style="display: none"
+      @change="handleFolderRecursiveSelect"
+    />
 
 
     <!-- Notification Snackbar -->
@@ -92,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import QueueProgressIndicator from '../features/upload/components/QueueProgressIndicator.vue';
 import UploadTable from '../features/upload/components/UploadTable.vue';
 import UploadPreviewModal from '../features/upload/components/UploadPreviewModal.vue';
@@ -174,6 +171,7 @@ const { verificationState } = useSequentialVerification(
 // Refs for file inputs
 const fileInput = ref(null);
 const folderRecursiveInput = ref(null);
+const mainViewport = ref(null);
 
 // Modal state
 const showPreviewModal = ref(false);
@@ -440,22 +438,12 @@ const handleFolderRecursiveSelect = (event) => {
 
 <style scoped>
 .main-viewport {
-  height: calc(100vh - 80px); /* Full viewport height minus AppHeader (pt-20 = 80px) */
+  height: 100%; /* Fill parent container (App.vue's main content area) */
   width: 100%; /* Full width of parent */
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  background: #FCFCF5;
   padding: 0; /* No padding - table fills entire viewport */
   overflow: hidden; /* Prevent page-level scrolling */
   display: flex;
   flex-direction: column;
-}
-
-.table-section {
-  flex: 1; /* Take up remaining space */
-  /* Removed width: 100% to allow table to size based on content, not viewport */
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Center the upload-table-container horizontally */
-  overflow-x: auto; /* Add horizontal scrollbar when table exceeds viewport width */
-  min-height: 0; /* Allow flex shrinking */
 }
 </style>

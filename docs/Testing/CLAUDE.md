@@ -4,16 +4,15 @@ Test suites, testing strategy, Vitest configuration, and test patterns for the L
 
 ## Available Documentation
 
-@vitest-test-suites.md - Complete registry of all test suites, test counts, and health status
-- Virtual Folder System tests (81 tests)
-- Component tests (227 tests)
-- Memory leak prevention tests (16 tests)
-- Upload system tests
-- SSO integration tests
+**Test Suites:**
+- @25-11-18-vitest-test-suites-detailed.md - Complete test suite registry, utilities, and configuration
+- @25-11-18-vitest-component-testing-standards.md - Vue component testing guide (Vue Test Utils, Vuetify, accessibility)
+- @25-11-18-vitest-history-and-guidelines.md - Change history, maintenance standards, and performance benchmarks
 
 ## Quick Reference
 
-**For test suite overview:** See @vitest-test-suites.md for complete registry
+**For test suite overview:** See @25-11-18-vitest-test-suites-detailed.md for complete registry
+**For component testing:** See @25-11-18-vitest-component-testing-standards.md for Vue/Vuetify patterns
 **For test patterns:** See root CLAUDE.md directive #5 - all tests must be in /tests folder
 **For web worker testing:** See root CLAUDE.md technical best practices section
 

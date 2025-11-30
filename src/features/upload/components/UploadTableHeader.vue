@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-table-header">
+  <div class="sticky-table-header upload-table-header">
     <!-- Select Column (60px) - FIRST COLUMN with Select All checkbox -->
     <div class="header-cell select-header-cell" style="width: 60px; flex-shrink: 0; justify-content: center">
       <input
@@ -91,13 +91,8 @@ watch(
 
 <style scoped>
 .upload-table-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
-  background: #f9fafb;
   border-bottom: 2px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-cell {

@@ -49,19 +49,23 @@ const router = createRouter({
     {
       path: '/upload/stub',
       name: 'preserve',
-      component: () => import('../views/Preserve.vue'),
+      component: () => import('../views/stubs/PreserveStub.vue'),
       meta: { requiresAuth: true, title: 'Preserve' },
     },
     {
       path: '/process/stub',
-      name: 'process',
-      component: () => import('../views/Process.vue'),
-      meta: { requiresAuth: true, title: 'Process' },
+      name: 'process-stub',
+      component: () => import('../views/stubs/ProcessStub.vue'),
+      meta: { requiresAuth: true, title: 'Process Dashboard' },
+    },
+    {
+      path: '/process',
+      redirect: '/process/stub',
     },
     {
       path: '/analysis/stub',
       name: 'analysis',
-      component: () => import('../views/Analysis.vue'),
+      component: () => import('../views/stubs/AnalysisStub.vue'),
       meta: { requiresAuth: true, title: 'Analysis' },
     },
     {
@@ -70,33 +74,46 @@ const router = createRouter({
     },
     {
       path: '/produce',
-      redirect: '/list/stub',
+      redirect: '/produce/stub',
+    },
+    {
+      path: '/produce/stub',
+      name: 'produce',
+      component: () => import('../views/stubs/ProduceStub.vue'),
+      meta: { requiresAuth: true, title: 'Produce' },
+    },
+    // Backward compatibility redirects for old /list routes
+    {
+      path: '/list',
+      redirect: '/produce',
     },
     {
       path: '/list/stub',
-      name: 'list',
-      component: () => import('../views/Produce.vue'),
-      meta: { requiresAuth: true, title: 'Produce' },
+      redirect: '/produce/stub',
     },
     {
       path: '/pleadings/stub',
-      name: 'pleadings',
-      component: () => import('../views/Pleadings.vue'),
-      meta: { requiresAuth: true, title: 'Pleadings' },
+      name: 'pleadings-stub',
+      component: () => import('../views/stubs/PleadingsStub.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings Blueprint' },
     },
     {
       path: '/pleadings',
-      redirect: '/pleadings/stub',
+      name: 'pleadings',
+      component: () => import('../features/pleadings/views/Pleadings.vue'),
+      meta: { requiresAuth: true, title: 'Pleadings' },
     },
     {
       path: '/law',
-      redirect: '/law/stub',
+      name: 'law',
+      component: () => import('../features/law/views/Law.vue'),
+      meta: { requiresAuth: true, title: 'Legal Research & Memos' },
     },
     {
       path: '/law/stub',
-      name: 'law',
-      component: () => import('../views/Law.vue'),
-      meta: { requiresAuth: true, title: 'Legal Memos' },
+      name: 'law-stub',
+      component: () => import('../views/stubs/LawStub.vue'),
+      meta: { requiresAuth: true, title: 'Legal Memos Blueprint' },
     },
     {
       path: '/theory',
@@ -105,28 +122,32 @@ const router = createRouter({
     {
       path: '/theory/stub',
       name: 'theory',
-      component: () => import('../views/Theory.vue'),
+      component: () => import('../views/stubs/TheoryStub.vue'),
       meta: { requiresAuth: true, title: 'Theory' },
     },
     {
-      path: '/facts',
-      redirect: '/facts/stub',
+      path: '/facts/stub',
+      name: 'facts-stub',
+      component: () => import('../views/stubs/FactsStub.vue'),
+      meta: { requiresAuth: true, title: 'Facts Blueprint' },
     },
     {
-      path: '/facts/stub',
+      path: '/facts',
       name: 'facts',
-      component: () => import('../views/Facts.vue'),
+      component: () => import('../features/facts/views/Facts.vue'),
       meta: { requiresAuth: true, title: 'Facts' },
     },
     {
       path: '/cast',
-      redirect: '/cast/stub',
+      name: 'cast',
+      component: () => import('../features/cast/views/Cast.vue'),
+      meta: { requiresAuth: true, title: 'Characters' },
     },
     {
       path: '/cast/stub',
-      name: 'cast',
-      component: () => import('../views/Cast.vue'),
-      meta: { requiresAuth: true, title: 'Characters' },
+      name: 'cast-stub',
+      component: () => import('../views/stubs/CastStub.vue'),
+      meta: { requiresAuth: true, title: 'Characters Blueprint' },
     },
     {
       path: '/identify',
@@ -135,18 +156,14 @@ const router = createRouter({
     {
       path: '/identify/stub',
       name: 'identify',
-      component: () => import('../views/Identify.vue'),
+      component: () => import('../views/stubs/IdentifyStub.vue'),
       meta: { requiresAuth: true, title: 'Identify' },
     },
     {
       path: '/collect/stub',
       name: 'collect-stub',
-      component: () => import('../views/Collect.vue'),
+      component: () => import('../views/stubs/CollectStub.vue'),
       meta: { requiresAuth: true, title: 'Collect' },
-    },
-    {
-      path: '/process',
-      redirect: '/process/stub',
     },
     {
       path: '/analysis',
@@ -159,7 +176,7 @@ const router = createRouter({
     {
       path: '/present/stub',
       name: 'present',
-      component: () => import('../views/Present.vue'),
+      component: () => import('../views/stubs/PresentStub.vue'),
       meta: { requiresAuth: true, title: 'Present' },
     },
     {
@@ -243,6 +260,18 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresMatter: true, title: 'Categories >> Edit' },
     },
     {
+      path: '/firm',
+      name: 'firm',
+      component: () => import('../core/firm/views/FirmSettings.vue'),
+      meta: { requiresAuth: true, title: 'Firm Settings' },
+    },
+    {
+      path: '/firm/stub',
+      name: 'firm-stub',
+      component: () => import('../views/stubs/FirmStub.vue'),
+      meta: { requiresAuth: true, title: 'Firm Blueprint' },
+    },
+    {
       path: '/matters',
       name: 'matters',
       component: () => import('../features/matters/views/Matters.vue'),
@@ -255,10 +284,16 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'New Matter' },
     },
     {
-      path: '/matters/import',
+      path: '/import',
       name: 'import-matters',
       component: () => import('../features/matters/views/MatterImport.vue'),
-      meta: { requiresAuth: true, title: 'Import Matters' },
+      meta: { requiresAuth: true, title: 'Bulk Import' },
+    },
+    {
+      path: '/matters/import/stub',
+      name: 'import-matters-stub',
+      component: () => import('../views/stubs/MatterImportStub.vue'),
+      meta: { requiresAuth: true, title: 'Matter Import Blueprint' },
     },
     {
       path: '/matters/edit/:matterId',

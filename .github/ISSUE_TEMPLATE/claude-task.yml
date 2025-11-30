@@ -1,0 +1,34 @@
+name: Claude Task
+description: Create a task specifically for the Claude Night Shift workflow.
+title: "[Claude] "
+labels: ["status: ready-for-ai"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for creating a task for Claude! This issue has been automatically labeled with `status: ready-for-ai` so the Night Shift workflow will pick it up.
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: What specifically do you want Claude to do? Be as detailed as possible and clearly define the goal.
+      placeholder: "Please refactor the login function to use async/await across all relevant files, following TypeScript best practices..."
+    validations:
+      required: true
+
+  - type: input
+    id: files
+    attributes:
+      label: Relevant Files (Optional but Recommended)
+      description: Guide Claude to the right place. List file paths relevant to the task (e.g., src/auth/login.ts).
+      placeholder: src/components/Header.tsx, utils/api.ts
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context and Constraints
+      description: Provide any constraints, library requirements, or specific design patterns Claude must follow.

@@ -34,7 +34,7 @@
               :class="[
                 'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
                 activeTab === 'first-app'
-                  ? 'border-blue-500 text-blue-600 bg-blue-50'
+                  ? 'border-teal-600 text-teal-600 bg-teal-50'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
               ]"
             >

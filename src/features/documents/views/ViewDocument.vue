@@ -14,10 +14,13 @@
       <v-btn class="mt-4" color="primary" @click="goBack">Back to Organizer</v-btn>
     </div>
 
-    <!-- Main content -->
-    <div
-      v-else
-      class="view-document-content"
+    <!-- Scroll container with gradient and title -->
+    <PageLayout v-else class="view-document-layout">
+      <TitleDrawer title="Review" :bottomPadding="'0'" />
+
+      <!-- Main content -->
+      <div
+        class="view-document-content"
       :data-thumbnails-visible="thumbnailsVisible"
       :data-metadata-visible="metadataVisible"
     >
@@ -80,7 +83,8 @@
         @variant-selected="handleMetadataSelection"
         @dropdown-toggled="dropdownOpen = $event"
       />
-    </div>
+      </div>
+    </PageLayout>
   </div>
 </template>
 
@@ -106,6 +110,8 @@ import DocumentNavigationBar from '@/features/documents/components/viewer/Docume
 import PdfThumbnailPanel from '@/features/documents/components/viewer/PdfThumbnailPanel.vue';
 import PdfViewerArea from '@/features/documents/components/viewer/PdfViewerArea.vue';
 import DocumentMetadataPanel from '@/features/documents/components/viewer/DocumentMetadataPanel.vue';
+import PageLayout from '@/shared/components/layout/PageLayout.vue';
+import TitleDrawer from '@/shared/components/layout/TitleDrawer.vue';
 
 // Stores & Route
 const route = useRoute();
@@ -323,7 +329,13 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 80px); /* Subtract AppHeader height */
-  background-color: #f5f5f5;
+  background-color: #FCFCF5;
+}
+
+/* Custom layout styling for ViewDocument page */
+.view-document-layout {
+  display: flex;
+  flex-direction: column;
 }
 
 .view-document-content {
@@ -336,9 +348,9 @@ onBeforeUnmount(() => {
   grid-template-rows: auto 1fr;
   gap: 24px;
   padding: 24px;
-  flex: 1;
-  overflow: auto;
   align-items: start;
+  position: relative;
+  z-index: 1;
 
   /* Default column widths (panels open) */
   --thumbnails-width: 200px;
@@ -360,6 +372,10 @@ onBeforeUnmount(() => {
 .view-document-content > :nth-child(1) {
   grid-column: thumbnails-start / thumbnails-end;
   grid-row: 1 / 3;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 /* Navigation bar: column 2 (center), row 1 */
@@ -367,6 +383,10 @@ onBeforeUnmount(() => {
   grid-column: center-start / center-end;
   grid-row: 1;
   min-width: 500px;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 /* PDF Viewer: dynamically spans columns based on panel visibility, row 2 */
@@ -374,6 +394,10 @@ onBeforeUnmount(() => {
   grid-row: 2;
   min-width: 500px;
   transition: grid-column 0.3s ease;
+  position: sticky;
+  top: 72px; /* Below navigation bar (64px height + 8px offset) */
+  z-index: 9;
+  align-self: start;
 }
 
 /* Both panels open: PDF viewer stays in center column */
@@ -400,6 +424,10 @@ onBeforeUnmount(() => {
 .view-document-content > :nth-child(4) {
   grid-column: metadata-start / metadata-end;
   grid-row: 1 / 3;
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  align-self: start;
 }
 
 .content-center {

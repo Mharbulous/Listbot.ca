@@ -1,50 +1,225 @@
-name: Claude Code Review
+name: Claude Night Shift (Prioritized Autonomous Agent)
 
 on:
-  issue_comment:
-    types: [created]
+  schedule:
+    # Runs at minute 0 and 30, hours 8-13 UTC (Midnight-6am PST/PDT).
+    - cron: '0,30 8-13 * * *'
+  workflow_dispatch:
+
+# Ensures runs do not overlap.
+concurrency: 
+  group: claude-night-shift
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  claude-review:
-    # Only run on PR comments that contain "@claude"
-    if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@claude')
-
+  autonomous-agent:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-      issues: read
-      id-token: write
-
+    env:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Run Claude Code Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
+      - name: Configure Git
+        run: |
+          git config --global user.name "Claude Night Shift"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.issue.number }}
+          node-version: '20'
 
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+      # --- DECISION ENGINE (Filtered and Sorted) ---
+      - name: Determine Task Priority
+        id: decision
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. CHECK PRIORITY 1 (RESUME STALLED): Filter by status only, oldest first.
+          RESUME_ID=$(gh issue list \
+            --label "status: in-progress" \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number')
+          
+          if [ ! -z "$RESUME_ID" ]; then
+            echo "mode=resume" >> $GITHUB_OUTPUT
+            echo "issue_id=$RESUME_ID" >> $GITHUB_OUTPUT
+            echo "✅ Priority 1: Resuming stalled issue #$RESUME_ID (Oldest first)."
+            gh issue comment "$RESUME_ID" --body "🤖 **Resuming Task:** Workflow detected a previous stalled state and is attempting to finish this issue."
+            exit 0
+          fi
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+          # 2. CHECK PRIORITY 2 (NEW WORK): Filter by status only, oldest first.
+          NEW_ID=$(gh issue list \
+            --label "status: ready-for-ai" \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number')
+          
+          if [ ! -z "$NEW_ID" ]; then
+            echo "mode=new" >> $GITHUB_OUTPUT
+            echo "issue_id=$NEW_ID" >> $GITHUB_OUTPUT
+            
+            # Lock the issue immediately
+            gh issue edit "$NEW_ID" \
+              --remove-label "status: ready-for-ai" \
+              --add-label "status: in-progress"
+            
+            gh issue comment "$NEW_ID" \
+              --body "🤖 Claude is starting work on this task (Priority 2)."
+            
+            echo "✅ Priority 2: Starting new issue #$NEW_ID (Oldest first)."
+            exit 0
+          fi
 
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          # 3. PRIORITY 3 (MAINTENANCE MODE)
+          echo "mode=maintenance" >> $GITHUB_OUTPUT
+          echo "✅ Priority 3: No issues found. Entering maintenance mode."
 
+      # --- EXECUTION: ISSUE MODE (Resume or New) ---
+      - name: Work on Issue
+        id: run_issue
+        if: steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=${{ steps.decision.outputs.issue_id }}
+          echo "Working on Issue #$ISSUE_NUMBER..."
+
+          # Fetch the full issue content (title, body, comments)
+          ISSUE_CONTENT=$(gh issue view "$ISSUE_NUMBER" --json title,body,comments --jq '{title: .title, body: .body, comments: [.comments[].body]}')
+
+          # Validate that we successfully fetched the issue
+          if [ -z "$ISSUE_CONTENT" ] || [ "$ISSUE_CONTENT" = "{}" ]; then
+            echo "❌ Error: Failed to fetch issue #$ISSUE_NUMBER content"
+            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Fetch Error:** Claude could not retrieve the issue content. Please check the issue format and try again."
+            exit 1
+          fi
+
+          # Extract title and body for the prompt
+          ISSUE_TITLE=$(echo "$ISSUE_CONTENT" | jq -r '.title')
+          ISSUE_BODY=$(echo "$ISSUE_CONTENT" | jq -r '.body // "No description provided"')
+
+          echo "📋 Issue Title: $ISSUE_TITLE"
+          echo "📝 Processing issue content..."
+
+          # Construct the prompt for Claude - PUSH DIRECTLY TO MAIN
+          CLAUDE_PROMPT="Please process GitHub issue #$ISSUE_NUMBER.
+
+ISSUE TITLE: $ISSUE_TITLE
+
+ISSUE DESCRIPTION:
+$ISSUE_BODY
+
+TASK INSTRUCTIONS:
+1. Analyze the requirements described in the issue
+2. Implement the requested changes following the project's coding standards
+3. Test your changes to ensure they work correctly
+4. Commit your changes with a clear, descriptive commit message
+   - Use format: 'Fix: <description> (fixes #$ISSUE_NUMBER)' or 'Feature: <description> (closes #$ISSUE_NUMBER)'
+   - Example: 'Fix: Remove bottom padding from upload table (fixes #$ISSUE_NUMBER)'
+5. Push your changes DIRECTLY to the main branch using: git push origin main
+6. After successfully pushing, close the issue with:
+   gh issue close $ISSUE_NUMBER --comment \"✅ Changes pushed to main branch. Review commit history for details.\"
+
+CRITICAL: 
+- Push directly to main - do NOT create a pull request
+- Ensure you commit and push before closing the issue
+- If you encounter any errors during push, do NOT close the issue
+
+CONTEXT:
+- Repository: ListBot.ca (EDRM litigation document management)
+- Tech stack: Vue 3, Vuetify 3, Firebase, Gemini API
+- Main branch is NOT production (promotion model is used)
+- Follow all guidelines in CLAUDE.md and @docs folder"
+
+          # Pass the prompt to Claude
+          claude -p "$CLAUDE_PROMPT"
+
+      # --- EXECUTION: MAINTENANCE MODE CASCADE ---
+      - name: Run Maintenance Cascade
+        id: run_maintenance
+        if: steps.decision.outputs.mode == 'maintenance'
+        continue-on-error: true
+        run: |
+          echo "⚙️ Entering Maintenance Mode..."
+          echo "ℹ️  Maintenance tasks are currently disabled. See TODO comments below."
+
+          # TODO: Implement P3a - Documentation Streamlining
+          # Purpose: Review docs/ folder for inconsistencies, outdated content, broken links
+          # Suggested prompt: "Review all files in the docs/ folder for consistency with the codebase.
+          #                   Check for outdated information, broken cross-references, and missing documentation.
+          #                   If changes are needed, commit and push directly to main with message:
+          #                   'Docs: Nightly maintenance - streamline documentation'."
+          # echo "-> Running doc streamline..."
+          # claude -p "Review all files in docs/ for consistency..." || true
+
+          # TODO: Implement P3b - Documentation Reconciliation
+          # Purpose: Ensure CLAUDE.md and sub-docs match actual codebase structure and conventions
+          # Suggested prompt: "Reconcile documentation in CLAUDE.md and @docs with the actual codebase.
+          #                   Verify that documented patterns match implementation, update any discrepancies.
+          #                   If changes are needed, commit and push directly to main with message:
+          #                   'Docs: Nightly maintenance - reconcile documentation with codebase'."
+          # echo "-> Running doc reconcile..."
+          # claude -p "Reconcile CLAUDE.md and @docs with codebase..." || true
+
+          # TODO: Implement P3c - General Code Streamlining
+          # Purpose: Identify and fix code quality issues (unused imports, console.logs, etc.)
+          # Suggested prompt: "Review codebase for quality improvements: remove unused imports,
+          #                   debug console.logs, fix obvious linting issues, simplify overly complex functions.
+          #                   If changes are made, commit and push directly to main with message:
+          #                   'Chore: Nightly maintenance - code quality improvements'."
+          # echo "-> Running code streamline..."
+          # claude -p "Review codebase for quality improvements..." || true
+
+          echo "✅ Maintenance mode complete (no active tasks)."
+
+      # --- POST-PROCESSING: SUCCESS (Issues Only) ---
+      - name: Mark Issue Complete
+        if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.decision.outputs.issue_id }}
+        run: |
+          # Check if issue is still open (Claude might have closed it)
+          ISSUE_STATE=$(gh issue view "${ISSUE_NUMBER}" --json state --jq '.state')
+          
+          if [ "$ISSUE_STATE" = "OPEN" ]; then
+            gh issue edit "${ISSUE_NUMBER}" \
+              --remove-label "status: in-progress" \
+              --add-label "status: ai-complete"
+            
+            gh issue comment "${ISSUE_NUMBER}" \
+              --body "✅ Task completed successfully. Changes have been pushed to the main branch."
+          else
+            echo "Issue #${ISSUE_NUMBER} was already closed by Claude."
+          fi
+
+      # --- POST-PROCESSING: FAILURE (Issues Only) ---
+      - name: Mark Issue Error
+        if: (steps.decision.outputs.mode == 'resume' || steps.decision.outputs.mode == 'new') && steps.run_issue.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.decision.outputs.issue_id }}
+        run: |
+          gh issue edit "${ISSUE_NUMBER}" \
+            --remove-label "status: in-progress" \
+            --add-label "status: ai-error"
+          
+          gh issue comment "${ISSUE_NUMBER}" \
+            --body "⚠️ **Claude Error:** The AI agent failed to complete the task (Exit Code 1). Check Action logs for details (likely out of credits, API timeout, or unresolvable code issue)."

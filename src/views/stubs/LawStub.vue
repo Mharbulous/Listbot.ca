@@ -1,0 +1,150 @@
+<template>
+  <StubPageLayout>
+    <template #header>
+      <PageHeader
+        badge-text="Case Management: Law"
+        badge-color="teal"
+        title="Legal Research & Memos Workflow"
+        description="The Law module helps you organize legal research, track relevant statutes and case law, and generate research memos—creating a comprehensive legal knowledge base integrated with your evidence and facts."
+      />
+    </template>
+
+    <template #key-impact>
+      <KeyImpactBox icon="⚖️" title="Integrated Legal Research" color="teal">
+        Connecting legal research directly to your evidence creates a powerful case development tool.
+        <span class="font-bold text-teal-700">Integrated research</span>
+        ensures every legal argument is backed by both law and evidence.
+      </KeyImpactBox>
+    </template>
+
+    <template #content>
+      <!-- Core Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Core Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="🏷️"
+            title="Issue Tracking"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="Keep track of legal questions asked by user. Tag research by legal issue, claim, or defense for organized access during brief writing."
+          />
+          <FeatureCard
+            icon="📚"
+            title="Memo Library"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="Organize case law, statutes, regulations, and secondary sources with custom tagging and categorization. Previously known as Legal Research Library."
+          />
+          <FeatureCard
+            icon="🔗"
+            title="Fact Finder"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="AI links facts to legal issues. Connect legal authorities directly to supporting facts and evidence, creating a unified legal and factual narrative."
+          />
+          <FeatureCard
+            icon="⚖️"
+            title="Authority List"
+            badge="Core Feature"
+            priority="high"
+            color="teal"
+            description="A list of the key caselaw or legislation being relied on. Keep track of the last time each authority was noted up to ensure your research stays current."
+          />
+        </div>
+      </div>
+
+      <!-- Wishlist Features -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-4">Wishlist Features</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <FeatureCard
+            icon="💬"
+            title="Research Chat"
+            badge="AI-Powered"
+            color="indigo"
+            description="AI chatbot answers questions based on the memo library. Get instant insights from your organized legal research."
+          />
+          <FeatureCard
+            icon="🔍"
+            title="Gap Finder"
+            badge="AI-Powered"
+            color="indigo"
+            description="Through chatting with the AI, the AI identifies gaps and conflicting authorities in your legal research."
+          />
+          <FeatureCard
+            icon="📝"
+            title="Research Memo Generator"
+            badge="Document Creation"
+            color="blue"
+            description="Generate formatted research memos with proper citations, integrated with your research library."
+          />
+          <FeatureCard
+            icon="🤖"
+            title="AI Legal Research Assistant"
+            badge="AI-Powered"
+            color="indigo"
+            description="AI-powered legal research suggestions based on your facts, similar cases, and legal issues."
+          />
+          <FeatureCard
+            icon="📊"
+            title="Citation Management"
+            badge="Quality Control"
+            color="emerald"
+            description="Track citations, validate cite formats, and ensure consistent legal citation throughout documents."
+          />
+        </div>
+      </div>
+
+      <!-- Workflow Steps -->
+      <WorkflowSteps title="Legal Research Workflow" :steps="workflowSteps" />
+    </template>
+
+    <template #footer>
+      <StubFooter
+        message="The Law module will transform legal research from isolated work into an integrated component of your case strategy."
+        back-button-text="Back"
+      />
+    </template>
+  </StubPageLayout>
+</template>
+
+<script setup>
+import StubPageLayout from '@/components/stubs/StubPageLayout.vue';
+import PageHeader from '@/components/stubs/PageHeader.vue';
+import KeyImpactBox from '@/components/stubs/KeyImpactBox.vue';
+import FeatureCard from '@/components/stubs/FeatureCard.vue';
+import WorkflowSteps from '@/components/stubs/WorkflowSteps.vue';
+import StubFooter from '@/components/stubs/StubFooter.vue';
+
+const workflowSteps = [
+  {
+    title: 'Conduct Research',
+    description: 'Research case law, statutes, and regulations using external legal databases.',
+  },
+  {
+    title: 'Add to Library',
+    description: 'Import and organize legal authorities into your research library with tags and notes.',
+  },
+  {
+    title: 'Link to Evidence',
+    description:
+      'Connect legal authorities to supporting facts and documents to build integrated arguments.',
+  },
+  {
+    title: 'Organize by Issue',
+    description: 'Tag and categorize research by legal issue, claim, or defense for easy retrieval.',
+  },
+  {
+    title: 'Generate Memos',
+    description: 'Create research memos with proper citations and integrated analysis.',
+  },
+  {
+    title: 'Brief Integration',
+    description: 'Pull research and citations directly into briefs and pleadings.',
+  },
+];
+</script>

@@ -108,6 +108,14 @@ import { computed } from 'vue';
 
 const availableDemos = computed(() => [
   {
+    title: 'Development Roadmap',
+    description:
+      'Strategic development plan showing feature priorities and implementation phases. Maps MVP goals to long-term vision with clear decision framework.',
+    route: '/dev/plan',
+    tags: ['Planning', 'Roadmap', 'Strategy', 'Documentation'],
+    status: 'Active',
+  },
+  {
     title: 'Lazy Loading Performance',
     description:
       'Demonstrates 99%+ performance improvement in file queue rendering. Compare 13+ second delays vs instant responsiveness.',

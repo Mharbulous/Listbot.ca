@@ -2,7 +2,12 @@ import { ref, computed } from 'vue';
 
 /**
  * Composable for managing cell content tooltips
- * Shows tooltip for all cells with content after 1-second hover or immediate on click
+ * Shows tooltip on single click
+ * Closes on:
+ * - Click outside tooltip and cells
+ * - Click on same cell that has the tooltip
+ * - Click on the tooltip itself (quick click, not drag)
+ * - 1-second hover away from both tooltip and its cell
  *
  * @returns {Object} Tooltip state and methods
  */
@@ -15,17 +20,22 @@ export function useCellTooltip() {
   const backgroundColor = ref('white');
 
   // Timing
-  const HOVER_DELAY = 1000; // 1 second
+  const HOVER_DELAY = 1000; // 1 second (not used for showing, kept for compatibility)
   const FADE_DURATION = 150; // milliseconds
   const HOVER_AWAY_DELAY = 1000; // 1 second - delay before closing when hovering away
+  const CLICK_DELAY = 300; // milliseconds - delay to distinguish single vs double click
 
   // Timers
   let showTimer = null;
   let fadeTimer = null;
   let hideTimer = null;
+  let clickTimer = null;
 
   // Current cell element
   let currentCellElement = null;
+
+  // Track tooltip element for text selection
+  let tooltipElement = null;
 
   // Track if tooltip is being hovered
   let isTooltipHovered = false;
@@ -108,6 +118,7 @@ export function useCellTooltip() {
 
   /**
    * Handle mouse enter on cell
+   * Hover no longer triggers tooltip display - only manages hover state for closing logic
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -116,64 +127,36 @@ export function useCellTooltip() {
     // Mark that cell is being hovered
     isCellHovered = true;
 
-    // Clear hide timer if it exists
-    if (hideTimer) {
+    // If hovering over the cell that has the tooltip, clear hide timer
+    if (hideTimer && isVisible.value && currentCellElement === cellElement) {
       clearTimeout(hideTimer);
       hideTimer = null;
     }
+    // If hovering over a DIFFERENT cell while tooltip is visible, start hide timer
+    else if (isVisible.value && currentCellElement !== cellElement) {
+      // Clear any existing hide timer
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
 
-    // Get the text content
-    const text = getTextContent(cellElement);
-    if (!text || text.trim() === '' || text.trim() === 't.b.d.') {
-      return;
+      // Start new hide timer
+      hideTimer = setTimeout(() => {
+        if (!isTooltipHovered) {
+          hideTooltip();
+        }
+      }, HOVER_AWAY_DELAY);
     }
 
-    // If tooltip is already visible for this cell, just update hover state
-    if (isVisible.value && currentCellElement === cellElement) {
-      return;
-    }
-
-    // If tooltip is visible for a DIFFERENT cell, hide it first
-    // This prevents the content from updating while showing at the old position
-    if (isVisible.value && currentCellElement !== cellElement) {
-      hideTooltip();
-    }
-
-    // Clear any existing show timers
+    // Clear any pending show timers from previous hover events
     if (showTimer) {
       clearTimeout(showTimer);
       showTimer = null;
     }
-
-    // Store pending data to be applied when tooltip becomes visible
-    const pendingCellElement = cellElement;
-    const pendingBgColor = bgColor;
-    const pendingText = text;
-
-    // Start timer to show tooltip after delay
-    showTimer = setTimeout(() => {
-      // Only update state when tooltip actually becomes visible
-      currentCellElement = pendingCellElement;
-      backgroundColor.value = pendingBgColor;
-      content.value = pendingText;
-
-      // Calculate position based on cell element
-      position.value = calculatePosition(currentCellElement);
-
-      // Show tooltip
-      isVisible.value = true;
-      openedByClick = false;
-
-      // Fade in
-      opacity.value = 0;
-      fadeTimer = setTimeout(() => {
-        opacity.value = 1;
-      }, 10);
-    }, HOVER_DELAY);
   };
 
   /**
-   * Handle click on cell (show tooltip immediately)
+   * Handle click on cell
+   * Delays action to allow double-click detection
    * @param {MouseEvent} event - The mouse event
    * @param {HTMLElement} cellElement - The cell element
    * @param {string} bgColor - The background color of the row
@@ -185,29 +168,61 @@ export function useCellTooltip() {
       return;
     }
 
-    // If tooltip is already visible for this cell, hide it (toggle behavior)
-    if (isVisible.value && currentCellElement === cellElement) {
-      hideTooltip();
-      return;
+    // Clear any existing click timer
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
     }
 
-    // Clear any pending timers
-    clearTimers();
+    // Delay the click action to allow double-click detection
+    clickTimer = setTimeout(() => {
+      // Single click confirmed
 
-    // Store cell element and background color
-    currentCellElement = cellElement;
-    backgroundColor.value = bgColor;
+      // If clicking the same cell that has the tooltip, close it
+      if (isVisible.value && currentCellElement === cellElement) {
+        hideTooltip();
+        return;
+      }
 
-    // Set content
-    content.value = text;
+      // Clear any pending timers
+      clearTimers();
 
-    // Calculate position based on cell element
-    position.value = calculatePosition(currentCellElement);
+      // Store cell element and background color
+      currentCellElement = cellElement;
+      backgroundColor.value = bgColor;
 
-    // Show tooltip immediately (no delay)
-    isVisible.value = true;
-    opacity.value = 1;
-    openedByClick = true;
+      // Set content
+      content.value = text;
+
+      // Calculate position based on cell element
+      position.value = calculatePosition(currentCellElement);
+
+      // Show tooltip
+      isVisible.value = true;
+      opacity.value = 1;
+      openedByClick = true;
+    }, CLICK_DELAY);
+  };
+
+  /**
+   * Handle double-click on cell
+   * If tooltip is open for this cell, select all text
+   * Otherwise, allow navigation to document (handled by row's @dblclick)
+   * @param {HTMLElement} cellElement - The cell element
+   */
+  const handleCellDoubleClick = (event, cellElement) => {
+    // Cancel any pending single-click action
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+
+    // If tooltip is visible for this cell, select all text
+    if (isVisible.value && currentCellElement === cellElement) {
+      event.stopPropagation(); // Prevent navigation
+      selectAllTooltipText();
+    }
+    // Otherwise, let the event bubble to the row's @dblclick handler for navigation
   };
 
   /**
@@ -301,6 +316,39 @@ export function useCellTooltip() {
   };
 
   /**
+   * Handle double-click on tooltip
+   * Selects all text in the tooltip
+   */
+  const handleTooltipDoubleClick = (event) => {
+    selectAllTooltipText();
+  };
+
+  /**
+   * Select all text in the tooltip
+   */
+  const selectAllTooltipText = () => {
+    if (!tooltipElement) return;
+
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(tooltipElement);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } catch (error) {
+      console.error('Failed to select tooltip text:', error);
+    }
+  };
+
+  /**
+   * Set tooltip element reference
+   * Called from the tooltip component when mounted
+   */
+  const setTooltipElement = (element) => {
+    tooltipElement = element;
+  };
+
+  /**
    * Handle clicks outside tooltip and cells
    * Used to close tooltip when clicking elsewhere
    */
@@ -341,6 +389,10 @@ export function useCellTooltip() {
       clearTimeout(hideTimer);
       hideTimer = null;
     }
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
   };
 
   /**
@@ -363,11 +415,14 @@ export function useCellTooltip() {
     handleCellMouseEnter,
     handleCellMouseLeave,
     handleCellClick,
+    handleCellDoubleClick,
 
     // Tooltip event handlers
     handleTooltipMouseEnter,
     handleTooltipMouseLeave,
     handleTooltipClick,
+    handleTooltipDoubleClick,
+    setTooltipElement,
 
     // Global handlers
     handleOutsideClick,

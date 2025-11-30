@@ -26,7 +26,26 @@
       @dragover="onDragOver"
       @drop="onDrop"
     >
-      <!-- Sticky Table Header -->
+      <!-- Extended Gradient Background (sits behind all content) -->
+      <div class="gradient-background"></div>
+
+      <!-- Title Drawer (scrollable - slides up behind sticky header) -->
+      <div
+        v-if="pageTitle"
+        class="title-drawer"
+        :style="{
+          background: 'transparent',
+          color: '#455A64',
+        }"
+      >
+        <h1 class="title-drawer-text">{{ pageTitle }}</h1>
+        <!-- Slot for controls (e.g., buttons, filters) -->
+        <div v-if="$slots.controls" class="title-drawer-controls">
+          <slot name="controls"></slot>
+        </div>
+      </div>
+
+      <!-- Sticky Table Header (drawer front panel - stays fixed) -->
       <div class="table-mockup-header" :style="{ minWidth: totalFooterWidth + 'px' }">
         <!-- Column Selector Button (always at far left) -->
         <div class="header-cell column-selector-cell">
@@ -163,6 +182,7 @@
               :style="{ width: columnWidths[column.key] + 'px' }"
               :data-column-key="column.key"
               @click="(e) => cellTooltip.handleCellClick(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
+              @dblclick="(e) => cellTooltip.handleCellDoubleClick(e, e.currentTarget)"
               @mouseenter="(e) => cellTooltip.handleCellMouseEnter(e, e.currentTarget, getRowBackgroundColor(virtualItem.index))"
               @mouseleave="(e) => cellTooltip.handleCellMouseLeave(e.currentTarget)"
             >
@@ -225,6 +245,8 @@
       @mouseenter="cellTooltip.handleTooltipMouseEnter"
       @mouseleave="cellTooltip.handleTooltipMouseLeave"
       @click="cellTooltip.handleTooltipClick"
+      @dblclick="cellTooltip.handleTooltipDoubleClick"
+      @mounted="cellTooltip.setTooltipElement"
     />
 
     <!-- Snackbar for notifications -->
@@ -295,6 +317,11 @@ const props = defineProps({
   columnSelectorLabel: {
     type: String,
     default: 'Cols'
+  },
+  // Optional page title to display above the table
+  pageTitle: {
+    type: String,
+    default: null
   }
 });
 
@@ -344,6 +371,9 @@ const showColumnSelector = ref(false);
 const scrollContainer = ref(null);
 const columnSelectorPopover = ref(null);
 const columnSelectorBtn = ref(null);
+
+// Search functionality
+const searchQuery = ref('');
 
 const defaultColumnWidths = computed(() => {
   return props.columns.reduce((acc, col) => {

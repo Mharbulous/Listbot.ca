@@ -36,7 +36,7 @@ ListBot App
 ├── 🗄️ Matters Management
 │   ├── /matters ......................... Matters List
 │   ├── /matters/new ..................... Create New Matter
-│   ├── /matters/import .................. Import Matters
+│   ├── /import .......................... Import Matters
 │   ├── /matters/edit/:matterId .......... Edit Matter
 │   └── /matters/:id ..................... Matter Detail View
 │
@@ -128,7 +128,7 @@ The app uses a fixed sidebar (`AppSideBar.vue`) with the following navigation it
 | `/settings` | ✅ | ❌ | ❌ |
 | `/sso` | ✅ | ❌ | ❌ |
 | `/analyze` | ✅ | ❌ | ❌ |
-| `/list` | ✅ | ❌ | ❌ |
+| `/produce` | ✅ | ❌ | ❌ |
 | `/dev/*` | varies | varies | ❌ |
 
 ### Global Guards
@@ -154,7 +154,7 @@ The router applies two global `beforeEach` guards:
 /matters ─────────────────────► List all matters
     │
     ├─► /matters/new ─────────► Create new matter
-    ├─► /matters/import ──────► Import matters from file
+    ├─► /import ──────────────► Import matters from file
     ├─► /matters/:id ─────────► View matter details
     └─► /matters/edit/:id ────► Edit matter
 ```
@@ -271,7 +271,7 @@ Some routes use `titleFn: true` metadata to generate dynamic titles:
 
 ### Under Construction Routes
 The following routes redirect to the "Under Construction" page:
-- `/list` - Evidence List feature (planned)
+- `/produce` - Evidence List feature (planned)
 
 ### Catch-All Route
 - `/:pathMatch(.*)*` - Catches all unmatched routes and redirects to `/404`

@@ -73,14 +73,24 @@ return `${fileSize} • ${fileExtension.toUpperCase()} • ${date}`;
 
 **Note**: Client names are stored directly in matter documents as string arrays, not as ID references. See [SoloFirmMatters.md](./architecture/SoloFirmMatters.md) for complete matter schema.
 
-## Storage Structure (Simplified)
+## Storage Structure
 
 ```
 Firebase Storage Root
-└── /firms/{firmId}/matters/{matterId}/uploads/{fileHash}.{ext}
+└── /firms/{firmId}/
+    └── /matters/{matterId}/
+        ├── /uploads/{fileHash}.{ext}     # Original files + attachments
+        └── /emails/{messageId}           # Parsed email message bodies (NEW)
 ```
 
-That's it. One pattern. Every file follows this structure.
+**Path Purposes:**
+- `/uploads`: Binary files (original .msg, extracted attachments, regular uploads)
+- `/emails`: Parsed message bodies (HTML/text content for threading)
+
+**Storage Optimization:**
+- Email messages stored separately to avoid re-parsing .msg files
+- Attachments deduplicated in /uploads regardless of source email
+- Original .msg files preserved for evidentiary integrity
 
 **Note**: Complete storage structure documentation is maintained in [data-structures.md - Firebase Storage Structure](./architecture.md#firebase-storage-structure).
 
