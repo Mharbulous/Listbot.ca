@@ -1,5 +1,6 @@
 import { createApplicationError } from '../../../utils/errorMessages';
 import { useQueueHelpers } from './useQueueHelpers';
+import { getMimeType } from '../../../utils/mimeTypeDetector';
 
 /**
  * Queue Hash Processing Composable
@@ -64,7 +65,7 @@ export function useQueueHashProcessing() {
         metadata: {
           sourceFileName: file.name,
           sourceFileSize: file.size,
-          sourceFileType: file.type,
+          sourceFileType: getMimeType(file), // Use MIME type with extension fallback
           lastModified: file.lastModified,
         },
       };

@@ -4,6 +4,7 @@
  */
 
 import { blake3 } from 'hash-wasm';
+import { getMimeType } from '../../../utils/mimeTypeDetector.js';
 
 // Worker-specific timing utility
 let processingStartTime = null;
@@ -98,7 +99,7 @@ async function processFiles(files, batchId) {
         metadata: {
           sourceFileName: file.name,
           sourceFileSize: file.size,
-          sourceFileType: file.type,
+          sourceFileType: getMimeType(file), // Use MIME type with extension fallback
           lastModified: file.lastModified,
         },
       };

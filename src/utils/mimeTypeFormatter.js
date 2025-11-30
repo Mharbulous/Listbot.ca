@@ -62,6 +62,10 @@ const MIME_TYPE_MAP = {
   'video/x-msvideo': 'AVI',
   'video/x-ms-wmv': 'WMV',
 
+  // Email formats
+  'application/vnd.ms-outlook': 'MSG',
+  'message/rfc822': 'EML',
+
   // Other common formats
   'application/rtf': 'RTF',
   'application/vnd.oasis.opendocument.text': 'ODT',
