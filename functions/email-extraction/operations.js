@@ -12,14 +12,15 @@ const { StorageError, LockError } = require('./errors');
 const { PARSE_STATUS, MAX_FILE_SIZE, MAX_BODY_SIZE, MAX_BODY_PREVIEW } = require('./constants');
 
 /**
- * Compute BLAKE3 hash of data
- * @param {Buffer} data 
- * @returns {string} Hex hash
+ * Compute BLAKE3 hash of data (128-bit output to match frontend)
+ * @param {Buffer} data
+ * @returns {string} Hex hash (32 characters)
  */
 function computeHash(data) {
   const hasher = blake3.createHash();
   hasher.update(data);
-  return hasher.digest('hex');
+  // Use 128-bit output (16 bytes) to match frontend fileHashWorker.js
+  return hasher.digest('hex', { length: 16 });
 }
 
 /**
