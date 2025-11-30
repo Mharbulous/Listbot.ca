@@ -72,8 +72,27 @@ function validateInputs(fileHash, uploadData) {
 async function processAttachment(attachment, params, bucket) {
   const { firmId, userId, matterId, fileHash: parentHash, nestingDepth } = params;
   
-  // Skip empty attachments
-  if (attachment.size === 0) {
+  // Check for extraction failure (had reported size but no content)
+  if (attachment._extractionFailed) {
+    console.error(`[Orchestrator] EXTRACTION FAILED for attachment "${attachment.fileName}": ` +
+      `Library reported ${attachment._reportedSize} bytes but could not extract content. ` +
+      `This is likely a limitation of the msgreader library with this MSG file format.`);
+    
+    // Return a record of the failed extraction so it's visible in the email document
+    return {
+      fileHash: null,
+      fileName: attachment.fileName,
+      size: 0,
+      reportedSize: attachment._reportedSize,
+      mimeType: attachment.mimeType,
+      isDuplicate: false,
+      extractionFailed: true,
+      error: 'Content extraction failed - library limitation'
+    };
+  }
+  
+  // Skip truly empty attachments (no reported size either)
+  if (attachment.size === 0 && !attachment._reportedSize) {
     console.log(`[Orchestrator] Skipping empty attachment: ${attachment.fileName}`);
     return null;
   }
@@ -175,13 +194,24 @@ async function processEmailFile(fileHash, uploadData) {
     // Step 6: Process attachments
     const attachmentResults = [];
     const attachmentHashes = [];
+    let failedExtractions = 0;
 
     for (const attachment of email.attachments) {
       const result = await processAttachment(attachment, params, bucket);
       if (result) {
         attachmentResults.push(result);
-        attachmentHashes.push(result.fileHash);
+        if (result.fileHash) {
+          attachmentHashes.push(result.fileHash);
+        }
+        if (result.extractionFailed) {
+          failedExtractions++;
+        }
       }
+    }
+
+    // Log summary of extraction issues
+    if (failedExtractions > 0) {
+      console.warn(`[Orchestrator] ${fileHash}: ${failedExtractions}/${email.attachments.length} attachments failed to extract`);
     }
 
     // Step 7: Save email bodies
@@ -204,7 +234,8 @@ async function processEmailFile(fileHash, uploadData) {
     // Step 9: Mark success
     await ops.markSuccess(db, firmId, matterId, fileHash, messageId, attachmentHashes);
     
-    console.log(`[Orchestrator] Completed ${fileHash}: ${attachmentResults.length} attachments, messageId=${messageId}`);
+    const successCount = attachmentResults.filter(r => !r.extractionFailed).length;
+    console.log(`[Orchestrator] Completed ${fileHash}: ${successCount} attachments extracted, ${failedExtractions} failed, messageId=${messageId}`);
     return { success: true, messageId };
 
   } catch (error) {

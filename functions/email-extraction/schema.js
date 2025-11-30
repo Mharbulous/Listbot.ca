@@ -21,6 +21,8 @@ const { ValidationError } = require('./errors');
  * @property {Buffer} data - File content (guaranteed to be a Buffer, may be empty)
  * @property {number} size - Size in bytes (guaranteed >= 0)
  * @property {string} mimeType - MIME type (guaranteed non-empty)
+ * @property {number|null} _reportedSize - Original reported size from parser (for debugging)
+ * @property {boolean} _extractionFailed - True if content extraction failed
  */
 
 /**
@@ -118,12 +120,18 @@ function validateAttachment(raw, index, sourceFileName) {
 
   // data: must be a Buffer
   let data;
+  let extractionFailed = false;
+  
   if (Buffer.isBuffer(raw.data)) {
     data = raw.data;
   } else if (raw.data instanceof Uint8Array) {
     data = Buffer.from(raw.data);
   } else if (raw.data == null) {
     data = Buffer.alloc(0);
+    // Check if extraction failed (had reported size but no content)
+    if (raw._reportedSize > 0 || raw.contentLength > 0) {
+      extractionFailed = true;
+    }
   } else {
     throw new ValidationError(`Attachment ${index} data is not a Buffer`, {
       field: `attachments[${index}].data`,
@@ -133,15 +141,24 @@ function validateAttachment(raw, index, sourceFileName) {
     });
   }
 
-  // size: derive from data if not provided
-  const size = typeof raw.size === 'number' ? raw.size : data.length;
+  // size: derive from data if not provided, but preserve reported size
+  const size = data.length;
+  const reportedSize = raw._reportedSize || raw.contentLength || null;
 
   // mimeType: default to octet-stream
   const mimeType = typeof raw.mimeType === 'string' && raw.mimeType.trim() 
     ? raw.mimeType.trim() 
     : 'application/octet-stream';
 
-  return { fileName, data, size, mimeType };
+  return { 
+    fileName, 
+    data, 
+    size, 
+    mimeType,
+    // Debugging metadata
+    _reportedSize: reportedSize,
+    _extractionFailed: extractionFailed
+  };
 }
 
 /**
@@ -202,6 +219,12 @@ function validateParsedEmail(raw, sourceFileName) {
     try {
       const validated = validateAttachment(rawAttachments[i], i, sourceFileName);
       attachments.push(validated);
+      
+      // Log warning for failed extractions
+      if (validated._extractionFailed) {
+        console.warn(`[Validation] Attachment ${i} "${validated.fileName}" in ${sourceFileName}: ` +
+          `extraction failed (reported size: ${validated._reportedSize} bytes, actual: ${validated.size} bytes)`);
+      }
     } catch (e) {
       // Log but don't fail - skip malformed attachments
       console.warn(`[Validation] Skipping attachment ${i} in ${sourceFileName}:`, e.message);

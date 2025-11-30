@@ -17,6 +17,7 @@ const { ParseError } = require('./errors');
  * - Alternative field names
  * - Attachment content retrieval via dataId
  * - Malformed attachment entries
+ * - Embedded MSG attachments (innerMsgContent)
  * 
  * @param {Buffer} buffer - The .msg file content
  * @param {string} fileName - Original filename (for error context)
@@ -96,15 +97,66 @@ function parseMsgBuffer(buffer, fileName) {
       continue;
     }
 
-    // Try to get content - may be in .content or need retrieval via dataId
-    let content = att.content;
+    // Debug: Log all attachment properties to understand structure
+    // Create a safe version of the attachment for logging (avoiding binary data)
+    const safeAttForLog = {};
+    for (const key of Object.keys(att)) {
+      const val = att[key];
+      if (val instanceof Uint8Array || Buffer.isBuffer(val)) {
+        safeAttForLog[key] = `[Binary: ${val.length} bytes]`;
+      } else if (typeof val === 'object' && val !== null) {
+        safeAttForLog[key] = `[Object with keys: ${Object.keys(val).join(', ')}]`;
+      } else {
+        safeAttForLog[key] = val;
+      }
+    }
+    console.log(`[MsgAdapter] Attachment ${i} in ${fileName}:`, JSON.stringify(safeAttForLog));
+
+    // Try multiple methods to get attachment content
+    let content = null;
+
+    // Method 1: Check if content is directly on the attachment object
+    if (att.content) {
+      content = att.content;
+      console.log(`[MsgAdapter] Got content directly from attachment ${i} in ${fileName}`);
+    }
     
+    // Method 2: Try getAttachment with the attachment object itself
+    if (!content) {
+      try {
+        const retrieved = reader.getAttachment(att);
+        if (retrieved?.content) {
+          content = retrieved.content;
+          console.log(`[MsgAdapter] Got content via getAttachment(att) for ${i} in ${fileName}`);
+        }
+      } catch (err) {
+        console.warn(`[MsgAdapter] getAttachment(att) failed for ${i} in ${fileName}:`, err.message);
+      }
+    }
+    
+    // Method 3: Try getAttachment with dataId (index-based)
     if (!content && att.dataId !== undefined) {
       try {
         const retrieved = reader.getAttachment(att.dataId);
-        content = retrieved?.content;
+        if (retrieved?.content) {
+          content = retrieved.content;
+          console.log(`[MsgAdapter] Got content via getAttachment(dataId=${att.dataId}) for ${i} in ${fileName}`);
+        }
       } catch (err) {
-        console.warn(`[MsgAdapter] Failed to retrieve attachment ${i} by dataId in ${fileName}:`, err.message);
+        console.warn(`[MsgAdapter] getAttachment(dataId) failed for ${i} in ${fileName}:`, err.message);
+      }
+    }
+
+    // Method 4: Try getAttachment with index
+    if (!content) {
+      try {
+        const retrieved = reader.getAttachment(i);
+        if (retrieved?.content) {
+          content = retrieved.content;
+          console.log(`[MsgAdapter] Got content via getAttachment(index=${i}) for ${i} in ${fileName}`);
+        }
+      } catch (err) {
+        console.warn(`[MsgAdapter] getAttachment(index) failed for ${i} in ${fileName}:`, err.message);
       }
     }
 
@@ -120,14 +172,29 @@ function parseMsgBuffer(buffer, fileName) {
     
     const detectedName = possibleNames.find(n => typeof n === 'string' && n.trim());
 
+    // Log warning if we couldn't get content
+    if (!content) {
+      console.warn(`[MsgAdapter] Could not extract content for attachment ${i} "${detectedName || 'unnamed'}" in ${fileName}`);
+      console.warn(`[MsgAdapter] Attachment ${i} full object:`, JSON.stringify(att, (key, value) => {
+        // Don't stringify large binary data
+        if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
+          return `[Binary data: ${value.length} bytes]`;
+        }
+        return value;
+      }, 2));
+    }
+
     // Build normalized attachment object
+    // Include attachment even without content - let orchestrator decide what to do
     attachments.push({
       fileName: detectedName || null,  // Let validator handle the fallback
       data: content ? Buffer.from(content) : null,
-      size: content?.length || 0,
-      mimeType: att.mimeType || att.contentType || null,
-      // Preserve index for debugging
-      _sourceIndex: i
+      size: content?.length || att.contentLength || 0,
+      mimeType: att.mimeType || att.contentType || att.attachMimeTag || null,
+      // Preserve metadata for debugging
+      _sourceIndex: i,
+      _hadContent: !!content,
+      _reportedSize: att.contentLength
     });
   }
 
