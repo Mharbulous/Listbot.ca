@@ -4,8 +4,8 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 
 admin.initializeApp();
 
-const { processEmailFile } = require('./orchestrator');
-const { PARSE_STATUS, MAX_RETRY } = require('./constants');
+const { processEmailFile } = require('./email-extraction/orchestrator');
+const { PARSE_STATUS, MAX_RETRY } = require('./email-extraction/constants');
 
 // Primary trigger: fires when evidence document created
 exports.onEvidenceCreated = onDocumentCreated({
