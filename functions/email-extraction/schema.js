@@ -1,6 +1,6 @@
 /**
  * Email Schema & Validation
- * 
+ *
  * This is the SINGLE SOURCE OF TRUTH for what a parsed email looks like.
  * After validation, all downstream code can trust these shapes.
  */
@@ -82,7 +82,7 @@ function validateEmailAddressArray(raw, fieldName) {
   if (!Array.isArray(raw)) {
     return [];
   }
-  
+
   return raw
     .map((item, index) => {
       try {
@@ -121,7 +121,7 @@ function validateAttachment(raw, index, sourceFileName) {
   // data: must be a Buffer
   let data;
   let extractionFailed = false;
-  
+
   if (Buffer.isBuffer(raw.data)) {
     data = raw.data;
   } else if (raw.data instanceof Uint8Array) {
@@ -146,14 +146,14 @@ function validateAttachment(raw, index, sourceFileName) {
   const reportedSize = raw._reportedSize || raw.contentLength || null;
 
   // mimeType: default to octet-stream
-  const mimeType = typeof raw.mimeType === 'string' && raw.mimeType.trim() 
-    ? raw.mimeType.trim() 
+  const mimeType = typeof raw.mimeType === 'string' && raw.mimeType.trim()
+    ? raw.mimeType.trim()
     : 'application/octet-stream';
 
-  return { 
-    fileName, 
-    data, 
-    size, 
+  return {
+    fileName,
+    data,
+    size,
     mimeType,
     // Debugging metadata
     _reportedSize: reportedSize,
@@ -163,10 +163,10 @@ function validateAttachment(raw, index, sourceFileName) {
 
 /**
  * Validates and normalizes a complete parsed email
- * 
+ *
  * This is the ONLY place where we handle malformed data.
  * After this function returns, everything is guaranteed valid.
- * 
+ *
  * @param {Object} raw - Raw parsed data from email library
  * @param {string} sourceFileName - Original file name (for error context)
  * @returns {ParsedEmail} - Validated and normalized email object
@@ -214,12 +214,12 @@ function validateParsedEmail(raw, sourceFileName) {
   // Attachments: validate each one, skip invalid ones
   const attachments = [];
   const rawAttachments = Array.isArray(raw.attachments) ? raw.attachments : [];
-  
+
   for (let i = 0; i < rawAttachments.length; i++) {
     try {
       const validated = validateAttachment(rawAttachments[i], i, sourceFileName);
       attachments.push(validated);
-      
+
       // Log warning for failed extractions
       if (validated._extractionFailed) {
         console.warn(`[Validation] Attachment ${i} "${validated.fileName}" in ${sourceFileName}: ` +

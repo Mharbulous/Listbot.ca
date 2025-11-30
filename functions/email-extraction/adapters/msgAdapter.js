@@ -1,24 +1,24 @@
 /**
  * MSG File Adapter
- * 
+ *
  * Isolates the @kenjiuno/msgreader library.
  * All quirks and edge cases of that library are handled HERE.
  * Returns a normalized raw object for validation.
  */
 
 const MsgReader = require('@kenjiuno/msgreader').default;
-const { ParseError } = require('./errors');
+const { ParseError } = require('../errors');
 
 /**
  * Parse a .msg file buffer into a raw email object
- * 
+ *
  * This function handles all msgreader-specific quirks:
  * - Missing fields
  * - Alternative field names
  * - Attachment content retrieval via dataId
  * - Malformed attachment entries
  * - Embedded MSG attachments (innerMsgContent)
- * 
+ *
  * @param {Buffer} buffer - The .msg file content
  * @param {string} fileName - Original filename (for error context)
  * @returns {Object} Raw parsed data (not yet validated)
@@ -46,14 +46,14 @@ function parseMsgBuffer(buffer, fileName) {
   }
 
   // Extract sender - msgreader has multiple possible fields
-  const senderEmail = data.senderEmail 
-    || data.senderSmtpAddress 
-    || data.headers?.from 
+  const senderEmail = data.senderEmail
+    || data.senderSmtpAddress
+    || data.headers?.from
     || '';
 
   // Extract recipients - filter by recipType
   const recipients = Array.isArray(data.recipients) ? data.recipients : [];
-  
+
   const toRecipients = recipients
     .filter(r => r && r.recipType === 1)
     .map(r => ({
@@ -84,7 +84,7 @@ function parseMsgBuffer(buffer, fileName) {
 
   for (let i = 0; i < rawAttachments.length; i++) {
     const att = rawAttachments[i];
-    
+
     // Skip null/undefined entries (yes, msgreader can return these)
     if (!att) {
       console.warn(`[MsgAdapter] Attachment ${i} is null/undefined in ${fileName}`);
@@ -120,7 +120,7 @@ function parseMsgBuffer(buffer, fileName) {
       content = att.content;
       console.log(`[MsgAdapter] Got content directly from attachment ${i} in ${fileName}`);
     }
-    
+
     // Method 2: Try getAttachment with the attachment object itself
     if (!content) {
       try {
@@ -133,7 +133,7 @@ function parseMsgBuffer(buffer, fileName) {
         console.warn(`[MsgAdapter] getAttachment(att) failed for ${i} in ${fileName}:`, err.message);
       }
     }
-    
+
     // Method 3: Try getAttachment with dataId (index-based)
     if (!content && att.dataId !== undefined) {
       try {
@@ -169,25 +169,18 @@ function parseMsgBuffer(buffer, fileName) {
       att.longFilename,
       att.shortFilename
     ];
-    
+
     const detectedName = possibleNames.find(n => typeof n === 'string' && n.trim());
 
     // Log warning if we couldn't get content
     if (!content) {
       console.warn(`[MsgAdapter] Could not extract content for attachment ${i} "${detectedName || 'unnamed'}" in ${fileName}`);
-      console.warn(`[MsgAdapter] Attachment ${i} full object:`, JSON.stringify(att, (key, value) => {
-        // Don't stringify large binary data
-        if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
-          return `[Binary data: ${value.length} bytes]`;
-        }
-        return value;
-      }, 2));
     }
 
     // Build normalized attachment object
     // Include attachment even without content - let orchestrator decide what to do
     attachments.push({
-      fileName: detectedName || null,  // Let validator handle the fallback
+      fileName: detectedName || null, // Let validator handle the fallback
       data: content ? Buffer.from(content) : null,
       size: content?.length || att.contentLength || 0,
       mimeType: att.mimeType || att.contentType || att.attachMimeTag || null,

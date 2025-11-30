@@ -1,9 +1,9 @@
 /**
  * Email Extraction Orchestrator
- * 
+ *
  * This is the main entry point for email extraction.
  * It coordinates all the operations but contains NO business logic itself.
- * 
+ *
  * The entire flow is visible in ~50 lines, making debugging straightforward.
  */
 
@@ -18,8 +18,8 @@ const storage = admin.storage();
 
 /**
  * Validate extraction inputs
- * @param {string} fileHash 
- * @param {Object} uploadData 
+ * @param {string} fileHash
+ * @param {Object} uploadData
  * @returns {Object} Validated params
  */
 function validateInputs(fileHash, uploadData) {
@@ -71,13 +71,13 @@ function validateInputs(fileHash, uploadData) {
  */
 async function processAttachment(attachment, params, bucket) {
   const { firmId, userId, matterId, fileHash: parentHash, nestingDepth } = params;
-  
+
   // Check for extraction failure (had reported size but no content)
   if (attachment._extractionFailed) {
     console.error(`[Orchestrator] EXTRACTION FAILED for attachment "${attachment.fileName}": ` +
       `Library reported ${attachment._reportedSize} bytes but could not extract content. ` +
       `This is likely a limitation of the msgreader library with this MSG file format.`);
-    
+
     // Return a record of the failed extraction so it's visible in the email document
     return {
       fileHash: null,
@@ -90,7 +90,7 @@ async function processAttachment(attachment, params, bucket) {
       error: 'Content extraction failed - library limitation'
     };
   }
-  
+
   // Skip truly empty attachments (no reported size either)
   if (attachment.size === 0 && !attachment._reportedSize) {
     console.log(`[Orchestrator] Skipping empty attachment: ${attachment.fileName}`);
@@ -99,14 +99,14 @@ async function processAttachment(attachment, params, bucket) {
 
   // Compute hash
   const attHash = ops.computeHash(attachment.data);
-  
+
   // Check for duplicate
   const isDuplicate = await ops.attachmentExists(db, firmId, matterId, attHash);
-  
+
   if (isDuplicate) {
     // Just add parent reference
     await ops.addParentReference(db, firmId, matterId, attHash, parentHash);
-    
+
     return {
       fileHash: attHash,
       fileName: attachment.fileName,
@@ -123,7 +123,7 @@ async function processAttachment(attachment, params, bucket) {
 
   // Create evidence document
   const isNestedEmail = isEmailFile(attachment.fileName);
-  
+
   await ops.createAttachmentEvidence(db, {
     firmId,
     userId,
@@ -148,7 +148,7 @@ async function processAttachment(attachment, params, bucket) {
 
 /**
  * Main extraction function
- * 
+ *
  * @param {string} fileHash - BLAKE3 hash of the email file
  * @param {Object} uploadData - Upload metadata from Firestore
  * @returns {Promise<{success: boolean, messageId?: string, reason?: string}>}
@@ -157,7 +157,7 @@ async function processEmailFile(fileHash, uploadData) {
   // Step 1: Validate inputs (fail fast)
   const params = validateInputs(fileHash, uploadData);
   const { firmId, userId, matterId, storagePath, sourceFileName, nestingDepth } = params;
-  
+
   console.log(`[Orchestrator] Starting extraction: ${fileHash} (${sourceFileName})`);
 
   try {
@@ -179,7 +179,7 @@ async function processEmailFile(fileHash, uploadData) {
     // Step 4: Download file
     const bucket = storage.bucket();
     const buffer = await ops.downloadFile(bucket, storagePath, fileHash);
-    
+
     if (buffer.length > MAX_FILE_SIZE) {
       throw new ValidationError('File exceeds 100MB limit', {
         field: 'fileSize',
@@ -216,7 +216,7 @@ async function processEmailFile(fileHash, uploadData) {
 
     // Step 7: Save email bodies
     const { textPath, htmlPath } = await ops.saveEmailBodies(
-      bucket, firmId, matterId, 
+      bucket, firmId, matterId,
       fileHash, // Use fileHash as temp ID, will be replaced
       email.bodyText, email.bodyHtml
     );
@@ -233,7 +233,7 @@ async function processEmailFile(fileHash, uploadData) {
 
     // Step 9: Mark success
     await ops.markSuccess(db, firmId, matterId, fileHash, messageId, attachmentHashes);
-    
+
     const successCount = attachmentResults.filter(r => !r.extractionFailed).length;
     console.log(`[Orchestrator] Completed ${fileHash}: ${successCount} attachments extracted, ${failedExtractions} failed, messageId=${messageId}`);
     return { success: true, messageId };
@@ -248,7 +248,7 @@ async function processEmailFile(fileHash, uploadData) {
 
     // Mark failure in Firestore
     await ops.markFailure(db, firmId, matterId, fileHash, error.message);
-    
+
     throw error;
   }
 }
