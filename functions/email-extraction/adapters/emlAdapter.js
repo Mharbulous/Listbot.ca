@@ -6,7 +6,7 @@
  */
 
 const { simpleParser } = require('mailparser');
-const { ParseError } = require('./errors');
+const { ParseError } = require('../errors');
 
 /**
  * Parse a .eml file buffer into a raw email object
